@@ -1,0 +1,24 @@
+atlasMakerServer.js
+Wed Feb 24 2016 17:19:21 GMT+0100 (CET)
+free memory 1100574720
+Wed Feb 24 2016 17:19:21 GMT+0100 (CET) '[initSocketConnection] host:' 'ws://localhost:8080'
+[connection open]
+remote_address 127.0.0.1
+User id u1 connected, total: 1 users
+[sendPreviousUserDataMessage]
+[sendPreviousUserDataMessage] check if socket already exists: true
+send user data from 0 users
+[add atlas]
+User requests atlas undefined from undefined
+No atlas /Library/WebServer/Documents/brainer/js/..//undefinedundefined exists. Create a new one
+Wed Feb 24 2016 17:19:33 GMT+0100 (CET) 'ERROR: Cannot create new empty atlas'
+1 user is connected to the atlas undefinedundefined
+[loadBrainNifti] undefined[object Object]
+ERROR: File does not exist: ../undefined[object Object]
+0 'users connected to atlas' undefined ',' undefined
+Wed Feb 24 2016 17:19:33 GMT+0100 (CET) '[unload atlas]' undefined undefined
+free memory 1037422592
+[add atlas]
+User requests atlas Atlas.nii.gz from /data/Black_rhinoceros/
+No atlas /Library/WebServer/Documents/brainer/js/..///data/Black_rhinoceros/Atlas.nii.gz exists. Create a new one
+Wed Feb 24 2016 17:19:33 GMT+0100 (CET) 'ERROR: Cannot create new empty atlas'

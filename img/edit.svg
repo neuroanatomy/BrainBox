@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.1"
+   width="32"
+   height="32"
+   id="svg2">
+  <defs
+     id="defs4">
+    <filter
+       x="-0.25"
+       y="-0.25"
+       width="1.5"
+       height="1.5"
+       color-interpolation-filters="sRGB"
+       id="filter4147">
+      <feGaussianBlur
+         result="blur"
+         stdDeviation="15"
+         in="SourceAlpha"
+         id="feGaussianBlur4149" />
+      <feColorMatrix
+         values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.5 0 "
+         type="matrix"
+         result="bluralpha"
+         id="feColorMatrix4151" />
+      <feOffset
+         result="offsetBlur"
+         dy="15"
+         dx="15"
+         in="bluralpha"
+         id="feOffset4153" />
+      <feMerge
+         id="feMerge4155">
+        <feMergeNode
+           in="offsetBlur"
+           id="feMergeNode4157" />
+        <feMergeNode
+           in="SourceGraphic"
+           id="feMergeNode4159" />
+      </feMerge>
+    </filter>
+    <filter
+       x="-0.25"
+       y="-0.25"
+       width="1.5"
+       height="1.5"
+       color-interpolation-filters="sRGB"
+       id="filter3021">
+      <feGaussianBlur
+         result="blur"
+         stdDeviation="10"
+         in="SourceAlpha"
+         id="feGaussianBlur3023" />
+      <feColorMatrix
+         values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.5 0 "
+         type="matrix"
+         result="bluralpha"
+         id="feColorMatrix3025" />
+      <feOffset
+         result="offsetBlur"
+         dy="15"
+         dx="15"
+         in="bluralpha"
+         id="feOffset3027" />
+      <feMerge
+         id="feMerge3029">
+        <feMergeNode
+           in="offsetBlur"
+           id="feMergeNode3031" />
+        <feMergeNode
+           in="SourceGraphic"
+           id="feMergeNode3033" />
+      </feMerge>
+    </filter>
+  </defs>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     transform="translate(-205.78773,-361.13823)"
+     id="layer1">
+    <path
+       d="M 395.05524,407.90863 A 104.78919,104.78919 0 1 1 185.47686,407.90863 104.78919,104.78919 0 1 1 395.05524,407.90863 z"
+       transform="matrix(0.11264974,0,0,0.11264974,187.16496,330.46911)"
+       id="path2985"
+       style="fill:#35a635;fill-opacity:1;stroke:none;filter:url(#filter3021)" />
+    <path
+       d="M 395.05524,407.90863 A 104.78919,104.78919 0 1 1 185.47686,407.90863 104.78919,104.78919 0 1 1 395.05524,407.90863 z"
+       transform="matrix(0.10056224,0,0,0.10056224,190.67356,335.3997)"
+       id="path2985-9"
+       style="fill:none;stroke:#ffffff;stroke-width:7.65907812;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
+    <path
+       d="M 216.84676,381.78261 217.69575,380.93362 215.5033,378.74117 214.65431,379.59016 214.65431,380.58843 215.84849,380.58843 215.84849,381.78261 216.84676,381.78261 z M 221.72614,373.12476 Q 221.72614,372.91951 221.52088,372.91951 221.42758,372.91951 221.36228,372.98482 L 216.30565,378.04145 Q 216.24034,378.10675 216.24034,378.20005 216.24034,378.4053 216.44558,378.4053 216.53888,378.4053 216.60419,378.33999 L 221.66083,373.28336 Q 221.72614,373.21806 221.72614,373.12476 z M 221.22234,371.33348 225.10344,375.21458 217.34123,382.9768 213.46012,382.9768 213.46012,379.09569 z M 227.59444,372.22912 Q 227.59444,372.72359 227.24924,373.06878 L 225.70054,374.61749 221.81943,370.73638 223.36814,369.197 Q 223.704,368.84248 224.2078,368.84248 224.70227,368.84248 225.05679,369.197 L 227.24924,371.38013 Q 227.59444,371.74398 227.59444,372.22912 z"
+       id="path2985-4"
+       style="fill:#ffffff;fill-opacity:1;stroke:none" />
+  </g>
+</svg>

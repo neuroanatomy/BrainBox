@@ -1,0 +1,65 @@
+<div id="toolbar" class="ui-corner-all">
+	
+	<!-- Controls -->
+	<div id="controls">
+		<div id="plane">
+			<table><tr>
+			<td><input type="radio" name="radio" id="sagittal" checked="checked"><label for="sagittal">Sagittal</label></td>
+			<td><input type="radio" name="radio" id="coronal"><label for="coronal">Coronal</label></td>
+			<td><input type="radio" name="radio" id="axial"><label for="axial">Axial</label></td>
+			</tr></table>
+		</div>
+
+		<div id="sliceTools">
+			<div id="sliderTool">
+				<button id="prevSlice">-</button>
+				<div id="sliderContainer">
+					<div id="slider" oninput="javascript:changeSlice()"></div>
+				</div>
+				<button id="nextSlice">+</button>
+			</div>
+		</div>
+
+		<div class="loginRequired">
+			<div id="paintTools">
+				<span id="tool">						
+					<input type="radio" name="tool" id="paint" checked="checked"><label for="paint">Paint</label>
+					<input type="radio" name="tool" id="erase"><label for="erase">Erase</label>
+				</span>
+				<input type="checkbox" id="fill"><label for="fill">Fill</label>
+				<button id="undo">Undo</button>
+			</div>
+
+			<div id="penSize">						
+				<input type="radio" name="penSize" id="1" checked="checked"><label for="1">1</label>
+				<input type="radio" name="penSize" id="2"><label for="2">2</label>
+				<input type="radio" name="penSize" id="3"><label for="3">3</label>
+				<input type="radio" name="penSize" id="5"><label for="5">5</label>
+				<input type="radio" name="penSize" id="10"><label for="10">10</label>
+				<input type="radio" name="penSize" id="15"><label for="15">15</label>
+			</div>
+
+			<div id="penColor">						
+				<span id="c1"></span>
+				<span id="c2"></span>
+				<span id="c3"></span>
+				<span id="c4"></span>
+				<span id="c5"></span>
+				<span id="c6"></span>
+			</div>
+
+			<div id="preciseCursor">
+				<input type="checkbox" id="precise"><label for="precise">Precise Cursor</label>
+			</div>
+		</div>
+	</div>
+	
+	<!-- Chat --!>
+	<div id="chatTools">
+		<label id="chat">Chat (not connected)</label>
+		<div id="log"></div>
+		<div class="loginRequired">
+			<input id="msg" type="text" onkeypress="AtlasMakerWidget.onkey(event)">
+		</div>
+	</div>
+</div>
