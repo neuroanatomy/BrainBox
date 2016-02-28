@@ -17,6 +17,7 @@ char	version[]="volume, v4, roberto toro, 9 August 2015";	// added surfaceNets f
 #define kMGZVolume		2
 #define kNiftiVolume	3
 #define kNiftiGZVolume	4
+#define kNiftiZipVolume	5
 
 typedef struct {
     float x,y,z;
@@ -1285,6 +1286,13 @@ int getformatindex(char *path)
             printf("Format: NiftiGZ volume\n");
     }
     else
+    if(i==5)
+    {
+        index=kNiftiZipVolume;
+        if(verbose)
+            printf("Format: NiftiZip volume\n");
+    }
+    else
 	{
 		printf("ERROR: unrecognized format \"%s\"\n",extension);
 		return 0;
@@ -1427,6 +1435,38 @@ int saveVolume_NiftiGZ(char *path)
 
     return 0;
 }
+int loadVolume_NiftiZip(char *path)
+{
+    FILE *f;
+    char filename[4096]={0};
+    char cmd[4096];
+
+    // create temporary file name
+    if(getenv("TEMP")==NULL) strcat(filename,"/tmp");
+    else                     strcat(filename,getenv("TEMP"));
+    strcat(filename,"/nii.XXXXXX");
+    f=mkstemp(filename);
+    if((int)f==-1)
+    {
+        printf("Cannot create temporary file.\n");
+        return 1;
+    }
+    if(verbose)
+        printf("Tempname: %s\n",filename);
+    
+    // uncompress orig.mgz into a temporary .mgh file
+    sprintf(cmd,"unzip -p %s > %s",path,filename);
+    system(cmd);
+    
+    // load temporary file
+    loadVolume_Nifti(filename);
+
+    // clean up
+    sprintf(cmd,"/bin/rm -r %s",filename);
+    system(cmd);
+
+    return 0;
+}
 int loadVolume(char *path)
 {
 	int	err,format;
@@ -1446,6 +1486,9 @@ int loadVolume(char *path)
             break;
         case kNiftiGZVolume:
             err=loadVolume_NiftiGZ(path);
+            break;
+        case kNiftiZipVolume:
+            err=loadVolume_NiftiZip(path);
             break;
 		default:
 			printf("ERROR: Input volume format not recognised\n");

@@ -12,6 +12,7 @@ var WebSocketServer=require("ws").Server; //https://github.com/websockets/ws
 var os=require("os");
 var fs=require("fs");
 var zlib=require("zlib");
+var magic=require("magic-number");
 var req=require('request');
 var jpeg=require('jpeg-js'); // jpeg-js library: https://github.com/eugeneware/jpeg-js
 
@@ -907,6 +908,7 @@ function loadBrainNifti(path,callback) {
 	} else {
 		var niigz;
 		try {
+			console.log(magic.detectFile(path));
 			niigz=fs.readFileSync(path);
 			zlib.gunzip(niigz,function(err,nii) {
 				var datatype=2;
