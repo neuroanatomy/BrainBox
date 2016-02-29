@@ -10,7 +10,12 @@
 <body>
 
 <!-- 
-	MyBrain: http://files.figshare.com/2284784/MRI_n4.nii.gz
+A few brains:
+http://braincatalogue.org/data/Baboon/MRI.nii.gz
+https://zenodo.org/record/44855/files/MRI-n4.nii.gz
+http://files.figshare.com/2284784/MRI_n4.nii.gz
+http://braincatalogue.org/data/Human/MRI-n4.nii.gz
+
 -->
 
 <!--
@@ -90,7 +95,7 @@
 				console.log(info);
 
 				// Add AtlasMaker
-				$("#stereotaxic").append('<div id="atlasMaker"></div>');
+				$("#stereotaxic").html('<div id="atlasMaker"></div>');
 				$("#atlasMaker").addClass('edit-mode');
 				var s = document.createElement("script");
 				s.src = "js/atlasMaker.js";

@@ -62,7 +62,7 @@ var AtlasMakerWidget = {
 	info:{},	// information displayed over each brain slice
 	// undo stack
 	Undo:[],
-	dbphp:          "php/brainer.php",
+	dbphp:          "php/brainbox.php",
 
 	//========================================================================================
 	// Local user interaction
@@ -1172,7 +1172,8 @@ var AtlasMakerWidget = {
 	
 		if(me.Collab[u]==undefined) {
 			try {
-				var	msg="<b>"+data.user.username+"</b> entered atlas "+data.user.specimenName+"/"+data.user.atlasFilename+"<br />"
+				//var	msg="<b>"+data.user.username+"</b> entered atlas "+data.user.specimenName+"/"+data.user.atlasFilename+"<br />"
+				var	msg="<b>"+data.user.username+"</b> entered<br />"
 				$("#log").append(msg);
 				$("#log").scrollTop($("#log")[0].scrollHeight);
 			} catch (e) {
@@ -1303,7 +1304,8 @@ var AtlasMakerWidget = {
 		var me=AtlasMakerWidget;
 		if(me.debug) console.log("> receiveDisconnectMessage()");
 		var u=data.uid;	// user
-		var	msg="<b>"+me.Collab[u].username+"</b> left atlas "+me.Collab[u].specimenName+"/"+me.Collab[u].atlasFilename+"<br />"
+		//var	msg="<b>"+me.Collab[u].username+"</b> left atlas "+me.Collab[u].specimenName+"/"+me.Collab[u].atlasFilename+"<br />"
+		var	msg="<b>"+me.Collab[u].username+"</b> left<br />"
 		me.Collab.splice(u,1);
 		var	v,nusers=1; for(v in me.Collab) nusers++;
 		$("#chat").text("Chat ("+nusers+" connected)");

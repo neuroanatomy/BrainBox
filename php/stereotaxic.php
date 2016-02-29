@@ -29,11 +29,13 @@ function download($params)
 		$dir=$_SERVER['DOCUMENT_ROOT']."/brainbox/data/".$hash;
 		
 		if (!file_exists($dir)) {
-			mkdir($dir,0777,true);
+			mkdir($dir,0777);
+			chmod($dir,0777);
 		}
 		
 		if (!file_exists($dir."/".$filename)) {
 			$result=@file_put_contents($dir."/".$filename,$handle);
+			chmod($dir."/".$filename, 0777);
 			if($result)
 			{
 				$info=@exec("../bin/volume -i ".$dir."/".$filename." -info|".

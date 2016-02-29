@@ -5,14 +5,14 @@
 	Launch using > node atlasMakerServer.js
 */
 
-var	debug=1;
+var	debug=0;
 
 var WebSocketServer=require("ws").Server; //https://github.com/websockets/ws
 
 var os=require("os");
 var fs=require("fs");
 var zlib=require("zlib");
-var magic=require("magic-number");
+var fileType=require("file-type");
 var req=require('request');
 var jpeg=require('jpeg-js'); // jpeg-js library: https://github.com/eugeneware/jpeg-js
 
@@ -296,16 +296,18 @@ function receiveRequestSliceMessage(data,user_socket) {
 		sendSliceToUser(data,view,slice,user_socket);
 	});
 
-	if(brain)
+	if(brain) {
 		sendSliceToUser(brain,view,slice,user_socket);
+	}
 }
 function getBrainAtPath(brainPath,callback) {
+	if(debug>1) console.log("[getBrainAtPath]");
 	var i;
 	for(i=0;i<Brains.length;i++)
 		if(Brains[i].path==brainPath)
 			return Brains[i].data;
 			
-	loadBrainNifti(brainPath,function(data){
+	loadBrainNiftiCompressed(brainPath,function(data) {
 		var brain={path:brainPath,data:data};
 		Brains.push(brain);
 		callback(data);
@@ -498,7 +500,6 @@ function addAtlas(user,callback) {
 	};
 
 	console.log("User requests atlas "+atlas.name+" from "+atlas.dirname);
-	console.log("user",user);
 	
 	loadAtlasNifti(atlas,user.username,callback);	
 	Atlases.push(atlas);
@@ -533,7 +534,6 @@ gawk 'BEGIN{s="5C 01 ...";split(s,a," ");for(i=1;i<=352;i++)printf"%s,",strtonum
 			125,194,195,245,40,194,195,245,168,190,0,0,0,128,0,0,0,0,144,194,93,66,0,0,0,128,195,245,168,
 			62,0,0,0,128,164,112,125,194,0,0,0,0,0,0,0,0,195,245,168,62,195,245,40,194,0,0,0,0,0,0,0,0,0,
 			0,0,0,0,0,0,0,110,43,49,0,0,0,0,0]);
-		console.log(atlas,username,callback);
 		try {
 			atlas.hdr.writeUInt16LE(datatype,72,2);		// datatype 2: unsigned char (8 bits/voxel)
 			atlas.hdr.writeUInt16LE(atlas.dim[0],42,2); // datatype 2: unsigned char (8 bits/voxel)
@@ -898,7 +898,34 @@ function fill(x,y,z,val,user,undoLayer)
 /*
 	Serve brain slices
 */
-function loadBrainNifti(path,callback) {
+function loadBrainNifti(err,nii,callback) {
+	var datatype=2;
+	var	vox_offset=352;
+	var	sizeof_hdr=nii.readUInt32LE(0);
+	var	dimensions=nii.readUInt16LE(40);
+	var brain={};
+	brain.hdr=nii.slice(0,vox_offset);
+	brain.dim=[];
+	brain.dim[0]=nii.readUInt16LE(42);
+	brain.dim[1]=nii.readUInt16LE(44);
+	brain.dim[2]=nii.readUInt16LE(46);
+	datatype=nii.readUInt16LE(72);
+	brain.pixdim=[];
+	brain.pixdim[0]=nii.readFloatLE(80);
+	brain.pixdim[1]=nii.readFloatLE(84);
+	brain.pixdim[2]=nii.readFloatLE(88);
+	vox_offset=nii.readFloatLE(108);
+	brain.data=nii.slice(vox_offset);
+	var i,sum=0;
+	for(i=0;i<brain.dim[0]*brain.dim[1]*brain.dim[2];i++)
+		sum+=brain.data[i];
+	brain.sum=sum;
+
+	console.log("nii file loaded",sum);
+	callback(brain);
+}
+
+function loadBrainNiftiCompressed(path,callback) {
 	if(debug)
 		console.log("[loadBrainNifti]",path);
 	path="../"+path;
@@ -908,34 +935,17 @@ function loadBrainNifti(path,callback) {
 	} else {
 		var niigz;
 		try {
-			console.log(magic.detectFile(path));
 			niigz=fs.readFileSync(path);
-			zlib.gunzip(niigz,function(err,nii) {
-				var datatype=2;
-				var	vox_offset=352;
-				var	sizeof_hdr=nii.readUInt32LE(0);
-				var	dimensions=nii.readUInt16LE(40);
-				var brain={};
-				brain.hdr=nii.slice(0,vox_offset);
-				brain.dim=[];
-				brain.dim[0]=nii.readUInt16LE(42);
-				brain.dim[1]=nii.readUInt16LE(44);
-				brain.dim[2]=nii.readUInt16LE(46);
-				datatype=nii.readUInt16LE(72);
-				brain.pixdim=[];
-				brain.pixdim[0]=nii.readFloatLE(80);
-				brain.pixdim[1]=nii.readFloatLE(84);
-				brain.pixdim[2]=nii.readFloatLE(88);
-				vox_offset=nii.readFloatLE(108);
-				brain.data=nii.slice(vox_offset);
-				var i,sum=0;
-				for(i=0;i<brain.dim[0]*brain.dim[1]*brain.dim[2];i++)
-					sum+=brain.data[i];
-				brain.sum=sum;
-			
-				console.log("nii file loaded",sum);
-				callback(brain);
-			});
+			var ft=fileType(niigz);
+			console.log("fileType",ft);
+			switch(ft.ext) {
+				case 'gz':
+					zlib.gunzip(niigz,function(err,nii){if(err) console.log("ERROR:",err);loadBrainNifti(err,nii,callback)});
+					break;
+				case 'zip':
+					zlib.inflate(niigz,function(err,nii){if(err) console.log("ERROR:",err);loadBrainNifti(err,nii,callback)});
+					break;
+			}
 		} catch(e) {
 			console.log(new Date(),"ERROR: Cannot read brain data");
 		}
