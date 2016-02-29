@@ -547,10 +547,10 @@ gawk 'BEGIN{s="5C 01 ...";split(s,a," ");for(i=1;i<=352;i++)printf"%s,",strtonum
 			atlas.sum=sum;
 
 			console.log(new Date());
-			console.log("size",atlas.data.length);
-			console.log("dim",atlas.dim);
-			console.log("datatype",datatype);
-			console.log("vox_offset",vox_offset);
+			console.log("atlas size",atlas.data.length);
+			console.log("atlas dim",atlas.dim);
+			console.log("atlas datatype",datatype);
+			console.log("atlas vox_offset",vox_offset);
 			console.log("free memory",os.freemem());
 			callback(atlas.data);
 		
@@ -585,10 +585,10 @@ gawk 'BEGIN{s="5C 01 ...";split(s,a," ");for(i=1;i<=352;i++)printf"%s,",strtonum
 				atlas.sum=sum;
 
 				console.log(new Date());
-				console.log("size",atlas.data.length);
-				console.log("dim",atlas.dim);
-				console.log("datatype",datatype);
-				console.log("vox_offset",vox_offset);
+				console.log("atlas size",atlas.data.length);
+				console.log("atlas dim",atlas.dim);
+				console.log("atlas datatype",datatype);
+				console.log("atlas vox_offset",vox_offset);
 				console.log("free memory",os.freemem());
 				callback(atlas.data);
 			});
@@ -899,7 +899,7 @@ function fill(x,y,z,val,user,undoLayer)
 	Serve brain slices
 */
 function loadBrainNifti(err,nii,callback) {
-	var datatype=2;
+	var datatype;
 	var	vox_offset=352;
 	var	sizeof_hdr=nii.readUInt32LE(0);
 	var	dimensions=nii.readUInt16LE(40);
@@ -909,19 +909,52 @@ function loadBrainNifti(err,nii,callback) {
 	brain.dim[0]=nii.readUInt16LE(42);
 	brain.dim[1]=nii.readUInt16LE(44);
 	brain.dim[2]=nii.readUInt16LE(46);
-	datatype=nii.readUInt16LE(72);
+	datatype=nii.readUInt16LE(70);
 	brain.pixdim=[];
 	brain.pixdim[0]=nii.readFloatLE(80);
 	brain.pixdim[1]=nii.readFloatLE(84);
 	brain.pixdim[2]=nii.readFloatLE(88);
-	vox_offset=nii.readFloatLE(108);
-	brain.data=nii.slice(vox_offset);
+	vox_offset=nii.readFloatLE(108);	
+	
+	switch(datatype) {
+		case 2: // UCHAR
+			brain.data=nii.slice(vox_offset);
+			break;
+		case 4: // SHORT
+			var tmp=nii.slice(vox_offset);
+			brain.data=new Uint16Array(brain.dim[0]*brain.dim[1]*brain.dim[2]);
+			for(j=0;j<brain.dim[0]*brain.dim[1]*brain.dim[2];j++)
+				brain.data[j]=tmp.readUInt16LE(j*2);
+			break;
+		case 8: // INT
+			var tmp=nii.slice(vox_offset);
+			brain.data=new Uint32Array(brain.dim[0]*brain.dim[1]*brain.dim[2]);
+			for(j=0;j<brain.dim[0]*brain.dim[1]*brain.dim[2];j++)
+				brain.data[j]=tmp.readUInt32LE(j*4);
+			break;
+		case 16: // FLOAT
+			var tmp=nii.slice(vox_offset);
+			brain.data=new Float32Array(brain.dim[0]*brain.dim[1]*brain.dim[2]);
+			for(j=0;j<brain.dim[0]*brain.dim[1]*brain.dim[2];j++)
+				brain.data[j]=tmp.readFloatLE(j*4);
+			break;
+		default:
+			console.log("ERROR: Unknown dataType: "+datatype);
+	}
+		
+	console.log(new Date());
+	console.log("brain size",brain.data.length);
+	console.log("brain dim",brain.dim);
+	console.log("brain datatype",datatype);
+	console.log("brain vox_offset",vox_offset);
+	console.log("free memory",os.freemem());
+	
 	var i,sum=0;
 	for(i=0;i<brain.dim[0]*brain.dim[1]*brain.dim[2];i++)
 		sum+=brain.data[i];
 	brain.sum=sum;
 
-	console.log("nii file loaded",sum);
+	console.log("nii file loaded, sum:",sum);
 	callback(brain);
 }
 
