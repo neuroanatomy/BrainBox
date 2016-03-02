@@ -239,16 +239,6 @@ button#undo {
     z-index:1;
 }
 
-#MyLogin {
-	font-family:sans-serif;
-	font-size:12px !important;
-	margin-left:50%;
-    transform:translate(-17%,0);
-    width:60%;
-    margin-top:45px;
-}
-
-
 .loginRequired {
 	width:100%;
 }
