@@ -7,7 +7,6 @@
 		<link rel="stylesheet" href="css/atlasMaker.css">
 	</head>
 
-	
 
 	<style>
 		html {
@@ -17,8 +16,8 @@
      		-counter-resetwebkit-font-smoothing: antialiased;
      		-moz-font-smoothing: antialiased;
  		}
- 		logo{
- 			width:100;
+ 		logobrainbox{
+ 			width:100%;
  		}
  		img {
      		margin-left:50%;
@@ -59,136 +58,138 @@
 
     <body style="width:100%">
 
-<!--<body bgcolor=black> -->
+		<!-- 
+		A few brains:
+		http://braincatalogue.org/data/Baboon/MRI.nii.gz
+		https://zenodo.org/record/44855/files/MRI-n4.nii.gz
+		http://files.figshare.com/2284784/MRI_n4.nii.gz
+		http://braincatalogue.org/data/Human/MRI-n4.nii.gz
+		https://dl.dropboxusercontent.com/u/363467/mprage003.nii.gz
+		-->
 
+		<!--
+		<div id="myStereo"></div>
+		-->
 
+		<div class="logobrainbox">
+			<img src="img/BrainBox_website.gif" style="text-align:center">
+		</div>
 
-<!-- 
-A few brains:
-http://braincatalogue.org/data/Baboon/MRI.nii.gz
-https://zenodo.org/record/44855/files/MRI-n4.nii.gz
-http://files.figshare.com/2284784/MRI_n4.nii.gz
-http://braincatalogue.org/data/Human/MRI-n4.nii.gz
-https://dl.dropboxusercontent.com/u/363467/mprage003.nii.gz
--->
+		<h2>Real-time collaboration</h2>
 
-<!--
-<div id="myStereo"></div>
--->
+		<div style="color:white" font>
+		     <p>BrainBox is a web application by <b><a class="one" href="http://neuroanatomy.github.io" style="color:white" "font-weight:bold" "text-decoration: underline">NAAT</a></b> to
+			visualise and segment collaboratively any brain MRI dataset available online.
+			Segmentations are automatically saved and can be downloaded as Nifti 2 files or
+			triangular meshes. Point BrainBox to your own Nifti 2 data, or try data catalogues
+			created by the community.
+			</p>
+		</div> 
 
-<div class="logo">
-	<img src="img/BrainBox_website.gif" style="text-align:center">
-</div>
+		<div id="MyLogin" style="color:white" "width=40%" "margin-left:50%" "margin-top:0px"> </div>
 
+		<input id="url" type="text" placeholder="Enter the URL of an MRI (.nii.gz)" style="width:60%"></input>
+		
+		<div id="msgLog"></div>
+		
+		<div id="stereotaxic" style="width:512px"></div>
 
-<h2>Real-time collaboration</h2>
-<div style="color:white" font>
-     <p>BrainBox is a web application by <b><a class="one" href="http://neuroanatomy.github.io" style="color:white" "font-weight:bold" "text-decoration: underline">NAAT</a></b> to
-	visualise and segment collaboratively any brain MRI dataset available online.
-	Segmentations are automatically saved and can be downloaded as Nifti 2 files or
-	triangular meshes. Point BrainBox to your own Nifti 2 data, or try data catalogues
-	created by the community.
-	</p>
-</div> 
+		<a id="logo" href="http://neuroanatomy.github.io">
+			<img src="img/naat.svg" style="width:2.5em" />
+		</a>
 
+		<script src="lib/jquery-1.11.0.min.js"></script>
+		<script src="lib/jquery-ui.js"></script>
+		<script src="lib/jquery.ui.touch-punch.min.js"></script>
+		<script src="lib/pako/pako.min.js"></script>
+		<script src="lib/mylogin/login.js"></script>
 
-<div id="MyLogin" style="color:white" width="40%" margin-left:"50%" margin-top:"80px";> </div>
-<input id="url" type="text" placeholder="Enter the URL of an MRI (.nii.gz)" style="width:60%"></input>
-<div id="msgLog"></div>
-<div id="stereotaxic" style="width:512px"></div>
-
-<script src="lib/jquery-1.11.0.min.js"></script>
-<script src="lib/jquery-ui.js"></script>
-<script src="lib/jquery.ui.touch-punch.min.js"></script>
-<script src="lib/pako/pako.min.js"></script>
-<script src="lib/mylogin/login.js"></script>
-
-<script>
-	function hash(str) {
-		var i,v0,v1,abc="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-		v0=0;
-		for(i=0;i<str.length;i++) {
-			v1=str.charCodeAt(i);
-			v0+=v0+v0^v1;
-		}
-		var sz=abc.length,v,res="";
-		for(i=0;i<5;i++) {
-			v1=parseInt(v0/sz);
-			v=Math.abs(v0-v1*sz);
-			res+=abc[v];
-			v0=v1;
-		}
-		return res;
-	}
-
-	// Init login widget
-	MyLoginWidget.init($("#MyLogin"));
-
-	// Add URL loading
-	$("#url").keyup(function (e) {
-		if (e.keyCode == 13) {
-			var url=$("#url").val();
-			var date;
-			
-			// create hash
-			var h=hash(url);
-
-			// Copy MRI from source
-			$.get("/brainbox/php/stereotaxic.php",{
-				action: "download",
-				url: url,
-				hash: h
-			}).done(function(data){
-				// Configure MRI into atlasMaker
-				data=JSON.parse(data);
-				if(data.success==false) {
-					date=new Date();
-					$("#msgLog").append(date.toLocaleDateString()+" ERROR: "+data.message+".<br/>");
-					return;
+		<script>
+			function hash(str) {
+				var i,v0,v1,abc="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+				v0=0;
+				for(i=0;i<str.length;i++) {
+					v1=str.charCodeAt(i);
+					v0+=v0+v0^v1;
 				}
-				var arr=url.split("/");
-				var name=arr[arr.length-1];
-				console.log('mripath',name);
-				date=new Date();
-				$("#msgLog").append(date.toLocaleDateString()+" Downloading from server...<br/>");
-				
-				var info={
-					url: "data/"+h+"/",
-					mri: {
-						atlas: [ { name: "Blank Atlas", description: "A blank atlas for testing", filename: "Atlas.nii.gz"}],
-						brain: name,
-						dim: data.dim,
-						pixdim: data.pixdim
-					},
-					name:"Coco"
-				};
-				console.log(info);
+				var sz=abc.length,v,res="";
+				for(i=0;i<5;i++) {
+					v1=parseInt(v0/sz);
+					v=Math.abs(v0-v1*sz);
+					res+=abc[v];
+					v0=v1;
+				}
+				return res;
+			}
 
-				// Add AtlasMaker
-				$("#stereotaxic").html('<div id="atlasMaker"></div>');
-				$("#atlasMaker").addClass('edit-mode');
-				var s = document.createElement("script");
-				s.src = "js/atlasMaker.js";
-				s.onload=function(){
-					AtlasMakerWidget.initAtlasMaker($("#atlasMaker"))
-					.then(function() {
-						AtlasMakerWidget.editMode=1;
-						AtlasMakerWidget.configureAtlasMaker(info,0);
-						AtlasMakerWidget.progress=$("#stereotaxic").find(".download_MRI");
-						$("#msgLog").html("");
+			// Init login widget
+			MyLoginWidget.init($("#MyLogin"));
+
+			// Add URL loading
+			$("#url").keyup(function (e) {
+				if (e.keyCode == 13) {
+					var url=$("#url").val();
+					var date;
+					
+					// create hash
+					var h=hash(url);
+
+					// Copy MRI from source
+					$.get("/brainbox/php/stereotaxic.php",{
+						action: "download",
+						url: url,
+						hash: h
+					}).done(function(data){
+						// Configure MRI into atlasMaker
+						data=JSON.parse(data);
+						if(data.success==false) {
+							date=new Date();
+							$("#msgLog").append(date.toLocaleDateString()+" ERROR: "+data.message+".<br/>");
+							return;
+						}
+						var arr=url.split("/");
+						var name=arr[arr.length-1];
+						console.log('mripath',name);
+						date=new Date();
+						$("#msgLog").append(date.toLocaleDateString()+" Downloading from server...<br/>");
+						
+						var info={
+							url: "data/"+h+"/",
+							mri: {
+								atlas: [ { name: "Blank Atlas", description: "A blank atlas for testing", filename: "Atlas.nii.gz"}],
+								brain: name,
+								dim: data.dim,
+								pixdim: data.pixdim
+							},
+							name:"Coco"
+						};
+						console.log(info);
+
+						// Add AtlasMaker
+						$("#stereotaxic").html('<div id="atlasMaker"></div>');
+						$("#atlasMaker").addClass('edit-mode');
+						var s = document.createElement("script");
+						s.src = "js/atlasMaker.js";
+						s.onload=function(){
+							AtlasMakerWidget.initAtlasMaker($("#atlasMaker"))
+							.then(function() {
+								AtlasMakerWidget.editMode=1;
+								AtlasMakerWidget.configureAtlasMaker(info,0);
+								AtlasMakerWidget.progress=$("#stereotaxic").find(".download_MRI");
+								$("#msgLog").html("");
+							});
+						}
+						document.body.appendChild(s);
+
+					}).fail(function() {
+						date=new Date();
+						$("#msgLog").append(date.toLocaleDateString()+" ERROR: Cannot load MRI at specified URL.<br/>");
 					});
+					date=new Date();
+					$("#msgLog").html(date.toLocaleDateString()+" Downloading from source to server...<br/>");
 				}
-				document.body.appendChild(s);
-
-			}).fail(function() {
-				date=new Date();
-				$("#msgLog").append(date.toLocaleDateString()+" ERROR: Cannot load MRI at specified URL.<br/>");
 			});
-			date=new Date();
-			$("#msgLog").html(date.toLocaleDateString()+" Downloading from source to server...<br/>");
-		}
-	});
-</script>
+		</script>
 
-</body>
+	</body>
 </html>
