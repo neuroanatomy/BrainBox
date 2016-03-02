@@ -214,17 +214,77 @@ https://dl.dropboxusercontent.com/u/363467/mprage003.nii.gz
 						$("#msgLog").html("");
 					});
 				}
-				document.body.appendChild(s);
+				return res;
+			}
 
-			}).fail(function() {
-				date=new Date();
-				$("#msgLog").append(date.toLocaleDateString()+" ERROR: Cannot load MRI at specified URL.<br/>");
+			// Init login widget
+			MyLoginWidget.init($("#MyLogin"));
+
+			// Add URL loading
+			$("#url").keyup(function (e) {
+				if (e.keyCode == 13) {
+					var url=$("#url").val();
+					var date;
+					
+					// create hash
+					var h=hash(url);
+
+					// Copy MRI from source
+					$.get("/brainbox/php/stereotaxic.php",{
+						action: "download",
+						url: url,
+						hash: h
+					}).done(function(data){
+						// Configure MRI into atlasMaker
+						data=JSON.parse(data);
+						if(data.success==false) {
+							date=new Date();
+							$("#msgLog").append(date.toLocaleDateString()+" ERROR: "+data.message+".<br/>");
+							return;
+						}
+						var arr=url.split("/");
+						var name=arr[arr.length-1];
+						console.log('mripath',name);
+						date=new Date();
+						$("#msgLog").append(date.toLocaleDateString()+" Downloading from server...<br/>");
+						
+						var info={
+							url: "data/"+h+"/",
+							mri: {
+								atlas: [ { name: "Blank Atlas", description: "A blank atlas for testing", filename: "Atlas.nii.gz"}],
+								brain: name,
+								dim: data.dim,
+								pixdim: data.pixdim
+							},
+							name:"Coco"
+						};
+						console.log(info);
+
+						// Add AtlasMaker
+						$("#stereotaxic").html('<div id="atlasMaker"></div>');
+						$("#atlasMaker").addClass('edit-mode');
+						var s = document.createElement("script");
+						s.src = "js/atlasMaker.js";
+						s.onload=function(){
+							AtlasMakerWidget.initAtlasMaker($("#atlasMaker"))
+							.then(function() {
+								AtlasMakerWidget.editMode=1;
+								AtlasMakerWidget.configureAtlasMaker(info,0);
+								AtlasMakerWidget.progress=$("#stereotaxic").find(".download_MRI");
+								$("#msgLog").html("");
+							});
+						}
+						document.body.appendChild(s);
+
+					}).fail(function() {
+						date=new Date();
+						$("#msgLog").append(date.toLocaleDateString()+" ERROR: Cannot load MRI at specified URL.<br/>");
+					});
+					date=new Date();
+					$("#msgLog").html(date.toLocaleDateString()+" Downloading from source to server...<br/>");
+				}
 			});
-			date=new Date();
-			$("#msgLog").html(date.toLocaleDateString()+" Downloading from source to server...<br/>");
-		}
-	});
-</script>
+		</script>
 
-</body>
+	</body>
 </html>

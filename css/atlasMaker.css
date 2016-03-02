@@ -228,6 +228,74 @@ button#undo {
     border-color:orange;
 }
 
+
+#logo {
+	position:absolute;
+	bottom:5px;
+	right:5px;
+    -webkit-filter: drop-shadow( 2px 2px 2px #777 );
+    -moz-filter: drop-shadow( 2px 2px 2px #777 );
+    filter: drop-shadow( 2px 2px 2px #777 );
+    z-index:1;
+}
+
+#MyLogin {
+	font-family:sans-serif;
+	font-size:12px !important;
+	margin-left:50%;
+    transform:translate(-17%,0);
+    width:60%;
+    margin-top:45px;
+}
+
+
 .loginRequired {
 	width:100%;
+}
+
+/*
+h2, p {
+     margin-left:50%;
+     transform:translate(-50%,0);
+     font-family: sans-serif;
+     color:white;
+     text-align:center;
+     width:500px;
+ }
+ */
+
+ #url {
+ 	margin-left:50%;
+    transform:translate(-50%,0);
+    width:60%;
+    margin-top:5px;
+ }
+
+/* unvisited link */
+a:link {
+	font-family:sans-serif;
+	font-size:12px !important;
+    color: lightgrey;
+    text-decoration: none;
+}
+
+/* visited link */
+a:visited {
+	font-family:sans-serif;
+	font-size:12px !important;
+    color: grey;
+}
+
+/* mouse over link */
+a:hover {
+	font-family:sans-serif;
+	font-size:12px !important;
+    color: white;
+}
+
+/* selected link */
+a:active {
+	font-family:sans-serif;
+	font-size:12px !important;
+    color: lightgrey;
 }
