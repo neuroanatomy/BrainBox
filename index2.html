@@ -5,119 +5,9 @@
     <title>BrainBox</title>
 	<link rel="stylesheet" href="lib/jquery-ui.css">
 	<link rel="stylesheet" href="css/atlasMaker.css">
-	<style>
-	 html {
-		background-color:#222;
-		font: 16px/24px "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
-		-webkit-font-smoothing: antialiased;
-		-moz-font-smoothing: antialiased;
-	 }
-	 img {
-		margin-top:70px;
-		margin-bottom:30px;
-		margin-left:50%;
-		transform:translate(-50%,0);
-		width:200px;
-	 }
-	 input {
-		margin-left:50%;
-		transform:translate(-50%,0);
-		width:60%;
-		margin-top:60px;
-	 }
-	 h2, p {
-		margin-left:50%;
-		transform:translate(-50%,0);
-		font-family: sans-serif;
-		color:white;
-		text-align:center;
-		width:500px;
-	 }
-	 a {
-		color:white;
-		font-weight:bold;
-	 }
-	 #MyLogin {
-	 	position:absolute;
-	 	top:5px;
-	 	right: 5px;
-	 }
-	 #stereotaxic {
-	 	margin-left:50%;
-	 	transform:translate(-50%,0);
-	 }
-
-	/* Login
-	-----------------------------------------------------------------------------*/
-	#login {
-		/*text-align:center;*/
-		display:inline;
-	}
-	#login * {
-		font-family: 'Quicksand', sans-serif;
-		width:auto;
-		display:inline;
-		vertical-align:middle;
-		text-decoration:none;
-	}
-	/*
-	#login .hidden {
-		display:none !important;
-	}
-	*/
-	.loginbox {
-		border:1px solid lightGrey;
-		position:absolute;
-		top:10px;
-		left:-150px;
-		background-color:white;
-		padding:20px;
-		max-width:80%;
-		margin-left: 50%;
-		width: 300px;
-		line-height:20px;
-		box-shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.5);
-		z-index:20;
-	}
-	.loginbox * {
-		color:black;
-	}
-	.loginbox #username,
-	.loginbox #e-mail,
-	.loginbox #password,
-	.loginbox #repassword,
-	.loginbox #registerLink,
-	.loginbox #remind,
-	.loginbox #warning {
-		display:block;
-	}
-	.loginbox #username,
-	.loginbox #e-mail,
-	.loginbox #password,
-	.loginbox #repassword {
-		width:90%;
-	}
-	</style>
 </head>
+
 <body>
-
-<div id="MyLogin"></div>
-
-<div id="intro">
-	<img src="img/brainbox-logo.svg" style="text-align:center"/><br />
-	<h2>Real-time collaboration</h2>
-	<p>
-		BrainBox is a web application by <a href="http://neuroanatomy.github.io">NAAT</a> to
-		visualise and segment collaboratively any brain MRI dataset available online.
-		Segmentations are automatically saved and can be downloaded as Nifti 2 files or
-		triangular meshes. Point BrainBox to your own Nifti 2 data, or try data catalogues
-		created by the community.
-	</p>
-	<input id="url" type="text" placeholder="Enter the URL of an MRI (.nii.gz)"></input>
-	<div id="msgLog"></div>
-</div>
-
-<div id="stereotaxic" style="width:512px"></div>
 
 <!-- 
 A few brains:
@@ -131,6 +21,11 @@ https://dl.dropboxusercontent.com/u/363467/mprage003.nii.gz
 <!--
 <div id="myStereo"></div>
 -->
+
+<div id="MyLogin"></div>
+<input id="url" type="text" placeholder="Enter the URL of an MRI (.nii.gz)" style="width:100%"></input>
+<div id="msgLog"></div>
+<div id="stereotaxic" style="width:512px"></div>
 
 <script src="lib/jquery-1.11.0.min.js"></script>
 <script src="lib/jquery-ui.js"></script>
@@ -200,7 +95,6 @@ https://dl.dropboxusercontent.com/u/363467/mprage003.nii.gz
 				console.log(info);
 
 				// Add AtlasMaker
-				$("#intro").remove();
 				$("#stereotaxic").html('<div id="atlasMaker"></div>');
 				$("#atlasMaker").addClass('edit-mode');
 				var s = document.createElement("script");
