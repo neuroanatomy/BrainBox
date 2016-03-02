@@ -1,13 +1,67 @@
 <!DOCTYPE html>
 <html>
-<head>
-	<meta charset="utf-8">
-    <title>BrainBox</title>
-	<link rel="stylesheet" href="lib/jquery-ui.css">
-	<link rel="stylesheet" href="css/atlasMaker.css">
-</head>
+	<head>
+		<meta charset="utf-8">
+    	<title>BrainBox</title>
+		<link rel="stylesheet" href="lib/jquery-ui.css">
+		<link rel="stylesheet" href="css/atlasMaker.css">
+	</head>
 
-<body>
+	
+
+	<style>
+		html {
+     		background-color:#333;
+     		width:100%;
+     		font: 16px/24px "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
+     		-counter-resetwebkit-font-smoothing: antialiased;
+     		-moz-font-smoothing: antialiased;
+ 		}
+ 		logo{
+ 			width:100;
+ 		}
+ 		img {
+     		margin-left:50%;
+     		transform:translate(-50%,0);
+     		margin-top:20px;
+     		width:290px;
+     		margin-bottom:10px;
+     	}
+     	input {
+     		margin-left:50%;
+     		transform:translate(-50%,0);
+     		width:20%;
+     		margin-top:5px;
+ 		}
+ 		p {
+     		margin-left:50%;
+     		transform:translate(-50%,0);
+     		font-family: sans-serif;
+     		font-weight:lighter;
+     		color:white;
+     		text-align:center;
+     		width:590px;
+ 		}
+ 		h2 {
+ 			margin-left:50%;
+     		transform:translate(-50%,0);
+     		font-family: sans-serif;
+     		color:white;
+     		text-align:center;
+     		width:500px;
+ 		}
+ 		a.one:link {color: lightgrey;font-size:16px;font-weight:bold;}
+		a.one:visited {color:grey;font-size:16px;font-weight:bold;}
+		a.one:hover {color:white;font-size:16px;font-weight:bold;}
+		a.one:active {color:lightgrey;font-size:16px;font-weight:bold;}
+    </style>
+
+
+    <body style="width:100%">
+
+<!--<body bgcolor=black> -->
+
+
 
 <!-- 
 A few brains:
@@ -22,8 +76,24 @@ https://dl.dropboxusercontent.com/u/363467/mprage003.nii.gz
 <div id="myStereo"></div>
 -->
 
-<div id="MyLogin"></div>
-<input id="url" type="text" placeholder="Enter the URL of an MRI (.nii.gz)" style="width:100%"></input>
+<div class="logo">
+	<img src="img/BrainBox_website.gif" style="text-align:center">
+</div>
+
+
+<h2>Real-time collaboration</h2>
+<div style="color:white" font>
+     <p>BrainBox is a web application by <b><a class="one" href="http://neuroanatomy.github.io" style="color:white" "font-weight:bold" "text-decoration: underline">NAAT</a></b> to
+	visualise and segment collaboratively any brain MRI dataset available online.
+	Segmentations are automatically saved and can be downloaded as Nifti 2 files or
+	triangular meshes. Point BrainBox to your own Nifti 2 data, or try data catalogues
+	created by the community.
+	</p>
+</div> 
+
+
+<div id="MyLogin" style="color:white" width="40%" margin-left:"50%" margin-top:"80px";> </div>
+<input id="url" type="text" placeholder="Enter the URL of an MRI (.nii.gz)" style="width:60%"></input>
 <div id="msgLog"></div>
 <div id="stereotaxic" style="width:512px"></div>
 

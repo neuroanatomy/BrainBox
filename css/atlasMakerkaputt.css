@@ -230,12 +230,10 @@ button#undo {
 
 
 #MyLogin {
-	font-family:sans-serif;
-	font-size:12px !important;
 	margin-left:50%;
-    transform:translate(-17%,0);
+    transform:translate(-50%,0);
     width:60%;
-    margin-top:20px;
+    margin-top:60px;
 }
 
 
@@ -243,7 +241,6 @@ button#undo {
 	width:100%;
 }
 
-/*
 h2, p {
      margin-left:50%;
      transform:translate(-50%,0);
@@ -252,40 +249,30 @@ h2, p {
      text-align:center;
      width:500px;
  }
- */
 
  #url {
  	margin-left:50%;
     transform:translate(-50%,0);
     width:60%;
-    margin-top:5px;
+    margin-top:90px;
  }
 
 /* unvisited link */
 a:link {
-	font-family:sans-serif;
-	font-size:12px !important;
     color: lightgrey;
-    text-decoration: none;
 }
 
 /* visited link */
 a:visited {
-	font-family:sans-serif;
-	font-size:12px !important;
     color: grey;
 }
 
 /* mouse over link */
 a:hover {
-	font-family:sans-serif;
-	font-size:12px !important;
     color: white;
 }
 
 /* selected link */
 a:active {
-	font-family:sans-serif;
-	font-size:12px !important;
     color: lightgrey;
 }
