@@ -2,7 +2,7 @@ var AtlasMakerWidget = {
 	//========================================================================================
 	// Globals
 	//========================================================================================
-	debug:			1,
+	debug:			0,
 	container:		null,	// Element where atlasMaker lives
 	brain_offcn:	null,
 	brain_offtx:	null,
@@ -72,13 +72,13 @@ var AtlasMakerWidget = {
 		if(me.debug) console.log("> changeView()");
 	
 		switch(theView) {
-			case 'sagittal':
+			case 'Sag':
 				me.User.view='sag';
 				break;
-			case 'coronal':
+			case 'Cor':
 				me.User.view='cor';
 				break;
-			case 'axial':
+			case 'Axi':
 				me.User.view='axi';
 				break;
 		}
@@ -116,11 +116,15 @@ var AtlasMakerWidget = {
 		me.User.penSize=parseInt(theSize);
 		me.sendUserDataMessage("change pen size");
 	},
-	changeSlice: function(e) {
+	changeSlice: function(x) {
 		var me=AtlasMakerWidget;
-		if(me.debug>1) console.log("> changeSlice()");
+		if(me.debug>1) console.log("> changeSlice("+x+")");
+
+		var max=$("#slice").data("max");
+		$("#slice").data("val",x);
+		$("#slice .thumb")[0].style.left=(x*100/max)+"%";
 	
-		me.User.slice=parseInt($("#slider").slider("value"));
+		me.User.slice=x;
 		me.sendUserDataMessage("change slice");
 
 		me.drawImages();
@@ -128,26 +132,27 @@ var AtlasMakerWidget = {
 	prevSlice: function() {
 		var me=AtlasMakerWidget;
 		if(me.debug>1) console.log("> prevSlice()");
-	
-		me.User.slice=parseInt($("#slider").slider("value"))-1;
-		if(me.User.slice<0)
-			me.User.slice=0;
-		me.sendUserDataMessage("previous slice");
 
-		$("#slider").slider("option","value",me.User.slice);
-		me.drawImages();
+		var x=$("#slice").data("val")-1;
+		if(x<0) x=0;
+		x=Math.round(x);
+		if(x!=$("#slice").data("val")) {
+			$("#slice").data("val",x);
+			me.changeSlice(x);
+		}
 	},
 	nextSlice: function() {
 		var me=AtlasMakerWidget;
 		if(me.debug>1) console.log("> nextSlice()");
-	
-		me.User.slice=parseInt($("#slider").slider("value"))+1;
-		if(me.User.slice>me.brain_D-1)
-			me.User.slice=me.brain_D-1;
-		me.sendUserDataMessage("next slice");
 
-		$("#slider").slider("option","value",me.User.slice);
-		me.drawImages();
+		var max=$("#slice").data("max");
+		var x=$("#slice").data("val")+1;
+		if(x>max) x=max;
+		x=Math.round(x);
+		if(x!=$("#slice").data("val")) {
+			$("#slice").data("val",x);
+			me.changeSlice(x);
+		}
 	},
 	toggleFill: function() {
 		var me=AtlasMakerWidget;
@@ -328,8 +333,8 @@ var AtlasMakerWidget = {
 		me.sendUserDataMessage("configure brain image");
 		
 		// configure toolbar slider
-		$("#slider").slider("option","max",me.brain_D);
-		$("#slider").slider("option","value",me.User.slice);
+		$(".slider#slice").data({max:me.brain_D});
+		me.changeSlice(me.User.slice);
 		
 		me.initCursor();
 	},
@@ -375,7 +380,7 @@ var AtlasMakerWidget = {
 			me.context.globalAlpha = 0.8;
 			me.context.globalCompositeOperation = "lighter";
 			me.drawAtlasImage(me.User.view,me.User.slice);
-			$("#slice").html(me.User.slice);
+			//$("#slicenum").html(me.User.slice);
 		}
 		else {
 			me.sendRequestSliceMessage();
@@ -486,7 +491,8 @@ var AtlasMakerWidget = {
 		var h=parseFloat($('#atlasMaker canvas').attr('height'));
 		var o=$('#atlasMaker canvas').offset();
 		var x=parseInt((e.pageX-o.left)*(w/W));
-		var y=parseInt((e.pageY-o.top)*(h/H));	// <-- i have to add here the compensation for rectangular pixels: f(brain_Wdim, brain_Hdim)
+		// i have to add here the compensation for rectangular pixels: f(brain_Wdim, brain_Hdim)
+		var y=parseInt((e.pageY-o.top)*(h/H));
 		me.down(x,y);
 	},
 	mousemove: function(e) {
@@ -760,9 +766,9 @@ var AtlasMakerWidget = {
 		}
 	},
 
-	//========================================================================================
+	//====================================================================================
 	// Paint functions common to all users
-	//========================================================================================
+	//====================================================================================
 	paintxy: function(u,c,x,y,usr) {
 		var me=AtlasMakerWidget;
 		if(me.debug>1) console.log("> paintxy()");
@@ -977,17 +983,17 @@ var AtlasMakerWidget = {
 		}	
 		return new Object({"x":x,"y":y,"z":z});	
 	},
-	//========================================================================================
+	//====================================================================================
 	// Undo
-	//========================================================================================
+	//====================================================================================
 	newUndoLayer: function() {
 		var undoLayer={};
 		Undo.push(undoLayer);
 	},
 
-	//========================================================================================
+	//====================================================================================
 	// Web sockets
-	//========================================================================================
+	//====================================================================================
 	createSocket: function(host) {
 		if(this.debug) console.log("> createSocket()");
 	
@@ -1082,7 +1088,7 @@ var AtlasMakerWidget = {
 									me.context.globalAlpha = 0.8;
 									me.context.globalCompositeOperation = "lighter";
 									me.drawAtlasImage(me.flagLoadingImg.view,me.flagLoadingImg.slice);
-									$("#slice").html(me.User.slice);
+									//$("#slice").html(me.User.slice);
 									
 									me.flagLoadingImg.loading=false;
 
@@ -1137,7 +1143,11 @@ var AtlasMakerWidget = {
 			};
 			
 			me.socket.onclose = function(msg) {
-				me.socket.send(JSON.stringify({"type":"echo","msg":"user socket closing","username":me.User.username}));
+				me.socket.send(JSON.stringify({
+					"type":"echo",
+					"msg":"user socket closing",
+					"username":me.User.username
+				}));
 				$("#chat").text("Chat (disconnected)");
 				me.flagConnected=0;
 			};
@@ -1352,9 +1362,9 @@ var AtlasMakerWidget = {
 	},
 
 
-	//========================================================================================
+	//====================================================================================
 	// Configuration
-	//========================================================================================
+	//====================================================================================
 	initAtlasMaker: function(elem) {
 		var me=AtlasMakerWidget;
 		if(me.debug)
@@ -1411,7 +1421,7 @@ var AtlasMakerWidget = {
 
 		// Init the toolbar: load template, wire actions
 		var def=$.Deferred();
-		$.get("templates/atlasMakerTools.html",function(html) {
+		$.get("templates/tools.html",function(html) {
 			console.log("toolbar html loaded");
 			me.container.append(html);
 			
@@ -1426,23 +1436,15 @@ var AtlasMakerWidget = {
 			$(document).keydown(function(e){me.keyDown(e)});
 
 			// configure annotation tools
-			$("a#download_atlas").button().click(function(){me.saveNifti()});
-			$("div#plane").buttonset().unbind('keydown');
-			$("#plane input[type=radio]").change(function(){me.changeView($(this).attr('id'))})
-			$("span#tool").buttonset().unbind('keydown');
-			$("#tool input[type=radio]").change(function(){me.changeTool($(this).attr('id'))})
-			$("button#undo").button().click(function(){me.sendUndoMessage()});
-			$("input#fill").button().click(function(){me.toggleFill()});
-			$("input#precise").button().click(function(){me.togglePreciseCursor()});
-			$("div#penSize").buttonset().unbind('keydown');
-			$("#penSize input[type=radio]").change(function(){me.changePenSize($(this).attr('id'))});
-
-			$("#penColor input[type=radio]").change(function(){me.changePenColor($(this).attr('id'))});
-
-			$("#slider").slider({slide:me.changeSlice,min:0,step:1});
-			$("button#prevSlice").button().click(function(){me.prevSlice()});
-			$("button#nextSlice").button().click(function(){me.nextSlice()});			
-			$("div#toolbar").blur();
+			me.slider($(".slider#slice"),me.changeSlice);
+			me.chose($(".chose#plane"),me.changeView);
+			me.chose($(".chose#paintTool"),me.changeTool);
+			me.chose($(".chose#penSize"),me.changePenSize);
+			me.toggle($(".toggle#precise"),me.togglePreciseCursor);
+			me.toggle($(".toggle#fill"),me.toggleFill);
+			me.push($(".push#undo"),me.sendUndoMessage);
+			me.push($(".push#prev"),me.prevSlice);
+			me.push($(".push#next"),me.nextSlice);
 			
 			def.resolve();
 		});
@@ -1487,7 +1489,8 @@ var AtlasMakerWidget = {
 		me.User.specimenName=info.name;
 		me.User.atlasFilename=info.mri.atlas[index].filename;
 		
-		// TODO: it's silly to have to put vol dim twice... (first here, once again further down)
+		// TODO: it's silly to have to put vol dim twice...
+		// (first here, once again further down)
 		me.User.dim=info.mri.dim;
 		me.User.pixdim=info.mri.pixdim;
 		
@@ -1502,8 +1505,8 @@ var AtlasMakerWidget = {
 
 		// configure toolbar slider
 		me.User.slice=parseInt(info.mri.dim[0]/2);
-		$("#slider").slider("option","max",info.mri.dim[0]);
-		$("#slider").slider("option","value",me.User.slice);
+		$(".slider#slice").data({max:info.mri.dim[0]});
+		me.changeSlice(me.User.slice);
 		me.drawImages();
 
 		if(me.brain===0) {
@@ -1522,15 +1525,64 @@ var AtlasMakerWidget = {
 		if(me.debug) console.log(">loginChanged() to",MyLoginWidget.loggedin);
 		if(MyLoginWidget.loggedin) {
 			$('body').addClass('loggedIn');
-			//$(".loginRequired").css('display','inline-block');	// Show all controls required to log in
+			// Show all controls required to log in
+			//$(".loginRequired").css('display','inline-block');
 			me.User.username=MyLoginWidget.username;
-			me.sendUserDataMessage("logged in");	// inform the server
+			// inform the server
+			me.sendUserDataMessage("logged in");
 		}
 		else {
 			$('body').removeClass('loggedIn');
-			//$(".loginRequired").css('display','none');	// Hide all controls required to log in
-			me.sendUserDataMessage("logged out");	// inform the server
+			// Hide all controls required to log in
+			//$(".loginRequired").css('display','none');
+			// inform the server
+			me.sendUserDataMessage("logged out");
 		}
+	},
+	slider: function(elem,callback) {
+		// Initialise a 'slider' control
+		var me=AtlasMakerWidget;
+		$(elem).data({
+			drag:false,
+			val:0,
+			max:100
+		});
+		$(document).on("mousemove",function(ev) {
+			if ($(elem).data("drag")==true) {
+				var R=$("#slice .track")[0].getBoundingClientRect();
+				var x=(ev.clientX-R.left)/R.width;
+				if(x<0) x=0;
+				if(x>1) x=1;
+				x=Math.round(x*$("#slice").data("max"));
+				if(x!=$("#slice").data("val")) {
+					me.changeSlice(x);
+				}
+			}
+		});
+		$(document).on("mouseup",function(){$(elem).data({drag:false})});
+		$(elem).on('mousedown',function(){$(elem).data({drag:true})});
+	},
+	chose: function(elem,callback) {
+		// Initialise a 'chose' control
+		var ch=$(elem).children();
+		ch.each(function(c,d){
+			$(d).click(function(){
+				ch.each(function(){$(this).removeClass("pressed")});
+				$(this).addClass("pressed");
+				callback($(this).text());
+			});
+		});
+	},
+	toggle: function(elem,callback) {
+		// Initialise a 'toggle' control
+		$(elem).click(function(){
+			$(this).hasClass("pressed")?$(this).removeClass("pressed"):$(this).addClass("pressed");
+			callback($(this).hasClass("pressed"));
+		});
+	},
+	push: function(elem,callback) {
+		// Initialise a 'push' control
+		$(elem).click(function(){callback()});
 	}
 };
 /*
