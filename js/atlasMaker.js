@@ -98,11 +98,11 @@ var AtlasMakerWidget = {
 		if(me.debug) console.log("> changeTool()");
 	
 		switch(theTool) {
-			case 'paint':
+			case 'Paint':
 				me.User.tool='paint';
 				me.User.penValue=1;
 				break;
-			case 'erase':
+			case 'Erase':
 				me.User.tool='erase';
 				me.User.penValue=0;
 				break;
@@ -154,12 +154,12 @@ var AtlasMakerWidget = {
 			me.changeSlice(x);
 		}
 	},
-	toggleFill: function() {
+	toggleFill: function(x) {
 		var me=AtlasMakerWidget;
 		if(me.debug)
 			console.log("> toggleFill()");
 	
-		me.User.doFill=!me.User.doFill;
+		me.User.doFill=x;
 		me.sendUserDataMessage("toggle fill");
 	},
 	togglePreciseCursor: function() {
