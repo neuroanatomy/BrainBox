@@ -36,6 +36,10 @@
 		color:white;
 		font-weight:bold;
 	 }
+	 .linkNoULine {
+	 	text-decoration: none;
+	 	font-weight: lighter;
+	 }
 	 #MyLogin {
 	 	position:absolute;
 	 	top:5px;
@@ -79,6 +83,22 @@
 	.loginbox #password,
 	.loginbox #repassword {
 		width:90%;
+	}
+	.loginbox #registerLink,
+	.loginbox #remind {
+		text-decoration: none;
+		font-size:12px;
+		font-weight: normal;
+		width:40%;
+	}
+	.loginbox #sendLogin, 
+	.loginbox #register,
+	.loginbox #cancel {
+		border-radius: 1px;
+		border:1px solid lightGrey;
+		background-color:white;
+		height:18px;
+		box-shadow: 0 0px 0px 0 rgba(0, 0, 0, 0.5);
 	}
 	/* atlasMaker
 	-----------------------------------------------------------------------------*/
@@ -160,7 +180,7 @@
 	<img id="logo" src="img/brainbox-logo.svg" style="text-align:center"/><br />
 	<h2>Real-time collaboration</h2>
 	<p>
-		BrainBox is a web application by <a href="http://neuroanatomy.github.io">NAAT</a> to
+		BrainBox is a web application by <a target="_blank" href="http://neuroanatomy.github.io">NAAT</a> to
 		visualise and segment collaboratively any brain MRI dataset available online.
 		Segmentations are automatically saved and can be downloaded as Nifti 2 files or
 		triangular meshes. Point BrainBox to your own Nifti 2 data, or try data catalogues
@@ -172,7 +192,13 @@
 
 <div id="stereotaxic" style="width:512px"></div>
 
-<p style="width:100%;position:absolute;bottom:5px;font-size:small;text-align:center"><img src="img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle" /> group de neuroanatomie appliquée et théorique</p>
+<p style="width:100%;position:absolute;bottom:5px;font-size:small;text-align:center"> 
+	<a target="_blank" href="http://neuroanatomy.github.io">
+		<img src="img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/></a>
+	<a target="_blank" href="http://neuroanatomy.github.io" class="linkNoULine">
+		group de neuroanatomie appliquée et théorique
+	</a>
+</p>
 
 <!-- 
 A few brains:
