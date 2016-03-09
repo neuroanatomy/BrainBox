@@ -249,21 +249,24 @@ var AtlasMakerWidget = {
 		var me=AtlasMakerWidget;
 		if(me.debug) console.log("> configureBrainImage()");
 	
-		var flagStored=false;
 		if(me.User.view==null) {
-			if(localStorage.AtlasMaker) {
-				var stored=JSON.parse(localStorage.AtlasMaker);
-				for(var i=0;i<stored.length;i++) {
-					if(stored[i].url==params.url) {
-						me.User.view=stored[i].view;
-						$(".chose#plane td").removeClass("pressed");
-						$(".chose#plane td:contains('"+
-							(me.User.view.charAt(0).toUpperCase() + me.User.view.slice(1))
-						+"')").addClass("pressed");
-						me.User.slice=stored[i].slice;
-						flagStored=true;
-						break;
-					}
+			var flagStored=false;
+			var stored=localStorage.AtlasMaker;
+			if(stored) {
+				var stored=JSON.parse(stored);
+				if(stored.version && stored.version==version) {
+					for(var i=0;i<stored.history.length;i++) {
+						if(stored.history[i].url==params.url) {
+							me.User.view=stored.history[i].view;
+							$(".chose#plane td").removeClass("pressed");
+							$(".chose#plane td:contains('"+
+								(me.User.view.charAt(0).toUpperCase() + me.User.view.slice(1))
+							+"')").addClass("pressed");
+							me.User.slice=stored.history[i].slice;
+							flagStored=true;
+							break;
+						}
+					}	
 				}
 			}
 			if(flagStored==false)
@@ -956,7 +959,7 @@ var AtlasMakerWidget = {
 								me.configureAtlasImage();
 								me.resizeWindow();
 
-								console.log(">>nii:drawImages");
+								console.log(">>nii:drawImages",me.User.view,me.User.slice);
 								me.drawImages();
 								var	link=me.container.find("span#download_atlas");
 								link.html("<a class='download' href='"+me.User.dirname+me.User.atlasFilename+"'><img src='/img/download.svg' style='vertical-align:middle'/></a>"+layer.name);
@@ -1346,23 +1349,27 @@ var AtlasMakerWidget = {
 		
 		// store state on exit
 		$(window).unload(function(){
-			var stored;
-			if(localStorage.AtlasMaker) {
-				stored=JSON.parse(localStorage.AtlasMaker);
-			} else {
-				stored=[];
-			}
-			for(var i=0;i<stored.length;i++) {
-				if(stored[i].url==params.url) {
-					stored.splice(i,1);
-					break;
+			var foundStored=false;
+			var stored=localStorage.AtlasMaker;
+			if(stored) {
+				stored=JSON.parse(stored);
+				if(stored.version && stored.version==version) {
+					foundStored=true;
+					for(var i=0;i<stored.history.length;i++) {
+						if(stored.history[i].url==params.url) {
+							stored.history.splice(i,1);
+							break;
+						}
+					}
 				}
 			}
-			stored.push({	
+			if(foundStored==false)
+				stored={version:version,history:[]};
+			stored.history.push({	
 				url:params.url,
 				view:me.User.view.toLowerCase(),
 				slice:me.User.slice
-			});
+			});			
 			localStorage.AtlasMaker=JSON.stringify(stored);
 		});
 		
@@ -1405,26 +1412,6 @@ var AtlasMakerWidget = {
 			me.brain_pixdim=info.mri.pixdim;
 		else
 			me.brain_pixdim=[1,1,1];
-
-		/*
-		// configure toolbar slider to mid-slice if new brain,
-		// to stored view and slice if stored in localStorage
-		var flag=false;
-		if(localStorage.AtlasMaker) {
-			var stored=JSON.parse(localStorage.AtlasMaker);
-			console.log("stored",stored,"params",params);
-			if(stored.url=params.url) {
-				me.User.view=stored.view;
-				me.User.slice=stored.slice;
-				flag=true;
-			}
-		}
-		if(!flag) {
-			me.User.view="sag";
-			me.User.slice=parseInt(info.mri.dim[0]/2);
-			$(".slider#slice").data({max:info.mri.dim[0]});
-		}
-		*/
 
 		console.log(">>configureMRI:drawImages");
 		me.drawImages();

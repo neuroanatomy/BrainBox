@@ -5,7 +5,7 @@
 	Launch using > node atlasMakerServer.js
 */
 
-var	debug=0;
+var	debug=1;
 
 var WebSocketServer=require("ws").Server; //https://github.com/websockets/ws
 
@@ -396,7 +396,7 @@ function receiveUserDataMessage(data,user_socket) {
 		for(i in Users)
 			if(Users[i].dirname==user.dirname && Users[i].atlasFilename==user.atlasFilename)
 				sum++;
-		console.log(sum+" user"+((sum==1)?" is":"s are")+" connected to the atlas "+user.dirname+user.atlasFilename);
+		console.log("["+sum+" user"+((sum==1)?" is":"s are")+" connected to the atlas "+user.dirname+user.atlasFilename+"]");
 	}	
 }
 
@@ -515,7 +515,7 @@ function loadAtlasNifti(atlas,username,callback)
 	var	vox_offset=352;
 	
 	if(!fs.existsSync(path)) {
-		console.log("No atlas "+path+" exists. Create a new one");
+		console.log("Atlas "+path+" does not exists. Create a new one");
 /*
 To create this buffer, I used an hex editor to dump the 1st 352 bytes of a
 nii file, and converted them to decimal using:
@@ -541,10 +541,10 @@ gawk 'BEGIN{s="5C 01 ...";split(s,a," ");for(i=1;i<=352;i++)printf"%s,",strtonum
 			atlas.hdr.writeUInt16LE(atlas.dim[2],46,2); // datatype 2: unsigned char (8 bits/voxel)
 			atlas.data=new Buffer(atlas.dim[0]*atlas.dim[1]*atlas.dim[2]);
 
-			var i,sum=0;
+			var i;
 			for(i=0;i<atlas.dim[0]*atlas.dim[1]*atlas.dim[2];i++)
-				sum+=atlas.data[i];
-			atlas.sum=sum;
+				atlas.data[i]=0;
+			atlas.sum=0;
 
 			console.log(new Date());
 			console.log("atlas size",atlas.data.length);
@@ -637,6 +637,8 @@ function saveNifti(atlas)
 //==========
 function logToDatabase(key,value,username)
 {
+	if(!username)
+		username="Undefined";
 	req.post({
   		url:db_url,
 		form:{
