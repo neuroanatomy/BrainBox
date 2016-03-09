@@ -9,9 +9,6 @@ if(isset($_GET["action"]))
 		case "download":
 			download($_GET);
 			break;
-		case "drawNiiSlice":
-			drawNiiSlice($_GET);
-			break;
 	}
 }
 
@@ -34,6 +31,7 @@ function download($params)
 		}
 		
 		if (!file_exists($dir."/".$filename)) {
+			@file_put_contents($dir."/info.txt",$url);		
 			$result=@file_put_contents($dir."/".$filename,$handle);
 			chmod($dir."/".$filename, 0777);
 			if($result)

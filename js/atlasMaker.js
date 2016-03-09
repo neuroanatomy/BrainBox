@@ -128,7 +128,6 @@ var AtlasMakerWidget = {
 		me.User.slice=x;
 		me.sendUserDataMessage("change slice");
 
-		console.log(">>changeSlice:drawImages");
 		me.drawImages();
 	},
 	prevSlice: function() {
@@ -254,10 +253,17 @@ var AtlasMakerWidget = {
 		if(me.User.view==null) {
 			if(localStorage.AtlasMaker) {
 				var stored=JSON.parse(localStorage.AtlasMaker);
-				if(stored.url=params.url) {
-					me.User.view=stored.view;
-					me.User.slice=stored.slice;
-					flagStored=true;
+				for(var i=0;i<stored.length;i++) {
+					if(stored[i].url==params.url) {
+						me.User.view=stored[i].view;
+						$(".chose#plane td").removeClass("pressed");
+						$(".chose#plane td:contains('"+
+							(me.User.view.charAt(0).toUpperCase() + me.User.view.slice(1))
+						+"')").addClass("pressed");
+						me.User.slice=stored[i].slice;
+						flagStored=true;
+						break;
+					}
 				}
 			}
 			if(flagStored==false)
@@ -1340,11 +1346,24 @@ var AtlasMakerWidget = {
 		
 		// store state on exit
 		$(window).unload(function(){
-			localStorage.AtlasMaker=JSON.stringify({	
+			var stored;
+			if(localStorage.AtlasMaker) {
+				stored=JSON.parse(localStorage.AtlasMaker);
+			} else {
+				stored=[];
+			}
+			for(var i=0;i<stored.length;i++) {
+				if(stored[i].url==params.url) {
+					stored.splice(i,1);
+					break;
+				}
+			}
+			stored.push({	
 				url:params.url,
 				view:me.User.view.toLowerCase(),
 				slice:me.User.slice
 			});
+			localStorage.AtlasMaker=JSON.stringify(stored);
 		});
 		
 		return def.promise();
@@ -1459,7 +1478,8 @@ var AtlasMakerWidget = {
 			$(d).click(function(){
 				ch.each(function(){$(this).removeClass("pressed")});
 				$(this).addClass("pressed");
-				callback($(this).text());
+				if(callback)
+					callback($(this).text());
 			});
 		});
 	},
@@ -1467,12 +1487,16 @@ var AtlasMakerWidget = {
 		// Initialise a 'toggle' control
 		$(elem).click(function(){
 			$(this).hasClass("pressed")?$(this).removeClass("pressed"):$(this).addClass("pressed");
-			callback($(this).hasClass("pressed"));
+			if(callback)
+				callback($(this).hasClass("pressed"));
 		});
 	},
 	push: function(elem,callback) {
 		// Initialise a 'push' control
-		$(elem).click(function(){callback()});
+		$(elem).click(function(){
+			if(callback)
+				callback();
+		});
 	}
 };
 /*

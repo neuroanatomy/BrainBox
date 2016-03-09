@@ -34,7 +34,6 @@
 	 }
 	 a {
 		color:white;
-		font-weight:bold;
 	 }
 	 .linkNoULine {
 	 	text-decoration: none;
@@ -191,7 +190,7 @@
 	<img id="logo" src="img/BrainBox_web.gif" style="text-align:center"/><br />
 	<h2>Real-time collaboration</h2>
 	<p>
-		BrainBox is a web application by <a target="_blank" href="http://neuroanatomy.github.io">NAAT</a> to
+		BrainBox is a web application by <b><a target="_blank" href="http://neuroanatomy.github.io">NAAT</a></b> to
 		visualise and segment collaboratively any brain MRI dataset available online.
 		Segmentations are automatically saved and can be downloaded as Nifti 2 files or
 		triangular meshes. Point BrainBox to your own Nifti 2 data, or try data catalogues
@@ -239,6 +238,16 @@ var params=deparam();
 console.log(params);
 if(params.url) {
 	initBrainBox({url:params.url,hash:hash(params.url)});
+} else {
+	if(localStorage.AtlasMaker) {
+		var stored=JSON.parse(localStorage.AtlasMaker);
+		var str="<br/><p><b>Recently visited</b><br/>";
+		for(var i=0;i<stored.length;i++) {
+			str+="<a href='"+location+"index.html?url="+stored[i].url+"'>"+stored[i].url+"</a><br />";
+		}
+		str+="</p>";
+		$("body").append(str);
+	}
 }
 
 function deparam() {
