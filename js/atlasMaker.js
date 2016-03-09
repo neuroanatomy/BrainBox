@@ -20,9 +20,9 @@ var AtlasMakerWidget = {
 	brain_datatype:	null,
 	brain:			0,
 	annotationLength:0,
-	User:			{  view:'sag',
+	User:			{  view:null,
 					   tool:'paint',
-					  slice:0,
+					  slice:null,
 					penSize:1,
 				   penValue:1,
 					 doFill:false,
@@ -71,14 +71,14 @@ var AtlasMakerWidget = {
 		var me=AtlasMakerWidget;
 		if(me.debug) console.log("> changeView()");
 	
-		switch(theView) {
-			case 'Sag':
+		switch(theView.toLowerCase()) {
+			case 'sag':
 				me.User.view='sag';
 				break;
-			case 'Cor':
+			case 'cor':
 				me.User.view='cor';
 				break;
-			case 'Axi':
+			case 'axi':
 				me.User.view='axi';
 				break;
 		}
@@ -88,6 +88,7 @@ var AtlasMakerWidget = {
 		me.configureAtlasImage();
 		me.resizeWindow();
 
+		console.log(">>changeView:drawImages");
 		me.drawImages();
 		
 		me.initCursor();
@@ -127,6 +128,7 @@ var AtlasMakerWidget = {
 		me.User.slice=x;
 		me.sendUserDataMessage("change slice");
 
+		console.log(">>changeSlice:drawImages");
 		me.drawImages();
 	},
 	prevSlice: function() {
@@ -201,70 +203,6 @@ var AtlasMakerWidget = {
 			
 		}
 	},
-	loadNifti: function() {
-		var me=AtlasMakerWidget;
-		if(me.debug) console.log("> loadNifti()");
-		var def=$.Deferred();
-	
-		if(0) {// disable MRI loading, keep slice streaming
-			var oReq = new XMLHttpRequest();
-			oReq.open("GET", me.User.dirname+"/"+me.User.mri, true);
-			console.log(me.User.dirname+"/"+me.User.mri);
-			oReq.addEventListener("progress", function(e){me.progress.html(parseInt(100*e.loaded/e.total)+"% Loaded")}, false);
-			oReq.responseType = "arraybuffer";
-			oReq.onload = function(oEvent) {
-				var	inflate=new pako.Inflate();
-				inflate.push(new Uint8Array(this.response),true);
-				var data=inflate.result.buffer;
-				var	dv=new DataView(data);
-				var	sizeof_hdr=dv.getInt32(0,true);
-				var	dimensions=dv.getInt16(40,true);
-				me.brain_dim[0]=dv.getInt16(42,true);
-				me.brain_dim[1]=dv.getInt16(44,true);
-				me.brain_dim[2]=dv.getInt16(46,true);
-				me.brain_datatype=dv.getInt16(72,true);
-				me.brain_pixdim[0]=dv.getFloat32(80,true);
-				me.brain_pixdim[1]=dv.getFloat32(84,true);
-				me.brain_pixdim[2]=dv.getFloat32(88,true);
-				var	vox_offset=dv.getFloat32(108,true);
-
-				switch(me.brain_datatype) {
-					case 8:
-						me.brain=new Uint8Array(data,vox_offset);
-						break;
-					case 16:
-						me.brain=new Int16Array(data,vox_offset);
-						break;
-					case 32:
-						me.brain=new Float32Array(data,vox_offset);
-						break;
-				}
-
-				console.log("dim",me.brain_dim[0],me.brain_dim[1],me.brain_dim[2]);
-				console.log("datatype",me.brain_datatype);
-				console.log("pixdim",me.brain_pixdim[0],me.brain_pixdim[1],me.brain_pixdim[2]);
-				console.log("vox_offset",vox_offset);
-			
-				me.configureBrainImage();
-				me.configureAtlasImage();
-				me.resizeWindow();
-				me.drawImages();
-
-				me.initCursor();
-				me.progress.html("<img src='/img/download.svg' style='vertical-align:middle'/>MRI");
-		
-				def.resolve();		
-			};
-			oReq.send();
-			me.progress.html("Loading...");
-			me.initCursor();
-			return def.promise();
-		} else {
-			//me.progress.html("<img src='/img/download.svg' style='vertical-align:middle'/>MRI");
-			return def.resolve();		
-		}
-		
-	},
 	saveNifti: function() {
 		var me=AtlasMakerWidget;
 		if(me.debug) console.log("> saveNifti()");
@@ -312,6 +250,20 @@ var AtlasMakerWidget = {
 		var me=AtlasMakerWidget;
 		if(me.debug) console.log("> configureBrainImage()");
 	
+		var flagStored=false;
+		if(me.User.view==null) {
+			if(localStorage.AtlasMaker) {
+				var stored=JSON.parse(localStorage.AtlasMaker);
+				if(stored.url=params.url) {
+					me.User.view=stored.view;
+					me.User.slice=stored.slice;
+					flagStored=true;
+				}
+			}
+			if(flagStored==false)
+				me.User.view="sag";
+		}
+
 		// init query image
 		switch(me.User.view) {
 			case 'sag':	me.brain_W=me.brain_dim[1]/*PA*/; me.brain_H=me.brain_dim[2]/*IS*/; me.brain_D=me.brain_dim[0]; me.brain_Wdim=me.brain_pixdim[1]; me.brain_Hdim=me.brain_pixdim[2]; break; // sagital
@@ -324,17 +276,19 @@ var AtlasMakerWidget = {
 		me.brain_offcn.height=me.brain_H;
 		me.brain_px=me.brain_offtx.getImageData(0,0,me.brain_offcn.width,me.brain_offcn.height);
 		
-	//	var W=parseFloat($('#resizable').css('width'));
-	//	$('#resizable').css('height', (brain_H*brain_Hdim)*W/(brain_W*brain_Wdim) );
-		
-		// configure user location
-		me.User.slice=parseInt(me.brain_D/2);
 		me.User.dim=me.brain_dim;
 		me.sendUserDataMessage("configure brain image");
+
+		if(flagStored==false)
+			me.User.slice=parseInt(me.brain_D/2);
 		
 		// configure toolbar slider
-		$(".slider#slice").data({max:me.brain_D});
-		me.changeSlice(me.User.slice);
+		$(".slider#slice").data({max:me.brain_D,val:me.User.slice});
+		$("#slice .thumb")[0].style.left=(me.User.slice/me.brain_D*100)+"%";
+
+		console.log(">>configureBrainImage:drawImages");
+		me.drawImages();
+		
 		
 		me.initCursor();
 	},
@@ -372,80 +326,7 @@ var AtlasMakerWidget = {
 		if(me.debug>1) console.log("> drawImages()");
 	
 		// draw brain
-		if(me.brain) {
-			me.context.clearRect(0,0,me.canvas.width,me.canvas.height);
-			me.displayInformation();
-
-			me.drawBrainImage(me.User.view,me.User.slice);
-			me.context.globalAlpha = 0.8;
-			me.context.globalCompositeOperation = "lighter";
-			me.drawAtlasImage(me.User.view,me.User.slice);
-			//$("#slicenum").html(me.User.slice);
-		}
-		else {
 			me.sendRequestSliceMessage();
-
-			/*
-			var slice=me.User.slice;
-			var img = new Image();
-			img.src=[
-				"/php/braincatalogue.php?",
-				"action=drawNiiSlice&",
-				"nii-file="+me.User.dirname+me.User.mri+"&",
-				"view="+me.User.view+"&",
-				"slice-index="+me.User.slice
-			].join("");
-			console.log(img.src);
-	
-			img.onload = function(){
-				me.context.clearRect(0,0,me.context.canvas.width,me.canvas.height);
-				me.displayInformation();
-
-				var	w=this.width;
-				var	h=this.height;
-				//console.log("image size: ",w,",",h);
-				if(me.canvas.width!=w || me.canvas.height!=h) {
-					me.canvas.width=w;
-					me.canvas.height=h;
-				}
-
-				me.flagLoadingImg.loading=false;
-				me.nearestNeighbour(me.context);
-				me.context.drawImage(this,0,0);//,0,0,W,h*W/w);
-				
-				if(slice!=me.User.slice)
-					me.drawImages();
-			};
-			*/
-		}
-	},
-	drawBrainImage: function(view,slice) {
-		var me=AtlasMakerWidget;
-		if(me.debug>1) console.log("> drawBrainImage()");
-	
-		if(me.brain===0)
-			return;
-
-		ys=yc=ya=slice;
-		for(y=0;y<me.brain_H;y++)
-		for(x=0;x<me.brain_W;x++) {
-			switch(view) {
-				case 'sag':i= y*me.brain_dim[1]/*PA*/*me.brain_dim[0]/*LR*/+ x*me.brain_dim[0]/*LR*/+ys; break;
-				case 'cor':i= y*me.brain_dim[1]/*PA*/*me.brain_dim[0]/*LR*/+yc*me.brain_dim[0]/*LR*/+x; break;
-				case 'axi':i=ya*me.brain_dim[1]/*PA*/*me.brain_dim[0]/*LR*/+ y*me.brain_dim[0]/*LR*/+x; break;
-			}
-			//val=255*(me.brain[i]-me.brain_min)/((me.brain_max-me.brain_min)||1);
-			val=me.brain[i];
-			i=(y*me.brain_offcn.width+x)*4;
-			me.brain_px.data[ i ]  =val;
-			me.brain_px.data[ i+1 ]=val;
-			me.brain_px.data[ i+2 ]=val;
-			me.brain_px.data[ i+3 ]=255;
-		}
-		me.brain_offtx.putImageData(me.brain_px, 0, 0);
-
-		me.nearestNeighbour(me.context);
-		me.context.drawImage(me.brain_offcn,0,0,me.brain_W,me.brain_H*me.brain_Hdim/me.brain_Wdim);
 	},
 	drawAtlasImage: function(view,slice) {
 		var me=AtlasMakerWidget;
@@ -1069,6 +950,7 @@ var AtlasMakerWidget = {
 								me.configureAtlasImage();
 								me.resizeWindow();
 
+								console.log(">>nii:drawImages");
 								me.drawImages();
 								var	link=me.container.find("span#download_atlas");
 								link.html("<a class='download' href='"+me.User.dirname+me.User.atlasFilename+"'><img src='/img/download.svg' style='vertical-align:middle'/></a>"+layer.name);
@@ -1456,27 +1338,29 @@ var AtlasMakerWidget = {
 		me.initSocketConnection()
 		.then(me.sendUserDataMessage);
 		
+		// store state on exit
+		$(window).unload(function(){
+			localStorage.AtlasMaker=JSON.stringify({	
+				url:params.url,
+				view:me.User.view.toLowerCase(),
+				slice:me.User.slice
+			});
+		});
+		
 		return def.promise();
 	},
 	configureAtlasMaker: function (info,index) {
 		var me=AtlasMakerWidget;
-		var def=$.Deferred();
 		if(me.debug)
 			console.log("configureAtlasMaker");
 		
-		me.configureMRI(info,index)
-		.then(function() {
-			me.sendUserDataMessage();
-			def.resolve();
-		});
-
-		return def.promise();
+		me.configureMRI(info,index);
+		me.sendUserDataMessage();
 	},
 	configureMRI: function(info,index) {
 		var me=AtlasMakerWidget;
-		var def=$.Deferred();
 		
-		console.log("> initMRI()");
+		console.log("> configureMRI()");
 				
 		// Get data from AtlasMaker object
 		me.name=info.name;
@@ -1503,22 +1387,28 @@ var AtlasMakerWidget = {
 		else
 			me.brain_pixdim=[1,1,1];
 
-		// configure toolbar slider
-		me.User.slice=parseInt(info.mri.dim[0]/2);
-		$(".slider#slice").data({max:info.mri.dim[0]});
-		me.changeSlice(me.User.slice);
-		me.drawImages();
-
-		if(me.brain===0) {
-			me.loadNifti().then(function() {
-				me.drawImages();
-				def.resolve();
-			});
-		} else {
-			def.resolve();
+		/*
+		// configure toolbar slider to mid-slice if new brain,
+		// to stored view and slice if stored in localStorage
+		var flag=false;
+		if(localStorage.AtlasMaker) {
+			var stored=JSON.parse(localStorage.AtlasMaker);
+			console.log("stored",stored,"params",params);
+			if(stored.url=params.url) {
+				me.User.view=stored.view;
+				me.User.slice=stored.slice;
+				flag=true;
+			}
 		}
-		
-		return def.promise();
+		if(!flag) {
+			me.User.view="sag";
+			me.User.slice=parseInt(info.mri.dim[0]/2);
+			$(".slider#slice").data({max:info.mri.dim[0]});
+		}
+		*/
+
+		console.log(">>configureMRI:drawImages");
+		me.drawImages();
 	},
 	loginChanged: function() {
 		var me=AtlasMakerWidget;
