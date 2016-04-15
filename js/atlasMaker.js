@@ -2,7 +2,7 @@ var AtlasMakerWidget = {
 	//========================================================================================
 	// Globals
 	//========================================================================================
-	debug:			0,
+	debug:			1,
 	container:		null,	// Element where atlasMaker lives
 	brain_offcn:	null,
 	brain_offtx:	null,
@@ -59,6 +59,7 @@ var AtlasMakerWidget = {
 					   touchStarted:false	// touch started flag
 					},
 	editMode:		0,	// editMode=0 to prevent editing, editMode=1 to accept it
+	fullscreen:		true,	// fullscreen mode
 	info:{},	// information displayed over each brain slice
 	// undo stack
 	Undo:[],
@@ -163,6 +164,54 @@ var AtlasMakerWidget = {
 		me.User.doFill=x;
 		me.sendUserDataMessage("toggle fill");
 	},
+	toggleFullscreen: function() {
+		var me=AtlasMakerWidget;
+		if(me.debug)
+			console.log("> toggleFullscreen()");
+
+		if(me.fullscreen==false) {
+			// Enter fullscreen
+			//-----------------
+		
+			// add black overlay
+			var black=$("<div id='blackOverlay'>");
+			black.css({position:'fixed',top:0,left:0,width:'100%',height:'100%','z-index':5,'background-color':'#222'});
+			$('body').append(black);
+	
+			// configure display mode
+			//    $("#atlasMaker").removeClass('display-mode');
+			$("#atlasMaker").addClass('fullscreen-mode');
+			$("#atlasMaker").detach().appendTo('body');
+			//    me.editMode=1;
+			me.resizeWindow();
+	
+			// configure toolbar for edit mode
+			$("#log").outerHeight($("#tools-side").outerHeight()-$("#log").offset().top-$("#msg").closest("tr").outerHeight());
+			me.fullscreen=true;
+		} else {
+
+			// Exit fullscreen
+			//----------------
+		
+			// remove black overlay
+			$("#blackOverlay").remove();
+	
+			// go back to display mode
+			$("#atlasMaker").removeClass('fullscreen-mode');
+			//    $("#atlasMaker").addClass('display-mode');
+			$("#atlasMaker").detach().appendTo('#stereotaxic')	;
+			//    me.editMode=0;
+			me.resizeWindow();
+
+			/*
+			// configure toolbar for display mode
+			$("div#toolbar").draggable('destroy');
+			$("div#toolbar").resizable('destroy');
+			$("div#toolbar").removeAttr("style");
+			*/
+			me.fullscreen=false;
+		}
+	},
 	togglePreciseCursor: function() {
 		var me=AtlasMakerWidget;
 		if(me.debug)
@@ -200,6 +249,10 @@ var AtlasMakerWidget = {
 				$('#resizable').css({width:(f*100)+'%',height:f*(100*wAspect/bAspect)+'%'});
 			}
 			
+		}
+		
+		if(me.fullscreen==true) {
+			$("#log").outerHeight($("#tools-side").outerHeight()-$("#log").offset().top-$("#msg").closest("tr").outerHeight());
 		}
 	},
 	saveNifti: function() {
@@ -286,10 +339,10 @@ var AtlasMakerWidget = {
 		me.brain_px=me.brain_offtx.getImageData(0,0,me.brain_offcn.width,me.brain_offcn.height);
 		
 		me.User.dim=me.brain_dim;
-		me.sendUserDataMessage("configure brain image");
-
 		if(flagStored==false)
 			me.User.slice=parseInt(me.brain_D/2);
+
+		me.sendUserDataMessage("configure brain image");
 		
 		// configure toolbar slider
 		$(".slider#slice").data({max:me.brain_D,val:me.User.slice});
@@ -297,7 +350,6 @@ var AtlasMakerWidget = {
 
 		console.log(">>configureBrainImage:drawImages");
 		me.drawImages();
-		
 		
 		me.initCursor();
 	},
@@ -1312,7 +1364,7 @@ var AtlasMakerWidget = {
 
 		// Init the toolbar: load template, wire actions
 		var def=$.Deferred();
-		$.get("templates/tools.html",function(html) {
+		$.get("templates/tools-side.html",function(html) {
 			console.log("toolbar html loaded");
 			me.container.append(html);
 			
@@ -1333,9 +1385,15 @@ var AtlasMakerWidget = {
 			me.chose($(".chose#penSize"),me.changePenSize);
 			me.toggle($(".toggle#precise"),me.togglePreciseCursor);
 			me.toggle($(".toggle#fill"),me.toggleFill);
+			me.toggle($(".toggle#fullscreen"),me.toggleFullscreen);
 			me.push($(".push#undo"),me.sendUndoMessage);
 			me.push($(".push#prev"),me.prevSlice);
 			me.push($(".push#next"),me.nextSlice);
+			
+			if(me.fullscreen==true) { // WARNING: HACK...
+				me.fullscreen=false;
+				me.toggleFullscreen();
+			}
 			
 			def.resolve();
 		});

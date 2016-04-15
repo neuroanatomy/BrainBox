@@ -1,36 +1,36 @@
-<style>
-html {
-	background-color:#222;
-	color:white;
-}
-table {
-	text-align:center;
-	font-family:sans-serif;
-	font-size:14px;
-}
-td {
-	padding:0;
-}
-td.a {
-	border:thin solid #777;
-	border-radius:3px;
-}
-td.a:hover {
-	background-color:#333;
-	-webkit-user-select:none;
-	-moz-user-select:none;
-	user-select:none;
-}
-.pressed {
-	background-color:#555 !important;
-}
-.icon {
-	width:20px;
-	vertical-align:middle;
-}
-</style>
+<div id="tools-side" style="display:inline-block">
 
-<div style="width:100%;display:inline-block">
+	<style>
+	html {
+		background-color:#222;
+		color:white;
+	}
+	table {
+		text-align:center;
+		font-family:sans-serif;
+		font-size:14px;
+	}
+	td {
+		padding:0;
+	}
+	td.a {
+		border:thin solid #777;
+		border-radius:3px;
+	}
+	td.a:hover {
+		background-color:#333;
+		-webkit-user-select:none;
+		-moz-user-select:none;
+		user-select:none;
+	}
+	.pressed {
+		background-color:#555 !important;
+	}
+	.icon {
+		width:16px;
+		vertical-align:middle;
+	}
+	</style>
 
 	<!-- Slider -->
 	<table width="100%" height=0>
@@ -53,9 +53,9 @@ td.a:hover {
 
 	<!-- Buttons -->
 	<table width="100%">
+		<!-- Plane -->
 		<tr>
-			
-			<td>
+			<td colspan=3>
 				<!-- Plane -->
 				<table width="100%">
 					<tr id="plane" class="chose">
@@ -68,31 +68,33 @@ td.a:hover {
 				<!-- Precise Cursor -->
 				<table width="100%">
 					<tr>
-						<td id="precise" class="a toggle" colspan=3>Precise Cursor</td>
+						<td id="precise" class="a toggle" colspan=2>Precise Cursor</td>
+						<td id="fullscreen" class="a toggle"><img class="icon" src="img/fullscreen.svg" /></td>
 					</tr>
 				</table>
 			</td>
+		</tr>
+
+		<tr><td height="8px"></td></tr>
 			
-			<td width="16px"></td>
-			
-			<td>
-				<!-- Paint Tools -->
+		<!-- Paint -->
+		<tr>
+			<td colspan=3>
 				<table width="100%">
-					<tr>
-						<td colspan=2>
-							<table width="100%">
-								<tr class="chose" id="paintTool">
-									<td class="a pressed">Paint</td>
-									<td class="a">Erase</td>
-								</tr>
-							</table>
-						</td>
-						<td id="fill" class="a toggle">Fill</td>
-						<td id="undo" class="a push">Undo</td>
-						<td id="fullscreen" class="a toggle"><img class="icon" src="img/fullscreen.svg" /></td>
-					</td>
+					<tr class="chose" id="paintTool">
+						<td class="a pressed">Paint</td>
+						<td class="a">Erase</td>
+					</tr>
 				</table>
-				
+			</td>
+		</tr>
+		<tr>
+			<td id="fill" class="a toggle">Fill</td>
+			<td id="undo" class="a push">Undo</td>
+		</tr>
+		
+		<tr>	
+			<td colspan=3>
 				<!-- Pen Size -->
 				<table width="100%">
 					<tr class="chose" id="penSize">
@@ -105,8 +107,8 @@ td.a:hover {
 					</tr>
 				</table>
 			</td>
-			
 		</tr>
+
 	</table>
 
 	<!-- Chat -->

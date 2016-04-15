@@ -14,8 +14,7 @@ td {
 #atlasMaker {
 	position:relative;
 }
-/*
-#atlasMaker.edit-mode {
+#atlasMaker.fullscreen-mode {
 	position:fixed;
 	top:0px;
 	left:0px;
@@ -23,7 +22,6 @@ td {
 	height:100%;
 	z-index:10;
 }
-*/
 #atlasMaker #resizable {
 	position:relative;
 	background-color:black;

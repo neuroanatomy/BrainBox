@@ -108,6 +108,14 @@
 	#atlasMaker #resizable {
 		position: relative;
 	}
+	#atlasMaker.fullscreen-mode {
+		position:fixed;
+		top:0px;
+		left:0px;
+		width: calc( 100% - 200px );
+		height:100%;
+		z-index:10;
+	}
 	#atlasMaker #info {
 		position: absolute;
 		bottom:5px;
@@ -118,6 +126,14 @@
 		height:100%;
 		background-color:black;
 		cursor: none;
+	}
+	
+	#tools-side {
+		position:fixed;
+		top:0px;
+		right:0px;
+		width:200px;
+		height:100%;
 	}
 	
 	/* cursor
@@ -177,6 +193,13 @@
 		border: 1px solid #777;
 		overflow: auto;
 		background-color: lightGrey;
+	}
+	
+	.middle {
+		position:absolute;
+		top:50%;
+		left:50%;
+		transform: translate(-50%,-50%);
 	}
 	
 	</style>
@@ -239,6 +262,7 @@ var version=1;
 // If brainbox's call contains an url, launch atlasMaker with it,
 // otherwise, present the history in localStorage if it exists.
 if(params.url) {
+	$("body").html("<div id='intro' class='middle'><img id='logo' src='img/brainbox-logo.svg'/><div id='msgLog'></div></div><div id='stereotaxic' style='width:512px'></div>");
 	initBrainBox({url:params.url,hash:hash(params.url)});
 } else {
 	if(localStorage.AtlasMaker) {
@@ -291,14 +315,14 @@ function initBrainBox(param) {
 		data=JSON.parse(data);
 		if(data.success==false) {
 			date=new Date();
-			$("#msgLog").append(date.toLocaleDateString()+" ERROR: "+data.message+".<br/>");
+			$("#msgLog").append("<p>ERROR: "+data.message+".");
 			return;
 		}
 		var arr=param.url.split("/");
 		var name=arr[arr.length-1];
 		console.log('mripath',name);
 		date=new Date();
-		$("#msgLog").append(date.toLocaleDateString()+" Downloading from server...<br/>");
+		$("#msgLog").append("<p>Downloading from server...");
 	
 		var info={
 			url: "data/"+param.hash+"/",
@@ -330,10 +354,10 @@ function initBrainBox(param) {
 		document.body.appendChild(s);
 	}).fail(function() {
 		date=new Date();
-		$("#msgLog").append(date.toLocaleDateString()+" ERROR: Cannot load MRI at specified URL.<br/>");
+		$("#msgLog").append("<p>ERROR: Cannot load MRI at specified URL.");
 	});
 	date=new Date();
-	$("#msgLog").html(date.toLocaleDateString()+" Downloading from source to server...<br/>");
+	$("#msgLog").html("<p>Downloading from source to server...");
 }
 
 // Add URL loading
