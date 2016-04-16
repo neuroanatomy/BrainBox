@@ -1501,10 +1501,11 @@ var AtlasMakerWidget = {
 			val:0,
 			max:100
 		});
-		$(document).on("mousemove",function(ev) {
+		
+		var movex=function(clientX) {
 			if ($(elem).data("drag")==true) {
 				var R=$("#slice .track")[0].getBoundingClientRect();
-				var x=(ev.clientX-R.left)/R.width;
+				var x=(clientX-R.left)/R.width;
 				if(x<0) x=0;
 				if(x>1) x=1;
 				x=Math.round(x*$("#slice").data("max"));
@@ -1512,9 +1513,11 @@ var AtlasMakerWidget = {
 					me.changeSlice(x);
 				}
 			}
-		});
-		$(document).on("mouseup",function(){$(elem).data({drag:false})});
-		$(elem).on('mousedown',function(){$(elem).data({drag:true})});
+		};
+		$(document).on("mousemove",function(ev){movex(ev.clientX);});
+		$(document).on("touchmove",function(ev){movex(ev.touches[0].clientX);});		
+		$(document).on("mouseup touchend",function(){$(elem).data({drag:false})});
+		$(elem).on('mousedown touchstart',function(){$(elem).data({drag:true})});
 	},
 	chose: function(elem,callback) {
 		// Initialise a 'chose' control
