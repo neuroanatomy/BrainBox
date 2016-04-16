@@ -1390,7 +1390,7 @@ var AtlasMakerWidget = {
 			me.push($(".push#prev"),me.prevSlice);
 			me.push($(".push#next"),me.nextSlice);
 			
-			if(me.fullscreen==true) { // WARNING: HACK...
+			if(me.fullscreen==true) { // WARNING: HACK... would be better to implement enter/exit fullscreen
 				me.fullscreen=false;
 				me.toggleFullscreen();
 			}
