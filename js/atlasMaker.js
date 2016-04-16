@@ -1515,7 +1515,7 @@ var AtlasMakerWidget = {
 			}
 		};
 		$(document).on("mousemove",function(ev){movex(ev.clientX);});
-		$(document).on("touchmove",function(ev){movex(ev.touches[0].clientX);});		
+		$(document).on("touchmove",function(ev){movex(ev.originalEvent.changedTouches[0].pageX);});		
 		$(document).on("mouseup touchend",function(){$(elem).data({drag:false})});
 		$(elem).on('mousedown touchstart',function(){$(elem).data({drag:true})});
 	},
