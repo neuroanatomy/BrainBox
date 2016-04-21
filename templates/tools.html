@@ -1,127 +1,105 @@
-<style>
-html {
-	background-color:#222;
-	color:white;
-}
-table {
-	text-align:center;
-	font-family:sans-serif;
-	font-size:14px;
-}
-td {
-	padding:0;
-}
-td.a {
-	border:thin solid #777;
-	border-radius:3px;
-}
-td.a:hover {
-	background-color:#333;
-	-webkit-user-select:none;
-	-moz-user-select:none;
-	user-select:none;
-}
-.pressed {
-	background-color:#555 !important;
-}
-.icon {
-	width:20px;
-	vertical-align:middle;
-}
-</style>
+<div id="tools-side" style="display:inline-block">
 
-<div style="width:100%;display:inline-block">
+	<style>
+	* {
+		font-size:14px;
+	}
+	html {
+		background-color:#222;
+		color:white;
+	}
+	.a {
+		border:thin solid #777;
+		border-radius:3px;
+		margin:1px;
+		text-align:center;
+	}
+	.a:hover {
+		background-color:#333;
+		-webkit-user-select:none;
+		-moz-user-select:none;
+		user-select:none;
+	}
+	.pressed {
+		background-color:#555 !important;
+	}
+	.icon {
+		width:16px;
+		vertical-align:middle;
+	}
+	</style>
 
-	<!-- Slider -->
-	<table width="100%" height=0>
-		<tr>
-			<td id="prev" class="a push" width="28px">-</td>
-			
-			<td class="a">
-				<div id="slice" class="slider" data-max=100 data-val=0 style="position:relative;margin-left:10px;width:calc(100% - 20px)">
-					<div class="track"
-						 style="position:absolute;left:0;top:50%;width:100%;border-top:1px solid #fff;display:inline-block"></div>
-					<div class="thumb"
-						 style="transform:translate(-10px,-10px);border-radius:10px;position:absolute;left:0;width:20px;height:20px;background-color:#fff;display:inline-block"></div>
+	<div style="width:100%;height:100%;display:flex;flex-direction:column">
+		<!-- slider -->
+		<div style="flex:0 0 28px">
+			<div style="display:flex">
+				<div style="height:28px;flex:0 0 28px">
+					<div id="prev" class="a push">-</div>
 				</div>
-				
-			</td>
-			
-			<td id="next" class="a push" width="28px">+</td>
-		</tr>
-	</table>
-
-	<!-- Buttons -->
-	<table width="100%">
-		<tr>
-			
-			<td>
-				<!-- Plane -->
-				<table width="100%">
-					<tr id="plane" class="chose">
-						<td class="a pressed">Sag</td>
-						<td class="a">Cor</td>
-						<td class="a">Axi</td>
-					</td>
-				</table>
-				
-				<!-- Precise Cursor -->
-				<table width="100%">
-					<tr>
-						<td id="precise" class="a toggle" colspan=3>Precise Cursor</td>
-					</tr>
-				</table>
-			</td>
-			
-			<td width="16px"></td>
-			
-			<td>
-				<!-- Paint Tools -->
-				<table width="100%">
-					<tr>
-						<td colspan=2>
-							<table width="100%">
-								<tr class="chose" id="paintTool">
-									<td class="a pressed">Paint</td>
-									<td class="a">Erase</td>
-								</tr>
-							</table>
-						</td>
-						<td id="fill" class="a toggle">Fill</td>
-						<td id="undo" class="a push">Undo</td>
-						<td id="fullscreen" class="a toggle"><img class="icon" src="img/fullscreen.svg" /></td>
-					</td>
-				</table>
-				
-				<!-- Pen Size -->
-				<table width="100%">
-					<tr class="chose" id="penSize">
-						<td class="a pressed">1</td>
-						<td class="a">2</td>
-						<td class="a">3</td>
-						<td class="a">5</td>
-						<td class="a">10</td>
-						<td class="a">15</td>
-					</tr>
-				</table>
-			</td>
-			
-		</tr>
-	</table>
-
-	<!-- Chat -->
-	<table width="100%">
-		<tr>
-			<td id="chat" style="text-align:left">Chat (disconnected)</td>
-		</tr>
-		<tr>
-			<td>
-				<div id="log" style="background-color:#333;padding:5px;text-align:left;vertical-align:top"></div>
-			</td>
-		</tr>
-		<tr>
-			<td><input id="msg" type="text" style="width:100%;border:0;padding:0" onkeypress="AtlasMakerWidget.onkey(event)"></td>
-		</tr>
-	</table>
+				<div style="height:28px;flex:1 0 28px">
+					<div style="display:inline-block;width:100%;height:100%">
+						<div id="slice" class="slider" data-max=100 data-val=0 style="position:relative;margin-left:10px;width:calc(100% - 20px);height:100%">
+							<div class="track"
+								 style="position:absolute;left:0;top:50%;width:100%;border-top:1px solid #fff;display:inline-block"></div>
+							<div class="thumb"
+								 style="transform:translate(-10px,-10px);border-radius:10px;position:absolute;left:0;top:50%;width:20px;height:20px;background-color:#fff;display:inline-block"></div>
+						</div>
+					</div>
+				</div>
+				<div style="height:28px;flex:0 0 28px">
+					<div id="prev" class="a push">+</div>
+				</div>
+			</div>
+		</div>
+		<!-- buttons -->
+		<div style="flex:0 0 auto">
+			<div style="display:flex;flex-wrap:wrap">
+				<div style="width:50px;height:56px;flex:1 0 150px;">
+					<!-- plane -->
+					<div style="display:flex" id="plane" class="chose">
+						<div style="height:28px;flex:1"><div class="a pressed">Sag</div></div>
+						<div style="height:28px;flex:1"><div class="a">Cor</div></div>
+						<div style="height:28px;flex:1"><div class="a">Axi</div></div>
+					</div>
+					<!-- fullscreen/precise-cursor -->
+					<div style="display:flex">
+						<div style="height:28px;flex:0 0 28px"><div id="fullscreen" class="a toggle"><img class="icon" src="img/fullscreen.svg" /></div></div>
+						<div style="height:28px;flex:1"><div id="precise" class="a toggle">Precise cursor</div></div>
+					</div>
+				</div>
+				<div style="width:50px;height:56px;flex:1 0 150px;">
+					<!-- paint/erase -->
+					<div style="display:flex" class="chose" id="paintTool">
+						<div style="height:28px;flex:1"><div class="a pressed">Paint</div></div>
+						<div style="height:28px;flex:1"><div class="a">Erase</div></div>
+					</div>
+					<!-- fill/undo -->
+					<div style="display:flex">
+						<div style="height:28px;flex:1"><div id="fill" class="a toggle">Fill</div></div>
+						<div style="height:28px;flex:1"><div id="undo" class="a push">Undo</div></div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- pen size -->
+		<div style="flex:0 0 28px">
+			<div style="display:flex" class="chose" id="penSize">
+				<div style="height:28px;flex:1"><div class="a pressed">1</div></div>
+				<div style="height:28px;flex:1"><div class="a">2</div></div>
+				<div style="height:28px;flex:1"><div class="a">3</div></div>
+				<div style="height:28px;flex:1"><div class="a">5</div></div>
+				<div style="height:28px;flex:1"><div class="a">10</div></div>
+				<div style="height:28px;flex:1"><div class="a">15</div></div>
+			</div>
+		</div>
+		<!-- chat -->
+		<div style="flex:0 0 28px">
+			<div id="chat">Chat (disconnected)</div>
+		</div>
+		<div class="a" style="flex:1 0 56px;text-align:left" id="log" style="background-color:#333;padding:5px;text-align:left;vertical-align:top"></div>
+		<div style="flex:0 0 28px">
+			<input id="msg" type="text" style="width:calc(100% - 8px);margin:1px;padding:1px" onkeypress="AtlasMakerWidget.onkey(event)">
+		</div>
+	</div>
 
 </div>

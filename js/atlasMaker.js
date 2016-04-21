@@ -59,11 +59,12 @@ var AtlasMakerWidget = {
 					   touchStarted:false	// touch started flag
 					},
 	editMode:		0,	// editMode=0 to prevent editing, editMode=1 to accept it
-	fullscreen:		true,	// fullscreen mode
+	fullscreen:		false,	// fullscreen mode
 	info:{},	// information displayed over each brain slice
 	// undo stack
 	Undo:[],
 	dbphp:          "php/brainbox.php",
+	version:	1, // version of the configuration file (slice number, plane, etc). Default=1
 
 	//========================================================================================
 	// Local user interaction
@@ -186,7 +187,7 @@ var AtlasMakerWidget = {
 			me.resizeWindow();
 	
 			// configure toolbar for edit mode
-			$("#log").outerHeight($("#tools-side").outerHeight()-$("#log").offset().top-$("#msg").closest("tr").outerHeight());
+			//$("#log").outerHeight($("#tools-side").outerHeight()-$("#log").offset().top-$("#msg").closest("tr").outerHeight());
 			me.fullscreen=true;
 		} else {
 
@@ -251,9 +252,11 @@ var AtlasMakerWidget = {
 			
 		}
 		
+		/*
 		if(me.fullscreen==true) {
 			$("#log").outerHeight($("#tools-side").outerHeight()-$("#log").offset().top-$("#msg").closest("tr").outerHeight());
 		}
+		*/
 	},
 	saveNifti: function() {
 		var me=AtlasMakerWidget;
@@ -302,29 +305,9 @@ var AtlasMakerWidget = {
 		var me=AtlasMakerWidget;
 		if(me.debug) console.log("> configureBrainImage()");
 	
-		if(me.User.view==null) {
-			var flagStored=false;
-			var stored=localStorage.AtlasMaker;
-			if(stored) {
-				var stored=JSON.parse(stored);
-				if(stored.version && stored.version==version) {
-					for(var i=0;i<stored.history.length;i++) {
-						if(stored.history[i].url==params.url) {
-							me.User.view=stored.history[i].view;
-							$(".chose#plane td").removeClass("pressed");
-							$(".chose#plane td:contains('"+
-								(me.User.view.charAt(0).toUpperCase() + me.User.view.slice(1))
-							+"')").addClass("pressed");
-							me.User.slice=stored.history[i].slice;
-							flagStored=true;
-							break;
-						}
-					}	
-				}
-			}
-			if(flagStored==false)
-				me.User.view="sag";
-		}
+		console.log("VIEW",me.User.view);
+		if(me.User.view==null)
+			me.User.view="sag";
 
 		// init query image
 		switch(me.User.view) {
@@ -339,7 +322,7 @@ var AtlasMakerWidget = {
 		me.brain_px=me.brain_offtx.getImageData(0,0,me.brain_offcn.width,me.brain_offcn.height);
 		
 		me.User.dim=me.brain_dim;
-		if(flagStored==false)
+		if(me.User.slice==null)
 			me.User.slice=parseInt(me.brain_D/2);
 
 		me.sendUserDataMessage("configure brain image");
@@ -367,7 +350,6 @@ var AtlasMakerWidget = {
 		if(me.debug>1) console.log("> nearestNeighbour()");
 	
 		ctx.imageSmoothingEnabled = false;
-		ctx.webkitImageSmoothingEnabled = false;
 		ctx.mozImageSmoothingEnabled = false;
 
 		ctx.mozImageSmoothingEnabled = false;
@@ -1364,7 +1346,7 @@ var AtlasMakerWidget = {
 
 		// Init the toolbar: load template, wire actions
 		var def=$.Deferred();
-		$.get("templates/tools-side.html",function(html) {
+		$.get("templates/tools.html",function(html) {
 			console.log("toolbar html loaded");
 			me.container.append(html);
 			
@@ -1395,6 +1377,13 @@ var AtlasMakerWidget = {
 				me.toggleFullscreen();
 			}
 			
+			if(me.User.view!=null) {
+				$(".chose#plane .a").removeClass("pressed");
+				var view=me.User.view.charAt(0).toUpperCase()+me.User.view.slice(1);
+				$(".chose#plane .a:contains('"+view+"')").addClass("pressed");
+			}
+
+			
 			def.resolve();
 		});
 		
@@ -1404,33 +1393,7 @@ var AtlasMakerWidget = {
 		// Init web socket connection
 		me.initSocketConnection()
 		.then(me.sendUserDataMessage);
-		
-		// store state on exit
-		$(window).unload(function(){
-			var foundStored=false;
-			var stored=localStorage.AtlasMaker;
-			if(stored) {
-				stored=JSON.parse(stored);
-				if(stored.version && stored.version==version) {
-					foundStored=true;
-					for(var i=0;i<stored.history.length;i++) {
-						if(stored.history[i].url==params.url) {
-							stored.history.splice(i,1);
-							break;
-						}
-					}
-				}
-			}
-			if(foundStored==false)
-				stored={version:version,history:[]};
-			stored.history.push({	
-				url:params.url,
-				view:me.User.view.toLowerCase(),
-				slice:me.User.slice
-			});			
-			localStorage.AtlasMaker=JSON.stringify(stored);
-		});
-		
+				
 		return def.promise();
 	},
 	configureAtlasMaker: function (info,index) {
@@ -1521,7 +1484,7 @@ var AtlasMakerWidget = {
 	},
 	chose: function(elem,callback) {
 		// Initialise a 'chose' control
-		var ch=$(elem).children();
+		var ch=$(elem).find(".a");
 		ch.each(function(c,d){
 			$(d).click(function(){
 				ch.each(function(){$(this).removeClass("pressed")});

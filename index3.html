@@ -222,7 +222,7 @@
 <div id="MyLogin"></div>
 
 <div id="intro">
-	<img id="logo" src="img/BrainBox_web.gif" style="text-align:center"/><br />
+	<img id="logo" src="img/brainbox.svg" style="text-align:center"/><br />
 	<h2>Real-time collaboration</h2>
 	<p>
 		BrainBox is a web application by <b><a target="_blank" href="http://neuroanatomy.github.io">NAAT</a></b> to
@@ -231,13 +231,11 @@
 		triangular meshes. Point BrainBox to your own Nifti 2 data, or try data catalogues
 		created by the community.
 	</p>
-	<input id="url" type="text" placeholder="Enter the URL of an MRI (.nii.gz)"></input>
-	<div id="msgLog"></div>
 </div>
 
 <div id="stereotaxic" style="width:512px"></div>
 
-<p style="width:100%;position:absolute;bottom:5px;font-size:small;text-align:center"> 
+<p style="width:100%;position:fixed;bottom:5px;font-size:small;text-align:center"> 
 	<a target="_blank" href="http://neuroanatomy.github.io">
 		<img src="img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/></a>
 	<a target="_blank" href="http://neuroanatomy.github.io" class="linkNoULine">
@@ -245,153 +243,17 @@
 	</a>
 </p>
 
-<!-- 
-A few brains:
-http://braincatalogue.org/data/Baboon/MRI.nii.gz
-https://zenodo.org/record/44855/files/MRI-n4.nii.gz
-http://files.figshare.com/2284784/MRI_n4.nii.gz
-http://braincatalogue.org/data/Human/MRI-n4.nii.gz
-https://dl.dropboxusercontent.com/u/363467/mprage003.nii.gz
--->
-
-<!--
-<div id="myStereo"></div>
--->
-
 <script src="lib/jquery-1.11.0.min.js"></script>
 <script src="lib/jquery-ui.js"></script>
 <script src="lib/jquery.ui.touch-punch.min.js"></script>
 <script src="lib/pako/pako.min.js"></script>
 <script src="lib/mylogin/login.js"></script>
+<script src="js/brainbox.js"></script>
 
 <script>
-
-// Init login widget
 MyLoginWidget.init($("#MyLogin"));
-
-var params=deparam();console.log("params:",params);
-var version=1;
-// If brainbox's call contains an url, launch atlasMaker with it,
-// otherwise, present the history in localStorage if it exists.
-if(params.url) {
-	var fullscreen=false;
-	if(params.fullscreen)
-		fullscreen=(params.fullscreen=="true");
-		
-	$("body").html([
-		"<div id='intro' class='middle'>",
-		" <img id='logo' src='img/brainbox-logo.svg'/>",
-		" <div id='msgLog'></div>",
-		"</div>",
-		"<div id='stereotaxic' style='width:512px'></div>"
-	].join(""));
-	initBrainBox({url:params.url,hash:hash(params.url),fullscreen:fullscreen});
-} else {
-	if(localStorage.AtlasMaker) {
-		var stored=JSON.parse(localStorage.AtlasMaker);
-		if(stored.version && stored.version==version) {
-			var str="<br/><p><b>Recently visited</b><br/>";
-			for(var i=0;i<stored.history.length;i++) {
-				str+="<a href='"+location+"index.html?url="+stored.history[i].url+"'>"+stored.history[i].url+"</a><br />";
-			}
-			str+="</p>";
-			$("body").append(str);
-		} else {
-			localStorage.clear();
-		}
-	}
-}
-
-function deparam() {
-    var search = location.search.substring(1);
-    var result = search?JSON.parse('{"' + search.replace(/&/g, '","').replace(/=/g,'":"') + '"}',
-                     function(key, value) { return key===""?value:decodeURIComponent(value) }):{};
-    return result;
-}
-function hash(str) {
-	var i,v0,v1,abc="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-	v0=0;
-	for(i=0;i<str.length;i++) {
-		v1=str.charCodeAt(i);
-		v0+=v0+v0^v1;
-	}
-	var sz=abc.length,v,res="";
-	for(i=0;i<5;i++) {
-		v1=parseInt(v0/sz);
-		v=Math.abs(v0-v1*sz);
-		res+=abc[v];
-		v0=v1;
-	}
-	return res;
-}
-function initBrainBox(param) {
-	var date;
-	
-	// Copy MRI from source
-	$.get("/brainbox/php/stereotaxic.php",{
-		action: "download",
-		url: param.url,
-		hash: param.hash
-	}).done(function(data){
-		// Configure MRI into atlasMaker
-		data=JSON.parse(data);
-		if(data.success==false) {
-			date=new Date();
-			$("#msgLog").append("<p>ERROR: "+data.message+".");
-			return;
-		}
-		var arr=param.url.split("/");
-		var name=arr[arr.length-1];
-		console.log('mripath',name);
-		date=new Date();
-		$("#msgLog").append("<p>Downloading from server...");
-	
-		var info={
-			url: "data/"+param.hash+"/",
-			mri: {
-				atlas: [ { name: "Blank Atlas", description: "A blank atlas for testing", filename: "Atlas.nii.gz"}],
-				brain: name,
-				dim: data.dim,
-				pixdim: data.pixdim
-			},
-			name:"Coco"
-		};
-		console.log(info);
-
-		// Add AtlasMaker
-		$("#intro").remove();
-		$("#stereotaxic").html('<div id="atlasMaker"></div>');
-		$("#atlasMaker").addClass('edit-mode');
-		var s = document.createElement("script");
-		s.src = "js/atlasMaker.js";
-		s.onload=function(){
-			AtlasMakerWidget.fullscreen=param.fullscreen;
-			AtlasMakerWidget.initAtlasMaker($("#atlasMaker"))
-			.then(function() {
-				AtlasMakerWidget.editMode=1;
-				AtlasMakerWidget.configureAtlasMaker(info,0);
-				AtlasMakerWidget.progress=$("#stereotaxic").find(".download_MRI");
-				$("#msgLog").html("");
-			});
-		}
-		document.body.appendChild(s);
-	}).fail(function() {
-		date=new Date();
-		$("#msgLog").append("<p>ERROR: Cannot load MRI at specified URL.");
-	});
-	date=new Date();
-	$("#msgLog").html("<p>Downloading from source to server...");
-}
-
-// Add URL loading
-$("#url").keyup(function (e) {
-	if (e.keyCode == 13) {
-		params.url=$("#url").val();
-		params.hash=hash(params.url);
-		location="/brainbox/index.html?url="+params.url;
-		initBrainBox(params);
-	}
-});
+var url="http://braincatalogue.dev/data/Lion/MRI-n4.nii.gz";
+BrainBox.initBrainBox({url:url,hash:BrainBox.hash(url),fullscreen:false});
 </script>
 
 </body>
