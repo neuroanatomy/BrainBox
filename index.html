@@ -263,14 +263,16 @@ https://dl.dropboxusercontent.com/u/363467/mprage003.nii.gz
 <script src="lib/jquery.ui.touch-punch.min.js"></script>
 <script src="lib/pako/pako.min.js"></script>
 <script src="lib/mylogin/login.js"></script>
+<script src="js/brainbox.js"></script>
 
 <script>
 
 // Init login widget
 MyLoginWidget.init($("#MyLogin"));
 
-var params=deparam();console.log("params:",params);
+var params=deparam();
 var version=1;
+
 // If brainbox's call contains an url, launch atlasMaker with it,
 // otherwise, present the history in localStorage if it exists.
 if(params.url) {
@@ -285,7 +287,8 @@ if(params.url) {
 		"</div>",
 		"<div id='stereotaxic' style='width:512px'></div>"
 	].join(""));
-	initBrainBox({url:params.url,hash:hash(params.url),fullscreen:fullscreen});
+	BrainBox.initBrainBox({url:params.url,hash:BrainBox.hash(params.url),fullscreen:fullscreen})
+	.then($("#logo").remove());
 } else {
 	if(localStorage.AtlasMaker) {
 		var stored=JSON.parse(localStorage.AtlasMaker);
@@ -308,86 +311,12 @@ function deparam() {
                      function(key, value) { return key===""?value:decodeURIComponent(value) }):{};
     return result;
 }
-function hash(str) {
-	var i,v0,v1,abc="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-	v0=0;
-	for(i=0;i<str.length;i++) {
-		v1=str.charCodeAt(i);
-		v0+=v0+v0^v1;
-	}
-	var sz=abc.length,v,res="";
-	for(i=0;i<5;i++) {
-		v1=parseInt(v0/sz);
-		v=Math.abs(v0-v1*sz);
-		res+=abc[v];
-		v0=v1;
-	}
-	return res;
-}
-function initBrainBox(param) {
-	var date;
-	
-	// Copy MRI from source
-	$.get("/brainbox/php/stereotaxic.php",{
-		action: "download",
-		url: param.url,
-		hash: param.hash
-	}).done(function(data){
-		// Configure MRI into atlasMaker
-		data=JSON.parse(data);
-		if(data.success==false) {
-			date=new Date();
-			$("#msgLog").append("<p>ERROR: "+data.message+".");
-			return;
-		}
-		var arr=param.url.split("/");
-		var name=arr[arr.length-1];
-		console.log('mripath',name);
-		date=new Date();
-		$("#msgLog").append("<p>Downloading from server...");
-	
-		var info={
-			url: "data/"+param.hash+"/",
-			mri: {
-				atlas: [ { name: "Blank Atlas", description: "A blank atlas for testing", filename: "Atlas.nii.gz"}],
-				brain: name,
-				dim: data.dim,
-				pixdim: data.pixdim
-			},
-			name:"Coco"
-		};
-		console.log(info);
-
-		// Add AtlasMaker
-		$("#intro").remove();
-		$("#stereotaxic").html('<div id="atlasMaker"></div>');
-		$("#atlasMaker").addClass('edit-mode');
-		var s = document.createElement("script");
-		s.src = "js/atlasMaker.js";
-		s.onload=function(){
-			AtlasMakerWidget.fullscreen=param.fullscreen;
-			AtlasMakerWidget.initAtlasMaker($("#atlasMaker"))
-			.then(function() {
-				AtlasMakerWidget.editMode=1;
-				AtlasMakerWidget.configureAtlasMaker(info,0);
-				AtlasMakerWidget.progress=$("#stereotaxic").find(".download_MRI");
-				$("#msgLog").html("");
-			});
-		}
-		document.body.appendChild(s);
-	}).fail(function() {
-		date=new Date();
-		$("#msgLog").append("<p>ERROR: Cannot load MRI at specified URL.");
-	});
-	date=new Date();
-	$("#msgLog").html("<p>Downloading from source to server...");
-}
 
 // Add URL loading
 $("#url").keyup(function (e) {
 	if (e.keyCode == 13) {
 		params.url=$("#url").val();
-		params.hash=hash(params.url);
+		params.hash=BrainBox.hash(params.url);
 		location="/brainbox/index.html?url="+params.url;
 		initBrainBox(params);
 	}

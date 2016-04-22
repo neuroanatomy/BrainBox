@@ -417,7 +417,7 @@ var AtlasMakerWidget = {
 		var x=parseInt((e.pageX-o.left)*(w/W));
 		// i have to add here the compensation for rectangular pixels: f(brain_Wdim, brain_Hdim)
 		var y=parseInt((e.pageY-o.top)*(h/H));
-		me.down(x,y);
+		me.down(x,Math.round(y*me.brain_Wdim/me.brain_Hdim));
 	},
 	mousemove: function(e) {
 		var me=AtlasMakerWidget;
@@ -438,7 +438,7 @@ var AtlasMakerWidget = {
 			width:me.User.penSize*(W/w),
 			height:me.User.penSize*(H/h)
 		});
-		me.move(x,y);
+		me.move(x,Math.round(y*me.brain_Wdim/me.brain_Hdim));
 	},
 	mouseup: function(e) {
 		var me=AtlasMakerWidget;
