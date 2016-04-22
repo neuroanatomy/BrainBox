@@ -499,9 +499,9 @@ var AtlasMakerWidget = {
 					me.updateCursor();
 				}
 			},1000);
-			me.down(me.Crsr.x,me.Crsr.y);
+			me.down(me.Crsr.x,Math.round(me.Crsr.y*me.brain_Wdim/me.brain_Hdim));
 		} else
-			me.down(x,y);
+			me.down(x,Math.round(y*me.brain_Wdim/me.brain_Hdim));
 	},
 	touchmove: function(e) {
 		var me=AtlasMakerWidget;
@@ -535,7 +535,7 @@ var AtlasMakerWidget = {
 				me.Crsr.y+=dy;
 				$("#cursor").css({left:me.Crsr.x*(W/w),top:me.Crsr.y*(H/h),width:me.User.penSize*(W/w),height:me.User.penSize*(H/h)});
 				if(me.Crsr.state=="draw")
-					me.move(me.Crsr.x,me.Crsr.y);
+					me.move(me.Crsr.x,Math.round(me.Crsr.y*me.brain_Wdim/me.brain_Hdim));
 			}
 			me.Crsr.fx+=dx*(W/w);
 			me.Crsr.fy+=dy*(H/h);
@@ -550,7 +550,7 @@ var AtlasMakerWidget = {
 				width:me.User.penSize*(W/w),
 				height:me.User.penSize*(H/h)
 			});
-			me.move(x,y);
+			me.move(x,Math.round(y*me.brain_Wdim/me.brain_Hdim));
 		}
 	},
 	touchend: function(e) {
