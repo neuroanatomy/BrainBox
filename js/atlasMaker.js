@@ -284,8 +284,7 @@ var AtlasMakerWidget = {
 		dv.setFloat32(108,voxel_offset,true);
 		dv.setInt8(123,spacetimeunits);
 
-		var layer=me.atlas;
-		var	data=layer.data;
+		var	data=me.atlas.data;
 		var	i;
 
 		var nii = new Uint8Array(voxel_offset+data.length);
@@ -355,6 +354,18 @@ var AtlasMakerWidget = {
 		ctx.mozImageSmoothingEnabled = false;
 		ctx.webkitImageSmoothingEnabled = false;
 	},
+	computeSegmentedVolume: function() {
+		var me=AtlasMakerWidget;
+		var i,sum=0;
+		var	data=me.atlas.data;
+		var	dim=me.atlas.dim;
+
+		for(i=0;i<dim[0]*dim[1]*dim[2];i++) {
+			if(data[i]>0)
+				sum++;
+		}
+		return sum*me.User.pixdim[0]*me.User.pixdim[1]*me.User.pixdim[2];
+	},
 	displayInformation: function() {
 		var me=AtlasMakerWidget;
 		if(me.debug>1) console.log("> displayInformation()");
@@ -378,9 +389,8 @@ var AtlasMakerWidget = {
 		if(!me.atlas)
 			return;
 
-		var layer=me.atlas;
-		var	data=layer.data;
-		var	dim=layer.dim;
+		var	data=me.atlas.data;
+		var	dim=me.atlas.dim;
 		var	val;
 
 		ys=yc=ya=slice;
@@ -675,6 +685,10 @@ var AtlasMakerWidget = {
 			.then(function(value){var length=parseInt(value);me.info.length=length+" mm";me.displayInformation()});
 
 		me.annotationLength=0;
+
+		// compute total segmented volume
+		var vol=me.computeSegmentedVolume();
+		me.info.volume=parseInt(vol)+" mm3";
 	},
 	keyDown: function(e) {
 		var me=AtlasMakerWidget;
