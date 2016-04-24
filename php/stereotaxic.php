@@ -17,10 +17,10 @@ function download($params)
 	$url=$params["url"];
 	$hash=$params["hash"];
 	
+	// download file from origin url
 	$tokens = explode('/', $url);
 	$filename=$tokens[sizeof($tokens)-1];
 	$handle=@fopen($url,'r');
-		
 	if($handle)
 	{
 		$dir=$_SERVER['DOCUMENT_ROOT']."/brainbox/data/".$hash;
@@ -30,6 +30,7 @@ function download($params)
 			chmod($dir,0777);
 		}
 		
+		// get file info: dimensions and voxel size
 		if (!file_exists($dir."/".$filename)) {
 			@file_put_contents($dir."/info.txt",$url);		
 			$result=@file_put_contents($dir."/".$filename,$handle);

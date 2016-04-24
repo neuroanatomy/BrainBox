@@ -951,12 +951,21 @@ function loadBrainNifti(err,nii,callback) {
 	console.log("brain vox_offset",vox_offset);
 	console.log("free memory",os.freemem());
 	
-	var i,sum=0;
-	for(i=0;i<brain.dim[0]*brain.dim[1]*brain.dim[2];i++)
+	var i,sum=0,min,max;
+	min=brain.data[0];
+	max=min;
+	for(i=0;i<brain.dim[0]*brain.dim[1]*brain.dim[2];i++) {
 		sum+=brain.data[i];
+		
+		if(brain.data[i]<min) min=brain.data[i];
+		if(brain.data[i]>max) max=brain.data[i];
+	}
 	brain.sum=sum;
+	brain.min=min;
+	brain.max=max;
 
 	console.log("nii file loaded, sum:",sum);
+	console.log("min:",min,"max:",max);
 	callback(brain);
 }
 
@@ -992,6 +1001,7 @@ function drawSlice(brain,view,slice) {
 	var x,y,i,j;
 	var brain_W, brain_H;
 	var ys,ya,yc;
+	var val;
 	
 	switch(view) {
 		case 'sag':	brain_W=brain.dim[1]; brain_H=brain.dim[2]; brain_D=brain.dim[0]; break; // sagital
@@ -1015,9 +1025,10 @@ function drawSlice(brain,view,slice) {
 			case 'cor':i= y*brain.dim[1]*brain.dim[0]+yc*brain.dim[0]+x; break;
 			case 'axi':i=ya*brain.dim[1]*brain.dim[0]+ y*brain.dim[0]+x; break;
 		}
-	  frameData[4*j+0] = brain.data[i]; // red
-	  frameData[4*j+1] = brain.data[i]; // green
-	  frameData[4*j+2] = brain.data[i]; // blue
+	  val=255*(brain.data[i]-brain.min)/(brain.max-brain.min);
+	  frameData[4*j+0] = val; // red
+	  frameData[4*j+1] = val; // green
+	  frameData[4*j+2] = val; // blue
 	  frameData[4*j+3] = 0xFF; // alpha - ignored in JPEGs
 	  j++;
 	}
