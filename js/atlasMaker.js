@@ -321,7 +321,7 @@ var AtlasMakerWidget = {
 		me.brain_px=me.brain_offtx.getImageData(0,0,me.brain_offcn.width,me.brain_offcn.height);
 		
 		me.User.dim=me.brain_dim;
-		if(me.User.slice==null)
+		if(me.User.slice==null || me.User.slice>=me.brain_D)
 			me.User.slice=parseInt(me.brain_D/2);
 
 		me.sendUserDataMessage("configure brain image");

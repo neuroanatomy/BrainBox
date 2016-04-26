@@ -1025,12 +1025,12 @@ function drawSlice(brain,view,slice) {
 			case 'cor':i= y*brain.dim[1]*brain.dim[0]+yc*brain.dim[0]+x; break;
 			case 'axi':i=ya*brain.dim[1]*brain.dim[0]+ y*brain.dim[0]+x; break;
 		}
-	  val=255*(brain.data[i]-brain.min)/(brain.max-brain.min);
-	  frameData[4*j+0] = val; // red
-	  frameData[4*j+1] = val; // green
-	  frameData[4*j+2] = val; // blue
-	  frameData[4*j+3] = 0xFF; // alpha - ignored in JPEGs
-	  j++;
+		val=255*(brain.data[i]-brain.min)/(brain.max-brain.min);
+		frameData[4*j+0] = val; // red
+		frameData[4*j+1] = val; // green
+		frameData[4*j+2] = val; // blue
+		frameData[4*j+3] = 0xFF; // alpha - ignored in JPEGs
+		j++;
 	}
 
 	var rawImageData = {
