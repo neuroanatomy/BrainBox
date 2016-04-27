@@ -71,6 +71,14 @@ var BrainBox={
 						}	
 					}
 				}
+				
+				// enact configuration in param, eventually overriding the stored one
+				if(param.view) {
+					AtlasMakerWidget.User.view=param.view;
+					AtlasMakerWidget.User.slice=null; // this will set the slider to the middle slice in case no slice were specified
+				}
+				if(param.slice)
+					AtlasMakerWidget.User.slice=param.slice;
 
 				AtlasMakerWidget.fullscreen=param.fullscreen;
 				AtlasMakerWidget.initAtlasMaker($("#atlasMaker"))

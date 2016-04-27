@@ -278,7 +278,7 @@ var version=1;
 if(params.url) {
 	var fullscreen=false;
 	if(params.fullscreen)
-		fullscreen=(params.fullscreen=="true");
+		params.fullscreen=(params.fullscreen=="true");
 		
 	$("body").html([
 		"<div id='intro' class='middle'>",
@@ -287,7 +287,9 @@ if(params.url) {
 		"</div>",
 		"<div id='stereotaxic' style='width:512px'></div>"
 	].join(""));
-	BrainBox.initBrainBox({url:params.url,hash:BrainBox.hash(params.url),fullscreen:fullscreen})
+	
+	params.hash=BrainBox.hash(params.url);
+	BrainBox.initBrainBox(params)
 	.then($("#logo").remove());
 } else {
 	if(localStorage.AtlasMaker) {
