@@ -5,7 +5,7 @@
 	Launch using > node atlasMakerServer.js
 */
 
-var	debug=1;
+var	debug=0;
 
 var WebSocketServer=require("ws").Server; //https://github.com/websockets/ws
 
@@ -330,6 +330,7 @@ function sendSliceToUser(brain,view,slice,user_socket) {
 
 function receiveUserDataMessage(data,user_socket) {
 	if(debug>1) console.log("[receiveUserDataMessage]");
+	
 
 	var uid=data.uid;
 	var user=data.user;
@@ -337,43 +338,48 @@ function receiveUserDataMessage(data,user_socket) {
 	
 	firstConnectionFlag=(Users[uid]==undefined);
 
-	// 1. Check if the atlas the user is requesting has not been loaded
-	atlasLoadedFlag=false;
-	// check if user is switching atlas, and unload unused atlases
-	switchingAtlasFlag=false;
-	if(Users[uid]) {
-		if((Users[uid].atlasFilename!=user.atlasFilename)||(Users[uid].dirname!=user.dirname)) {
-			// User is switching atlas.
-			switchingAtlasFlag=true;
-			// check whether the old atlas has to be unloaded
-			var sum;
-			sum=numberOfUsersConnectedToAtlas(Users[uid].dirname,Users[uid].atlasFilename);
+	if(data.description=="sendAtlas") {
+		// 1. Check if the atlas the user is requesting has not been loaded
+		atlasLoadedFlag=false;
+		
+		// check if user is switching atlas, and unload unused atlases
+		switchingAtlasFlag=false;
+		if(Users[uid]) {
+			if((Users[uid].atlasFilename!=user.atlasFilename)||(Users[uid].dirname!=user.dirname)) {
+				// User is switching atlas.
+				switchingAtlasFlag=true;
+				
+				// check whether the old atlas has to be unloaded
+				var sum;
+				sum=numberOfUsersConnectedToAtlas(Users[uid].dirname,Users[uid].atlasFilename);
 			
-			console.log(sum,"users connected to atlas",Users[uid].dirname,",",Users[uid].atlasFilename);
+				console.log(sum,"users connected to atlas",Users[uid].dirname,",",Users[uid].atlasFilename);
 			
-			if(sum==0) {
-				unloadAtlas(Users[uid].dirname,Users[uid].atlasFilename);
+				if(sum==0) {
+					unloadAtlas(Users[uid].dirname,Users[uid].atlasFilename);
+				}
 			}
 		}
-	}
-	for(i=0;i<Atlases.length;i++)
-		if(Atlases[i].dirname==user.dirname && Atlases[i].name==user.atlasFilename) {
-			atlasLoadedFlag=true;
-			break;
-		}
-	user.iAtlas=i;	// i-th value if it was found, or last if it wasn't
+		
+		for(i=0;i<Atlases.length;i++)
+			if(Atlases[i].dirname==user.dirname && Atlases[i].name==user.atlasFilename) {
+				atlasLoadedFlag=true;
+				break;
+			}
+		user.iAtlas=i;	// i-th value if it was found, or last if it wasn't
 	
-	// 2. Send the atlas to the user (load it if required)
-	if(atlasLoadedFlag) {
-		if(firstConnectionFlag || switchingAtlasFlag) {
-			// send the new user our data
-			sendAtlasToUser(Atlases[i].data,user_socket);
+		// 2. Send the atlas to the user (load it if required)
+		if(atlasLoadedFlag) {
+			if(firstConnectionFlag || switchingAtlasFlag) {
+				// send the new user our data
+				sendAtlasToUser(Atlases[i].data,user_socket);
+			}
+		} else {
+			// The atlas requested has not been loaded before:
+			// Load the atlas s/he's requesting
+			addAtlas(user,function(atlas){sendAtlasToUser(atlas,user_socket)});
 		}
-	} else {
-		// The atlas requested has not been loaded before:
-		// Load the atlas s/he's requesting
-		addAtlas(user,function(atlas){sendAtlasToUser(atlas,user_socket)});
-	}	
+	}
 	
 	// 3. Update user data
 	// If the user didn't have a name (wasn't logged in), but now has one,
@@ -386,9 +392,8 @@ function receiveUserDataMessage(data,user_socket) {
 			console.log("User "+user.username+", id "+uid+" logged in");
 		}
 	}
-	//else
-	//	console.log(new Date(),"Name unknown for user id "+uid);
-	Users[uid]=user;
+	if(Users[uid]==null) Users[uid]={};
+	for(var prop in user) Users[uid][prop]=user[prop];
 
 	// 4. Update number of users connected to atlas
 	if(firstConnectionFlag) {
@@ -396,7 +401,7 @@ function receiveUserDataMessage(data,user_socket) {
 		for(i in Users)
 			if(Users[i].dirname==user.dirname && Users[i].atlasFilename==user.atlasFilename)
 				sum++;
-		console.log("["+sum+" user"+((sum==1)?" is":"s are")+" connected to the atlas "+user.dirname+user.atlasFilename+"]");
+		console.log(sum+" user"+((sum==1)?" is":"s are")+" connected to the atlas "+user.dirname+user.atlasFilename);
 	}	
 }
 
@@ -501,7 +506,9 @@ function addAtlas(user,callback) {
 
 	console.log("User requests atlas "+atlas.name+" from "+atlas.dirname);
 	
-	loadAtlasNifti(atlas,user.username,callback);	
+	loadAtlasNifti(atlas,user.username,callback);
+
+	user.iAtlas=Atlases.length;
 	Atlases.push(atlas);
 	
 	atlas.timer=setInterval(function(){saveNifti(atlas)},60*60*1000); // 60 minutes

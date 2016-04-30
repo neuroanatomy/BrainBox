@@ -80,7 +80,11 @@ var BrainBox={
 				if(param.slice)
 					AtlasMakerWidget.User.slice=param.slice;
 
-				AtlasMakerWidget.fullscreen=param.fullscreen;
+				if(param.fullscreen)
+					AtlasMakerWidget.fullscreen=param.fullscreen;
+				else
+					AtlasMakerWidget.fullscreen=false;
+					
 				AtlasMakerWidget.initAtlasMaker($("#atlasMaker"))
 				.then(function() {
 					AtlasMakerWidget.editMode=1;
