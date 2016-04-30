@@ -2,7 +2,7 @@ var AtlasMakerWidget = {
 	//========================================================================================
 	// Globals
 	//========================================================================================
-	debug:			1,
+	debug:			0,
 	container:		null,	// Element where atlasMaker lives
 	brain_offcn:	null,
 	brain_offtx:	null,
@@ -18,6 +18,10 @@ var AtlasMakerWidget = {
 	brain_dim:		new Array(3),
 	brain_pixdim:	new Array(3),
 	brain_datatype:	null,
+	brain_img:      {     img: null,
+						 view: null,
+						slice: null
+					},
 	brain:			0,
 	annotationLength:0,
 	User:			{  view:null,
@@ -350,9 +354,6 @@ var AtlasMakerWidget = {
 	
 		ctx.imageSmoothingEnabled = false;
 		ctx.mozImageSmoothingEnabled = false;
-
-		ctx.mozImageSmoothingEnabled = false;
-		ctx.webkitImageSmoothingEnabled = false;
 	},
 	computeSegmentedVolume: function() {
 		var me=AtlasMakerWidget;
@@ -379,8 +380,19 @@ var AtlasMakerWidget = {
 		var me=AtlasMakerWidget;
 		if(me.debug>1) console.log("> drawImages()");
 	
-		// draw brain
+		if(me.brain_img.img && me.brain_img.view==me.User.view && me.brain_img.slice==me.User.slice) {
+			me.context.clearRect(0,0,me.context.canvas.width,me.canvas.height);
+			me.displayInformation();
+
+			me.nearestNeighbour(me.context);
+			me.context.drawImage(me.brain_img.img,0,0,me.brain_W,me.brain_H*me.brain_Hdim/me.brain_Wdim);
+
+			me.context.globalAlpha = 0.8;
+			me.context.globalCompositeOperation = "lighter";
+			me.drawAtlasImage(me.flagLoadingImg.view,me.flagLoadingImg.slice);
+		} else {
 			me.sendRequestSliceMessage();
+		}
 	},
 	drawAtlasImage: function(view,slice) {
 		var me=AtlasMakerWidget;
@@ -715,7 +727,7 @@ var AtlasMakerWidget = {
 		// c: command
 		// x, y: coordinates
 		msg={"c":c,"x":x,"y":y};
-		if(u==-1 && msg!=me.msg0) {
+		if(u==-1 && JSON.stringify(msg)!=JSON.stringify(me.msg0)) {
 			me.sendPaintMessage(msg);
 			me.msg0=msg;
 		}
@@ -772,7 +784,7 @@ var AtlasMakerWidget = {
 		// u: user number
 		// img: img data
 		msg={"img":img};
-		if(u==-1 && msg!=me.msg0) {
+		if(u==-1 && JSON.stringify(msg)!=JSON.stringify(me.msg0)) {
 			//me.sendPaintMessage(msg);
 			me.msg0=msg;
 		}
@@ -1007,8 +1019,9 @@ var AtlasMakerWidget = {
 								me.configureAtlasImage();
 								me.resizeWindow();
 
-								console.log(">>nii:drawImages",me.User.view,me.User.slice);
+								me.brain_img.img=null;
 								me.drawImages();
+
 								var	link=me.container.find("span#download_atlas");
 								link.html("<a class='download' href='"+me.User.dirname+me.User.atlasFilename+"'><img src='/img/download.svg' style='vertical-align:middle'/></a>"+layer.name);
 								break;
@@ -1018,20 +1031,16 @@ var AtlasMakerWidget = {
 								var imageUrl = urlCreator.createObjectURL(msg.data);
 								var img = new Image();
 								img.onload=function(){
-									me.context.clearRect(0,0,me.context.canvas.width,me.canvas.height);
-									me.displayInformation();
+									var flagFirstImage=(me.brain_img.img==null);
+									me.brain_img.img=img;
+									me.brain_img.view=me.flagLoadingImg.view;
+									me.brain_img.slice=me.flagLoadingImg.slice;
 
-									me.nearestNeighbour(me.context);
-									me.context.drawImage(this,0,0,me.brain_W,me.brain_H*me.brain_Hdim/me.brain_Wdim);
-
-									me.context.globalAlpha = 0.8;
-									me.context.globalCompositeOperation = "lighter";
-									me.drawAtlasImage(me.flagLoadingImg.view,me.flagLoadingImg.slice);
-									//$("#slice").html(me.User.slice);
-									
+									me.drawImages();
+																		
 									me.flagLoadingImg.loading=false;
 
-									if(me.flagLoadingImg.view!=me.User.view ||me.flagLoadingImg.slice!=me.User.slice) {
+									if(flagFirstImage || me.flagLoadingImg.view!=me.User.view ||me.flagLoadingImg.slice!=me.User.slice) {
 										me.sendRequestSliceMessage();
 									}
 								}
@@ -1130,7 +1139,7 @@ var AtlasMakerWidget = {
 			}
 		}
 		me.Collab[u]=data.user;
-	
+
 		var	v,nusers=1; for(v in me.Collab) nusers++;
 		$("#chat").text("Chat ("+nusers+" connected)");
 	},
@@ -1358,6 +1367,9 @@ var AtlasMakerWidget = {
 			me.resizeWindow();
 		});
 
+		// get pointer to progress div
+		me.progress=$("a.download_MRI");
+
 		// Init the toolbar: load template, wire actions
 		var def=$.Deferred();
 		$.get("templates/tools.html",function(html) {
@@ -1396,18 +1408,15 @@ var AtlasMakerWidget = {
 				var view=me.User.view.charAt(0).toUpperCase()+me.User.view.slice(1);
 				$(".chose#plane .a:contains('"+view+"')").addClass("pressed");
 			}
-
-			
-			def.resolve();
+		})
+		.then(
+			// Init web socket connection
+			me.initSocketConnection
+		).then(function() {
+			console.log("tools loaded, socket initialised");
+			def.resolve()
 		});
-		
-		// get pointer to progress div
-		me.progress=$("a.download_MRI");
-		
-		// Init web socket connection
-		me.initSocketConnection()
-		.then(me.sendUserDataMessage);
-				
+						
 		return def.promise();
 	},
 	configureAtlasMaker: function (info,index) {
@@ -1415,11 +1424,17 @@ var AtlasMakerWidget = {
 		if(me.debug)
 			console.log("configureAtlasMaker");
 		
-		me.configureMRI(info,index);
-		me.sendUserDataMessage();
+		var def=$.Deferred();
+		me.configureMRI(info,index)
+		.then(function() {
+			console.log("request atlas");
+			me.sendUserDataMessage("sendAtlas");
+			def.resolve();
+		});
 	},
 	configureMRI: function(info,index) {
 		var me=AtlasMakerWidget;
+		var def=$.Deferred();
 		
 		console.log("> configureMRI()");
 				
@@ -1448,8 +1463,7 @@ var AtlasMakerWidget = {
 		else
 			me.brain_pixdim=[1,1,1];
 
-		console.log(">>configureMRI:drawImages");
-		me.drawImages();
+		return def.resolve().promise();
 	},
 	loginChanged: function() {
 		var me=AtlasMakerWidget;
