@@ -319,8 +319,8 @@ $("#url").keyup(function (e) {
 	if (e.keyCode == 13) {
 		params.url=$("#url").val();
 		params.hash=BrainBox.hash(params.url);
-		location="/brainbox/index.html?url="+params.url;
-		initBrainBox(params);
+		location="/index.html?url="+params.url;
+		BrainBox.initBrainBox(params);
 	}
 });
 </script>

@@ -23,7 +23,7 @@ function download($params)
 	$handle=@fopen($url,'r');
 	if($handle)
 	{
-		$dir=$_SERVER['DOCUMENT_ROOT']."/brainbox/data/".$hash;
+		$dir=$_SERVER['DOCUMENT_ROOT']."/data/".$hash;
 		
 		if (!file_exists($dir)) {
 			mkdir($dir,0777);

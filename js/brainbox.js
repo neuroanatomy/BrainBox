@@ -20,7 +20,7 @@ var BrainBox={
 		var date;
 	
 		// Copy MRI from source
-		var def=$.get("/brainbox/php/stereotaxic.php",{
+		var def=$.get("/php/stereotaxic.php",{
 			action: "download",
 			url: param.url,
 			hash: param.hash
