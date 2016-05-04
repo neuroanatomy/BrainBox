@@ -37,19 +37,30 @@ function download($params)
 			chmod($dir."/".$filename, 0777);
 			if($result)
 			{
-				$info=@exec("../bin/volume -i ".$dir."/".$filename." -info|".
-				'awk \'/dim:/{printf"\"dim\":[%i,%i,%i],",$2,$3,$4}/voxelSize:/{printf"\"pixdim\":[%f,%f,%f]",$2,$3,$4}\''
+				$tmp=@exec("../bin/volume -i ".$dir."/".$filename." -info|".
+				'awk \'/dim:/{printf"{\"dim\":[%i,%i,%i],",$2,$3,$4}/voxelSize:/{printf"\"pixdim\":[%f,%f,%f]}",$2,$3,$4}\''
 				,$arr,$retval);
-				echo '{"url":"'.$url.'", "localpath":"'.$dir.'/'.$filename.'", "filename":"'.$filename.'", "success":true, '.$info.'}';
+				$info=json_decode($tmp);
+				$info=json_decode($tmp);
+				$info->url=$url;
+				$info->localpath=$dir.'/'.$filename;
+				$info->filename=$filename;
+				$info->success=true;
+				echo json_encode($info);
 			}
 			else
 				echo '{"success":false,"message":"CANNOT DOWNLOAD FILE FROM SOURCE","result":"'.$result.'"}';
 		}
 		else {
-			$info=@exec("../bin/volume -i ".$dir."/".$filename." -info|".
-			'awk \'/dim:/{printf"\"dim\":[%i,%i,%i],",$2,$3,$4}/voxelSize:/{printf"\"pixdim\":[%f,%f,%f]",$2,$3,$4}\''
+			$tmp=@exec("../bin/volume -i ".$dir."/".$filename." -info|".
+			'awk \'/dim:/{printf"{\"dim\":[%i,%i,%i],",$2,$3,$4}/voxelSize:/{printf"\"pixdim\":[%f,%f,%f]}",$2,$3,$4}\''
 			,$arr,$retval);
-			echo '{"url":"'.$url.'", "localpath":"'.$dir.'/'.$filename.'", "filename":"'.$filename.'", "success":true, '.$info.'}';
+			$info=json_decode($tmp);
+			$info->url=$url;
+			$info->localpath=$dir.'/'.$filename;
+			$info->filename=$filename;
+			$info->success=true;
+			echo json_encode($info);
 		}
 	}
 	else
