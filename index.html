@@ -6,8 +6,9 @@
     <title>BrainBox</title>
 	<link rel="stylesheet" href="lib/jquery-ui.css">
 	<style>
-	 html {
+	 html,body {
 		background-color:#222;
+		height:100%;
 		font: 16px/24px "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
 		-webkit-font-smoothing: antialiased;
 		-moz-font-smoothing: antialiased;
@@ -219,31 +220,43 @@
 
 <body>
 
-<div id="MyLogin"></div>
+<div style="width:100%;height:100%;display:flex;flex-direction:column">
+	<!-- Row of fixed height -->
+	<div style="flex:0 0 32px">
+		<div id="MyLogin"></div>
+	</div>
+	
+	<!-- Row of variable height -->
+	<div style="flex:1 1 auto">
+		<div id="intro">
+			<img id="logo" src="img/brainbox-logo.svg" style="text-align:center"/><br />
+			<h2>Real-time collaboration</h2>
+			<p>
+				BrainBox is a web application by <b><a target="_blank" href="http://neuroanatomy.github.io">NAAT</a></b> to
+				visualise and segment collaboratively any brain MRI dataset available online.
+				Segmentations are automatically saved and can be downloaded as Nifti 2 files or
+				triangular meshes. Point BrainBox to your own Nifti 2 data, or try data catalogues
+				created by the community.
+			</p>
+			<input id="url" type="text" placeholder="Enter the URL of an MRI (.nii.gz)"></input>
+			<div id="msgLog"></div>
 
-<div id="intro">
-	<img id="logo" src="img/BrainBox_web.gif" style="text-align:center"/><br />
-	<h2>Real-time collaboration</h2>
-	<p>
-		BrainBox is a web application by <b><a target="_blank" href="http://neuroanatomy.github.io">NAAT</a></b> to
-		visualise and segment collaboratively any brain MRI dataset available online.
-		Segmentations are automatically saved and can be downloaded as Nifti 2 files or
-		triangular meshes. Point BrainBox to your own Nifti 2 data, or try data catalogues
-		created by the community.
-	</p>
-	<input id="url" type="text" placeholder="Enter the URL of an MRI (.nii.gz)"></input>
-	<div id="msgLog"></div>
+			<div id="stereotaxic" style="width:512px"></div>
+			
+		</div>
+	</div>
+	
+	<!-- Row of fixed height -->
+	<div style="flex:0 0 32px">
+		<p style="width:100%;font-size:small;text-align:center"> 
+			<a target="_blank" href="http://neuroanatomy.github.io">
+				<img src="img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/></a>
+			<a target="_blank" href="http://neuroanatomy.github.io" class="linkNoULine">
+				group de neuroanatomie appliquée et théorique
+			</a>
+		</p>
+	</div>
 </div>
-
-<div id="stereotaxic" style="width:512px"></div>
-
-<p style="width:100%;position:absolute;bottom:5px;font-size:small;text-align:center"> 
-	<a target="_blank" href="http://neuroanatomy.github.io">
-		<img src="img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/></a>
-	<a target="_blank" href="http://neuroanatomy.github.io" class="linkNoULine">
-		group de neuroanatomie appliquée et théorique
-	</a>
-</p>
 
 <!-- 
 A few brains:
@@ -300,7 +313,7 @@ if(params.url) {
 				str+="<a href='"+location+"index.html?url="+stored.history[i].url+"'>"+stored.history[i].url+"</a><br />";
 			}
 			str+="</p>";
-			$("body").append(str);
+			$("#intro").append(str);
 		} else {
 			localStorage.clear();
 		}
