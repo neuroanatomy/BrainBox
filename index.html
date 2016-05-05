@@ -9,6 +9,7 @@
 	 html,body {
 		background-color:#222;
 		height:100%;
+		margin:0px;
 		font: 16px/24px "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
 		-webkit-font-smoothing: antialiased;
 		-moz-font-smoothing: antialiased;
@@ -221,12 +222,12 @@
 <body>
 
 <div style="width:100%;height:100%;display:flex;flex-direction:column">
-	<!-- Row of fixed height -->
-	<div style="flex:0 0 32px">
+	<!-- Login (fixed height) -->
+	<div style="flex:0 0 64px">
 		<div id="MyLogin"></div>
 	</div>
 	
-	<!-- Row of variable height -->
+	<!-- Content (variable height) -->
 	<div style="flex:1 1 auto">
 		<div id="intro">
 			<img id="logo" src="img/brainbox-logo.svg" style="text-align:center"/><br />
@@ -239,15 +240,17 @@
 				created by the community.
 			</p>
 			<input id="url" type="text" placeholder="Enter the URL of an MRI (.nii.gz)"></input>
-			<div id="msgLog"></div>
-
-			<div id="stereotaxic" style="width:512px"></div>
-			
 		</div>
+		<div id="stereotaxic" style="width:512px"></div>
+
 	</div>
 	
-	<!-- Row of fixed height -->
-	<div style="flex:0 0 32px">
+	<!-- Space (fixed height) -->
+	<div style="flex:0 0 50px">
+	</div>
+
+	<!-- Footer (fixed height) -->
+	<div style="flex:0 0 100px;background-color:#000">
 		<p style="width:100%;font-size:small;text-align:center"> 
 			<a target="_blank" href="http://neuroanatomy.github.io">
 				<img src="img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/></a>
@@ -292,18 +295,33 @@ if(params.url) {
 	var fullscreen=false;
 	if(params.fullscreen)
 		params.fullscreen=(params.fullscreen=="true");
-		
-	$("body").html([
-		"<div id='intro' class='middle'>",
-		" <img id='logo' src='img/brainbox-logo.svg'/>",
+	
+	var splash=$("<div id='splash'>");
+	splash.css({position:'absolute',top:'0px',left:'0px',backgroundColor:'#222',width:'100%',height:'100%'});
+	splash.append([
+		" <a href='/'>",
+		"  <img id='logo' src='img/brainbox-logo.svg'/>",
+		" </a>",
 		" <div id='msgLog'></div>",
-		"</div>",
-		"<div id='stereotaxic' style='width:512px'></div>"
+		"</div>"
 	].join(""));
+	console.log(splash);
+	$('body').append(splash);
 	
 	params.hash=BrainBox.hash(params.url);
 	BrainBox.initBrainBox(params)
-	.then($("#logo").remove());
+	.then(function(){
+		$("#intro").remove();
+		$("#splash").remove();
+		$("body").prepend([
+			"<a href='/'>",
+			" <img style='position:fixed;left:5px;top:5px;width:200px' src='img/brainbox-logo-small.svg'/>",
+			"</a>"
+		].join(""));
+
+	},function(){
+		console.log("ERROR");
+	});
 } else {
 	if(localStorage.AtlasMaker) {
 		var stored=JSON.parse(localStorage.AtlasMaker);

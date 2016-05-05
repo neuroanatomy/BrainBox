@@ -8,7 +8,7 @@
 //error_reporting(E_ALL);
 //ini_set('display_errors', 'On');
 
-$rootdir = "/brainbox/";
+$rootdir = "/";
 
 include $_SERVER['DOCUMENT_ROOT'].$rootdir."/php/base.php";
 $connection=mysqli_connect($dbhost,$dbuser,$dbpass,$dblogin) or die("ERROR: Can't connect to MySQL DB: " . mysql_error());
@@ -47,10 +47,12 @@ function user_check()
 function user_login()
 {
     global $connection;
+    global $dblogin;
     $username = mysqli_real_escape_string($connection,$_GET['username']);
     $password = md5(mysqli_real_escape_string($connection,$_GET['password']));
     
     $query="SELECT * FROM ".$dblogin.".Users WHERE Username = '".$username."' AND Password = '".$password."'";
+    
     $checklogin = mysqli_query($connection,$query);
     if(mysqli_num_rows($checklogin) == 1)
     {

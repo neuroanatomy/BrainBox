@@ -20,7 +20,8 @@ var BrainBox={
 		var date;
 	
 		// Copy MRI from source
-		var def=$.get("/php/stereotaxic.php",{
+		var def=$.Deferred();
+		$.get("/php/stereotaxic.php",{
 			action: "download",
 			url: param.url,
 			hash: param.hash
@@ -30,6 +31,7 @@ var BrainBox={
 			if(data.success==false) {
 				date=new Date();
 				$("#msgLog").append("<p>ERROR: "+data.message+".");
+				def.reject();
 				return;
 			}
 			var arr=param.url.split("/");
@@ -120,6 +122,8 @@ var BrainBox={
 				});			
 				localStorage.AtlasMaker=JSON.stringify(stored);
 			});
+			
+			def.resolve();
 
 		}).fail(function() {
 			date=new Date();
@@ -128,6 +132,6 @@ var BrainBox={
 		date=new Date();
 		$("#msgLog").html("<p>Downloading from source to server...");
 		
-		return def;
+		return def.promise();
 	}
 }

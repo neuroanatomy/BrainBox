@@ -219,29 +219,44 @@
 
 <body>
 
-<div id="MyLogin"></div>
+<div style="width:100%;height:100%;display:flex;flex-direction:column">
+	<!-- Login (fixed height) -->
+	<div style="flex:0 0 64px">
+		<div id="MyLogin"></div>
+	</div>
+	
+	<!-- Content (variable height) -->
+	<div style="flex:1 1 auto">
+		<div id="intro">
+			<img id="logo" src="img/brainbox-logo.svg" style="text-align:center"/><br />
+			<h2>Real-time collaboration</h2>
+			<p>
+				BrainBox is a web application by <b><a target="_blank" href="http://neuroanatomy.github.io">NAAT</a></b> to
+				visualise and segment collaboratively any brain MRI dataset available online.
+				Segmentations are automatically saved and can be downloaded as Nifti 2 files or
+				triangular meshes. Point BrainBox to your own Nifti 2 data, or try data catalogues
+				created by the community.
+			</p>
+		</div>
+		<div id="stereotaxic" style="width:512px"></div>
 
-<div id="intro">
-	<img id="logo" src="img/brainbox.svg" style="text-align:center"/><br />
-	<h2>Real-time collaboration</h2>
-	<p>
-		BrainBox is a web application by <b><a target="_blank" href="http://neuroanatomy.github.io">NAAT</a></b> to
-		visualise and segment collaboratively any brain MRI dataset available online.
-		Segmentations are automatically saved and can be downloaded as Nifti 2 files or
-		triangular meshes. Point BrainBox to your own Nifti 2 data, or try data catalogues
-		created by the community.
-	</p>
+	</div>
+	
+	<!-- Space (fixed height) -->
+	<div style="flex:0 0 50px">
+	</div>
+
+	<!-- Footer (fixed height) -->
+	<div style="flex:0 0 100px;background-color:#000">
+		<p style="width:100%;font-size:small;text-align:center"> 
+			<a target="_blank" href="http://neuroanatomy.github.io">
+				<img src="img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/></a>
+			<a target="_blank" href="http://neuroanatomy.github.io" class="linkNoULine">
+				group de neuroanatomie appliquée et théorique
+			</a>
+		</p>
+	</div>
 </div>
-
-<div id="stereotaxic" style="width:512px"></div>
-
-<p style="width:100%;position:fixed;bottom:5px;font-size:small;text-align:center"> 
-	<a target="_blank" href="http://neuroanatomy.github.io">
-		<img src="img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/></a>
-	<a target="_blank" href="http://neuroanatomy.github.io" class="linkNoULine">
-		group de neuroanatomie appliquée et théorique
-	</a>
-</p>
 
 <script src="lib/jquery-1.11.0.min.js"></script>
 <script src="lib/jquery-ui.js"></script>
