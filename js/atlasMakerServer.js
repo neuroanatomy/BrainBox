@@ -843,6 +843,9 @@ function line(x,y,val,user,undoLayer)
 	var x2=x;
 	var y2=y;
 	var	i;
+	
+	if(Math.pow(x1-x2,2)+Math.pow(y1-y2,2)<10*10)
+		console.log("WARNING: long line from",x1,y1,"to",x2,y2,user);
 
     // Define differences and error check
     var dx = Math.abs(x2 - x1);
@@ -931,9 +934,9 @@ function loadBrainNifti(err,nii,callback) {
 			break;
 		case 4: // SHORT
 			var tmp=nii.slice(vox_offset);
-			brain.data=new Uint16Array(brain.dim[0]*brain.dim[1]*brain.dim[2]);
+			brain.data=new Int16Array(brain.dim[0]*brain.dim[1]*brain.dim[2]);
 			for(j=0;j<brain.dim[0]*brain.dim[1]*brain.dim[2];j++)
-				brain.data[j]=tmp.readUInt16LE(j*2);
+				brain.data[j]=tmp.readInt16LE(j*2);
 			break;
 		case 8: // INT
 			var tmp=nii.slice(vox_offset);
