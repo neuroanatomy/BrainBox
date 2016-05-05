@@ -41,7 +41,6 @@ function download($params)
 				'awk \'/dim:/{printf"{\"dim\":[%i,%i,%i],",$2,$3,$4}/voxelSize:/{printf"\"pixdim\":[%f,%f,%f]}",$2,$3,$4}\''
 				,$arr,$retval);
 				$info=json_decode($tmp);
-				$info=json_decode($tmp);
 				$info->url=$url;
 				$info->localpath=$dir.'/'.$filename;
 				$info->filename=$filename;
