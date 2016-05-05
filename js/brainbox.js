@@ -21,13 +21,13 @@ var BrainBox={
 	
 		// Copy MRI from source
 		var def=$.Deferred();
-		$.get("/php/stereotaxic.php",{
+		$.getJSON("/php/stereotaxic.php",{
 			action: "download",
 			url: param.url,
 			hash: param.hash
 		}).done(function(data){
 			// Configure MRI into atlasMaker
-			data=JSON.parse(data);
+			// data=JSON.parse(data);
 			if(data.success==false) {
 				date=new Date();
 				$("#msgLog").append("<p>ERROR: "+data.message+".");
