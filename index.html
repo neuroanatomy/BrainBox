@@ -22,14 +22,19 @@
 		width:250px;
 	 }
 	 input#url {
-		margin-left:50%;
-		transform:translate(-50%,0);
 		width:calc(100% - 8px);
 		height:32px;
-		margin-top:0px;
-		margin-bottom:0px;
 		border:0px;
 		padding:0px;
+	 }
+	 #go {
+		 height:30px;
+		 width:30px;
+		 border:1px solid #ddd;
+		 border-radius:6px;
+		 color:#ddd;
+		 text-align:center;
+		 -webkit-appearance:none;
 	 }
 	 h2, p {
 		font-family: sans-serif;
@@ -243,12 +248,12 @@
 						triangular meshes. Point BrainBox to your own Nifti 2 data, or try data catalogues
 						created by the community.
 					</p>
-					<div style="calc( 100% - 40px);margin-top:30px;display:flex">
+					<div style="width:calc( 100% - 20px);margin-left:10px;margin-top:30px;display:flex">
 						<div style="flex:1 1 auto">
 							<input id="url" type="text" placeholder="Enter the URL of an MRI (.nii.gz)"></input>
 						</div>
 						<div style="flex:0 0 32px">
-							<button style="height:32px;margin-top:0px;margin-bottom:0px;" onclick="goToURL()">Go</button>
+							<div id="go" onclick="goToURL()">Go</div>
 						</div>
 					</div>
 				</div>
