@@ -24,16 +24,17 @@
 	 input#url {
 		margin-left:50%;
 		transform:translate(-50%,0);
-		width:60%;
-		margin-top:60px;
+		width:calc(100% - 8px);
+		height:32px;
+		margin-top:0px;
+		margin-bottom:0px;
+		border:0px;
+		padding:0px;
 	 }
 	 h2, p {
-		margin-left:50%;
-		transform:translate(-50%,0);
 		font-family: sans-serif;
 		color:white;
 		text-align:center;
-		width:500px;
 	 }
 	 a {
 		color:white;
@@ -226,23 +227,35 @@
 	<div style="flex:0 0 64px">
 		<div id="MyLogin"></div>
 	</div>
-	
 	<!-- Content (variable height) -->
 	<div style="flex:1 1 auto">
 		<div id="intro">
 			<img id="logo" src="img/brainbox-logo.svg" style="text-align:center"/><br />
 			<h2>Real-time collaboration</h2>
-			<p>
-				BrainBox is a web application by <b><a target="_blank" href="http://neuroanatomy.github.io">NAAT</a></b> to
-				visualise and segment collaboratively any brain MRI dataset available online.
-				Segmentations are automatically saved and can be downloaded as Nifti 2 files or
-				triangular meshes. Point BrainBox to your own Nifti 2 data, or try data catalogues
-				created by the community.
-			</p>
-			<input id="url" type="text" placeholder="Enter the URL of an MRI (.nii.gz)"></input>
+			
+			<div style="display:flex">
+				<div style="flex:1 1 auto"></div>
+				<div style="flex:0 1 500px">
+					<p>
+						BrainBox is a web application by <b><a target="_blank" href="http://neuroanatomy.github.io">NAAT</a></b> to
+						visualise and segment collaboratively any brain MRI dataset available online.
+						Segmentations are automatically saved and can be downloaded as Nifti 2 files or
+						triangular meshes. Point BrainBox to your own Nifti 2 data, or try data catalogues
+						created by the community.
+					</p>
+					<div style="calc( 100% - 40px);margin-top:30px;display:flex">
+						<div style="flex:1 1 auto">
+							<input id="url" type="text" placeholder="Enter the URL of an MRI (.nii.gz)"></input>
+						</div>
+						<div style="flex:0 0 32px">
+							<button style="height:32px;margin-top:0px;margin-bottom:0px;" onclick="goToURL()">Go</button>
+						</div>
+					</div>
+				</div>
+				<div style="flex:1 1 auto"></div>
+			</div>
 		</div>
 		<div id="stereotaxic" style="width:512px"></div>
-
 	</div>
 	
 	<!-- Space (fixed height) -->
@@ -346,14 +359,18 @@ function deparam() {
 }
 
 // Add URL loading
-$("#url").keyup(function (e) {
+$("#url").keyup(function(e) {
 	if (e.keyCode == 13) {
-		params.url=$("#url").val();
-		params.hash=BrainBox.hash(params.url);
-		location="/index.html?url="+params.url;
-		BrainBox.initBrainBox(params);
+		goToURL(e);
 	}
 });
+function goToURL(e) {
+	var url=$("#url").val();
+	params.url=url;
+	params.hash=BrainBox.hash(url);
+	location="/index.html?url="+url;
+	BrainBox.initBrainBox(params);
+};
 </script>
 
 </body>
