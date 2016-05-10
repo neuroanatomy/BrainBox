@@ -290,7 +290,7 @@ function receiveRequestSliceMessage(data,user_socket) {
 	var	user=Users[uid];	// user data
 	var brainPath=user.dirname+user.mri;
 	var view=user.view;		// user view
-	var slice=user.slice;	// user slice
+	var slice=parseInt(user.slice);	// user slice
 	
 	var brain=getBrainAtPath(brainPath,function(data){
 		sendSliceToUser(data,view,slice,user_socket);
