@@ -217,6 +217,18 @@ var AtlasMakerWidget = {
 			me.fullscreen=false;
 		}
 	},
+	render3D: function() {
+		var me=AtlasMakerWidget;
+		if(me.debug)
+			console.log("> reder3D()");
+		location="surfacenets.html?path="+me.User.dirname+"/"+me.User.atlasFilename;
+	},
+	link: function() {
+		var me=AtlasMakerWidget;
+		if(me.debug)
+			console.log("> link()");
+		window.prompt("Copy to clipboard:", location.href+"&view="+AtlasMakerWidget.User.view+"&slice="+AtlasMakerWidget.User.slice);
+	},
 	togglePreciseCursor: function() {
 		var me=AtlasMakerWidget;
 		if(me.debug)
@@ -1394,6 +1406,8 @@ var AtlasMakerWidget = {
 			me.toggle($(".toggle#precise"),me.togglePreciseCursor);
 			me.toggle($(".toggle#fill"),me.toggleFill);
 			me.toggle($(".toggle#fullscreen"),me.toggleFullscreen);
+			me.push($(".push#3drender"),me.render3D);
+			me.push($(".push#link"),me.link);
 			me.push($(".push#undo"),me.sendUndoMessage);
 			me.push($(".push#prev"),me.prevSlice);
 			me.push($(".push#next"),me.nextSlice);
