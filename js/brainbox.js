@@ -41,7 +41,7 @@ var BrainBox={
 			$("#msgLog").append("<p>Downloading from server...");
 	
 			var info={
-				url: "data/"+param.hash+"/",
+				url: "/data/"+param.hash+"/",
 				mri: {
 					atlas: [ { name: "Blank Atlas", description: "A blank atlas for testing", filename: "Atlas.nii.gz"}],
 					brain: name,

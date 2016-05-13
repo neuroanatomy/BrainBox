@@ -221,7 +221,7 @@ var AtlasMakerWidget = {
 		var me=AtlasMakerWidget;
 		if(me.debug)
 			console.log("> reder3D()");
-		location="surfacenets.html?path="+me.User.dirname+"/"+me.User.atlasFilename;
+		window.open("/templates/surface.html?path="+me.User.dirname+me.User.atlasFilename,"_blank");
 	},
 	link: function() {
 		var me=AtlasMakerWidget;
