@@ -2,9 +2,12 @@ self.addEventListener('message', function(e) {
 	var data = e.data;
 	switch (data.cmd) {
 		case 'start':
-			init(data.path,data.level);
+			var param={path:data.path,level:data.level};
+			if(data.niigz)
+				param.niigz=data.niigz;
+			init(param);
 			break;
-	};
+	}
 });
 
 var cube_edges = new Int32Array(24);	// surfacenets
@@ -12,16 +15,26 @@ var edge_table = new Int32Array(256);	// surfacenets
 var buffer = new Int32Array(4096);		// surfacenets
 var brain={};
 
-function init(path,level) {
+function init(param) {
 	init_surfacenets();
 
+	var path=param.path;
+	brain.level=param.level;
+	
 	importScripts("/lib/pako/pako.min.js");
-	loadNifti(path,function(){
-		var g=SurfaceNets(brain.data,brain.dim,brain.pixdim,level);
-		self.postMessage({msg:"success",geometry:g});
-	});
-}
 
+	if(param.niigz) {
+		self.postMessage({msg:"render from localStorage"});
+		configureNifti(param.niigz,computeMesh);		
+	} else {
+		self.postMessage({msg:"render from server"});
+		loadNifti(path,computeMesh);
+	}
+}
+function computeMesh() {
+	var g=SurfaceNets(brain.data,brain.dim,brain.pixdim,brain.level);
+	self.postMessage({msg:"success",geometry:g});
+}
 function init_surfacenets()
 {
 	var k = 0;
@@ -131,51 +144,57 @@ function SurfaceNets(data, dims, pixdims, level)
 	}
 	return { vertices: vertices, faces: faces };
 }
+function configureNifti(niigz, callback) {
+	var	inflate=new pako.Inflate();
+	try {
+		inflate.push(new Uint8Array(niigz),true);
+		var data=inflate.result.buffer;
+	} catch(ex) {
+		self.postMessage({msg:"ERROR: cannot decompress segmentation data"});
+		self.close();
+	}
+	var	dv=new DataView(data);
+	var	sizeof_hdr=dv.getInt32(0,true);
+	var	dimensions=dv.getInt16(40,true);
 
+	brain.dim=[];
+	brain.dim[0]=dv.getInt16(42,true);
+	brain.dim[1]=dv.getInt16(44,true);
+	brain.dim[2]=dv.getInt16(46,true);
+	brain.datatype=dv.getInt16(72,true);
+	brain.pixdim=[];
+	brain.pixdim[0]=dv.getFloat32(80,true);
+	brain.pixdim[1]=dv.getFloat32(84,true);
+	brain.pixdim[2]=dv.getFloat32(88,true);
+	var	vox_offset=dv.getFloat32(108,true);
+
+	switch(brain.datatype)
+	{
+		case 2:
+		case 8:
+			brain.data=new Uint8Array(data,vox_offset);
+			break;
+		case 16:
+			brain.data=new Int16Array(data,vox_offset);
+			break;
+		case 32:
+			brain.data=new Float32Array(data,vox_offset);
+			break;
+	}
+
+	console.log("dim",brain.dim[0],brain.dim[1],brain.dim[2]);
+	console.log("datatype",brain.datatype);
+	console.log("pixdim",brain.pixdim[0],brain.pixdim[1],brain.pixdim[2]);
+	console.log("vox_offset",vox_offset);
+	callback();
+}
 function loadNifti(path,callback) {
 	var oReq = new XMLHttpRequest();
 	oReq.open("GET", path, true);
 	oReq.addEventListener("progress", function(e){console.log(parseInt(100*e.loaded/e.total)+"% Loaded")}, false);
 	oReq.responseType = "arraybuffer";
-	oReq.onload = function(oEvent)
-	{
-		var	inflate=new pako.Inflate();
-		inflate.push(new Uint8Array(this.response),true);
-		var data=inflate.result.buffer;
-		var	dv=new DataView(data);
-		var	sizeof_hdr=dv.getInt32(0,true);
-		var	dimensions=dv.getInt16(40,true);
-		
-		brain={dim:[],pixdim:[]};
-		brain.dim[0]=dv.getInt16(42,true);
-		brain.dim[1]=dv.getInt16(44,true);
-		brain.dim[2]=dv.getInt16(46,true);
-		brain.datatype=dv.getInt16(72,true);
-		brain.pixdim[0]=dv.getFloat32(80,true);
-		brain.pixdim[1]=dv.getFloat32(84,true);
-		brain.pixdim[2]=dv.getFloat32(88,true);
-		var	vox_offset=dv.getFloat32(108,true);
-
-		self.postMessage({msg:"datatype: "+brain.datatype});
-		switch(brain.datatype)
-		{
-			case 2:
-			case 8:
-				brain.data=new Uint8Array(data,vox_offset);
-				break;
-			case 16:
-				brain.data=new Int16Array(data,vox_offset);
-				break;
-			case 32:
-				brain.data=new Float32Array(data,vox_offset);
-				break;
-		}
-
-		console.log("dim",brain.dim[0],brain.dim[1],brain.dim[2]);
-		console.log("datatype",brain.datatype);
-		console.log("pixdim",brain.pixdim[0],brain.pixdim[1],brain.pixdim[2]);
-		console.log("vox_offset",vox_offset);
-		callback();		
+	oReq.onload = function(oEvent) {
+		configureNifti(this.response,callback);
 	};
 	oReq.send();
 }
