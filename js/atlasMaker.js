@@ -221,7 +221,12 @@ var AtlasMakerWidget = {
 		var me=AtlasMakerWidget;
 		if(me.debug)
 			console.log("> reder3D()");
-		location="surfacenets.html?path="+me.User.dirname+"/"+me.User.atlasFilename;
+		
+		// puts a fresh version of the segmentation in localStorage
+		localStorage.brainbox=URL.createObjectURL(new Blob([me.encodeNifti()]));
+		
+		// opens 3d render window
+		window.open("/templates/surface.html?path="+me.User.dirname+me.User.atlasFilename,"_blank");
 	},
 	link: function() {
 		var me=AtlasMakerWidget;
@@ -274,9 +279,9 @@ var AtlasMakerWidget = {
 		}
 		*/
 	},
-	saveNifti: function() {
+	encodeNifti: function() {
 		var me=AtlasMakerWidget;
-		if(me.debug) console.log("> saveNifti()");
+		if(me.debug) console.log("> encodeNifti()");
 	
 		var	sizeof_hdr=348;
 		var	dimensions=4;			// number of dimension values provided
@@ -291,7 +296,7 @@ var AtlasMakerWidget = {
 		dv.setInt16(44,me.brain_dim[1],true);
 		dv.setInt16(46,me.brain_dim[2],true);
 		dv.setInt16(48,1,true);
-		dv.setInt16(70,datatype,true);
+		dv.setInt16(72,datatype,true);
 		dv.setInt16(74,8,true);			// bits per voxel
 		dv.setFloat32(76,1,true);		// first pixdim value
 		dv.setFloat32(80,me.brain_pixdim[0],true);
@@ -309,9 +314,17 @@ var AtlasMakerWidget = {
 		for(i=0;i<data.length;i++)
 			nii[i+voxel_offset]=data[i];
 		
-		var	deflate=new pako.Deflate({gzip:true});
-		deflate.push(nii,true);
-		var niigzBlob = new Blob([deflate.result]);
+		var	niigz=new pako.Deflate({gzip:true});
+		niigz.push(nii,true);
+				
+		return niigz.result;
+	},
+	saveNifti: function() {
+		var me=AtlasMakerWidget;
+		if(me.debug) console.log("> saveNifti()");
+	
+		var niigz=me.encodeNifti();
+		var niigzBlob = new Blob([niigz]);
 	
 		$("a#download_atlas").attr("href",window.URL.createObjectURL(niigzBlob));
 		$("a#download_atlas").attr("download",me.User.atlasFilename);
