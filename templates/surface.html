@@ -57,10 +57,38 @@ loadScript("/lib/three.min.js")
 			default:
 				console.log(e.data);
 		}
-			
 	}
-	console.log("Start worker");
-	worker.postMessage({cmd:"start",path:path,level:level}); // Start the worker.
+	console.log("Start worker",path);
+	if(localStorage.brainbox) {
+		console.log("with segmentation from localStorage");
+		var xhr = new XMLHttpRequest();
+		xhr.open('GET',localStorage.brainbox,true);
+		xhr.responseType = 'blob';
+		xhr.onload = function(e) {
+
+			if(this.status!=200) {
+				console.log("load from localStorage failed (status: "+this.status+"). Try to load from server");
+				worker.postMessage({cmd:"start",path:path,level:level});
+				return;
+			}
+			
+			var blob=this.response;
+			var reader = new FileReader();
+			reader.addEventListener("loadend", function() {
+				var ab=this.result;
+				worker.postMessage({cmd:"start",path:path,level:level,niigz:ab});
+			});
+			reader.readAsArrayBuffer(blob);
+		};
+		xhr.onerror = function(e) {
+			console.log("load from localStorage failed. Try to load from server");
+			worker.postMessage({cmd:"start",path:path,level:level});
+		};
+		xhr.send();
+	} else {
+		console.log("with segmentation from server");
+		worker.postMessage({cmd:"start",path:path,level:level});
+	}		
 });
 
 // "wait" animation
