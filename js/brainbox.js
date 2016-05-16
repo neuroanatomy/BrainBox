@@ -1,5 +1,6 @@
 var BrainBox={
 	version: 1,
+	/*
 	hash: function(str) {
 		var i,v0,v1,abc="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 		v0=0;
@@ -16,6 +17,23 @@ var BrainBox={
 		}
 		return res;
 	},
+	*/
+	hash: function(str) {
+		var v0=0,v1,abc="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		for(i=0;i<str.length;i++) {
+			ch=str.charCodeAt(i);
+			v0=((v0<<5)-v0)+ch;
+			v0=v0&v0;
+		}
+		var sz=abc.length,v,res="";
+		for(i=0;i<8;i++) {
+			v1=parseInt(v0/sz);
+			v=Math.abs(v0-v1*sz);
+			res+=abc[v];
+			v0=v1;
+		}
+		return res;
+	}
 	initBrainBox: function(param) {
 		var date;
 	
