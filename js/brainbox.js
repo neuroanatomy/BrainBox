@@ -1,22 +1,8 @@
 var BrainBox={
 	version: 1,
 	/*
-	hash: function(str) {
-		var i,v0,v1,abc="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-		v0=0;
-		for(i=0;i<str.length;i++) {
-			v1=str.charCodeAt(i);
-			v0+=v0+v0^v1;
-		}
-		var sz=abc.length,v,res="";
-		for(i=0;i<5;i++) {
-			v1=parseInt(v0/sz);
-			v=Math.abs(v0-v1*sz);
-			res+=abc[v];
-			v0=v1;
-		}
-		return res;
-	},
+		JavaScript implementation of Java's hashCode method from
+		http://werxltd.com/wp/2010/05/13/javascript-implementation-of-javas-string-hashcode-method/
 	*/
 	hash: function(str) {
 		var v0=0,v1,abc="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
