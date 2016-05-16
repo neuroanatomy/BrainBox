@@ -33,7 +33,7 @@ var BrainBox={
 			v0=v1;
 		}
 		return res;
-	}
+	},
 	initBrainBox: function(param) {
 		var date;
 	
