@@ -26,11 +26,22 @@ td {
 	position:relative;
 	background-color:black;
 }
-#atlasMaker #info {
+#atlasMaker {
 	position: absolute;
 	bottom:5px;
 	right:5px;
 	color:white;
+	font-family:sans-serif;
+	z-index:11;
+}
+#info {
+	position: absolute;
+	top:0px;
+	right:0px;
+	width:100%;
+	height:100%;
+	color:white;
+	background-color:rgb(255,0,0,0.4);
 	font-family:sans-serif;
 	z-index:11;
 }
