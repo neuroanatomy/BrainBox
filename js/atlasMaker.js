@@ -411,15 +411,15 @@ var AtlasMakerWidget = {
 		if(me.User.measureLength) {
 			var W=parseFloat($('#atlasMaker canvas').css('width'));
 			var w=parseFloat($('#atlasMaker canvas').attr('width'));
-			var z=W/w,p=me.User.measureLength,str1;
+			var zx=W/w,zy=zx*me.brain_Hdim/me.brain_Wdim,p=me.User.measureLength,str1;
 			var W=parseFloat($('#atlasMaker canvas').css('width'));
 			var w=parseFloat($('#atlasMaker canvas').attr('width'));
-			str1="M"+z*p[0].x+","+z*p[0].y;
+			str1="M"+zx*p[0].x+","+zy*p[0].y;
 			for(i=1;i<p.length;i++)
-				str1+="L"+z*p[i].x+","+z*p[i].y;
-			str+=[	"<circle fill='#00ff00' cx="+z*p[0].x+" cy="+z*p[0].y+" r=3 />",
+				str1+="L"+zx*p[i].x+","+zy*p[i].y;
+			str+=[	"<circle fill='#00ff00' cx="+zx*p[0].x+" cy="+zy*p[0].y+" r=3 />",
 					"<path stroke='#00ff00' fill='none' d='"+str1+"'/>",
-					(i>0)?"<circle fill='#00ff00' cx="+z*p[i-1].x+" cy="+z*p[i-1].y+" r=3 />":""].join("\n");
+					(i>0)?"<circle fill='#00ff00' cx="+zx*p[i-1].x+" cy="+zy*p[i-1].y+" r=3 />":""].join("\n");
 		}
 		
 		info.html(str);
