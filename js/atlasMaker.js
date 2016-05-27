@@ -24,6 +24,7 @@ var AtlasMakerWidget = {
 					},
 	brain:			0,
 	annotationLength:0,
+	measureLength:	null,
 	User:			{  view:null,
 					   tool:'paint',
 					  slice:null,
@@ -113,8 +114,12 @@ var AtlasMakerWidget = {
 				me.User.tool='erase';
 				me.User.penValue=0;
 				break;
+			case 'Measure':
+				me.User.tool='measure';
+				break;
 		}
 		me.sendUserDataMessage("change tool");
+		me.User.measureLength=null;
 	},
 	changePenSize: function(theSize) {
 		var me=AtlasMakerWidget;
@@ -396,10 +401,28 @@ var AtlasMakerWidget = {
 		var me=AtlasMakerWidget;
 		if(me.debug>1) console.log("> displayInformation()");
 		me.info.slice=me.User.slice;
-		me.container.find("#info").html("");
+		var i=0,info=me.container.find("#info");
+		
+		var str="";
 		for(var k in me.info) {
-			me.container.find("#info").append(k+": "+me.info[k]+"<br/>");
+			str+="<text x='5' y='"+(15+15*i++)+"' fill='white'>"+k+": "+me.info[k]+"</text>";
 		}
+		
+		if(me.User.measureLength) {
+			var W=parseFloat($('#atlasMaker canvas').css('width'));
+			var w=parseFloat($('#atlasMaker canvas').attr('width'));
+			var zx=W/w,zy=zx*me.brain_Hdim/me.brain_Wdim,p=me.User.measureLength,str1;
+			var W=parseFloat($('#atlasMaker canvas').css('width'));
+			var w=parseFloat($('#atlasMaker canvas').attr('width'));
+			str1="M"+zx*p[0].x+","+zy*p[0].y;
+			for(i=1;i<p.length;i++)
+				str1+="L"+zx*p[i].x+","+zy*p[i].y;
+			str+=[	"<circle fill='#00ff00' cx="+zx*p[0].x+" cy="+zy*p[0].y+" r=3 />",
+					"<path stroke='#00ff00' fill='none' d='"+str1+"'/>",
+					(i>0)?"<circle fill='#00ff00' cx="+zx*p[i-1].x+" cy="+zy*p[i-1].y+" r=3 />":""].join("\n");
+		}
+		
+		info.html(str);
 	},
 	drawImages: function() {
 		var me=AtlasMakerWidget;
@@ -668,6 +691,35 @@ var AtlasMakerWidget = {
 	
 		var z=me.User.slice;
 
+		
+		switch(me.User.tool) {
+			case 'paint':
+				if(me.User.doFill)
+					me.paintxy(-1,'f',x,y,me.User);
+				else {
+					me.User.mouseIsDown = true;
+					me.sendUserDataMessage("mouse down");
+					me.paintxy(-1,'mf',x,y,me.User);
+				}
+				break;
+			case 'erase':
+				if(me.User.doFill)
+					me.paintxy(-1,'e',x,y,me.User);
+				else {
+					me.User.mouseIsDown = true;
+					me.sendUserDataMessage("mouse down");
+					me.paintxt(-1,'me',x,y,me.User);
+				}
+				break;
+			case 'measure':
+				if(me.User.measureLength==null)
+					me.User.measureLength=[{x:x,y:y}];
+				else
+					me.User.measureLength.push({x:x,y:y});
+				break;
+		}
+		
+		/*
 		if(me.User.doFill) {
 			if(me.User.penValue==0)
 				me.paintxy(-1,'e',x,y,me.User);
@@ -682,6 +734,7 @@ var AtlasMakerWidget = {
 			if(me.User.tool=='erase')
 				me.paintxy(-1,'me',x,y,me.User);
 		}
+		*/
 	
 		// init annotation length counter
 		me.annotationLength=0;
@@ -697,11 +750,23 @@ var AtlasMakerWidget = {
 
 		if(!me.User.mouseIsDown)
 			return;
+		
+		switch(me.User.tool) {
+			case 'paint':
+				me.paintxy(-1,'lf',x,y,me.User);
+				break;
+			case 'erase':
+				me.paintxy(-1,'le',x,y,me.User);
+				break;
+		}
+		
+		/*
 		if(me.User.tool=='paint')
 			me.paintxy(-1,'lf',x,y,me.User);
 		else
 		if(me.User.tool=='erase')
 			me.paintxy(-1,'le',x,y,me.User);
+		*/
 
 	},
 	up: function(e) {
@@ -731,13 +796,29 @@ var AtlasMakerWidget = {
 		var me=AtlasMakerWidget;
 		if(me.debug>1) console.log("> keyDown()");
 	
-		if(e.which==37) {	// left arrow
-			me.prevSlice();
-			e.preventDefault();
-		}
-		if(e.which==39) {	// right arrow
-			me.nextSlice(this);
-			e.preventDefault();
+		// console.log("key:",e.which);
+	
+		switch(e.which) {
+			case 13: // return
+				if(me.User.measureLength) {
+					var length=0;
+					var p=me.User.measureLength;
+					var wdim=me.brain_Wdim,hdim=me.brain_Hdim;
+					var i;
+					for(i=1;i<p.length;i++)
+						length+=Math.sqrt(Math.pow(wdim*(p[i].x-p[i-1].x),2)+Math.pow(hdim*(p[i].y-p[i-1].y),2));
+					$("#log").append("Length: "+length+"<br/>");
+					me.User.measureLength=null;
+				}
+				break;
+			case 37: // left arrow
+				me.prevSlice();
+				e.preventDefault();
+				break;
+			case 39: // right arrow
+				me.nextSlice(this);
+				e.preventDefault();
+				break;
 		}
 	},
 
@@ -1369,7 +1450,7 @@ var AtlasMakerWidget = {
 		me.context = me.canvas.getContext('2d');
 
 		// Add div to display slice number
-		me.container.find("#resizable").append("<div id='info'></div>");
+		me.container.find("#resizable").append("<svg id='info'></svg>");
 		
 		// Add cursor (a small div)
 		me.container.append("<div id='cursor'></div>");

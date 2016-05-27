@@ -1,0 +1,28 @@
+{
+  "name": "brainbox",
+  "version": "0.0.1",
+  "description": "Web app for the collaborative editing of brain imaging data.",
+  "main": "atlasMakerServer.js",
+  "dependencies": {
+    "file-type": "^3.7.0",
+    "jpeg-js": "^0.1.1",
+    "magic-number": "^0.1.4",
+    "request": "^2.58.0",
+    "require": "^2.4.20",
+    "ws": "^0.4.32"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "node atlasMakerServer.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OpenNeuroLab/BrainBox"
+  },
+  "author": "Roberto Toro <rto@braincatalogue.org> (http://neuroanatomy.github.io)",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/OpenNeuroLab/BrainBox/issues"
+  },
+  "homepage": "https://github.com/OpenNeuroLab/BrainBox"
+}
