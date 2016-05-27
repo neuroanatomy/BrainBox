@@ -25,6 +25,7 @@ var	localdir=__dirname+"/../";
 var	uidcounter=1;
 
 var niiTag=bufferTag("nii",8);
+var mghTag=bufferTag("mgh",8);
 var jpgTag=bufferTag("jpg",8);
 
 var websocket;
@@ -307,7 +308,7 @@ function getBrainAtPath(brainPath,callback) {
 		if(Brains[i].path==brainPath)
 			return Brains[i].data;
 			
-	loadBrainNiftiCompressed(brainPath,function(data) {
+	loadBrainCompressed(brainPath,function(data) {
 		var brain={path:brainPath,data:data};
 		Brains.push(brain);
 		callback(data);
@@ -916,7 +917,6 @@ function loadBrainNifti(err,nii,callback) {
 	var	sizeof_hdr=nii.readUInt32LE(0);
 	var	dimensions=nii.readUInt16LE(40);
 	var brain={};
-	brain.hdr=nii.slice(0,vox_offset);
 	brain.dim=[];
 	brain.dim[0]=nii.readUInt16LE(42);
 	brain.dim[1]=nii.readUInt16LE(44);
@@ -978,26 +978,100 @@ function loadBrainNifti(err,nii,callback) {
 	console.log("min:",min,"max:",max);
 	callback(brain);
 }
+function loadBrainMGZ(err,data,callback) {
+	var hdr_sz=284;
+	var brain={};
+	var datatype;
+	
+	brain.dim=[];
+	brain.dim[0]=data.readInt32BE(4);
+	brain.dim[1]=data.readInt32BE(8);
+	brain.dim[2]=data.readInt32BE(12);
+	datatype=data.readInt32BE(20);
+	brain.pixdim=[];
+	brain.pixdim[0]=data.readFloatBE(30);
+	brain.pixdim[1]=data.readFloatBE(34);
+	brain.pixdim[2]=data.readFloatBE(38);
+	
+	switch(datatype) {
+		case 0: // MGHUCHAR
+			brain.data=data.slice(hdr_sz);
+			break;
+		case 1: // MGHINT
+			var tmp=data.slice(hdr_sz);
+			brain.data=new Uint32Array(brain.dim[0]*brain.dim[1]*brain.dim[2]);
+			for(j=0;j<brain.dim[0]*brain.dim[1]*brain.dim[2];j++)
+				brain.data[j]=tmp.readUInt32BE(j*4);
+			break;
+		case 3: // MGHFLOAT
+			var tmp=data.slice(hdr_sz);
+			brain.data=new Float32Array(brain.dim[0]*brain.dim[1]*brain.dim[2]);
+			for(j=0;j<brain.dim[0]*brain.dim[1]*brain.dim[2];j++)
+				brain.data[j]=tmp.readFloatBE(j*4);
+			break;
+		case 4: // MGHSHORT
+			var tmp=data.slice(hdr_sz);
+			brain.data=new Int16Array(brain.dim[0]*brain.dim[1]*brain.dim[2]);
+			for(j=0;j<brain.dim[0]*brain.dim[1]*brain.dim[2];j++)
+				brain.data[j]=tmp.readInt16BE(j*2);
+			break;
+		default:
+			console.log("ERROR: Unknown dataType: "+datatype);
+	}
+		
+	console.log(new Date());
+	console.log("brain size",brain.data.length);
+	console.log("brain dim",brain.dim);
+	console.log("brain datatype",datatype);
+	console.log("free memory",os.freemem());
+	
+	var i,sum=0,min,max;
+	min=brain.data[0];
+	max=min;
+	for(i=0;i<brain.dim[0]*brain.dim[1]*brain.dim[2];i++) {
+		sum+=brain.data[i];
+		
+		if(brain.data[i]<min) min=brain.data[i];
+		if(brain.data[i]>max) max=brain.data[i];
+	}
+	brain.sum=sum;
+	brain.min=min;
+	brain.max=max;
 
-function loadBrainNiftiCompressed(path,callback) {
+	console.log("mgh file loaded, sum:",sum);
+	console.log("min:",min,"max:",max);
+	callback(brain);
+}
+function loadBrainCompressed(path,callback) {
 	if(debug)
-		console.log("[loadBrainNifti]",path);
+		console.log("[loadBrainCompressed]",path);
 	path="../"+path;
 	if(!fs.existsSync(path)) {
 		console.log("ERROR: File does not exist:",path);
 		return;
 	} else {
-		var niigz;
+		var datagz;
 		try {
-			niigz=fs.readFileSync(path);
-			var ft=fileType(niigz);
+			datagz=fs.readFileSync(path);
+			var ft=fileType(datagz);
 			console.log("fileType",ft);
+			var ext=path.split('.').pop();
+			console.log("extension",ext);
+			
 			switch(ft.ext) {
-				case 'gz':
-					zlib.gunzip(niigz,function(err,nii){if(err) console.log("ERROR:",err);loadBrainNifti(err,nii,callback)});
+				case 'gz': {
+					switch(ext) {
+						case 'gz':
+							zlib.gunzip(datagz,function(err,nii){if(err) console.log("ERROR:",err);loadBrainNifti(err,nii,callback)});
+							break;
+						case 'mgz':
+							zlib.gunzip(datagz,function(err,nii){if(err) console.log("ERROR:",err);loadBrainMGZ(err,nii,callback)});
+							break;
+					}
 					break;
+				}
 				case 'zip':
-					zlib.inflate(niigz,function(err,nii){if(err) console.log("ERROR:",err);loadBrainNifti(err,nii,callback)});
+					zlib.inflate(datagz,function(err,nii){if(err) console.log("ERROR:",err);loadBrainNifti(err,nii,callback)});
 					break;
 			}
 		} catch(e) {
