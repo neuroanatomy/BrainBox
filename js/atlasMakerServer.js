@@ -5,7 +5,7 @@
 	Launch using > node atlasMakerServer.js
 */
 
-var	debug=0;
+var	debug=1;
 
 var WebSocketServer=require("ws").Server; //https://github.com/websockets/ws
 
@@ -177,6 +177,9 @@ function initSocketConnection() {
 					case "requestSlice":
 						receiveRequestSliceMessage(data,this);
 						break;
+					case "saveMetadata":
+						receiveSaveMetadataMessage(data,this);
+						break;
 					case "echo":
 						console.log("ECHO: '"+data.msg+"' from user "+data.username);
 						break;
@@ -300,6 +303,24 @@ function receiveRequestSliceMessage(data,user_socket) {
 	if(brain) {
 		sendSliceToUser(brain,view,slice,user_socket);
 	}
+}
+function receiveSaveMetadataMessage(data,user_socket) {
+	if(debug>=1) console.log("[receiveSaveMetadataMessage]");
+
+	console.log("[receiveSaveMetadataMessage]");
+	console.log(JSON.stringify(data,null,"\t"));
+	
+	var uid=data.uid;		// user id
+	var	ms=+new Date;
+	var path1=localdir+Users[uid].dirname+"info.json";
+	var	path2=localdir+Users[uid].dirname+ms+"_info.json";
+	fs.rename(path1,path2,function(){
+		try {
+			fs.writeFileSync(path1,JSON.stringify(data.metadata,null,"\t"));
+		} catch(e) {
+			console.log("ERROR: Cannot save info.json file at "+dirname);
+		}
+	});
 }
 function getBrainAtPath(brainPath,callback) {
 	if(debug>1) console.log("[getBrainAtPath]");
@@ -738,12 +759,16 @@ function undo(user) {
 	var	vol=Atlases[user.iAtlas].data;
 	var val;
 
-	for(i in undoLayer.actions) {
+	for(j in undoLayer.actions) {
+		var i=parseInt(j);
 		val=undoLayer.actions[i];
 		arr.push([i,val]);
 
+	    /*
 	    // The actual undo having place:
-	    vol[i]-=val;
+	    vol[i]-=val;	// TODO-UNDO: PREPARE FOR UNDO-PULL
+	    */
+	    vol[i]=val;
 	    
 	    if(debug>=2) console.log("undo:",i%user.dim[0],parseInt(i/user.dim[0])%user.dim[1],parseInt(i/user.dim[0]/user.dim[1])%user.dim[2]);
 	}
@@ -775,18 +800,19 @@ function paintxy(u,c,x,y,user,undoLayer)
 				user.x0=coord.x;
 				user.y0=coord.y;
 			}
+			break;
 		case 'le': // Line, erasing
 			line(coord.x,coord.y,0,user,undoLayer);
 			user.x0=coord.x;
 			user.y0=coord.y;
 			break;
 		case 'lf': // Line, painting
-			line(coord.x,coord.y,1,user,undoLayer);
+			line(coord.x,coord.y,user.penValue,user,undoLayer);
 			user.x0=coord.x;
 			user.y0=coord.y;
 			break;
 		case 'f': // Fill, painting
-			fill(coord.x,coord.y,coord.z,1,user,undoLayer);
+			fill(coord.x,coord.y,coord.z,user.penValue,user,undoLayer);
 			break;
 		case 'e': // Fill, erasing
 			fill(coord.x,coord.y,coord.z,0,user,undoLayer);
@@ -811,8 +837,15 @@ function paintVoxel(mx,my,mz,user,vol,val,undoLayer) {
 	}	
 	if(z>=0&&z<dim[2]&&y>=0&&y<dim[1]&&x>=0&&x<dim[0])
 		i=z*dim[1]*dim[0]+y*dim[0]+x;
+	
+	/*
 	if(vol[i]!=val) {
-		undoLayer.actions[i]=val-vol[i];
+		undoLayer.actions[i]=val-vol[i];	// TODO-UNDO: UNDO-PUSH
+		vol[i]=val;
+	}
+	*/
+	if(vol[i]!=val) {
+		undoLayer.actions[i]=vol[i];
 		vol[i]=val;
 	}
 }
@@ -845,7 +878,7 @@ function line(x,y,val,user,undoLayer)
 	var y2=y;
 	var	i;
 	
-	if(Math.pow(x1-x2,2)+Math.pow(y1-y2,2)<10*10)
+	if(Math.pow(x1-x2,2)+Math.pow(y1-y2,2)>10*10)
 		console.log("WARNING: long line from",x1,y1,"to",x2,y2,user);
 
     // Define differences and error check
@@ -881,29 +914,30 @@ function fill(x,y,z,val,user,undoLayer)
 	var dim=Atlases[user.iAtlas].dim;
 	var	Q=[],n;
 	var	i;
+	var bval=vol[sliceXYZ2index(x,y,z,user)]; // background-value: value of the voxel where the click occurred
 		
 	Q.push({"x":x,"y":y});
 	while(Q.length>0) {
 		n=Q.pop();
 		x=n.x;
 		y=n.y;
-		if(vol[sliceXYZ2index(x,y,z,user)]!=val) {
+		if(vol[sliceXYZ2index(x,y,z,user)]==bval) {
 			paintVoxel(x,y,z,user,vol,val,undoLayer);
 			
 			i=sliceXYZ2index(x-1,y,z,user);
-			if(i>=0 && vol[i]!=val)
+			if(i>=0 && vol[i]==bval)
 				Q.push({"x":x-1,"y":y});
 			
 			i=sliceXYZ2index(x+1,y,z,user);
-			if(i>=0 && vol[i]!=val)
+			if(i>=0 && vol[i]==bval)
 				Q.push({"x":x+1,"y":y});
 			
 			i=sliceXYZ2index(x,y-1,z,user);
-			if(i>=0 && vol[i]!=val)
+			if(i>=0 && vol[i]==bval)
 				Q.push({"x":x,"y":y-1});
 			
 			i=sliceXYZ2index(x,y+1,z,user);
-			if(i>=0 && vol[i]!=val)
+			if(i>=0 && vol[i]==bval)
 				Q.push({"x":x,"y":y+1});
 		}
 	}

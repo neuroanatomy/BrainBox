@@ -11,12 +11,16 @@
 <body>
 
 <div style="width:100%;height:100%;display:flex;flex-direction:column">
+	
 	<!-- Login (fixed height) -->
 	<div style="flex:0 0 64px">
 		<div id="MyLogin"></div>
 	</div>
+	
 	<!-- Content (variable height) -->
-	<div style="flex:1 0 auto">
+	<div id="content" style="flex:1 0 auto">
+		
+		<!-- Introduction -->
 		<div id="intro">
 			<img id="logo" src="img/brainbox-logo.svg" style="text-align:center"/><br />
 			<h2>Real-time collaboration</h2>
@@ -43,8 +47,97 @@
 				<div style="flex:1 1 auto"></div>
 			</div>
 		</div>
-		<div id="stereotaxic" style="width:512px"></div>
+		<!-- End Introduction-->
+		
+		<!-- Splash -->
+		<div id='splash'>
+			<a href='/'>
+				<img id='logo' src='/img/brainbox-logo.svg'/>
+			</a>
+			<div id='msgLog'></div>
+		</div>
+		<!-- End Splash -->
+				
+		<!-- Data -->
+		<div id="data">		
+			<!-- Small left-top logo -->
+			<a href='/'>
+				<img style='position:fixed;left:5px;top:5px;width:200px' src='/img/brainbox-logo-small.svg'/>
+			</a>
+
+			<!-- Data Table -->
+			<table style="text-align:left;padding:1rem">
+			<tr>
+				<!-- AtlasMaker -->
+				<td>
+					<!-- AtlasMaker -->
+					<div id="stereotaxic" style="width:512px">
+					</div>
+					<!-- End AtlasMaker -->
+				</td>
+				
+				<!-- Annotations -->
+				<td style="vertical-align:top;padding-left:0.5rem">
+					<ul>
+						<li>
+							<b>Data source</b></br> <span id="source"></span>
+						</li>
+						<li>
+							<b>Inclusion date</b><br/> <span id="included"></span>
+						</li>
+						<li>
+							<b>Annotations</b><br/>
+							<table id="info">
+							<tr>
+								<th>Title</th>
+								<th>Project</th>
+								<th>Label Set</th>
+								<th>Owner</th>
+								<th>Created</th>
+								<th>Modified</th>
+								<th>Access</th>
+							</tr>
+							</table>
+							<div style="text-align:right">
+								<img id="addAnnotation"    class="button" src='/img/plus-circle.svg'/>
+								<img id="removeAnnotation" class="button" src='/img/minus-circle.svg'/>
+								<img id="saveAnnotations"   class="button" src='/img/floppy.svg'/>
+							</div>
+						</li>
+					</ul>
+				</td>
+			</tr>
+			</table>
+			<!-- End Data Table -->
+		</div>
+		<!-- End Data -->
+
+		<!-- Labels -->
+		<div id="labelset">
+			<div style="z-index:23;text-align:right">
+				<img id="labels-close" class="button" src="/img/times-circle.svg"/>
+			</div>
+
+			<ul style="padding-left:1rem">
+				<li>
+					<b>Label Set</b><br/>
+					<span id="labels-name"></span>
+				</li>
+				<li>
+					<b>Labels</b><br/>
+					<div id="label-list">
+					</div>
+					<div id="label-template">
+						<div class="label-color"></div>
+						<span class="label-name">Label Name</name>
+					</div>
+				</li>
+			</ul>
+		</div>
+		<!-- End Labels -->
+
 	</div>
+	<!-- End Content -->
 	
 	<!-- Space (fixed height) -->
 	<div style="flex:0 0 50px">
@@ -89,6 +182,150 @@ MyLoginWidget.init($("#MyLogin"));
 
 var params=deparam();
 var version=1;
+var info_proxy={};
+var labelSets;
+var access=["Read/Write","Read"];
+var hash_old;
+var date_format=function(e,d){$(e).text(new Date(d).toLocaleString())};
+
+// 2-way binding
+function bind2(proxy,original,path,el,format,parse) {
+	var i,k=path.split("."),o=original;
+	for(i=0;i<k.length-1;i++)
+		o=o[k[i]];
+	Object.defineProperty(proxy,path,{
+		get: function(){
+			if(parse)
+				o[k[i]]=parse(el);
+			else
+				o[k[i]]=$(el).text();
+			return o[k[i]];
+		},
+		set: function(v) {
+			o[k[i]]=v;
+			if(format)
+				format(el,v);
+			else
+				$(el).text(v);
+		},
+		enumerable:true
+	});
+	proxy[path]=o[k[i]];
+}
+// 1-way (bottom-up) binding
+function bind1(proxy,original,path,el,format) {
+	var i,k=path.split("."),o=original;
+	for(i=0;i<k.length-1;i++)
+		o=o[k[i]];
+	Object.defineProperty(proxy,path,{
+		get: function(){
+			return o[k[i]];
+		},
+		set: function(v) {
+			o[k[i]]=v;
+			if(format)
+				format(el,v);
+			else
+				$(el).text(v);
+		},
+		enumerable:true
+	});
+	proxy[path]=o[k[i]];
+}
+function unbind2(proxy,path) {
+	delete proxy[path];
+}
+
+function loadLabelsets() {
+	return $.getJSON("/php/brainbox.php?action=getLabelsets",function(data) {
+		labelSets=data;
+	});
+}
+function selectTableRow() {
+	var index=$(this).index()-1;
+	if(index>=0) {
+		$("table#info tr").removeClass("selected");
+		$(this).addClass("selected");
+		AtlasMakerWidget.configureAtlasMaker(BrainBox.info,index);
+	}
+}
+function appendTableRow(i) {
+	$("table#info").append($.map([
+		"<tr>",
+		" <td contentEditable></td>",
+		" <td contentEditable></td>",
+		" <td><select>",labelSets.map(function(o){return "<option>"+o.name+"</option>"}),"</select></td>",	// append label sets
+		" <td></td>",
+		" <td></td>",
+		" <td></td>",
+		" <td><select>",access.map(function(o){return "<option>"+o+"</option>"}),"</select></td>",	// append label sets
+		"</tr>"],function(o){return o}).join()
+	);
+	bind2(info_proxy,BrainBox.info,"mri.atlas."+i+".name",    $("table#info").find("tr:eq("+(i+1)+") td:eq(0)"));
+	bind2(info_proxy,BrainBox.info,"mri.atlas."+i+".project", $("table#info").find("tr:eq("+(i+1)+") td:eq(1)"));
+	bind2(info_proxy,BrainBox.info,"mri.atlas."+i+".labels",  $("table#info").find("tr:eq("+(i+1)+") td:eq(2)"),
+		function(e,d){$(e).find("select").prop('selectedIndex',labelSets.map(function(o){return o.source}).indexOf(d))},
+		function(e){var name=$(e).find("select").val();var i=labelSets.map(function(o){return o.name}).indexOf(name);return labelSets[i].source}
+	);
+	bind1(info_proxy,BrainBox.info,"mri.atlas."+i+".owner",   $("table#info").find("tr:eq("+(i+1)+") td:eq(3)"),function(e,d){$.get(d,function(r){$(e).text(r)})});
+	bind1(info_proxy,BrainBox.info,"mri.atlas."+i+".created", $("table#info").find("tr:eq("+(i+1)+") td:eq(4)"),date_format);
+	bind1(info_proxy,BrainBox.info,"mri.atlas."+i+".modified",$("table#info").find("tr:eq("+(i+1)+") td:eq(5)"),date_format);
+	bind2(info_proxy,BrainBox.info,"mri.atlas."+i+".access",  $("table#info").find("tr:eq("+(i+1)+") td:eq(6)"),
+		function(e,d){$(e).find("select").prop('selectedIndex',access.indexOf(d))},
+		function(e){return $(e).find("select").val()}
+	);
+}
+function addAnnotation() {
+	var date=new Date();
+	// add data to annotations array
+	BrainBox.info.mri.atlas.push({
+		name:"Untitled",
+		project:"Untitled",
+		access: "Read/Write", 
+		created: date.toJSON(), 
+		modified: date.toJSON(), 
+		filename: Math.random().toString(36).slice(2)+".nii.gz",	// automatically generated filename
+		labels: "http://brainbox.dev/labels/foreground.json",
+		owner: "/users/"+AtlasMakerWidget.User.username,
+		type: "volume"
+	});
+	
+	// add and bind new table row
+	var i=BrainBox.info.mri.atlas.length-1;
+	appendTableRow(i);
+	
+	// update in server
+	saveAnnotations();
+}
+function removeAnnotation() {
+	// remove row from table
+	var index=$("table#info").find(".selected").index()-1;
+	$('table#info tr:eq('+(index+1)+')').remove();
+
+	// remove binding
+	JSON.stringify(info_proxy); // update BrainBox.info from info_proxy
+	var i=BrainBox.info.mri.atlas.length-1;
+	unbind2(info_proxy,"mri.atlas."+i+".name");
+	unbind2(info_proxy,"mri.atlas."+i+".project");
+	unbind2(info_proxy,"mri.atlas."+i+".labels");
+	unbind2(info_proxy,"mri.atlas."+i+".owner");
+	unbind2(info_proxy,"mri.atlas."+i+".created");
+	unbind2(info_proxy,"mri.atlas."+i+".modified");
+	unbind2(info_proxy,"mri.atlas."+i+".access");
+	
+	// remove row from BrainBox.info.mri.atlas
+	BrainBox.info.mri.atlas.splice(index,1);
+
+	// update in server
+	saveAnnotations();
+}
+function saveAnnotations() {
+	console.log("save annotations");
+	JSON.stringify(info_proxy); // update BrainBox.info from info_proxy
+	AtlasMakerWidget.sendSaveMetadataMessage(BrainBox.info);
+	hash_old=BrainBox.hash(JSON.stringify(BrainBox.info));
+	$("#saveAnnotations").hide();
+}
 
 // If brainbox's call contains an url, launch atlasMaker with it,
 // otherwise, present the history in localStorage if it exists.
@@ -96,33 +333,75 @@ if(params.url) {
 	var fullscreen=false;
 	if(params.fullscreen)
 		params.fullscreen=(params.fullscreen=="true");
-	
-	var splash=$("<div id='splash'>");
-	splash.css({position:'absolute',top:'0px',left:'0px',backgroundColor:'#222',width:'100%',height:'100%'});
-	splash.append([
-		" <a href='/'>",
-		"  <img id='logo' src='/img/brainbox-logo.svg'/>",
-		" </a>",
-		" <div id='msgLog'></div>",
-		"</div>"
-	].join(""));
-	console.log(splash);
-	$('body').append(splash);
-	
 	params.hash=BrainBox.hash(params.url);
-	BrainBox.initBrainBox(params)
-	.then(function(){
-		$("#intro").remove();
-		$("#splash").remove();
-		$("body").prepend([
-			"<a href='/'>",
-			" <img style='position:fixed;left:5px;top:5px;width:200px' src='/img/brainbox-logo-small.svg'/>",
-			"</a>"
-		].join(""));
+	
+	// Present a splash screen while loading
+	$("#intro").hide();
+	$("#splash").show();	
 
+	// Load data
+	BrainBox.initBrainBox(params)
+	.then(function(){return loadLabelsets()})
+	.then(function(){
+		// Remove splash
+		$("#splash").hide();
+
+		// bind interface
+		bind1(info_proxy,BrainBox.info,"source",$("#source"));
+		bind1(info_proxy,BrainBox.info,"included",$("#included"),date_format);
+		for(var i=0;i<BrainBox.info.mri.atlas.length;i++) {
+			appendTableRow(i);
+		}
+
+		// connect colours close button
+		$(document).on('click', "#labels-close", function(){$("#labelset").hide()});
+
+		// annotations table: connect pop-down menus
+		$(document).on('change', "table#info select", function(){
+			var col=$("table#info tr:eq(0) th:eq("+$(this).closest('td')[0].cellIndex+")").text();
+			var index=$(this).closest('tr')[0].rowIndex-1;
+			switch(col) {
+				case "Label Set":
+					var url=info_proxy["mri.atlas."+index+".labels"];
+					$.getJSON(url,function(json) {
+						AtlasMakerWidget.ontology=json;
+						AtlasMakerWidget.changePenColor(0);
+						AtlasMakerWidget.brain_img.img=null; // to force redraw with new colors
+						AtlasMakerWidget.drawImages();
+					});
+					break;
+				case "Access":
+					break;
+			}
+		});
+		// annotation table: select row
+		$(document).on('click', "table#info tr", selectTableRow);
+		// annotations table: add, remove and save annotations
+		$(document).on('click', "#addAnnotation", addAnnotation);
+		$(document).on('click', "#removeAnnotation", removeAnnotation);
+		$(document).on('click', "#saveAnnotations", saveAnnotations);
+		
+		// annotations table: select the first row by default
+		$("table#info tr").removeClass("selected");
+		$("table#info tr").eq(1).addClass("selected");
+
+		$("#data").show();
+		
+		// autosave
+		hash_old=BrainBox.hash(JSON.stringify(BrainBox.info));
+		$("#saveAnnotations").hide();
+		setInterval(function() {
+			JSON.stringify(info_proxy);
+			var hash=BrainBox.hash(JSON.stringify(BrainBox.info));
+			if(hash!=hash_old) {
+				$("#saveAnnotations").show();
+			}
+		},1000*60*1 /*every 1 minute*/);
+			
 	},function(){
-		console.log("ERROR");
+		$("#msgLog").html("ERROR: Can't load data");
 	});
+
 } else {
 	if(localStorage.AtlasMaker) {
 		var stored=JSON.parse(localStorage.AtlasMaker);
