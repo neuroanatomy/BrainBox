@@ -836,6 +836,9 @@ var AtlasMakerWidget = {
 		if(me.debug>1) console.log("> keyDown()");
 	
 		// console.log("key:",e.which);
+		
+		if(e.target.tagName!="BODY")
+			return;
 	
 		switch(e.which) {
 			case 13: // return
