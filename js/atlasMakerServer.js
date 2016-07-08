@@ -565,9 +565,9 @@ gawk 'BEGIN{s="5C 01 ...";split(s,a," ");for(i=1;i<=352;i++)printf"%s,",strtonum
 			0,0,0,0,0,0,0,110,43,49,0,0,0,0,0]);
 		try {
 			atlas.hdr.writeUInt16LE(datatype,72,2);		// datatype 2: unsigned char (8 bits/voxel)
-			atlas.hdr.writeUInt16LE(atlas.dim[0],42,2); // datatype 2: unsigned char (8 bits/voxel)
-			atlas.hdr.writeUInt16LE(atlas.dim[1],44,2); // datatype 2: unsigned char (8 bits/voxel)
-			atlas.hdr.writeUInt16LE(atlas.dim[2],46,2); // datatype 2: unsigned char (8 bits/voxel)
+			atlas.hdr.writeUInt16LE(atlas.dim[0],42,2);
+			atlas.hdr.writeUInt16LE(atlas.dim[1],44,2);
+			atlas.hdr.writeUInt16LE(atlas.dim[2],46,2);
 			atlas.data=new Buffer(atlas.dim[0]*atlas.dim[1]*atlas.dim[2]);
 
 			var i;

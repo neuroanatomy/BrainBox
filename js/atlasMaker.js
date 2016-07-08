@@ -239,6 +239,24 @@ var AtlasMakerWidget = {
 			console.log("> link()");
 		window.prompt("Copy to clipboard:", location.href+"&view="+AtlasMakerWidget.User.view+"&slice="+AtlasMakerWidget.User.slice);
 	},
+	upload: function() {
+		var me=AtlasMakerWidget;
+		if(me.debug)
+			console.log("> upload()");
+	},
+	download: function() {
+		var me=AtlasMakerWidget;
+		if(me.debug)
+			console.log("> download()");
+			
+		var a = document.createElement('a');
+		var niigz=me.encodeNifti();
+		var niigzBlob = new Blob([niigz]);
+		a.href=window.URL.createObjectURL(niigzBlob);
+		a.download=me.atlasName+".nii.gz";
+		document.body.appendChild(a);
+		a.click();
+	},
 	color: function() {
 		var me=AtlasMakerWidget;
 		if(me.debug)
@@ -331,8 +349,10 @@ var AtlasMakerWidget = {
 		dv.setInt16(44,me.brain_dim[1],true);
 		dv.setInt16(46,me.brain_dim[2],true);
 		dv.setInt16(48,1,true);
-		dv.setInt16(72,datatype,true);
-		dv.setInt16(74,8,true);			// bits per voxel
+		dv.setInt16(70,datatype,true);
+		dv.setInt16(72,8,true);			// bits per voxel
+//		dv.setInt16(72,datatype,true);
+//		dv.setInt16(74,8,true);			// bits per voxel
 		dv.setFloat32(76,1,true);		// first pixdim value
 		dv.setFloat32(80,me.brain_pixdim[0],true);
 		dv.setFloat32(84,me.brain_pixdim[1],true);
@@ -1557,6 +1577,8 @@ var AtlasMakerWidget = {
 			me.toggle($(".toggle#fullscreen"),me.toggleFullscreen);
 			me.push($(".push#3drender"),me.render3D);
 			me.push($(".push#link"),me.link);
+			me.push($(".push#upload"),me.upload);
+			me.push($(".push#download"),me.download);
 			me.push($(".push#color"),me.color);
 			me.push($(".push#undo"),me.sendUndoMessage);
 			me.push($(".push#prev"),me.prevSlice);
@@ -1610,6 +1632,7 @@ var AtlasMakerWidget = {
 		me.name=info.name||"Untitled";
 		me.url=info.url;
 		me.atlasFilename=info.mri.atlas[index].filename;
+		me.atlasName=info.mri.atlas[index].name;
 
 		// get local file path from url
 		me.User.dirname=me.url; // TEMPORARY
