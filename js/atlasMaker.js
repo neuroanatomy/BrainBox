@@ -243,6 +243,50 @@ var AtlasMakerWidget = {
 		var me=AtlasMakerWidget;
 		if(me.debug)
 			console.log("> upload()");
+		var inp=$("<input>");
+		inp.hide();
+		$("body").append(inp);
+		var input=inp.get(0);
+		input.type="file";
+		input.onchange=function(e){
+			var name=this.files[0];
+			var reader = new FileReader();
+			reader.onload = function(e) {
+				var result=e.target.result;
+				var nii;
+				if(name.name.split('.').pop()=="gz") {
+					var inflate=new pako.Inflate();
+					inflate.push(new Uint8Array(result),true);
+					nii=inflate.result.buffer;
+				}
+				else
+					nii=result;
+				var mri=me.loadNifti(nii);
+
+				if(	mri.dim[0]!=me.User.dim[0] ||
+					mri.dim[1]!=me.User.dim[1] ||
+					mri.dim[2]!=me.User.dim[2]) {
+					console.log("ERROR: Volume dimensions do not match");
+					return;
+				}
+				
+				// copy uploaded data to atlas data
+				var i;
+				for(i=0;i<me.atlas.data.length;i++)
+					me.atlas.data[i]=mri.data[i];
+				
+				// send uploaded data to server (compressed)
+				me.socket.binaryType="arraybuffer";
+				me.socket.send(pako.deflate(mri.data));
+				me.socket.binaryType="blob";
+				
+				// redraw images
+				me.drawImages();
+			}
+			reader.readAsArrayBuffer(name);
+			inp.remove();
+		}
+		input.click();
 	},
 	download: function() {
 		var me=AtlasMakerWidget;
@@ -383,6 +427,44 @@ var AtlasMakerWidget = {
 	
 		$("a#download_atlas").attr("href",window.URL.createObjectURL(niigzBlob));
 		$("a#download_atlas").attr("download",me.User.atlasFilename);
+	},
+	loadNifti: function(nii) {
+		var	dv=new DataView(nii);
+		var	vox_offset=352;
+		var	sizeof_hdr=dv.getInt32(0,true);
+		var	dimensions=dv.getInt16(40,true);
+	
+		var mri={};
+		mri.hdr=nii.slice(0,vox_offset);
+		mri.dim=[];
+		mri.dim[0]=dv.getInt16(42,true);
+		mri.dim[1]=dv.getInt16(44,true);
+		mri.dim[2]=dv.getInt16(46,true);
+		mri.datatype=dv.getInt16(70,true);
+		mri.pixdim=[];
+		mri.pixdim[0]=dv.getFloat32(80,true);
+		mri.pixdim[1]=dv.getFloat32(84,true);
+		mri.pixdim[2]=dv.getFloat32(88,true);
+		vox_offset=dv.getFloat32(108,true);	
+		switch(mri.datatype)
+		{
+			case 2: // UCHAR
+				mri.data=new Uint8Array(nii,vox_offset);
+				break;
+			case 4: // SHORT
+				mri.data=new Int16Array(nii,vox_offset);
+				break;
+			case 8:  // INT
+				mri.data=new Int32Array(nii,vox_offset);
+				break;
+			case 16: // FLOAT
+				mri.data=new Float32Array(nii,vox_offset);
+				break;
+			default:
+				console.log("ERROR: Unknown dataType: "+mri.datatype);
+		}
+	
+		return mri;
 	},
 	configureBrainImage: function() {
 		var me=AtlasMakerWidget;

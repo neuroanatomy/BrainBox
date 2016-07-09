@@ -163,7 +163,13 @@ function initSocketConnection() {
 				if(debug>=2) console.log("[connection: message]",msg);
 				
 				var uid=getUserId(this);
-				var	data=JSON.parse(msg);
+				var data={};
+				
+				if(msg instanceof Buffer) { // Handle binary data: a user uploaded an atlas file
+					data.data=msg;
+					data.type="atlas";
+				} else
+					data=JSON.parse(msg);
 				data.uid=uid;
 				
 				// integrate paint messages
@@ -179,6 +185,9 @@ function initSocketConnection() {
 						break;
 					case "saveMetadata":
 						receiveSaveMetadataMessage(data,this);
+						break;
+					case "atlas":
+						receiveAtlasFromUserMessage(data,this);
 						break;
 					case "echo":
 						console.log("ECHO: '"+data.msg+"' from user "+data.username);
@@ -209,7 +218,13 @@ function initSocketConnection() {
 						continue;
 					}
 					
-					websocket.clients[i].send(JSON.stringify(data));
+					if(data.type=="atlas") {
+						// TODO: data.data is compressed, but sendAtlasToUser will compress it again... 
+						// sendAtlasToUser(data.data,websocket.clients[i]);
+					} 
+					else {
+						websocket.clients[i].send(JSON.stringify(data));
+					}
 					n++;
 				}
 				if(debug>=2) console.log("broadcasted to",n,"users");
@@ -320,6 +335,26 @@ function receiveSaveMetadataMessage(data,user_socket) {
 		} catch(e) {
 			console.log("ERROR: Cannot save info.json file at "+dirname);
 		}
+	});
+}
+function receiveAtlasFromUserMessage(data,user_socket) {
+	if(debug>=1) console.log("[receiveAtlasFromUserMessage]");
+	zlib.inflate(data.data,function(err,atlasData){
+		// Save current atlas
+		var uid=data.uid;		// user id
+		var iAtlas=Users[uid].iAtlas;
+		var atlas=Atlases[iAtlas];
+		saveNifti(atlas);
+
+		// Replace current atlas with new atlas
+		atlas.data=atlasData;
+		/*
+		console.log(atlas.dim[0]*atlas.dim[1]*atlas.dim[2],atlasData.length);
+		var i;
+		for(i=0;i<atlas.dim[0]*atlas.dim[1]*atlas.dim[2];i++) {
+			atlas.data[i]=atlasData[i];
+		}
+		*/
 	});
 }
 function getBrainAtPath(brainPath,callback) {
@@ -466,9 +501,8 @@ function sendPreviousUserDataMessage(new_uid) {
 		console.log("ERROR: Unable to sendPreviousUserDataMessage",ex);
 	}
 }
-function sendAtlasToUser(atlasdata,user_socket)
-{
-	if(debug) console.log("[sendAtlasToUser]");
+function sendAtlasToUser(atlasdata,user_socket) {
+	if(debug>=1) console.log("[sendAtlasToUser]");
 	
 	zlib.gzip(atlasdata,function(err,atlasdatagz) {
 		try {
@@ -532,10 +566,12 @@ function addAtlas(user,callback) {
 
 	user.iAtlas=Atlases.length;
 	Atlases.push(atlas);
-	
+
 	atlas.timer=setInterval(function(){saveNifti(atlas)},60*60*1000); // 60 minutes
 }
 function loadNifti(nii) {
+	if(debug>=1) console.log("[loadNifti]");
+
 	var	vox_offset=352;
 	var	sizeof_hdr=nii.readUInt32LE(0);
 	var	dimensions=nii.readUInt16LE(40);
@@ -581,10 +617,10 @@ function loadNifti(nii) {
 	
 	return mri;
 }
-function saveNifti() {
-}
 function loadAtlasNifti(atlas,username,callback)
 {
+	if(debug>=1) console.log("[loadAtlasNifti]");
+		
 	// Load nifty label
 	
 	var path=localdir+"/"+atlas.dirname+atlas.name;
@@ -644,7 +680,14 @@ gawk 'BEGIN{s="5C 01 ...";split(s,a," ");for(i=1;i<=352;i++)printf"%s,",strtonum
 		try {
 			niigz=fs.readFileSync(path);
 			zlib.gunzip(niigz,function(err,nii) {
-				var atlas=loadNifti(nii);
+				var mri=loadNifti(nii);
+				
+				atlas.hdr=mri.hdr;
+				atlas.dim=mri.dim;
+				atlas.datatype=mri.datatype;
+				atlas.pixdim=mri.pixdim;
+				atlas.data=mri.data;
+				
 				var i,sum=0;
 				for(i=0;i<atlas.dim[0]*atlas.dim[1]*atlas.dim[2];i++)
 					sum+=atlas.data[i];
@@ -664,6 +707,8 @@ gawk 'BEGIN{s="5C 01 ...";split(s,a," ");for(i=1;i<=352;i++)printf"%s,",strtonum
 }
 function saveNifti(atlas)
 {
+	if(debug>=1) console.log("[saveNifti]");
+
 	if(atlas && atlas.dim ) {
 		if(atlas.data==undefined) {
 			console.log("ERROR: [saveNifti] atlas is still in Atlas array, but it has not data");
@@ -702,6 +747,8 @@ function saveNifti(atlas)
 //==========
 function logToDatabase(key,value,username)
 {
+	if(debug>=1) console.log("[logToDatabase]");
+	
 	if(!username)
 		username="Undefined";
 	req.post({
