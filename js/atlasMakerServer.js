@@ -535,6 +535,54 @@ function addAtlas(user,callback) {
 	
 	atlas.timer=setInterval(function(){saveNifti(atlas)},60*60*1000); // 60 minutes
 }
+function loadNifti(nii) {
+	var	vox_offset=352;
+	var	sizeof_hdr=nii.readUInt32LE(0);
+	var	dimensions=nii.readUInt16LE(40);
+	
+	var mri={};
+	mri.hdr=nii.slice(0,vox_offset);
+	mri.dim=[];
+	mri.dim[0]=nii.readUInt16LE(42);
+	mri.dim[1]=nii.readUInt16LE(44);
+	mri.dim[2]=nii.readUInt16LE(46);
+	mri.datatype=nii.readUInt16LE(70);
+	mri.pixdim=[];
+	mri.pixdim[0]=nii.readFloatLE(80);
+	mri.pixdim[1]=nii.readFloatLE(84);
+	mri.pixdim[2]=nii.readFloatLE(88);
+	vox_offset=nii.readFloatLE(108);	
+	
+	switch(mri.datatype) {
+		case 2: // UCHAR
+			mri.data=nii.slice(vox_offset);
+			break;
+		case 4: // SHORT
+			var tmp=nii.slice(vox_offset);
+			mri.data=new Int16Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);
+			for(j=0;j<mri.dim[0]*mri.dim[1]*mri.dim[2];j++)
+				mri.data[j]=tmp.readInt16LE(j*2);
+			break;
+		case 8: // INT
+			var tmp=nii.slice(vox_offset);
+			mri.data=new Uint32Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);
+			for(j=0;j<mri.dim[0]*mri.dim[1]*mri.dim[2];j++)
+				mri.data[j]=tmp.readUInt32LE(j*4);
+			break;
+		case 16: // FLOAT
+			var tmp=nii.slice(vox_offset);
+			mri.data=new Float32Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);
+			for(j=0;j<mri.dim[0]*mri.dim[1]*mri.dim[2];j++)
+				mri.data[j]=tmp.readFloatLE(j*4);
+			break;
+		default:
+			console.log("ERROR: Unknown dataType: "+mri.datatype);
+	}
+	
+	return mri;
+}
+function saveNifti() {
+}
 function loadAtlasNifti(atlas,username,callback)
 {
 	// Load nifty label
@@ -596,18 +644,7 @@ gawk 'BEGIN{s="5C 01 ...";split(s,a," ");for(i=1;i<=352;i++)printf"%s,",strtonum
 		try {
 			niigz=fs.readFileSync(path);
 			zlib.gunzip(niigz,function(err,nii) {
-				var	sizeof_hdr=nii.readUInt32LE(0);
-				var	dimensions=nii.readUInt16LE(40);
-				atlas.hdr=nii.slice(0,vox_offset);
-				atlas.dim=[];
-				atlas.dim[0]=nii.readUInt16LE(42);
-				atlas.dim[1]=nii.readUInt16LE(44);
-				atlas.dim[2]=nii.readUInt16LE(46);
-				datatype=nii.readUInt16LE(72);
-				vox_offset=nii.readFloatLE(108);
-
-				atlas.data=nii.slice(vox_offset);
-
+				var atlas=loadNifti(nii);
 				var i,sum=0;
 				for(i=0;i<atlas.dim[0]*atlas.dim[1]*atlas.dim[2];i++)
 					sum+=atlas.data[i];
@@ -616,8 +653,7 @@ gawk 'BEGIN{s="5C 01 ...";split(s,a," ");for(i=1;i<=352;i++)printf"%s,",strtonum
 				console.log(new Date());
 				console.log("atlas size",atlas.data.length);
 				console.log("atlas dim",atlas.dim);
-				console.log("atlas datatype",datatype);
-				console.log("atlas vox_offset",vox_offset);
+				console.log("atlas datatype",atlas.datatype);
 				console.log("free memory",os.freemem());
 				callback(atlas.data);
 			});
@@ -945,54 +981,14 @@ function fill(x,y,z,val,user,undoLayer)
 /*
 	Serve brain slices
 */
-function loadBrainNifti(err,nii,callback) {
-	var datatype;
-	var	vox_offset=352;
-	var	sizeof_hdr=nii.readUInt32LE(0);
-	var	dimensions=nii.readUInt16LE(40);
-	var brain={};
-	brain.dim=[];
-	brain.dim[0]=nii.readUInt16LE(42);
-	brain.dim[1]=nii.readUInt16LE(44);
-	brain.dim[2]=nii.readUInt16LE(46);
-	datatype=nii.readUInt16LE(70);
-	brain.pixdim=[];
-	brain.pixdim[0]=nii.readFloatLE(80);
-	brain.pixdim[1]=nii.readFloatLE(84);
-	brain.pixdim[2]=nii.readFloatLE(88);
-	vox_offset=nii.readFloatLE(108);	
-	
-	switch(datatype) {
-		case 2: // UCHAR
-			brain.data=nii.slice(vox_offset);
-			break;
-		case 4: // SHORT
-			var tmp=nii.slice(vox_offset);
-			brain.data=new Int16Array(brain.dim[0]*brain.dim[1]*brain.dim[2]);
-			for(j=0;j<brain.dim[0]*brain.dim[1]*brain.dim[2];j++)
-				brain.data[j]=tmp.readInt16LE(j*2);
-			break;
-		case 8: // INT
-			var tmp=nii.slice(vox_offset);
-			brain.data=new Uint32Array(brain.dim[0]*brain.dim[1]*brain.dim[2]);
-			for(j=0;j<brain.dim[0]*brain.dim[1]*brain.dim[2];j++)
-				brain.data[j]=tmp.readUInt32LE(j*4);
-			break;
-		case 16: // FLOAT
-			var tmp=nii.slice(vox_offset);
-			brain.data=new Float32Array(brain.dim[0]*brain.dim[1]*brain.dim[2]);
-			for(j=0;j<brain.dim[0]*brain.dim[1]*brain.dim[2];j++)
-				brain.data[j]=tmp.readFloatLE(j*4);
-			break;
-		default:
-			console.log("ERROR: Unknown dataType: "+datatype);
-	}
+function loadBrainNifti(nii,callback) {
+
+	brain=loadNifti(nii);
 		
 	console.log(new Date());
 	console.log("brain size",brain.data.length);
 	console.log("brain dim",brain.dim);
-	console.log("brain datatype",datatype);
-	console.log("brain vox_offset",vox_offset);
+	console.log("brain datatype",brain.datatype);
 	console.log("free memory",os.freemem());
 	
 	var i,sum=0,min,max;
@@ -1012,7 +1008,7 @@ function loadBrainNifti(err,nii,callback) {
 	console.log("min:",min,"max:",max);
 	callback(brain);
 }
-function loadBrainMGZ(err,data,callback) {
+function loadBrainMGZ(data,callback) {
 	var hdr_sz=284;
 	var brain={};
 	var datatype;
@@ -1096,16 +1092,16 @@ function loadBrainCompressed(path,callback) {
 				case 'gz': {
 					switch(ext) {
 						case 'gz':
-							zlib.gunzip(datagz,function(err,nii){if(err) console.log("ERROR:",err);loadBrainNifti(err,nii,callback)});
+							zlib.gunzip(datagz,function(err,nii){if(err) console.log("ERROR:",err);loadBrainNifti(nii,callback)});
 							break;
 						case 'mgz':
-							zlib.gunzip(datagz,function(err,nii){if(err) console.log("ERROR:",err);loadBrainMGZ(err,nii,callback)});
+							zlib.gunzip(datagz,function(err,nii){if(err) console.log("ERROR:",err);loadBrainMGZ(nii,callback)});
 							break;
 					}
 					break;
 				}
 				case 'zip':
-					zlib.inflate(datagz,function(err,nii){if(err) console.log("ERROR:",err);loadBrainNifti(err,nii,callback)});
+					zlib.inflate(datagz,function(err,nii){if(err) console.log("ERROR:",err);loadBrainNifti(nii,callback)});
 					break;
 			}
 		} catch(e) {
