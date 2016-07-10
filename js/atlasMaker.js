@@ -327,9 +327,24 @@ var AtlasMakerWidget = {
 	},
 	changePenColor: function(index) {
 		var me=AtlasMakerWidget;
+		if(me.debug)
+			console.log("> changePenColor()");
 		var c=me.ontology.labels[index].color;
 		$("#color").css({backgroundColor:'rgb('+c[0]+','+c[1]+','+c[2]+')'});
 		me.User.penValue=me.ontology.labels[index].value;
+	},
+	ontologyValueToColor: function(val) {
+		var me=AtlasMakerWidget;
+		if(me.debug>2)
+			console.log("> ontologyValueToColor()");
+		var c=[0,0,0];
+		var i=me.ontology.valueToIndex[val];
+		if(i>=0) {
+			c=me.ontology.labels[i].color;
+		} else if(val) {
+			c=[255,0,0]; // unavailable labels are set to pure red
+		}
+		return c;
 	},
 	togglePreciseCursor: function() {
 		var me=AtlasMakerWidget;
@@ -593,16 +608,7 @@ var AtlasMakerWidget = {
 				case 'axi':i=ya*dim[1]/*PA*/*dim[0]/*LR*/+ y*dim[0]/*LR*/+x; break;
 			}
 			
-			var c;
-			if(data[i]>0) {
-				try {
-					c=me.ontology.labels[data[i]-1].color;
-				} catch(e) {
-					c=me.ontology.labels[me.ontology.labels.length-1].color; // label saturation
-				}
-			}
-			else
-				c=[0,0,0];
+			var c=me.ontologyValueToColor(data[i]);
 			i=(y*me.atlas_offcn.width+x)*4;
 			me.atlas_px.data[ i ]  =c[0];
 			me.atlas_px.data[ i+1 ]=c[1];
@@ -1032,37 +1038,6 @@ var AtlasMakerWidget = {
 
 		me.drawImages();
 	},
-	/* DEPRECATED
-	paintslice: function(u,img,user) {
-		var me=AtlasMakerWidget;
-		/// part of undo
-		// u: user number
-		// img: img data
-		msg={"img":img};
-		if(u==-1 && JSON.stringify(msg)!=JSON.stringify(me.msg0)) {
-			//me.sendPaintMessage(msg);
-			me.msg0=msg;
-		}
-
-		var layer=me.atlas;
-		// Should be called only from the server
-		// img contains the img data
-		// we must apply this image on the correct slice / view ( user.slice, user.view) !!
-		var idx_img = 0;
-		var width = getCanvasWidth(user.view);
-		var height = getCanvasHeight(user.view);
-		var i,x,y;
-		for(y = 0 ; y < height; y++) {
-			for(x = 0 ; x < width; x++) {
-				i = me.slice2index(x, y, user.slice, user.view);
-				layer.data[i] -= img[idx_img];
-				idx_img++;
-			}
-		}
-
-		me.drawImages();
-	},
-	*/
 	fill: function(x,y,z,val,myView) {
 		var me=AtlasMakerWidget;
 		if(me.debug) console.log("> fill()");
@@ -1071,9 +1046,10 @@ var AtlasMakerWidget = {
 		var	layer=me.atlas;
 		var	dim=layer.dim;
 		var	i;
-		var bval; // background-value: value of the voxel where the click occurred
+		var bval=layer.data[me.slice2index(x,y,z,myView)]; // background-value: value of the voxel where the click occurred
 		
-		bval=layer.data[me.slice2index(x,y,z,myView)];
+		if(bval==val)	// nothing to do
+			return;
 		
 		Q.push({"x":x,"y":y});
 		while(Q.length>0) {
@@ -1682,6 +1658,8 @@ var AtlasMakerWidget = {
 		// Load segmentation labels
 		$.getJSON(info.mri.atlas[index].labels,function(json) {
 			me.ontology=json
+			me.ontology.valueToIndex=[];
+			me.ontology.labels.forEach(function(o,i){me.ontology.valueToIndex[o.value]=i});
 			me.changePenColor(0);
 		});
 

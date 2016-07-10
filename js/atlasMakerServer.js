@@ -991,7 +991,10 @@ function fill(x,y,z,val,user,undoLayer)
 	var	Q=[],n;
 	var	i;
 	var bval=vol[sliceXYZ2index(x,y,z,user)]; // background-value: value of the voxel where the click occurred
-		
+
+	if(bval==val)	// nothing to do
+		return;
+	
 	Q.push({"x":x,"y":y});
 	while(Q.length>0) {
 		n=Q.pop();
