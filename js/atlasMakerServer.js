@@ -219,8 +219,7 @@ function initSocketConnection() {
 					}
 					
 					if(data.type=="atlas") {
-						// TODO: data.data is compressed, but sendAtlasToUser will compress it again... 
-						// sendAtlasToUser(data.data,websocket.clients[i]);
+						sendAtlasToUser(data.data,websocket.clients[i],false);
 					} 
 					else {
 						websocket.clients[i].send(JSON.stringify(data));
@@ -348,13 +347,6 @@ function receiveAtlasFromUserMessage(data,user_socket) {
 
 		// Replace current atlas with new atlas
 		atlas.data=atlasData;
-		/*
-		console.log(atlas.dim[0]*atlas.dim[1]*atlas.dim[2],atlasData.length);
-		var i;
-		for(i=0;i<atlas.dim[0]*atlas.dim[1]*atlas.dim[2];i++) {
-			atlas.data[i]=atlasData[i];
-		}
-		*/
 	});
 }
 function getBrainAtPath(brainPath,callback) {
@@ -429,12 +421,12 @@ function receiveUserDataMessage(data,user_socket) {
 		if(atlasLoadedFlag) {
 			if(firstConnectionFlag || switchingAtlasFlag) {
 				// send the new user our data
-				sendAtlasToUser(Atlases[i].data,user_socket);
+				sendAtlasToUser(Atlases[i].data,user_socket,true);
 			}
 		} else {
 			// The atlas requested has not been loaded before:
 			// Load the atlas s/he's requesting
-			addAtlas(user,function(atlas){sendAtlasToUser(atlas,user_socket)});
+			addAtlas(user,function(atlas){sendAtlasToUser(atlas,user_socket,true)});
 		}
 	}
 	
@@ -501,16 +493,24 @@ function sendPreviousUserDataMessage(new_uid) {
 		console.log("ERROR: Unable to sendPreviousUserDataMessage",ex);
 	}
 }
-function sendAtlasToUser(atlasdata,user_socket) {
+function sendAtlasToUser(atlasdata,user_socket,flagCompress) {
 	if(debug>=1) console.log("[sendAtlasToUser]");
 	
-	zlib.gzip(atlasdata,function(err,atlasdatagz) {
+	if(flagCompress) {
+		zlib.gzip(atlasdata,function(err,atlasdatagz) {
+			try {
+				user_socket.send(Buffer.concat([atlasdatagz,niiTag]), {binary: true, mask: false});
+			} catch(e) {
+				console.log(new Date(),"ERROR: Cannot send atlas data to user");
+			}
+		});
+	} else {
 		try {
-			user_socket.send(Buffer.concat([atlasdatagz,niiTag]), {binary: true, mask: false});
+			user_socket.send(Buffer.concat([atlasdata,niiTag]), {binary: true, mask: false});
 		} catch(e) {
 			console.log(new Date(),"ERROR: Cannot send atlas data to user");
 		}
-	});
+	}
 }
 function broadcastPaintVolumeMessage(msg,user) {
 	if(debug) console.log("> broadcastPaintVolumeMessage()");
@@ -812,6 +812,7 @@ function undo(user) {
 	var undoLayer;
 	var	i,action,found=false;
 	
+	// find latest undo layer for user
 	for(i=UndoStack.length-1;i>=0;i--) {
 		undoLayer=UndoStack[i];
 		if(undoLayer==undefined)
@@ -832,6 +833,7 @@ function undo(user) {
 		return;
 	}
 	
+	// undo latest actions
 	/*
 		undoLayer.actions is a sparse array, with many undefined values.
 		Here I take each of the values in actions, and add them to arr.
@@ -847,13 +849,10 @@ function undo(user) {
 		val=undoLayer.actions[i];
 		arr.push([i,val]);
 
-	    /*
 	    // The actual undo having place:
-	    vol[i]-=val;	// TODO-UNDO: PREPARE FOR UNDO-PULL
-	    */
 	    vol[i]=val;
 	    
-	    if(debug>=2) console.log("undo:",i%user.dim[0],parseInt(i/user.dim[0])%user.dim[1],parseInt(i/user.dim[0]/user.dim[1])%user.dim[2]);
+	    if(debug>=3) console.log("undo:",i%user.dim[0],parseInt(i/user.dim[0])%user.dim[1],parseInt(i/user.dim[0]/user.dim[1])%user.dim[2]);
 	}
 	msg={"data":arr};
 	broadcastPaintVolumeMessage(msg,user);
@@ -921,12 +920,6 @@ function paintVoxel(mx,my,mz,user,vol,val,undoLayer) {
 	if(z>=0&&z<dim[2]&&y>=0&&y<dim[1]&&x>=0&&x<dim[0])
 		i=z*dim[1]*dim[0]+y*dim[0]+x;
 	
-	/*
-	if(vol[i]!=val) {
-		undoLayer.actions[i]=val-vol[i];	// TODO-UNDO: UNDO-PUSH
-		vol[i]=val;
-	}
-	*/
 	if(vol[i]!=val) {
 		undoLayer.actions[i]=vol[i];
 		vol[i]=val;

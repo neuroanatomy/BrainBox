@@ -1230,18 +1230,6 @@ var AtlasMakerWidget = {
 			console.log("[initSocketConnection] host:",host);
 		me.progress.html("Connecting...");
 		
-		/* work in progress: animate the connection :)
-		setInterval(function(){
-			if(me.progress.text()=="MRI")
-				clearInterval(this);
-			else {
-				var i=me.progress.text().length;
-				if(i<13) me.progress.append(".");
-				else me.progress.html("Connecting");
-			}
-		},200);
-		*/
-	
 		try {
 			me.socket = me.createSocket(host);
 			
