@@ -28,8 +28,7 @@ var BrainBox={
 		var def=$.Deferred();
 		$.getJSON("/php/brainbox.php",{
 			action: "download",
-			url: param.url,
-			hash: BrainBox.hash(param.url)
+			url: param.url //,hash: BrainBox.hash(param.url)
 		}).done(function(data) {
 			// Configure MRI into atlasMaker
 			//data=JSON.parse(data);

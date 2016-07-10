@@ -39,7 +39,8 @@ function brainbox($args)
 function download($params)
 {
 	$url=$params["url"];
-	$hash=$params["hash"];
+	//$hash=$params["hash"];
+	$hash=hash("md5",$url);
 	
 	// download file from origin url
 	$tokens = explode('/', $url);
