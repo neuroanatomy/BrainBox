@@ -239,6 +239,68 @@ var AtlasMakerWidget = {
 			console.log("> link()");
 		window.prompt("Copy to clipboard:", location.href+"&view="+AtlasMakerWidget.User.view+"&slice="+AtlasMakerWidget.User.slice);
 	},
+	upload: function() {
+		var me=AtlasMakerWidget;
+		if(me.debug)
+			console.log("> upload()");
+		var inp=$("<input>");
+		inp.hide();
+		$("body").append(inp);
+		var input=inp.get(0);
+		input.type="file";
+		input.onchange=function(e){
+			var name=this.files[0];
+			var reader = new FileReader();
+			reader.onload = function(e) {
+				var result=e.target.result;
+				var nii;
+				if(name.name.split('.').pop()=="gz") {
+					var inflate=new pako.Inflate();
+					inflate.push(new Uint8Array(result),true);
+					nii=inflate.result.buffer;
+				}
+				else
+					nii=result;
+				var mri=me.loadNifti(nii);
+
+				if(	mri.dim[0]!=me.User.dim[0] ||
+					mri.dim[1]!=me.User.dim[1] ||
+					mri.dim[2]!=me.User.dim[2]) {
+					console.log("ERROR: Volume dimensions do not match");
+					return;
+				}
+				
+				// copy uploaded data to atlas data
+				var i;
+				for(i=0;i<me.atlas.data.length;i++)
+					me.atlas.data[i]=mri.data[i];
+				
+				// send uploaded data to server (compressed)
+				me.socket.binaryType="arraybuffer";
+				me.socket.send(pako.deflate(mri.data));
+				me.socket.binaryType="blob";
+				
+				// redraw images
+				me.drawImages();
+			}
+			reader.readAsArrayBuffer(name);
+			inp.remove();
+		}
+		input.click();
+	},
+	download: function() {
+		var me=AtlasMakerWidget;
+		if(me.debug)
+			console.log("> download()");
+			
+		var a = document.createElement('a');
+		var niigz=me.encodeNifti();
+		var niigzBlob = new Blob([niigz]);
+		a.href=window.URL.createObjectURL(niigzBlob);
+		a.download=me.atlasName+".nii.gz";
+		document.body.appendChild(a);
+		a.click();
+	},
 	color: function() {
 		var me=AtlasMakerWidget;
 		if(me.debug)
@@ -331,8 +393,10 @@ var AtlasMakerWidget = {
 		dv.setInt16(44,me.brain_dim[1],true);
 		dv.setInt16(46,me.brain_dim[2],true);
 		dv.setInt16(48,1,true);
-		dv.setInt16(72,datatype,true);
-		dv.setInt16(74,8,true);			// bits per voxel
+		dv.setInt16(70,datatype,true);
+		dv.setInt16(72,8,true);			// bits per voxel
+//		dv.setInt16(72,datatype,true);
+//		dv.setInt16(74,8,true);			// bits per voxel
 		dv.setFloat32(76,1,true);		// first pixdim value
 		dv.setFloat32(80,me.brain_pixdim[0],true);
 		dv.setFloat32(84,me.brain_pixdim[1],true);
@@ -363,6 +427,44 @@ var AtlasMakerWidget = {
 	
 		$("a#download_atlas").attr("href",window.URL.createObjectURL(niigzBlob));
 		$("a#download_atlas").attr("download",me.User.atlasFilename);
+	},
+	loadNifti: function(nii) {
+		var	dv=new DataView(nii);
+		var	vox_offset=352;
+		var	sizeof_hdr=dv.getInt32(0,true);
+		var	dimensions=dv.getInt16(40,true);
+	
+		var mri={};
+		mri.hdr=nii.slice(0,vox_offset);
+		mri.dim=[];
+		mri.dim[0]=dv.getInt16(42,true);
+		mri.dim[1]=dv.getInt16(44,true);
+		mri.dim[2]=dv.getInt16(46,true);
+		mri.datatype=dv.getInt16(70,true);
+		mri.pixdim=[];
+		mri.pixdim[0]=dv.getFloat32(80,true);
+		mri.pixdim[1]=dv.getFloat32(84,true);
+		mri.pixdim[2]=dv.getFloat32(88,true);
+		vox_offset=dv.getFloat32(108,true);	
+		switch(mri.datatype)
+		{
+			case 2: // UCHAR
+				mri.data=new Uint8Array(nii,vox_offset);
+				break;
+			case 4: // SHORT
+				mri.data=new Int16Array(nii,vox_offset);
+				break;
+			case 8:  // INT
+				mri.data=new Int32Array(nii,vox_offset);
+				break;
+			case 16: // FLOAT
+				mri.data=new Float32Array(nii,vox_offset);
+				break;
+			default:
+				console.log("ERROR: Unknown dataType: "+mri.datatype);
+		}
+	
+		return mri;
 	},
 	configureBrainImage: function() {
 		var me=AtlasMakerWidget;
@@ -1128,18 +1230,6 @@ var AtlasMakerWidget = {
 			console.log("[initSocketConnection] host:",host);
 		me.progress.html("Connecting...");
 		
-		/* work in progress: animate the connection :)
-		setInterval(function(){
-			if(me.progress.text()=="MRI")
-				clearInterval(this);
-			else {
-				var i=me.progress.text().length;
-				if(i<13) me.progress.append(".");
-				else me.progress.html("Connecting");
-			}
-		},200);
-		*/
-	
 		try {
 			me.socket = me.createSocket(host);
 			
@@ -1557,6 +1647,8 @@ var AtlasMakerWidget = {
 			me.toggle($(".toggle#fullscreen"),me.toggleFullscreen);
 			me.push($(".push#3drender"),me.render3D);
 			me.push($(".push#link"),me.link);
+			me.push($(".push#upload"),me.upload);
+			me.push($(".push#download"),me.download);
 			me.push($(".push#color"),me.color);
 			me.push($(".push#undo"),me.sendUndoMessage);
 			me.push($(".push#prev"),me.prevSlice);
@@ -1610,6 +1702,7 @@ var AtlasMakerWidget = {
 		me.name=info.name||"Untitled";
 		me.url=info.url;
 		me.atlasFilename=info.mri.atlas[index].filename;
+		me.atlasName=info.mri.atlas[index].name;
 
 		// get local file path from url
 		me.User.dirname=me.url; // TEMPORARY
