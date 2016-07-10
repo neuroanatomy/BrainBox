@@ -29,7 +29,7 @@ var BrainBox={
 		$.getJSON("/php/brainbox.php",{
 			action: "download",
 			url: param.url,
-			hash: param.hash
+			hash: BrainBox.hash(param.url)
 		}).done(function(data) {
 			// Configure MRI into atlasMaker
 			//data=JSON.parse(data);
@@ -44,7 +44,6 @@ var BrainBox={
 			
 			var arr=param.url.split("/");
 			var name=arr[arr.length-1];
-			console.log('mripath',name);
 			date=new Date();
 			$("#msgLog").append("<p>Downloading from server...");
 	

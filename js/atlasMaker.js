@@ -510,7 +510,6 @@ var AtlasMakerWidget = {
 		$(".slider#slice").data({max:me.brain_D,val:me.User.slice});
 		$("#slice .thumb")[0].style.left=(me.User.slice/me.brain_D*100)+"%";
 
-		console.log(">>configureBrainImage:drawImages");
 		me.drawImages();
 		
 		me.initCursor();
@@ -1211,7 +1210,7 @@ var AtlasMakerWidget = {
 			
 			me.socket.onopen = function(msg) {
 				if(me.debug)
-					console.log("[initSocketConnection] onopen",msg);
+					console.log("[initSocketConnection] connection open",msg);
 				me.progress.html("<img src='/img/download.svg' style='vertical-align:middle'/>MRI");
 				$("#chat").text("Chat (1 connected)");
 				me.flagConnected=1;

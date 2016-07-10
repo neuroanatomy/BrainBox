@@ -4,7 +4,6 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> 
     <title>BrainBox</title>
-	<link rel="stylesheet" href="lib/jquery-ui.css">
 	<style>
 	 html {
 		background-color:#222;
@@ -259,8 +258,6 @@
 </div>
 
 <script src="lib/jquery-1.11.0.min.js"></script>
-<script src="lib/jquery-ui.js"></script>
-<script src="lib/jquery.ui.touch-punch.min.js"></script>
 <script src="lib/pako/pako.min.js"></script>
 <script src="lib/mylogin/login.js"></script>
 <script src="js/brainbox.js"></script>
@@ -268,7 +265,7 @@
 <script>
 MyLoginWidget.init($("#MyLogin"));
 var url="http://braincatalogue.org/data/Lion/MRI-n4.nii.gz";
-BrainBox.initBrainBox({url:url,hash:BrainBox.hash(url),view:"cor",slice:180,fullscreen:false});
+BrainBox.initBrainBox({url:url,view:"cor",slice:180,fullscreen:false});
 </script>
 
 </body>

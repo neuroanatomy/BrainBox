@@ -4,7 +4,6 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> 
     <title>BrainBox</title>
-	<link rel="stylesheet" href="lib/jquery-ui.css">
 	<link rel="stylesheet" href="css/common.css" />
 </head>
 
@@ -331,7 +330,6 @@ if(params.url) {
 	var fullscreen=false;
 	if(params.fullscreen)
 		params.fullscreen=(params.fullscreen=="true");
-	params.hash=BrainBox.hash(params.url);
 	
 	// Present a splash screen while loading
 	$("#intro").hide();
@@ -433,7 +431,6 @@ $("#url").keyup(function(e) {
 function goToURL(e) {
 	var url=$("#url").val();
 	params.url=url;
-	params.hash=BrainBox.hash(url);
 	location="/index.html?url="+url;
 };
 </script>
