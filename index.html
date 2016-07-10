@@ -169,8 +169,6 @@ https://dl.dropboxusercontent.com/u/363467/mprage003.nii.gz
 -->
 
 <script src="lib/jquery-1.11.0.min.js"></script>
-<script src="lib/jquery-ui.js"></script>
-<script src="lib/jquery.ui.touch-punch.min.js"></script>
 <script src="lib/pako/pako.min.js"></script>
 <script src="lib/mylogin/login.js"></script>
 <script src="js/brainbox.js"></script>
@@ -437,7 +435,6 @@ function goToURL(e) {
 	params.url=url;
 	params.hash=BrainBox.hash(url);
 	location="/index.html?url="+url;
-	BrainBox.initBrainBox(params);
 };
 </script>
 
