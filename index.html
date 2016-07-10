@@ -373,7 +373,7 @@ if(params.url) {
 			}
 		});
 		// annotation table: select row
-		$(document).on('click', "table#info tr", selectTableRow);
+		$(document).on('change', "table#info tr", selectTableRow);
 		// annotations table: add, remove and save annotations
 		$(document).on('click', "#addAnnotation", addAnnotation);
 		$(document).on('click', "#removeAnnotation", removeAnnotation);

@@ -1653,7 +1653,7 @@ var AtlasMakerWidget = {
 	configureAtlasMaker: function (info,index) {
 		var me=AtlasMakerWidget;
 		if(me.debug)
-			console.log("configureAtlasMaker");
+			console.log("> configureAtlasMaker");
 		
 		// Load segmentation labels
 		$.getJSON(info.mri.atlas[index].labels,function(json) {
@@ -1661,13 +1661,14 @@ var AtlasMakerWidget = {
 			me.ontology.valueToIndex=[];
 			me.ontology.labels.forEach(function(o,i){me.ontology.valueToIndex[o.value]=i});
 			me.changePenColor(0);
-		});
-
-		var def=$.Deferred();
-		me.configureMRI(info,index)
+		})
 		.then(function() {
-			me.sendUserDataMessage("sendAtlas");
-			def.resolve();
+			var def=$.Deferred();
+			me.configureMRI(info,index)
+			.then(function() {
+				me.sendUserDataMessage("sendAtlas");
+				def.resolve();
+			});
 		});
 	},
 	configureMRI: function(info,index) {
