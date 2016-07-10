@@ -1,5 +1,6 @@
 var BrainBox={
 	version: 1,
+	info:{},
 	/*
 		JavaScript implementation of Java's hashCode method from
 		http://werxltd.com/wp/2010/05/13/javascript-implementation-of-javas-string-hashcode-method/
@@ -25,36 +26,28 @@ var BrainBox={
 	
 		// Copy MRI from source
 		var def=$.Deferred();
-		$.getJSON("/php/stereotaxic.php",{
+		$.getJSON("/php/brainbox.php",{
 			action: "download",
-			url: param.url,
-			hash: param.hash
-		}).done(function(data){
+			url: param.url //,hash: BrainBox.hash(param.url)
+		}).done(function(data) {
 			// Configure MRI into atlasMaker
-			// data=JSON.parse(data);
+			//data=JSON.parse(data);
 			if(data.success==false) {
 				date=new Date();
 				$("#msgLog").append("<p>ERROR: "+data.message+".");
+				console.log("<p>ERROR: "+data.message+".");
 				def.reject();
 				return;
 			}
+			BrainBox.info=data;
+			
 			var arr=param.url.split("/");
 			var name=arr[arr.length-1];
-			console.log('mripath',name);
 			date=new Date();
 			$("#msgLog").append("<p>Downloading from server...");
 	
-			var info={
-				url: "/data/"+param.hash+"/",
-				mri: {
-					atlas: [ { name: "Blank Atlas", description: "A blank atlas for testing", filename: "Atlas.nii.gz"}],
-					brain: name,
-					dim: data.dim,
-					pixdim: data.pixdim
-				},
-				name:"Coco"
-			};
-			console.log(info);
+			param.dim=BrainBox.info.dim; // this allows to keep dim and pixdim through annotation changes
+			param.pixdim=BrainBox.info.pixdim;
 
 			// Add AtlasMaker
 			$("#stereotaxic").html('<div id="atlasMaker"></div>');
@@ -94,7 +87,7 @@ var BrainBox={
 				AtlasMakerWidget.initAtlasMaker($("#atlasMaker"))
 				.then(function() {
 					AtlasMakerWidget.editMode=1;
-					AtlasMakerWidget.configureAtlasMaker(info,0);
+					AtlasMakerWidget.configureAtlasMaker(BrainBox.info,0);
 					AtlasMakerWidget.progress=$("#stereotaxic").find(".download_MRI");
 					$("#msgLog").html("");
 				});
