@@ -427,6 +427,7 @@ function deparam() {
 
 // Add URL loading
 $("#url").keyup(function(e) {
+	console.log(e,e.target);
 	if (e.keyCode == 13) {
 		goToURL(e);
 	}
