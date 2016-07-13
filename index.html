@@ -241,9 +241,20 @@ function loadLabelsets() {
 	});
 }
 function selectTableRow() {
+	console.log(">> selectTableRow()");
+	
+	var currentIndex=$("#info tr.selected").index()-1;
 	var index=$(this).index()-1;
-	if(index>=0) {
-		$("table#info tr").removeClass("selected");
+	var nodeName=$(this).prop('nodeName');
+	console.log(currentIndex,index,nodeName);
+	
+	if(nodeName=="TD" && currentIndex==index) {
+		console.log(">>  change label set");
+		AtlasMakerWidget.configureAtlasMaker(BrainBox.info,index);
+	} else
+	if(index>=0 && currentIndex!=index) {
+		console.log(">>  change selected annotation");
+		$("#info tr").removeClass("selected");
 		$(this).addClass("selected");
 		AtlasMakerWidget.configureAtlasMaker(BrainBox.info,index);
 	}
@@ -362,8 +373,7 @@ if(params.url) {
 				case "Label Set":
 					var url=info_proxy["mri.atlas."+index+".labels"];
 					$.getJSON(url,function(json) {
-						AtlasMakerWidget.ontology=json;
-						AtlasMakerWidget.changePenColor(0);
+						AtlasMakerWidget.configureOntology(json);
 						AtlasMakerWidget.brain_img.img=null; // to force redraw with new colors
 						AtlasMakerWidget.drawImages();
 					});
@@ -373,7 +383,9 @@ if(params.url) {
 			}
 		});
 		// annotation table: select row
-		$(document).on('change', "table#info tr", selectTableRow);
+		
+		$(document).on('click', "#info tr",selectTableRow);
+		
 		// annotations table: add, remove and save annotations
 		$(document).on('click', "#addAnnotation", addAnnotation);
 		$(document).on('click', "#removeAnnotation", removeAnnotation);

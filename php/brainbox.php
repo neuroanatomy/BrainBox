@@ -50,6 +50,7 @@ function upload()
 	// check user/password
     global $connection;
     global $dblogin;
+    global $brainboxURL;
     $username = mysqli_real_escape_string($connection,$_POST['user']);
     $password = md5(mysqli_real_escape_string($connection,$_POST['password']));
     $query="SELECT * FROM ".$dblogin.".Users WHERE Username = '".$username."' AND Password = '".$password."'";
@@ -148,7 +149,7 @@ function upload()
 		"access"=>"Read/Write",
 		"type"=>"volume",
 		"filename"=>$_FILES["atlas"]["name"],
-		"labels"=>"http://brainbox.dev/labels/".$labels
+		"labels"=>$brainboxURL."/labels/".$labels
 	);
 	$info->mri->atlas[]=$atlas;
 
@@ -218,7 +219,7 @@ function download($params)
 							"access"=>"Read/Write",
 							"type"=>"volume",
 							"filename"=>"Atlas.nii.gz",
-							"labels"=>"http://brainbox.dev/labels/foreground.json"
+							"labels"=>$brainboxURL."/labels/foreground.json"
 						)
 					)
 				);
