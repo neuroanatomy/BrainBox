@@ -146,6 +146,7 @@ function upload()
 	$atlas=array(
 		"owner"=>"/users/".$_POST["user"],
 		"created"=>$dt->format(\DateTime::ISO8601),
+		"modified"=>$dt->format(\DateTime::ISO8601),
 		"access"=>"Read/Write",
 		"type"=>"volume",
 		"filename"=>$_FILES["atlas"]["name"],
@@ -216,6 +217,7 @@ function download($params)
 						array(
 							"owner"=>"/users/THE_USER_URL",
 							"created"=>$dt->format(\DateTime::ISO8601),
+							"modified"=>$dt->format(\DateTime::ISO8601),
 							"access"=>"Read/Write",
 							"type"=>"volume",
 							"filename"=>"Atlas.nii.gz",
