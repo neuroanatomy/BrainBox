@@ -31,18 +31,60 @@ if(isset($_POST["action"]))
 }
 function brainbox($args)
 {
-	if($args[1]=="labels")
+	switch($args[1])
 	{
-		header('HTTP/1.1 200 OK');
-		header("Status: 200 OK");
-		print "foreground";
+		case "labels":
+			header('HTTP/1.1 200 OK');
+			header("Status: 200 OK");
+			print "foreground";
+			break;
+		case "user":
+			userPage($args);
+			break;
 	}
-	else
-	if($args[1]=="users")
+}
+function userPage($args)
+{
+	$userInfo=[];
+	$userInfo["name"]=$args[2];
+
+	if(!isset($args[3]))
 	{
 		header('HTTP/1.1 200 OK');
 		header("Status: 200 OK");
-		print "roberto";
+
+		$html=file_get_contents($_SERVER['DOCUMENT_ROOT']."/templates/user.html");
+
+		$tmp=str_replace("{{UserName}}",json_encode($userInfo),$html);
+		$html=$tmp;
+
+		header('HTTP/1.1 200 OK');
+		header("Status: 200 OK");
+		print $html;
+		
+		return;
+	}
+	
+	switch($args[3])
+	{
+		case "json":
+			header('HTTP/1.1 200 OK');
+			header("Status: 200 OK");
+			print json_encode($userInfo);
+			break;
+		default:
+			if(isset($userInfo[$args[3]]))
+			{
+				header('HTTP/1.1 200 OK');
+				header("Status: 200 OK");
+				print $userInfo[$args[3]];
+			}
+			else
+			{
+				echo "ERROR: Information unavailable for user\n";
+				return;
+			}
+			break;
 	}
 }
 function upload()
@@ -144,7 +186,7 @@ function upload()
 	else
 		$labels="foreground.json";
 	$atlas=array(
-		"owner"=>"/users/".$_POST["user"],
+		"owner"=>"/user/".$_POST["user"],
 		"created"=>$dt->format(\DateTime::ISO8601),
 		"modified"=>$dt->format(\DateTime::ISO8601),
 		"access"=>"Read/Write",
@@ -215,7 +257,7 @@ function download($params)
 					"brain"=>$filename,
 					"atlas"=>array(
 						array(
-							"owner"=>"/users/THE_USER_URL",
+							"owner"=>"/user/rob3",
 							"created"=>$dt->format(\DateTime::ISO8601),
 							"modified"=>$dt->format(\DateTime::ISO8601),
 							"access"=>"Read/Write",

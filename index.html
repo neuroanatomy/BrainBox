@@ -265,7 +265,7 @@ function appendTableRow(i) {
 		" <td contentEditable></td>",
 		" <td contentEditable></td>",
 		" <td><select>",labelSets.map(function(o){return "<option>"+o.name+"</option>"}),"</select></td>",	// append label sets
-		" <td></td>",
+		" <td><a></a></td>",
 		" <td></td>",
 		" <td></td>",
 		" <td><select>",access.map(function(o){return "<option>"+o+"</option>"}),"</select></td>",	// append label sets
@@ -277,7 +277,7 @@ function appendTableRow(i) {
 		function(e,d){$(e).find("select").prop('selectedIndex',labelSets.map(function(o){return o.source}).indexOf(d))},
 		function(e){var name=$(e).find("select").val();var i=labelSets.map(function(o){return o.name}).indexOf(name);return labelSets[i].source}
 	);
-	bind1(info_proxy,BrainBox.info,"mri.atlas."+i+".owner",   $("table#info").find("tr:eq("+(i+1)+") td:eq(3)"),function(e,d){$.get(d,function(r){$(e).text(r)})});
+	bind1(info_proxy,BrainBox.info,"mri.atlas."+i+".owner",   $("table#info").find("tr:eq("+(i+1)+") td:eq(3) a"),function(e,d){$.get(d+"/name",function(r){$(e).text(r);$(e).attr('href',d)})});
 	bind1(info_proxy,BrainBox.info,"mri.atlas."+i+".created", $("table#info").find("tr:eq("+(i+1)+") td:eq(4)"),date_format);
 	bind1(info_proxy,BrainBox.info,"mri.atlas."+i+".modified",$("table#info").find("tr:eq("+(i+1)+") td:eq(5)"),date_format);
 	bind2(info_proxy,BrainBox.info,"mri.atlas."+i+".access",  $("table#info").find("tr:eq("+(i+1)+") td:eq(6)"),
@@ -296,7 +296,7 @@ function addAnnotation() {
 		modified: date.toJSON(), 
 		filename: Math.random().toString(36).slice(2)+".nii.gz",	// automatically generated filename
 		labels: "http://brainbox.dev/labels/foreground.json",
-		owner: "/users/"+AtlasMakerWidget.User.username,
+		owner: "/user/"+AtlasMakerWidget.User.username,
 		type: "volume"
 	});
 	
