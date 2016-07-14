@@ -260,7 +260,7 @@
 tr {
 	vertical-align:top;
 }
-table#info {
+#info {
 	border-collapse:collapse;
 	border-bottom:thin solid white;
 }
