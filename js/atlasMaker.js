@@ -1558,6 +1558,7 @@ var AtlasMakerWidget = {
 	// Database
 	//==========
 	logToDatabase: function(key,value) {
+		var me=AtlasMakerWidget;
 		if(me.debug>1)
 			console.log("> logToDatabase()");
 
