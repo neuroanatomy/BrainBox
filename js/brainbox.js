@@ -115,7 +115,8 @@ var BrainBox={
 				stored.history.push({	
 					url:param.url,
 					view:AtlasMakerWidget.User.view.toLowerCase(),
-					slice:AtlasMakerWidget.User.slice
+					slice:AtlasMakerWidget.User.slice,
+					lastVisited:date.toJSON()
 				});			
 				localStorage.AtlasMaker=JSON.stringify(stored);
 			});
