@@ -454,6 +454,7 @@ var AtlasMakerWidget = {
 		$("a#download_atlas").attr("download",me.User.atlasFilename);
 	},
 	loadNifti: function(nii) {
+		var me=AtlasMakerWidget;
 		if(me.debug>1)
 			console.log("> loadNifti()");
 		var	dv=new DataView(nii);
