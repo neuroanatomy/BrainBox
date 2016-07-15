@@ -1,3 +1,7 @@
+ * {
+ 	font-size:14px;
+	color:white;
+ }
  html,body {
 	background-color:#222;
 	height:100%;
@@ -28,9 +32,12 @@
 	 text-align:center;
 	 -webkit-appearance:none;
  }
+ h1 {
+ 	font-size: 1rem;
+	text-align:center;
+ }
  h2, p {
 	font-family: sans-serif;
-	color:white;
 	text-align:center;
  }
  a {

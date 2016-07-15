@@ -41,6 +41,9 @@ function brainbox($args)
 		case "user":
 			userPage($args);
 			break;
+		case "project":
+			projectPage($args);
+			break;
 	}
 }
 function userPage($args)
@@ -55,7 +58,7 @@ function userPage($args)
 
 		$html=file_get_contents($_SERVER['DOCUMENT_ROOT']."/templates/user.html");
 
-		$tmp=str_replace("{{UserName}}",json_encode($userInfo),$html);
+		$tmp=str_replace("{{userName}}",json_encode($userInfo),$html);
 		$html=$tmp;
 
 		header('HTTP/1.1 200 OK');
@@ -82,6 +85,49 @@ function userPage($args)
 			else
 			{
 				echo "ERROR: Information unavailable for user\n";
+				return;
+			}
+			break;
+	}
+}
+function projectPage($args)
+{
+	$projectInfo=json_decode(file_get_contents($_SERVER['DOCUMENT_ROOT']."/project/".$args[2]."/info.json"),true);
+
+	if(!isset($args[3]))
+	{
+		header('HTTP/1.1 200 OK');
+		header("Status: 200 OK");
+
+		$html=file_get_contents($_SERVER['DOCUMENT_ROOT']."/templates/project.html");
+
+		$tmp=str_replace("{{projectName}}",json_encode($projectInfo),$html);
+		$html=$tmp;
+
+		header('HTTP/1.1 200 OK');
+		header("Status: 200 OK");
+		print $html;
+		
+		return;
+	}
+	
+	switch($args[3])
+	{
+		case "json":
+			header('HTTP/1.1 200 OK');
+			header("Status: 200 OK");
+			print json_encode($projectInfo);
+			break;
+		default:
+			if(isset($projectInfo[$args[3]]))
+			{
+				header('HTTP/1.1 200 OK');
+				header("Status: 200 OK");
+				print $projectInfo[$args[3]];
+			}
+			else
+			{
+				echo "ERROR: Information unavailable for project\n";
 				return;
 			}
 			break;

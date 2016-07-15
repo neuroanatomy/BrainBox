@@ -1,0 +1,43 @@
+{
+	"name": "Brain Catalogue",
+	"url":"http://braincatalogue.org",
+	"brainboxURL":"http://brainbox.dev/project/braincatalogue",
+	"created": "2016-07-11T16:03:47+0200",
+	"owner":"http://brainbox.dev/user/roberto",
+	"collaborators":[
+		"http://brainbox.dev/user/rob3",
+		"http://brainbox.dev/user/kat1",
+		"http://brainbox.dev/user/anivos"
+	],
+	"files":[
+		"http://files.figshare.com/2284784/MRI_n4.nii.gz",
+		"https://dl.dropbox.com/s/puqpp7abnr1ftno/subj01.nii.gz",
+		"https://dl.dropbox.com/s/cny5b3so267bv94/p32-f18-uchar.nii.gz",
+		"http://braincatalogue.org/data/Pineal/P001/t1wdb.nii.gz",
+		"http://braincatalogue.org/data/Human/MRI-n4.nii.gz",
+		"http://braincatalogue.dev/data/Sloth_bear/MRI-n4.nii.gz",
+		"http://braincatalogue.dev/data/Human/MRI-n4.nii.gz",
+		"http://braincatalogue.dev/data/Slow_loris/MRI-n4.nii.gz",
+		"http://braincatalogue.dev/data/Night_monkey/MRI-n4.nii.gz",
+		"http://braincatalogue.dev/data/Chimpanzee/MRI-n4.nii.gz",
+		"http://braincatalogue.dev/data/Bottlenose_dolphin/MRI-n4.nii.gz",
+		"http://braincatalogue.dev/data/Orangutan/MRI-n4.nii.gz"
+	],
+	"access":{
+		"files":{
+			"view":"public",
+			"add":"collaborators",
+			"edit":"collaborators",
+			"remove":"owner"
+		},
+		"collaborators": {
+			"view":"public",
+			"add":"owner",
+			"remove":"owner"
+		}
+	},
+	"tags":[
+		"comparative anatomy",
+		"non-human"
+	]
+}
