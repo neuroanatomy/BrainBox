@@ -48,8 +48,20 @@ function brainbox($args)
 }
 function userPage($args)
 {
-	$userInfo=[];
-	$userInfo["name"]=$args[2];
+	// get user info from user db
+	$file=$_SERVER['DOCUMENT_ROOT']."/user/".$args[2]."/info.json";	
+	if(!file_exists($file))
+	{
+		echo "ERROR: Unknown user\n";
+		return;
+	}
+	$userInfo=json_decode(file_get_contents($file),true);
+	
+	// query mri files entered and visited
+	/* to do */
+	
+	// query projects created, collaborating, visited
+	/* to do */
 
 	if(!isset($args[3]))
 	{
@@ -92,7 +104,14 @@ function userPage($args)
 }
 function projectPage($args)
 {
-	$projectInfo=json_decode(file_get_contents($_SERVER['DOCUMENT_ROOT']."/project/".$args[2]."/info.json"),true);
+	// get project info from project db
+	$file=$_SERVER['DOCUMENT_ROOT']."/project/".$args[2]."/info.json";
+	if(!file_exists($file))
+	{
+		echo "ERROR: Unknown user\n";
+		return;
+	}
+	$projectInfo=json_decode(file_get_contents($file),true);
 
 	if(!isset($args[3]))
 	{
