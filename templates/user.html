@@ -60,7 +60,8 @@
 					<div style="background:#333;width:200px;height:200px">
 					</div>
 					<h1 id="userName"></h1>
-					<p>Joined on 1 January 1904</p>
+					<h2 id="userNickname"></h2>
+					<p id="userJoined"></p>
 					<p>15 Files
 					<p>3 Projects
 				</td>			
@@ -108,6 +109,8 @@
 	var userInfo='{{userName}}';
 	userInfo=JSON.parse(userInfo);
 	$("#userName").text(userInfo.name);
+	$("#userNickname").text(userInfo.nickname);
+	$("#userJoined").text("Joined on "+new Date(userInfo.joined).toLocaleString());
 	
 	$("a.tab").click(function() {
 		$("a.tab").removeClass("selected");
@@ -165,10 +168,10 @@
 				"<tr>"].join();
 	for(var i=0;i<stored.history.length;i++) {
 		str+=[	"<tr>",
-				"<td>Brain Catalogue</td>",
+				"<td><a href='http://brainbox.dev/project/braincatalogue'>Brain Catalogue</a></td>",
 				"<td>83</td>",
 				"<td>5</td>",
-				"<td>roberto</td>",
+				"<td><a href='http://brainbox.dev/user/roberto'>roberto</a></td>",
 				"<td>14 July 2016</td>",
 				"</tr>"].join("");
 	}
