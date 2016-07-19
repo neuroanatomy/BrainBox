@@ -190,14 +190,21 @@ var AtlasMakerWidget = {
 			//-----------------
 		
 			// add black overlay
-			var black=$("<div id='blackOverlay'>");
-			black.css({position:'fixed',top:0,left:0,width:'100%',height:'100%','z-index':5,'background-color':'#222'});
-			$('body').append(black);
+			var test=true;
+			
+			if(test==false) {
+				var black=$("<div id='blackOverlay'>");
+				black.css({position:'fixed',top:0,left:0,width:'100%',height:'100%','z-index':5,'background-color':'#222'});
+				$('body').append(black);
+			}
 	
 			// configure display mode
 			//    $("#atlasMaker").removeClass('display-mode');
 			$("#atlasMaker").addClass('fullscreen-mode');
-			$("#atlasMaker").detach().appendTo('body');
+			if(test==false) {
+				$("#atlasMaker").detach().appendTo('body');
+			}
+			
 			//    me.editMode=1;
 			me.resizeWindow();
 	
@@ -215,16 +222,10 @@ var AtlasMakerWidget = {
 			// go back to display mode
 			$("#atlasMaker").removeClass('fullscreen-mode');
 			//    $("#atlasMaker").addClass('display-mode');
-			$("#atlasMaker").detach().appendTo('#stereotaxic')	;
+			$("#atlasMaker").detach().appendTo('#stereotaxic');
 			//    me.editMode=0;
 			me.resizeWindow();
 
-			/*
-			// configure toolbar for display mode
-			$("div#toolbar").draggable('destroy');
-			$("div#toolbar").resizable('destroy');
-			$("div#toolbar").removeAttr("style");
-			*/
 			me.fullscreen=false;
 		}
 	},
@@ -1645,7 +1646,7 @@ var AtlasMakerWidget = {
 
 		// Init the toolbar: load template, wire actions
 		var def=$.Deferred();
-		$.get("templates/tools.html",function(html) {
+		$.get("/templates/tools.html",function(html) {
 			me.container.append(html);
 			
 			// hide or show annotation tools depending on login changes
@@ -1700,7 +1701,7 @@ var AtlasMakerWidget = {
 			console.log("> configureAtlasMaker");
 		
 		// Load segmentation labels
-		$.getJSON(info.mri.atlas[index].labels,me.configureOntology)
+		return $.getJSON(info.mri.atlas[index].labels,me.configureOntology)
 		.then(function() {
 			var def=$.Deferred();
 			me.configureMRI(info,index)
@@ -1708,6 +1709,7 @@ var AtlasMakerWidget = {
 				me.sendUserDataMessage("sendAtlas");
 				def.resolve();
 			});
+			return def.promise();
 		});
 	},
 	configureOntology: function(json) {
