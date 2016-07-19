@@ -393,12 +393,6 @@ var AtlasMakerWidget = {
 			}
 			
 		}
-		
-		/*
-		if(me.fullscreen==true) {
-			$("#log").outerHeight($("#tools-side").outerHeight()-$("#log").offset().top-$("#msg").closest("tr").outerHeight());
-		}
-		*/
 	},
 	encodeNifti: function() {
 		var me=AtlasMakerWidget;
