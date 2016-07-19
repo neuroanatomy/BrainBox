@@ -53,7 +53,7 @@ var BrainBox={
 			$("#stereotaxic").html('<div id="atlasMaker"></div>');
 			$("#atlasMaker").addClass('edit-mode');
 			var s = document.createElement("script");
-			s.src = "js/atlasMaker.js";
+			s.src = "/js/atlasMaker.js";
 			s.onload=function(){
 
 				// re-instance stored configuration
@@ -87,9 +87,12 @@ var BrainBox={
 				AtlasMakerWidget.initAtlasMaker($("#atlasMaker"))
 				.then(function() {
 					AtlasMakerWidget.editMode=1;
-					AtlasMakerWidget.configureAtlasMaker(BrainBox.info,0);
 					AtlasMakerWidget.progress=$("#stereotaxic").find(".download_MRI");
 					$("#msgLog").html("");
+					 return AtlasMakerWidget.configureAtlasMaker(BrainBox.info,0);
+				})
+				.then(function() {
+					def.resolve();
 				});
 			}
 			document.body.appendChild(s);
@@ -120,8 +123,6 @@ var BrainBox={
 				});			
 				localStorage.AtlasMaker=JSON.stringify(stored);
 			});
-			
-			def.resolve();
 
 		}).fail(function() {
 			date=new Date();
