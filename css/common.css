@@ -47,11 +47,19 @@
 	text-decoration: none;
 	font-weight: lighter;
  }
- #MyLogin {
+ #menu {
 	position:absolute;
 	top:5px;
 	right: 5px;
+	display: inline-block;
 	font: 16px/24px "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
+ }
+ #menu img{
+ 	margin-left: 15px;
+ }
+ #MyLogin {
+ 	display:inline-block;
+ 	margin-left:15px;
  }
  #stereotaxic {
 	margin-left:50%;
@@ -308,6 +316,13 @@ img.button {
 }
 img.button:hover {
 	opacity:0.5;
+}
+img.icon {
+	width:1rem;
+	height:1rem;
+	margin:4px 2px;
+	vertical-align:middle;
+	cursor:pointer;
 }
 
 /* Content: Splash
