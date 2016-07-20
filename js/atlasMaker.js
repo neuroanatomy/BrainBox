@@ -68,7 +68,7 @@ var AtlasMakerWidget = {
 	info:{},	// information displayed over each brain slice
 	// undo stack
 	/* DEPRECATED Undo:[], */
-	dbphp:          "php/brainbox.php",
+	dbphp:          "/php/brainbox.php",
 	version:	1, // version of the configuration file (slice number, plane, etc). Default=1
 
 	//========================================================================================
