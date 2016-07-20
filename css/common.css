@@ -217,6 +217,9 @@
 	overflow: auto;
 	background-color: #333;
 }
+#msg {
+	color: black;
+}
 
 .middle {
 	position:absolute;
