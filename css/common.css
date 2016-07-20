@@ -153,11 +153,12 @@
 	height:100%;
 	z-index:10;
 }
+
 #atlasMaker.fullscreen-mode #tools-side {
 	position:fixed;
 	top:0px;
 	right:0px;
-	width:240px;					/* width of tools */
+	width:240px;
 	height:100%;
 }
 

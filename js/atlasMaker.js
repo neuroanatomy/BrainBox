@@ -517,7 +517,7 @@ var AtlasMakerWidget = {
 		
 		// configure toolbar slider
 		$(".slider#slice").data({max:me.brain_D,val:me.User.slice});
-		$("#slice .thumb")[0].style.left=(me.User.slice/me.brain_D*100)+"%";
+		if($("#slice .thumb")[0]) $("#slice .thumb")[0].style.left=(me.User.slice/me.brain_D*100)+"%";
 
 		me.drawImages();
 		
