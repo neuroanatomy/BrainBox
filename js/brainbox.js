@@ -1,6 +1,7 @@
 var BrainBox={
 	version: 1,
 	info:{},
+	labelSets:null,
 	/*
 		JavaScript implementation of Java's hashCode method from
 		http://werxltd.com/wp/2010/05/13/javascript-implementation-of-javas-string-hashcode-method/
@@ -132,5 +133,10 @@ var BrainBox={
 		$("#msgLog").html("<p>Downloading from source to server...");
 		
 		return def.promise();
-	}
+	},
+	loadLabelsets: function() {
+	return $.getJSON("/php/brainbox.php?action=getLabelsets",function(data) {
+		BrainBox.labelSets=data;
+	})
+}
 }

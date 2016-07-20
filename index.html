@@ -182,7 +182,6 @@ MyLoginWidget.init($("#MyLogin"));
 var params=deparam();
 var version=1;
 var info_proxy={};
-var labelSets;
 var access=["Read/Write","Read"];
 var hash_old;
 var date_format=function(e,d){$(e).text(new Date(d).toLocaleString())};
@@ -235,11 +234,6 @@ function unbind2(proxy,path) {
 	delete proxy[path];
 }
 
-function loadLabelsets() {
-	return $.getJSON("/php/brainbox.php?action=getLabelsets",function(data) {
-		labelSets=data;
-	});
-}
 function selectTableRow() {
 	console.log(">> selectTableRow()");
 	
@@ -264,7 +258,7 @@ function appendTableRow(i) {
 		"<tr>",
 		" <td contentEditable></td>",
 		" <td contentEditable></td>",
-		" <td><select>",labelSets.map(function(o){return "<option>"+o.name+"</option>"}),"</select></td>",	// append label sets
+		" <td><select>",BrainBox.labelSets.map(function(o){return "<option>"+o.name+"</option>"}),"</select></td>",	// append label sets
 		" <td><a></a></td>",
 		" <td></td>",
 		" <td></td>",
@@ -274,8 +268,8 @@ function appendTableRow(i) {
 	bind2(info_proxy,BrainBox.info,"mri.atlas."+i+".name",    $("table#info").find("tr:eq("+(i+1)+") td:eq(0)"));
 	bind2(info_proxy,BrainBox.info,"mri.atlas."+i+".project", $("table#info").find("tr:eq("+(i+1)+") td:eq(1)"));
 	bind2(info_proxy,BrainBox.info,"mri.atlas."+i+".labels",  $("table#info").find("tr:eq("+(i+1)+") td:eq(2)"),
-		function(e,d){$(e).find("select").prop('selectedIndex',labelSets.map(function(o){return o.source}).indexOf(d))},
-		function(e){var name=$(e).find("select").val();var i=labelSets.map(function(o){return o.name}).indexOf(name);return labelSets[i].source}
+		function(e,d){$(e).find("select").prop('selectedIndex',BrainBox.labelSets.map(function(o){return o.source}).indexOf(d))},
+		function(e){var name=$(e).find("select").val();var i=BrainBox.labelSets.map(function(o){return o.name}).indexOf(name);return BrainBox.labelSets[i].source}
 	);
 	bind1(info_proxy,BrainBox.info,"mri.atlas."+i+".owner",   $("table#info").find("tr:eq("+(i+1)+") td:eq(3) a"),function(e,d){$.get(d+"/name",function(r){$(e).text(r);$(e).attr('href',d)})});
 	bind1(info_proxy,BrainBox.info,"mri.atlas."+i+".created", $("table#info").find("tr:eq("+(i+1)+") td:eq(4)"),date_format);
@@ -350,7 +344,7 @@ if(params.url) {
 
 	// Load data
 	BrainBox.initBrainBox(params)
-	.then(function(){return loadLabelsets()})
+	.then(function(){return BrainBox.loadLabelsets()})
 	.then(function(){
 		// Remove splash
 		$("#splash").hide();
