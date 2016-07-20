@@ -102,13 +102,15 @@
 			</div>
 		</div>
 		<!-- chat -->
-		<div id="chatBlock">
-			<div style="flex:0 0 28px">
-				<div id="chat">Chat (disconnected)</div>
-			</div>
-			<div class="a" style="flex:1 0 56px;text-align:left" id="log" style="background-color:#333;padding:5px;text-align:left;vertical-align:top"></div>
-			<div style="flex:0 0 28px">
-				<input id="msg" type="text" style="width:calc(100% - 2px);margin:1px;padding:1px" onkeypress="AtlasMakerWidget.onkey(event)">
+		<div id="chatBlock" style="flex:1 1 110px">
+			<div style="display:flex;flex-direction:column">
+				<div style="flex:0 0 28px">
+					<div id="chat">Chat (disconnected)</div>
+				</div>
+				<div class="a" style="flex:1 0 56px;text-align:left" id="log" style="background-color:#333;padding:5px;text-align:left;vertical-align:top"></div>
+				<div style="flex:0 0 28px">
+					<input id="msg" type="text" style="width:calc(100% - 2px);margin:1px;padding:1px" onkeypress="AtlasMakerWidget.onkey(event)">
+				</div>
 			</div>
 		</div>
 	</div>
