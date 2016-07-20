@@ -1,46 +1,48 @@
 <html>
+
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> 
     <title>BrainBox</title>
 	<link rel="stylesheet" href="/css/common.css" />
 	<link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
+
+	<style>
+	.tab {
+		padding-top:3px;
+		padding-right:12px;
+		padding-left:12px;
+		padding-bottom:4px;
+		cursor: pointer;
+	}
+	.tab.selected {
+		background:#555;
+	}
+	#files, #projects {
+		color:white;
+		text-align:left;
+		width:100%;
+		border-collapse:collapse;
+	}
+	#files td, #projects td,
+	#files th, #projects th {
+		padding:0px 4px;
+	}
+	#files, #projects,
+	#files th, #projects th {
+		border-bottom:thin solid white;
+	}
+	#files a, #projects a {
+		text-decoration:none;
+	}
+	#projectFiles {
+		overflow:scroll;
+	}
+	</style>
+
 </head>
 
 <body>
-
-<style>
-.tab {
-	padding-top:3px;
-	padding-right:12px;
-	padding-left:12px;
-	padding-bottom:4px;
-	cursor: pointer;
-}
-.tab.selected {
-	background:#555;
-}
-#files, #projects {
-	color:white;
-	text-align:left;
-	width:100%;
-	border-collapse:collapse;
-}
-#files td, #projects td,
-#files th, #projects th {
-	padding:0px 4px;
-}
-#files, #projects,
-#files th, #projects th {
-	border-bottom:thin solid white;
-}
-#files a, #projects a {
-	text-decoration:none;
-}
-#projectFiles {
-	overflow:scroll;
-}
-</style>
 
 <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:stretch">
 	
@@ -62,15 +64,12 @@
 	</div>
 	
 	<!-- Content -->
-	<div id="content" style="flex:1 1 auto">
-	
-
-		<div style="display:flex;align-items:stretch">
+	<div id="content" style="flex:1 1 auto;position:relative">
+		<div style="display:flex;width:100%;height:100%;align-items:stretch;position:absolute">
 
 			<div id="left" style="flex:0 0 400px">
-				
-				<div style="display:flex;flex-direction:column;width:100%">
-					<div id="tools" style="flex:1 1 200px">
+				<div style="display:flex;flex-direction:column;height:100%">
+					<div id="tools" style="flex:1 1 auto">
 					</div>
 				
 					<div id="projectFiles" style="flex:1 1 auto">
@@ -83,14 +82,14 @@
 						</table>
 					</div>
 				
-					<div id="annotations" style="flex:1 0 200px">
+					<div id="annotations" style="flex:1 1 auto">
 						<p>bring the annotations this way</p>
 					</div>
 				</div>
 			</div>
 
 			<div id="right" style="flex:1 0">
-				<div id="stereotaxic" style="width:100%;background:#222"></div>
+				<div id="stereotaxic" style="width:100%"></div>
 			</div>
 
 		</div>
@@ -120,6 +119,7 @@
 	</ul>
 </div>
 <!-- End Labels -->
+
 
 <script src="/lib/jquery-1.11.0.min.js"></script>
 <script src="/lib/mylogin/login.js"></script>
