@@ -38,6 +38,10 @@
 	#projectFiles {
 		overflow:scroll;
 	}
+	.block {
+		border:thin solid #555;
+		padding: 5px;
+	}
 	</style>
 
 </head>
@@ -69,20 +73,24 @@
 
 			<div id="left" style="flex:0 0 400px">
 				<div style="display:flex;flex-direction:column;height:100%">
-					<div id="tools" style="flex:1 1 auto">
+					<div id="tools" class="block" style="flex:1 1 auto">
 					</div>
 				
-					<div id="projectFiles" style="flex:1 1 auto">
+					<div id="projectFiles" class="block" style="flex:1 1 auto">
 						<table style="width:100%;text-align:left">
-							<tr>
-								<th>File</th>
-								<th>QC</th>
-								<th>QC Comment</th>
-							</tr>
+							<thead>
+								<tr>
+									<th>File</th>
+									<th>QC</th>
+									<th>QC Comment</th>
+								</tr>
+							</thead>
+							<tbody>
+							</tbody>
 						</table>
 					</div>
 				
-					<div id="annotations" style="flex:1 1 200px">
+					<div id="annotations" class="block" style="flex:1 1 200px">
 						<p>bring the annotations this way</p>
 					</div>
 				</div>
@@ -154,7 +162,7 @@
 				"	<td>No Comment</td>",
 				"</tr>"].join("");
 	}
-	$("#projectFiles table").append(str);
+	$("#projectFiles tbody").append(str);
 	
 	/*
 		The list of all projects to which the project
