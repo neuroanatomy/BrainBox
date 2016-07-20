@@ -47,6 +47,7 @@
 	text-decoration: none;
 	font-weight: lighter;
  }
+
  #menu {
 	position:absolute;
 	top:5px;
@@ -219,6 +220,7 @@
 
 /* chat log
 ----------------------- */
+
 #log {
 	width: auto;
 	line-height:1;

@@ -180,6 +180,13 @@ var AtlasMakerWidget = {
 		me.User.doFill=x;
 		me.sendUserDataMessage("toggle fill");
 	},
+	toggleChat: function() {
+		var me=AtlasMakerWidget;
+		if(me.debug)
+			console.log("> toggleChat()");
+	
+		$("#chatBlock").toggle();
+	},
 	toggleFullscreen: function() {
 		var me=AtlasMakerWidget;
 		if(me.debug)
@@ -1660,6 +1667,7 @@ var AtlasMakerWidget = {
 			me.toggle($(".toggle#precise"),me.togglePreciseCursor);
 			me.toggle($(".toggle#fill"),me.toggleFill);
 			me.toggle($(".toggle#fullscreen"),me.toggleFullscreen);
+			me.toggle($(".toggle#bubble"),me.toggleChat);
 			me.push($(".push#3drender"),me.render3D);
 			me.push($(".push#link"),me.link);
 			me.push($(".push#upload"),me.upload);

@@ -52,7 +52,7 @@
 			<img style='position:fixed;left:5px;top:5px;width:200px' src='/img/brainbox-logo-small_noFont.svg'/>
 		</a>
 		<!--get project name from projectInfo.name!!!-->
-		<div id="projName" style="position:fixed;left:70px;top:21px;width:auto; font-family: Roboto, sans-serif; font-size: 30px; font-weight:300">Brain Catalogue
+		<div style="position:fixed;left:70px;top:21px;width:auto; font-family: Roboto, sans-serif; font-size: 36px; font-weight:300" id="projectName">
 		</div>
 		<div id="menu">
 			<img id="addProject" title="add project" style='width:13px' src='/img/plus.svg'/>
@@ -132,7 +132,7 @@
 
 	var projectInfo='{{projectName}}';
 	projectInfo=JSON.parse(projectInfo);
-	$("#projectName").text(projectInfo.name);
+	$("#projectName").text("Project: " + projectInfo.name);
 	$("#projectOwner").html("<a href='"+projectInfo.owner+"'>"+projectInfo.owner+"</a>");
 	var creation=new Date(projectInfo.created);
 	$("#projectCreated").text("Created on "+creation.toLocaleString());
