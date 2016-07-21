@@ -145,10 +145,6 @@ var BrainBox={
 		var index=$(this).index()-1;
 		var nodeName=$(this).prop('nodeName');
 	
-		if(nodeName=="TD" && currentIndex==index) {
-			console.log(">>  change label set");
-			AtlasMakerWidget.configureAtlasMaker(BrainBox.info,index);
-		} else
 		if(index>=0 && currentIndex!=index) {
 			console.log(">>  change selected annotation");
 			$(table).find("tr").removeClass("selected");
