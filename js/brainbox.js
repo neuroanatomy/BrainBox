@@ -158,17 +158,7 @@ var BrainBox={
 			This function is hard-wired for a unique annotation table structure.
 			It should be made generic.
 		*/
-		$(param.table).append($.map([
-			"<tr>",
-			" <td contentEditable></td>",
-			" <td contentEditable></td>",
-			" <td><select>",BrainBox.labelSets.map(function(o){return "<option>"+o.name+"</option>"}),"</select></td>",	// append label sets
-			" <td><a></a></td>",
-			" <td></td>",
-			" <td></td>",
-			" <td><select>",BrainBox.access.map(function(o){return "<option>"+o+"</option>"}),"</select></td>",	// append label sets
-			"</tr>"],function(o){return o}).join()
-		);
+		$(param.table).append(param.trTemplate);
 		bind2(param.info_proxy,BrainBox.info,"mri.atlas."+i+".name",    $("table#info").find("tr:eq("+(i+1)+") td:eq(0)"));
 		bind2(param.info_proxy,BrainBox.info,"mri.atlas."+i+".project", $("table#info").find("tr:eq("+(i+1)+") td:eq(1)"));
 		bind2(param.info_proxy,BrainBox.info,"mri.atlas."+i+".labels",  $("table#info").find("tr:eq("+(i+1)+") td:eq(2)"),

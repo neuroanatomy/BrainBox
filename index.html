@@ -210,8 +210,18 @@ if(params.url) {
 		var aParam = {
 			table: $("table#info"),
 			info_proxy: info_proxy,
-			saveWarning: $("#saveAnnotations")
-		}
+			saveWarning: $("#saveAnnotations"),
+			trTemplate: $.map([
+				"<tr>",
+				" <td contentEditable></td>",
+				" <td contentEditable></td>",
+				" <td><select>",BrainBox.labelSets.map(function(o){return "<option>"+o.name+"</option>"}),"</select></td>",	// append label sets
+				" <td><a></a></td>",
+				" <td></td>",
+				" <td></td>",
+				" <td><select>",BrainBox.access.map(function(o){return "<option>"+o+"</option>"}),"</select></td>",	// append label sets
+				"</tr>"],function(o){return o}).join()
+		};
 
 		// bind interface
 		bind1(info_proxy,BrainBox.info,"source",$("#source"));
