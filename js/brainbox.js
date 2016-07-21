@@ -2,6 +2,7 @@ var BrainBox={
 	version: 1,
 	info:{},
 	labelSets:null,
+	access:["Read/Write","Read"],
 	/*
 		JavaScript implementation of Java's hashCode method from
 		http://werxltd.com/wp/2010/05/13/javascript-implementation-of-javas-string-hashcode-method/
@@ -153,6 +154,10 @@ var BrainBox={
 		}
 	},
 	appendTableRow: function(i,param) {
+		/*
+			This function is hard-wired for a unique annotation table structure.
+			It should be made generic.
+		*/
 		$(param.table).append($.map([
 			"<tr>",
 			" <td contentEditable></td>",
@@ -161,7 +166,7 @@ var BrainBox={
 			" <td><a></a></td>",
 			" <td></td>",
 			" <td></td>",
-			" <td><select>",access.map(function(o){return "<option>"+o+"</option>"}),"</select></td>",	// append label sets
+			" <td><select>",BrainBox.access.map(function(o){return "<option>"+o+"</option>"}),"</select></td>",	// append label sets
 			"</tr>"],function(o){return o}).join()
 		);
 		bind2(param.info_proxy,BrainBox.info,"mri.atlas."+i+".name",    $("table#info").find("tr:eq("+(i+1)+") td:eq(0)"));
@@ -174,7 +179,7 @@ var BrainBox={
 		bind1(param.info_proxy,BrainBox.info,"mri.atlas."+i+".created", $("table#info").find("tr:eq("+(i+1)+") td:eq(4)"),date_format);
 		bind1(param.info_proxy,BrainBox.info,"mri.atlas."+i+".modified",$("table#info").find("tr:eq("+(i+1)+") td:eq(5)"),date_format);
 		bind2(param.info_proxy,BrainBox.info,"mri.atlas."+i+".access",  $("table#info").find("tr:eq("+(i+1)+") td:eq(6)"),
-			function(e,d){$(e).find("select").prop('selectedIndex',access.indexOf(d))},
+			function(e,d){$(e).find("select").prop('selectedIndex',BrainBox.access.indexOf(d))},
 			function(e){return $(e).find("select").val()}
 		);
 	},
@@ -201,6 +206,11 @@ var BrainBox={
 		BrainBox.saveAnnotations(param);
 	},
 	removeAnnotation: function(param) {
+		/*
+			This function is hard-wired for a unique annotation table structure.
+			It should be made generic.
+		*/
+
 		// remove row from table
 		var index=$(param.table).find(".selected").index()-1;
 		$(param.table).find('tr:eq('+(index+1)+')').remove();
