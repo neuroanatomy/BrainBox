@@ -197,20 +197,14 @@ var AtlasMakerWidget = {
 			//-----------------
 		
 			// add black overlay
-			var test=true;
-			
-			if(test==false) {
-				var black=$("<div id='blackOverlay'>");
-				black.css({position:'fixed',top:0,left:0,width:'100%',height:'100%','z-index':5,'background-color':'#222'});
-				$('body').append(black);
-			}
+			var black=$("<div id='blackOverlay'>");
+			black.css({position:'fixed',top:0,left:0,width:'100%',height:'100%','z-index':5,'background-color':'#222'});
+			$('body').append(black);
 	
 			// configure display mode
 			//    $("#atlasMaker").removeClass('display-mode');
 			$("#atlasMaker").addClass('fullscreen-mode');
-			if(test==false) {
-				$("#atlasMaker").detach().appendTo('body');
-			}
+			$("#atlasMaker").detach().appendTo('body');
 			
 			//    me.editMode=1;
 			me.resizeWindow();
