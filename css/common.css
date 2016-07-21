@@ -283,7 +283,6 @@ tr {
 }
 #info {
 	border-collapse:collapse;
-	border-bottom:thin solid white;
 }
 #info th {
 	font-weight: bold;
