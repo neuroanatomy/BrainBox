@@ -134,9 +134,108 @@ var BrainBox={
 		
 		return def.promise();
 	},
+	/*
+		Annotations
+	*/
+	selectTableRow: function() {
+		console.log(">> selectTableRow()");
+	
+		var table=$(this).closest("table");
+		var currentIndex=$(table).find("tr.selected").index()-1;
+		var index=$(this).index()-1;
+		var nodeName=$(this).prop('nodeName');
+	
+		if(nodeName=="TD" && currentIndex==index) {
+			console.log(">>  change label set");
+			AtlasMakerWidget.configureAtlasMaker(BrainBox.info,index);
+		} else
+		if(index>=0 && currentIndex!=index) {
+			console.log(">>  change selected annotation");
+			$(table).find("tr").removeClass("selected");
+			$(this).addClass("selected");
+			AtlasMakerWidget.configureAtlasMaker(BrainBox.info,index);
+		}
+	},
+	appendTableRow: function(i,param) {
+		$(param.table).append($.map([
+			"<tr>",
+			" <td contentEditable></td>",
+			" <td contentEditable></td>",
+			" <td><select>",BrainBox.labelSets.map(function(o){return "<option>"+o.name+"</option>"}),"</select></td>",	// append label sets
+			" <td><a></a></td>",
+			" <td></td>",
+			" <td></td>",
+			" <td><select>",access.map(function(o){return "<option>"+o+"</option>"}),"</select></td>",	// append label sets
+			"</tr>"],function(o){return o}).join()
+		);
+		bind2(param.info_proxy,BrainBox.info,"mri.atlas."+i+".name",    $("table#info").find("tr:eq("+(i+1)+") td:eq(0)"));
+		bind2(param.info_proxy,BrainBox.info,"mri.atlas."+i+".project", $("table#info").find("tr:eq("+(i+1)+") td:eq(1)"));
+		bind2(param.info_proxy,BrainBox.info,"mri.atlas."+i+".labels",  $("table#info").find("tr:eq("+(i+1)+") td:eq(2)"),
+			function(e,d){$(e).find("select").prop('selectedIndex',BrainBox.labelSets.map(function(o){return o.source}).indexOf(d))},
+			function(e){var name=$(e).find("select").val();var i=BrainBox.labelSets.map(function(o){return o.name}).indexOf(name);return BrainBox.labelSets[i].source}
+		);
+		bind1(param.info_proxy,BrainBox.info,"mri.atlas."+i+".owner",   $("table#info").find("tr:eq("+(i+1)+") td:eq(3) a"),function(e,d){$.get(d+"/nickname",function(r){$(e).text(r);$(e).attr('href',d)})});
+		bind1(param.info_proxy,BrainBox.info,"mri.atlas."+i+".created", $("table#info").find("tr:eq("+(i+1)+") td:eq(4)"),date_format);
+		bind1(param.info_proxy,BrainBox.info,"mri.atlas."+i+".modified",$("table#info").find("tr:eq("+(i+1)+") td:eq(5)"),date_format);
+		bind2(param.info_proxy,BrainBox.info,"mri.atlas."+i+".access",  $("table#info").find("tr:eq("+(i+1)+") td:eq(6)"),
+			function(e,d){$(e).find("select").prop('selectedIndex',access.indexOf(d))},
+			function(e){return $(e).find("select").val()}
+		);
+	},
+	addAnnotation: function(param) {
+		var date=new Date();
+		// add data to annotations array
+		BrainBox.info.mri.atlas.push({
+			name:"Untitled",
+			project:"Untitled",
+			access: "Read/Write", 
+			created: date.toJSON(), 
+			modified: date.toJSON(), 
+			filename: Math.random().toString(36).slice(2)+".nii.gz",	// automatically generated filename
+			labels: "http://brainbox.dev/labels/foreground.json",
+			owner: "/user/"+AtlasMakerWidget.User.username,
+			type: "volume"
+		});
+	
+		// add and bind new table row
+		var i=BrainBox.info.mri.atlas.length-1;
+		BrainBox.appendTableRow(i,param);
+	
+		// update in server
+		BrainBox.saveAnnotations(param);
+	},
+	removeAnnotation: function(param) {
+		// remove row from table
+		var index=$(param.table).find(".selected").index()-1;
+		$(param.table).find('tr:eq('+(index+1)+')').remove();
+
+		// remove binding
+		JSON.stringify(param.info_proxy); // update BrainBox.info from info_proxy
+		var i=BrainBox.info.mri.atlas.length-1;
+		unbind2(param.info_proxy,"mri.atlas."+i+".name");
+		unbind2(param.info_proxy,"mri.atlas."+i+".project");
+		unbind2(param.info_proxy,"mri.atlas."+i+".labels");
+		unbind2(param.info_proxy,"mri.atlas."+i+".owner");
+		unbind2(param.info_proxy,"mri.atlas."+i+".created");
+		unbind2(param.info_proxy,"mri.atlas."+i+".modified");
+		unbind2(param.info_proxy,"mri.atlas."+i+".access");
+	
+		// remove row from BrainBox.info.mri.atlas
+		BrainBox.info.mri.atlas.splice(index,1);
+
+		// update in server
+		BrainBox.saveAnnotations(param);
+	},
+	saveAnnotations: function(param) {
+		console.log("save annotations");
+		JSON.stringify(param.info_proxy); // update BrainBox.info from info_proxy
+		AtlasMakerWidget.sendSaveMetadataMessage(BrainBox.info);
+		hash_old=BrainBox.hash(JSON.stringify(BrainBox.info));
+		$(param.saveWarning).hide();
+	},
 	loadLabelsets: function() {
-	return $.getJSON("/php/brainbox.php?action=getLabelsets",function(data) {
-		BrainBox.labelSets=data;
-	})
-}
+		return $.getJSON("/php/brainbox.php?action=getLabelsets",function(data) {
+			BrainBox.labelSets=data;
+		});
+	}
 }
