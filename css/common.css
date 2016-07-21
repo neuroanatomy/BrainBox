@@ -327,6 +327,11 @@ img.icon {
 	cursor:pointer;
 }
 
+#NAATlogo {
+	position:relative;
+	z-index:25;
+}
+
 /* Content: Splash
 ---------------------- */
 #splash {
