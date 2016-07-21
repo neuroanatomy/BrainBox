@@ -136,7 +136,7 @@ var BrainBox={
 		return def.promise();
 	},
 	/*
-		Annotations
+		Annotation related functions
 	*/
 	selectTableRow: function() {
 		console.log(">> selectTableRow()");
