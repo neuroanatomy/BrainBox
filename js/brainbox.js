@@ -153,25 +153,32 @@ var BrainBox={
 			AtlasMakerWidget.configureAtlasMaker(BrainBox.info,index);
 		}
 	},
-	appendTableRow: function(i,param) {
-		/*
-			This function is hard-wired for a unique annotation table structure.
-			It should be made generic.
-		*/
+	appendTableRow: function(irow,param) {
 		$(param.table).append(param.trTemplate);
-		bind2(param.info_proxy,BrainBox.info,"mri.atlas."+i+".name",    $("table#info").find("tr:eq("+(i+1)+") td:eq(0)"));
-		bind2(param.info_proxy,BrainBox.info,"mri.atlas."+i+".project", $("table#info").find("tr:eq("+(i+1)+") td:eq(1)"));
-		bind2(param.info_proxy,BrainBox.info,"mri.atlas."+i+".labels",  $("table#info").find("tr:eq("+(i+1)+") td:eq(2)"),
-			function(e,d){$(e).find("select").prop('selectedIndex',BrainBox.labelSets.map(function(o){return o.source}).indexOf(d))},
-			function(e){var name=$(e).find("select").val();var i=BrainBox.labelSets.map(function(o){return o.name}).indexOf(name);return BrainBox.labelSets[i].source}
-		);
-		bind1(param.info_proxy,BrainBox.info,"mri.atlas."+i+".owner",   $("table#info").find("tr:eq("+(i+1)+") td:eq(3) a"),function(e,d){$.get(d+"/nickname",function(r){$(e).text(r);$(e).attr('href',d)})});
-		bind1(param.info_proxy,BrainBox.info,"mri.atlas."+i+".created", $("table#info").find("tr:eq("+(i+1)+") td:eq(4)"),date_format);
-		bind1(param.info_proxy,BrainBox.info,"mri.atlas."+i+".modified",$("table#info").find("tr:eq("+(i+1)+") td:eq(5)"),date_format);
-		bind2(param.info_proxy,BrainBox.info,"mri.atlas."+i+".access",  $("table#info").find("tr:eq("+(i+1)+") td:eq(6)"),
-			function(e,d){$(e).find("select").prop('selectedIndex',BrainBox.access.indexOf(d))},
-			function(e){return $(e).find("select").val()}
-		);
+
+		for(var icol=0;icol<param.objTemplate.length;icol++) {
+			switch(param.objTemplate[icol].typeOfBinding) {
+				case 1:
+					bind1(
+						param.info_proxy,
+						param.info,
+						param.objTemplate[icol].path.replace("#",irow),
+						$(param.table).find("tr:eq("+(irow+1)+") td:eq("+icol+")"),
+						param.objTemplate[icol].format
+					);
+					break;
+				case 2:
+					bind2(
+						param.info_proxy,
+						param.info,
+						param.objTemplate[icol].path.replace("#",irow),
+						$(param.table).find("tr:eq("+(irow+1)+") td:eq("+icol+")"),
+						param.objTemplate[icol].format,
+						param.objTemplate[icol].parse
+					);
+					  break;
+			}
+		}
 	},
 	addAnnotation: function(param) {
 		var date=new Date();
@@ -196,25 +203,16 @@ var BrainBox={
 		BrainBox.saveAnnotations(param);
 	},
 	removeAnnotation: function(param) {
-		/*
-			This function is hard-wired for a unique annotation table structure.
-			It should be made generic.
-		*/
-
 		// remove row from table
 		var index=$(param.table).find(".selected").index()-1;
 		$(param.table).find('tr:eq('+(index+1)+')').remove();
 
 		// remove binding
 		JSON.stringify(param.info_proxy); // update BrainBox.info from info_proxy
-		var i=BrainBox.info.mri.atlas.length-1;
-		unbind2(param.info_proxy,"mri.atlas."+i+".name");
-		unbind2(param.info_proxy,"mri.atlas."+i+".project");
-		unbind2(param.info_proxy,"mri.atlas."+i+".labels");
-		unbind2(param.info_proxy,"mri.atlas."+i+".owner");
-		unbind2(param.info_proxy,"mri.atlas."+i+".created");
-		unbind2(param.info_proxy,"mri.atlas."+i+".modified");
-		unbind2(param.info_proxy,"mri.atlas."+i+".access");
+		var irow=BrainBox.info.mri.atlas.length-1;
+		for(var icol=0; icol<param.objTemplate.length; icol++) {
+			unbind2(param.info_proxy,param.objTemplate[icol].path.replace("#", irow));
+		}
 	
 		// remove row from BrainBox.info.mri.atlas
 		BrainBox.info.mri.atlas.splice(index,1);

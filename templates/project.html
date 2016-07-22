@@ -160,6 +160,47 @@
 	$("#projectFilesNumber").text(projectInfo.files.length+" Files");
 	$("#projectCollaboratorsNumber").text(projectInfo.collaborators.length+" Collaborators");
 	
+
+
+/*
+//insert bind function here
+	var aParam = {
+		table: $("table#info"),
+		info_proxy: info_proxy,
+		info: BrainBox.info,
+		trTemplate: $.map([
+			"<tr>",
+			" <td></td>",
+			" <td><select>",BrainBox.labelSets.map(function(o){return "<option>"+o.name+"</option>"}),"</select></td>",	// append label sets
+			" <td><a></a></td>",
+			"</tr>"],function(o){return o}).join(),
+		objTemplate: [
+			{	typeOfBinding:1,
+				path:"mri.atlas.#.name"
+			},
+			{	typeOfBinding:1,
+				path:"mri.atlas.#.labels",
+				format: function(e,d){$(e).find("select").prop('selectedIndex',BrainBox.labelSets.map(function(o){return o.source}).indexOf(d))},
+				parse: function(e){var name=$(e).find("select").val();var i=BrainBox.labelSets.map(function(o){return o.name}).indexOf(name);return BrainBox.labelSets[i].source}
+			},
+			{	typeOfBinding:1,
+				path:"mri.atlas.#.owner",
+				format: function(e,d){$.get(d+"/nickname",function(r){$(e).text(r);$(e).attr('href',d)})}
+			}
+		]
+	};
+
+	// bind interface
+	bind1(info_proxy,BrainBox.info,"source",$("#source"));
+	bind1(info_proxy,BrainBox.info,"included",$("#included"),date_format);
+	for(var i=0;i<BrainBox.info.mri.atlas.length;i++) {
+		BrainBox.appendTableRow(i,aParam);
+	}
+*/
+
+
+
+
 	/*
 		The list of all files visited by the project
 		should be recovered from the database

@@ -210,6 +210,7 @@ if(params.url) {
 		var aParam = {
 			table: $("table#info"),
 			info_proxy: info_proxy,
+			info: BrainBox.info,
 			saveWarning: $("#saveAnnotations"),
 			trTemplate: $.map([
 				"<tr>",
@@ -220,7 +221,37 @@ if(params.url) {
 				" <td></td>",
 				" <td></td>",
 				" <td><select>",BrainBox.access.map(function(o){return "<option>"+o+"</option>"}),"</select></td>",	// append label sets
-				"</tr>"],function(o){return o}).join()
+				"</tr>"],function(o){return o}).join(),
+			objTemplate: [
+				{	typeOfBinding:2,
+					path:"mri.atlas.#.name"
+				},
+				{	typeOfBinding:2,
+					path:"mri.atlas.#.project"
+				},
+				{	typeOfBinding:2,
+					path:"mri.atlas.#.labels",
+					format: function(e,d){$(e).find("select").prop('selectedIndex',BrainBox.labelSets.map(function(o){return o.source}).indexOf(d))},
+					parse: function(e){var name=$(e).find("select").val();var i=BrainBox.labelSets.map(function(o){return o.name}).indexOf(name);return BrainBox.labelSets[i].source}
+				},
+				{	typeOfBinding:1,
+					path:"mri.atlas.#.owner",
+					format: function(e,d){$.get(d+"/nickname",function(r){$(e).text(r);$(e).attr('href',d)})}
+				},
+				{	typeOfBinding:1,
+					path:"mri.atlas.#.created",
+					format: date_format
+				},
+				{	typeOfBinding:1,
+					path:"mri.atlas.#.modified",
+					format: date_format
+				},
+				{	typeOfBinding:2,path:"mri.atlas.#.access",
+					format: function(e,d){$(e).find("select").prop('selectedIndex',BrainBox.access.indexOf(d))},
+					parse: function(e){return $(e).find("select").val()}
+				}
+			]
+
 		};
 
 		// bind interface
