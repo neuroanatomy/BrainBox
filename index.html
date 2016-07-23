@@ -24,7 +24,7 @@
 	
 	<!-- Content (variable height) -->
 	<div id="content" style="flex:1 0 auto">
-		
+			
 		<!-- Introduction -->
 		<div id="intro">
 			<img id="logo" src="img/brainbox-logo.svg" style="text-align:center"/><br />
@@ -70,50 +70,48 @@
 				<img style='position:fixed;left:5px;top:5px;width:200px' src='/img/brainbox-logo-small.svg'/>
 			</a>
 
-			<!-- Data Table -->
-			<table style="text-align:left;padding:1rem">
-			<tr>
-				<!-- AtlasMaker -->
-				<td>
+			<!-- Data Flex -->
+			<div style="display:flex;justify-content:center">
 					<!-- AtlasMaker -->
-					<div id="stereotaxic" style="width:512px">
+					<div style="flex:0 1 auto">
+						<!-- AtlasMaker -->
+						<div id="stereotaxic" style="width:512px">
+						</div>
+						<!-- End AtlasMaker -->
 					</div>
-					<!-- End AtlasMaker -->
-				</td>
 				
-				<!-- Annotations -->
-				<td style="vertical-align:top;padding-left:0.5rem">
-					<ul>
-						<li>
-							<b>Data source</b></br> <span id="source"></span>
-						</li>
-						<li>
-							<b>Inclusion date</b><br/> <span id="included"></span>
-						</li>
-						<li>
-							<b>Annotations</b><br/>
-							<table id="info">
-							<tr>
-								<th>Name</th>
-								<th>Project</th>
-								<th>Label Set</th>
-								<th>Owner</th>
-								<th>Created</th>
-								<th>Modified</th>
-								<th>Access</th>
-							</tr>
-							</table>
-							<div style="text-align:right">
-								<img id="addAnnotation"    class="button" src='/img/plus-circle.svg'/>
-								<img id="removeAnnotation" class="button" src='/img/minus-circle.svg'/>
-								<img id="saveAnnotations"   class="button" src='/img/floppy.svg'/>
-							</div>
-						</li>
-					</ul>
-				</td>
-			</tr>
-			</table>
-			<!-- End Data Table -->
+					<!-- Annotations -->
+					<div style="flex:0 1 auto;vertical-align:top;padding-left:0.5rem">
+						<ul>
+							<li>
+								<b>Data source</b></br> <span id="source"></span>
+							</li>
+							<li>
+								<b>Inclusion date</b><br/> <span id="included"></span>
+							</li>
+							<li>
+								<b>Annotations</b><br/>
+								<table id="info">
+								<tr>
+									<th>Name</th>
+									<th>Project</th>
+									<th>Label Set</th>
+									<th>Owner</th>
+									<th>Created</th>
+									<th>Modified</th>
+									<th>Access</th>
+								</tr>
+								</table>
+								<div style="text-align:right">
+									<img id="addAnnotation"    class="button" src='/img/plus-circle.svg'/>
+									<img id="removeAnnotation" class="button" src='/img/minus-circle.svg'/>
+									<img id="saveAnnotations"   class="button" src='/img/floppy.svg'/>
+								</div>
+							</li>
+						</ul>
+					</div>
+			</div>
+			<!-- End Data Flex -->
 		</div>
 		<!-- End Data -->
 
