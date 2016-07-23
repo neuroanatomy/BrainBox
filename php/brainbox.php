@@ -380,7 +380,15 @@ function getLabelsets()
 }
 function getFileMetadata()
 /*
-	Get metadata (info.json) for file
+	Get metadata (info.json) for file.
+	Examples:
+		1. The call:
+			http://brainbox.dev/php/brainbox.php?action=getFileMetadata&url=http://braincatalogue.dev/data/Human/MRI-n4.nii.gz
+			will display the metadata associated with the mri as a json file
+		2. The call:
+			http://brainbox.dev/php/brainbox.php?action=getFileMetadata&url=http://braincatalogue.dev/data/Human/MRI-n4.nii.gz&var=mri.atlas.1.name
+			will display the name of the first atlas associated with the mri
+		
 */
 {
 	// check that the url corresponds to a local directory
