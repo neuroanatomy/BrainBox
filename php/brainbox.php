@@ -396,7 +396,8 @@ function getFileMetadata()
 	$hash=hash("md5",$url);
 	$dir=$_SERVER['DOCUMENT_ROOT']."/data/".$hash;
 	if(!file_exists($dir)) {
-		echo "ERROR: No data for url\n";
+		header('HTTP/1.1 404 Not Found');
+		header("Status: 404 Not Found");
 		return;
 	}
 
@@ -406,11 +407,21 @@ function getFileMetadata()
 	if(isset($_GET["var"])) {
 		$info=json_decode($txt,true);
 
-		$path = explode(".", $_GET["var"]);
+		$var=$_GET["var"];
+		$path = explode(".",$var);
 		foreach($path as $i) {
-			$info = $info[$i];
+			if(isset($info[$i])) {
+				$info = $info[$i];
+			} else {
+				header('HTTP/1.1 404 Not Found');
+				header("Status: 404 Not Found");
+				return;
+			}
 		}
-		print json_encode($info);
+		if(is_string($info))
+			print $info;
+		else
+			print json_encode($info);
 	} else {
 		print $txt;
 	}
