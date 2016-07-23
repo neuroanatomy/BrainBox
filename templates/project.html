@@ -80,6 +80,7 @@
 						<table style="width:100%;text-align:left">
 							<thead>
 								<tr>
+									<th>Name</th>
 									<th>File</th>
 									<th>QC</th>
 									<th>QC Comment</th>
@@ -168,14 +169,19 @@
 	for(var i=0;i<projectInfo.files.length;i++) {
 		var name=projectInfo.files[i].split("/").pop();
 		str+=[	"<tr>",
-				"	<td>",
-				"		<a href='"+location.origin+"/index.html?url="+projectInfo.files[i]+"'>"+name+"</a>",
-				"	</td>",
+				"	<td></td>",
+				"	<td><a href='"+location.origin+"/index.html?url="+projectInfo.files[i]+"'>"+name+"</a></td>",
 				"	<td>1</td>",
 				"	<td>No Comment</td>",
 				"</tr>"].join("");
 	}
 	$("#projectFiles tbody").append(str);
+	for(var i=0;i<projectInfo.files.length;i++) {
+		(function(irow) {
+			$.get("/php/brainbox.php",{action:"getFileMetadata",url:projectInfo.files[i],"var":"name"})
+			.done(function(name){$("#projectFiles tbody tr:eq("+irow+") td:eq(0)").text(name)});
+		})(i);
+	}
 	
 	/*
 		The list of all projects to which the project
@@ -196,7 +202,12 @@
 	}
 	$("#collaborators").append(str);
 	
-	var url="http://braincatalogue.dev/data/Lion/MRI-n4.nii.gz";
+	// select the first file in the list by default
+	// TODO: load from localStorage
+	
+	var url=projectInfo.files[0];
+	$("#projectFiles tbody tr:eq(0)").addClass("selected");
+	
 	BrainBox.initBrainBox({url:url,view:"cor",slice:180,fullscreen:false})
 	.then(function() {return BrainBox.loadLabelsets()})
 	.then(function() {
