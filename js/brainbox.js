@@ -138,8 +138,8 @@ var BrainBox={
 	/*
 		Annotation related functions
 	*/
-	selectTableRow: function() {
-		console.log(">> selectTableRow()");
+	selectAnnotationTableRow: function() {
+		console.log(">> selectAnnotationTableRow()");
 	
 		var table=$(this).closest("table");
 		var currentIndex=$(table).find("tr.selected").index()-1;
@@ -153,7 +153,7 @@ var BrainBox={
 			AtlasMakerWidget.configureAtlasMaker(BrainBox.info,index);
 		}
 	},
-	appendTableRow: function(irow,param) {
+	appendAnnotationTableRow: function(irow,param) {
 		$(param.table).append(param.trTemplate);
 
 		for(var icol=0;icol<param.objTemplate.length;icol++) {
@@ -197,7 +197,7 @@ var BrainBox={
 	
 		// add and bind new table row
 		var i=BrainBox.info.mri.atlas.length-1;
-		BrainBox.appendTableRow(i,param);
+		BrainBox.appendAnnotationTableRow(i,param);
 	
 		// update in server
 		BrainBox.saveAnnotations(param);

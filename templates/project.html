@@ -91,7 +91,7 @@
 					</div>
 				
 					<div id="annotations" class="block" style="flex:1 1 200px">
-						<table id="info">
+						<table id="info" style="width:100%;text-align:left">
 							<tr>
 								<th>Name</th>
 								<th>Label Set</th>
@@ -235,8 +235,28 @@
 
 		// bind interface
 		for(var i=0;i<BrainBox.info.mri.atlas.length;i++) {
-			BrainBox.appendTableRow(i,aParam);
+			BrainBox.appendAnnotationTableRow(i,aParam);
 		}
+		
+		// file selection table: select row
+		$(document).on('click', "#projectFiles tbody tr",function() {
+			console.log(">> selectProjectFilesTableRow()");
+	
+			var table=$(this).closest("table");
+			var currentIndex=$(table).find("tr.selected").index();
+			var index=$(this).index();
+			var nodeName=$(this).prop('nodeName');
+	
+			if(index>=0 && currentIndex!=index) {
+				console.log(">>  change selected annotation:",index);
+				$(table).find("tr").removeClass("selected");
+				$(this).addClass("selected");
+				//AtlasMakerWidget.configureAtlasMaker(BrainBox.info,index);
+			}
+		});
+
+		// annotation table: select row
+		$(document).on('click', "#info tr",BrainBox.selectAnnotationTableRow);
 	});
 </script>
 

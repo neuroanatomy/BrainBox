@@ -258,7 +258,7 @@ if(params.url) {
 		bind1(info_proxy,BrainBox.info,"source",$("#source"));
 		bind1(info_proxy,BrainBox.info,"included",$("#included"),date_format);
 		for(var i=0;i<BrainBox.info.mri.atlas.length;i++) {
-			BrainBox.appendTableRow(i,aParam);
+			BrainBox.appendAnnotationTableRow(i,aParam);
 		}
 
 		// connect colours close button
@@ -281,9 +281,9 @@ if(params.url) {
 					break;
 			}
 		});
+
 		// annotation table: select row
-		
-		$(document).on('click', "#info tr",BrainBox.selectTableRow);
+		$(document).on('click', "#info tr",BrainBox.selectAnnotationTableRow);
 		
 		// annotations table: add, remove and save annotations
 		$(document).on('click', "#addAnnotation", function(){BrainBox.addAnnotation(aParam)});
