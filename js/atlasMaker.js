@@ -79,14 +79,14 @@ var AtlasMakerWidget = {
 		if(me.debug)
 			console.log("> changeView()");
 	
-		switch(theView.toLowerCase()) {
-			case 'sag':
+		switch(theView) {
+			case 'Sagittal':
 				me.User.view='sag';
 				break;
-			case 'cor':
+			case 'Coronal':
 				me.User.view='cor';
 				break;
-			case 'axi':
+			case 'Axial':
 				me.User.view='axi';
 				break;
 		}
@@ -1811,7 +1811,7 @@ var AtlasMakerWidget = {
 				ch.each(function(){$(this).removeClass("pressed")});
 				$(this).addClass("pressed");
 				if(callback)
-					callback($(this).text());
+					callback($(this).attr('title'));
 			});
 		});
 	},
