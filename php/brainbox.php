@@ -17,6 +17,9 @@ if(isset($_GET["action"]))
 		case "getLabelsets":
 			getLabelsets($_GET);
 			break;
+		case "getFileMetadata":
+			getFileMetadata($_GET);
+			break;
 	}
 }
 
@@ -33,11 +36,6 @@ function brainbox($args)
 {
 	switch($args[1])
 	{
-		case "labels":
-			header('HTTP/1.1 200 OK');
-			header("Status: 200 OK");
-			print "foreground";
-			break;
 		case "user":
 			userPage($args);
 			break;
@@ -47,6 +45,9 @@ function brainbox($args)
 	}
 }
 function userPage($args)
+/*
+	Dynamically generated User pages
+*/
 {
 	// get user info from user db
 	$file=$_SERVER['DOCUMENT_ROOT']."/user/".$args[2]."/info.json";	
@@ -103,6 +104,9 @@ function userPage($args)
 	}
 }
 function projectPage($args)
+/*
+	Dynamically generated Project pages
+*/
 {
 	// get project info from project db
 	$file=$_SERVER['DOCUMENT_ROOT']."/project/".$args[2]."/info.json";
@@ -153,6 +157,9 @@ function projectPage($args)
 	}
 }
 function upload()
+/*
+	Upload atlas file
+*/
 {
 	// check user/password
     global $connection;
@@ -270,6 +277,9 @@ function upload()
 }
 
 function download($params)
+/*
+	Download MRI file from source URL into server
+*/
 {
 	$url=$params["url"];
 	//$hash=$params["hash"];
@@ -353,6 +363,9 @@ function download($params)
 }
 
 function getLabelsets()
+/*
+	Get list of available Label Sets
+*/
 {
 	$arr=[];
 	foreach (glob($_SERVER['DOCUMENT_ROOT']."/labels/*.json") as $path) {
@@ -364,5 +377,34 @@ function getLabelsets()
 		$arr[]=$obj;
 	}
 	echo json_encode($arr);
+}
+function getFileMetadata()
+/*
+	Get metadata (info.json) for file
+*/
+{
+	// check that the url corresponds to a local directory
+	$url=$_GET["url"];
+	$hash=hash("md5",$url);
+	$dir=$_SERVER['DOCUMENT_ROOT']."/data/".$hash;
+	if(!file_exists($dir)) {
+		echo "ERROR: No data for url\n";
+		return;
+	}
+
+	// get mri info.json metadata file
+	$txt=file_get_contents($dir."/info.json");
+
+	if(isset($_GET["var"])) {
+		$info=json_decode($txt,true);
+
+		$path = explode(".", $_GET["var"]);
+		foreach($path as $i) {
+			$info = $info[$i];
+		}
+		print json_encode($info);
+	} else {
+		print $txt;
+	}
 }
 ?>
