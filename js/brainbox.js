@@ -141,9 +141,9 @@ var BrainBox={
 	selectAnnotationTableRow: function() {
 		console.log(">> selectAnnotationTableRow()");
 	
-		var table=$(this).closest("table");
-		var currentIndex=$(table).find("tr.selected").index()-1;
-		var index=$(this).index()-1;
+		var table=$(this).closest("tbody");
+		var currentIndex=$(table).find("tr.selected").index();
+		var index=$(this).index();
 		var nodeName=$(this).prop('nodeName');
 	
 		if(index>=0 && currentIndex!=index) {
@@ -204,8 +204,8 @@ var BrainBox={
 	},
 	removeAnnotation: function(param) {
 		// remove row from table
-		var index=$(param.table).find(".selected").index()-1;
-		$(param.table).find('tr:eq('+(index+1)+')').remove();
+		var index=$(param.table).find("tbody .selected").index();
+		$(param.table).find('tbody tr:eq('+index+')').remove();
 
 		// remove binding
 		JSON.stringify(param.info_proxy); // update BrainBox.info from info_proxy
