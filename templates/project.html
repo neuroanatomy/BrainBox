@@ -153,9 +153,10 @@
 var str;
 
 function loadProjectFile(url) {
-	BrainBox.initBrainBox({url:url,view:"cor",slice:180,fullscreen:false})
-	.then(function from_loadProjectFile() {return BrainBox.loadLabelsets()})
-	.then(function from_loadProjectFile() {
+	BrainBox.initBrainBox()
+	.then(function from_loadProjectFile(){return BrainBox.loadLabelsets()})
+	.then(function from_loadProjectFile(){return BrainBox.configureBrainBox({url:url,view:"cor",slice:180,fullscreen:false})})
+	.then(function from_loadProjectFile(){
 		$("#tools-side").detach().appendTo('#tools');
 		// connect colours close button
 		$(document).on('click', "#labels-close", function(){$("#labelset").hide()});
@@ -201,8 +202,8 @@ function loadProjectFile(url) {
 }
 
 function loadProjectFile2(url) {
-	BrainBox.initBrainBox({url:url,view:"cor",slice:180,fullscreen:false})
-	.then(function() {
+	BrainBox.configureBrainBox({url:url,view:"cor",slice:180,fullscreen:false})
+	.then(function from_loadProjectFile() {
 		// binding prototype
 		var info_proxy={};
 		var aParam = {
