@@ -201,8 +201,9 @@ if(params.url) {
 	$("#splash").show();	
 
 	// Load data
-	BrainBox.initBrainBox(params)
+	BrainBox.initBrainBox()
 	.then(function(){return BrainBox.loadLabelsets()})
+	.then(function(){return BrainBox.configureBrainBox(params)})
 	.then(function(){
 		// Remove splash
 		$("#splash").hide();
@@ -305,7 +306,7 @@ if(params.url) {
 			if(hash!=hash_old) {
 				$("#saveAnnotations").show();
 			}
-		},1000*60*1 /*every 1 minute*/);
+		},1000*60*1); // every 1 minute
 			
 	},function(){
 		$("#msgLog").html("ERROR: Can't load data");

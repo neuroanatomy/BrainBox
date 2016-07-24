@@ -150,89 +150,17 @@
 <script src="/js/twoWayBinding.js"></script>
 <script src="/js/brainbox.js"></script>
 <script>
+var str;
 
-	// Init login widget
-	MyLoginWidget.init($("#MyLogin"));
-
-	var projectInfo='{{projectName}}';
-	projectInfo=JSON.parse(projectInfo);
-	$("#projectName").text("Project: " + projectInfo.name);
-	$("#projectOwner").html("<a href='"+projectInfo.owner+"'>"+projectInfo.owner+"</a>");
-	var creation=new Date(projectInfo.created);
-	$("#projectCreated").text("Created on "+creation.toLocaleString());
-	$("#projectFilesNumber").text(projectInfo.files.length+" Files");
-	$("#projectCollaboratorsNumber").text(projectInfo.collaborators.length+" Collaborators");
-
-	/*
-		The list of all files visited by the project
-		should be recovered from the database
-	*/
-	var str;
-	for(var i=0;i<projectInfo.files.length;i++) {
-		var name=projectInfo.files[i].split("/").pop();
-		str+=[	"<tr>",
-				"	<td></td>",
-				"	<td><a href='"+location.origin+"/index.html?url="+projectInfo.files[i]+"'>"+name+"</a></td>",
-				"	<td>1</td>",
-				"	<td>No Comment</td>",
-				"</tr>"].join("");
-	}
-	$("#projectFiles tbody").append(str);
-	for(var i=0;i<projectInfo.files.length;i++) {
-		(function(irow) {
-			$.get("/php/brainbox.php",{action:"getFileMetadata",url:projectInfo.files[i],"var":"name"})
-			.done(function(name){$("#projectFiles tbody tr:eq("+irow+") td:eq(0)").text(name)});
-		})(i);
-	}
-	var url=projectInfo.files[0];
-	
-	// select first file by default (should come from localStorage)
-	$("#projectFiles tbody tr:eq(0)").addClass("selected");
-
-	// listen to changes in selected file
-	$(document).on('click', "#projectFiles tbody tr",function() {
-		console.log(">> selectProjectFilesTableRow()");
-
-		var table=$(this).closest("table");
-		var currentIndex=$(table).find("tr.selected").index();
-		var index=$(this).index();
-		var nodeName=$(this).prop('nodeName');
-
-		if(index>=0 && currentIndex!=index) {
-			console.log(">>  change selected annotation:",index);
-			$(table).find("tr").removeClass("selected");
-			$(this).addClass("selected");
-			// AtlasMakerWidget.configureAtlasMaker(BrainBox.info,index);
-		}
-	});
-	
-	/*
-		The list of all projects to which the project
-		participates should be recovered from
-		the database
-	*/
-	str=[	"<tr>",
-			"<th>Name</th>",
-			"<th>Last visited</th>",
-			"<tr>"].join();
-	for(var i=0;i<projectInfo.collaborators.length;i++) {
-		str+=[	"<tr>",
-				"	<td>",
-				"		<a href='"+projectInfo.collaborators[i]+"'>"+projectInfo.collaborators[i]+"</a>",
-				"	</td>",
-				"	<td>14 July 2016</td>",
-				"</tr>"].join("");
-	}
-	$("#collaborators").append(str);
-	
+function loadProjectFile(url) {
 	BrainBox.initBrainBox({url:url,view:"cor",slice:180,fullscreen:false})
-	.then(function() {return BrainBox.loadLabelsets()})
-	.then(function() {
+	.then(function from_loadProjectFile() {return BrainBox.loadLabelsets()})
+	.then(function from_loadProjectFile() {
 		$("#tools-side").detach().appendTo('#tools');
 		// connect colours close button
 		$(document).on('click', "#labels-close", function(){$("#labelset").hide()});
 	})
-	.then(function() {
+	.then(function from_loadProjectFile() {
 		// binding prototype
 		var info_proxy={};
 		var aParam = {
@@ -266,11 +194,143 @@
 			BrainBox.appendAnnotationTableRow(i,aParam);
 		}
 
+		// select the first annotation by default
+		// (should be read from project settings)
 		$("#annotations tbody tr:eq(0)").addClass("selected");
-
-		// listen to changes in selected annotation
-		$(document).on('click', "#info tr",BrainBox.selectAnnotationTableRow);
 	});
+}
+
+function loadProjectFile2(url) {
+	BrainBox.initBrainBox({url:url,view:"cor",slice:180,fullscreen:false})
+	.then(function() {
+		// binding prototype
+		var info_proxy={};
+		var aParam = {
+			table: $("table#info"),
+			info_proxy: info_proxy,
+			info: BrainBox.info,
+			trTemplate: $.map([
+				"<tr>",
+				" <td></td>",
+				" <td><select>",BrainBox.labelSets.map(function(o){return "<option>"+o.name+"</option>"}),"</select></td>",	// append label sets
+				" <td><a></a></td>",
+				"</tr>"],function(o){return o}).join(),
+			objTemplate: [
+				{	typeOfBinding:1,
+					path:"mri.atlas.#.name"
+				},
+				{	typeOfBinding:1,
+					path:"mri.atlas.#.labels",
+					format: function(e,d){$(e).find("select").prop('selectedIndex',BrainBox.labelSets.map(function(o){return o.source}).indexOf(d))},
+					parse: function(e){var name=$(e).find("select").val();var i=BrainBox.labelSets.map(function(o){return o.name}).indexOf(name);return BrainBox.labelSets[i].source}
+				},
+				{	typeOfBinding:1,
+					path:"mri.atlas.#.owner",
+					format: function(e,d){$.get(d+"/nickname",function(r){$(e).text(r);$(e).attr('href',d)})}
+				}
+			]
+		};
+
+		// bind interface
+		for(var i=0;i<BrainBox.info.mri.atlas.length;i++)
+			BrainBox.appendAnnotationTableRow(i,aParam);
+
+		// select the first annotation by default
+		// (should be read from project settings)
+		$("#annotations tbody tr:eq(0)").addClass("selected");
+	});
+}
+
+// Init login widget
+MyLoginWidget.init($("#MyLogin"));
+
+/*
+	This variable contains project metadata
+	and is filled by the server.
+*/
+var projectInfo='{{projectName}}';
+
+projectInfo=JSON.parse(projectInfo);
+$("#projectName").text("Project: " + projectInfo.name);
+$("#projectOwner").html("<a href='"+projectInfo.owner+"'>"+projectInfo.owner+"</a>");
+var creation=new Date(projectInfo.created);
+$("#projectCreated").text("Created on "+creation.toLocaleString());
+$("#projectFilesNumber").text(projectInfo.files.length+" Files");
+$("#projectCollaboratorsNumber").text(projectInfo.collaborators.length+" Collaborators");
+
+/*
+	The list of all collaborators participating in the project
+	(should be recovered from the database)
+*/
+str=[	"<tr>",
+		"<th>Name</th>",
+		"<th>Last visited</th>",
+		"<tr>"].join();
+for(var i=0;i<projectInfo.collaborators.length;i++) {
+	str+=[	"<tr>",
+			"	<td>",
+			"		<a href='"+projectInfo.collaborators[i]+"'>"+projectInfo.collaborators[i]+"</a>",
+			"	</td>",
+			"	<td>14 July 2016</td>",
+			"</tr>"].join("");
+}
+$("#collaborators").append(str);
+
+/*
+	The list of all files included in the project
+	(should be recovered from the database)
+*/
+str=[];
+for(var i=0;i<projectInfo.files.length;i++) {
+	var name=projectInfo.files[i].split("/").pop();
+	str+=[	"<tr>",
+			"	<td></td>",
+			"	<td><a href='"+location.origin+"/index.html?url="+projectInfo.files[i]+"'>"+name+"</a></td>",
+			"	<td>1</td>",
+			"	<td>No Comment</td>",
+			"</tr>"].join("");
+}
+$("#projectFiles tbody").append(str);
+for(var i=0;i<projectInfo.files.length;i++) {
+	(function(irow) {
+		$.get("/php/brainbox.php",{action:"getFileMetadata",url:projectInfo.files[i],"var":"name"})
+		.done(function(name){$("#projectFiles tbody tr:eq("+irow+") td:eq(0)").text(name)});
+	})(i);
+}
+
+// select first file by default (should come from localStorage)
+var url=projectInfo.files[0];	
+$("#projectFiles tbody tr:eq(0)").addClass("selected");
+loadProjectFile(url);
+
+// listen to changes in file selection
+$(document).on('click', "#projectFiles tbody tr",function() {
+	console.log(">> selectProjectFilesTableRow()");
+
+	var table=$(this).closest("table");
+	var currentIndex=$(table).find("tr.selected").index();
+	var index=$(this).index();
+	var nodeName=$(this).prop('nodeName');
+
+	if(index>=0 && currentIndex!=index) {
+		console.log(">>  change selected file:",index);
+		$(table).find("tr").removeClass("selected");
+		$(this).addClass("selected");
+		
+		// new url
+		url=projectInfo.files[index];
+		
+		// remove table with previous annotations
+		$("table#info tbody").html("");
+
+		// load and bind new file
+		loadProjectFile2(url);
+	}
+});
+
+// listen to changes in selected annotation
+$(document).on('click', "#info tbody tr",BrainBox.selectAnnotationTableRow);
+
 </script>
 
 </body>
