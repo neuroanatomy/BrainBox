@@ -15,6 +15,7 @@ var zlib=require("zlib");
 var fileType=require("file-type");
 var req=require('request');
 var jpeg=require('jpeg-js'); // jpeg-js library: https://github.com/eugeneware/jpeg-js
+var keypress = require('keypress');
 
 var db_url=fs.readFileSync("db_url.txt","utf8");
 var	Atlases=[];
@@ -38,6 +39,39 @@ setInterval(function(){console.log(new Date())},60*60*1000); // time mark every 
 console.log("free memory",os.freemem());
 
 initSocketConnection();
+
+// make `process.stdin` begin emitting "keypress" events 
+keypress(process.stdin);
+ // listen for the "keypress" event 
+process.stdin.on('keypress', function (ch, key) {
+	if(key) {
+		switch (key.name) {
+			case 'b':
+				console.log("\n"+Brains.length+" Brains:");
+				for(var i=0;i<Brains.length;i++) {
+					var sum=numberOfUsersConnectedToMRI(Brains[i].path);
+					console.log("Brains["+i+"].path="+Brains[i].path+", "+sum+" users connected");
+				}
+				break;
+			case 'c':
+				if(key.ctrl) {
+					console.log("Exit");
+					process.exit();
+				}
+			case 'u':
+				console.log("\n"+usrsckts.length+" usrsckts:");
+				for(var i=0;i<usrsckts.length;i++) {
+					console.log("usrsckts["+i+"].uid=",usrsckts[i].uid);
+					console.log("Users["+usrsckts[i].uid+"]:");
+					console.log(Users[usrsckts[i].uid]);
+				}
+				break;
+			break;
+		}
+	}
+});
+process.stdin.setRawMode(true);
+process.stdin.resume();
 
 function bufferTag(str,sz) {
 	var buf=new Buffer(sz).fill(32);
@@ -63,10 +97,10 @@ function removeUser(socket) {
 		}
 	}
 }
-function numberOfUsersConnectedToMRI(dirname,mri) {
+function numberOfUsersConnectedToMRI(path) {
 	var sum=0;
 
-	if(dirname==undefined || mri==undefined)
+	if(path==undefined)
 		return sum;
 		
 	for(var i in Users) {
@@ -82,18 +116,18 @@ function numberOfUsersConnectedToMRI(dirname,mri) {
 			console.log("ERROR: A user uid "+i+" MRI is unknown");
 			continue;
 		}
-		if(Users[i].dirname==dirname && Users[i].mri==mri)
+		if(Users[i].dirname+Users[i].mri==path)
 			sum++;
 	}
-	sum--;
+	/* sum--; */
 	return sum;
 }
-function unloadMRI(dirname,mri) {
+function unloadMRI(path) {
 	if(debug)
-		console.log(new Date(), "[unload MRI]",dirname,mri);
+		console.log(new Date(), "[unload MRI]",path);
 		
 	for(var i in Brains) {
-		if(Brains[i].path==dirname+mri) {
+		if(Brains[i].path==path) {
 			Brains.splice(i,1);
 			console.log("free memory",os.freemem());
 			break;
@@ -248,14 +282,15 @@ function initSocketConnection() {
 					console.log("WARNING: dirname was not defined");
 				
 				// count how many users remain connected to the MRI after user leaves
-				sum=numberOfUsersConnectedToMRI(Users[uid].dirname,Users[uid].mri);
+				sum=numberOfUsersConnectedToMRI(Users[uid].dirname+Users[uid].mri);
+				sum-=1;
 				if(sum)
 					console.log("There remain "+sum+" users connected to that MRI");
 				else {
 					console.log("No user connected to MRI "
 								+ Users[uid].dirname
 								+ Users[uid].mri+": unloading it");
-					unloadMRI(Users[uid].dirname,Users[uid].mri);
+					unloadMRI(Users[uid].dirname+Users[uid].mri);
 				}
 
 				// count how many users remain connected to the atlas after user leaves

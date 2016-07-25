@@ -153,55 +153,6 @@
 var str;
 
 function loadProjectFile(url) {
-	BrainBox.initBrainBox()
-	.then(function from_loadProjectFile(){return BrainBox.loadLabelsets()})
-	.then(function from_loadProjectFile(){return BrainBox.configureBrainBox({url:url,view:"cor",slice:180,fullscreen:false})})
-	.then(function from_loadProjectFile(){
-		$("#tools-side").detach().appendTo('#tools');
-		// connect colours close button
-		$(document).on('click', "#labels-close", function(){$("#labelset").hide()});
-	})
-	.then(function from_loadProjectFile() {
-		// binding prototype
-		var info_proxy={};
-		var aParam = {
-			table: $("table#info"),
-			info_proxy: info_proxy,
-			info: BrainBox.info,
-			trTemplate: $.map([
-				"<tr>",
-				" <td></td>",
-				" <td><select>",BrainBox.labelSets.map(function(o){return "<option>"+o.name+"</option>"}),"</select></td>",	// append label sets
-				" <td><a></a></td>",
-				"</tr>"],function(o){return o}).join(),
-			objTemplate: [
-				{	typeOfBinding:1,
-					path:"mri.atlas.#.name"
-				},
-				{	typeOfBinding:1,
-					path:"mri.atlas.#.labels",
-					format: function(e,d){$(e).find("select").prop('selectedIndex',BrainBox.labelSets.map(function(o){return o.source}).indexOf(d))},
-					parse: function(e){var name=$(e).find("select").val();var i=BrainBox.labelSets.map(function(o){return o.name}).indexOf(name);return BrainBox.labelSets[i].source}
-				},
-				{	typeOfBinding:1,
-					path:"mri.atlas.#.owner",
-					format: function(e,d){$.get(d+"/nickname",function(r){$(e).text(r);$(e).attr('href',d)})}
-				}
-			]
-		};
-
-		// bind interface
-		for(var i=0;i<BrainBox.info.mri.atlas.length;i++) {
-			BrainBox.appendAnnotationTableRow(i,aParam);
-		}
-
-		// select the first annotation by default
-		// (should be read from project settings)
-		$("#annotations tbody tr:eq(0)").addClass("selected");
-	});
-}
-
-function loadProjectFile2(url) {
 	BrainBox.configureBrainBox({url:url,view:"cor",slice:180,fullscreen:false})
 	.then(function from_loadProjectFile() {
 		// binding prototype
@@ -302,7 +253,15 @@ for(var i=0;i<projectInfo.files.length;i++) {
 // select first file by default (should come from localStorage)
 var url=projectInfo.files[0];	
 $("#projectFiles tbody tr:eq(0)").addClass("selected");
-loadProjectFile(url);
+
+BrainBox.initBrainBox()
+.then(function from_project(){return BrainBox.loadLabelsets()})
+.then(function from_project(){return loadProjectFile(url)})
+.then(function from_project(){
+	$("#tools-side").detach().appendTo('#tools');
+	// connect colours close button
+	$(document).on('click', "#labels-close", function(){$("#labelset").hide()});
+});
 
 // listen to changes in file selection
 $(document).on('click', "#projectFiles tbody tr",function() {
@@ -325,7 +284,7 @@ $(document).on('click', "#projectFiles tbody tr",function() {
 		$("table#info tbody").html("");
 
 		// load and bind new file
-		loadProjectFile2(url);
+		loadProjectFile(url);
 	}
 });
 
