@@ -2,7 +2,7 @@ var AtlasMakerWidget = {
 	//========================================================================================
 	// Globals
 	//========================================================================================
-	debug:			2,
+	debug:			1,
 	container:		null,	// Element where atlasMaker lives
 	brain_offcn:	null,
 	brain_offtx:	null,
@@ -1198,107 +1198,7 @@ var AtlasMakerWidget = {
 				def.resolve();
 			};
 			
-			me.socket.onmessage = function from_initSocketConnection(msg) {
-				if(me.debug>1) console.log("[initSocketConnection] onmessage",msg);
-				// Message: atlas data initialisation
-				if(msg.data instanceof Blob) {
-					if(this.debug) console.log("received binary blob",msg.data.size,"bytes long");
-					var fileReader = new FileReader();
-					fileReader.onload = function from_initSocketConnection() {
-						var data=new Uint8Array(this.result);
-						var sz=data.length;
-						var ext=String.fromCharCode(data[sz-8],data[sz-7],data[sz-6]);
-						
-						switch(ext) {
-							case "nii": {
-								var	inflate=new pako.Inflate();
-								inflate.push(data,true);
-								var layer=new Object();
-								layer.data=inflate.result;
-								layer.name=me.atlasFilename;
-								layer.dim=me.brain_dim;
-						
-								me.atlas=layer;
-
-								me.configureBrainImage();
-								me.configureAtlasImage();
-								me.resizeWindow();
-
-								me.brain_img.img=null;
-								me.drawImages();
-								
-								// compute total segmented volume
-								var vol=me.computeSegmentedVolume();
-								me.info.volume=parseInt(vol)+" mm3";
-
-								// setup download link
-								var	link=me.container.find("span#download_atlas");
-								link.html("<a class='download' href='"+me.User.dirname+me.User.atlasFilename+"'><img src='/img/download.svg' style='vertical-align:middle'/></a>"+layer.name);
-								break;
-							}
-							case "jpg": {
-								var urlCreator = window.URL || window.webkitURL;
-								var imageUrl = urlCreator.createObjectURL(msg.data);
-								var img = new Image();
-								img.onload=function from_initSocketConnection(){
-									var flagFirstImage=(me.brain_img.img==null);
-									me.brain_img.img=img;
-									me.brain_img.view=me.flagLoadingImg.view;
-									me.brain_img.slice=me.flagLoadingImg.slice;
-
-									me.drawImages();
-																		
-									me.flagLoadingImg.loading=false;
-
-									if(flagFirstImage || me.flagLoadingImg.view!=me.User.view ||me.flagLoadingImg.slice!=me.User.slice) {
-										me.sendRequestSliceMessage();
-									}
-								}
-								img.src=imageUrl;
-								
-								break;
-							}
-						}
-					};
-					fileReader.readAsArrayBuffer(msg.data);
-					return;
-				}
-			
-				// Message: interaction message
-				var	data=JSON.parse(msg.data);
-			
-				// [deprecated]
-				// If we receive a message from an unknown user,
-				// send our own data to make us known
-				// [now, the server does the introductions]
-				/*
-				if(data.uid!=undefined && !Collab[data.uid]) {
-					console.log("Received message from unknown user");
-					sendUserDataMessage("introduce to new user");
-				}
-				*/
-			
-				switch(data.type) {
-					case "intro":
-						me.receiveUserDataMessage(data);
-						break;
-					case "volInfo":
-						console.log("volInfo",data);
-						break;
-					case "chat":
-						me.receiveChatMessage(data);
-						break;
-					case "paint":
-						me.receivePaintMessage(data);
-						break;
-					case "paintvol":
-						me.receivePaintVolumeMessage(data);
-						break;
-					case "disconnect":
-						me.receiveDisconnectMessage(data);
-						break;
-				}
-			};
+			me.socket.onmessage = me.receiveSocketMessage;
 			
 			me.socket.onclose = function(msg) {
 				me.socket.send(JSON.stringify({
@@ -1315,6 +1215,109 @@ var AtlasMakerWidget = {
 		}
 		
 		return def.promise();
+	},
+	receiveSocketMessage: function receiveSocketMessage(msg) {
+		var me=AtlasMakerWidget;
+		var l=me.traceLog(receiveSocketMessage);if(l)console.log(l);
+
+		// Message: atlas data initialisation
+		if(msg.data instanceof Blob) {
+			if(this.debug) console.log("received binary blob",msg.data.size,"bytes long");
+			var fileReader = new FileReader();
+			fileReader.onload = function from_receiveSocketMessage() {
+				var data=new Uint8Array(this.result);
+				var sz=data.length;
+				var ext=String.fromCharCode(data[sz-8],data[sz-7],data[sz-6]);
+				
+				switch(ext) {
+					case "nii": {
+						var	inflate=new pako.Inflate();
+						inflate.push(data,true);
+						var layer=new Object();
+						layer.data=inflate.result;
+						layer.name=me.atlasFilename;
+						layer.dim=me.brain_dim;
+				
+						me.atlas=layer;
+
+						me.configureBrainImage();
+						me.configureAtlasImage();
+						me.resizeWindow();
+
+						me.brain_img.img=null;
+						me.drawImages();
+						
+						// compute total segmented volume
+						var vol=me.computeSegmentedVolume();
+						me.info.volume=parseInt(vol)+" mm3";
+
+						// setup download link
+						var	link=me.container.find("span#download_atlas");
+						link.html("<a class='download' href='"+me.User.dirname+me.User.atlasFilename+"'><img src='/img/download.svg' style='vertical-align:middle'/></a>"+layer.name);
+						break;
+					}
+					case "jpg": {
+						var urlCreator = window.URL || window.webkitURL;
+						var imageUrl = urlCreator.createObjectURL(msg.data);
+						var img = new Image();
+						img.onload=function from_initSocketConnection(){
+							var flagFirstImage=(me.brain_img.img==null);
+							me.brain_img.img=img;
+							me.brain_img.view=me.flagLoadingImg.view;
+							me.brain_img.slice=me.flagLoadingImg.slice;
+
+							me.drawImages();
+																
+							me.flagLoadingImg.loading=false;
+
+							if(flagFirstImage || me.flagLoadingImg.view!=me.User.view ||me.flagLoadingImg.slice!=me.User.slice) {
+								me.sendRequestSliceMessage();
+							}
+						}
+						img.src=imageUrl;
+						
+						break;
+					}
+				}
+			};
+			fileReader.readAsArrayBuffer(msg.data);
+			return;
+		}
+	
+		// Message: interaction message
+		var	data=JSON.parse(msg.data);
+	
+		// [deprecated]
+		// If we receive a message from an unknown user,
+		// send our own data to make us known
+		// [now, the server does the introductions]
+		/*
+		if(data.uid!=undefined && !Collab[data.uid]) {
+			console.log("Received message from unknown user");
+			sendUserDataMessage("introduce to new user");
+		}
+		*/
+	
+		switch(data.type) {
+			case "intro":
+				me.receiveUserDataMessage(data);
+				break;
+			case "volInfo":
+				console.log("volInfo",data);
+				break;
+			case "chat":
+				me.receiveChatMessage(data);
+				break;
+			case "paint":
+				me.receivePaintMessage(data);
+				break;
+			case "paintvol":
+				me.receivePaintVolumeMessage(data);
+				break;
+			case "disconnect":
+				me.receiveDisconnectMessage(data);
+				break;
+		}
 	},
 	sendUserDataMessage: function sendUserDataMessage(description) {
 		var me=AtlasMakerWidget;
@@ -1550,7 +1553,7 @@ var AtlasMakerWidget = {
 		me.container.find("#resizable").append("<svg id='info'></svg>");
 		
 		// Add cursor (a small div)
-		me.container.append("<div id='cursor'></div>");
+		me.container.find("#resizable").append("<div id='cursor'></div>");
 		
 		// Add precise cursor
 		var isTouchArr=[];//["iPad","iPod"];

@@ -66,7 +66,7 @@ var BrainBox={
 		$.getJSON("/php/brainbox.php",{
 			action: "download",
 			url: param.url //,hash: BrainBox.hash(param.url)
-		}).done(function(data) {
+		}).done(function from_configureBrainBox(data) {
 			// Configure MRI into atlasMaker
 			//data=JSON.parse(data);
 			if(data.success==false) {

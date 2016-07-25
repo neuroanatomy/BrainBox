@@ -350,12 +350,16 @@ function receiveAtlasFromUserMessage(data,user_socket) {
 	});
 }
 function getBrainAtPath(brainPath,callback) {
-	if(debug>1) console.log("[getBrainAtPath]");
+	if(debug) console.log("[getBrainAtPath]");
 	var i;
 	for(i=0;i<Brains.length;i++)
-		if(Brains[i].path==brainPath)
+		if(Brains[i].path==brainPath) {
+			if(debug) console.log("brain already loaded");
 			return Brains[i].data;
-			
+		}
+	if(debug) {
+		console.log("loading brain at",brainPath);
+	}	
 	loadBrainCompressed(brainPath,function(data) {
 		var brain={path:brainPath,data:data};
 		Brains.push(brain);
