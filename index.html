@@ -2,7 +2,8 @@
 <html>
 <head>
 	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> 
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+	<link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
     <title>BrainBox</title>
 	<link rel="stylesheet" href="css/common.css" />
 	<link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
@@ -87,12 +88,9 @@
 					<!-- Annotations -->
 					<div style="flex:0 1 auto;vertical-align:top;padding-left:0.5rem">
 						<ul>
-							<li>
-								<b>Data source</b></br> <span id="source"></span>
-							</li>
-							<li>
-								<b>Inclusion date</b><br/> <span id="included"></span>
-							</li>
+							<li><b>Name</b><br/> <span id="name" contentEditable></span></li>
+							<li><b>Data source</b></br> <span id="source"></span></li>
+							<li><b>Inclusion date</b><br/> <span id="included"></span></li>
 							<li>
 								<b>Annotations</b><br/>
 								<table id="info">
@@ -260,6 +258,7 @@ if(params.url) {
 		};
 
 		// bind interface
+		bind2(info_proxy,BrainBox.info,"name",$("#name"),function(e,d){$(e).text(d||"Empty")},function(e){return ($(e).text()=="Empty")?"":$(e).text()});
 		bind1(info_proxy,BrainBox.info,"source",$("#source"));
 		bind1(info_proxy,BrainBox.info,"included",$("#included"),date_format);
 		for(var i=0;i<BrainBox.info.mri.atlas.length;i++) {
