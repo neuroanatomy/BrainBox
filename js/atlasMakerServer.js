@@ -33,6 +33,7 @@ var websocket;
 
 var UndoStack=[];
 
+console.log("if user loads a new brain from disk, the previous brain will be unloaded, however, if the new brain was already loaded, the previous brain will not be unloaded. Check the getBrainAtPath function");
 console.log("atlasMakerServer.js");
 console.log(new Date());
 setInterval(function(){console.log(new Date())},60*60*1000); // time mark every 60 minutes
@@ -157,7 +158,6 @@ function numberOfUsersConnectedToAtlas(dirname,atlasFilename) {
 		if(Users[i].dirname==dirname && Users[i].atlasFilename==atlasFilename)
 			sum++;
 	}
-	sum--;
 	return sum;
 }
 function unloadAtlas(dirname,atlasFilename) {
@@ -283,10 +283,10 @@ function initSocketConnection() {
 				
 				// count how many users remain connected to the MRI after user leaves
 				sum=numberOfUsersConnectedToMRI(Users[uid].dirname+Users[uid].mri);
-				sum-=1;
-				if(sum)
+				sum-=1; // subtract current user
+				if(sum) {
 					console.log("There remain "+sum+" users connected to that MRI");
-				else {
+				} else {
 					console.log("No user connected to MRI "
 								+ Users[uid].dirname
 								+ Users[uid].mri+": unloading it");
@@ -295,9 +295,10 @@ function initSocketConnection() {
 
 				// count how many users remain connected to the atlas after user leaves
 				sum=numberOfUsersConnectedToAtlas(Users[uid].dirname,Users[uid].atlasFilename);
-				if(sum)
+				sum-=1; // subtract current user
+				if(sum) {
 					console.log("There remain "+sum+" users connected to that atlas");
-				else {
+				} else {
 					console.log("No user connected to atlas "
 								+ Users[uid].dirname
 								+ Users[uid].atlasFilename+": unloading it");
@@ -387,21 +388,48 @@ function receiveAtlasFromUserMessage(data,user_socket) {
 function getBrainAtPath(brainPath,callback) {
 	if(debug) console.log("[getBrainAtPath]");
 	var i;
-	for(i=0;i<Brains.length;i++)
+	for(i=0;i<Brains.length;i++) {
 		if(Brains[i].path==brainPath) {
-			if(debug) console.log("brain already loaded");
+			if(debug)
+				console.log("brain already loaded");
 			return Brains[i].data;
 		}
+	}
 	if(debug) {
 		console.log("loading brain at",brainPath);
 	}	
 	loadBrainCompressed(brainPath,function(data) {
 		var brain={path:brainPath,data:data};
 		Brains.push(brain);
-		callback(data);
+		callback(data); // callback: sendSliceToUser
+
+		// check for brains and atlases to unload
+		unloadUnusedBrains();
+		unloadUnusedAtlases();
 	});
 		
 	return null;
+}
+function unloadUnusedBrains() {
+	var i;
+	for(i=0;i<Brains.length;i++) {
+		var sum=numberOfUsersConnectedToMRI(Brains[i].path);
+
+		if(sum==0) {
+			console.log("No user connected to MRI "+Brains[i].path+": unloading it");
+			unloadMRI(Brains[i].path);
+		}
+	}
+}
+function unloadUnusedAtlases() {
+	var i;
+	for(i=0;i<Atlases.length;i++) {
+		var sum=numberOfUsersConnectedToAtlas(Atlases[i].dirname,Atlases[i].name);
+		if(sum==0) {
+			console.log("No user connected to Atlas "+Atlases[i].dirname+Atlases[i].name+": unloading it");
+			unloadAtlas(Atlases[i].dirname,Atlases[i].name);
+		}
+	}
 }
 function sendSliceToUser(brain,view,slice,user_socket) {
 	if(debug>1) console.log("[sendSliceToUser]");
