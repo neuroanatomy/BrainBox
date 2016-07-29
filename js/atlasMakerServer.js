@@ -31,6 +31,8 @@ var jpgTag=bufferTag("jpg",8);
 
 var websocket;
 
+var enterCommands=0;
+
 var UndoStack=[];
 
 console.log("atlasMakerServer.js");
@@ -40,36 +42,50 @@ console.log("free memory",os.freemem());
 
 initSocketConnection();
 
-// make `process.stdin` begin emitting "keypress" events 
+
+function displayBrains() {
+	console.log("\n"+Brains.length+" Brains:");
+	for(var i=0;i<Brains.length;i++) {
+		var sum=numberOfUsersConnectedToMRI(Brains[i].path);
+		console.log("Brains["+i+"].path="+Brains[i].path+", "+sum+" users connected");
+	}
+	for(var i=0;i<Brains.length;i++) {
+		console.log(Brains[i]);
+	}
+}
+function displayUsers() {
+	console.log("\n"+usrsckts.length+" usrsckts:");
+	for(var i=0;i<usrsckts.length;i++) {
+		console.log("usrsckts["+i+"].uid=",usrsckts[i].uid);
+		console.log("Users["+usrsckts[i].uid+"]:");
+		console.log(Users[usrsckts[i].uid]);
+	}
+}
 keypress(process.stdin);
- // listen for the "keypress" event 
 process.stdin.on('keypress', function (ch, key) {
 	if(key) {
-		switch (key.name) {
-			case 'b':
-				console.log("\n"+Brains.length+" Brains:");
-				for(var i=0;i<Brains.length;i++) {
-					var sum=numberOfUsersConnectedToMRI(Brains[i].path);
-					console.log("Brains["+i+"].path="+Brains[i].path+", "+sum+" users connected");
-				}
-				for(var i=0;i<Brains.length;i++) {
-					console.log(Brains[i]);
-				}
-				break;
-			case 'c':
-				if(key.ctrl) {
-					console.log("Exit");
-					process.exit();
-				}
-			case 'u':
-				console.log("\n"+usrsckts.length+" usrsckts:");
-				for(var i=0;i<usrsckts.length;i++) {
-					console.log("usrsckts["+i+"].uid=",usrsckts[i].uid);
-					console.log("Users["+usrsckts[i].uid+"]:");
-					console.log(Users[usrsckts[i].uid]);
-				}
-				break;
-			break;
+		if(key.name=='c' && key.ctrl) {
+			console.log("Exit.");
+			process.exit();
+		}
+		if(key.name=='escape') {
+			enterCommands=!enterCommands;
+			console.log("enterCommands: "+enterCommands);
+		}
+		if(enterCommands==0) {
+			if(key.name=='return')
+				console.log();
+			else
+				process.stdout.write(key.sequence);
+		} else {
+			switch (key.name) {
+				case 'b':
+					displayBrains();
+					break;
+				case 'u':
+					displayUsers();
+					break;
+			}
 		}
 	}
 });
@@ -250,7 +266,7 @@ function initSocketConnection() {
 					}
 					
 					if( Users[uid].iAtlas!=Users[data.uid].iAtlas && data.type!="chat" && data.type!="intro" ) {
-						if(debug) console.log("no broadcast to user "+Users[uid].username+"/"+Users[uid].specimenName+"/"+Users[uid].atlasFilename);
+						if(debug) console.log("no broadcast to user "+Users[uid].username+" [uid: "+uid+"] of atlas "+Users[uid].specimenName+"/"+Users[uid].atlasFilename);
 						continue;
 					}
 					
@@ -451,10 +467,20 @@ function receiveUserDataMessage(data,user_socket) {
 	var	i,atlasLoadedFlag,firstConnectionFlag,switchingAtlasFlag;
 	
 	firstConnectionFlag=(Users[uid]==undefined);
+	
+	user.uid=uid;
 
 	if(data.description=="sendAtlas") {
 		// 1. Check if the atlas the user is requesting has not been loaded
 		atlasLoadedFlag=false;
+		
+		// check whether user is switching atlas.
+		switchingAtlasFlag=false;
+		if(Users[uid]) {
+			if((Users[uid].atlasFilename!=user.atlasFilename)||(Users[uid].dirname!=user.dirname)) {
+				switchingAtlasFlag=true;
+			}
+		}
 		
 		for(i=0;i<Atlases.length;i++)
 			if(Atlases[i].dirname==user.dirname && Atlases[i].name==user.atlasFilename) {
@@ -474,9 +500,6 @@ function receiveUserDataMessage(data,user_socket) {
 			// Load the atlas s/he's requesting
 			addAtlas(user,function(atlas){sendAtlasToUser(atlas,user_socket,true)});
 		}
-		
-		unloadUnusedBrains();
-		unloadUnusedAtlases();
 	}
 	
 	// 3. Update user data
@@ -501,6 +524,12 @@ function receiveUserDataMessage(data,user_socket) {
 				sum++;
 		console.log(sum+" user"+((sum==1)?" is":"s are")+" connected to the atlas "+user.dirname+user.atlasFilename);
 	}	
+
+	// 5. Unload unused data (the check is only done if new data has been added)
+	if(data.description=="sendAtlas") {
+		unloadUnusedBrains();
+		unloadUnusedAtlases();
+	}
 }
 
 /*

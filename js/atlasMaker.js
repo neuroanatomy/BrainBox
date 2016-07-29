@@ -2,7 +2,7 @@ var AtlasMakerWidget = {
 	//========================================================================================
 	// Globals
 	//========================================================================================
-	debug:			1,
+	debug:			2,
 	container:		null,	// Element where atlasMaker lives
 	brain_offcn:	null,
 	brain_offtx:	null,
@@ -1222,12 +1222,14 @@ var AtlasMakerWidget = {
 
 		// Message: atlas data initialisation
 		if(msg.data instanceof Blob) {
-			if(this.debug) console.log("received binary blob",msg.data.size,"bytes long");
+			if(me.debug) console.log("received binary blob",msg.data.size,"bytes long");
 			var fileReader = new FileReader();
 			fileReader.onload = function from_receiveSocketMessage() {
 				var data=new Uint8Array(this.result);
 				var sz=data.length;
 				var ext=String.fromCharCode(data[sz-8],data[sz-7],data[sz-6]);
+
+				if(me.debug) console.log("type: "+ext);
 				
 				switch(ext) {
 					case "nii": {
@@ -1286,6 +1288,7 @@ var AtlasMakerWidget = {
 	
 		// Message: interaction message
 		var	data=JSON.parse(msg.data);
+		if(me.debug) console.log("message: "+data.type);
 	
 		// [deprecated]
 		// If we receive a message from an unknown user,
@@ -1326,7 +1329,7 @@ var AtlasMakerWidget = {
 		if(me.flagConnected==0)
 			return;
 
-		if(me.debug>1) console.log("> sendUserDataMessage()");
+		if(me.debug>1) console.log("message: "+description);
 		
 		var msg={"type":"intro","user":me.User,"description":description};
 		try {
@@ -1678,6 +1681,8 @@ var AtlasMakerWidget = {
 		me.User.pixdim=info.pixdim;
 		
 		me.flagLoadingImg={loading:false};
+		
+		me.brain_img.img=null;
 		
 		// get volume dimensions
 		me.brain_dim=info.dim;
