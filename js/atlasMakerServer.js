@@ -33,7 +33,6 @@ var websocket;
 
 var UndoStack=[];
 
-console.log("if user loads a new brain from disk, the previous brain will be unloaded, however, if the new brain was already loaded, the previous brain will not be unloaded. Check the getBrainAtPath function");
 console.log("atlasMakerServer.js");
 console.log(new Date());
 setInterval(function(){console.log(new Date())},60*60*1000); // time mark every 60 minutes
@@ -52,6 +51,9 @@ process.stdin.on('keypress', function (ch, key) {
 				for(var i=0;i<Brains.length;i++) {
 					var sum=numberOfUsersConnectedToMRI(Brains[i].path);
 					console.log("Brains["+i+"].path="+Brains[i].path+", "+sum+" users connected");
+				}
+				for(var i=0;i<Brains.length;i++) {
+					console.log(Brains[i]);
 				}
 				break;
 			case 'c':
@@ -402,10 +404,6 @@ function getBrainAtPath(brainPath,callback) {
 		var brain={path:brainPath,data:data};
 		Brains.push(brain);
 		callback(data); // callback: sendSliceToUser
-
-		// check for brains and atlases to unload
-		unloadUnusedBrains();
-		unloadUnusedAtlases();
 	});
 		
 	return null;
@@ -458,25 +456,6 @@ function receiveUserDataMessage(data,user_socket) {
 		// 1. Check if the atlas the user is requesting has not been loaded
 		atlasLoadedFlag=false;
 		
-		// check if user is switching atlas, and unload unused atlases
-		switchingAtlasFlag=false;
-		if(Users[uid]) {
-			if((Users[uid].atlasFilename!=user.atlasFilename)||(Users[uid].dirname!=user.dirname)) {
-				// User is switching atlas.
-				switchingAtlasFlag=true;
-				
-				// check whether the old atlas has to be unloaded
-				var sum;
-				sum=numberOfUsersConnectedToAtlas(Users[uid].dirname,Users[uid].atlasFilename);
-			
-				console.log(sum,"users connected to atlas",Users[uid].dirname,",",Users[uid].atlasFilename);
-			
-				if(sum==0) {
-					unloadAtlas(Users[uid].dirname,Users[uid].atlasFilename);
-				}
-			}
-		}
-		
 		for(i=0;i<Atlases.length;i++)
 			if(Atlases[i].dirname==user.dirname && Atlases[i].name==user.atlasFilename) {
 				atlasLoadedFlag=true;
@@ -495,6 +474,9 @@ function receiveUserDataMessage(data,user_socket) {
 			// Load the atlas s/he's requesting
 			addAtlas(user,function(atlas){sendAtlasToUser(atlas,user_socket,true)});
 		}
+		
+		unloadUnusedBrains();
+		unloadUnusedAtlases();
 	}
 	
 	// 3. Update user data
