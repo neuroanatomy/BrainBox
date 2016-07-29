@@ -281,6 +281,8 @@ function download($params)
 	Download MRI file from source URL into server
 */
 {
+    global $brainboxURL;
+
 	$url=$params["url"];
 	//$hash=$params["hash"];
 	$hash=hash("md5",$url);
@@ -367,12 +369,14 @@ function getLabelsets()
 	Get list of available Label Sets
 */
 {
+    global $brainboxURL;
+
 	$arr=[];
 	foreach (glob($_SERVER['DOCUMENT_ROOT']."/labels/*.json") as $path) {
 		$info=json_decode(file_get_contents($path));
 		$obj=array(
 			"name"=>$info->name,
-			"source"=>"http://brainbox.dev/labels/".basename($path)
+			"source"=>$brainboxURL."/labels/".basename($path)
 		);	
 		$arr[]=$obj;
 	}
