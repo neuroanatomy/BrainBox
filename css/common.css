@@ -364,3 +364,8 @@ select {
     width: 100px;
     text-overflow: ellipsis;
 }
+
+[contentEditable=true]:empty:not(:focus):before {
+	content:attr(data-ph);
+	color:rgba(255,255,255,0.4);
+}

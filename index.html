@@ -88,7 +88,7 @@
 					<!-- Annotations -->
 					<div style="flex:0 1 auto;vertical-align:top;padding-left:0.5rem">
 						<ul>
-							<li><b>Name</b><br/> <span id="name" contentEditable></span></li>
+							<li><b>Name</b><br/> <span id="name" contentEditable=true data-ph='Empty'></span></li>
 							<li><b>Data source</b></br> <span id="source"></span></li>
 							<li><b>Inclusion date</b><br/> <span id="included"></span></li>
 							<li>
@@ -217,8 +217,8 @@ if(params.url) {
 			saveWarning: $("#saveAnnotations"),
 			trTemplate: $.map([
 				"<tr>",
-				" <td contentEditable></td>",
-				" <td contentEditable></td>",
+				" <td contentEditable=true data-ph='Empty'></td>",
+				" <td contentEditable=true data-ph='Empty'></td>",
 				" <td><select>",BrainBox.labelSets.map(function(o){return "<option>"+o.name+"</option>"}),"</select></td>",	// append label sets
 				" <td><a></a></td>",
 				" <td></td>",
@@ -258,7 +258,7 @@ if(params.url) {
 		};
 
 		// bind interface
-		bind2(info_proxy,BrainBox.info,"name",$("#name"),function(e,d){$(e).text(d||"Empty")},function(e){return ($(e).text()=="Empty")?"":$(e).text()});
+		bind2(info_proxy,BrainBox.info,"name",$("#name"));
 		bind1(info_proxy,BrainBox.info,"source",$("#source"));
 		bind1(info_proxy,BrainBox.info,"included",$("#included"),date_format);
 		for(var i=0;i<BrainBox.info.mri.atlas.length;i++) {
