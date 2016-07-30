@@ -243,10 +243,10 @@ str=[];
 for(var i=0;i<projectInfo.files.length;i++) {
 	var name=projectInfo.files[i].split("/").pop();
 	str+=[	"<tr>",
-			"	<td></td>",
+			"	<td contentEditable=true data-ph='Empty'></td>",
 			"	<td><a href='"+location.origin+"/index.html?url="+projectInfo.files[i]+"'>"+name+"</a></td>",
-			"	<td>1</td>",
-			"	<td>No Comment</td>",
+			"	<td contentEditable=true data-ph='1'></td>",
+			"	<td contentEditable=true data-ph='No Comment'></td>",
 			"</tr>"].join("");
 }
 $("#projectFiles tbody").append(str);
