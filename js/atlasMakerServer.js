@@ -18,10 +18,24 @@ var jpeg=require('jpeg-js'); // jpeg-js library: https://github.com/eugeneware/j
 var keypress = require('keypress');
 
 var db_url=fs.readFileSync("db_url.txt","utf8");
+
+/*
+	Atlases[] is a sparse associative array, it can have undefined indices. Values are
+	eliminated from Atlases using 'delete'. Do not use '.length' to count the number of
+	elements in Atlases -- the array has to be first filtered (see the function
+	displayAtlases). In the code '.length' is only used to find an available slot with
+	higher index than any of those already present
+*/
 var	Atlases=[];
+
 var Brains=[];
 var	Users=[];
+
+/*
+	usrsckts[] is a sparse associative array. The comments for Atlases[] apply.
+*/
 var	usrsckts=[];
+
 var	localdir=__dirname+"/../";
 var	uidcounter=1;
 
@@ -43,6 +57,16 @@ console.log("free memory",os.freemem());
 initSocketConnection();
 
 
+function displayAtlases() {
+	console.log("\n"+Atlases.filter(function(o){return o!=undefined}).length+" Atlases:");
+	for(var i in Atlases) {
+		var sum=numberOfUsersConnectedToAtlas(Atlases[i].dirname,Atlases[i].name);
+		console.log("Atlases["+i+"] path:"+Atlases[i].dirname+Atlases[i].name+", "+sum+" users connected");
+	}
+	for(var i in Atlases) {
+		console.log(Atlases[i]);
+	}
+}
 function displayBrains() {
 	console.log("\n"+Brains.length+" Brains:");
 	for(var i=0;i<Brains.length;i++) {
@@ -54,8 +78,8 @@ function displayBrains() {
 	}
 }
 function displayUsers() {
-	console.log("\n"+usrsckts.length+" usrsckts:");
-	for(var i=0;i<usrsckts.length;i++) {
+	console.log("\n"+usrsckts.filter(function(o){return o!=undefined}).length+" usrsckts:");
+	for(var i in usrsckts) {
 		console.log("usrsckts["+i+"].uid=",usrsckts[i].uid);
 		console.log("Users["+usrsckts[i].uid+"]:");
 		console.log(Users[usrsckts[i].uid]);
@@ -79,6 +103,9 @@ process.stdin.on('keypress', function (ch, key) {
 				process.stdout.write(key.sequence);
 		} else {
 			switch (key.name) {
+				case 'a':
+					displayAtlases();
+					break;
 				case 'b':
 					displayBrains();
 					break;
@@ -187,7 +214,7 @@ function unloadAtlas(dirname,atlasFilename) {
 		if(Atlases[i].dirname==dirname && Atlases[i].name==atlasFilename) {
 			saveNifti(Atlases[i]);
 			clearInterval(Atlases[i].timer);
-			Atlases.splice(i,1);
+			delete Atlases[i];
 			console.log("free memory",os.freemem());
 			break;
 		}
@@ -206,7 +233,7 @@ function initSocketConnection() {
 			console.log("remote_address",s.upgradeReq.connection.remoteAddress);
 			var	usr={"uid":"u"+uidcounter++,"socket":s};
 			usrsckts.push(usr);
-			console.log("User id "+usr.uid+" connected, total: "+usrsckts.length+" users");
+			console.log("User id "+usr.uid+" connected, total: "+usrsckts.filter(function(o){return o!=undefined}).length+" users");
 			
 			// send data from previous users
 			sendPreviousUserDataMessage(usr.uid);
@@ -283,7 +310,7 @@ function initSocketConnection() {
 			
 			s.on('close',function(msg) {
 				console.log(new Date(),"[connection: close]");
-				console.log("usrsckts length",usrsckts.length);
+				console.log("usrsckts length",usrsckts.filter(function(o){return o!=undefined}).length);
 				for(var i in usrsckts)
 					if(usrsckts[i].socket==s)
 						console.log("user",usrsckts[i].uid,"is closing connection");
@@ -437,7 +464,7 @@ function unloadUnusedBrains() {
 }
 function unloadUnusedAtlases() {
 	var i;
-	for(i=0;i<Atlases.length;i++) {
+	for(i in Atlases) {
 		var sum=numberOfUsersConnectedToAtlas(Atlases[i].dirname,Atlases[i].name);
 		if(sum==0) {
 			console.log("No user connected to Atlas "+Atlases[i].dirname+Atlases[i].name+": unloading it");
@@ -482,12 +509,12 @@ function receiveUserDataMessage(data,user_socket) {
 			}
 		}
 		
-		for(i=0;i<Atlases.length;i++)
+		for(i in Atlases)
 			if(Atlases[i].dirname==user.dirname && Atlases[i].name==user.atlasFilename) {
 				atlasLoadedFlag=true;
 				break;
 			}
-		user.iAtlas=i;	// i-th value if it was found, or last if it wasn't
+		user.iAtlas=atlasLoadedFlag?i:Atlases.length;	// value i if it was found, or last available if it wasn't
 	
 		// 2. Send the atlas to the user (load it if required)
 		if(atlasLoadedFlag) {
@@ -642,8 +669,8 @@ function addAtlas(user,callback) {
 	
 	loadAtlasNifti(atlas,user.username,callback);
 
-	user.iAtlas=Atlases.length;
 	Atlases.push(atlas);
+	user.iAtlas=Atlases.indexOf(atlas);
 
 	atlas.timer=setInterval(function(){saveNifti(atlas)},60*60*1000); // 60 minutes
 }
