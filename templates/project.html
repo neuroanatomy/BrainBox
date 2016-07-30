@@ -290,10 +290,9 @@ $(document).on('click', "#projectFiles tbody tr",function() {
 });
 
 // listen to changes in file selection by pressing the up/down arrows
-$(document).keydown(function(e){
+$(document).on('keydown', function(e){
 	var table=$("#projectFiles tbody");
 	var index=$(table).find("tr.selected").index();
-	console.log(e);
 	
 	if(e.keyCode!=38 && e.keyCode!=40)
 		return;
