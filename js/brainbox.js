@@ -257,6 +257,10 @@ var BrainBox={
 		
 		return $.getJSON("/php/brainbox.php?action=getLabelsets",function(data) {
 			BrainBox.labelSets=data;
+			/*
+				If we wanted to filter out the location, we would use:
+				BrainBox.labelSets=$.map(data,function(o){return new URL(o.source).pathname});
+			*/
 		});
 	}
 }

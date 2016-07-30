@@ -174,8 +174,8 @@ function loadProjectFile(url) {
 				},
 				{	typeOfBinding:1,
 					path:"mri.atlas.#.labels",
-					format: function(e,d){$(e).find("select").prop('selectedIndex',BrainBox.labelSets.map(function(o){return o.source}).indexOf(d))},
-					parse: function(e){var name=$(e).find("select").val();var i=BrainBox.labelSets.map(function(o){return o.name}).indexOf(name);return BrainBox.labelSets[i].source}
+					format: function(e,d){var u="http://brainbox.dev",d1=(new URL((new URL(d,u)).pathname,u)).href;$(e).find("select").prop('selectedIndex',$.map(BrainBox.labelSets,function(o){return o.source}).indexOf(d1))},
+					parse: function(e){var name=$(e).find("select").val(),i=$.map(BrainBox.labelSets,function(o){return o.name}).indexOf(name);return BrainBox.labelSets[i].source}
 				},
 				{	typeOfBinding:1,
 					path:"mri.atlas.#.owner",
