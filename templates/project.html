@@ -264,7 +264,7 @@ BrainBox.initBrainBox()
 	$(document).on('click', "#labels-close", function(){$("#labelset").hide()});
 });
 
-// listen to changes in file selection
+// listen to changes in file selection by clicking of the file table
 $(document).on('click', "#projectFiles tbody tr",function() {
 	console.log(">> selectProjectFilesTableRow()");
 
@@ -288,6 +288,38 @@ $(document).on('click', "#projectFiles tbody tr",function() {
 		loadProjectFile(url);
 	}
 });
+
+// listen to changes in file selection by pressing the up/down arrows
+$(document).keydown(function(e){
+	var table=$("#projectFiles tbody");
+	var index=$(table).find("tr.selected").index();
+	console.log(e);
+	
+	if(e.keyCode!=38 && e.keyCode!=40)
+		return;
+
+	switch(e.keyCode) {
+		case 38: // up
+			index=(index+projectInfo.files.length-1)%projectInfo.files.length;
+			break;
+		case 40: // down
+			index=(index+1)%projectInfo.files.length;
+			break;
+	}
+	console.log(">>  change selected file:",index);
+	$(table).find("tr").removeClass("selected");
+	$(table).find("tr:eq("+index+")").addClass("selected");
+	
+	// new url
+	url=projectInfo.files[index];
+	
+	// remove table with previous annotations
+	$("table#info tbody").html("");
+
+	// load and bind new file
+	loadProjectFile(url);
+});
+
 
 // listen to changes in selected annotation
 $(document).on('click', "#info tbody tr",BrainBox.selectAnnotationTableRow);
