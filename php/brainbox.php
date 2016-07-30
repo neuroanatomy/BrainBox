@@ -42,6 +42,11 @@ function brainbox($args)
 		case "project":
 			projectPage($args);
 			break;
+		default:
+			header('HTTP/1.1 404 Not Found');
+			header("Status: 404 Not Found");
+			echo "Error 404: File not found";
+			return;
 	}
 }
 function userPage($args)
@@ -399,9 +404,11 @@ function getFileMetadata()
 	$url=$_GET["url"];
 	$hash=hash("md5",$url);
 	$dir=$_SERVER['DOCUMENT_ROOT']."/data/".$hash;
-	if(!file_exists($dir)) {
+
+	if(!file_exists($dir."/info.json")) {
 		header('HTTP/1.1 404 Not Found');
 		header("Status: 404 Not Found");
+		echo "Error 404: File not found";
 		return;
 	}
 
@@ -419,6 +426,7 @@ function getFileMetadata()
 			} else {
 				header('HTTP/1.1 404 Not Found');
 				header("Status: 404 Not Found");
+				echo "Error 404: File not found";
 				return;
 			}
 		}
