@@ -1,9 +1,6 @@
-<div id="tools-side" style="display:inline-block">
+<div id="tools-side" style="display:block">
 
 	<style>
-	* {
-		font-size:14px;
-	}
 	html {
 		background-color:#222;
 		color:white;
@@ -34,7 +31,7 @@
 	}
 	</style>
 
-	<div style="width:100%;height:100%;display:flex;flex-direction:column">
+	<div style="width:100%;display:flex;flex-direction:column">
 		<!-- slider -->
 		<div style="flex:0 0 28px">
 			<div style="display:flex">
@@ -62,32 +59,33 @@
 				<div style="width:50px;height:56px;flex:1 0 150px;">
 					<!-- plane -->
 					<div style="display:flex" id="plane" class="chose">
-						<div style="height:28px;flex:1"><div class="a pressed">Sag</div></div>
-						<div style="height:28px;flex:1"><div class="a">Cor</div></div>
-						<div style="height:28px;flex:1"><div class="a">Axi</div></div>
+						<div style="height:28px;flex:1"><div title="sag" class="a pressed">Sag</div></div>
+						<div style="height:28px;flex:1"><div title="cor" class="a">Cor</div></div>
+						<div style="height:28px;flex:1"><div title="axi" class="a">Axi</div></div>
 					</div>
 					<!-- fullscreen/precise-cursor -->
 					<div style="display:flex">
-						<div style="height:28px;flex:0 0 28px"><div id="fullscreen" title="Full screen" class="a toggle"><img class="icon" src="img/fullscreen.svg" /></div></div>
-						<div style="height:28px;flex:0 0 28px"><div id="3drender" title="3D render" class="a push"><img class="icon" src="img/3drender.svg" /></div></div>
-						<div style="height:28px;flex:0 0 28px"><div id="link" title="Link" class="a push"><img class="icon" src="img/link.svg" /></div></div>
-						<div style="height:28px;flex:0 0 28px"><div id="upload" title="UL" class="a push">UL</div></div>
-						<div style="height:28px;flex:0 0 28px"><div id="download" title="DL" class="a push">DL</div></div>
-						<div style="height:28px;flex:1"><div id="precise" class="a toggle">Pr</div></div>
-						<div style="height:28px;flex:0 0 28px"><div id="color" title="Color" style="width:40px;height:24px;background-color:#f00" class="a push"></div></div>
+						<div style="height:28px;flex:1"><div id="fullscreen" title="Full screen" class="a toggle"><img class="icon" src="/img/fullscreen.svg" /></div></div>
+						<div style="height:28px;flex:1"><div id="3drender" title="3D render" class="a push"><img class="icon" src="/img/3drender.svg" /></div></div>
+						<div style="height:28px;flex:1"><div id="link" title="Link" class="a push"><img class="icon" src="/img/link.svg" /></div></div>
+						<div style="height:28px;flex:1"><div id="bubble" title="Chat" class="a toggle pressed"><img class="icon" src="/img/chat.svg" /></div></div>
+						<div style="height:28px;flex:1"><div id="upload" title="Upload" class="a push"><img class="icon" src="/img/upload.svg" /></div></div>
+						<div style="height:28px;flex:1"><div id="download" title="Download" class="a push"><img class="icon" src="/img/download.svg" /></div></div>
+						<div style="height:28px;flex:1"><div id="precise" title="Precise cursor" class="a toggle"><img class="icon" src="/img/preciseCursor.svg" /></div></div>
 					</div>
 				</div>
 				<div style="width:50px;height:56px;flex:1 0 150px;">
 					<!-- paint/erase -->
 					<div style="display:flex" class="chose" id="paintTool">
-						<div style="height:28px;flex:1"><div class="a pressed">Paint</div></div>
-						<div style="height:28px;flex:1"><div class="a">Erase</div></div>
-						<div style="height:28px;flex:1"><div class="a">Measure</div></div>
+						<div style="height:28px;flex:1"><div title="Paint" class="a pressed"><img class="icon" src="/img/paint.svg" /></div></div>
+						<div style="height:28px;flex:1"><div title="Erase" class="a"><img class="icon" src="/img/erase.svg" /></div></div>
+						<div style="height:28px;flex:1"><div title="Measure" class="a"><img class="icon" src="/img/ruler.svg" /></div></div>
 					</div>
 					<!-- fill/undo -->
 					<div style="display:flex">
-						<div style="height:28px;flex:1"><div id="fill" class="a toggle">Fill</div></div>
-						<div style="height:28px;flex:1"><div id="undo" class="a push">Undo</div></div>
+						<div style="height:28px;flex:1"><div id="color" title="Color" style="height:24px;background-color:#f00" class="a push"></div></div>
+						<div style="height:28px;flex:1"><div id="fill" class="a toggle"><img class="icon" src="/img/fill.svg" /></div></div>
+						<div style="height:28px;flex:1"><div id="undo" title="Undo" class="a push"><img class="icon" src="/img/undo.svg" /></div></div>
 					</div>
 				</div>
 			</div>
@@ -95,21 +93,25 @@
 		<!-- pen size -->
 		<div style="flex:0 0 28px">
 			<div style="display:flex" class="chose" id="penSize">
-				<div style="height:28px;flex:1"><div class="a pressed">1</div></div>
-				<div style="height:28px;flex:1"><div class="a">2</div></div>
-				<div style="height:28px;flex:1"><div class="a">3</div></div>
-				<div style="height:28px;flex:1"><div class="a">5</div></div>
-				<div style="height:28px;flex:1"><div class="a">10</div></div>
-				<div style="height:28px;flex:1"><div class="a">15</div></div>
+				<div style="height:28px;flex:1"><div title="1" class="a pressed">1</div></div>
+				<div style="height:28px;flex:1"><div title="2" class="a">2</div></div>
+				<div style="height:28px;flex:1"><div title="3" class="a">3</div></div>
+				<div style="height:28px;flex:1"><div title="5" class="a">5</div></div>
+				<div style="height:28px;flex:1"><div title="10" class="a">10</div></div>
+				<div style="height:28px;flex:1"><div title="15" class="a">15</div></div>
 			</div>
 		</div>
 		<!-- chat -->
-		<div style="flex:0 0 28px">
-			<div id="chat">Chat (disconnected)</div>
-		</div>
-		<div class="a" style="flex:1 0 56px;text-align:left" id="log" style="background-color:#333;padding:5px;text-align:left;vertical-align:top"></div>
-		<div style="flex:0 0 28px">
-			<input id="msg" type="text" style="width:calc(100% - 8px);margin:1px;padding:1px" onkeypress="AtlasMakerWidget.onkey(event)">
+		<div id="chatBlock" style="flex:1 1 110px">
+			<div style="display:flex;flex-direction:column">
+				<div style="flex:0 0 28px">
+					<div id="chat">Chat (disconnected)</div>
+				</div>
+				<div class="a" style="flex:1 0 56px;text-align:left" id="log" style="background-color:#333;padding:5px;text-align:left;vertical-align:top"></div>
+				<div style="flex:0 0 28px">
+					<input id="msg" type="text" style="width:calc(100% - 2px);margin:1px;padding:1px" onkeypress="AtlasMakerWidget.onkey(event)">
+				</div>
+			</div>
 		</div>
 	</div>
 
