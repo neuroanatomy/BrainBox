@@ -29,6 +29,10 @@ var db_url=fs.readFileSync("db_url.txt","utf8");
 var	Atlases=[];
 
 var Brains=[];
+
+/*
+	Users[] is a sparse associative array. The comments for Atlases[] apply.
+*/
 var	Users=[];
 
 /*
@@ -316,15 +320,17 @@ function initSocketConnection() {
 						console.log("user",usrsckts[i].uid,"is closing connection");
 				var uid=getUserId(this);
 				console.log("User ID "+uid+" is disconnecting");
-				if(Users[uid]==undefined)
-					console.log("User ID "+uid+" is undefined. List of all known Users follows",Users);
-				else
-				if(Users[uid].dirname) {
+				if(Users[uid]==undefined) {
+					console.log("<BUG ALERT> User ID "+uid+" is undefined.");
+					console.log("Users:",Users);
+					console.log("usrsckts:",usrsckts);
+					console.log("</BUG ALERT>");
+				} else if(Users[uid].dirname) {
 					console.log("User was connected to MRI "+ Users[uid].dirname+Users[uid].mri);
 					console.log("User was connected to atlas "+ Users[uid].dirname+Users[uid].atlasFilename);
-				}
-				else
+				} else {
 					console.log("WARNING: dirname was not defined");
+				}
 				
 				// count how many users remain connected to the MRI after user leaves
 				sum=numberOfUsersConnectedToMRI(Users[uid].dirname+Users[uid].mri);
