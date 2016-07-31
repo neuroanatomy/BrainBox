@@ -101,6 +101,33 @@ var BrainBox={
 				}
 			}
 			
+<<<<<<< HEAD
+			// store state on exit
+			$(window).unload(function(){
+				var foundStored=false;
+				var stored=localStorage.AtlasMaker;
+				if(stored) {
+					stored=JSON.parse(stored);
+					if(stored.version && stored.version==BrainBox.version) {
+						foundStored=true;
+						for(var i=0;i<stored.history.length;i++) {
+							if(stored.history[i].url==param.url) {
+								stored.history.splice(i,1);
+								break;
+							}
+						}
+					}
+				}
+				if(foundStored==false)
+					stored={version:BrainBox.version,history:[]};
+				stored.history.push({	
+					url:param.url,
+					view:AtlasMakerWidget.User.view.toLowerCase(),
+					slice:AtlasMakerWidget.User.slice,
+					lastVisited:date.toJSON()
+				});			
+				localStorage.AtlasMaker=JSON.stringify(stored);
+=======
 			// enact configuration in param, eventually overriding the stored one
 			if(param.view) {
 				AtlasMakerWidget.User.view=param.view;
@@ -119,6 +146,7 @@ var BrainBox={
 			AtlasMakerWidget.configureAtlasMaker(BrainBox.info,0)
 			.then(function() {
 				def.resolve();
+>>>>>>> OpenNeuroLab/master
 			});
 
 		}).fail(function() {
