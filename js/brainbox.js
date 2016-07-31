@@ -32,6 +32,7 @@ var BrainBox={
 		}
 		return res;
 	},
+	// init is executed only once, on startup
 	initBrainBox: function initBrainBox() {
 		console.log(BrainBox.traceLog(initBrainBox));
 		
@@ -55,6 +56,7 @@ var BrainBox={
 		
 		return def.promise();
 	},
+	// configure is executed every time the mri data is replaced
 	configureBrainBox: function configureBrainBox(param) {
 		console.log(BrainBox.traceLog(configureBrainBox));
 		
