@@ -82,12 +82,7 @@ var AtlasMakerWidget = {
 	//========================================================================================
 	changeView: function changeView(theView) {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug)
-			console.log("> changeView()");
-=======
 		var l=me.traceLog(changeView);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		switch(theView) {
 			case 'sag':
@@ -114,12 +109,7 @@ var AtlasMakerWidget = {
 	},
 	changeTool: function changeTool(theTool) {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug)
-			console.log("> changeTool()");
-=======
 		var l=me.traceLog(changeTool);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		switch(theTool) {
 			case 'Paint':
@@ -139,26 +129,16 @@ var AtlasMakerWidget = {
 	},
 	changePenSize: function changePenSize(theSize) {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug)
-			console.log("> changePenSize()");
-=======
 		var l=me.traceLog(changePenSize);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		me.User.penSize=parseInt(theSize);
 		me.sendUserDataMessage("change pen size");
 	},
 	changeSlice: function changeSlice(x) {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug>1)
-			console.log("> changeSlice("+x+")");
-=======
 		var l=me.traceLog(changeSlice,1);if(l)console.log(l);
 
 		console.log("to",x);
->>>>>>> OpenNeuroLab/master
 
 		var max=$("#slice").data("max");
 		$("#slice").data("val",x);
@@ -171,12 +151,7 @@ var AtlasMakerWidget = {
 	},
 	prevSlice: function prevSlice() {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug>1)
-			console.log("> prevSlice()");
-=======
 		var l=me.traceLog(prevSlice,1);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 
 		var x=$("#slice").data("val")-1;
 		if(x<0) x=0;
@@ -188,12 +163,7 @@ var AtlasMakerWidget = {
 	},
 	nextSlice: function nextSlice() {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug>1)
-			console.log("> nextSlice()");
-=======
 		var l=me.traceLog(nextSlice,1);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 
 		var max=$("#slice").data("max");
 		var x=$("#slice").data("val")+1;
@@ -369,13 +339,8 @@ var AtlasMakerWidget = {
 	},
 	ontologyValueToColor: function ontologyValueToColor(val) {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug>3)
-			console.log("> ontologyValueToColor()");
-=======
-		//var l=me.traceLog(ontologyValueToColor,3);if(l)console.log(l);
+		var l=me.traceLog(ontologyValueToColor,3);if(l)console.log(l);
 
->>>>>>> OpenNeuroLab/master
 		var c=[0,0,0];
 		var i;
 		if(val in me.ontology.valueToIndex)
@@ -426,12 +391,7 @@ var AtlasMakerWidget = {
 	},
 	encodeNifti: function encodeNifti() {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug)
-			console.log("> encodeNifti()");
-=======
 		var l=me.traceLog(encodeNifti);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		var	sizeof_hdr=348;
 		var	dimensions=4;			// number of dimension values provided
@@ -473,12 +433,7 @@ var AtlasMakerWidget = {
 	},
 	saveNifti: function saveNifti() {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug)
-			console.log("> saveNifti()");
-=======
 		var l=me.traceLog(saveNifti);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		var niigz=me.encodeNifti();
 		var niigzBlob = new Blob([niigz]);
@@ -486,16 +441,10 @@ var AtlasMakerWidget = {
 		$("a#download_atlas").attr("href",window.URL.createObjectURL(niigzBlob));
 		$("a#download_atlas").attr("download",me.User.atlasFilename);
 	},
-<<<<<<< HEAD
-	loadNifti: function(nii) {
-		if(me.debug>1)
-			console.log("> loadNifti()");
-=======
 	loadNifti: function loadNifti(nii) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(loadNifti,1);if(l)console.log(l);
 
->>>>>>> OpenNeuroLab/master
 		var	dv=new DataView(nii);
 		var	vox_offset=352;
 		var	sizeof_hdr=dv.getInt32(0,true);
@@ -535,12 +484,7 @@ var AtlasMakerWidget = {
 	},
 	configureBrainImage: function configureBrainImage() {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug)
-			console.log("> configureBrainImage()");
-=======
 		var l=me.traceLog(configureBrainImage);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		if(me.User.view==null)
 			me.User.view="sag";
@@ -573,12 +517,7 @@ var AtlasMakerWidget = {
 	},
 	configureAtlasImage: function configureAtlasImage() {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug)
-			console.log("> configureAtlasImage()");
-=======
 		var l=me.traceLog(configureAtlasImage);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		// has to be run *after* configureBrainImage
 		me.atlas_offcn.width=me.brain_W;
@@ -587,25 +526,15 @@ var AtlasMakerWidget = {
 	},
 	nearestNeighbour: function nearestNeighbour(ctx) {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug>1)
-			console.log("> nearestNeighbour()");
-=======
 		var l=me.traceLog(nearestNeighbour,1);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		ctx.imageSmoothingEnabled = false;
 		ctx.mozImageSmoothingEnabled = false;
 	},
 	computeSegmentedVolume: function computeSegmentedVolume() {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug>1)
-			console.log("> computeSegmentedVolume()");
-=======
 		var l=me.traceLog(computeSegmentedVolume,1);if(l)console.log(l);
 
->>>>>>> OpenNeuroLab/master
 		var i,sum=0;
 		var	data=me.atlas.data;
 		var	dim=me.atlas.dim;
@@ -618,12 +547,7 @@ var AtlasMakerWidget = {
 	},
 	displayInformation: function displayInformation() {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug>1)
-			console.log("> displayInformation()");
-=======
 		var l=me.traceLog(displayInformation,1);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 			
 		me.info.slice=me.User.slice;
 		var i=0,info=me.container.find("#info");
@@ -651,12 +575,7 @@ var AtlasMakerWidget = {
 	},
 	drawImages: function drawImages() {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug>1)
-			console.log("> drawImages()");
-=======
 		var l=me.traceLog(drawImages,1);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		if(me.brain_img.img && me.brain_img.view==me.User.view && me.brain_img.slice==me.User.slice) {
 			me.context.clearRect(0,0,me.context.canvas.width,me.canvas.height);
@@ -674,12 +593,7 @@ var AtlasMakerWidget = {
 	},
 	drawAtlasImage: function drawAtlasImage(view,slice) {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug>1)
-			console.log("> drawAtlasImage()");
-=======
 		var l=me.traceLog(drawAtlasImage,1);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		if(!me.atlas)
 			return;
@@ -711,12 +625,7 @@ var AtlasMakerWidget = {
 	},
 	mousedown: function mousedown(e) {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(this.debug)
-			console.log("> mousedown()");
-=======
 		var l=me.traceLog(mousedown);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		e.preventDefault();
 
@@ -732,12 +641,7 @@ var AtlasMakerWidget = {
 	},
 	mousemove: function mousemove(e) {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug>=2)
-			console.log("> mousemove()");
-=======
 		var l=me.traceLog(mousemove,2);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		e.preventDefault();
 		var W=parseFloat($('#atlasMaker canvas').css('width'));
@@ -758,23 +662,13 @@ var AtlasMakerWidget = {
 	},
 	mouseup: function mouseup(e) {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug)
-			console.log("> mouseup()");
-=======
 		var l=me.traceLog(mouseup);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		me.up(e);
 	},
 	touchstart: function touchstart(e) {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug)
-			console.log("> touchstart()");
-=======
 		var l=me.traceLog(touchstart);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		e.preventDefault();
 
@@ -821,12 +715,7 @@ var AtlasMakerWidget = {
 	},
 	touchmove: function touchmove(e) {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug)
-			console.log("> touchmove()");
-=======
 		var l=me.traceLog(touchmove,2);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 		
 		if(me.Crsr.touchStarted==false && me.debug) {
 			console.log("WARNING TO MYSELF: touch can move without having started");
@@ -876,12 +765,7 @@ var AtlasMakerWidget = {
 	},
 	touchend: function touchend(e) {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug)
-			console.log("> touchend()");
-=======
 		var l=me.traceLog(touchend);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 		
 		e.preventDefault();
 	
@@ -897,12 +781,7 @@ var AtlasMakerWidget = {
 	},
 	initCursor: function initCursor() {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug>1)
-			console.log("> initCursor()");
-=======
 		var l=me.traceLog(initCursor,1);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 
 		var W=parseFloat($('#atlasMaker canvas').css('width'));
 		var H=parseFloat($('#atlasMaker canvas').css('height'));
@@ -946,12 +825,7 @@ var AtlasMakerWidget = {
 	},
 	updateCursor: function updateCursor() {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug>1)
-			console.log("> updateCursor()");
-=======
 		var l=me.traceLog(updateCursor,1);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 
 		$("#finger").removeClass("move draw configure");
 		switch(me.Crsr.state) {
@@ -964,12 +838,7 @@ var AtlasMakerWidget = {
 	},
 	down: function down(x,y) {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug)
-			console.log("> down()");
-=======
 		var l=me.traceLog(down,2);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		if(MyLoginWidget.loggedin==0 || me.editMode==0)
 			return;
@@ -1009,12 +878,7 @@ var AtlasMakerWidget = {
 	},
 	move: function move(x,y) {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug>=2)
-			console.log("> move()");
-=======
 		var l=me.traceLog(move,2);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		if(MyLoginWidget.loggedin==0 || me.editMode==0)
 			return;
@@ -1044,12 +908,7 @@ var AtlasMakerWidget = {
 	},
 	up: function up(e) {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug)
-			console.log("> up()");
-=======
 		var l=me.traceLog(up,2);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 
 		if(MyLoginWidget.loggedin==0 || me.editMode==0)
 			return;
@@ -1072,12 +931,7 @@ var AtlasMakerWidget = {
 	},
 	keyDown: function keyDown(e) {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug>1)
-			console.log("> keyDown()");
-=======
 		var l=me.traceLog(keyDown,2);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		// console.log("key:",e.which);
 		
@@ -1113,12 +967,7 @@ var AtlasMakerWidget = {
 	//====================================================================================
 	paintxy: function paintxy(u,c,x,y,usr) {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug>1)
-			console.log("> paintxy()");
-=======
 		var l=me.traceLog(paintxy,1);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		// u: user number
 		// c: command
@@ -1157,18 +1006,10 @@ var AtlasMakerWidget = {
 		usr.x0=coord.x;
 		usr.y0=coord.y;
 	},
-<<<<<<< HEAD
-	paintvol: function(voxels) {
-		/* this function is exclusively used for undoing */
-		var me=AtlasMakerWidget;
-		if(me.debug)
-			console.log("> paintvol()");
-=======
 	paintvol: function paintvol(voxels) {
 		/* this function is exclusively used for undoing */
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(paintvol);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		var	i,
 			ind,			// voxel index
@@ -1188,12 +1029,7 @@ var AtlasMakerWidget = {
 	},
 	fill: function fill(x,y,z,val,myView) {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug)
-			console.log("> fill()");
-=======
 		var l=me.traceLog(fill);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		var	Q=[],n;
 		var	layer=me.atlas;
@@ -1225,12 +1061,7 @@ var AtlasMakerWidget = {
 	},
 	line: function line(x,y,val,usr) {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug>1)
-			console.log("> line()");
-=======
 		var l=me.traceLog(line,1);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		// Bresenham's line algorithm adapted from
 		// http://stackoverflow.com/questions/4672279/bresenham-algorithm-in-javascript
@@ -1314,12 +1145,7 @@ var AtlasMakerWidget = {
 	},
 	xyz2slice: function xyz2slice(x,y,z,myView) {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug)
-			console.log("> xyz2slice()");
-=======
 		var l=me.traceLog(xyz2slice);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		var	mx,my,mz;
 		switch(myView) {
@@ -1333,15 +1159,9 @@ var AtlasMakerWidget = {
 	//====================================================================================
 	// Web sockets
 	//====================================================================================
-<<<<<<< HEAD
-	createSocket: function(host) {
-		if(this.debug)
-			console.log("> createSocket()");
-=======
 	createSocket: function createSocket(host) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(createSocket);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		var ws;
 
@@ -1355,12 +1175,7 @@ var AtlasMakerWidget = {
 	},
 	initSocketConnection: function initSocketConnection() {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug)
-			console.log("> initSocketConnection()");
-=======
 		var l=me.traceLog(initSocketConnection);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 			
 		var def=$.Deferred();
 	
@@ -1403,10 +1218,6 @@ var AtlasMakerWidget = {
 	},
 	receiveSocketMessage: function receiveSocketMessage(msg) {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug>1)
-			console.log("> sendUserDataMessage()");
-=======
 		var l=me.traceLog(receiveSocketMessage);if(l)console.log(l);
 
 		// Message: atlas data initialisation
@@ -1514,7 +1325,6 @@ var AtlasMakerWidget = {
 	sendUserDataMessage: function sendUserDataMessage(description) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(sendUserDataMessage,1);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 
 		if(me.flagConnected==0)
 			return;
@@ -1530,12 +1340,7 @@ var AtlasMakerWidget = {
 	},
 	receiveUserDataMessage: function receiveUserDataMessage(data) {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug)
-			console.log("> receiveUserDataMessage()");
-=======
 		var l=me.traceLog(receiveUserDataMessage);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 
 		if(me.debug) console.log("description: "+data.description,data);
 	
@@ -1558,12 +1363,7 @@ var AtlasMakerWidget = {
 	},
 	sendChatMessage: function sendChatMessage() {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug)
-			console.log("> sendChatMessage()");
-=======
 		var l=me.traceLog(sendChatMessage);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		if(me.flagConnected==0)
 			return;
@@ -1580,12 +1380,7 @@ var AtlasMakerWidget = {
 	},
 	receiveChatMessage: function receiveChatMessage(data) {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug)
-			console.log("> receiveChatMessage()");
-=======
 		var l=me.traceLog(receiveChatMessage);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		var	theView=me.Collab[data.uid].view;
 		var	theSlice=me.Collab[data.uid].slice;
@@ -1596,12 +1391,7 @@ var AtlasMakerWidget = {
 	},
 	sendPaintMessage: function sendPaintMessage(msg) {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug>1)
-			console.log("> sendPaintMessage()");
-=======
 		var l=me.traceLog(sendPaintMessage,1);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		if(me.flagConnected==0)
 			return;
@@ -1613,12 +1403,7 @@ var AtlasMakerWidget = {
 	},
 	receivePaintMessage: function receivePaintMessage(data) {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug)
-			console.log("> receivePaintMessage()");
-=======
 		var l=me.traceLog(receivePaintMessage);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		var	msg=data.data;
 		var u=data.uid;	// user
@@ -1630,28 +1415,16 @@ var AtlasMakerWidget = {
 	},
 	receivePaintVolumeMessage: function receivePaintVolumeMessage(data) {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug)
-			console.log("> receivePaintVolumeMessage()");
-=======
 		var l=me.traceLog(receivePaintVolumeMessage);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		var	i,ind,val,voxels;
 	
 		voxels=data.data;
 		me.paintvol(voxels.data);
 	},
-<<<<<<< HEAD
-	sendUndoMessage: function() {
-		var me=AtlasMakerWidget;
-		if(me.debug)
-			console.log("> sendUndoMessage()");
-=======
 	sendUndoMessage: function sendUndoMessage() {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(sendUndoMessage);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		if(me.flagConnected==0)
 			return;
@@ -1663,12 +1436,7 @@ var AtlasMakerWidget = {
 	},
 	sendRequestSliceMessage: function sendRequestSliceMessage() {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug>1)
-			console.log("> sendRequestSliceMessage()");
-=======
 		var l=me.traceLog(sendRequestSliceMessage,1);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 
 		if(me.flagConnected==0)
 			return;
@@ -1686,12 +1454,7 @@ var AtlasMakerWidget = {
 	},
 	sendSaveMetadataMessage: function sendSaveMetadataMessage(info) {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug>1)
-			console.log("> sendSaveMetadataMessage()");
-=======
 		var l=me.traceLog(sendSaveMetadataMessage,1);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 			
 		if(me.flagConnected==0)
 			return;
@@ -1703,12 +1466,7 @@ var AtlasMakerWidget = {
 	},
 	receiveDisconnectMessage: function receiveDisconnectMessage(data) {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug)
-			console.log("> receiveDisconnectMessage()");
-=======
 		var l=me.traceLog(receiveDisconnectMessage);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 
 		var u=data.uid;	// user
 		//var	msg="<b>"+me.Collab[u].username+"</b> left atlas "+me.Collab[u].specimenName+"/"+me.Collab[u].atlasFilename+"<br />"
@@ -1721,12 +1479,7 @@ var AtlasMakerWidget = {
 	},
 	onkey: function onkey(e) {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug)
-			console.log("> onkey()");
-=======
 		var l=me.traceLog(onkey);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		if (e.keyCode == 13) {
 			me.sendChatMessage();
@@ -1734,12 +1487,7 @@ var AtlasMakerWidget = {
 	},
 	quit: function quit() {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug)
-			console.log("> quit()");
-=======
 		var l=me.traceLog(quit);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 	
 		me.log("","Goodbye!");
 		me.socket.close();
@@ -1748,16 +1496,9 @@ var AtlasMakerWidget = {
 	//==========
 	// Database
 	//==========
-<<<<<<< HEAD
-	logToDatabase: function(key,value) {
-		var me=AtlasMakerWidget;
-		if(me.debug>1)
-			console.log("> logToDatabase()");
-=======
 	logToDatabase: function logToDatabase(key,value) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(logToDatabase,1);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 
 		var def=$.Deferred();
 		$.ajax({
@@ -1884,13 +1625,8 @@ var AtlasMakerWidget = {
 		var l=me.traceLog(configureAtlasMaker);if(l)console.log(l);
 		
 		// Load segmentation labels
-<<<<<<< HEAD
-		$.getJSON(info.mri.atlas[index].labels,me.configureOntology)
-		.then(function() {
-=======
 		return $.getJSON(info.mri.atlas[index].labels,function from_configureAtlasMaker(d){me.configureOntology(d);})
 		.then(function from_configureAtlasMaker() {
->>>>>>> OpenNeuroLab/master
 			var def=$.Deferred();
 			me.configureMRI(info,index)
 			.then(function from_configureAtlasMaker() {
@@ -1912,22 +1648,6 @@ var AtlasMakerWidget = {
 			return def.promise();
 		});
 	},
-<<<<<<< HEAD
-	configureOntology: function(json) {
-		var me=AtlasMakerWidget;
-		if(me.debug)
-			console.log("> configureOntology()");
-
-		me.ontology=json
-		me.ontology.valueToIndex=[];
-		me.ontology.labels.forEach(function(o,i){me.ontology.valueToIndex[o.value]=i});
-		me.changePenColor(0);
-	},
-	configureMRI: function(info,index) {
-		var me=AtlasMakerWidget;
-		if(me.debug)
-			console.log("> configureMRI()");
-=======
 	configureOntology: function configureOntology(json) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(configureOntology);if(l)console.log(l);
@@ -1940,7 +1660,6 @@ var AtlasMakerWidget = {
 	configureMRI: function configureMRI(info,index) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(configureMRI);if(l)console.log(l);
->>>>>>> OpenNeuroLab/master
 
 		var def=$.Deferred();
 				
@@ -1976,14 +1695,9 @@ var AtlasMakerWidget = {
 	},
 	loginChanged: function loginChanged() {
 		var me=AtlasMakerWidget;
-<<<<<<< HEAD
-		if(me.debug)
-			console.log(">loginChanged() to",MyLoginWidget.loggedin);
-=======
 		var l=me.traceLog(loginChanged);if(l)console.log(l);
 
 		console.log("to",MyLoginWidget.loggedin);
->>>>>>> OpenNeuroLab/master
 
 		if(MyLoginWidget.loggedin) {
 			$('body').addClass('loggedIn');
@@ -2001,17 +1715,10 @@ var AtlasMakerWidget = {
 			me.sendUserDataMessage("logged out");
 		}
 	},
-<<<<<<< HEAD
-	slider: function(elem,callback) {
-		var me=AtlasMakerWidget;
-		if(me.debug>2)
-			console.log("> slider()");
-=======
 	slider: function slider(elem,callback) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(slider,2);if(l)console.log(l);
 		
->>>>>>> OpenNeuroLab/master
 		// Initialise a 'slider' control
 
 		$(elem).data({
