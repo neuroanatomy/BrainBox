@@ -1,3 +1,7 @@
+ * {
+ 	font-size:14px;
+	color:white;
+ }
  html,body {
 	background-color:#222;
 	height:100%;
@@ -18,6 +22,7 @@
 	height:32px;
 	border:0px;
 	padding:0px;
+	color: black;
  }
  #go {
 	 height:30px;
@@ -28,9 +33,12 @@
 	 text-align:center;
 	 -webkit-appearance:none;
  }
+ h1 {
+ 	font-size: 1rem;
+	text-align:center;
+ }
  h2, p {
 	font-family: sans-serif;
-	color:white;
 	text-align:center;
  }
  a {
@@ -40,16 +48,27 @@
 	text-decoration: none;
 	font-weight: lighter;
  }
- #MyLogin {
+
+ #menu {
 	position:absolute;
 	top:5px;
 	right: 5px;
+	display: inline-block;
 	font: 16px/24px "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
  }
+ #menu img{
+ 	margin-left: 15px;
+ }
+ #MyLogin {
+ 	display:inline-block;
+ 	margin-left:15px;
+ }
+ /*
  #stereotaxic {
 	margin-left:50%;
 	transform:translate(-50%,0);
  }
+ */
 /* Login
 -----------------------------------------------------------------------------*/
 .loginbox {
@@ -105,6 +124,7 @@
 #atlasMaker {
 	color: white;
 	font-size:10px;
+	height:100%;
 }
 #atlasMaker #resizable {
 	position: relative;
@@ -139,18 +159,19 @@
 }
 
 #atlasMaker.fullscreen-mode {
-	position:fixed;
+	position:absolute;
 	top:0px;
 	left:0px;
 	width: calc( 100% - 240px );	/* width of tools */
 	height:100%;
 	z-index:10;
 }
+
 #atlasMaker.fullscreen-mode #tools-side {
 	position:fixed;
 	top:0px;
 	right:0px;
-	width:240px;					/* width of tools */
+	width:240px;
 	height:100%;
 }
 
@@ -203,12 +224,16 @@
 
 /* chat log
 ----------------------- */
+
 #log {
 	width: auto;
 	line-height:1;
 	border: 1px solid #777;
 	overflow: auto;
 	background-color: #333;
+}
+#msg {
+	color: black;
 }
 
 .middle {
@@ -260,16 +285,19 @@
 tr {
 	vertical-align:top;
 }
+<<<<<<< HEAD
 #info {
-	border-collapse:collapse;
-	border-bottom:thin solid white;
+=======
+tr.selected {
+	background-color: #333;
 }
-#info th {
+table {
+>>>>>>> OpenNeuroLab/master
+	border-collapse:collapse;
+}
+th {
 	font-weight: bold;
 	border-bottom:thin solid white;
-}
-#info tr.selected {
-	background-color: #333;
 }
 #info td {
 	font-weight: normal;
@@ -297,6 +325,18 @@ img.button {
 }
 img.button:hover {
 	opacity:0.5;
+}
+img.icon {
+	width:1rem;
+	height:1rem;
+	margin:4px 2px;
+	vertical-align:middle;
+	cursor:pointer;
+}
+
+#NAATlogo {
+	position:relative;
+	z-index:25;
 }
 
 /* Content: Splash
@@ -327,4 +367,9 @@ select {
 	appearance: none;
     width: 100px;
     text-overflow: ellipsis;
+}
+
+[contentEditable=true]:empty:not(:focus):before {
+	content:attr(data-ph);
+	color:rgba(255,255,255,0.4);
 }
