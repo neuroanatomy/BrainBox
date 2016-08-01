@@ -1,0 +1,335 @@
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> 
+	<link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
+    <title>{{title}}</title>
+	<link rel="stylesheet" href="/stylesheets/style.css" />
+	<link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
+
+	<style>
+	.tab {
+		padding-top:3px;
+		padding-right:12px;
+		padding-left:12px;
+		padding-bottom:4px;
+		cursor: pointer;
+	}
+	.tab.selected {
+		background:#555;
+	}
+	#files, #projects {
+		color:white;
+		text-align:left;
+		width:100%;
+		border-collapse:collapse;
+	}
+	#files td, #projects td,
+	#files th, #projects th {
+		padding:0px 4px;
+	}
+	#files, #projects,
+	#files th, #projects th {
+		border-bottom:thin solid white;
+	}
+	#files a, #projects a {
+		text-decoration:none;
+	}
+	#projectFiles {
+		overflow:scroll;
+	}
+	.block {
+		border:thin solid #555;
+		padding: 5px;
+	}
+	</style>
+
+</head>
+
+<body>
+
+<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:stretch">
+	
+	<!-- Header -->
+	<div style="flex:0 0 100px">
+		<a href='/'>
+			<img style='position:fixed;left:10px;top:5px;width:200px' src='/img/brainbox-logo-small_noFont.svg'/>
+		</a>
+		<div style="position:fixed;left:73px;top:21px;width:auto; font-family: Roboto, sans-serif; font-size: 36px; font-weight:300" id="projectName">
+		</div>
+		<div id="menu">
+			<img id="showCollaborators" title="Show collaborators" style='width:13px' src='/img/collaborators.svg'/>
+			<img id="addProject" title="Add project" style='width:13px' src='/img/plus.svg'/>
+			<img id="search" title="Search" style='width:13px' src='/img/search.svg'/>
+			<img id="doc" title="Documentation" style='width:13px' src='/img/doc.svg'/>
+			<img id="settings" title="Settings" style='width:13px' src='/img/settings.svg'/>
+			<div id="MyLogin"></div>
+		</div>
+	</div>
+	
+	<!-- Content -->
+	<div id="content" style="flex:1 1 auto;position:relative">
+		<div style="display:flex;width:100%;height:100%;align-items:stretch;position:absolute">
+
+			<div id="left" style="flex:0 0 400px">
+				<div style="display:flex;flex-direction:column;height:100%">
+					<div id="tools" class="block" style="flex:1 1 auto">
+					</div>
+				
+					<div id="projectFiles" class="block" style="flex:1 1 auto">
+						<table style="width:100%;text-align:left">
+							<thead>
+								<tr>
+									<th>Name</th>
+									<th>File</th>
+									<th>QC</th>
+									<th>QC Comment</th>
+								</tr>
+							</thead>
+							<tbody>
+							</tbody>
+						</table>
+					</div>
+				
+					<div id="annotations" class="block" style="flex:1 1 200px">
+						<table id="info" style="width:100%;text-align:left">
+							<thead>
+								<tr>
+									<th>Name</th>
+									<th>Label Set</th>
+									<th>Owner</th>
+								</tr>
+							</thead>
+						</table>
+					</div>
+				</div>
+			</div>
+
+			<div id="right" style="flex:1 0">
+				<div id="stereotaxic" style="width:100%"></div>
+			</div>
+
+		</div>
+	</div>
+	<!-- NAAT logo down right corner -->
+	<div id="NAATlogo" style="margin-left:97%;margin-bottom:10px">
+		<a target="_blank" href="http://neuroanatomy.github.io">
+			<img src="/img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/>
+		</a>
+	</div>
+</div>
+
+<!-- Labels -->
+<div id="labelset">
+	<div style="z-index:23;text-align:right">
+		<img id="labels-close" class="button" src="/img/times-circle.svg"/>
+	</div>
+
+	<ul style="padding-left:1rem">
+		<li>
+			<b>Label Set</b><br/>
+			<span id="labels-name"></span>
+		</li>
+		<li>
+			<b>Labels</b><br/>
+			<div id="label-list">
+			</div>
+			<div id="label-template">
+				<div class="label-color"></div>
+				<span class="label-name">Label Name</name>
+			</div>
+		</li>
+	</ul>
+</div>
+<!-- End Labels -->
+
+
+<script src="/lib/jquery-1.11.0.min.js"></script>
+<script src="/lib/mylogin/login.js"></script>
+<script src="/lib/pako/pako.min.js"></script>
+<script src="/js/twoWayBinding.js"></script>
+<script src="/js/brainbox.js"></script>
+<script>
+var str;
+
+function loadProjectFile(url) {
+	BrainBox.configureBrainBox({url:url,view:"cor",slice:180,fullscreen:false})
+	.then(function from_loadProjectFile() {
+		// binding prototype
+		var info_proxy={};
+		var aParam = {
+			table: $("table#info"),
+			info_proxy: info_proxy,
+			info: BrainBox.info,
+			trTemplate: $.map([
+				"<tr>",
+				" <td></td>",
+				" <td><select>",BrainBox.labelSets.map(function(o){return "<option>"+o.name+"</option>"}),"</select></td>",	// append label sets
+				" <td><a></a></td>",
+				"</tr>"],function(o){return o}).join(),
+			objTemplate: [
+				{	typeOfBinding:1,
+					path:"mri.atlas.#.name"
+				},
+				{	typeOfBinding:1,
+					path:"mri.atlas.#.labels",
+					format: function(e,d){var u="http://localhost:3000",d1=(new URL((new URL(d,u)).pathname,u)).href;$(e).find("select").prop('selectedIndex',$.map(BrainBox.labelSets,function(o){return o.source}).indexOf(d1))},
+					/*
+						-----------------------------------------------------------
+						NOTE: this is a temporary fix, the final version should be:
+						-----------------------------------------------------------
+						format: function(e,d){$(e).find("select").prop('selectedIndex',$.map(BrainBox.labelSets,function(o){return o.source}).indexOf(d))},
+					*/
+					parse: function(e){var name=$(e).find("select").val(),i=$.map(BrainBox.labelSets,function(o){return o.name}).indexOf(name);return BrainBox.labelSets[i].source}
+				},
+				{	typeOfBinding:1,
+					path:"mri.atlas.#.owner",
+					format: function(e,d){$.get("http://localhost:3000/api/user/"+d.split("/").pop()+"?var=nickname",function(r){$(e).text(r);$(e).attr('href',d)})}
+				}
+			]
+		};
+
+		// bind interface
+		for(var i=0;i<BrainBox.info.mri.atlas.length;i++)
+			BrainBox.appendAnnotationTableRow(i,aParam);
+
+		// select the first annotation by default
+		// (should be read from project settings)
+		$("#annotations tbody tr:eq(0)").addClass("selected");
+	});
+}
+
+// Init login widget
+MyLoginWidget.init($("#MyLogin"));
+
+/*
+	This variable contains project metadata
+	and is filled by the server, from the database.
+*/
+var projectInfo='{{{projectInfo}}}';
+
+projectInfo=JSON.parse(projectInfo);
+$("#projectName").text("Project: " + projectInfo.name);
+$("#projectOwner").html("<a href='"+projectInfo.owner+"'>"+projectInfo.owner+"</a>");
+var creation=new Date(projectInfo.created);
+$("#projectCreated").text("Created on "+creation.toLocaleString());
+$("#projectFilesNumber").text(projectInfo.files.length+" Files");
+$("#projectCollaboratorsNumber").text(projectInfo.collaborators.length+" Collaborators");
+
+/*
+	The list of all collaborators participating in the project
+	(should be recovered from the database)
+*/
+str=[	"<tr>",
+		"<th>Name</th>",
+		"<th>Last visited</th>",
+		"<tr>"].join();
+for(var i=0;i<projectInfo.collaborators.length;i++) {
+	str+=[	"<tr>",
+			"	<td>",
+			"		<a href='"+projectInfo.collaborators[i]+"'>"+projectInfo.collaborators[i]+"</a>",
+			"	</td>",
+			"	<td>14 July 2016</td>",
+			"</tr>"].join("");
+}
+$("#collaborators").append(str);
+
+/*
+	The list of all files included in the project
+	(should be recovered from the database)
+*/
+str=[];
+for(var i=0;i<projectInfo.files.length;i++) {
+	var name=projectInfo.files[i].split("/").pop();
+	str+=[	"<tr>",
+			"	<td contentEditable=true data-ph='Empty'></td>",
+			"	<td><a href='"+location.origin+"/index.html?url="+projectInfo.files[i]+"'>"+name+"</a></td>",
+			"	<td contentEditable=true data-ph='1'></td>",
+			"	<td contentEditable=true data-ph='No Comment'></td>",
+			"</tr>"].join("");
+}
+$("#projectFiles tbody").append(str);
+for(var i=0;i<projectInfo.files.length;i++) {
+	(function(irow) {
+		$.get("/api/getFileMetadata",{url:projectInfo.files[i],"var":"name"})
+		.done(function(name){$("#projectFiles tbody tr:eq("+irow+") td:eq(0)").text(name)});
+	})(i);
+}
+
+// select first file by default (should come from localStorage)
+var url=projectInfo.files[0];	
+$("#projectFiles tbody tr:eq(0)").addClass("selected");
+
+BrainBox.initBrainBox()
+.then(function from_project(){return BrainBox.loadLabelsets()})
+.then(function from_project(){return loadProjectFile(url)})
+.then(function from_project(){
+	$("#tools-side").detach().appendTo('#tools');
+	// connect colours close button
+	$(document).on('click', "#labels-close", function(){$("#labelset").hide()});
+});
+
+// listen to changes in file selection by clicking of the file table
+$(document).on('click', "#projectFiles tbody tr",function() {
+	console.log(">> selectProjectFilesTableRow()");
+
+	var table=$(this).closest("table");
+	var currentIndex=$(table).find("tr.selected").index();
+	var index=$(this).index();
+	var nodeName=$(this).prop('nodeName');
+
+	if(index>=0 && currentIndex!=index) {
+		console.log(">>  change selected file:",index);
+		$(table).find("tr").removeClass("selected");
+		$(this).addClass("selected");
+		
+		// new url
+		url=projectInfo.files[index];
+		
+		// remove table with previous annotations
+		$("table#info tbody").html("");
+
+		// load and bind new file
+		loadProjectFile(url);
+	}
+});
+
+// listen to changes in file selection by pressing the up/down arrows
+$(document).on('keydown', function(e){
+	var table=$("#projectFiles tbody");
+	var index=$(table).find("tr.selected").index();
+	
+	if(e.keyCode!=38 && e.keyCode!=40)
+		return;
+
+	switch(e.keyCode) {
+		case 38: // up
+			index=(index+projectInfo.files.length-1)%projectInfo.files.length;
+			break;
+		case 40: // down
+			index=(index+1)%projectInfo.files.length;
+			break;
+	}
+	console.log(">>  change selected file:",index);
+	$(table).find("tr").removeClass("selected");
+	$(table).find("tr:eq("+index+")").addClass("selected");
+	
+	// new url
+	url=projectInfo.files[index];
+	
+	// remove table with previous annotations
+	$("table#info tbody").html("");
+
+	// load and bind new file
+	loadProjectFile(url);
+});
+
+
+// listen to changes in selected annotation
+$(document).on('click', "#info tbody tr",BrainBox.selectAnnotationTableRow);
+
+</script>
+
+</body>
+</html>

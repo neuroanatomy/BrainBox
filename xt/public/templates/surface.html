@@ -1,0 +1,187 @@
+<html>
+<head>
+	<meta charset="utf-8">
+    <meta name=viewport content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="/css/common.css" type="text/css" media="screen, projection" />
+	<link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
+    <title>BrainBox</title>
+	<style>
+	html,body {
+		width:100%;
+		height:100%;
+		margin:0;
+		background-color:#000;
+	}
+	</style>
+</head>
+<body>
+
+</head>
+
+<body>
+
+<div id="splash" style="width:100%;height:100%;display:flex;flex-direction:column">
+	<div style="flex:1 1">
+	</div>
+	<div style="flex:0 0 auto;text-align:center">
+		<div style="display:inline-block">
+			<img style='width:200px' src='/img/brainbox-logo-small.svg'/>
+			<div id="dot" style="display:block;width:8px;height:8px;border-radius:8px;background-color:#fff"></div>
+			<p style="color:#fff">Computing mesh from segmentation</p>
+		</div>
+	</div>
+	<div style="flex:1 1">
+	</div>
+</div>
+
+<script src="/lib/jquery-1.11.0.min.js"></script>
+<script>
+var params=deparam();
+var renderer,scene,camera,trackball;
+var path=params.path;
+var level=1;
+
+loadScript("/lib/three.min.js")
+.then(function(){return loadScript("/lib/TrackballControls.js")})
+.then(function(){
+	var worker = new Worker("/js/surfacenets-worker.js");
+	worker.onmessage = function(e) {
+		var msg=e.data.msg;
+		switch(msg) {
+			case 'success':
+				console.log("Worker finished");
+				var g=e.data.geometry;
+				createMesh(g);
+				$("#splash").remove();
+				animate();
+				break;
+			default:
+				console.log(e.data);
+		}
+	}
+	console.log("Start worker",path);
+	if(localStorage.brainbox) {
+		console.log("with segmentation from localStorage");
+		var xhr = new XMLHttpRequest();
+		xhr.open('GET',localStorage.brainbox,true);
+		xhr.responseType = 'blob';
+		xhr.onload = function(e) {
+
+			if(this.status!=200) {
+				console.log("load from localStorage failed (status: "+this.status+"). Try to load from server");
+				worker.postMessage({cmd:"start",path:path,level:level});
+				return;
+			}
+			
+			var blob=this.response;
+			var reader = new FileReader();
+			reader.addEventListener("loadend", function() {
+				var ab=this.result;
+				worker.postMessage({cmd:"start",path:path,level:level,niigz:ab});
+			});
+			reader.readAsArrayBuffer(blob);
+		};
+		xhr.onerror = function(e) {
+			console.log("load from localStorage failed. Try to load from server");
+			worker.postMessage({cmd:"start",path:path,level:level});
+		};
+		xhr.send();
+	} else {
+		console.log("with segmentation from server");
+		worker.postMessage({cmd:"start",path:path,level:level});
+	}		
+});
+
+// "wait" animation
+var dot=0;setInterval(function(){if($("#dot"))$("#dot").css({marginLeft:50*(1+Math.sin(dot))+"%"});dot+=0.1},33);
+
+function loadScript(script) {
+	var def=new $.Deferred();
+	var s = document.createElement("script");
+	s.src = script;
+	s.onload=function(){console.log("loaded",script,new Date());def.resolve();}
+	s.onerror=function(e){console.log("unable to load",script);def.reject();}
+	document.body.appendChild(s);
+	return def.promise();
+}
+
+function deparam() {
+    var search = location.search.substring(1);
+    var result = search?JSON.parse('{"' + search.replace(/&/g, '","').replace(/=/g,'":"') + '"}',
+                     function(key, value) { return key===""?value:decodeURIComponent(value) }):{};
+    return result;
+}
+
+function createMesh(g) {
+
+	renderer = new THREE.WebGLRenderer( { antialias: true } );
+	renderer.setPixelRatio( window.devicePixelRatio );
+	renderer.setClearColor(0x000000);
+	var W=window.innerWidth;
+	var H=window.innerHeight;
+	renderer.setSize(W,H);
+	document.body.appendChild(renderer.domElement);
+
+	camera = new THREE.PerspectiveCamera(50,W/H,1,2000 );
+	camera.position.z = 200;
+	scene = new THREE.Scene();
+
+	trackball = new THREE.TrackballControls(camera,renderer.domElement);
+
+	window.addEventListener( 'resize', onWindowResize, false );
+		
+	var geometry=new THREE.Geometry();
+	geometry.vertices.length=0;
+	geometry.faces.length=0;
+	var o={x:0,y:0,z:0};
+	for(var i=0; i<g.vertices.length; ++i) {
+		var v = g.vertices[i];
+		o.x+=v[0];
+		o.y+=v[1];
+		o.z+=v[2];
+	}
+	o.x/=g.vertices.length;
+	o.y/=g.vertices.length;
+	o.z/=g.vertices.length;
+	for(var i=0; i<g.vertices.length; ++i)
+	{
+		var v = g.vertices[i];
+		var	z=0.5;
+		geometry.vertices.push(new THREE.Vector3((v[0]-o.x)*z,(v[1]-o.y)*z,(v[2]-o.z)*z));
+	}
+	for(var i=0; i<g.faces.length; ++i) {
+		var f = g.faces[i];
+		if(f.length === 3) {
+			geometry.faces.push(new THREE.Face3(f[0], f[1], f[2]));
+		} else if(f.length === 4) {
+			geometry.faces.push(new THREE.Face4(f[0], f[1], f[2], f[3]));
+		}
+	}
+	geometry.computeFaceNormals();
+	geometry.computeVertexNormals();
+
+	var material=new THREE.MeshNormalMaterial();
+	var	mesh=new THREE.Mesh(geometry,material);
+	scene.add(mesh);
+}
+function animate()
+{
+	requestAnimationFrame( animate );
+	render();
+}
+
+// render the scene
+function render() {
+	renderer.render( scene, camera );
+	trackball.update();
+}
+function onWindowResize(event) {
+	var W=window.innerWidth;
+	var H=window.innerHeight;
+	renderer.setSize( W, H );
+	camera.aspect = W/H;
+	camera.updateProjectionMatrix();
+}	
+
+</script>
+</body>

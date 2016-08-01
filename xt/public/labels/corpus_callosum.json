@@ -1,0 +1,11 @@
+{
+	"name":"Corpus Callosum: 5 segments",
+	"source":"http://brainbox.dev/labels/corpus_callosum.json",
+	"labels":[
+		{"name":"Anterior","value":1,"color":[230,160,50],"url":"http://brainbox.pasteur.fr/labels/Corpus_Callosum/Anterior"},
+		{"name":"Mid Anterior","value":2,"color":[160,190,60],"url":"http://brainbox.pasteur.fr/Corpus_Callosum/Mid_Anterior"},
+		{"name":"Central","value":3,"color":[35,205,240],"url":"http://brainbox.pasteur.fr/Corpus_Callosum/Central"},
+		{"name":"Mid Posterior","value":4,"color":[160,110,20],"url":"http://brainbox.pasteur.fr/Corpus_Callosum/Mid_Posterior"},
+		{"name":"Posterior","value":5,"color":[195,30,155],"url":"http://brainbox.pasteur.fr/Corpus_Callosum/Posterior"}
+	]
+}

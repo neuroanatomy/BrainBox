@@ -1,0 +1,198 @@
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> 
+	<link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
+    <title>{{title}}</title>
+	<link rel="stylesheet" href="/stylesheets/style.css" />
+	<link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
+
+	<style>
+	.tab {
+		padding-right:12px;
+		padding-left:12px;
+		padding-bottom:4px;
+		cursor: pointer;
+		height:20px;
+	}
+	.tab.selected {
+		background:#333;
+	}
+	#files, #projects {
+		color:white;
+		text-align:left;
+		width:100%;
+		border-collapse:collapse;
+	}
+	#files td, #projects td,
+	#files th, #projects th {
+		padding:0px 4px;
+	}
+	#files, #projects,
+	#files th, #projects th {
+		border-bottom:thin solid white;
+	}
+	#files a, #projects a {
+		text-decoration:none;
+	}
+	</style>
+
+</head>
+
+<body>
+
+<div style="width:100%;height:100%;display:flex;flex-direction:column">
+	
+	<!-- Header -->
+	<div style="flex:0 0 100px">
+		<a href='/'>
+			<img style='position:fixed;left:10px;top:5px;width:200px' src='/img/brainbox-logo-small_noFont.svg'/>
+		</a>
+		<div style="position:fixed;left:73px;top:21px;width:auto; font-family: Roboto, sans-serif; font-size: 36px; font-weight:300" id="userNickname">
+		</div>
+		<div id="menu">
+			<img id="addProject" title="add project" style='width:13px' src='/img/plus.svg'/>
+			<img id="search" title="search" style='width:13px' src='/img/search.svg'/>
+			<img id="doc" title="documentation" style='width:13px' src='/img/doc.svg'/>
+			<img id="settings" title="settings" style='width:13px' src='/img/settings.svg'/>
+			<div id="MyLogin"></div>
+		</div>
+	</div>
+	
+	<!-- Content (variable height) -->
+	<div id="content" style="flex:1 0 auto;justify-content:center">
+	
+		<table style="margin:auto;width:1000px">
+			<tr>
+				<td style="width:250px;margin:1rem;vertical-align:top">
+					<div style="background:#333;width:200px;height:200px;margin-left:25px">
+					</div>
+					<h1 id="userName"></h1>
+					<h2 id="userNickname"></h2>
+					<p id="userJoined"></p>
+					<p>15 Files
+					<p>3 Projects
+				</td>			
+				<td style="margin:1rem;vertical-align:top">
+					<div style="width:100%">
+						<div>
+							<a class="tab selected">Files</a>
+							<a class="tab">Projects</a>
+						</div>
+						<div style="width:100%;min-height:400px;background:#333;padding:20px">
+							<table id="files" style="padding:10px"></table>
+							<table id="projects" style="padding:10px;display:none"></table>
+						</div>
+					</div>
+				</td>
+			</tr>
+		</table>
+	</div>
+	<!-- End Content -->
+	
+
+
+	<!-- I think this is not used-->
+	<!-- Space (fixed height) -->
+	<div style="flex:0 0 50px">
+	</div>
+
+
+
+	<!-- NAAT logo down right corner -->
+	<div id="NAATlogo" style="margin-left:97%;margin-bottom:10px">
+		<a target="_blank" href="http://neuroanatomy.github.io">
+			<img src="/img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/>
+		</a>
+	</div>
+	
+</div>
+
+<script src="/lib/jquery-1.11.0.min.js"></script>
+<script src="/lib/mylogin/login.js"></script>
+<!--
+<script src="/lib/pako/pako.min.js"></script>
+<script src="/js/brainbox.js"></script>
+-->
+<script>
+
+	// Init login widget
+	MyLoginWidget.init($("#MyLogin"));
+
+	var userInfo='{{{userInfo}}}';
+	userInfo=JSON.parse(userInfo);
+	$("#userName").text(userInfo.name);
+	$("#userNickname").text("User: " + userInfo.nickname);
+	$("#userJoined").text("Joined on "+new Date(userInfo.joined).toLocaleString());
+	
+	$("a.tab").click(function() {
+		$("a.tab").removeClass("selected");
+		$(this).addClass("selected");
+		switch($(this).text()) {
+			case "Files":
+				$("#files").show();
+				$("#projects").hide();
+				break;
+			case "Projects":
+				$("#files").hide();
+				$("#projects").show();
+				break;
+		}
+	});
+
+	/*
+		The list of all files visited by the user
+		should be recovered from the database
+	*/
+	if(localStorage.AtlasMaker) {
+		var stored=JSON.parse(localStorage.AtlasMaker);
+		var str=[	"<tr>",
+					"<th>URL</th>",
+					"<th>Name</th>",
+					"<th>Project</th>",
+					"<th>Last visited</th>",
+					"<tr>"].join();
+		for(var i=0;i<stored.history.length;i++) {
+			str+=[	"<tr>",
+					"<td>",
+					"<a href='"+location.origin+"/index.html?url="+stored.history[i].url+"'>"+stored.history[i].url+"</a>",
+					"</td>",
+					"<td></td>",
+					"<td></td>",
+					"<td>",
+					(stored.history[i].lastVisited)?new Date(stored.history[i].lastVisited).toLocaleString():"",
+					"</td>",
+					"</tr>"].join("");
+		}
+		$("#files").append(str);
+	}
+	
+	/*
+		The list of all projects to which the user
+		participates should be recovered from
+		the database
+	*/
+	var str=[	"<tr>",
+				"<th>Project</th>",
+				"<th>Files</th>",
+				"<th>Collaborators</th>",
+				"<th>Owner</th>",
+				"<th>Last visited</th>",
+				"<tr>"].join();
+	for(var i=0;i<stored.history.length;i++) {
+		str+=[	"<tr>",
+				"<td><a href='http://brainbox.dev/project/braincatalogue'>Brain Catalogue</a></td>",
+				"<td>83</td>",
+				"<td>5</td>",
+				"<td><a href='http://brainbox.dev/user/roberto'>roberto</a></td>",
+				"<td>14 July 2016</td>",
+				"</tr>"].join("");
+	}
+	$("#projects").append(str);
+	
+	
+</script>
+
+</body>
+</html>
