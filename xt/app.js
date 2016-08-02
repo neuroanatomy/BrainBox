@@ -31,6 +31,10 @@ var request=require('request');
 var jpeg=require('jpeg-js'); // jpeg-js library: https://github.com/eugeneware/jpeg-js
 var keypress = require('keypress');
 
+var mongo = require('mongodb');
+var monk = require('monk');
+var db = monk('localhost:27017/brainbox');
+
 var db_url=fs.readFileSync(__dirname+"/public/js/db_url.txt","utf8");
 var	Atlases=[];
 var Brains=[];
@@ -69,28 +73,26 @@ app.use('/users', users);
 
 // api routes
 app.get('/api/user/:name', function(req, res) {
-	var json=JSON.parse(fs.readFileSync(__dirname+"/public/user/"+req.params.name+"/info.json"));
-	if(req.query.var) {
-		var i,arr=req.query.var.split("/");
-		for(i in arr)
-			json=json[arr[i]];
-	}
-	res.send(json);
+	db.get('user').findOne({nickname:req.params.name},"-_id")
+	.then(function(json) {
+		if(req.query.var) {
+			var i,arr=req.query.var.split("/");
+			for(i in arr)
+				json=json[arr[i]];
+		}
+		res.send(json);
+	});
 });
 app.get('/api/project/:name', function(req, res) {
-	var json=JSON.parse(fs.readFileSync(__dirname+"/public/project/"+req.params.name+"/info.json"));
-	if(req.query.var) {
-		var i,arr=req.query.var.split("/");
-		for(i in arr)
-			json=json[arr[i]];
-	}
-	res.send(json);
-});
-app.get('/api/download', function(req, res) {
-	var myurl=req.query.url;
-	var hash = crypto.createHash('md5').update(myurl).digest('hex');
-	var json=JSON.parse(fs.readFileSync(__dirname+"/public/data/"+hash+"/info.json"));
-	res.send(json);
+	db.get('project').findOne({shortname:req.params.name},"-_id")
+	.then(function(json) {
+		if(req.query.var) {
+			var i,arr=req.query.var.split("/");
+			for(i in arr)
+				json=json[arr[i]];
+		}
+		res.send(json);
+	})
 });
 app.get('/api/getLabelsets', function(req, res) {
 	var i,arr=fs.readdirSync(__dirname+"/public/labels/"),info=[];
@@ -106,98 +108,98 @@ app.get('/api/getLabelsets', function(req, res) {
 app.get('/api/mri', function(req, res) {
 	var myurl=req.query.url;
 	var hash = crypto.createHash('md5').update(myurl).digest('hex');
-	
-	var json=JSON.parse(fs.readFileSync(__dirname+"/public/data/"+hash+"/info.json"));
-	if(req.query.var) {
-		var i,arr=req.query.var.split("/");
-		for(i in arr)
-			json=json[arr[i]];
-	}
-	res.send(json);
+	db.get('mri').findOne({url:"/data/"+hash+"/"},"-_id")
+	.then(function(json) {
+		if(req.query.var) {
+			var i,arr=req.query.var.split("/");
+			for(i in arr)
+				json=json[arr[i]];
+		}
+		res.send(json);
+	})
 });
 
 // mri route
 app.get('/mri', function(req, res) {
 	var myurl = req.query.url;
 	var hash = crypto.createHash('md5').update(myurl).digest('hex');
-	var path = __dirname+"/public/data/"+hash+"/info.json";
-	console.log(myurl);
-	console.log(hash);
-	console.log(path);
-	if(fs.existsSync(path)) {
-		console.log("exists");
-		var json=JSON.parse(fs.readFileSync(path));
-		res.render('mri', {
-			title: json.name|'Untitled MRI',
-			params: JSON.stringify(req.query),
-			mriInfo: JSON.stringify(json)
-		});
-	} else {
-		console.log("does not exist");
-		if (!fs.existsSync(__dirname+"/public/data/"+hash)) {
-			fs.mkdirSync(__dirname+"/public/data/"+hash,0777);
-		}
-		var myurl = req.query.url;
-		var filename = url.parse(req.query.url).pathname.split("/").pop();
-		var file = fs.createWriteStream(__dirname+"/public/data/"+hash+"/"+filename,{mode:0777});
-		console.log(filename);
-		var requ  = http.get(myurl, function(response) {
-			response.pipe(file).on('close', function() {
-				getBrainAtPath(__dirname+"/public/data/"+hash+"/"+filename,function(mri) {
-					// Create info.json file for new dataset
-					// 1. get creation date
-					var date = new Date();
-					var json = {
-						localpath: __dirname+"/public/data/"+hash+"/"+filename,
-						filename: filename,
-						success: true,
-						source: myurl,
-						url: "/data/"+hash+"/",
-						included: new Date(),
-						dim: mri.dim,
-						pixdim: mri.pixdim,
-						mri: {
-							brain: filename,
-							atlas: [{
-								owner:'/user/roberto',
-								created: new Date(),
-								modified: new Date(),
-								access: 'Read/Write',
-								type: 'volume',
-								filename: 'Atlas.nii.gz',
-								labels: 'http://brainbox.dev/labels/foreground.json'
-							}]
-						}
-					};
-					fs.writeFileSync(__dirname+"/public/data/"+hash+"/info.json",JSON.stringify(json,null,"\t"));
-
-					res.render('mri', {
-						title: json.name|'Untitled MRI',
-						params: JSON.stringify(req.query),
-						mriInfo: JSON.stringify(json)
+	db.get('mri').findOne({url:"/data/"+hash+"/"},"-_id")
+	.then(function(json) {
+		if(json) {
+			console.log("exists");
+			res.render('mri', {
+				title: json.name|'Untitled MRI',
+				params: JSON.stringify(req.query),
+				mriInfo: JSON.stringify(json)
+			});
+		} else {
+			console.log("does not exist");
+			if (!fs.existsSync(__dirname+"/public/data/"+hash)) {
+				fs.mkdirSync(__dirname+"/public/data/"+hash,0777);
+			}
+			var myurl = req.query.url;
+			var filename = url.parse(req.query.url).pathname.split("/").pop();
+			var file = fs.createWriteStream(__dirname+"/public/data/"+hash+"/"+filename,{mode:0777});
+			console.log(filename);
+			var requ  = http.get(myurl, function(response) {
+				response.pipe(file).on('close', function() {
+					getBrainAtPath(__dirname+"/public/data/"+hash+"/"+filename,function(mri) {
+						// create json file for new dataset
+						var date = new Date();
+						var json = {
+							localpath: __dirname+"/public/data/"+hash+"/"+filename,
+							filename: filename,
+							success: true,
+							source: myurl,
+							url: "/data/"+hash+"/",
+							included: new Date(),
+							dim: mri.dim,
+							pixdim: mri.pixdim,
+							mri: {
+								brain: filename,
+								atlas: [{
+									owner:'/user/roberto',
+									created: new Date(),
+									modified: new Date(),
+									access: 'Read/Write',
+									type: 'volume',
+									filename: 'Atlas.nii.gz',
+									labels: 'http://brainbox.dev/labels/foreground.json'
+								}]
+							}
+						};
+						db.get('mri').insert(json);
+						res.render('mri', {
+							title: json.name|'Untitled MRI',
+							params: JSON.stringify(req.query),
+							mriInfo: JSON.stringify(json)
+						});
 					});
 				});
-			});
-		});			
-		//echo '{"success":false,"message":"CANNOT DOWNLOAD FILE FROM SOURCE","result":"'.$result.'"}';
-	}
+			});			
+		}
+	});
 });
 
 // user route
 app.get('/user/:id', function(req, res) {
-	var json=JSON.parse(fs.readFileSync(__dirname+"/public/user/"+req.params.id+"/info.json"));
-	res.render('user', {
-		title: req.params.id,
-		userInfo: JSON.stringify(json)
+	db.get('user').findOne({nickname:req.params.id},"-_id")
+	.then(function(json) {
+		res.render('user', {
+			title: req.params.id,
+			userInfo: JSON.stringify(json)
+		});
 	});
 });
 
 // page route
 app.get('/project/:id', function(req, res) {
-	var json=JSON.parse(fs.readFileSync(__dirname+"/public/project/braincatalogue/info.json"));
-	res.render('project', {
-		title: req.params.id,
-		projectInfo: JSON.stringify(json)
+	db.get('project').findOne({shortname:req.params.id},"-_id")
+	.then(function(json) {
+		res.render('project', {
+			title: req.params.id,
+			projectInfo: JSON.stringify(json)
+		});
 	});
 });
 
