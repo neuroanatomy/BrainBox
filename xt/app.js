@@ -108,27 +108,32 @@ app.get('/api/getLabelsets', function(req, res) {
 app.get('/api/mri', function(req, res) {
 	var myurl=req.query.url;
 	var hash = crypto.createHash('md5').update(myurl).digest('hex');
-	db.get('mri').findOne({url:"/data/"+hash+"/"},"-_id")
+	// shell equivalent: db.mri.find({source:"http://braincatalogue.org/data/Pineal/P001/t1wdb.nii.gz"}).limit(1).sort({$natural:-1})
+	db.get('mri').find({url:"/data/"+hash+"/"}, {sort:{$natural:-1},limit:1})
 	.then(function(json) {
+		json=json[0];
 		if(req.query.var) {
 			var i,arr=req.query.var.split("/");
 			for(i in arr)
 				json=json[arr[i]];
 		}
 		res.send(json);
-	})
+	}, function(err) {
+		console.error(err);
+	});
 });
 
 // mri route
 app.get('/mri', function(req, res) {
 	var myurl = req.query.url;
 	var hash = crypto.createHash('md5').update(myurl).digest('hex');
-	db.get('mri').findOne({url:"/data/"+hash+"/"},"-_id")
+	db.get('mri').find({url:"/data/"+hash+"/"}, {sort:{$natural:-1},limit:1})
 	.then(function(json) {
 		if(json) {
+			json=json[0];
 			console.log("exists");
 			res.render('mri', {
-				title: json.name|'Untitled MRI',
+				title: json.name||'Untitled MRI',
 				params: JSON.stringify(req.query),
 				mriInfo: JSON.stringify(json)
 			});
@@ -178,6 +183,8 @@ app.get('/mri', function(req, res) {
 				});
 			});			
 		}
+	}, function(err) {
+		console.error(err);
 	});
 });
 
