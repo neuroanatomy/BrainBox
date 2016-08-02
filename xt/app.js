@@ -17,7 +17,8 @@ var bodyParser = require('body-parser');
 var mustacheExpress = require('mustache-express');
 var crypto = require('crypto');
 
-var server = require('http').createServer(),
+var http = require('http'),
+	server = http.createServer(),
 	url = require('url'),
 	WebSocketServer = require('ws').Server,
 	websocket,
@@ -86,8 +87,8 @@ app.get('/api/project/:name', function(req, res) {
 	res.send(json);
 });
 app.get('/api/download', function(req, res) {
-	var url=req.query.url;
-	var hash = crypto.createHash('md5').update(url).digest('hex');
+	var myurl=req.query.url;
+	var hash = crypto.createHash('md5').update(myurl).digest('hex');
 	var json=JSON.parse(fs.readFileSync(__dirname+"/public/data/"+hash+"/info.json"));
 	res.send(json);
 });
@@ -102,9 +103,10 @@ app.get('/api/getLabelsets', function(req, res) {
 	}
 	res.send(info);
 });
-app.get('/api/getFileMetadata', function(req, res) {
-	var url=req.query.url;
-	var hash = crypto.createHash('md5').update(url).digest('hex');
+app.get('/api/mri', function(req, res) {
+	var myurl=req.query.url;
+	var hash = crypto.createHash('md5').update(myurl).digest('hex');
+	
 	var json=JSON.parse(fs.readFileSync(__dirname+"/public/data/"+hash+"/info.json"));
 	if(req.query.var) {
 		var i,arr=req.query.var.split("/");
@@ -112,6 +114,73 @@ app.get('/api/getFileMetadata', function(req, res) {
 			json=json[arr[i]];
 	}
 	res.send(json);
+});
+
+// mri route
+app.get('/mri', function(req, res) {
+	var myurl = req.query.url;
+	var hash = crypto.createHash('md5').update(myurl).digest('hex');
+	var path = __dirname+"/public/data/"+hash+"/info.json";
+	console.log(myurl);
+	console.log(hash);
+	console.log(path);
+	if(fs.existsSync(path)) {
+		console.log("exists");
+		var json=JSON.parse(fs.readFileSync(path));
+		res.render('mri', {
+			title: json.name|'Untitled MRI',
+			params: JSON.stringify(req.query),
+			mriInfo: JSON.stringify(json)
+		});
+	} else {
+		console.log("does not exist");
+		if (!fs.existsSync(__dirname+"/public/data/"+hash)) {
+			fs.mkdirSync(__dirname+"/public/data/"+hash,0777);
+		}
+		var myurl = req.query.url;
+		var filename = url.parse(req.query.url).pathname.split("/").pop();
+		var file = fs.createWriteStream(__dirname+"/public/data/"+hash+"/"+filename,{mode:0777});
+		console.log(filename);
+		var requ  = http.get(myurl, function(response) {
+			response.pipe(file).on('close', function() {
+				getBrainAtPath(__dirname+"/public/data/"+hash+"/"+filename,function(mri) {
+					// Create info.json file for new dataset
+					// 1. get creation date
+					var date = new Date();
+					var json = {
+						localpath: __dirname+"/public/data/"+hash+"/"+filename,
+						filename: filename,
+						success: true,
+						source: myurl,
+						url: "/data/"+hash+"/",
+						included: new Date(),
+						dim: mri.dim,
+						pixdim: mri.pixdim,
+						mri: {
+							brain: filename,
+							atlas: [{
+								owner:'/user/roberto',
+								created: new Date(),
+								modified: new Date(),
+								access: 'Read/Write',
+								type: 'volume',
+								filename: 'Atlas.nii.gz',
+								labels: 'http://brainbox.dev/labels/foreground.json'
+							}]
+						}
+					};
+					fs.writeFileSync(__dirname+"/public/data/"+hash+"/info.json",JSON.stringify(json,null,"\t"));
+
+					res.render('mri', {
+						title: json.name|'Untitled MRI',
+						params: JSON.stringify(req.query),
+						mriInfo: JSON.stringify(json)
+					});
+				});
+			});
+		});			
+		//echo '{"success":false,"message":"CANNOT DOWNLOAD FILE FROM SOURCE","result":"'.$result.'"}';
+	}
 });
 
 // user route
@@ -507,7 +576,7 @@ function receiveRequestSliceMessage(data,user_socket) {
 	var view=user.view;		// user view
 	var slice=parseInt(user.slice);	// user slice
 	
-	var brain=getBrainAtPath(brainPath,function(data){
+	var brain=getBrainAtPath("../"+brainPath,function(data){
 		sendSliceToUser(data,view,slice,user_socket);
 	});
 
@@ -1339,7 +1408,6 @@ function loadBrainMGZ(data,callback) {
 function loadBrainCompressed(path,callback) {
 	if(debug)
 		console.log("[loadBrainCompressed]",path);
-	path="../"+path;
 	if(!fs.existsSync(path)) {
 		console.log("ERROR: File does not exist:",path);
 		return;

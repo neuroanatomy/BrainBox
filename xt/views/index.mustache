@@ -234,7 +234,7 @@ if(params.url) {
 				},
 				{	typeOfBinding:2,
 					path:"mri.atlas.#.labels",
-					format: function(e,d){var u="http://localhost:3000",d1=(new URL((new URL(d,u)).pathname,u)).href;$(e).find("select").prop('selectedIndex',$.map(BrainBox.labelSets,function(o){return o.source}).indexOf(d1))},
+					format: function(e,d){var u="http://brainbox.dev",d1=(new URL((new URL(d,u)).pathname,u)).href;$(e).find("select").prop('selectedIndex',$.map(BrainBox.labelSets,function(o){return o.source}).indexOf(d1))},
 					/*
 						-----------------------------------------------------------
 						NOTE: this is a temporary fix, the final version should be:
@@ -245,7 +245,7 @@ if(params.url) {
 				},
 				{	typeOfBinding:1,
 					path:"mri.atlas.#.owner",
-					format: function(e,d){$.get("http://localhost:3000/api/user/"+d.split("/").pop()+"?var=nickname",function(r){$(e).text(r);$(e).attr('href',d)})}
+					format: function(e,d){$.get("http://brainbox.dev/api/user/"+d.split("/").pop()+"?var=nickname",function(r){$(e).text(r);$(e).attr('href',d)})}
 				},
 				{	typeOfBinding:1,
 					path:"mri.atlas.#.created",
@@ -327,7 +327,7 @@ if(params.url) {
 		if(stored.version && stored.version==version) {
 			var str="<br/><p><b>Recently visited</b><br/>";
 			for(var i=0;i<stored.history.length;i++) {
-				str+="<a href='"+location+"index.html?url="+stored.history[i].url+"'>"+stored.history[i].url+"</a><br />";
+				str+="<a href='"+location+"mri?url="+stored.history[i].url+"'>"+stored.history[i].url+"</a><br />";
 			}
 			str+="</p>";
 			$("#intro").append(str);
@@ -354,7 +354,7 @@ $("#url").keyup(function(e) {
 function goToURL(e) {
 	var url=$("#url").val();
 	params.url=url;
-	location="/index.html?url="+url;
+	location="/mri?url="+url;
 };
 </script>
 

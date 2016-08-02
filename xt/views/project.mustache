@@ -154,7 +154,12 @@
 var str;
 
 function loadProjectFile(url) {
-	BrainBox.configureBrainBox({url:url,view:"cor",slice:180,fullscreen:false})
+	var params={url:url,view:"cor",slice:180,fullscreen:false};
+	$.get("/api/mri",{url:url})
+	.done(function from_loadProjectFile(data) {
+		params.info=data;
+		BrainBox.configureBrainBox(params)
+	})
 	.then(function from_loadProjectFile() {
 		// binding prototype
 		var info_proxy={};
@@ -174,7 +179,7 @@ function loadProjectFile(url) {
 				},
 				{	typeOfBinding:1,
 					path:"mri.atlas.#.labels",
-					format: function(e,d){var u="http://localhost:3000",d1=(new URL((new URL(d,u)).pathname,u)).href;$(e).find("select").prop('selectedIndex',$.map(BrainBox.labelSets,function(o){return o.source}).indexOf(d1))},
+					format: function(e,d){var u="http://brainbox.dev",d1=(new URL((new URL(d,u)).pathname,u)).href;$(e).find("select").prop('selectedIndex',$.map(BrainBox.labelSets,function(o){return o.source}).indexOf(d1))},
 					/*
 						-----------------------------------------------------------
 						NOTE: this is a temporary fix, the final version should be:
@@ -185,7 +190,7 @@ function loadProjectFile(url) {
 				},
 				{	typeOfBinding:1,
 					path:"mri.atlas.#.owner",
-					format: function(e,d){$.get("http://localhost:3000/api/user/"+d.split("/").pop()+"?var=nickname",function(r){$(e).text(r);$(e).attr('href',d)})}
+					format: function(e,d){$.get("http://brainbox.dev/api/user/"+d.split("/").pop()+"?var=nickname",function(r){$(e).text(r);$(e).attr('href',d)})}
 				}
 			]
 		};
@@ -244,7 +249,7 @@ for(var i=0;i<projectInfo.files.length;i++) {
 	var name=projectInfo.files[i].split("/").pop();
 	str+=[	"<tr>",
 			"	<td contentEditable=true data-ph='Empty'></td>",
-			"	<td><a href='"+location.origin+"/index.html?url="+projectInfo.files[i]+"'>"+name+"</a></td>",
+			"	<td><a href='"+location.origin+"/mri?url="+projectInfo.files[i]+"'>"+name+"</a></td>",
 			"	<td contentEditable=true data-ph='1'></td>",
 			"	<td contentEditable=true data-ph='No Comment'></td>",
 			"</tr>"].join("");
@@ -252,7 +257,7 @@ for(var i=0;i<projectInfo.files.length;i++) {
 $("#projectFiles tbody").append(str);
 for(var i=0;i<projectInfo.files.length;i++) {
 	(function(irow) {
-		$.get("/api/getFileMetadata",{url:projectInfo.files[i],"var":"name"})
+		$.get("/api/mri",{url:projectInfo.files[i],"var":"name"})
 		.done(function(name){$("#projectFiles tbody tr:eq("+irow+") td:eq(0)").text(name)});
 	})(i);
 }

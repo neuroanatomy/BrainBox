@@ -60,70 +60,64 @@ var BrainBox={
 		
 		var def=$.Deferred();
 		var date=new Date();
+		var data=param.info;
 	
 		// Copy MRI from source
 		$("#msgLog").html("<p>Downloading from source to server...");
-		$.getJSON("/api/download", {
-			url: param.url
-		}).done(function from_configureBrainBox(data) {
-			// Configure MRI into atlasMaker
-			//data=JSON.parse(data);
-			if(data.success==false) {
-				date=new Date();
-				$("#msgLog").append("<p>ERROR: "+data.message+".");
-				console.log("<p>ERROR: "+data.message+".");
-				def.reject();
-				return;
-			}
-			BrainBox.info=data;
+
+					// Configure MRI into atlasMaker
+					//data=JSON.parse(data);
+					if(data.success==false) {
+						date=new Date();
+						$("#msgLog").append("<p>ERROR: "+data.message+".");
+						console.log("<p>ERROR: "+data.message+".");
+						def.reject();
+						return;
+					}
+					BrainBox.info=data;
 			
-			var arr=param.url.split("/");
-			var name=arr[arr.length-1];
-			date=new Date();
-			$("#msgLog").append("<p>Downloading from server...");
+					var arr=param.url.split("/");
+					var name=arr[arr.length-1];
+					date=new Date();
+					$("#msgLog").append("<p>Downloading from server...");
 	
-			param.dim=BrainBox.info.dim; // this allows to keep dim and pixdim through annotation changes
-			param.pixdim=BrainBox.info.pixdim;
+					param.dim=BrainBox.info.dim; // this allows to keep dim and pixdim through annotation changes
+					param.pixdim=BrainBox.info.pixdim;
 
-			// re-instance stored configuration
-			var stored=localStorage.AtlasMaker;
-			if(stored) {
-				var stored=JSON.parse(stored);
-				if(stored.version && stored.version==BrainBox.version) {
-					for(var i=0;i<stored.history.length;i++) {
-						if(stored.history[i].url==param.url) {
-							AtlasMakerWidget.User.view=stored.history[i].view;
-							AtlasMakerWidget.User.slice=stored.history[i].slice;
-							break;
+					// re-instance stored configuration
+					var stored=localStorage.AtlasMaker;
+					if(stored) {
+						var stored=JSON.parse(stored);
+						if(stored.version && stored.version==BrainBox.version) {
+							for(var i=0;i<stored.history.length;i++) {
+								if(stored.history[i].url==param.url) {
+									AtlasMakerWidget.User.view=stored.history[i].view;
+									AtlasMakerWidget.User.slice=stored.history[i].slice;
+									break;
+								}
+							}	
 						}
-					}	
-				}
-			}
+					}
 			
-			// enact configuration in param, eventually overriding the stored one
-			if(param.view) {
-				AtlasMakerWidget.User.view=param.view;
-				AtlasMakerWidget.User.slice=null; // this will set the slider to the middle slice in case no slice were specified
-			}
-			if(param.slice)
-				AtlasMakerWidget.User.slice=param.slice;
+					// enact configuration in param, eventually overriding the stored one
+					if(param.view) {
+						AtlasMakerWidget.User.view=param.view;
+						AtlasMakerWidget.User.slice=null; // this will set the slider to the middle slice in case no slice were specified
+					}
+					if(param.slice)
+						AtlasMakerWidget.User.slice=param.slice;
 
-			if(param.fullscreen)
-				AtlasMakerWidget.fullscreen=param.fullscreen;
-			else
-				AtlasMakerWidget.fullscreen=false;
+					if(param.fullscreen)
+						AtlasMakerWidget.fullscreen=param.fullscreen;
+					else
+						AtlasMakerWidget.fullscreen=false;
 				
-			AtlasMakerWidget.editMode=1;
+					AtlasMakerWidget.editMode=1;
 
-			AtlasMakerWidget.configureAtlasMaker(BrainBox.info,0)
-			.then(function() {
-				def.resolve();
-			});
-
-		}).fail(function() {
-			date=new Date();
-			$("#msgLog").append("<p>ERROR: Cannot load MRI at specified URL.");
-		});
+					AtlasMakerWidget.configureAtlasMaker(BrainBox.info,0)
+					.then(function() {
+						def.resolve();
+					});
 		
 		return def.promise();
 	},
