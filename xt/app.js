@@ -589,13 +589,21 @@ function receiveRequestSliceMessage(data,user_socket) {
 function receiveSaveMetadataMessage(data,user_socket) {
 	if(debug>=1) console.log("[receiveSaveMetadataMessage]");
 
+	var uid=data.uid;		// user id
+	/*
 	console.log("[receiveSaveMetadataMessage]");
 	console.log(JSON.stringify(data,null,"\t"));
-	
-	var uid=data.uid;		// user id
 	var	ms=+new Date;
 	var path1=localdir+Users[uid].dirname+"info.json";
 	var	path2=localdir+Users[uid].dirname+ms+"_info.json";
+	*/
+	
+	var json=data.metadata;
+	json.modified=(new Date()).toJSON();
+	json.modifiedBy=Users[uid].username;
+	db.get('mri').insert(json);
+	
+	/*
 	fs.rename(path1,path2,function(){
 		try {
 			fs.writeFileSync(path1,JSON.stringify(data.metadata,null,"\t"));
@@ -603,6 +611,7 @@ function receiveSaveMetadataMessage(data,user_socket) {
 			console.log("ERROR: Cannot save info.json file at "+dirname);
 		}
 	});
+	*/
 }
 function receiveAtlasFromUserMessage(data,user_socket) {
 	if(debug>=1) console.log("[receiveAtlasFromUserMessage]");
