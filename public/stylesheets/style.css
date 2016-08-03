@@ -365,7 +365,7 @@ select {
     text-overflow: ellipsis;
 }
 
-.noEmpty:empty:not(:focus):before {
+.noEmpty:empty:before {
 	content:'Empty';
 	color:rgba(255,255,255,0.4);
 }
