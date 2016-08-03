@@ -117,7 +117,7 @@ function projectPage($args)
 	$file=$_SERVER['DOCUMENT_ROOT']."/project/".$args[2]."/info.json";
 	if(!file_exists($file))
 	{
-		echo "ERROR: Unknown user\n";
+		echo "ERROR: Unknown project\n";
 		return;
 	}
 	$projectInfo=json_decode(file_get_contents($file),true);
