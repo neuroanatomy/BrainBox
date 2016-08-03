@@ -4,7 +4,7 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
 	<link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
-    <title>BrainBox</title>
+    <title>{{title}}</title>
 	<link rel="stylesheet" href="/stylesheets/style.css" />
 	<link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
 </head>
@@ -20,7 +20,9 @@
 			<img id="search" title="search" style='width:13px' src='/img/search.svg'/>
 			<img id="doc" title="documentation" style='width:13px' src='/img/doc.svg'/>
 			<img id="settings" title="settings" style='width:13px' src='/img/settings.svg'/>
-			<div id="MyLogin"></div>
+			<div id="MyLogin">
+				<span>{{{login}}}</span>
+			</div>
 		</div>
 	</div>
 	
@@ -177,14 +179,16 @@ https://dl.dropboxusercontent.com/u/363467/mprage003.nii.gz
 
 <script src="/lib/jquery-1.11.0.min.js"></script>
 <script src="/lib/pako/pako.min.js"></script>
-<script src="/lib/mylogin/login.js"></script>
+<!-- REMOVE <script src="/lib/mylogin/login.js"></script>-->
 <script src="/js/twoWayBinding.js"></script>
 <script src="/js/brainbox.js"></script>
 
 <script>
 
+/* REMOVE
 // Init login widget
 MyLoginWidget.init($("#MyLogin"));
+*/
 
 var params=deparam();
 var version=1;

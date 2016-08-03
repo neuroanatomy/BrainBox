@@ -64,7 +64,9 @@
 			<img id="search" title="Search" style='width:13px' src='/img/search.svg'/>
 			<img id="doc" title="Documentation" style='width:13px' src='/img/doc.svg'/>
 			<img id="settings" title="Settings" style='width:13px' src='/img/settings.svg'/>
-			<div id="MyLogin"></div>
+			<div id="MyLogin">
+				<span>{{{login}}}</span>
+			</div>
 		</div>
 	</div>
 	
@@ -146,7 +148,9 @@
 
 
 <script src="/lib/jquery-1.11.0.min.js"></script>
+<!--
 <script src="/lib/mylogin/login.js"></script>
+-->
 <script src="/lib/pako/pako.min.js"></script>
 <script src="/js/twoWayBinding.js"></script>
 <script src="/js/brainbox.js"></script>
@@ -205,8 +209,10 @@ function loadProjectFile(url) {
 	});
 }
 
+/*
 // Init login widget
 MyLoginWidget.init($("#MyLogin"));
+*/
 
 /*
 	This variable contains project metadata

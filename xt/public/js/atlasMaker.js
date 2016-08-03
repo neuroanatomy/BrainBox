@@ -840,8 +840,10 @@ var AtlasMakerWidget = {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(down,2);if(l)console.log(l);
 	
+		/*
 		if(MyLoginWidget.loggedin==0 || me.editMode==0)
 			return;
+		*/
 	
 		var z=me.User.slice;
 
@@ -880,8 +882,10 @@ var AtlasMakerWidget = {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(move,2);if(l)console.log(l);
 	
+		/*
 		if(MyLoginWidget.loggedin==0 || me.editMode==0)
 			return;
+		*/
 
 		var z=me.User.slice;
 
@@ -910,8 +914,10 @@ var AtlasMakerWidget = {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(up,2);if(l)console.log(l);
 
+		/*
 		if(MyLoginWidget.loggedin==0 || me.editMode==0)
 			return;
+		*/
 
 		// Send mouse up (touch ended) message
 		me.User.mouseIsDown = false;
@@ -1498,10 +1504,14 @@ var AtlasMakerWidget = {
 	// Database
 	//==========
 	logToDatabase: function logToDatabase(key,value) {
+		console.log("WARNING: logToDatabase is still using php. It should either use http.post or the websocket");
+		var def=$.Deferred();
+		return def.resolve().promise();
+		/*
+		var def=$.Deferred();
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(logToDatabase,1);if(l)console.log(l);
 
-		var def=$.Deferred();
 		$.ajax({
 			url:AtlasMakerWidget.dbphp,
 			type:"POST",
@@ -1518,6 +1528,7 @@ var AtlasMakerWidget = {
 			def.reject("Error");
 		});
 		return def.promise();
+		*/
 	},
 
 
@@ -1585,11 +1596,13 @@ var AtlasMakerWidget = {
 		$.get("/templates/tools.html",function from_initAtlasMaker(html) {
 			me.container.append(html);
 			
+			/*
 			// hide or show annotation tools depending on login changes
 			if(MyLoginWidget) {
 				me.loginChanged();
 				MyLoginWidget.subscribe(me.loginChanged);
 			}
+			*/
 
 			// intercept keyboard events
 			$(document).keydown(function(e){me.keyDown(e)});
@@ -1698,6 +1711,7 @@ var AtlasMakerWidget = {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(loginChanged);if(l)console.log(l);
 
+		/*
 		console.log("to",MyLoginWidget.loggedin);
 
 		if(MyLoginWidget.loggedin) {
@@ -1715,6 +1729,7 @@ var AtlasMakerWidget = {
 			// inform the server
 			me.sendUserDataMessage("logged out");
 		}
+		*/
 	},
 	slider: function slider(elem,callback) {
 		var me=AtlasMakerWidget;

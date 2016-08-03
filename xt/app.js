@@ -68,8 +68,10 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+/*
 app.use('/', routes);
 app.use('/users', users);
+*/
 
 //{-----passport
 var session = require('express-session');
@@ -88,29 +90,154 @@ passport.deserializeUser(function(user, done) {done(null, user);});
 // Simple authentication middleware. Add to routes that need to be protected.
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {return next();}
-  else res.redirect('/login');
+  else res.redirect('/');
 }
 app.get('/secure-route-example',ensureAuthenticated,function(req, res){res.send("access granted");});
-app.get('/login', function (req, res) {
-	var html = "<a href='/auth/github'>GitHub</a><br/><a href='/logout'>logout</a>";
-	// dump the user for debugging
-	if(req.isAuthenticated()) {
-		html += "<p>authenticated as user:</p>"
-		html += "<pre>" + JSON.stringify(req.user, null, 4) + "</pre>";
-	}
-	res.send(html);
-});
 app.get('/logout', function(req, res){
 	console.log('logging out');
 	req.logout();
-	res.redirect('/login');
+	res.redirect('/');
 });
 // start the GitHub Login process
 app.get('/auth/github',passport.authenticate('github'));
-app.get('/auth/github/callback',passport.authenticate('github',{failureRedirect:'/login'}),function(req, res){res.redirect('/login');});
+app.get('/auth/github/callback',
+	passport.authenticate('github',{failureRedirect:'/'}),
+	function(req, res) {
+		// successfully loged in. Check if user is new
+		db.get('user').findOne({nickname:req.params.name},"-_id")
+		.then(function(json) {
+			if(!json) {
+				// insert new user
+				json={
+					name: req.user.displayName,
+					nickname: req.user.username,
+					url:req.user._json.blog,
+					brainboxURL:"http://brainbox.dev/user/"+req.user.username,
+					joined: (new Date()).toJSON()
+				}
+				db.get('user').insert(json);
+			}
+		});
+
+		res.redirect('/');
+	});
 //-----}
 
-// api routes
+// GUI routes
+app.get('/', function(req,res) {
+	var login=	(req.isAuthenticated())?
+				("<a href='/user/"+req.user.username+"'>"+req.user.username+"</a> (<a href='/logout'>logout</a>)")
+				:("<a href='/auth/github'>Login with GitHub</a>");
+	res.render('index', {
+		title: 'BrainBox',
+		login: login
+	});
+});
+app.get('/mri', function(req, res) {
+	var login=	(req.isAuthenticated())?
+				("<a href='/user/"+req.user.username+"'>"+req.user.username+"</a> (<a href='/logout'>logout</a>)")
+				:("<a href='/auth/github'>Login with GitHub</a>");
+	var myurl = req.query.url;
+	var hash = crypto.createHash('md5').update(myurl).digest('hex');
+	db.get('mri').find({url:"/data/"+hash+"/"}, {sort:{$natural:-1},limit:1})
+	.then(function(json) {
+		if(json) {
+			json=json[0];
+			res.render('mri', {
+				title: json.name||'Untitled MRI',
+				params: JSON.stringify(req.query),
+				mriInfo: JSON.stringify(json),
+				login: login
+			});
+		} else {
+			if (!fs.existsSync(__dirname+"/public/data/"+hash)) {
+				fs.mkdirSync(__dirname+"/public/data/"+hash,0777);
+			}
+			var myurl = req.query.url;
+			var filename = url.parse(req.query.url).pathname.split("/").pop();
+			var file = fs.createWriteStream(__dirname+"/public/data/"+hash+"/"+filename,{mode:0777});
+			console.log(filename);
+			var requ  = http.get(myurl, function(response) {
+				response.pipe(file).on('close', function() {
+					getBrainAtPath(__dirname+"/public/data/"+hash+"/"+filename,function(mri) {
+						// create json file for new dataset
+						var date = new Date();
+						var ip = req.headers['x-forwarded-for'] || 
+								 req.connection.remoteAddress || 
+								 req.socket.remoteAddress ||
+								 req.connection.socket.remoteAddress;
+						var username=(req.isAuthenticated())?req.user.username:ip
+						var json = {
+							localpath: __dirname+"/public/data/"+hash+"/"+filename,
+							filename: filename,
+							success: true,
+							source: myurl,
+							url: "/data/"+hash+"/",
+							included: new Date(),
+							dim: mri.dim,
+							pixdim: mri.pixdim,
+							mri: {
+								brain: filename,
+								atlas: [{
+									owner:username,
+									created: new Date(),
+									modified: new Date(),
+									access: 'Read/Write',
+									type: 'volume',
+									filename: 'Atlas.nii.gz',
+									labels: 'http://brainbox.dev/labels/foreground.json'
+								}]
+							}
+						};
+						db.get('mri').insert(json);
+						res.render('mri', {
+							title: json.name||'Untitled MRI',
+							params: JSON.stringify(req.query),
+							mriInfo: JSON.stringify(json),
+							login: login
+						});
+					});
+				});
+			});			
+		}
+	}, function(err) {
+		console.error(err);
+	});
+});
+app.get('/user/:id', function(req, res) {
+	var login=	(req.isAuthenticated())?
+				("<a href='/user/"+req.user.username+"'>"+req.user.username+"</a> (<a href='/logout'>logout</a>)")
+				:("<a href='/auth/github'>Login with GitHub</a>");
+	db.get('user').findOne({nickname:req.params.id},"-_id")
+	.then(function(json) {
+		var context={
+			title: req.params.id,
+			userInfo: JSON.stringify(json),
+			login: login
+		}
+		if(req.isAuthenticated()) {
+			context.avatar="<img src='"+req.user._json.avatar_url+"'/>";
+			// dump the user for debugging
+			console.log(JSON.stringify(req.user, null, 4));
+		}
+		res.render('user',context);
+	});
+});
+app.get('/project/:id', function(req, res) {
+	var login=	(req.isAuthenticated())?
+				("<a href='/user/"+req.user.username+"'>"+req.user.username+"</a> (<a href='/logout'>logout</a>)")
+				:("<a href='/auth/github'>Login with GitHub</a>");
+	db.get('project').findOne({shortname:req.params.id},"-_id")
+	.then(function(json) {
+		res.render('project', {
+			title: req.params.id,
+			projectInfo: JSON.stringify(json),
+			login: login
+		});
+	});
+});
+
+// API routes
 app.get('/api/user/:name', function(req, res) {
 	db.get('user').findOne({nickname:req.params.name},"-_id")
 	.then(function(json) {
@@ -160,93 +287,6 @@ app.get('/api/mri', function(req, res) {
 		res.send(json);
 	}, function(err) {
 		console.error(err);
-	});
-});
-
-// mri route
-app.get('/mri', function(req, res) {
-	var myurl = req.query.url;
-	var hash = crypto.createHash('md5').update(myurl).digest('hex');
-	db.get('mri').find({url:"/data/"+hash+"/"}, {sort:{$natural:-1},limit:1})
-	.then(function(json) {
-		if(json) {
-			json=json[0];
-			console.log("exists");
-			res.render('mri', {
-				title: json.name||'Untitled MRI',
-				params: JSON.stringify(req.query),
-				mriInfo: JSON.stringify(json)
-			});
-		} else {
-			console.log("does not exist");
-			if (!fs.existsSync(__dirname+"/public/data/"+hash)) {
-				fs.mkdirSync(__dirname+"/public/data/"+hash,0777);
-			}
-			var myurl = req.query.url;
-			var filename = url.parse(req.query.url).pathname.split("/").pop();
-			var file = fs.createWriteStream(__dirname+"/public/data/"+hash+"/"+filename,{mode:0777});
-			console.log(filename);
-			var requ  = http.get(myurl, function(response) {
-				response.pipe(file).on('close', function() {
-					getBrainAtPath(__dirname+"/public/data/"+hash+"/"+filename,function(mri) {
-						// create json file for new dataset
-						var date = new Date();
-						var json = {
-							localpath: __dirname+"/public/data/"+hash+"/"+filename,
-							filename: filename,
-							success: true,
-							source: myurl,
-							url: "/data/"+hash+"/",
-							included: new Date(),
-							dim: mri.dim,
-							pixdim: mri.pixdim,
-							mri: {
-								brain: filename,
-								atlas: [{
-									owner:'/user/roberto',
-									created: new Date(),
-									modified: new Date(),
-									access: 'Read/Write',
-									type: 'volume',
-									filename: 'Atlas.nii.gz',
-									labels: 'http://brainbox.dev/labels/foreground.json'
-								}]
-							}
-						};
-						db.get('mri').insert(json);
-						res.render('mri', {
-							title: json.name|'Untitled MRI',
-							params: JSON.stringify(req.query),
-							mriInfo: JSON.stringify(json)
-						});
-					});
-				});
-			});			
-		}
-	}, function(err) {
-		console.error(err);
-	});
-});
-
-// user route
-app.get('/user/:id', function(req, res) {
-	db.get('user').findOne({nickname:req.params.id},"-_id")
-	.then(function(json) {
-		res.render('user', {
-			title: req.params.id,
-			userInfo: JSON.stringify(json)
-		});
-	});
-});
-
-// page route
-app.get('/project/:id', function(req, res) {
-	db.get('project').findOne({shortname:req.params.id},"-_id")
-	.then(function(json) {
-		res.render('project', {
-			title: req.params.id,
-			projectInfo: JSON.stringify(json)
-		});
 	});
 });
 

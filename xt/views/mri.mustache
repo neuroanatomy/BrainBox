@@ -20,7 +20,9 @@
 			<img id="search" title="search" style='width:13px' src='/img/search.svg'/>
 			<img id="doc" title="documentation" style='width:13px' src='/img/doc.svg'/>
 			<img id="settings" title="settings" style='width:13px' src='/img/settings.svg'/>
-			<div id="MyLogin"></div>
+			<div id="MyLogin">
+				<span>{{{login}}}</span>
+			</div>
 		</div>
 	</div>
 	
@@ -148,14 +150,18 @@ https://dl.dropboxusercontent.com/u/363467/mprage003.nii.gz
 
 <script src="/lib/jquery-1.11.0.min.js"></script>
 <script src="/lib/pako/pako.min.js"></script>
+<!--
 <script src="/lib/mylogin/login.js"></script>
+-->
 <script src="/js/twoWayBinding.js"></script>
 <script src="/js/brainbox.js"></script>
 
 <script>
 
+/*
 // Init login widget
 MyLoginWidget.init($("#MyLogin"));
+*/
 
 var params=JSON.parse('{{{params}}}');
 var mriInfo=JSON.parse('{{{mriInfo}}}');
