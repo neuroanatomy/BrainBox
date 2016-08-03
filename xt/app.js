@@ -71,6 +71,45 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', routes);
 app.use('/users', users);
 
+//{-----passport
+var session = require('express-session');
+var passport = require('passport');
+var GithubStrategy = require('passport-github').Strategy;
+passport.use(new GithubStrategy(
+	JSON.parse(fs.readFileSync(__dirname+"/github-keys.json")),
+	function(accessToken,refreshToken,profile,done){return done(null, profile);}
+));
+app.use(session({secret: "a mi no me gusta la sémola"}));
+app.use(passport.initialize());
+app.use(passport.session());
+// add custom serialization/deserialization here (get user from mongo?) null is for errors
+passport.serializeUser(function(user, done) {done(null, user);});
+passport.deserializeUser(function(user, done) {done(null, user);});
+// Simple authentication middleware. Add to routes that need to be protected.
+function ensureAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) {return next();}
+  else res.redirect('/login');
+}
+app.get('/secure-route-example',ensureAuthenticated,function(req, res){res.send("access granted");});
+app.get('/login', function (req, res) {
+	var html = "<a href='/auth/github'>GitHub</a><br/><a href='/logout'>logout</a>";
+	// dump the user for debugging
+	if(req.isAuthenticated()) {
+		html += "<p>authenticated as user:</p>"
+		html += "<pre>" + JSON.stringify(req.user, null, 4) + "</pre>";
+	}
+	res.send(html);
+});
+app.get('/logout', function(req, res){
+	console.log('logging out');
+	req.logout();
+	res.redirect('/login');
+});
+// start the GitHub Login process
+app.get('/auth/github',passport.authenticate('github'));
+app.get('/auth/github/callback',passport.authenticate('github',{failureRedirect:'/login'}),function(req, res){res.redirect('/login');});
+//-----}
+
 // api routes
 app.get('/api/user/:name', function(req, res) {
 	db.get('user').findOne({nickname:req.params.name},"-_id")
@@ -109,6 +148,7 @@ app.get('/api/mri', function(req, res) {
 	var myurl=req.query.url;
 	var hash = crypto.createHash('md5').update(myurl).digest('hex');
 	// shell equivalent: db.mri.find({source:"http://braincatalogue.org/data/Pineal/P001/t1wdb.nii.gz"}).limit(1).sort({$natural:-1})
+	
 	db.get('mri').find({url:"/data/"+hash+"/"}, {sort:{$natural:-1},limit:1})
 	.then(function(json) {
 		json=json[0];
