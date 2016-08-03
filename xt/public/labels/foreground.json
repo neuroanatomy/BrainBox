@@ -1,7 +1,0 @@
-{
-	"name":"Foreground",
-	"source":"http://brainbox.dev/labels/foreground.json",
-	"labels":[
-		{ "name":"Foreground","value":1,"color":[255,0,0],"url":"http://brainbox.pasteur.fr/labels/Foreground"}
-	]
-}
