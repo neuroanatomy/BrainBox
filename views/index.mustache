@@ -330,7 +330,7 @@ if(params.url) {
 		var stored=JSON.parse(localStorage.AtlasMaker);
 		if(stored.version && stored.version==version) {
 			var str="<br/><p><b>Recently visited</b><br/>";
-			for(var i=0;i<stored.history.length;i++) {
+			for(var i=stored.history.length-1;i>=Math.max(0,stored.history.length-10);i--) {
 				str+="<a href='"+location+"mri?url="+stored.history[i].url+"'>"+stored.history[i].url+"</a><br />";
 			}
 			str+="</p>";
