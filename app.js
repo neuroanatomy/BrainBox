@@ -115,7 +115,7 @@ app.get('/auth/github/callback',
 					name: req.user.displayName,
 					nickname: req.user.username,
 					url:req.user._json.blog,
-					brainboxURL:"http://brainbox.dev/user/"+req.user.username,
+					brainboxURL:"/user/"+req.user.username,
 					avatarURL:req.user._json.avatar_url,
 					joined: (new Date()).toJSON()
 				}
@@ -202,7 +202,7 @@ app.get('/mri', function(req, res) {
 									access: 'Read/Write',
 									type: 'volume',
 									filename: 'Atlas.nii.gz',
-									labels: 'http://brainbox.dev/labels/foreground.json'
+									labels: '/labels/foreground.json'
 								}]
 							}
 						};
@@ -261,7 +261,7 @@ app.get('/user/:id', function(req, res) {
 					parentName:o.name,
 					name:o.mri.atlas[i].name,
 					project:o.mri.atlas[i].project,
-					projectURL:'http://brainbox.dev/project/braincatalogue',
+					projectURL:'/project/braincatalogue',
 					modified:o.mri.atlas[i].modified
 				});
 			});
@@ -358,7 +358,7 @@ app.get('/api/getLabelsets', function(req, res) {
 		var json=JSON.parse(fs.readFileSync(__dirname+"/public/labels/"+arr[i]));
 		info.push({
 			name:json.name,
-			source:"http://brainbox.dev/labels/"+arr[i]
+			source:"/labels/"+arr[i]
 		});
 	}
 	res.send(info);

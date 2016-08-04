@@ -211,7 +211,7 @@ BrainBox.initBrainBox()
 			},
 			{	typeOfBinding:2,
 				path:"mri.atlas.#.labels",
-				format: function(e,d){var u="http://brainbox.dev",d1=(new URL((new URL(d,u)).pathname,u)).href;$(e).find("select").prop('selectedIndex',$.map(BrainBox.labelSets,function(o){return o.source}).indexOf(d1))},
+				format: function(e,d){var u="/",d1=(new URL((new URL(d,u)).pathname,u)).href;$(e).find("select").prop('selectedIndex',$.map(BrainBox.labelSets,function(o){return o.source}).indexOf(d1))},
 				/*
 					-----------------------------------------------------------
 					NOTE: this is a temporary fix, the final version should be:
@@ -222,7 +222,7 @@ BrainBox.initBrainBox()
 			},
 			{	typeOfBinding:1,
 				path:"mri.atlas.#.owner",
-				format: function(e,d){$.get("http://brainbox.dev/api/user/"+d.split("/").pop()+"?var=nickname",function(r){$(e).text(r);$(e).attr('href',d)})}
+				format: function(e,d){$.get("/api/user/"+d.split("/").pop()+"?var=nickname",function(r){$(e).text(r);$(e).attr('href',d)})}
 			},
 			{	typeOfBinding:1,
 				path:"mri.atlas.#.created",

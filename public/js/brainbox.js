@@ -205,7 +205,7 @@ var BrainBox={
 			created: date.toJSON(), 
 			modified: date.toJSON(), 
 			filename: Math.random().toString(36).slice(2)+".nii.gz",	// automatically generated filename
-			labels: "http://brainbox.dev/labels/foreground.json",
+			labels: "/labels/foreground.json",
 			owner: "/user/"+AtlasMakerWidget.User.username,
 			type: "volume"
 		});
