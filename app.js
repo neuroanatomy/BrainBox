@@ -279,7 +279,7 @@ app.get('/user/:id', function(req, res) {
 			context.numMRI=context.MRIFiles.length;
 			context.numAtlas=context.atlasFiles.length;
 			context.numProjects=context.projects.length;
-			context.avatar="<img src='"+json.avatarURL+"'/>";
+			context.avatar=json.avatarURL;
 			res.render('user',context);
 		});
 	});
