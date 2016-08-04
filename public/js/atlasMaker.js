@@ -1185,8 +1185,8 @@ var AtlasMakerWidget = {
 		var def=$.Deferred();
 	
 		// WS connection
-		var host = "ws://localhost:8080/";
-	
+		var host = "ws://" + window.location.host + ":8080/";
+		
 		if(me.debug)
 			console.log("[initSocketConnection] host:",host);
 		me.progress.html("Connecting...");
