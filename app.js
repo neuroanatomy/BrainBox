@@ -27,7 +27,6 @@ var os=require("os");
 var fs=require("fs");
 var zlib=require("zlib");
 var fileType=require("file-type");
-var request=require('request');
 var jpeg=require('jpeg-js'); // jpeg-js library: https://github.com/eugeneware/jpeg-js
 var keypress = require('keypress');
 
@@ -35,7 +34,6 @@ var mongo = require('mongodb');
 var monk = require('monk');
 var db = monk('localhost:27017/brainbox');
 
-var db_url=fs.readFileSync(__dirname+"/public/js/db_url.txt","utf8");
 var	Atlases=[];
 var Brains=[];
 var	Users=[];
@@ -367,12 +365,7 @@ app.get('/api/getLabelsets', function(req, res) {
 });
 app.post('/api/log', function(req, res) {
 	var json=req.body;
-	json.ip=req.headers['x-forwarded-for'] || 
-			req.connection.remoteAddress || 
-			req.socket.remoteAddress ||
-			req.connection.socket.remoteAddress;
-	json.date=(new Date()).toJSON();
-	db.get('log').insert(json);
+	logToDatabase(json.key,json.value,json.username);
 	res.send();
 });
 
@@ -1209,21 +1202,22 @@ function saveNifti(atlas)
 //==========
 // Database
 //==========
-function logToDatabase(key,value,username)
-{
+function logToDatabase(key,value,username) {
 	if(debug>=1) console.log("[logToDatabase]");
 	
-	if(!username)
-		username="Undefined";
-	request.post({
-  		url:db_url,
-		form:{
-			action:"add_log",
-			userName:username,
-			key:key,
-			value:value
-		}
-	}, function (error, response, body) {console.log(body)});
+	var ip=req.headers['x-forwarded-for'] || 
+		req.connection.remoteAddress || 
+		req.socket.remoteAddress ||
+		req.connection.socket.remoteAddress;
+	var date=(new Date()).toJSON();
+
+	db.get('log').insert({
+		key:key,
+		value:value,
+		username:username,
+		ip: ip,
+		date: date
+	});
 }
 
 //========================================================================================
