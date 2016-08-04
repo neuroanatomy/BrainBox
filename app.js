@@ -572,13 +572,10 @@ function unloadAtlas(dirname,atlasFilename) {
 }
 function initSocketConnection() {
 	// WS connection
-	var host = "ws://localhost:8080";
-	
-	if(debug) console.log(new Date(),"[initSocketConnection] host:",host);
+	if(debug) console.log(new Date(),"[initSocketConnection]");
 	
 	try {
 		websocket = new WebSocketServer({ server: server });
-		// websocket = new WebSocketServer({port:8080});
 		websocket.on("connection",function(s) {
 			console.log("[connection open]");
 			console.log("remote_address",s.upgradeReq.connection.remoteAddress);
