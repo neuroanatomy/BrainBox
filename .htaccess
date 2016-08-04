@@ -1,3 +1,5 @@
+Header set Access-Control-Allow-Origin "*"
+
 <IfModule mod_headers.c>
 	Header add Cache-Control "max-age=600"
 	<FilesMatch "\.(jpg|jpeg|png|gif)$">

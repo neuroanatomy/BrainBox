@@ -1,7 +1,4 @@
 data
-php/base.php
-bin/volume
-js/node_modules
+github-keys.json
 project/braincatalogue-dev
-project/NIHPD
 node_modules
