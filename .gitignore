@@ -4,3 +4,4 @@ bin/volume
 js/node_modules
 project/braincatalogue-dev
 project/NIHPD
+node_modules
