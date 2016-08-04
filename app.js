@@ -17,6 +17,7 @@ var bodyParser = require('body-parser');
 var mustacheExpress = require('mustache-express');
 var crypto = require('crypto');
 
+var request = require('request');
 var http = require('http'),
 	server = http.createServer(),
 	url = require('url'),
@@ -169,54 +170,55 @@ app.get('/mri', function(req, res) {
 			console.log("downloading the file");
 			var myurl = req.query.url;
 			var filename = url.parse(req.query.url).pathname.split("/").pop();
-			var file = fs.createWriteStream(__dirname+"/public/data/"+hash+"/"+filename,{mode:0777});
+			var dest=__dirname+"/public/data/"+hash+"/"+filename;
+			var file = fs.createWriteStream(dest,{mode:0777});
 			console.log(filename);
-			var requ  = http.get(myurl, function(response) {
-				response.pipe(file).on('close', function() {
-					console.log("file completely downloaded");
-					console.log("loading it");
-					getBrainAtPath(__dirname+"/public/data/"+hash+"/"+filename,function(mri) {
-						console.log("file loaded, get info");
-						// create json file for new dataset
-						var ip = req.headers['x-forwarded-for'] || 
-								 req.connection.remoteAddress || 
-								 req.socket.remoteAddress ||
-								 req.connection.socket.remoteAddress;
-						var username=(req.isAuthenticated())?req.user.username:ip
-						var json = {
-							localpath: __dirname+"/public/data/"+hash+"/"+filename,
-							filename: filename,
-							success: true,
-							source: myurl,
-							url: "/data/"+hash+"/",
-							included: (new Date()).toJSON(),
-							dim: mri.dim,
-							pixdim: mri.pixdim,
-							owner:username,
-							mri: {
-								brain: filename,
-								atlas: [{
-									owner:username,
-									created: (new Date()).toJSON(),
-									modified: (new Date()).toJSON(),
-									access: 'Read/Write',
-									type: 'volume',
-									filename: 'Atlas.nii.gz',
-									labels: '/labels/foreground.json'
-								}]
-							}
-						};
-						console.log("insert metadata in the database");
-						db.get('mri').insert(json);
-						res.render('mri', {
-							title: json.name||'Untitled MRI',
-							params: JSON.stringify(req.query),
-							mriInfo: JSON.stringify(json),
-							login: login
-						});
+			request({uri:myurl})
+			.pipe(fs.createWriteStream(dest))
+			.on('close', function() {
+				console.log("file completely downloaded");
+				console.log("loading it");
+				getBrainAtPath(dest,function(mri) {
+					console.log("file loaded, get info");
+					// create json file for new dataset
+					var ip = req.headers['x-forwarded-for'] || 
+							 req.connection.remoteAddress || 
+							 req.socket.remoteAddress ||
+							 req.connection.socket.remoteAddress;
+					var username=(req.isAuthenticated())?req.user.username:ip
+					var json = {
+						localpath: dest,
+						filename: filename,
+						success: true,
+						source: myurl,
+						url: "/data/"+hash+"/",
+						included: (new Date()).toJSON(),
+						dim: mri.dim,
+						pixdim: mri.pixdim,
+						owner:username,
+						mri: {
+							brain: filename,
+							atlas: [{
+								owner:username,
+								created: (new Date()).toJSON(),
+								modified: (new Date()).toJSON(),
+								access: 'Read/Write',
+								type: 'volume',
+								filename: 'Atlas.nii.gz',
+								labels: '/labels/foreground.json'
+							}]
+						}
+					};
+					console.log("insert metadata in the database");
+					db.get('mri').insert(json);
+					res.render('mri', {
+						title: json.name||'Untitled MRI',
+						params: JSON.stringify(req.query),
+						mriInfo: JSON.stringify(json),
+						login: login
 					});
 				});
-			});			
+			});
 		}
 	}, function(err) {
 		console.error(err);
