@@ -97,6 +97,12 @@ app.get('/logout', function(req, res){
 	req.logout();
 	res.redirect('/');
 });
+app.get('/loggedIn', function(req, res){
+	if (req.isAuthenticated())
+		res.send({loggedIn:true,username:req.user.username});
+	else
+		res.send({loggedIn:false});
+});
 // start the GitHub Login process
 app.get('/auth/github',passport.authenticate('github'));
 app.get('/auth/github/callback',
@@ -118,16 +124,15 @@ app.get('/auth/github/callback',
 				db.get('user').insert(json);
 			}
 		});
-
 		res.redirect('/');
 	});
 //-----}
 
 // GUI routes
-app.get('/', function(req,res) {
+app.get('/', function(req,res) { // /auth/github
 	var login=	(req.isAuthenticated())?
-				("<a href='/user/"+req.user.username+"'>"+req.user.username+"</a> (<a href='/logout'>logout</a>)")
-				:("<a href='/auth/github'>Login with GitHub</a>");
+				("<a href='/user/"+req.user.username+"'>"+req.user.username+"</a> (<a href='/logout'>Log Out</a>)")
+				:("<a href='/auth/github'>Log in with GitHub</a>");
 	res.render('index', {
 		title: 'BrainBox',
 		login: login
@@ -136,9 +141,8 @@ app.get('/', function(req,res) {
 
 app.get('/mri', function(req, res) {
 	var login=	(req.isAuthenticated())?
-				("<a href='/user/"+req.user.username+"'>"+req.user.username+"</a> (<a href='/logout'>logout</a>)")
-				:("<a href='/auth/github'>Login with GitHub</a>");
-	
+				("<a href='/user/"+req.user.username+"'>"+req.user.username+"</a> (<a href='/logout'>Log Out</a>)")
+				:("<a href='/auth/github'>Log in with GitHub</a>");
 	var myurl = req.query.url;
 	var hash = crypto.createHash('md5').update(myurl).digest('hex');
 	
@@ -221,13 +225,12 @@ app.get('/mri', function(req, res) {
 	});
 });
 app.get('/user/:id', function(req, res) {
+	var login=	(req.isAuthenticated())?
+				("<a href='/user/"+req.user.username+"'>"+req.user.username+"</a> (<a href='/logout'>Log Out</a>)")
+				:("<a href='/auth/github'>Log in with GitHub</a>");
 	var username=req.params.id;
 	db.get('user').findOne({nickname:username},"-_id")
 	.then(function(json) {
-		var login=	(req.isAuthenticated())?
-					("<a href='/user/"+username+"'>"+username+"</a> (<a href='/logout'>logout</a>)")
-					:("<a href='/auth/github'>Login with GitHub</a>");
-
 		// gather user information on mri, atlas and projects
 		var mri,atlas,projects;
 		db.get('mri').find({owner:username,backup:{$exists:false}})
@@ -285,13 +288,14 @@ app.get('/user/:id', function(req, res) {
 });
 app.get('/project/:id', function(req, res) {
 	var login=	(req.isAuthenticated())?
-				("<a href='/user/"+req.user.username+"'>"+req.user.username+"</a> (<a href='/logout'>logout</a>)")
-				:("<a href='/auth/github'>Login with GitHub</a>");
+				("<a href='/user/"+req.user.username+"'>"+req.user.username+"</a> (<a href='/logout'>Log Out</a>)")
+				:("<a href='/auth/github'>Log in with GitHub</a>");
 	db.get('project').findOne({shortname:req.params.id},"-_id")
 	.then(function(json) {
 		res.render('project', {
 			title: json.name,
 			projectInfo: JSON.stringify(json),
+			projectName: json.name,
 			login: login
 		});
 	});
@@ -360,6 +364,16 @@ app.get('/api/getLabelsets', function(req, res) {
 		});
 	}
 	res.send(info);
+});
+app.post('/api/log', function(req, res) {
+	var json=req.body;
+	json.ip=req.headers['x-forwarded-for'] || 
+			req.connection.remoteAddress || 
+			req.socket.remoteAddress ||
+			req.connection.socket.remoteAddress;
+	json.date=(new Date()).toJSON();
+	db.get('log').insert(json);
+	res.send();
 });
 
 // init web socket server

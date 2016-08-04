@@ -9,33 +9,6 @@
 	<link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
 
 	<style>
-	.tab {
-		padding-top:3px;
-		padding-right:12px;
-		padding-left:12px;
-		padding-bottom:4px;
-		cursor: pointer;
-	}
-	.tab.selected {
-		background:#555;
-	}
-	#files, #projects {
-		color:white;
-		text-align:left;
-		width:100%;
-		border-collapse:collapse;
-	}
-	#files td, #projects td,
-	#files th, #projects th {
-		padding:0px 4px;
-	}
-	#files, #projects,
-	#files th, #projects th {
-		border-bottom:thin solid white;
-	}
-	#files a, #projects a {
-		text-decoration:none;
-	}
 	#projectFiles {
 		overflow:scroll;
 	}
@@ -56,14 +29,14 @@
 		<a href='/'>
 			<img style='position:fixed;left:10px;top:5px;width:200px' src='/img/brainbox-logo-small_noFont.svg'/>
 		</a>
-		<div style="position:fixed;left:73px;top:21px;width:auto; font-family: Roboto, sans-serif; font-size: 36px; font-weight:300" id="projectName">
+		<div style="position:fixed;left:73px;top:21px;width:auto; font-family: Roboto, sans-serif; font-size: 36px; font-weight:300">
+			{{projectName}}
 		</div>
 		<div id="menu">
-			<img id="showCollaborators" title="Show collaborators" style='width:13px' src='/img/collaborators.svg'/>
 			<img id="addProject" title="Add project" style='width:13px' src='/img/plus.svg'/>
+			<img id="settings" title="Settings" style='width:13px' src='/img/settings.svg'/>
 			<img id="search" title="Search" style='width:13px' src='/img/search.svg'/>
 			<img id="doc" title="Documentation" style='width:13px' src='/img/doc.svg'/>
-			<img id="settings" title="Settings" style='width:13px' src='/img/settings.svg'/>
 			<div id="MyLogin">
 				<span>{{{login}}}</span>
 			</div>
@@ -221,7 +194,7 @@ MyLoginWidget.init($("#MyLogin"));
 var projectInfo='{{{projectInfo}}}';
 
 projectInfo=JSON.parse(projectInfo);
-$("#projectName").text("Project: " + projectInfo.name);
+$("#projectName").text(projectInfo.name);
 $("#projectOwner").html("<a href='"+projectInfo.owner+"'>"+projectInfo.owner+"</a>");
 var creation=new Date(projectInfo.created);
 $("#projectCreated").text("Created on "+creation.toLocaleString());

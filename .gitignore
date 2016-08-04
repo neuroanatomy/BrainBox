@@ -1,7 +1,3 @@
 data
-php/base.php
-bin/volume
-js/node_modules
-
-xt/github-keys.json
-xt/node_modules
+github-keys.json
+node_modules

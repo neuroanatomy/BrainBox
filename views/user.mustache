@@ -50,13 +50,13 @@
 			<img style='position:fixed;left:10px;top:5px;width:200px' src='/img/brainbox-logo-small_noFont.svg'/>
 		</a>
 		<div style="position:fixed;left:73px;top:21px;width:auto; font-family: Roboto, sans-serif; font-size: 36px; font-weight:300">
-			User: {{nickname}}
+			{{nickname}}
 		</div>
 		<div id="menu">
 			<img id="addProject" title="add project" style='width:13px' src='/img/plus.svg'/>
+			<img id="settings" title="settings" style='width:13px' src='/img/settings.svg'/>
 			<img id="search" title="search" style='width:13px' src='/img/search.svg'/>
 			<img id="doc" title="documentation" style='width:13px' src='/img/doc.svg'/>
-			<img id="settings" title="settings" style='width:13px' src='/img/settings.svg'/>
 			<div id="MyLogin">
 				<span>{{{login}}}</span>
 			</div>
@@ -81,13 +81,18 @@
 				</td>			
 				<td style="margin:1rem;vertical-align:top">
 					<div style="width:100%">
+						
+						<!-- Tab heads -->
 						<div>
 							<a class="tab selected">MRI Files</a>
 							<a class="tab">Atlas Files</a>
 							<a class="tab">Projects</a>
 						</div>
+						
 						<div style="width:100%;min-height:400px;background:#333;padding:20px">
-							<table id="MRIFiles" style="padding:10px">
+						
+							<!-- Tab Content 1: MRI Files -->
+							<table id="MRIFiles" class="tabContent" style="padding:10px">
 								<thead>
 									<tr>
 										<th>Name</th>
@@ -108,7 +113,8 @@
 								</tbody>
 							</table>
 							
-							<table id="atlasFiles" style="padding:10px;display:none">
+							<!-- Tab Content 2: Atlas Files -->
+							<table id="atlasFiles" class="tabContent" style="padding:10px;display:none">
 								<thead>
 									<tr>
 										<th>Parent MRI</th>
@@ -131,7 +137,9 @@
 									{{/atlasFiles}}
 								</tbody>
 							</table>
-							<table id="projects" style="padding:10px;display:none">
+							
+							<!-- Tab Content 3: Projects -->
+							<table id="projects" class="tabContent" style="padding:10px;display:none">
 								<thead>
 									<tr>
 										<th>Name</th>
@@ -153,6 +161,7 @@
 									{{/projects}}
 								</tbody>
 							</table>
+							
 						</div>
 					</div>
 				</td>
@@ -180,39 +189,23 @@
 </div>
 
 <script src="/lib/jquery-1.11.0.min.js"></script>
-<!--
-<script src="/lib/mylogin/login.js"></script>
-<script src="/lib/pako/pako.min.js"></script>
-<script src="/js/brainbox.js"></script>
--->
 <script>
-
-	/*
-	// Init login widget
-	MyLoginWidget.init($("#MyLogin"));
-	*/
-
 	var userInfo='{{{userInfo}}}';
 	userInfo=JSON.parse(userInfo);
 	
-	// change tabs
+	// switch tabs
 	$("a.tab").click(function() {
 		$("a.tab").removeClass("selected");
 		$(this).addClass("selected");
+		$(".tabContent").hide();
 		switch($(this).text()) {
 			case "MRI Files":
 				$("#MRIFiles").show();
-				$("#atlasFiles").hide();
-				$("#projects").hide();
 				break;
 			case "Atlas Files":
-				$("#MRIFiles").hide();
 				$("#atlasFiles").show();
-				$("#projects").hide();
 				break;
 			case "Projects":
-				$("#MRIFiles").hide();
-				$("#atlasFiles").hide();
 				$("#projects").show();
 				break;
 		}
