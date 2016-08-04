@@ -1,5 +1,0 @@
-{
-	"clientID": "61640f0b4b0433f9a2db",
-	"clientSecret": "1d414219a58a0b7a4911da312df68ecb4dd9268f",
-	"callbackURL": "http://brainbox.dev/auth/github/callback"
-}
