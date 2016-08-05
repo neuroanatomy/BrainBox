@@ -30,6 +30,7 @@ var zlib=require("zlib");
 var fileType=require("file-type");
 var jpeg=require('jpeg-js'); // jpeg-js library: https://github.com/eugeneware/jpeg-js
 var keypress = require('keypress');
+var dateFormat = require('dateformat');
 
 var mongo = require('mongodb');
 var monk = require('monk');
@@ -254,6 +255,7 @@ app.get('/user/:id', function(req, res) {
 			context.MRIFiles=mri.map(function(o){return {
 				url:o.source,
 				name:o.name,
+				included:dateFormat(o.included,"d mmm yyyy, HH:MM"),
 				volDimensions:o.dim.join(" x ")
 			}});
 			atlas.map(function(o){
@@ -264,7 +266,7 @@ app.get('/user/:id', function(req, res) {
 					name:o.mri.atlas[i].name,
 					project:o.mri.atlas[i].project,
 					projectURL:'/project/braincatalogue',
-					modified:o.mri.atlas[i].modified
+					modified:dateFormat(o.mri.atlas[i].modified,"d mmm yyyy, HH:MM")
 				});
 			});
 			context.projects=projects.map(function(o){return {
@@ -273,11 +275,11 @@ app.get('/user/:id', function(req, res) {
 				numFiles:o.files.length,
 				numCollaborators:o.collaborators.length,
 				owner:o.owner,
-				modified:o.modified
+				modified:dateFormat(o.modified,"d mmm yyyy, HH:MM")
 			}});
 			context.username=json.name;
 			context.nickname=json.nickname;
-			context.joined=json.joined;
+			context.joined=dateFormat(json.joined, "dddd d mmm yyyy, HH:MM");
 			context.numMRI=context.MRIFiles.length;
 			context.numAtlas=context.atlasFiles.length;
 			context.numProjects=context.projects.length;
