@@ -182,6 +182,12 @@ $("#login").click(function(){$.get("/login",function(r){console.log(r)})});
 $("#logout").click(function(){$.get("/logout",function(r){console.log(r)})});
 
 var version=1;
+var brainsToTry=[
+	"https://zenodo.org/record/44855/files/MRI-n4.nii.gz",
+	"http://files.figshare.com/2284784/MRI_n4.nii.gz",
+	"https://dl.dropbox.com/s/cny5b3so267bv94/p32-f18-uchar.nii.gz",
+	"https://fcp-indi.s3.amazonaws.com/data/Projects/ABIDE_Initiative/RawData/NYU/0050952/session_1/anat_1/mprage.nii.gz"
+]
 
 // If brainbox's call contains an url, launch atlasMaker with it,
 // otherwise, present the history in localStorage if it exists.
@@ -198,6 +204,15 @@ var version=1;
 		} else {
 			localStorage.clear();
 		}
+	}
+	
+	if(localStorage.AtlasMaker==undefined || stored.history.length<5) {
+		var str="<br/><p><b>Some brains to try</b><br/>";
+		for(var i=0;i<brainsToTry.length;i++) {
+			str+="<a href='"+location+"mri?url="+brainsToTry[i]+"'>"+brainsToTry[i]+"</a><br />";
+		}
+		str+="</p>";
+		$("#intro").append(str);
 	}
 // Add URL loading
 $("#url").keyup(function(e) {
