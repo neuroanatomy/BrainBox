@@ -113,11 +113,11 @@ var AtlasMakerWidget = {
 		switch(theTool) {
 			case 'Paint':
 				me.User.tool='paint';
-				me.User.penValue=1;
+				//me.User.penValue=1;
 				break;
 			case 'Erase':
 				me.User.tool='erase';
-				me.User.penValue=0;
+				//me.User.penValue=0;
 				break;
 			case 'Measure':
 				me.User.tool='measure';

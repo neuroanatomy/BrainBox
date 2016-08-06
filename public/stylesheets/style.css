@@ -369,3 +369,18 @@ select {
 	content:'Empty';
 	color:rgba(255,255,255,0.4);
 }
+
+/* Project Page, Left Bar, Resize Button
+-----------------------------------------*/
+#resizeButton {
+	display:inline-block;
+	position:absolute;
+	width:10px;
+	height:20px;
+	top:50%;
+	left:100%;
+	background:#333;
+	transform:translate(-50%, -50%);
+	border-radius:5px;
+	z-index:5;
+}
