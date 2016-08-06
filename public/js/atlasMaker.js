@@ -230,7 +230,7 @@ var AtlasMakerWidget = {
 	},
 	render3D: function render3D() {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(reder3D);if(l)console.log(l);
+		var l=me.traceLog(render3D);if(l)console.log(l);
 		
 		// puts a fresh version of the segmentation in localStorage
 		localStorage.brainbox=URL.createObjectURL(new Blob([me.encodeNifti()]));
