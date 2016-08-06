@@ -1,13 +1,13 @@
 {
 	"name": "Brain Catalogue",
+	"shortname":"braincatalogue",
 	"url":"http://braincatalogue.org",
-	"brainboxURL":"http://brainbox.dev/project/braincatalogue",
+	"brainboxURL":"http://brainbox.pasteur.fr/project/braincatalogue",
 	"created": "2016-07-11T16:03:47+0200",
-	"owner":"http://brainbox.dev/user/roberto",
+	"owner":"r03ert0",
 	"collaborators":[
-		"http://brainbox.dev/user/rob3",
-		"http://brainbox.dev/user/kat1",
-		"http://brainbox.dev/user/anivos"
+		"katjaq",
+		"aniv0s"
 	],
 	"files":[
 		"http://braincatalogue.org/data/Baboon/MRI.nii.gz",

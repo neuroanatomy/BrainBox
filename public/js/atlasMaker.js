@@ -113,11 +113,11 @@ var AtlasMakerWidget = {
 		switch(theTool) {
 			case 'Paint':
 				me.User.tool='paint';
-				me.User.penValue=1;
+				//me.User.penValue=1;
 				break;
 			case 'Erase':
 				me.User.tool='erase';
-				me.User.penValue=0;
+				//me.User.penValue=0;
 				break;
 			case 'Measure':
 				me.User.tool='measure';
@@ -1185,9 +1185,8 @@ var AtlasMakerWidget = {
 		var def=$.Deferred();
 	
 		// WS connection
-		//var host = "ws://" + window.location.host + ":8080/";
-		var host = "ws://localhost:8080/";
-	
+		var host = "ws://" + window.location.host + ":8080/";
+		
 		if(me.debug)
 			console.log("[initSocketConnection] host:",host);
 		me.progress.html("Connecting...");

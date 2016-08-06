@@ -47,11 +47,14 @@
 	<div id="content" style="flex:1 1 auto;position:relative">
 		<div style="display:flex;width:100%;height:100%;align-items:stretch;position:absolute">
 
-			<div id="left" style="flex:0 0 400px">
+			<div id="left" style="flex:0 0 400px;position:relative">
+			
 				<div style="display:flex;flex-direction:column;height:100%">
+					<!-- Tools -->
 					<div id="tools" class="block" style="flex:1 1 auto">
 					</div>
 				
+					<!-- Project Files -->
 					<div id="projectFiles" class="block" style="flex:1 1 auto">
 						<table style="width:100%;text-align:left">
 							<thead>
@@ -67,6 +70,7 @@
 						</table>
 					</div>
 				
+					<!-- File Annotations -->
 					<div id="annotations" class="block" style="flex:1 1 200px">
 						<table id="info" style="width:100%;text-align:left">
 							<thead>
@@ -79,8 +83,11 @@
 						</table>
 					</div>
 				</div>
+				
+				<div id="resizeButton" class="block">
+				</div>
+				
 			</div>
-
 			<div id="right" style="flex:1 0">
 				<div id="stereotaxic" style="width:100%"></div>
 			</div>
@@ -156,7 +163,7 @@ function loadProjectFile(url) {
 				},
 				{	typeOfBinding:1,
 					path:"mri.atlas.#.labels",
-					format: function(e,d){var u="/",d1=(new URL((new URL(d,u)).pathname,u)).href;$(e).find("select").prop('selectedIndex',$.map(BrainBox.labelSets,function(o){return o.source}).indexOf(d1))},
+					format: function(e,d){$(e).find("select").prop('selectedIndex',$.map(BrainBox.labelSets,function(o){return o.source}).indexOf(d))},
 					/*
 						-----------------------------------------------------------
 						NOTE: this is a temporary fix, the final version should be:
@@ -308,9 +315,24 @@ $(document).on('keydown', function(e){
 	loadProjectFile(url);
 });
 
-
 // listen to changes in selected annotation
 $(document).on('click', "#info tbody tr",BrainBox.selectAnnotationTableRow);
+
+// resize left tool bar
+$("#resizeButton").data({flag:-1,x0:0,y0:0});
+$("#resizeButton").on('mousedown',function(e){$(this).data({flag:0,x0:e.pageX,y0:e.pageY})});
+$("body").on('mousemove',function(e) {
+	var p={x:e.pageX,y:e.pageY};
+	if($("#resizeButton").data("flag")==0) {
+		$("#resizeButton").data({flag:1,x0:p.x,y0:p.y});
+	} else if($("#resizeButton").data("flag")==1) {
+		var d=$("#resizeButton").data("x0")-p.x;
+		$("#left").css({'flex-basis':$("#left").width()-d});
+		$("#resizeButton").data({x0:p.x,y0:p.y});
+		AtlasMakerWidget.resizeWindow();
+	}
+});
+$("body").on('mouseup',function(e){$("#resizeButton").data({flag:-1})});
 
 </script>
 

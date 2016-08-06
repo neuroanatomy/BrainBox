@@ -70,7 +70,7 @@
 			<tr>
 				<td style="width:250px;margin:1rem;vertical-align:top">
 					<div style="background:#333;width:200px;height:200px;margin-left:25px">
-						{{{avatar}}}
+						<img src='{{{avatar}}}' style="width:100%"/>
 					</div>
 					<h1>{{username}}</h1>
 					<h2>{{nickname}}</h2>
@@ -97,6 +97,7 @@
 									<tr>
 										<th>Name</th>
 										<th>Volume Dimensions</th>
+										<th>Included</th>
 									<tr>
 								</thead>
 								<tbody>
@@ -108,6 +109,7 @@
 												</a>
 											</td>
 											<td>{{volDimensions}}</td>
+											<td>{{included}}</td>
 										</tr>
 									{{/MRIFiles}}
 								</tbody>
@@ -127,7 +129,7 @@
 									{{#atlasFiles}}
 										<tr>
 											<td>
-												<a href="/user/{{url}}">
+												<a href="/mri?url={{url}}">
 													{{#parentName}}{{parentName}}{{/parentName}}{{^parentName}}{{url}}{{/parentName}}
 												</a></td>
 											<td class='noEmpty'>{{name}}</td>

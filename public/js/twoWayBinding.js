@@ -1,4 +1,4 @@
-var date_format=function(e,d){$(e).text(new Date(d).toLocaleString())};
+var date_format=function(e,d){$(e).text(new Date(d).toLocaleDateString())};
 
 // 2-way binding
 function bind2(proxy,original,path,el,format,parse) {

@@ -17,6 +17,7 @@ var bodyParser = require('body-parser');
 var mustacheExpress = require('mustache-express');
 var crypto = require('crypto');
 
+var request = require('request');
 var http = require('http'),
 	server = http.createServer(),
 	url = require('url'),
@@ -29,6 +30,7 @@ var zlib=require("zlib");
 var fileType=require("file-type");
 var jpeg=require('jpeg-js'); // jpeg-js library: https://github.com/eugeneware/jpeg-js
 var keypress = require('keypress');
+var dateFormat = require('dateformat');
 
 var mongo = require('mongodb');
 var monk = require('monk');
@@ -59,7 +61,8 @@ app.engine('mustache', mustacheExpress());
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'mustache');
 app.use(favicon(__dirname + '/public/favicon.png'));
-app.use(logger('dev'));
+app.set('trust proxy', 'loopback');
+app.use(logger(':remote-addr :method :url :status :response-time ms - :res[content-length]'));//app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
@@ -78,7 +81,11 @@ passport.use(new GithubStrategy(
 	JSON.parse(fs.readFileSync(__dirname+"/github-keys.json")),
 	function(accessToken,refreshToken,profile,done){return done(null, profile);}
 ));
-app.use(session({secret: "a mi no me gusta la sémola"}));
+app.use(session({
+	secret: "a mi no me gusta la sémola",
+	resave:false,
+	saveUninitialized:false
+}));
 app.use(passport.initialize());
 app.use(passport.session());
 // add custom serialization/deserialization here (get user from mongo?) null is for errors
@@ -169,54 +176,55 @@ app.get('/mri', function(req, res) {
 			console.log("downloading the file");
 			var myurl = req.query.url;
 			var filename = url.parse(req.query.url).pathname.split("/").pop();
-			var file = fs.createWriteStream(__dirname+"/public/data/"+hash+"/"+filename,{mode:0777});
+			var dest=__dirname+"/public/data/"+hash+"/"+filename;
+			var file = fs.createWriteStream(dest,{mode:0777});
 			console.log(filename);
-			var requ  = http.get(myurl, function(response) {
-				response.pipe(file).on('close', function() {
-					console.log("file completely downloaded");
-					console.log("loading it");
-					getBrainAtPath(__dirname+"/public/data/"+hash+"/"+filename,function(mri) {
-						console.log("file loaded, get info");
-						// create json file for new dataset
-						var ip = req.headers['x-forwarded-for'] || 
-								 req.connection.remoteAddress || 
-								 req.socket.remoteAddress ||
-								 req.connection.socket.remoteAddress;
-						var username=(req.isAuthenticated())?req.user.username:ip
-						var json = {
-							localpath: __dirname+"/public/data/"+hash+"/"+filename,
-							filename: filename,
-							success: true,
-							source: myurl,
-							url: "/data/"+hash+"/",
-							included: (new Date()).toJSON(),
-							dim: mri.dim,
-							pixdim: mri.pixdim,
-							owner:username,
-							mri: {
-								brain: filename,
-								atlas: [{
-									owner:username,
-									created: (new Date()).toJSON(),
-									modified: (new Date()).toJSON(),
-									access: 'Read/Write',
-									type: 'volume',
-									filename: 'Atlas.nii.gz',
-									labels: '/labels/foreground.json'
-								}]
-							}
-						};
-						console.log("insert metadata in the database");
-						db.get('mri').insert(json);
-						res.render('mri', {
-							title: json.name||'Untitled MRI',
-							params: JSON.stringify(req.query),
-							mriInfo: JSON.stringify(json),
-							login: login
-						});
+			request({uri:myurl})
+			.pipe(fs.createWriteStream(dest))
+			.on('close', function() {
+				console.log("file completely downloaded");
+				console.log("loading it");
+				getBrainAtPath(dest,function(mri) {
+					console.log("file loaded, get info");
+					// create json file for new dataset
+					var ip = req.headers['x-forwarded-for'] || 
+							 req.connection.remoteAddress || 
+							 req.socket.remoteAddress ||
+							 req.connection.socket.remoteAddress;
+					var username=(req.isAuthenticated())?req.user.username:ip
+					var json = {
+						localpath: dest,
+						filename: filename,
+						success: true,
+						source: myurl,
+						url: "/data/"+hash+"/",
+						included: (new Date()).toJSON(),
+						dim: mri.dim,
+						pixdim: mri.pixdim,
+						owner:username,
+						mri: {
+							brain: filename,
+							atlas: [{
+								owner:username,
+								created: (new Date()).toJSON(),
+								modified: (new Date()).toJSON(),
+								access: 'Read/Write',
+								type: 'volume',
+								filename: 'Atlas.nii.gz',
+								labels: '/labels/foreground.json'
+							}]
+						}
+					};
+					console.log("insert metadata in the database");
+					db.get('mri').insert(json);
+					res.render('mri', {
+						title: json.name||'Untitled MRI',
+						params: JSON.stringify(req.query),
+						mriInfo: JSON.stringify(json),
+						login: login
 					});
 				});
-			});			
+			});
 		}
 	}, function(err) {
 		console.error(err);
@@ -252,6 +260,7 @@ app.get('/user/:id', function(req, res) {
 			context.MRIFiles=mri.map(function(o){return {
 				url:o.source,
 				name:o.name,
+				included:dateFormat(o.included,"d mmm yyyy, HH:MM"),
 				volDimensions:o.dim.join(" x ")
 			}});
 			atlas.map(function(o){
@@ -262,7 +271,7 @@ app.get('/user/:id', function(req, res) {
 					name:o.mri.atlas[i].name,
 					project:o.mri.atlas[i].project,
 					projectURL:'/project/braincatalogue',
-					modified:o.mri.atlas[i].modified
+					modified:dateFormat(o.mri.atlas[i].modified,"d mmm yyyy, HH:MM")
 				});
 			});
 			context.projects=projects.map(function(o){return {
@@ -271,15 +280,15 @@ app.get('/user/:id', function(req, res) {
 				numFiles:o.files.length,
 				numCollaborators:o.collaborators.length,
 				owner:o.owner,
-				modified:o.modified
+				modified:dateFormat(o.modified,"d mmm yyyy, HH:MM")
 			}});
 			context.username=json.name;
 			context.nickname=json.nickname;
-			context.joined=json.joined;
+			context.joined=dateFormat(json.joined, "dddd d mmm yyyy, HH:MM");
 			context.numMRI=context.MRIFiles.length;
 			context.numAtlas=context.atlasFiles.length;
 			context.numProjects=context.projects.length;
-			context.avatar="<img src='"+json.avatarURL+"'/>";
+			context.avatar=json.avatarURL;
 			res.render('user',context);
 		});
 	});
@@ -572,13 +581,10 @@ function unloadAtlas(dirname,atlasFilename) {
 }
 function initSocketConnection() {
 	// WS connection
-	var host = "ws://localhost:8080";
-	
-	if(debug) console.log(new Date(),"[initSocketConnection] host:",host);
+	if(debug) console.log(new Date(),"[initSocketConnection]");
 	
 	try {
 		websocket = new WebSocketServer({ server: server });
-		// websocket = new WebSocketServer({port:8080});
 		websocket.on("connection",function(s) {
 			console.log("[connection open]");
 			console.log("remote_address",s.upgradeReq.connection.remoteAddress);

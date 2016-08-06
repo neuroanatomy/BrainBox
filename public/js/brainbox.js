@@ -122,6 +122,7 @@ var BrainBox={
 		return def.promise();
 	},
 	unload: function unload() {
+		console.log(BrainBox.traceLog(unload));
 		var foundStored=false;
 		var stored=localStorage.AtlasMaker;
 		if(stored) {
