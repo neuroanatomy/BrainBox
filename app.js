@@ -81,7 +81,11 @@ passport.use(new GithubStrategy(
 	JSON.parse(fs.readFileSync(__dirname+"/github-keys.json")),
 	function(accessToken,refreshToken,profile,done){return done(null, profile);}
 ));
-app.use(session({secret: "a mi no me gusta la sémola"}));
+app.use(session({
+	secret: "a mi no me gusta la sémola",
+	resave:false,
+	saveUninitialized:false
+}));
 app.use(passport.initialize());
 app.use(passport.session());
 // add custom serialization/deserialization here (get user from mongo?) null is for errors
