@@ -1,7 +1,8 @@
 {
 	"name": "Brain Catalogue",
+	"shortname":"braincatalogue",
 	"url":"http://braincatalogue.org",
-	"brainboxURL":"http://brainbox.dev/project/braincatalogue",
+	"brainboxURL":"http://brainbox.pasteur.fr/project/braincatalogue",
 	"created": "2016-07-11T16:03:47+0200",
 	"owner":"r03ert0",
 	"collaborators":[
