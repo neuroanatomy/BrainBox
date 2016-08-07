@@ -98,7 +98,6 @@ function ensureAuthenticated(req, res, next) {
 }
 app.get('/secure-route-example',ensureAuthenticated,function(req, res){res.send("access granted");});
 app.get('/logout', function(req, res){
-	console.log('logging out');
 	req.logout();
 	res.redirect('/');
 });
@@ -151,13 +150,10 @@ app.get('/mri', function(req, res) {
 	var myurl = req.query.url;
 	var hash = crypto.createHash('md5').update(myurl).digest('hex');
 	
-	console.log("i'll query the db");
 	db.get('mri').find({url:"/data/"+hash+"/"}, {fields:{_id:0},sort:{$natural:-1},limit:1})
 	.then(function(json) {
 		json=json[0];
-		console.log("query finished");
 		if(json) {
-			console.log("a known mri file:",json);
 			res.render('mri', {
 				title: json.name||'Untitled MRI',
 				params: JSON.stringify(req.query),
@@ -165,66 +161,16 @@ app.get('/mri', function(req, res) {
 				login: login
 			});
 		} else {
-			console.log("an unknown mri file");
-
-			console.log("check if its folder exists");
-			if (!fs.existsSync(__dirname+"/public/data/"+hash)) {
-				console.log("didn't exist: creating it");
-				fs.mkdirSync(__dirname+"/public/data/"+hash,0777);
-			}
-			
-			console.log("downloading the file");
-			var myurl = req.query.url;
-			var filename = url.parse(req.query.url).pathname.split("/").pop();
-			var dest=__dirname+"/public/data/"+hash+"/"+filename;
-			var file = fs.createWriteStream(dest,{mode:0777});
-			console.log(filename);
-			request({uri:myurl})
-			.pipe(fs.createWriteStream(dest))
-			.on('close', function() {
-				console.log("file completely downloaded");
-				console.log("loading it");
-				getBrainAtPath(dest,function(mri) {
-					console.log("file loaded, get info");
-					// create json file for new dataset
-					var ip = req.headers['x-forwarded-for'] || 
-							 req.connection.remoteAddress || 
-							 req.socket.remoteAddress ||
-							 req.connection.socket.remoteAddress;
-					var username=(req.isAuthenticated())?req.user.username:ip
-					var json = {
-						localpath: dest,
-						filename: filename,
-						success: true,
-						source: myurl,
-						url: "/data/"+hash+"/",
-						included: (new Date()).toJSON(),
-						dim: mri.dim,
-						pixdim: mri.pixdim,
-						owner:username,
-						mri: {
-							brain: filename,
-							atlas: [{
-								owner:username,
-								created: (new Date()).toJSON(),
-								modified: (new Date()).toJSON(),
-								access: 'Read/Write',
-								type: 'volume',
-								filename: 'Atlas.nii.gz',
-								labels: '/labels/foreground.json'
-							}]
-						}
-					};
-					console.log("insert metadata in the database");
-					db.get('mri').insert(json);
-					res.render('mri', {
+			(function(my,rq,rs) {
+				downloadMRI(my,rq,function(js) {
+					rs.render('mri', {
 						title: json.name||'Untitled MRI',
-						params: JSON.stringify(req.query),
-						mriInfo: JSON.stringify(json),
+						params: JSON.stringify(rq.query),
+						mriInfo: JSON.stringify(js),
 						login: login
 					});
 				});
-			});
+			})(myurl,req,res);
 		}
 	}, function(err) {
 		console.error(err);
@@ -355,7 +301,15 @@ app.get('/api/mri', function(req, res) {
 			}
 			res.send(json);
 		} else {
-			res.send();
+			if(req.query.var) {
+				res.send();
+			} else {
+				(function(my,rq,rs) {
+					downloadMRI(my,rq,rs,function(js) {
+						rs.send(js);
+					});
+				})(myurl,req,res);
+			}
 		}
 	}, function(err) {
 		console.error(err);
@@ -374,9 +328,80 @@ app.get('/api/getLabelsets', function(req, res) {
 });
 app.post('/api/log', function(req, res) {
 	var json=req.body;
-	logToDatabase(json.key,json.value,json.username);
+	db.get('log').insert({
+		key: json.key,
+		value: json.value,
+		username: json.username,
+		date: (new Date()).toJSON(),
+		ip: req.headers['x-forwarded-for'] || 
+			req.connection.remoteAddress || 
+			req.socket.remoteAddress ||
+			req.connection.socket.remoteAddress
+	});
 	res.send();
 });
+
+/* Download MRI file
+---------------------*/
+function downloadMRI(myurl,req,res,callback) {
+	console.log("downloadMRI");
+	var hash = crypto.createHash('md5').update(myurl).digest('hex');
+	var filename = url.parse(myurl).pathname.split("/").pop();
+	var dest=__dirname+"/public/data/"+hash+"/"+filename;
+	console.log("   source:",myurl);
+	console.log("     hash:",hash);
+	console.log(" filename:",filename);
+	console.log("     dest:",dest);
+	
+	if (!fs.existsSync(__dirname+"/public/data/"+hash)) {
+		fs.mkdirSync(__dirname+"/public/data/"+hash,0777);
+	}
+
+	var file = fs.createWriteStream(dest,{mode:0777});
+
+	request({uri:myurl})
+	.pipe(fs.createWriteStream(dest))
+	.on('close', function() {
+		getBrainAtPath(dest,function(mri) {
+			// create json file for new dataset
+			var ip = req.headers['x-forwarded-for'] || 
+					 req.connection.remoteAddress || 
+					 req.socket.remoteAddress ||
+					 req.connection.socket.remoteAddress;
+			var username=(req.isAuthenticated())?req.user.username:ip
+			var json = {
+				localpath: dest,
+				filename: filename,
+				success: true,
+				source: myurl,
+				url: "/data/"+hash+"/",
+				included: (new Date()).toJSON(),
+				dim: mri.dim,
+				pixdim: mri.pixdim,
+				owner:username,
+				mri: {
+					brain: filename,
+					atlas: [{
+						owner:username,
+						created: (new Date()).toJSON(),
+						modified: (new Date()).toJSON(),
+						access: 'Read/Write',
+						type: 'volume',
+						filename: 'Atlas.nii.gz',
+						labels: '/labels/foreground.json'
+					}]
+				}
+			};
+			db.get('mri').insert(json);
+			callback(json);
+		});
+	})
+	.on('error',function(err){
+		console.error("ERROR in downloadMRI",err);
+		callback();
+	});
+}
+
 
 // init web socket server
 initSocketConnection();
@@ -662,7 +687,7 @@ function initSocketConnection() {
 					}
 					n++;
 				}
-				if(debug>=2) console.log("broadcasted to",n,"users");
+				if(debug>2) console.log("broadcasted to",n,"users");
 			});
 			
 			s.on('close',function(msg) {
@@ -738,11 +763,10 @@ function receivePaintMessage(data) {
 	var y=msg.y;		// y coordinate
 	var undoLayer=getCurrentUndoLayer(user);	// current undoLayer for user
 	
-	// console.log("PaintMessage u",user,"user",user);
 	paintxy(uid,c,x,y,user,undoLayer);
 }
 function receiveRequestSliceMessage(data,user_socket) {
-	if(debug>=2) console.log("[receiveRequestSliceMessage]");
+	if(debug>2) console.log("[receiveRequestSliceMessage]");
 
 	var uid=data.uid;		// user id
 	var	user=Users[uid];	// user data
@@ -759,24 +783,19 @@ function receiveRequestSliceMessage(data,user_socket) {
 	}
 }
 function receiveSaveMetadataMessage(data,user_socket) {
-	if(debug>=1) console.log("[receiveSaveMetadataMessage]");
+	if(debug>1) console.log("[receiveSaveMetadataMessage]");
 
 	var uid=data.uid;		// user id
-	console.log("received save metadata message from user uid:",uid);
 	var json=data.metadata;
-	console.log("the metadata was json:",json);
 	json.modified=(new Date()).toJSON();
-	console.log("the modification date was:",json.modified);
 	json.modifiedBy=Users[uid].username||"unknown";
-	console.log("and the user that modified it:",json.modifiedBy);
-	console.log("going to insert this json object in the db");
 	// mark previous one as backup
 	db.get('mri').update({url:json.url,backup:{$exists:false}},{$set:{backup:true}},{multi:true});
 	// insert new one
 	db.get('mri').insert(json);
 }
 function receiveAtlasFromUserMessage(data,user_socket) {
-	if(debug>=1) console.log("[receiveAtlasFromUserMessage]");
+	if(debug>1) console.log("[receiveAtlasFromUserMessage]");
 	zlib.inflate(data.data,function(err,atlasData){
 		// Save current atlas
 		var uid=data.uid;		// user id
@@ -789,12 +808,11 @@ function receiveAtlasFromUserMessage(data,user_socket) {
 	});
 }
 function getBrainAtPath(brainPath,callback) {
-	if(debug) console.log("[getBrainAtPath]");
+	if(debug>1) console.log("[getBrainAtPath]");
 	var i;
 	for(i=0;i<Brains.length;i++) {
 		if(Brains[i].path==brainPath) {
-			if(debug)
-				console.log("brain already loaded");
+			if(debug>1) console.log("brain already loaded");
 			return Brains[i].data;
 		}
 	}
@@ -1123,17 +1141,20 @@ gawk 'BEGIN{s="5C 01 ...";split(s,a," ");for(i=1;i<=352;i++)printf"%s,",strtonum
 			atlas.sum=0;
 
 			console.log(new Date());
-			console.log("atlas size",atlas.data.length);
-			console.log("atlas dim",atlas.dim);
-			console.log("atlas datatype",datatype);
-			console.log("atlas vox_offset",vox_offset);
-			console.log("free memory",os.freemem());
+			console.log("      atlas size:",atlas.data.length);
+			console.log("       atlas dim:",atlas.dim);
+			console.log("  atlas datatype:",datatype);
+			console.log("atlas vox_offset:",vox_offset);
+			console.log("     free memory:",os.freemem());
 			callback(atlas.data);
 		
 			// log atlas creation
-			var key="createAtlas";
-			var value=JSON.stringify({specimen:atlas.specimen,atlas:atlas.name});
-			logToDatabase(key,value,username);
+			db.get('log').insert({
+				key: "createAtlas",
+				value: JSON.stringify({specimen:atlas.specimen,atlas:atlas.name}),
+				username: username,
+				date: (new Date()).toJSON()
+			});
 		} catch(e) {
 			console.log(new Date(),"ERROR: Cannot create new empty atlas");
 		}
@@ -1157,10 +1178,10 @@ gawk 'BEGIN{s="5C 01 ...";split(s,a," ");for(i=1;i<=352;i++)printf"%s,",strtonum
 				atlas.sum=sum;
 
 				console.log(new Date());
-				console.log("atlas size",atlas.data.length);
-				console.log("atlas dim",atlas.dim);
-				console.log("atlas datatype",atlas.datatype);
-				console.log("free memory",os.freemem());
+				console.log("    atlas size:",atlas.data.length);
+				console.log("     atlas dim:",atlas.dim);
+				console.log("atlas datatype:",atlas.datatype);
+				console.log("   free memory:",os.freemem());
 				callback(atlas.data);
 			});
 		} catch(e) {
@@ -1205,27 +1226,6 @@ function saveNifti(atlas)
 		});
 	}
 }
-//==========
-// Database
-//==========
-function logToDatabase(key,value,username) {
-	if(debug>=1) console.log("[logToDatabase]");
-	
-	var ip=req.headers['x-forwarded-for'] || 
-		req.connection.remoteAddress || 
-		req.socket.remoteAddress ||
-		req.connection.socket.remoteAddress;
-	var date=(new Date()).toJSON();
-
-	db.get('log').insert({
-		key:key,
-		value:value,
-		username:username,
-		ip: ip,
-		date: date
-	});
-}
-
 //========================================================================================
 // Undo
 //========================================================================================
@@ -1493,10 +1493,10 @@ function loadBrainNifti(nii,callback) {
 	brain=loadNifti(nii);
 		
 	console.log(new Date());
-	console.log("brain size",brain.data.length);
-	console.log("brain dim",brain.dim);
-	console.log("brain datatype",brain.datatype);
-	console.log("free memory",os.freemem());
+	console.log("    brain size:",brain.data.length);
+	console.log("     brain dim:",brain.dim);
+	console.log("brain datatype:",brain.datatype);
+	console.log("   free memory:",os.freemem());
 	
 	var i,sum=0,min,max;
 	min=brain.data[0];
@@ -1557,10 +1557,10 @@ function loadBrainMGZ(data,callback) {
 	}
 		
 	console.log(new Date());
-	console.log("brain size",brain.data.length);
-	console.log("brain dim",brain.dim);
-	console.log("brain datatype",datatype);
-	console.log("free memory",os.freemem());
+	console.log("    brain size:",brain.data.length);
+	console.log("     brain dim:",brain.dim);
+	console.log("brain datatype:",datatype);
+	console.log("   free memory:",os.freemem());
 	
 	var i,sum=0,min,max;
 	min=brain.data[0];
