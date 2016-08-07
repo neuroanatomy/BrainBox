@@ -24,12 +24,12 @@
 			$("#minLevel").data("val",x);
 			$("#minLevel .thumb")[0].style.left=x+"%";
 		
-			$("#canvas").css({"webkit-filter":"brightness("+(2*x/100)+")"})
+			$("#canvas").css({"webkit-filter":"brightness("+(2*x/100)+") contrast("+(2*$("#maxLevel").data("val")/100)+")"});
 		});
 		AtlasMakerWidget.slider($(".slider#maxLevel"),function(x) {
 			$("#maxLevel").data("val",x);
 			$("#maxLevel .thumb")[0].style.left=x+"%";
-			$("#canvas").css({"webkit-filter":"contrast("+(2*x/100)+")"})
+			$("#canvas").css({"webkit-filter":"brightness("+(2*$("#minLevel").data("val")/100)+") contrast("+(2*x/100)+")"});
 		});
 
 		$(".slider#minLevel").data({max:100,val:50});
