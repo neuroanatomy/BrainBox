@@ -144,7 +144,7 @@ var AtlasMakerWidget = {
 		$("#slice .thumb")[0].style.left=(x*100/max)+"%";
 	
 		me.User.slice=x;
-		me.sendUserDataMessage("change slice");
+		//me.sendUserDataMessage("change slice");
 
 		me.drawImages();
 	},
@@ -576,7 +576,7 @@ var AtlasMakerWidget = {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(drawImages,1);if(l)console.log(l);
 	
-		if(me.brain_img.img && me.brain_img.view==me.User.view && me.brain_img.slice==me.User.slice) {
+		if(me.brain_img.img) {
 			me.context.clearRect(0,0,me.context.canvas.width,me.canvas.height);
 			me.displayInformation();
 
@@ -586,7 +586,9 @@ var AtlasMakerWidget = {
 			me.context.globalAlpha = 0.8;
 			me.context.globalCompositeOperation = "lighter";
 			me.drawAtlasImage(me.flagLoadingImg.view,me.flagLoadingImg.slice);
-		} else {
+		}
+
+		if(!me.brain_img.img || me.brain_img.view!=me.User.view || me.brain_img.slice!=me.User.slice) {
 			me.sendRequestSliceMessage();
 		}
 	},
@@ -1223,18 +1225,18 @@ var AtlasMakerWidget = {
 	},
 	receiveSocketMessage: function receiveSocketMessage(msg) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(receiveSocketMessage);if(l)console.log(l);
+		var l=me.traceLog(receiveSocketMessage,1);if(l)console.log(l);
 
 		// Message: atlas data initialisation
 		if(msg.data instanceof Blob) {
-			if(me.debug) console.log("received binary blob",msg.data.size,"bytes long");
+			if(me.debug>1) console.log("received binary blob",msg.data.size,"bytes long");
 			var fileReader = new FileReader();
 			fileReader.onload = function from_receiveSocketMessage() {
 				var data=new Uint8Array(this.result);
 				var sz=data.length;
 				var ext=String.fromCharCode(data[sz-8],data[sz-7],data[sz-6]);
 
-				if(me.debug) console.log("type: "+ext);
+				if(me.debug>1) console.log("type: "+ext);
 				
 				switch(ext) {
 					case "nii": {
@@ -1448,7 +1450,11 @@ var AtlasMakerWidget = {
 		if(me.flagLoadingImg.loading==true)
 			return;
 		try {
-			me.socket.send(JSON.stringify({type:"requestSlice"}));
+			me.socket.send(JSON.stringify({
+				type:"requestSlice",
+				view:me.User.view,
+				slice:me.User.slice
+			}));
 			me.flagLoadingImg.loading=true;
 			me.flagLoadingImg.view=me.User.view;
 			me.flagLoadingImg.slice=me.User.slice;

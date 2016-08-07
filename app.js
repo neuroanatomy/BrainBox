@@ -792,11 +792,20 @@ function receivePaintMessage(data) {
 function receiveRequestSliceMessage(data,user_socket) {
 	if(debug>2) console.log("[receiveRequestSliceMessage]");
 
+	// get slice information from message
+	var view=data.view;		// user view
+	var slice=parseInt(data.slice);	// user slice
+
+	// get User object
 	var uid=data.uid;		// user id
 	var	user=Users[uid];	// user data
+
+	// get brainPath from User object
 	var brainPath=user.dirname+user.mri;
-	var view=user.view;		// user view
-	var slice=parseInt(user.slice);	// user slice
+	
+	// update User object
+	user.view=view;
+	user.slice=slice;
 	
 	var brain=getBrainAtPath(__dirname+"/public"+brainPath,function(data){
 		sendSliceToUser(data,view,slice,user_socket);
