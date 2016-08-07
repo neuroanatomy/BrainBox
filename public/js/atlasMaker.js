@@ -110,17 +110,26 @@ var AtlasMakerWidget = {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(changeTool);if(l)console.log(l);
 	
+		if(theTool.toLowerCase()==me.User.tool)
+			return;
+		
 		switch(theTool) {
 			case 'Paint':
 				me.User.tool='paint';
-				//me.User.penValue=1;
 				break;
 			case 'Erase':
 				me.User.tool='erase';
-				//me.User.penValue=0;
 				break;
 			case 'Measure':
 				me.User.tool='measure';
+				break;
+			case 'Adjust':
+				me.User.tool='adjust';
+				if($("#adjust").length==0) {
+					$.get("/templates/adjust.html",function(html) {
+						me.container.find("#resizable").append(html);
+					});
+				}
 				break;
 		}
 		me.sendUserDataMessage("change tool");
@@ -874,6 +883,11 @@ var AtlasMakerWidget = {
 				else
 					me.User.measureLength.push({x:x,y:y});
 				break;
+			case 'adjust':
+				me.User.mouseIsDown = true;
+				me.info.x=x/me.brain_W;
+				me.info.y=1-y/me.brain_H;
+				break;
 		}
 	
 		// init annotation length counter
@@ -899,6 +913,11 @@ var AtlasMakerWidget = {
 				break;
 			case 'erase':
 				me.paintxy(-1,'le',x,y,me.User);
+				break;
+			case 'adjust':
+				me.info.x=x/me.brain_W;
+				me.info.y=1-y/me.brain_H;
+				me.drawImages();
 				break;
 		}
 		
@@ -1606,7 +1625,7 @@ var AtlasMakerWidget = {
 			$(document).keydown(function(e){me.keyDown(e)});
 
 			// configure annotation tools
-			me.slider($(".slider#slice"),me.changeSlice);
+			me.slider($(".slider#slice"),function(x){me.changeSlice(Math.round(x))});
 			me.chose($(".chose#plane"),me.changeView);
 			me.chose($(".chose#paintTool"),me.changeTool);
 			me.chose($(".chose#penSize"),me.changePenSize);
@@ -1649,7 +1668,7 @@ var AtlasMakerWidget = {
 				}
 			
 				if(me.User.view!=null) {
-					$(".chose#plane .a").removeClass("pressed");
+					$(".chose#plane .a").find(".pressed").removeClass("pressed");
 					var view=me.User.view.charAt(0).toUpperCase()+me.User.view.slice(1);
 					$(".chose#plane .a:contains('"+view+"')").addClass("pressed");
 				}
@@ -1717,20 +1736,20 @@ var AtlasMakerWidget = {
 			max:100
 		});
 		
-		var movex=function(clientX) {
-			if ($(elem).data("drag")==true) {
-				var R=$("#slice .track")[0].getBoundingClientRect();
+		var movex=function(el,clientX) {
+			if ($(el).data("drag")==true) {
+				var R=$(el).find(".track")[0].getBoundingClientRect();
 				var x=(clientX-R.left)/R.width;
 				if(x<0) x=0;
 				if(x>1) x=1;
-				x=Math.round(x*$("#slice").data("max"));
-				if(x!=$("#slice").data("val")) {
-					me.changeSlice(x);
+				x=x*$(el).data("max");
+				if(x!=$(el).data("val")) {
+					callback(x);
 				}
 			}
 		};
-		$(document).on("mousemove",function from_slider(ev){movex(ev.clientX);});
-		$(document).on("touchmove",function from_slider(ev){movex(ev.originalEvent.changedTouches[0].pageX);});		
+		$(document).on("mousemove",function from_slider(ev){movex(elem,ev.clientX);});
+		$(document).on("touchmove",function from_slider(ev){movex(elem,ev.originalEvent.changedTouches[0].pageX);});		
 		$(document).on("mouseup touchend",function from_slider(){$(elem).data({drag:false})});
 		$(elem).on('mousedown touchstart',function from_slider(){$(elem).data({drag:true})});
 	},
@@ -1739,6 +1758,10 @@ var AtlasMakerWidget = {
 		var ch=$(elem).find(".a");
 		ch.each(function(c,d){
 			$(d).click(function(){
+				if($(this).hasClass("pressed")) {
+					callback($(this).attr('title'));
+					return;
+				}
 				ch.each(function(){$(this).removeClass("pressed")});
 				$(this).addClass("pressed");
 				if(callback)
