@@ -31,6 +31,7 @@ var fileType=require("file-type");
 var jpeg=require('jpeg-js'); // jpeg-js library: https://github.com/eugeneware/jpeg-js
 var keypress = require('keypress');
 var dateFormat = require('dateformat');
+var async = require("async");
 
 var mongo = require('mongodb');
 var monk = require('monk');
@@ -245,12 +246,35 @@ app.get('/project/:id', function(req, res) {
 				:("<a href='/auth/github'>Log in with GitHub</a>");
 	db.get('project').findOne({shortname:req.params.id},"-_id")
 	.then(function(json) {
-		res.render('project', {
-			title: json.name,
-			projectInfo: JSON.stringify(json),
-			projectName: json.name,
-			login: login
-		});
+		async.each(
+			json.files,
+			function(item,cb) {
+				db.get('mri').find({source:item,backup:{$exists:0}},{name:1,_id:0})
+				.then(function(obj) {
+					if(obj[0]) {
+						json.files[json.files.indexOf(item)]={
+							source: item,
+							name: obj[0].name
+						}
+					} else {
+						json.files[json.files.indexOf(item)]={
+							source: item,
+							name: ""
+						}
+					}
+					cb();
+				});
+			},
+			function() {
+ 				res.render('project', {
+ 					title: json.name,
+ 					projectInfo: JSON.stringify(json),
+ 					projectName: json.name,
+ 					login: login
+ 				});
+			}
+		);
+		
 	});
 });
 
