@@ -1644,7 +1644,7 @@ var AtlasMakerWidget = {
 		})
 		.then(function from_initAtlasMaker() {
 			// Init web socket connection
-			me.initSocketConnection();
+			return me.initSocketConnection();
 		}).then(function() {
 			def.resolve()
 		});
@@ -1673,6 +1673,9 @@ var AtlasMakerWidget = {
 					$(".chose#plane .a:contains('"+view+"')").addClass("pressed");
 				}
 
+				me.sendUserDataMessage();
+
+				console.log("sendAtlas");
 				me.sendUserDataMessage("sendAtlas");
 				def.resolve();
 			});
@@ -1705,6 +1708,7 @@ var AtlasMakerWidget = {
 		me.User.mri=info.mri.brain;
 		me.User.specimenName=me.name;
 		me.User.atlasFilename=info.mri.atlas[index].filename;
+		me.User.isMRILoaded=false;
 		
 		// TODO: it's silly to have to put vol dim twice...
 		// (first here, once again further down)

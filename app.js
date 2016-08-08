@@ -54,8 +54,8 @@ setInterval(function(){console.log(new Date())},60*60*1000); // time mark every 
 console.log("free memory",os.freemem());
 
 // init web server
-var routes = require('./routes/index');
-var users = require('./routes/users');
+//var routes = require('./routes/index');
+// var users = require('./routes/users');
 
 var app = express();
 app.engine('mustache', mustacheExpress());
@@ -69,10 +69,8 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-/*
-app.use('/', routes);
-app.use('/users', users);
-*/
+//app.use('/', routes);
+// app.use('/users', users);
 
 //{-----passport
 var session = require('express-session');
@@ -163,9 +161,9 @@ app.get('/mri', function(req, res) {
 			});
 		} else {
 			(function(my,rq,rs) {
-				downloadMRI(my,rq,function(js) {
+				downloadMRI(my,rq,rs,function(js) {
 					rs.render('mri', {
-						title: json.name||'Untitled MRI',
+						title: js.name||'Untitled MRI',
 						params: JSON.stringify(rq.query),
 						mriInfo: JSON.stringify(js),
 						login: login
@@ -386,7 +384,7 @@ function downloadMRI(myurl,req,res,callback) {
 	request({uri:myurl})
 	.pipe(fs.createWriteStream(dest))
 	.on('close', function() {
-		getBrainAtPath(dest,function(mri) {
+		getBrainAtPath("/data/"+hash+"/"+filename,function(mri) {
 			// create json file for new dataset
 			var ip = req.headers['x-forwarded-for'] || 
 					 req.connection.remoteAddress || 
@@ -807,7 +805,7 @@ function receiveRequestSliceMessage(data,user_socket) {
 	user.view=view;
 	user.slice=slice;
 	
-	var brain=getBrainAtPath(__dirname+"/public"+brainPath,function(data){
+	var brain=getBrainAtPath(brainPath,function(data){
 		sendSliceToUser(data,view,slice,user_socket);
 	});
 
@@ -852,7 +850,7 @@ function getBrainAtPath(brainPath,callback) {
 	if(debug) {
 		console.log("loading brain at",brainPath);
 	}	
-	loadBrainCompressed(brainPath,function(data) {
+	loadBrainCompressed(__dirname+"/public"+brainPath,function(data) {
 		var brain={path:brainPath,data:data};
 		Brains.push(brain);
 		callback(data); // callback: sendSliceToUser
@@ -897,12 +895,14 @@ function sendSliceToUser(brain,view,slice,user_socket) {
 function receiveUserDataMessage(data,user_socket) {
 	if(debug>1) console.log("[receiveUserDataMessage]");
 	
-
 	var uid=data.uid;
 	var user=data.user;
-	var	i,atlasLoadedFlag,firstConnectionFlag,switchingAtlasFlag;
+	var	i,atlasLoadedFlag,firstConnectionFlag=false,switchingAtlasFlag=false;
 	
-	firstConnectionFlag=(Users[uid]==undefined);
+	if(Users[uid]==undefined)
+		firstConnectionFlag=true;
+	else if(Users[uid].isMRILoaded===false)
+		firstConnectionFlag=true;
 	
 	user.uid=uid;
 
@@ -930,11 +930,13 @@ function receiveUserDataMessage(data,user_socket) {
 			if(firstConnectionFlag || switchingAtlasFlag) {
 				// send the new user our data
 				sendAtlasToUser(Atlases[i].data,user_socket,true);
+				Users[uid].isMRILoaded=true;
 			}
 		} else {
 			// The atlas requested has not been loaded before:
 			// Load the atlas s/he's requesting
 			addAtlas(user,function(atlas){sendAtlasToUser(atlas,user_socket,true)});
+			Users[uid].isMRILoaded=true;
 		}
 	}
 	
@@ -949,16 +951,21 @@ function receiveUserDataMessage(data,user_socket) {
 			console.log("User "+user.username+", id "+uid+" logged in");
 		}
 	}
-	if(Users[uid]==null) Users[uid]={};
+	if(Users[uid]==undefined) Users[uid]={};
 	for(var prop in user) Users[uid][prop]=user[prop];
 
 	// 4. Update number of users connected to atlas
 	if(firstConnectionFlag) {
-		var sum=0;
-		for(i in Users)
+		var sumAtlas=0,
+			sumMRI=0;
+		for(i in Users) {
 			if(Users[i].dirname==user.dirname && Users[i].atlasFilename==user.atlasFilename)
-				sum++;
-		console.log(sum+" user"+((sum==1)?" is":"s are")+" connected to the atlas "+user.dirname+user.atlasFilename);
+				sumAtlas++;
+			if(Users[i].dirname==user.dirname && Users[i].mri==user.mri)
+				sumMRI++;
+		}
+		console.log(sumAtlas+" user"+((sumAtlas==1)?" is":"s are")+" connected to the atlas "+user.dirname+user.atlasFilename);
+		console.log(sumMRI+" user"+((sumMRI==1)?" is":"s are")+" connected to the MRI "+user.dirname+user.mri);
 	}	
 
 	// 5. Unload unused data (the check is only done if new data has been added)
