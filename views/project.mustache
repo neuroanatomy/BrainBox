@@ -198,9 +198,8 @@ MyLoginWidget.init($("#MyLogin"));
 	This variable contains project metadata
 	and is filled by the server, from the database.
 */
-var projectInfo='{{{projectInfo}}}';
+var projectInfo={{{projectInfo}}};
 
-projectInfo=JSON.parse(projectInfo);
 $("#projectName").text(projectInfo.name);
 $("#projectOwner").html("<a href='"+projectInfo.owner+"'>"+projectInfo.owner+"</a>");
 var creation=new Date(projectInfo.created);

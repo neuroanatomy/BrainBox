@@ -1,4 +1,17 @@
 <div id="adjust" style="width:calc(100% - 20px );position:absolute;bottom:0;left:0;padding:10px;">
+	
+	<!-- Transparency -->
+	<div>
+		<div style="display:inline-block;width:20px;height:20px;text-align:middle">A</div>
+		<div id="alphaLevel" class="slider" data-max=100 data-val=0 style="display:inline-block;position:relative;margin-left:10px;width:calc(100% - 30px - 20px);height:100%;vertical-align:middle">
+			<div class="track"
+				 style="position:absolute;left:0;top:50%;width:100%;border-top:1px solid #fff;display:inline-block"></div>
+			<div class="thumb"
+				 style="transform:translate(-10px,-10px);border-radius:10px;position:absolute;left:0;top:50%;width:20px;height:20px;background-color:#fff;display:inline-block"></div>
+		</div>
+	</div>
+
+	<!-- Brightness -->
 	<div>
 		<img src="/img/sun-o.svg" style="width:20px;vertical-align:middle"/>
 		<div id="minLevel" class="slider" data-max=100 data-val=0 style="display:inline-block;position:relative;margin-left:10px;width:calc(100% - 30px - 20px);height:100%;vertical-align:middle">
@@ -8,6 +21,8 @@
 				 style="transform:translate(-10px,-10px);border-radius:10px;position:absolute;left:0;top:50%;width:20px;height:20px;background-color:#fff;display:inline-block"></div>
 		</div>
 	</div>
+	
+	<!-- Contrast -->
 	<div>
 		<img src="/img/adjust.svg" style="width:20px;vertical-align:middle"/>
 		<div id="maxLevel" class="slider" data-max=100 data-val=0 style="display:inline-block;position:relative;margin-left:10px;width:calc(100% - 30px - 20px);height:100%;vertical-align:middle">
@@ -19,7 +34,17 @@
 	</div>
 
 	<script>
-		console.log("------>Adding Adjust tool");
+		// Transparency
+		AtlasMakerWidget.slider($(".slider#alphaLevel"),function(x) {
+			$("#alphaLevel").data("val",x);
+			$("#alphaLevel .thumb")[0].style.left=x+"%";
+			AtlasMakerWidget.alphaLevel=x/100;
+			AtlasMakerWidget.drawImages();
+		});
+		$(".slider#alphaLevel").data({max:100,val:50});
+		$("#alphaLevel .thumb")[0].style.left=(AtlasMakerWidget.alphaLevel*100)+"%";
+
+		// Brightness
 		AtlasMakerWidget.slider($(".slider#minLevel"),function(x) {
 			$("#minLevel").data("val",x);
 			$("#minLevel .thumb")[0].style.left=x+"%";
@@ -31,6 +56,10 @@
 				"filter":"brightness("+b+") contrast("+c+")"
 			});
 		});
+		$(".slider#minLevel").data({max:100,val:50});
+		$("#minLevel .thumb")[0].style.left="50%";
+		
+		// Contrast
 		AtlasMakerWidget.slider($(".slider#maxLevel"),function(x) {
 			$("#maxLevel").data("val",x);
 			$("#maxLevel .thumb")[0].style.left=x+"%";
@@ -42,12 +71,10 @@
 				"filter":"brightness("+b+") contrast("+c+")"
 			});
 		});
-
-		$(".slider#minLevel").data({max:100,val:50});
-		$("#minLevel .thumb")[0].style.left="50%";
-
 		$(".slider#maxLevel").data({max:100,val:50});
 		$("#maxLevel .thumb")[0].style.left="50%";
+
+
 	
 		var observer = new MutationObserver(function(mutations) {
 			mutations.forEach(function(mutation) {

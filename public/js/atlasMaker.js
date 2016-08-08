@@ -23,6 +23,7 @@ var AtlasMakerWidget = {
 						slice: null
 					},
 	brain:			0,
+	alphaLevel:		0.5,
 	annotationLength:0,
 	measureLength:	null,
 	User:			{  view:null,
@@ -592,8 +593,6 @@ var AtlasMakerWidget = {
 			me.nearestNeighbour(me.context);
 			me.context.drawImage(me.brain_img.img,0,0,me.brain_W,me.brain_H*me.brain_Hdim/me.brain_Wdim);
 
-			me.context.globalAlpha = 0.8;
-			me.context.globalCompositeOperation = "lighter";
 			me.drawAtlasImage(me.flagLoadingImg.view,me.flagLoadingImg.slice);
 		}
 
@@ -622,11 +621,12 @@ var AtlasMakerWidget = {
 			}
 			
 			var c=me.ontologyValueToColor(data[i]);
+			var alpha=(data[i]>0)?255:0;
 			i=(y*me.atlas_offcn.width+x)*4;
 			me.atlas_px.data[ i ]  =c[0];
 			me.atlas_px.data[ i+1 ]=c[1];
 			me.atlas_px.data[ i+2 ]=c[2];
-			me.atlas_px.data[ i+3 ]=255;
+			me.atlas_px.data[ i+3 ]=alpha*me.alphaLevel;
 		}
 		me.atlas_offtx.putImageData(me.atlas_px, 0, 0);
 
