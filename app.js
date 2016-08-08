@@ -18,12 +18,12 @@ var mustacheExpress = require('mustache-express');
 var crypto = require('crypto');
 
 var request = require('request');
-var http = require('http'),
-	server = http.createServer(),
-	url = require('url'),
-	WebSocketServer = require('ws').Server,
-	websocket,
-	port = 8080;
+var http = require('http');
+var	server = http.createServer();
+var	url = require('url');
+var	WebSocketServer = require('ws').Server
+var	websocket;
+var	port = 8080;
 var os=require("os");
 var fs=require("fs");
 var zlib=require("zlib");
