@@ -40,7 +40,7 @@ var db = monk('localhost:27017/brainbox');
 var	Atlases=[];
 var Brains=[];
 var	Users=[];
-var	usrsckts=[];
+var	US=[];
 var	uidcounter=1;
 var niiTag=bufferTag("nii",8);
 var mghTag=bufferTag("mgh",8);
@@ -484,11 +484,11 @@ function displayBrains() {
 	}
 }
 function displayUsers() {
-	console.log("\n"+usrsckts.filter(function(o){return o!=undefined}).length+" usrsckts:");
-	for(var i in usrsckts) {
-		console.log("usrsckts["+i+"].uid=",usrsckts[i].uid);
-		console.log("Users["+usrsckts[i].uid+"]:");
-		console.log(Users[usrsckts[i].uid]);
+	console.log("\n"+US.filter(function(o){return o!=undefined}).length+" User Sockets:");
+	for(var i in US) {
+		console.log("US["+i+"].uid=",US[i].uid);
+		console.log("Users["+US[i].uid+"]:");
+		console.log(Users[US[i].uid]);
 	}
 }
 keypress(process.stdin);
@@ -535,16 +535,16 @@ function bufferTag(str,sz) {
 // Web socket
 //========================================================================================
 function getUserId(socket) {
-	for(var i in usrsckts) {
-		if(socket==usrsckts[i].socket)
-			return usrsckts[i].uid;
+	for(var i in US) {
+		if(socket==US[i].socket)
+			return US[i].uid;
 	}
 	return -1;
 }
 function removeUser(socket) {
-	for(var i in usrsckts) {
-		if(socket==usrsckts[i].socket) {
-			delete usrsckts[i];
+	for(var i in US) {
+		if(socket==US[i].socket) {
+			delete US[i];
 			break;
 		}
 	}
@@ -636,8 +636,8 @@ function initSocketConnection() {
 			console.log("[connection open]");
 			console.log("remote_address",s.upgradeReq.connection.remoteAddress);
 			var	usr={"uid":"u"+uidcounter++,"socket":s};
-			usrsckts.push(usr);
-			console.log("User id "+usr.uid+" connected, total: "+usrsckts.filter(function(o){return o!=undefined}).length+" users");
+			US.push(usr);
+			console.log("User id "+usr.uid+" connected, total: "+US.filter(function(o){return o!=undefined}).length+" users");
 			
 			// send data from previous users
 			sendPreviousUserDataMessage(usr.uid);
@@ -714,16 +714,16 @@ function initSocketConnection() {
 			
 			s.on('close',function(msg) {
 				console.log(new Date(),"[connection: close]");
-				console.log("usrsckts length",usrsckts.filter(function(o){return o!=undefined}).length);
-				for(var i in usrsckts)
-					if(usrsckts[i].socket==s)
-						console.log("user",usrsckts[i].uid,"is closing connection");
+				console.log("US length",US.filter(function(o){return o!=undefined}).length);
+				for(var i in US)
+					if(US[i].socket==s)
+						console.log("user",US[i].uid,"is closing connection");
 				var uid=getUserId(this);
 				console.log("User ID "+uid+" is disconnecting");
 				if(Users[uid]==undefined) {
 					console.log("<BUG ALERT> User ID "+uid+" is undefined.");
 					console.log("Users:",Users);
-					console.log("usrsckts:",usrsckts);
+					console.log("US:",US);
 					console.log("</BUG ALERT>");
 				} else if(Users[uid].dirname) {
 					console.log("User was connected to MRI "+ Users[uid].dirname+Users[uid].mri);
