@@ -1,0 +1,7 @@
+{
+	"name":"Cerebrum",
+	"source":"http://brainbox.pasteur.fr/labels/cerebrum.json",
+	"labels":[
+		{"name":"Cerebrum","value":1,"color":[255,0,0],"url":"http://brainbox.pasteur.fr/labels/Cerebrum"}
+	]
+}

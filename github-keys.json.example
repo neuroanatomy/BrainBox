@@ -1,0 +1,5 @@
+{
+	"clientID": "GET YOURS AT https://github.com/settings/applications/new",
+	"clientSecret": "GET YOURS AT https://github.com/settings/applications/new",
+	"callbackURL": "http://brainbox.dev/auth/github/callback"
+}

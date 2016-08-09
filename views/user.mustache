@@ -1,0 +1,218 @@
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> 
+	<link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
+    <title>{{title}}</title>
+	<link rel="stylesheet" href="/stylesheets/style.css" />
+	<link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
+
+	<style>
+	.tab {
+		padding-right:12px;
+		padding-left:12px;
+		padding-bottom:4px;
+		cursor: pointer;
+		height:20px;
+	}
+	.tab.selected {
+		background:#333;
+	}
+	#MRIFiles, #atlasFiles, #projects {
+		color:white;
+		text-align:left;
+		width:100%;
+		border-collapse:collapse;
+	}
+	#MRIFiles td, #atlasFiles td, #projects td,
+	#MRIFiles th, #atlasFiles th, #projects th {
+		padding:0px 4px;
+	}
+	#MRIFiles, #atlasFiles, #projects,
+	#MRIFiles th, #atlasFiles th, #projects th {
+		border-bottom:thin solid white;
+	}
+	#MRIFiles a, #atlasFiles a, #projects a {
+		text-decoration:none;
+	}
+	</style>
+
+</head>
+
+<body>
+
+<div style="width:100%;height:100%;display:flex;flex-direction:column">
+	
+	<!-- Header -->
+	<div style="flex:0 0 100px">
+		<a href='/'>
+			<img style='position:fixed;left:10px;top:5px;width:200px' src='/img/brainbox-logo-small_noFont.svg'/>
+		</a>
+		<div style="position:fixed;left:73px;top:21px;width:auto; font-family: Roboto, sans-serif; font-size: 36px; font-weight:300">
+			{{nickname}}
+		</div>
+		<div id="menu">
+			<img id="addProject" title="add project" style='width:13px' src='/img/plus.svg'/>
+			<img id="settings" title="settings" style='width:13px' src='/img/settings.svg'/>
+			<img id="search" title="search" style='width:13px' src='/img/search.svg'/>
+			<img id="doc" title="documentation" style='width:13px' src='/img/doc.svg'/>
+			<div id="MyLogin">
+				<span>{{{login}}}</span>
+			</div>
+		</div>
+	</div>
+	
+	<!-- Content (variable height) -->
+	<div id="content" style="flex:1 0 auto;justify-content:center">
+	
+		<table style="margin:auto;width:1000px">
+			<tr>
+				<td style="width:250px;margin:1rem;vertical-align:top">
+					<div style="background:#333;width:200px;height:200px;margin-left:25px">
+						<img src='{{{avatar}}}' style="width:100%"/>
+					</div>
+					<h1>{{username}}</h1>
+					<h2>{{nickname}}</h2>
+					<p>{{joined}}</p>
+					<p>{{numMRI}} MRI Files
+					<p>{{numAtlas}} Atlas Files
+					<p>{{numProjects}} Projects
+				</td>			
+				<td style="margin:1rem;vertical-align:top">
+					<div style="width:100%">
+						
+						<!-- Tab heads -->
+						<div>
+							<a class="tab selected">MRI Files</a>
+							<a class="tab">Atlas Files</a>
+							<a class="tab">Projects</a>
+						</div>
+						
+						<div style="width:100%;min-height:400px;background:#333;padding:20px">
+						
+							<!-- Tab Content 1: MRI Files -->
+							<table id="MRIFiles" class="tabContent" style="padding:10px">
+								<thead>
+									<tr>
+										<th>Name</th>
+										<th>Volume Dimensions</th>
+										<th>Included</th>
+									<tr>
+								</thead>
+								<tbody>
+									{{#MRIFiles}}
+										<tr>
+											<td>
+												<a href="/mri?url={{url}}">
+													{{#name}}{{name}}{{/name}}{{^name}}{{url}}{{/name}}
+												</a>
+											</td>
+											<td>{{volDimensions}}</td>
+											<td>{{included}}</td>
+										</tr>
+									{{/MRIFiles}}
+								</tbody>
+							</table>
+							
+							<!-- Tab Content 2: Atlas Files -->
+							<table id="atlasFiles" class="tabContent" style="padding:10px;display:none">
+								<thead>
+									<tr>
+										<th>Parent MRI</th>
+										<th>Name</th>
+										<th>Project</th>
+										<th>Last modified</th>
+									<tr>
+								</thead>
+								<tbody>
+									{{#atlasFiles}}
+										<tr>
+											<td>
+												<a href="/mri?url={{url}}">
+													{{#parentName}}{{parentName}}{{/parentName}}{{^parentName}}{{url}}{{/parentName}}
+												</a></td>
+											<td class='noEmpty'>{{name}}</td>
+											<td><a href="{{projectURL}}" class='noEmpty'>{{project}}</a></td>
+											<td>{{modified}}</td>
+										</tr>
+									{{/atlasFiles}}
+								</tbody>
+							</table>
+							
+							<!-- Tab Content 3: Projects -->
+							<table id="projects" class="tabContent" style="padding:10px;display:none">
+								<thead>
+									<tr>
+										<th>Name</th>
+										<th>Files</th>
+										<th>Collaborators</th>
+										<th>Owner</th>
+										<th>Last modified</th>
+									<tr>
+								</thead>
+								<tbody>
+									{{#projects}}
+										<tr>
+											<td><a href="{{projectURL}}">{{project}}</a></td>
+											<td>{{numFiles}}</td>
+											<td>{{numCollaborators}}</td>
+											<td><a href="/user/{{owner}}">{{owner}}</a></td>
+											<td>{{modified}}</td>
+										</tr>
+									{{/projects}}
+								</tbody>
+							</table>
+							
+						</div>
+					</div>
+				</td>
+			</tr>
+		</table>
+	</div>
+	<!-- End Content -->
+	
+
+
+	<!-- I think this is not used-->
+	<!-- Space (fixed height) -->
+	<div style="flex:0 0 50px">
+	</div>
+
+
+
+	<!-- NAAT logo down right corner -->
+	<div id="NAATlogo" style="margin-left:97%;margin-bottom:10px">
+		<a target="_blank" href="http://neuroanatomy.github.io">
+			<img src="/img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/>
+		</a>
+	</div>
+	
+</div>
+
+<script src="/lib/jquery-1.11.0.min.js"></script>
+<script>
+	var userInfo='{{{userInfo}}}';
+	userInfo=JSON.parse(userInfo);
+	
+	// switch tabs
+	$("a.tab").click(function() {
+		$("a.tab").removeClass("selected");
+		$(this).addClass("selected");
+		$(".tabContent").hide();
+		switch($(this).text()) {
+			case "MRI Files":
+				$("#MRIFiles").show();
+				break;
+			case "Atlas Files":
+				$("#atlasFiles").show();
+				break;
+			case "Projects":
+				$("#projects").show();
+				break;
+		}
+	});
+</script>
+
+</body>
+</html>

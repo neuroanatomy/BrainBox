@@ -1,7 +1,0 @@
-<?php
-session_start();
-$dbhost = "localhost"; // this will ususally be 'localhost', but can sometimes differ
-$dbuser = "YOUR DATABASE USER"; // the username that you created, or were given, to access your database
-$dbpass = "YOUR DATABASE PASSWORD"; // the password that you created, or were given, to access your database
-$dblogin = "THE DATABSE CONTAINING THE USERS LIST";	// database containing the users list
-?>

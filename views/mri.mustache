@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+	<link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
+    <title>{{title}}</title>
+	<link rel="stylesheet" href="/stylesheets/style.css" />
+	<link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
+</head>
+
+<body>
+
+<div style="width:100%;height:100%;display:flex;flex-direction:column">
+	
+	<!-- Login (fixed height) -->
+	<div style="flex:0 0 64px">
+		<div id="menu">
+			<img id="addProject" title="add project" style='width:13px' src='/img/plus.svg'/>
+			<img id="settings" title="settings" style='width:13px' src='/img/settings.svg'/>
+			<img id="search" title="search" style='width:13px' src='/img/search.svg'/>
+			<img id="doc" title="documentation" style='width:13px' src='/img/doc.svg'/>
+			<div id="MyLogin">
+				<span>{{{login}}}</span>
+			</div>
+		</div>
+	</div>
+	
+	<!-- Content (variable height) -->
+	<div id="content" style="flex:1 0 auto">
+			
+		<!-- Splash -->
+		<div id='splash'>
+			<a href='/'>
+				<img id='logo' src='/img/brainbox-logo.svg'/>
+			</a>
+			<div id='msgLog'></div>
+		</div>
+		<!-- End Splash -->
+				
+		<!-- Data -->
+		<div id="data">		
+			<!-- Small left-top logo -->
+			<a href='/'>
+				<img style='position:fixed;left:10px;top:5px;width:200px' src='/img/brainbox-logo-small_noFont.svg'/>
+			</a>
+			<div style="position:fixed;left:73px;top:21px;width:auto; font-family: Roboto, sans-serif; font-size: 36px; font-weight:100" id="fontLogo"> 
+				<a href='/' style="font-family: Roboto, sans-serif; font-size: 36px; font-weight:100; text-decoration:none">BrainBox</a>
+			</div>
+
+			<!-- Data Flex -->
+			<div style="display:flex;justify-content:center">
+					<!-- AtlasMaker -->
+					<div style="flex:0 1 auto">
+						<!-- AtlasMaker -->
+						<div id="stereotaxic" style="width:512px">
+						</div>
+						<!-- End AtlasMaker -->
+					</div>
+				
+					<!-- Annotations -->
+					<div style="flex:0 1 auto;vertical-align:top;padding-left:0.5rem">
+						<ul>
+							<li><b>Name</b><br/> <span id="name" contentEditable=true class='noEmpty'></span></li>
+							<li><b>Data source</b></br> <span id="source"></span></li>
+							<li><b>Inclusion date</b><br/> <span id="included"></span></li>
+							<li>
+								<b>Annotations</b><br/>
+								<table id="info">
+								<thead>
+									<tr>
+										<th>Name</th>
+										<th>Project</th>
+										<th>Label Set</th>
+										<th>Owner</th>
+										<th>Created</th>
+										<th>Modified</th>
+										<th>Access</th>
+									</tr>
+								</thead>
+								</table>
+								<div style="text-align:right">
+									<img id="addAnnotation"    class="button" src='/img/plus-circle.svg'/>
+									<img id="removeAnnotation" class="button" src='/img/minus-circle.svg'/>
+									<img id="saveAnnotations"   class="button" src='/img/floppy.svg'/>
+								</div>
+							</li>
+						</ul>
+					</div>
+			</div>
+			<!-- End Data Flex -->
+		</div>
+		<!-- End Data -->
+
+		<!-- Labels -->
+		<div id="labelset">
+			<div style="z-index:23;text-align:right">
+				<img id="labels-close" class="button" src="/img/times-circle.svg"/>
+			</div>
+
+			<ul style="padding-left:1rem">
+				<li>
+					<b>Label Set</b><br/>
+					<span id="labels-name"></span>
+				</li>
+				<li>
+					<b>Labels</b><br/>
+					<div id="label-list">
+					</div>
+					<div id="label-template">
+						<div class="label-color"></div>
+						<span class="label-name">Label Name</name>
+					</div>
+				</li>
+			</ul>
+		</div>
+		<!-- End Labels -->
+
+	</div>
+	<!-- End Content -->
+	
+	<!-- Space (fixed height) -->
+	<div style="flex:0 0 50px">
+	</div>
+
+	<!-- Footer (fixed height) -->
+	<div style="flex:0 0 100px;background-color:#000">
+		<p style="width:100%;font-size:small;text-align:center"> 
+			<a target="_blank" href="http://neuroanatomy.github.io">
+				<img src="img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/></a>
+			<a target="_blank" href="http://neuroanatomy.github.io" class="linkNoULine">
+				group de neuroanatomie appliquée et théorique
+			</a>
+		</p>
+	</div>
+</div>
+
+<!-- 
+A few brains:
+http://braincatalogue.org/data/Baboon/MRI.nii.gz
+https://zenodo.org/record/44855/files/MRI-n4.nii.gz
+http://files.figshare.com/2284784/MRI_n4.nii.gz
+http://braincatalogue.org/data/Human/MRI-n4.nii.gz
+https://dl.dropboxusercontent.com/u/363467/mprage003.nii.gz
+-->
+
+<!--
+<div id="myStereo"></div>
+-->
+
+<script src="/lib/jquery-1.11.0.min.js"></script>
+<script src="/lib/pako/pako.min.js"></script>
+<!--
+<script src="/lib/mylogin/login.js"></script>
+-->
+<script src="/js/twoWayBinding.js"></script>
+<script src="/js/brainbox.js"></script>
+
+<script>
+
+/*
+// Init login widget
+MyLoginWidget.init($("#MyLogin"));
+*/
+
+var params={{{params}}};
+var mriInfo={{{mriInfo}}};
+var version=1;
+var info_proxy={};
+var hash_old;
+
+params.info=mriInfo;
+
+var fullscreen=false;
+if(params.fullscreen)
+	params.fullscreen=(params.fullscreen=="true");
+
+// Present a splash screen while loading
+$("#intro").hide();
+$("#splash").show();	
+
+// Load data
+BrainBox.initBrainBox()
+.then(function(){return BrainBox.loadLabelsets()})
+.then(function(){return BrainBox.configureBrainBox(params)})
+.then(function(){
+	// Remove splash
+	$("#splash").hide();
+
+	var aParam = {
+		table: $("table#info"),
+		info_proxy: info_proxy,
+		info: BrainBox.info,
+		saveWarning: $("#saveAnnotations"),
+		trTemplate: $.map([
+			"<tr>",
+			" <td contentEditable=true class='noEmpty'></td>",
+			" <td contentEditable=true class='noEmpty'></td>",
+			" <td><select>",$.map(BrainBox.labelSets,function(o){return "<option>"+o.name+"</option>"}),"</select></td>",	// append label sets
+			" <td><a></a></td>",
+			" <td></td>",
+			" <td></td>",
+			" <td><select>",BrainBox.access.map(function(o){return "<option>"+o+"</option>"}),"</select></td>",	// append label sets
+			"</tr>"],function(o){return o}).join(),
+		objTemplate: [
+			{	typeOfBinding:2,
+				path:"mri.atlas.#.name"
+			},
+			{	typeOfBinding:2,
+				path:"mri.atlas.#.project"
+			},
+			{	typeOfBinding:2,
+				path:"mri.atlas.#.labels",
+				format: function(e,d){$(e).find("select").prop('selectedIndex',$.map(BrainBox.labelSets,function(o){return o.source}).indexOf(d))},
+				/*
+					-----------------------------------------------------------
+					NOTE: this is a temporary fix, the final version should be:
+					-----------------------------------------------------------
+					format: function(e,d){$(e).find("select").prop('selectedIndex',$.map(BrainBox.labelSets,function(o){return o.source}).indexOf(d))},
+				*/
+				parse: function(e){var name=$(e).find("select").val(),i=$.map(BrainBox.labelSets,function(o){return o.name}).indexOf(name);return BrainBox.labelSets[i].source}
+			},
+			{	typeOfBinding:1,
+				path:"mri.atlas.#.owner",
+				format: function(e,d){$.get("/api/user/"+d.split("/").pop()+"?var=nickname",function(r){$(e).text(r);$(e).attr('href',d)})}
+			},
+			{	typeOfBinding:1,
+				path:"mri.atlas.#.created",
+				format: date_format
+			},
+			{	typeOfBinding:1,
+				path:"mri.atlas.#.modified",
+				format: date_format
+			},
+			{	typeOfBinding:2,path:"mri.atlas.#.access",
+				format: function(e,d){$(e).find("select").prop('selectedIndex',BrainBox.access.indexOf(d))},
+				parse: function(e){return $(e).find("select").val()}
+			}
+		]
+
+	};
+
+	// bind interface
+	bind2(info_proxy,BrainBox.info,"name",$("#name"));
+	bind1(info_proxy,BrainBox.info,"source",$("#source"));
+	bind1(info_proxy,BrainBox.info,"included",$("#included"),date_format);
+	for(var i=0;i<BrainBox.info.mri.atlas.length;i++) {
+		BrainBox.appendAnnotationTableRow(i,aParam);
+	}
+
+	// connect colours close button
+	$(document).on('click', "#labels-close", function(){$("#labelset").hide()});
+
+	// annotations table: connect pop-down menus
+	$(document).on('change', "table#info select", function(){
+		var col=$("table#info tr:eq(0) th:eq("+$(this).closest('td')[0].cellIndex+")").text();
+		var index=$(this).closest('tr')[0].rowIndex-1;
+		switch(col) {
+			case "Label Set":
+				var url=info_proxy["mri.atlas."+index+".labels"];
+				$.getJSON(url,function(json) {
+					AtlasMakerWidget.configureOntology(json);
+					AtlasMakerWidget.brain_img.img=null; // to force redraw with new colors
+					AtlasMakerWidget.drawImages();
+				});
+				break;
+			case "Access":
+				break;
+		}
+	});
+
+	// annotation table: select row
+	$(document).on('click', "#info tr",BrainBox.selectAnnotationTableRow);
+	
+	// annotations table: add, remove and save annotations
+	$(document).on('click', "#addAnnotation", function(){BrainBox.addAnnotation(aParam)});
+	$(document).on('click', "#removeAnnotation", function(){BrainBox.removeAnnotation(aParam)});
+	$(document).on('click', "#saveAnnotations", function(){BrainBox.saveAnnotations(aParam)});
+	
+	// annotations table: select the first row by default
+	$("table#info tr").removeClass("selected");
+	$("table#info tr").eq(1).addClass("selected");
+
+	$("#data").show();
+	
+	// autosave
+	hash_old=BrainBox.hash(JSON.stringify(BrainBox.info));
+	$("#saveAnnotations").hide();
+	setInterval(function() {
+		JSON.stringify(info_proxy);
+		var hash=BrainBox.hash(JSON.stringify(BrainBox.info));
+		if(hash!=hash_old) {
+			$("#saveAnnotations").show();
+		}
+	},1000*10); // every 10 seconds
+		
+},function(){
+	$("#msgLog").html("ERROR: Can't load data");
+});
+
+</script>
+
+
+
+</body>
+</html>
