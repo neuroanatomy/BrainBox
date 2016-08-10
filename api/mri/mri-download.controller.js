@@ -93,8 +93,9 @@ var download = function(req, res) {
 	var myurl = req.query.url;
 	var hash = crypto.createHash('md5').update(myurl).digest('hex');
 	
-	req.db.get('mri').find({url:req.dirname + "/public/data/"+hash+"/"}, {fields:{_id:0},sort:{$natural:-1},limit:1})
+	req.db.get('mri').find({url:"/data/"+hash+"/"}, {fields:{_id:0},sort:{$natural:-1},limit:1})
 	.then(function(json) {
+		console.log(json);
 		json=json[0];
 		if(json) {
 			res.render('mri', {
