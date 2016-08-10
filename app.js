@@ -21,6 +21,7 @@ var mongo = require('mongodb');
 var monk = require('monk');
 var db = monk('localhost:27017/brainbox');
 var fs = require('fs');
+var expressValidator = require('express-validator');
 
 var atlasMakerServer = require('./js/atlasMakerServer.js');
 
@@ -37,11 +38,20 @@ app.set('trust proxy', 'loopback');
 app.use(logger(':remote-addr :method :url :status :response-time ms - :res[content-length]'));//app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(expressValidator());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use(function(req, res, next){
+	req.dirname = __dirname;
+	req.db = db;
+	next();
+})
+
 //app.use('/', routes);
 // app.use('/users', users);
+
+app.use('/mri', require('./api/mri/'));
 
 //{-----passport
 var session = require('express-session');
@@ -113,40 +123,9 @@ app.get('/', function(req,res) { // /auth/github
 	});
 });
 
-app.get('/mri', function(req, res) {
-	var login=	(req.isAuthenticated())?
-				("<a href='/user/"+req.user.username+"'>"+req.user.username+"</a> (<a href='/logout'>Log Out</a>)")
-				:("<a href='/auth/github'>Log in with GitHub</a>");
-	var myurl = req.query.url;
-	var hash = crypto.createHash('md5').update(myurl).digest('hex');
-	
-	db.get('mri').find({url:"/data/"+hash+"/"}, {fields:{_id:0},sort:{$natural:-1},limit:1})
-	.then(function(json) {
-		json=json[0];
-		if(json) {
-			res.render('mri', {
-				title: json.name||'Untitled MRI',
-				params: JSON.stringify(req.query),
-				mriInfo: JSON.stringify(json),
-				login: login
-			});
-		} else {
-			(function(my,rq,rs) {
-				downloadMRI(my,rq,rs,function(js) {
-					console.log(js);
-					rs.render('mri', {
-						title: js.name||'Untitled MRI',
-						params: JSON.stringify(rq.query),
-						mriInfo: JSON.stringify(js),
-						login: login
-					});
-				});
-			})(myurl,req,res);
-		}
-	}, function(err) {
-		console.error(err);
-	});
-});
+// app.get('/mri', function(req, res) {
+
+// });
 app.get('/user/:id', function(req, res) {
 	var login=	(req.isAuthenticated())?
 				("<a href='/user/"+req.user.username+"'>"+req.user.username+"</a> (<a href='/logout'>Log Out</a>)")
@@ -279,36 +258,7 @@ app.get('/api/project/:name', function(req, res) {
 		}
 	})
 });
-app.get('/api/mri', function(req, res) {
-	var myurl=req.query.url;
-	var hash = crypto.createHash('md5').update(myurl).digest('hex');
-	// shell equivalent: db.mri.find({source:"http://braincatalogue.org/data/Pineal/P001/t1wdb.nii.gz"}).limit(1).sort({$natural:-1})
-	
-	db.get('mri').find({url:"/data/"+hash+"/",backup:{$exists:false}}, "-_id", {sort:{$natural:-1},limit:1})
-	.then(function(json) {
-		json=json[0];
-		if(json) {
-			if(req.query.var) {
-				var i,arr=req.query.var.split("/");
-				for(i in arr)
-					json=json[arr[i]];
-			}
-			res.send(json);
-		} else {
-			if(req.query.var) {
-				res.send();
-			} else {
-				(function(my,rq,rs) {
-					downloadMRI(my,rq,rs,function(js) {
-						rs.send(js);
-					});
-				})(myurl,req,res);
-			}
-		}
-	}, function(err) {
-		console.error(err);
-	});
-});
+
 app.get('/api/getLabelsets', function(req, res) {
 	var i,arr=fs.readdirSync(__dirname+"/public/labels/"),info=[];
 	for(i in arr) {
@@ -335,20 +285,55 @@ app.post('/api/log', function(req, res) {
 	res.send();
 });
 
+
+// init web socket server
+atlasMakerServer.initSocketConnection();
+atlasMakerServer.dataDirectory = __dirname + "/public";
+
+// catch 404 and forward to error handler
+app.use(function(req, res, next) {
+    var err = new Error('Not Found');
+    err.status = 404;
+    next(err);
+});
+
+// error handlers
+// development error handler
+// will print stacktrace
+if (app.get('env') === 'development') {
+    app.use(function(err, req, res, next) {
+        res.status(err.status || 500);
+        res.render('error', {
+            message: err.message,
+            error: err
+        });
+    });
+}
+// production error handler
+// no stacktraces leaked to user
+app.use(function(err, req, res, next) {
+    res.status(err.status || 500);
+    res.render('error', {
+        message: err.message,
+        error: {}
+    });
+});
+
+
 /* Download MRI file
 ---------------------*/
 function downloadMRI(myurl,req,res,callback) {
 	console.log("downloadMRI");
 	var hash = crypto.createHash('md5').update(myurl).digest('hex');
 	var filename = url.parse(myurl).pathname.split("/").pop();
-	var dest=__dirname+"/public/data/"+hash+"/"+filename;
+	var dest="../../public/data/"+hash+"/"+filename;
 	console.log("   source:",myurl);
 	console.log("     hash:",hash);
 	console.log(" filename:",filename);
 	console.log("     dest:",dest);
 	
-	if (!fs.existsSync(__dirname+"/public/data/"+hash)) {
-		fs.mkdirSync(__dirname+"/public/data/"+hash,0777);
+	if (!fs.existsSync("../../public/data/"+hash)) {
+		fs.mkdirSync("../../public/data/"+hash,0777);
 	}
 
 	var file = fs.createWriteStream(dest,{mode:0777});
@@ -395,39 +380,5 @@ function downloadMRI(myurl,req,res,callback) {
 		callback();
 	});
 }
-
-
-// init web socket server
-atlasMakerServer.initSocketConnection();
-
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-    var err = new Error('Not Found');
-    err.status = 404;
-    next(err);
-});
-
-// error handlers
-// development error handler
-// will print stacktrace
-if (app.get('env') === 'development') {
-    app.use(function(err, req, res, next) {
-        res.status(err.status || 500);
-        res.render('error', {
-            message: err.message,
-            error: err
-        });
-    });
-}
-// production error handler
-// no stacktraces leaked to user
-app.use(function(err, req, res, next) {
-    res.status(err.status || 500);
-    res.render('error', {
-        message: err.message,
-        error: {}
-    });
-});
-
 
 module.exports = app;

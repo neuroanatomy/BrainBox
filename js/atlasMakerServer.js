@@ -18,12 +18,12 @@ var mongo = require('mongodb');
 var monk = require('monk');
 var db = monk('localhost:27017/brainbox');
 
-var AtlasMakerServer = function(){
+var atlasMakerServer = function(){
 
 var	debug=1;
-
+this.dataDirectory = "";
 var	Atlases=[];
-var Brains=[];
+this.Brains=[];
 var	Users=[];
 var	usrsckts=[];
 var	uidcounter=1;
@@ -384,12 +384,14 @@ var receiveRequestSliceMessage = function(data,user_socket) {
 
 	// get brainPath from User object
 	var brainPath=user.dirname+user.mri;
+	console.log(user.dirname);
+	console.log(user.mri);
 	
 	// update User object
 	user.view=view;
 	user.slice=slice;
-	
-	var brain=getBrainAtPath(brainPath,function(data){
+	var fullBrainPath = this.dataDirectory + brainPath;
+	var brain=getBrainAtPath(fullBrainPath,function(data){
 		sendSliceToUser(data,view,slice,user_socket);
 	});
 
@@ -427,6 +429,7 @@ var receiveAtlasFromUserMessage = function(data,user_socket) {
 
 var getBrainAtPath = function(brainPath,callback) {
 	if(debug>1) console.log("[getBrainAtPath]");
+
 	var i;
 	for(i=0;i<Brains.length;i++) {
 		if(Brains[i].path===brainPath) {
@@ -436,8 +439,10 @@ var getBrainAtPath = function(brainPath,callback) {
 	}
 	if(debug) {
 		console.log("loading brain at",brainPath);
-	}	
-	loadBrainCompressed("./public"+brainPath,function(data) {
+	}
+	console.log("getBrainAtPath -> loadBrainCompressed")
+	console.log(brainPath);
+	loadBrainCompressed(brainPath,function(data) {
 		var brain={path:brainPath,data:data};
 		Brains.push(brain);
 		callback(data); // callback: sendSliceToUser
@@ -445,6 +450,7 @@ var getBrainAtPath = function(brainPath,callback) {
 		
 	return null;
 }
+this.getBrainAtPath = getBrainAtPath;
 
 var unloadUnusedBrains = function() {
 	var i;
@@ -740,7 +746,7 @@ var loadAtlasNifti = function(atlas,username,callback)
 		
 	// Load nifty label
 	
-	var path=__dirname+"/public"+atlas.dirname+atlas.name;
+	var path=this.dataDirectory+atlas.dirname+atlas.name;
 	var datatype=2;
 	var	vox_offset=352;
 	
@@ -855,8 +861,8 @@ var saveNifti = function(atlas)
 		atlas.data.copy(nii,voxel_offset);
 		zlib.gzip(nii,function(err,niigz) {
 			var	ms=+new Date();
-			var path1=__dirname+"/public"+atlas.dirname+atlas.name;
-			var	path2=__dirname+"/public"+atlas.dirname+ms+"_"+atlas.name;
+			var path1=this.dataDirectory+atlas.dirname+atlas.name;
+			var	path2=this.dataDirectory+atlas.dirname+ms+"_"+atlas.name;
 			fs.rename(path1,path2,function(){
 				fs.writeFile(path1,niigz);
 			});
@@ -1302,10 +1308,10 @@ var drawSlice = function(brain,view,slice) {
 	};
 	return jpeg.encode(rawImageData,99);
 }
-
+return this;
 }
 
-module.exports = new AtlasMakerServer();
+module.exports = atlasMakerServer();
 
 /*
 	atlas
