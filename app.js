@@ -52,7 +52,7 @@ app.use(function(req, res, next){
 //app.use('/', routes);
 // app.use('/users', users);
 
-
+app.use('/mri', require('./api/mri/'));
 
 //{-----passport
 var session = require('express-session');
@@ -390,6 +390,6 @@ function downloadMRI(myurl,req,res,callback) {
 	});
 }
 
-app.use('/mri', require('./api/mri/'));
+
 
 module.exports = app;
