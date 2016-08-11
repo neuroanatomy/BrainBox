@@ -108,7 +108,7 @@ var download = function(req, res) {
 			(function(my,rq,rs) {
 				downloadMRI(my,rq,rs,function(obj) {
 					console.log(obj);
-					req.db.get('mri').insert(obj);
+					rq.db.get('mri').insert(obj);
 					rs.render('mri', {
 						title: obj.name||'Untitled MRI',
 						params: JSON.stringify(rq.query),
