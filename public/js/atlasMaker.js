@@ -497,6 +497,11 @@ var AtlasMakerWidget = {
 	
 		if(me.User.view==null)
 			me.User.view="sag";
+			
+/*
+	TRANSFORMATION FROM VOXEL SPACE TO SCREEN SPACE
+*/
+
 
 		// init query image
 		switch(me.User.view) {
@@ -609,16 +614,21 @@ var AtlasMakerWidget = {
 
 		var	data=me.atlas.data;
 		var	dim=me.atlas.dim;
-		var	val;
+		var	s,val;
 
 		ys=yc=ya=slice;
 		for(y=0;y<me.brain_H;y++)
 		for(x=0;x<me.brain_W;x++) {
 			switch(view) {
-				case 'sag':i= y*dim[1]/*PA*/*dim[0]/*LR*/+ x*dim[0]/*LR*/+ys; break;
-				case 'cor':i= y*dim[1]/*PA*/*dim[0]/*LR*/+yc*dim[0]/*LR*/+x; break;
-				case 'axi':i=ya*dim[1]/*PA*/*dim[0]/*LR*/+ y*dim[0]/*LR*/+x; break;
+				case 'sag':s=[ys,x,y]; break;
+				case 'cor':s=[x,yc,y]; break;
+				case 'axi':s=[x,y,ya]; break;
 			}
+			
+/*
+	TRANSFORM SCREEN SPACE INTO VOXEL INDEX
+*/
+			i= s[2]*dim[1]*dim[0]+ s[1]*dim[0]+ s[0];
 			
 			var c=me.ontologyValueToColor(data[i]);
 			var alpha=(data[i]>0)?255:0;
@@ -1146,13 +1156,17 @@ var AtlasMakerWidget = {
 	
 		var	layer=me.atlas;
 		var	dim=layer.dim;
-		var	x,y,z;
+		var	x,y,z,i;
 		switch(myView) {
 			case 'sag':	x=mz; y=mx; z=my;break; // sagital
 			case 'cor':	x=mx; y=mz; z=my;break; // coronal
 			case 'axi':	x=mx; y=my; z=mz;break; // axial
-		}	
-		return z*dim[1]*dim[0]+y*dim[0]+x;	
+		}
+/*
+	TRANSFORM SCREEN SPACE INTO VOXEL INDEX
+*/
+		i=z*dim[1]*dim[0]+y*dim[0]+x;
+		return i;
 	},
 	slice2xyzi: function slice2xyzi(mx,my,mz,myView) {
 		var me=AtlasMakerWidget;
@@ -1166,20 +1180,11 @@ var AtlasMakerWidget = {
 			case 'cor':	x=mx; y=mz; z=my;break; // coronal
 			case 'axi':	x=mx; y=my; z=mz;break; // axial
 		}
+/*
+	TRANSFORM SCREEN SPACE INTO VOXEL INDEX
+*/
 		i=z*dim[1]*dim[0]+y*dim[0]+x;
 		return [x,y,z,i];	
-	},
-	xyz2slice: function xyz2slice(x,y,z,myView) {
-		var me=AtlasMakerWidget;
-		var l=me.traceLog(xyz2slice);if(l)console.log(l);
-	
-		var	mx,my,mz;
-		switch(myView) {
-			case 'sag':	mz=x; mx=y; my=z;break; // sagital
-			case 'cor':	mx=x; mz=y; my=z;break; // coronal
-			case 'axi':	mx=x; my=y; mz=z;break; // axial
-		}	
-		return new Object({"x":x,"y":y,"z":z});	
 	},
 
 	//====================================================================================
