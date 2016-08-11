@@ -1668,7 +1668,7 @@ var AtlasMakerWidget = {
 				}
 			
 				if(me.User.view!=null) {
-					$(".chose#plane .a").find(".pressed").removeClass("pressed");
+					$(".chose#plane .a").removeClass("pressed");
 					var view=me.User.view.charAt(0).toUpperCase()+me.User.view.slice(1);
 					$(".chose#plane .a:contains('"+view+"')").addClass("pressed");
 				}
