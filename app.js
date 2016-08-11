@@ -975,8 +975,8 @@ function receiveUserDataMessage(data,user_socket) {
 			if(US[i].User.dirname==User.dirname && US[i].User.mri==User.mri)
 				sumMRI++;
 		}
-		console.log(sumAtlas+" user"+((sumAtlas==1)?" is":"s are")+" connected to the atlas "+User.dirname+User.atlasFilename);
-		console.log(sumMRI+" user"+((sumMRI==1)?" is":"s are")+" connected to the MRI "+User.dirname+User.mri);
+		console.log(sumMRI+" user"+((sumMRI==1)?" is":"s are")+" requesting MRI "+User.dirname+User.mri);
+		console.log(sumAtlas+" user"+((sumAtlas==1)?" is":"s are")+" requesting atlas "+User.dirname+User.atlasFilename);
 	}	
 
 	// 5. Unload unused data (the check is only done if new data has been added)
@@ -1082,7 +1082,7 @@ function addAtlas(User,callback) {
 
 	console.log("User requests atlas "+atlas.name+" from "+atlas.dirname);
 	
-	loadAtlasNifti(atlas,User.username,callback);
+	loadAtlasNifti(atlas,User,callback);
 
 	Atlases.push(atlas);
 	User.iAtlas=Atlases.indexOf(atlas);
@@ -1092,47 +1092,48 @@ function addAtlas(User,callback) {
 function loadNifti(nii) {
 	if(debug>=1) console.log("[loadNifti]");
 	
-	var	vox_offset=352;
-	var	sizeof_hdr=nii.readUInt32LE(0);
-	var	dimensions=nii.readUInt16LE(40);
-	
 	var mri={};
-	mri.hdr=nii.slice(0,vox_offset);
-	mri.dim=[];
-	mri.dim[0]=nii.readUInt16LE(42);
-	mri.dim[1]=nii.readUInt16LE(44);
-	mri.dim[2]=nii.readUInt16LE(46);
-	mri.datatype=nii.readUInt16LE(70);
-	mri.pixdim=[];
-	mri.pixdim[0]=nii.readFloatLE(80);
-	mri.pixdim[1]=nii.readFloatLE(84);
-	mri.pixdim[2]=nii.readFloatLE(88);
-	vox_offset=nii.readFloatLE(108);
+
+	// standard nii header
+	var niiHdr=niijs.parseNIfTIHeader(nii); console.log(niiHdr);
+	var	sizeof_hdr=niiHdr.sizeof_hdr;
+	mri.dim=niiHdr.dim.slice(1);
+	mri.pixdim=niiHdr.pixdim.slice(1);
+	mri.vox_offset=niiHdr.vox_offset;
 	
-	var hdr=niijs.parseNIfTIHeader(nii);
-	var hdr1=niijs.parseHeader(nii); // computes space directions and space origin
-	mri.dir=hdr1.spaceDirections;
-	mri.ori=hdr1.spaceOrigin;
+	// nrrd-compatible header, computes space directions and space origin
+	if(niiHdr.qform_code>0) {
+		var nrrdHdr=niijs.parseHeader(nii);
+		mri.dir=nrrdHdr.spaceDirections;
+		mri.ori=nrrdHdr.spaceOrigin;
+	} else {
+		mri.dir=[[mri.pixdim[0],0,0],[0,mri.pixdim[1],0],[0,0,mri.pixdim[2]]];
+		mri.ori=[0,0,0];
+	}
 	computeS2VTransformation(mri); // compute the transformation from voxel space to screen space
+
+	// manually parsed information
+	mri.hdr=nii.slice(0,352);
+	mri.datatype=nii.readUInt16LE(70);
 	
 	switch(mri.datatype) {
 		case 2: // UCHAR
-			mri.data=nii.slice(vox_offset);
+			mri.data=nii.slice(mri.vox_offset);
 			break;
 		case 4: // SHORT
-			var tmp=nii.slice(vox_offset);
+			var tmp=nii.slice(mri.vox_offset);
 			mri.data=new Int16Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);
 			for(j=0;j<mri.dim[0]*mri.dim[1]*mri.dim[2];j++)
 				mri.data[j]=tmp.readInt16LE(j*2);
 			break;
 		case 8: // INT
-			var tmp=nii.slice(vox_offset);
+			var tmp=nii.slice(mri.vox_offset);
 			mri.data=new Uint32Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);
 			for(j=0;j<mri.dim[0]*mri.dim[1]*mri.dim[2];j++)
 				mri.data[j]=tmp.readUInt32LE(j*4);
 			break;
 		case 16: // FLOAT
-			var tmp=nii.slice(vox_offset);
+			var tmp=nii.slice(mri.vox_offset);
 			mri.data=new Float32Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);
 			for(j=0;j<mri.dim[0]*mri.dim[1]*mri.dim[2];j++)
 				mri.data[j]=tmp.readFloatLE(j*4);
@@ -1143,7 +1144,7 @@ function loadNifti(nii) {
 	
 	return mri;
 }
-function loadAtlasNifti(atlas,username,callback)
+function loadAtlasNifti(atlas,User,callback)
 {
 	if(debug>=1) console.log("[loadAtlasNifti]");
 		
@@ -1155,33 +1156,11 @@ function loadAtlasNifti(atlas,username,callback)
 	
 	if(!fs.existsSync(path)) {
 		console.log("Atlas "+path+" does not exists. Create a new one");
-/*
-To create this buffer, I used an hex editor to dump the 1st 352 bytes of a
-nii file, and converted them to decimal using:
-gawk 'BEGIN{s="5C 01 ...";split(s,a," ");for(i=1;i<=352;i++)printf"%s,",strtonum("0x"a[i])}'
-*/
-		atlas.hdr=new Buffer([
-			92,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,230,0,
-			44,1,14,1,1,0,1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,8,0,0,0,0,0,128,191,195,245,168,
-			62,195,245,168,62,195,245,168,62,0,0,0,0,0,0,128,63,0,0,128,63,0,0,128,63,0,0,176,67,0,0,0,
-			0,0,0,0,0,0,0,0,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-			// AtlasMaker, braincatalogue.org
-			65,116,108,97,115,77,97,107,101,114,44,32,98,114,97,105,110,99,97,116,97,108,111,103,117,101,46,111,114,103,
-			0,0,0,0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,128,0,0,128,63,0,0,0,0,144,194,93,66,164,112,
-			125,194,195,245,40,194,195,245,168,190,0,0,0,128,0,0,0,0,144,194,93,66,0,0,0,128,195,245,168,
-			62,0,0,0,128,164,112,125,194,0,0,0,0,0,0,0,0,195,245,168,62,195,245,40,194,0,0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,110,43,49,0,0,0,0,0]);
-		try {
-			atlas.hdr.writeUInt16LE(datatype,72,2);		// datatype 2: unsigned char (8 bits/voxel)
-			atlas.hdr.writeUInt16LE(atlas.dim[0],42,2);
-			atlas.hdr.writeUInt16LE(atlas.dim[1],44,2);
-			atlas.hdr.writeUInt16LE(atlas.dim[2],46,2);
+		encodeAtlasNiftiHeader(User)
+		.then(function(hdr) {
+			atlas.hdr=hdr;
 			atlas.data=new Buffer(atlas.dim[0]*atlas.dim[1]*atlas.dim[2]);
-
-			var i;
-			for(i=0;i<atlas.dim[0]*atlas.dim[1]*atlas.dim[2];i++)
+			for(var i=0;i<atlas.dim[0]*atlas.dim[1]*atlas.dim[2];i++)
 				atlas.data[i]=0;
 			atlas.sum=0;
 
@@ -1191,18 +1170,17 @@ gawk 'BEGIN{s="5C 01 ...";split(s,a," ");for(i=1;i<=352;i++)printf"%s,",strtonum
 			console.log("  atlas datatype:",datatype);
 			console.log("atlas vox_offset:",vox_offset);
 			console.log("     free memory:",os.freemem());
+
 			callback(atlas.data);
-		
+	
 			// log atlas creation
 			db.get('log').insert({
 				key: "createAtlas",
 				value: JSON.stringify({specimen:atlas.specimen,atlas:atlas.name}),
-				username: username,
+				username: User.username,
 				date: (new Date()).toJSON()
 			});
-		} catch(e) {
-			console.log(new Date(),"ERROR: Cannot create new empty atlas");
-		}
+		});
 	} else {
 		console.log("Atlas found. Loading it");
 		var niigz;
@@ -1234,8 +1212,25 @@ gawk 'BEGIN{s="5C 01 ...";split(s,a," ");for(i=1;i<=352;i++)printf"%s,",strtonum
 		}
 	}
 }
-function saveNifti(atlas)
-{
+function encodeAtlasNiftiHeader(User) {
+	var encode=function encode(mri) {
+		var hdr=new Buffer(mri.hdr);
+		var datatype=2;
+		var vox_offset=352;
+		hdr.writeUInt16LE(datatype,70,2);	// set datatype to 2:unsigned char (8 bits/voxel)
+		hdr.writeFloatLE(vox_offset,108,4);	// set voxel_offset to 352 (minimum size of a nii header)
+		return hdr;
+	}
+	var pr = new Promise(function(resolve, reject) {
+		var brain=getBrainAtPath(User.dirname+User.mri,function(mri) {
+			resolve(encode(mri));
+		});
+		if(brain)
+			resolve(encode(mri));
+    });
+    return pr;
+}
+function saveNifti(atlas) {
 	if(debug>=1) console.log("[saveNifti]");
 
 	if(atlas && atlas.dim ) {
@@ -1556,7 +1551,6 @@ function fill(x,y,z,val,User,undoLayer)
 	Serve brain slices
 */
 function loadBrainNifti(nii,callback) {
-
 	brain=loadNifti(nii);
 		
 	console.log(new Date());
@@ -1776,7 +1770,7 @@ function drawSlice(brain,view,slice) {
 	var s,s2v=brain.s2v;
 	
 	switch(view) {
-		case 'sag':	brain_W=s2v.sdim[2]; brain_H=s2v.sdim[1]; brain_D=s2v.sdim[0]; break; // sagital
+		case 'sag':	brain_W=s2v.sdim[1]; brain_H=s2v.sdim[2]; brain_D=s2v.sdim[0]; break; // sagital
 		case 'cor':	brain_W=s2v.sdim[0]; brain_H=s2v.sdim[2]; brain_D=s2v.sdim[1]; break; // coronal
 		case 'axi':	brain_W=s2v.sdim[0]; brain_H=s2v.sdim[1]; brain_D=s2v.sdim[2]; break; // axial
 	}
@@ -1804,6 +1798,8 @@ function drawSlice(brain,view,slice) {
 		frameData[4*j+3] = 0xFF; // alpha - ignored in JPEGs
 		j++;
 	}
+	
+	console.log("W,H:",brain_W,brain_H);
 
 	var rawImageData = {
 	  data: frameData,
