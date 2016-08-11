@@ -1014,8 +1014,7 @@ var AtlasMakerWidget = {
 			me.msg0=msg;
 		}
 	
-		var	layer=me.atlas;
-		var	dim=layer.dim;
+		var	dim=me.atlas.dim;
 	
 		var	coord={"x":x,"y":y,"z":usr.slice};
 		if(usr.x0<0) {
@@ -1049,16 +1048,12 @@ var AtlasMakerWidget = {
 	
 		var	i,
 			ind,			// voxel index
-			val,			// voxel delta-value, such that -=val undoes
-			layer=me.atlas;
+			val;			// voxel delta-value, such that -=val undoes
 		for(i=0;i<voxels.length;i++) {
 			ind=voxels[i][0];
 			val=voxels[i][1];
 			
-			/*
-			layer.data[ind]-=val;	// TODO-UNDO: move from delta-value to absolute
-			*/
-			layer.data[ind]=val;
+			me.atlas.data[ind]=val;
 		}
 
 		me.drawImages();
@@ -1068,10 +1063,10 @@ var AtlasMakerWidget = {
 		var l=me.traceLog(fill);if(l)console.log(l);
 	
 		var	Q=[],n;
-		var	layer=me.atlas;
-		var	dim=layer.dim;
+		var	atlas=me.atlas;
+		var	dim=atlas.dim;
 		var	i;
-		var bval=layer.data[me.slice2index(x,y,z,myView)]; // background-value: value of the voxel where the click occurred
+		var bval=atlas.data[me.slice2index(x,y,z,myView)]; // background-value: value of the voxel where the click occurred
 		
 		if(bval==val)	// nothing to do
 			return;
@@ -1081,15 +1076,15 @@ var AtlasMakerWidget = {
 			n=Q.pop();
 			x=n.x;
 			y=n.y;
-			if(layer.data[me.slice2index(x,y,z,myView)]==bval) {
-				layer.data[me.slice2index(x,y,z,myView)]=val;
-				if(x-1>=0         && layer.data[me.slice2index(x-1,y,z,myView)]==bval)
+			if(atlas.data[me.slice2index(x,y,z,myView)]==bval) {
+				atlas.data[me.slice2index(x,y,z,myView)]=val;
+				if(x-1>=0         && atlas.data[me.slice2index(x-1,y,z,myView)]==bval)
 					Q.push({"x":x-1,"y":y});
-				if(x+1<me.brain_W && layer.data[me.slice2index(x+1,y,z,myView)]==bval)
+				if(x+1<me.brain_W && atlas.data[me.slice2index(x+1,y,z,myView)]==bval)
 					Q.push({"x":x+1,"y":y});
-				if(y-1>=0         && layer.data[me.slice2index(x,y-1,z,myView)]==bval)
+				if(y-1>=0         && atlas.data[me.slice2index(x,y-1,z,myView)]==bval)
 					Q.push({"x":x,"y":y-1});
-				if(y+1<me.brain_H && layer.data[me.slice2index(x,y+1,z,myView)]==bval)
+				if(y+1<me.brain_H && atlas.data[me.slice2index(x,y+1,z,myView)]==bval)
 					Q.push({"x":x,"y":y+1});
 			}
 		}
@@ -1102,8 +1097,8 @@ var AtlasMakerWidget = {
 		// Bresenham's line algorithm adapted from
 		// http://stackoverflow.com/questions/4672279/bresenham-algorithm-in-javascript
 
-		var	layer=me.atlas;
-		var	dim=layer.dim;
+		var	atlas=me.atlas;
+		var	dim=atlas.dim;
 		var	xyzi1=new Array(4);
 		var	xyzi2=new Array(4);
 		var	i;
@@ -1129,7 +1124,7 @@ var AtlasMakerWidget = {
 		for(j=0;j<usr.penSize;j++)
 		for(k=0;k<usr.penSize;k++) {
 			i=me.slice2index(x1+j,y1+k,z,usr.view);
-			layer.data[i]=val;
+			atlas.data[i]=val;
 		}
 	
 		while (!((x1 == x2) && (y1 == y2))) {
@@ -1145,7 +1140,7 @@ var AtlasMakerWidget = {
 			for(j=0;j<usr.penSize;j++)
 			for(k=0;k<usr.penSize;k++) {
 				i=me.slice2index(x1+j,y1+k,z,usr.view);
-				layer.data[i]=val;
+				atlas.data[i]=val;
 			}
 		}
 		me.drawImages();
@@ -1154,8 +1149,7 @@ var AtlasMakerWidget = {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(slice2index,3);if(l)console.log(l);
 	
-		var	layer=me.atlas;
-		var	dim=layer.dim;
+		var	dim=me.atlas.dim;
 		var	x,y,z,i;
 		switch(myView) {
 			case 'sag':	x=mz; y=mx; z=my;break; // sagital
@@ -1172,8 +1166,7 @@ var AtlasMakerWidget = {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(slice2xyzi,1);if(l)console.log(l);
 	
-		var	layer=me.atlas;
-		var	dim=layer.dim;
+		var	dim=me.atlas.dim;
 		var	x,y,z,i;
 		switch(myView) {
 			case 'sag':	x=mz; y=mx; z=my;break; // sagital
@@ -1266,12 +1259,12 @@ var AtlasMakerWidget = {
 					case "nii": {
 						var	inflate=new pako.Inflate();
 						inflate.push(data,true);
-						var layer=new Object();
-						layer.data=inflate.result;
-						layer.name=me.atlasFilename;
-						layer.dim=me.brain_dim;
+						var atlas=new Object();
+						atlas.data=inflate.result;
+						atlas.name=me.atlasFilename;
+						atlas.dim=me.brain_dim;
 				
-						me.atlas=layer;
+						me.atlas=atlas;
 
 						me.configureBrainImage();
 						me.configureAtlasImage();
@@ -1286,7 +1279,7 @@ var AtlasMakerWidget = {
 
 						// setup download link
 						var	link=me.container.find("span#download_atlas");
-						link.html("<a class='download' href='"+me.User.dirname+me.User.atlasFilename+"'><img src='/img/download.svg' style='vertical-align:middle'/></a>"+layer.name);
+						link.html("<a class='download' href='"+me.User.dirname+me.User.atlasFilename+"'><img src='/img/download.svg' style='vertical-align:middle'/></a>"+atlas.name);
 						break;
 					}
 					case "jpg": {
