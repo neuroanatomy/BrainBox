@@ -1113,6 +1113,7 @@ function loadNifti(nii) {
 	var hdr1=niijs.parseHeader(nii); // computes space directions and space origin
 	mri.dir=hdr1.spaceDirections;
 	mri.ori=hdr1.spaceOrigin;
+	mri.n2s=computeScreenTransformation(mri); // compute the transformation from voxel space to screen space
 	
 	switch(mri.datatype) {
 		case 2: // UCHAR
@@ -1694,40 +1695,45 @@ function subVecVec(a,b) {
 function addVecVec(a,b) {
 	return [a[0]+b[0],a[1]+b[1],a[2]+b[2]];
 }
-function drawSlice(brain,view,slice) {
-	var x,y,i,j;
-	var brain_W, brain_H;
-	var ys,ya,yc;
-	var val;
-	
+function computeScreenTransformation(brain) {
 	// n: native voxel coordinates
 	// w: world dimensions
 	// s: screen pixel coordinates
-	
 	var wori=brain.ori;
 	// space directions are transposed!
 	var n2w=[[],[],[]];
 	for(j in brain.dir)
 		for(i in brain.dir[j]) n2w[i][j]=brain.dir[j][i];
-	var w2n=invMat(n2w);
 	var wpixdim=subVecVec(mulMatVec(n2w,[1,1,1]),mulMatVec(n2w,[0,0,0]));
-	
 	// min and max world coordinates
 	var wnmax=addVecVec(mulMatVec(n2w,brain.dim),wori);
 	var wnmin=addVecVec(mulMatVec(n2w,[0,0,0]),wori);
-	
 	var wmin=[Math.min(wnmin[0],wnmax[0]),Math.min(wnmin[1],wnmax[1]),Math.min(wnmin[2],wnmax[2])];
 	var wmax=[Math.max(wnmin[0],wnmax[0]),Math.max(wnmin[1],wnmax[1]),Math.max(wnmin[2],wnmax[2])];
-	var sdim=[(wmax[0]-wmin[0])/Math.abs(wpixdim[0]),(wmax[1]-wmin[1])/Math.abs(wpixdim[1]),(wmax[2]-wmin[2])/Math.abs(wpixdim[2])];
-	
 	var w2s=[[1/Math.abs(wpixdim[0]),0,0],[0,1/Math.abs(wpixdim[1]),0],[0,0,1/Math.abs(wpixdim[2])]];
-	var sori=[-wmin[0]/Math.abs(wpixdim[0]),-wmin[1]/Math.abs(wpixdim[1]),-wmin[2]/Math.abs(wpixdim[2])];
-	var s2w=invMat(w2s);
 
+	var n2s = {
+		sdim: [(wmax[0]-wmin[0])/Math.abs(wpixdim[0]),(wmax[1]-wmin[1])/Math.abs(wpixdim[1]),(wmax[2]-wmin[2])/Math.abs(wpixdim[2])],
+		s2w: invMat(w2s),
+		sori: [-wmin[0]/Math.abs(wpixdim[0]),-wmin[1]/Math.abs(wpixdim[1]),-wmin[2]/Math.abs(wpixdim[2])],
+		w2n: invMat(n2w),
+		wori: wori
+	};
+	
+	return n2s;
+}
+
+function drawSlice(brain,view,slice) {
+	var x,y,i,j;
+	var brain_W, brain_H, brain_D;
+	var ys,ya,yc;
+	var val;
+	var n2s=brain.n2s;
+	
 	switch(view) {
-		case 'sag':	brain_W=sdim[2]; brain_H=sdim[1]; brain_D=sdim[0]; break; // sagital
-		case 'cor':	brain_W=sdim[0]; brain_H=sdim[2]; brain_D=sdim[1]; break; // coronal
-		case 'axi':	brain_W=sdim[0]; brain_H=sdim[1]; brain_D=sdim[2]; break; // axial
+		case 'sag':	brain_W=n2s.sdim[2]; brain_H=n2s.sdim[1]; brain_D=n2s.sdim[0]; break; // sagital
+		case 'cor':	brain_W=n2s.sdim[0]; brain_H=n2s.sdim[2]; brain_D=n2s.sdim[1]; break; // coronal
+		case 'axi':	brain_W=n2s.sdim[0]; brain_H=n2s.sdim[1]; brain_D=n2s.sdim[2]; break; // axial
 	}
 
 	var frameData = new Buffer(brain_W * brain_H * 4);
@@ -1746,8 +1752,8 @@ function drawSlice(brain,view,slice) {
 			case 'cor': s=[x,yc,brain_H-1-y]; break;
 			case 'axi': s=[x,brain_H-1-y,ya]; break;
 		}
-		w=mulMatVec(s2w,subVecVec(s,sori)); // screen to world: w=s2w*(s-sori)
-		n=mulMatVec(w2n,subVecVec(w,wori)); // world to native
+		w=mulMatVec(n2s.s2w,subVecVec(s,n2s.sori)); // screen to world: w=s2w*(s-sori)
+		n=mulMatVec(n2s.w2n,subVecVec(w,n2s.wori)); // world to native
 		n1=[Math.round(n[0]),Math.round(n[1]),Math.round(n[2])]; // round to integer
 
 		// compute i
