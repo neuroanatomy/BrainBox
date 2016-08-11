@@ -791,7 +791,7 @@ function receivePaintMessage(data) {
 
 	var	msg=data.data;
 	var	sourceUS=getUserFromUserId(data.uid);			// user data
-	var c=msg.c;				// command
+	var c=msg.c;		// command
 	var x=msg.x;		// x coordinate
 	var y=msg.y;		// y coordinate
 	var undoLayer=getCurrentUndoLayer(sourceUS.User);	// current undoLayer for user
@@ -1113,7 +1113,7 @@ function loadNifti(nii) {
 	var hdr1=niijs.parseHeader(nii); // computes space directions and space origin
 	mri.dir=hdr1.spaceDirections;
 	mri.ori=hdr1.spaceOrigin;
-	mri.n2s=computeScreenTransformation(mri); // compute the transformation from voxel space to screen space
+	computeS2VTransformation(mri); // compute the transformation from voxel space to screen space
 	
 	switch(mri.datatype) {
 		case 2: // UCHAR
@@ -1350,7 +1350,8 @@ function undo(User) {
 	*/
 	var arr=[];
 	var msg;
-	var	vol=Atlases[User.iAtlas].data;
+	var atlas=Atlases[User.iAtlas];
+	var	vol=atlas.data;
 	var val;
 
 	for(j in undoLayer.actions) {
@@ -1377,7 +1378,8 @@ function paintxy(u,c,x,y,User,undoLayer)
 	[issue: undoLayer also has a User field. Maybe only undoLayer should be kept?]
 */
 {
-	if(Atlases[User.iAtlas].data==undefined) {
+	var atlas=Atlases[User.iAtlas];
+	if(atlas.data==undefined) {
 		console.log(new Date(),"ERROR: No atlas to draw into");
 		return;
 	}
@@ -1418,14 +1420,23 @@ function paintxy(u,c,x,y,User,undoLayer)
 }
 function paintVoxel(mx,my,mz,User,vol,val,undoLayer) {
 	var	view=User.view;
-	var	dim=Atlases[User.iAtlas].dim;
+	var atlas=Atlases[User.iAtlas];
+	var	dim=atlas.dim;
 	var	x,y,z;
-	var	i=-1;
+		
 	switch(view) {
 		case 'sag':	x=mz; y=mx; z=my;break; // sagital
 		case 'cor':	x=mx; y=mz; z=my;break; // coronal
 		case 'axi':	x=mx; y=my; z=mz;break; // axial
-	}	
+	}
+
+/*
+	TRANSFORMATION FROM SCREEN SPACE TO VOXEL SPACE
+
+	var s,v;
+	s=[x,y,z];
+	i=S2I(s,atlas);
+*/	
 	if(z>=0&&z<dim[2]&&y>=0&&y<dim[1]&&x>=0&&x<dim[0])
 		i=z*dim[1]*dim[0]+y*dim[0]+x;
 	
@@ -1437,9 +1448,19 @@ function paintVoxel(mx,my,mz,User,vol,val,undoLayer) {
 function sliceXYZ2index(mx,my,mz,User)
 {
 	var	view=User.view;
-	var	dim=Atlases[User.iAtlas].dim;
+	var atlas=Atlases[User.iAtlas];
+	var	dim=atlas.dim;
 	var	x,y,z;
 	var	i=-1;
+
+/*
+	TRANSFORMATION FROM SCREEN SPACE TO VOXEL SPACE
+
+	var s,v;
+	s=[x,y,z];
+	i=S2I(s,atlas);
+*/
+
 	switch(view) {
 		case 'sag':	x=mz; y=mx; z=my;break; // sagital
 		case 'cor':	x=mx; y=mz; z=my;break; // coronal
@@ -1454,8 +1475,9 @@ function line(x,y,val,User,undoLayer)
 	// Bresenham's line algorithm adapted from
 	// http://stackoverflow.com/questions/4672279/bresenham-algorithm-in-javascript
 
-	var	vol=Atlases[User.iAtlas].data;
-	var	dim=Atlases[User.iAtlas].dim;
+	var atlas=Atlases[User.iAtlas];
+	var	vol=atlas.data;
+	var	dim=atlas.dim;
 	var	x1=User.x0;
 	var y1=User.y0;
 	var	z=User.slice;
@@ -1695,45 +1717,68 @@ function subVecVec(a,b) {
 function addVecVec(a,b) {
 	return [a[0]+b[0],a[1]+b[1],a[2]+b[2]];
 }
-function computeScreenTransformation(brain) {
-	// n: native voxel coordinates
-	// w: world dimensions
-	// s: screen pixel coordinates
-	var wori=brain.ori;
+function computeS2VTransformation(mri) {
+	/*
+		The basic transformation is
+		w = v2w * n + wori
+		
+		In what follows:
+		v: native voxel coordinates
+		w: world dimensions
+		s: screen pixel coordinates
+	*/ 
+	var wori=mri.ori;
 	// space directions are transposed!
-	var n2w=[[],[],[]];
-	for(j in brain.dir)
-		for(i in brain.dir[j]) n2w[i][j]=brain.dir[j][i];
-	var wpixdim=subVecVec(mulMatVec(n2w,[1,1,1]),mulMatVec(n2w,[0,0,0]));
+	var v2w=[[],[],[]];
+	for(j in mri.dir)
+		for(i in mri.dir[j]) v2w[i][j]=mri.dir[j][i];
+	var wpixdim=subVecVec(mulMatVec(v2w,[1,1,1]),mulMatVec(v2w,[0,0,0]));
 	// min and max world coordinates
-	var wnmax=addVecVec(mulMatVec(n2w,brain.dim),wori);
-	var wnmin=addVecVec(mulMatVec(n2w,[0,0,0]),wori);
-	var wmin=[Math.min(wnmin[0],wnmax[0]),Math.min(wnmin[1],wnmax[1]),Math.min(wnmin[2],wnmax[2])];
-	var wmax=[Math.max(wnmin[0],wnmax[0]),Math.max(wnmin[1],wnmax[1]),Math.max(wnmin[2],wnmax[2])];
+	var wvmax=addVecVec(mulMatVec(v2w,mri.dim),wori);
+	var wvmin=addVecVec(mulMatVec(v2w,[0,0,0]),wori);
+	var wmin=[Math.min(wvmin[0],wvmax[0]),Math.min(wvmin[1],wvmax[1]),Math.min(wvmin[2],wvmax[2])];
+	var wmax=[Math.max(wvmin[0],wvmax[0]),Math.max(wvmin[1],wvmax[1]),Math.max(wvmin[2],wvmax[2])];
 	var w2s=[[1/Math.abs(wpixdim[0]),0,0],[0,1/Math.abs(wpixdim[1]),0],[0,0,1/Math.abs(wpixdim[2])]];
 
-	var n2s = {
+	mri.s2v = {
 		sdim: [(wmax[0]-wmin[0])/Math.abs(wpixdim[0]),(wmax[1]-wmin[1])/Math.abs(wpixdim[1]),(wmax[2]-wmin[2])/Math.abs(wpixdim[2])],
 		s2w: invMat(w2s),
 		sori: [-wmin[0]/Math.abs(wpixdim[0]),-wmin[1]/Math.abs(wpixdim[1]),-wmin[2]/Math.abs(wpixdim[2])],
-		w2n: invMat(n2w),
+		w2v: invMat(v2w),
 		wori: wori
 	};
 	
-	return n2s;
+	console.log(mri.s2v);
 }
-
+function S2V(s,mri) {
+	var s2v=mri.s2v;
+	var i,w,s,v,v1=[];
+	w=mulMatVec(s2v.s2w,subVecVec(s,s2v.sori)); // screen to world: w=s2w*(s-sori)
+	v=mulMatVec(s2v.w2v,subVecVec(w,s2v.wori)); // world to voxel
+	v1=[Math.round(v[0]),Math.round(v[1]),Math.round(v[2])]; // round to integer
+	return v1;
+}
+function S2I(s,mri) {
+	var s2v=mri.s2v;
+	var i=null,w,s,v;
+	w=mulMatVec(s2v.s2w,subVecVec(s,s2v.sori)); // screen to world: w=s2w*(s-sori)
+	v=mulMatVec(s2v.w2v,subVecVec(w,s2v.wori)); // world to voxel
+	v=[Math.round(v[0]),Math.round(v[1]),Math.round(v[2])]; // round to integer
+	if(v[0]>=0&&v[0]<mri.dim[0]&&v[0]>=0&&v[0]<mri.dim[0]&&v[0]>=0&&v[0]<mri.dim[0])
+		i= v[2]*mri.dim[1]*mri.dim[0]+ v[1]*mri.dim[0] +v[0];
+	return i;
+}
 function drawSlice(brain,view,slice) {
 	var x,y,i,j;
 	var brain_W, brain_H, brain_D;
 	var ys,ya,yc;
 	var val;
-	var n2s=brain.n2s;
+	var s,s2v=brain.s2v;
 	
 	switch(view) {
-		case 'sag':	brain_W=n2s.sdim[2]; brain_H=n2s.sdim[1]; brain_D=n2s.sdim[0]; break; // sagital
-		case 'cor':	brain_W=n2s.sdim[0]; brain_H=n2s.sdim[2]; brain_D=n2s.sdim[1]; break; // coronal
-		case 'axi':	brain_W=n2s.sdim[0]; brain_H=n2s.sdim[1]; brain_D=n2s.sdim[2]; break; // axial
+		case 'sag':	brain_W=s2v.sdim[2]; brain_H=s2v.sdim[1]; brain_D=s2v.sdim[0]; break; // sagital
+		case 'cor':	brain_W=s2v.sdim[0]; brain_H=s2v.sdim[2]; brain_D=s2v.sdim[1]; break; // coronal
+		case 'axi':	brain_W=s2v.sdim[0]; brain_H=s2v.sdim[1]; brain_D=s2v.sdim[2]; break; // axial
 	}
 
 	var frameData = new Buffer(brain_W * brain_H * 4);
@@ -1744,7 +1789,6 @@ function drawSlice(brain,view,slice) {
 		case 'cor':yc=slice; break;
 		case 'axi':ya=slice; break;
 	}
-	var w,s,n,n1=[];
 	for(y=0;y<brain_H;y++)
 	for(x=0;x<brain_W;x++) {
 		switch(view) {
@@ -1752,13 +1796,7 @@ function drawSlice(brain,view,slice) {
 			case 'cor': s=[x,yc,brain_H-1-y]; break;
 			case 'axi': s=[x,brain_H-1-y,ya]; break;
 		}
-		w=mulMatVec(n2s.s2w,subVecVec(s,n2s.sori)); // screen to world: w=s2w*(s-sori)
-		n=mulMatVec(n2s.w2n,subVecVec(w,n2s.wori)); // world to native
-		n1=[Math.round(n[0]),Math.round(n[1]),Math.round(n[2])]; // round to integer
-
-		// compute i
-		i= n1[2]*brain.dim[1]*brain.dim[0]+ n1[1]*brain.dim[0]+n1[0];
-		
+		i=S2I(s,brain);
 		val=255*(brain.data[i]-brain.min)/(brain.max-brain.min);
 		frameData[4*j+0] = val; // red
 		frameData[4*j+1] = val; // green
