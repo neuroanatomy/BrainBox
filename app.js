@@ -13,9 +13,10 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-
+var dateFormat = require('dateformat');
 var mustacheExpress = require('mustache-express');
 var crypto = require('crypto');
+var async = require("async");
 
 var mongo = require('mongodb');
 var monk = require('monk');
@@ -51,7 +52,7 @@ app.use(function(req, res, next){
 //app.use('/', routes);
 // app.use('/users', users);
 
-app.use('/mri', require('./api/mri/'));
+
 
 //{-----passport
 var session = require('express-session');
@@ -94,7 +95,7 @@ app.get('/auth/github/callback',
 	function(req, res) {
 		// successfully loged in. Check if user is new
 		db.get('user').findOne({nickname:req.user.username},"-_id")
-		.then(function(json) {
+		.then(function(json) {Ò
 			if(!json) {
 				// insert new user
 				json={
@@ -127,26 +128,30 @@ app.get('/', function(req,res) { // /auth/github
 
 // });
 app.get('/user/:id', function(req, res) {
+
 	var login=	(req.isAuthenticated())?
 				("<a href='/user/"+req.user.username+"'>"+req.user.username+"</a> (<a href='/logout'>Log Out</a>)")
 				:("<a href='/auth/github'>Log in with GitHub</a>");
 	var username=req.params.id;
 	db.get('user').findOne({nickname:username},"-_id")
 	.then(function(json) {
+
 		// gather user information on mri, atlas and projects
 		var mri,atlas,projects;
 		db.get('mri').find({owner:username,backup:{$exists:false}})
 		.then(function(arr) {
+			console.log(arr);
 			mri=arr;
 			return db.get('mri').find({"mri.atlas":{$elemMatch:{owner:username}},backup:{$exists:false}});
 		})
 		.then(function(arr) {
+			console.log(arr);
 			atlas=arr;
 			return db.get('project').find({owner:username,backup:{$exists:false}});
 		})
 		.then(function(arr) {
 			projects=arr;
-			
+			console.log(arr);
 			var context={
 				title: req.params.id,
 				userInfo: JSON.stringify(json),
@@ -160,6 +165,7 @@ app.get('/user/:id', function(req, res) {
 				volDimensions:o.dim.join(" x ")
 			}});
 			atlas.map(function(o){
+				console.log("this is fucked up");
 				var i,arr=[];
 				for(i in o.mri.atlas) context.atlasFiles.push({
 					url:o.source,
@@ -178,6 +184,7 @@ app.get('/user/:id', function(req, res) {
 				owner:o.owner,
 				modified:dateFormat(o.modified,"d mmm yyyy, HH:MM")
 			}});
+			
 			context.username=json.name;
 			context.nickname=json.nickname;
 			context.joined=dateFormat(json.joined, "dddd d mmm yyyy, HH:MM");
@@ -185,7 +192,8 @@ app.get('/user/:id', function(req, res) {
 			context.numAtlas=context.atlasFiles.length;
 			context.numProjects=context.projects.length;
 			context.avatar=json.avatarURL;
-			res.render('user',context);
+			
+			res.render('user',context).end();;
 		});
 	});
 });
@@ -195,6 +203,7 @@ app.get('/project/:id', function(req, res) {
 				:("<a href='/auth/github'>Log in with GitHub</a>");
 	db.get('project').findOne({shortname:req.params.id},"-_id")
 	.then(function(json) {
+		console.log(json);
 		async.each(
 			json.files,
 			function(item,cb) {
@@ -380,5 +389,7 @@ function downloadMRI(myurl,req,res,callback) {
 		callback();
 	});
 }
+
+app.use('/mri', require('./api/mri/'));
 
 module.exports = app;

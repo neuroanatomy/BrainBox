@@ -92,7 +92,7 @@ var download = function(req, res) {
 				:("<a href='/auth/github'>Log in with GitHub</a>");
 	var myurl = req.query.url;
 	var hash = crypto.createHash('md5').update(myurl).digest('hex');
-	
+	console.log("yoyo what's up")	
 	req.db.get('mri').find({url:"/data/"+hash+"/"}, {fields:{_id:0},sort:{$natural:-1},limit:1})
 	.then(function(json) {
 		console.log(json);
