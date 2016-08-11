@@ -1109,18 +1109,8 @@ function loadNifti(nii) {
 	mri.pixdim[2]=nii.readFloatLE(88);
 	vox_offset=nii.readFloatLE(108);
 	
-/*	var sd=niijs.parseHeader(nii).spaceDirections;
-	var i,j;
-	for(j in sd) for(i in sd[j]) {
-		sd[j][i]=Math.round(sd[j][i]);
-		sd[j][i]=sd[j][i]/(sd[j][i]?Math.abs(sd[j][i]):1);	// raw values
-		//sd[j][i]=sd[j][i]/(sd[j][i]?sd[j][i]:1);	// absolute values
-	}
-*/
 	var hdr=niijs.parseNIfTIHeader(nii);
-	var hdr1=niijs.parseHeader(nii);
-/**/
-	console.log(hdr);
+	var hdr1=niijs.parseHeader(nii); // computes space directions and space origin
 	mri.dir=hdr1.spaceDirections;
 	mri.ori=hdr1.spaceOrigin;
 	
@@ -1710,58 +1700,29 @@ function drawSlice(brain,view,slice) {
 	var ys,ya,yc;
 	var val;
 	
-	var wori=brain.ori;
+	// n: native voxel coordinates
+	// w: world dimensions
+	// s: screen pixel coordinates
 	
+	var wori=brain.ori;
 	// space directions are transposed!
 	var n2w=[[],[],[]];
 	for(j in brain.dir)
 		for(i in brain.dir[j]) n2w[i][j]=brain.dir[j][i];
-	
 	var w2n=invMat(n2w);
+	var wpixdim=subVecVec(mulMatVec(n2w,[1,1,1]),mulMatVec(n2w,[0,0,0]));
 	
-	var nmax=brain.dim;
-	var wnmax=addVecVec(mulMatVec(n2w,nmax),wori);
-	
-	var nmin=[0,0,0];
-	var wnmin=addVecVec(mulMatVec(n2w,nmin),wori);
-	
-	var nori=mulMatVec(w2n,subVecVec([0,0,0],wori));
-	
-	console.log("should be 0:",addVecVec(mulMatVec(n2w,nori),wori));
+	// min and max world coordinates
+	var wnmax=addVecVec(mulMatVec(n2w,brain.dim),wori);
+	var wnmin=addVecVec(mulMatVec(n2w,[0,0,0]),wori);
 	
 	var wmin=[Math.min(wnmin[0],wnmax[0]),Math.min(wnmin[1],wnmax[1]),Math.min(wnmin[2],wnmax[2])];
 	var wmax=[Math.max(wnmin[0],wnmax[0]),Math.max(wnmin[1],wnmax[1]),Math.max(wnmin[2],wnmax[2])];
-	
-	var wpixdim=subVecVec(mulMatVec(n2w,[1,1,1]),mulMatVec(n2w,[0,0,0]));
-	var wi=subVecVec(mulMatVec(n2w,[1,0,0]),mulMatVec(n2w,[0,0,0]));
-	var wj=subVecVec(mulMatVec(n2w,[0,1,0]),mulMatVec(n2w,[0,0,0]));
-	var wk=subVecVec(mulMatVec(n2w,[0,0,1]),mulMatVec(n2w,[0,0,0]));
+	var sdim=[(wmax[0]-wmin[0])/Math.abs(wpixdim[0]),(wmax[1]-wmin[1])/Math.abs(wpixdim[1]),(wmax[2]-wmin[2])/Math.abs(wpixdim[2])];
 	
 	var w2s=[[1/Math.abs(wpixdim[0]),0,0],[0,1/Math.abs(wpixdim[1]),0],[0,0,1/Math.abs(wpixdim[2])]];
 	var sori=[-wmin[0]/Math.abs(wpixdim[0]),-wmin[1]/Math.abs(wpixdim[1]),-wmin[2]/Math.abs(wpixdim[2])];
-	var swmin=addVecVec(mulMatVec(w2s,wmin),sori);
-	var swmax=addVecVec(mulMatVec(w2s,wmax),sori);
-	
 	var s2w=invMat(w2s);
-	
-	var sdim=[(wmax[0]-wmin[0])/Math.abs(wpixdim[0]),(wmax[1]-wmin[1])/Math.abs(wpixdim[1]),(wmax[2]-wmin[2])/Math.abs(wpixdim[2])];
-
-	console.log("n2w",n2w);
-	console.log("wori",wori);
-	console.log("w2s",w2s);
-	console.log("sori",sori);
-	console.log("nori",nori);
-	console.log("wpixdim",wpixdim);
-	console.log("wnmin",wnmin);
-	console.log("wnmax",wnmax);
-	console.log("wi",wi);
-	console.log("wj",wj);
-	console.log("wk",wk);
-	console.log("wmin",wmin);
-	console.log("wmax",wmax);
-	console.log("swmin",swmin);
-	console.log("swmax",swmax);
-	console.log("sdim",sdim);
 
 	switch(view) {
 		case 'sag':	brain_W=sdim[2]; brain_H=sdim[1]; brain_D=sdim[0]; break; // sagital
@@ -1785,17 +1746,9 @@ function drawSlice(brain,view,slice) {
 			case 'cor': s=[x,yc,brain_H-1-y]; break;
 			case 'axi': s=[x,brain_H-1-y,ya]; break;
 		}
-		
-		// move from s to w: s= w2s*w +sori, s2w*(s-sori)=w
-		w=mulMatVec(s2w,subVecVec(s,sori));
-		
-		// then from w to n
-		n=mulMatVec(w2n,subVecVec(w,wori));
-		
-		// round n to closest integer
-		n1[0]=Math.round(n[0]);
-		n1[1]=Math.round(n[1]);
-		n1[2]=Math.round(n[2]);
+		w=mulMatVec(s2w,subVecVec(s,sori)); // screen to world: w=s2w*(s-sori)
+		n=mulMatVec(w2n,subVecVec(w,wori)); // world to native
+		n1=[Math.round(n[0]),Math.round(n[1]),Math.round(n[2])]; // round to integer
 
 		// compute i
 		i= n1[2]*brain.dim[1]*brain.dim[0]+ n1[1]*brain.dim[0]+n1[0];
