@@ -498,10 +498,6 @@ var AtlasMakerWidget = {
 		if(me.User.view==null)
 			me.User.view="sag";
 
-/*
-	TRANSFORMATION FROM VOXEL SPACE TO SCREEN SPACE
-*/
-
 		// init query image
 		switch(me.User.view) {
 			case 'sag':	me.brain_W=me.brain_dim[1]/*PA*/; me.brain_H=me.brain_dim[2]/*IS*/; me.brain_D=me.brain_dim[0]; me.brain_Wdim=me.brain_pixdim[1]; me.brain_Hdim=me.brain_pixdim[2]; break; // sagital
@@ -613,21 +609,16 @@ var AtlasMakerWidget = {
 
 		var	data=me.atlas.data;
 		var	dim=me.atlas.dim;
-		var	s,val;
+		var	val;
 
 		ys=yc=ya=slice;
 		for(y=0;y<me.brain_H;y++)
 		for(x=0;x<me.brain_W;x++) {
 			switch(view) {
-				case 'sag':s=[y,x,ys]; break;
-				case 'cor':s=[y,yc,x]; break;
-				case 'axi':s=[ya,y,x]; break;
+				case 'sag':i= y*dim[1]/*PA*/*dim[0]/*LR*/+ x*dim[0]/*LR*/+ys; break;
+				case 'cor':i= y*dim[1]/*PA*/*dim[0]/*LR*/+yc*dim[0]/*LR*/+x; break;
+				case 'axi':i=ya*dim[1]/*PA*/*dim[0]/*LR*/+ y*dim[0]/*LR*/+x; break;
 			}
-
-/*
-	TRANSFORMATION FROM SCREEN SPACE TO VOXEL INDEX
-*/
-			i= s[2]*dim[1]*dim[0]+ s[1]*dim[0]+s[0]; 
 			
 			var c=me.ontologyValueToColor(data[i]);
 			var alpha=(data[i]>0)?255:0;
@@ -1155,19 +1146,13 @@ var AtlasMakerWidget = {
 	
 		var	layer=me.atlas;
 		var	dim=layer.dim;
-		var	x,y,z,i;
+		var	x,y,z;
 		switch(myView) {
 			case 'sag':	x=mz; y=mx; z=my;break; // sagital
 			case 'cor':	x=mx; y=mz; z=my;break; // coronal
 			case 'axi':	x=mx; y=my; z=mz;break; // axial
 		}	
-		
-/*
-	TRANSFORMATION FROM SCREEN SPACE TO VOXEL INDEX
-*/
-		i=z*dim[1]*dim[0]+y*dim[0]+x;
-		
-		return i;
+		return z*dim[1]*dim[0]+y*dim[0]+x;	
 	},
 	slice2xyzi: function slice2xyzi(mx,my,mz,myView) {
 		var me=AtlasMakerWidget;
@@ -1181,12 +1166,20 @@ var AtlasMakerWidget = {
 			case 'cor':	x=mx; y=mz; z=my;break; // coronal
 			case 'axi':	x=mx; y=my; z=mz;break; // axial
 		}
-		
-/*
-	TRANSFORMATION FROM SCREEN SPACE TO VOXEL INDEX
-*/
 		i=z*dim[1]*dim[0]+y*dim[0]+x;
 		return [x,y,z,i];	
+	},
+	xyz2slice: function xyz2slice(x,y,z,myView) {
+		var me=AtlasMakerWidget;
+		var l=me.traceLog(xyz2slice);if(l)console.log(l);
+	
+		var	mx,my,mz;
+		switch(myView) {
+			case 'sag':	mz=x; mx=y; my=z;break; // sagital
+			case 'cor':	mx=x; mz=y; my=z;break; // coronal
+			case 'axi':	mx=x; my=y; mz=z;break; // axial
+		}	
+		return new Object({"x":x,"y":y,"z":z});	
 	},
 
 	//====================================================================================
