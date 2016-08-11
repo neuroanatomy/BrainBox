@@ -139,7 +139,7 @@ var str;
 
 function loadProjectFile(url) {
 	var params={url:url,view:"cor",slice:180,fullscreen:false};
-	$.get("/api/mri",{url:url})
+	$.get("/mri/json",{url:url})
 	.done(function from_loadProjectFile(data) {
 		params.info=data;
 		BrainBox.configureBrainBox(params)
