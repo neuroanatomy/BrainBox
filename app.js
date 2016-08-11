@@ -52,8 +52,6 @@ app.use(function(req, res, next){
 //app.use('/', routes);
 // app.use('/users', users);
 
-app.use('/mri', require('./api/mri/'));
-
 //{-----passport
 var session = require('express-session');
 var passport = require('passport');
@@ -112,6 +110,10 @@ app.get('/auth/github/callback',
 		res.redirect('/');
 	});
 //-----}
+
+
+
+app.use('/mri', require('./controller/mri/'));
 
 // GUI routes
 app.get('/', function(req,res) { // /auth/github
