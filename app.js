@@ -168,7 +168,7 @@ app.get('/user/:id', function(req, res) {
 				volDimensions:o.dim.join(" x ")
 			}});
 			atlas.map(function(o){
-				console.log("this is fucked up");
+				console.log("WARNING: this is not working");
 				var i,arr=[];
 				for(i in o.mri.atlas) context.atlasFiles.push({
 					url:o.source,
