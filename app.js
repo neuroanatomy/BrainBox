@@ -401,6 +401,8 @@ function downloadMRI(myurl,req,res,callback) {
 				included: (new Date()).toJSON(),
 				dim: mri.dim,
 				pixdim: mri.pixdim,
+				voxel2world: mri.v2w,
+				worldOrigin: mri.wori,
 				owner:username,
 				mri: {
 					brain: filename,
@@ -933,7 +935,7 @@ function receiveUserDataMessage(data,user_socket) {
 				atlasLoadedFlag=true;
 				break;
 			}
-		User.iAtlas=atlasLoadedFlag?i:Atlases.length;	// value i if it was found, or last available if it wasn't
+		User.iAtlas=atlasLoadedFlag?parseInt(i):Atlases.length;	// value i if it was found, or last available if it wasn't
 	
 		// 2. Send the atlas to the user (load it if required)
 		if(atlasLoadedFlag) {
@@ -999,10 +1001,10 @@ function sendPreviousUserDataMessage(newUS) {
 
 		if(found) {
 			for(i in US) {
-				if(US[i].s==newUS.s)
+				if(US[i].socket==newUS.socket)
 					continue;
 				var msg=JSON.stringify({type:"intro",user:US[i].User,uid:US[i].uid,description:"old user intro to new user"});
-				newUS.s.send(msg);
+				newUS.socket.send(msg);
 				n++;
 			}
 			if(debug) console.log("send user data from "+n+" users");
@@ -1042,7 +1044,7 @@ function broadcastPaintVolumeMessage(msg,User) {
 			if( US[i].User!=undefined &&
 				US[i].User.iAtlas!=User.iAtlas )
 				continue;
-			US[i].s.send(msg);
+			US[i].socket.send(msg);
 			n++;
 		}
 		if(debug) console.log("paintVolume message broadcasted to "+n+" users");
@@ -1057,7 +1059,7 @@ function sendDisconnectMessage(uid) {
 	try {
 		var n=0,i,msg=JSON.stringify({type:"disconnect",uid:uid});
 		for(i in US) {
-			US[i].s.send(msg);
+			US[i].socket.send(msg);
 			n++;
 		}
 		if(debug) console.log("user disconnect message sent to "+n+" users");
@@ -1095,7 +1097,7 @@ function loadNifti(nii) {
 	var mri={};
 
 	// standard nii header
-	var niiHdr=niijs.parseNIfTIHeader(nii); console.log(niiHdr);
+	var niiHdr=niijs.parseNIfTIHeader(nii);
 	var	sizeof_hdr=niiHdr.sizeof_hdr;
 	mri.dim=niiHdr.dim.slice(1);
 	mri.pixdim=niiHdr.pixdim.slice(1);
@@ -1416,24 +1418,28 @@ function paintxy(u,c,x,y,User,undoLayer)
 function paintVoxel(mx,my,mz,User,vol,val,undoLayer) {
 	var	view=User.view;
 	var atlas=Atlases[User.iAtlas];
-	var	dim=atlas.dim;
 	var	x,y,z;
-		
+	var sdim=User.s2v.sdim;
+
 	switch(view) {
-		case 'sag':	x=mz; y=mx; z=my;break; // sagital
-		case 'cor':	x=mx; y=mz; z=my;break; // coronal
-		case 'axi':	x=mx; y=my; z=mz;break; // axial
-	}
+		case 'sag':	x=mz; y=mx; z=sdim[2]-1-my;break; // sagital
+		case 'cor':	x=mx; y=mz; z=sdim[2]-1-my;break; // coronal
+		case 'axi':	x=mx; y=sdim[1]-1-my; z=mz;break; // axial
+	}	
 
 /*
 	TRANSFORMATION FROM SCREEN SPACE TO VOXEL SPACE
+*/	
 
 	var s,v;
 	s=[x,y,z];
-	i=S2I(s,atlas);
-*/	
+	
+	i=S2I(s,User);
+	
+	/*
 	if(z>=0&&z<dim[2]&&y>=0&&y<dim[1]&&x>=0&&x<dim[0])
 		i=z*dim[1]*dim[0]+y*dim[0]+x;
+	*/
 	
 	if(vol[i]!=val) {
 		undoLayer.actions[i]=vol[i];
@@ -1447,22 +1453,27 @@ function sliceXYZ2index(mx,my,mz,User)
 	var	dim=atlas.dim;
 	var	x,y,z;
 	var	i=-1;
-
-/*
-	TRANSFORMATION FROM SCREEN SPACE TO VOXEL SPACE
-
-	var s,v;
-	s=[x,y,z];
-	i=S2I(s,atlas);
-*/
+	var sdim=User.s2v.sdim;
 
 	switch(view) {
-		case 'sag':	x=mz; y=mx; z=my;break; // sagital
-		case 'cor':	x=mx; y=mz; z=my;break; // coronal
-		case 'axi':	x=mx; y=my; z=mz;break; // axial
+		case 'sag':	x=mz; y=mx; z=sdim[2]-1-my;break; // sagital
+		case 'cor':	x=mx; y=mz; z=sdim[2]-1-my;break; // coronal
+		case 'axi':	x=mx; y=sdim[1]-1-my; z=mz;break; // axial
 	}	
+/*
+	TRANSFORMATION FROM SCREEN SPACE TO VOXEL SPACE
+*/
+
+	var s;
+	s=[x,y,z];
+
+	i=S2I(s,User);
+		
+	/*
 	if(z>=0&&z<dim[2]&&y>=0&&y<dim[1]&&x>=0&&x<dim[0])
 		i=z*dim[1]*dim[0]+y*dim[0]+x;
+	*/
+	
 	return i;
 }
 function line(x,y,val,User,undoLayer)
@@ -1473,9 +1484,9 @@ function line(x,y,val,User,undoLayer)
 	var atlas=Atlases[User.iAtlas];
 	var	vol=atlas.data;
 	var	dim=atlas.dim;
-	var	x1=User.x0;
-	var y1=User.y0;
-	var	z=User.slice;
+	var	x1=User.x0; 	// screen coords
+	var y1=User.y0; 	// screen coords
+	var	z=User.slice;	// screen coords
 	var x2=x;
 	var y2=y;
 	var	i;
@@ -1714,7 +1725,7 @@ function addVecVec(a,b) {
 function computeS2VTransformation(mri) {
 	/*
 		The basic transformation is
-		w = v2w * n + wori
+		w = v2w * v + wori
 		
 		In what follows:
 		v: native voxel coordinates
@@ -1741,8 +1752,8 @@ function computeS2VTransformation(mri) {
 		w2v: invMat(v2w),
 		wori: wori
 	};
-	
-	console.log(mri.s2v);
+	mri.v2w=v2w;
+	mri.wori=wori;
 }
 function S2V(s,mri) {
 	var s2v=mri.s2v;
@@ -1786,9 +1797,9 @@ function drawSlice(brain,view,slice) {
 	for(y=0;y<brain_H;y++)
 	for(x=0;x<brain_W;x++) {
 		switch(view) {
-			case 'sag': s=[ys,x,brain_H-1-y]; break;
-			case 'cor': s=[x,yc,brain_H-1-y]; break;
-			case 'axi': s=[x,brain_H-1-y,ya]; break;
+			case 'sag': s=[ys,x,s2v.sdim[2]-1-y]; break;
+			case 'cor': s=[x,yc,s2v.sdim[2]-1-y]; break;
+			case 'axi': s=[x,s2v.sdim[1]-1-y,ya]; break;
 		}
 		i=S2I(s,brain);
 		val=255*(brain.data[i]-brain.min)/(brain.max-brain.min);
@@ -1799,8 +1810,6 @@ function drawSlice(brain,view,slice) {
 		j++;
 	}
 	
-	console.log("W,H:",brain_W,brain_H);
-
 	var rawImageData = {
 	  data: frameData,
 	  width: brain_W,
@@ -1821,7 +1830,7 @@ function drawSlice(brain,view,slice) {
 	
 	US
 		.uid
-		.s
+		.socket
 		.User
 			.view:		string, either 'sag', 'axi' or 'cor'
 			.tool:		string, either 'paint' or 'erase'

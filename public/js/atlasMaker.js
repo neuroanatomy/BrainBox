@@ -15,9 +15,15 @@ var AtlasMakerWidget = {
 	brain_Wdim:		null,
 	brain_Hdim:		null,
 	max:			0,
+	/*
+		{FIX: TRY TO KEEP ALL 3D STUFF INSIDE Users
+	*/
 	brain_dim:		new Array(3),
 	brain_pixdim:	new Array(3),
 	brain_datatype:	null,
+	/*
+		}
+	*/
 	brain_img:      {     img: null,
 						 view: null,
 						slice: null
@@ -146,8 +152,6 @@ var AtlasMakerWidget = {
 	changeSlice: function changeSlice(x) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(changeSlice,1);if(l)console.log(l);
-
-		console.log("to",x);
 
 		var max=$("#slice").data("max");
 		$("#slice").data("val",x);
@@ -471,6 +475,7 @@ var AtlasMakerWidget = {
 		mri.pixdim[1]=dv.getFloat32(84,true);
 		mri.pixdim[2]=dv.getFloat32(88,true);
 		vox_offset=dv.getFloat32(108,true);	
+		
 		switch(mri.datatype)
 		{
 			case 2: // UCHAR
@@ -500,22 +505,32 @@ var AtlasMakerWidget = {
 			
 /*
 	TRANSFORMATION FROM VOXEL SPACE TO SCREEN SPACE
+	DONE.
 */
-
+		var s2v=me.User.s2v;
+		switch(me.User.view) {
+			case 'sag':	me.brain_W=s2v.sdim[1]; me.brain_H=s2v.sdim[2]; me.brain_D=s2v.sdim[0]; me.brain_Wdim=s2v.wpixdim[1]; me.brain_Hdim=s2v.wpixdim[2]; break; // sagital
+			case 'cor':	me.brain_W=s2v.sdim[0]; me.brain_H=s2v.sdim[2]; me.brain_D=s2v.sdim[1]; me.brain_Wdim=s2v.wpixdim[0]; me.brain_Hdim=s2v.wpixdim[2]; break; // coronal
+			case 'axi':	me.brain_W=s2v.sdim[0]; me.brain_H=s2v.sdim[1]; me.brain_D=s2v.sdim[2]; me.brain_Wdim=s2v.wpixdim[0]; me.brain_Hdim=s2v.wpixdim[1]; break; // axial
+		}
 
 		// init query image
+		/*
 		switch(me.User.view) {
-			case 'sag':	me.brain_W=me.brain_dim[1]/*PA*/; me.brain_H=me.brain_dim[2]/*IS*/; me.brain_D=me.brain_dim[0]; me.brain_Wdim=me.brain_pixdim[1]; me.brain_Hdim=me.brain_pixdim[2]; break; // sagital
-			case 'cor':	me.brain_W=me.brain_dim[0]/*LR*/; me.brain_H=me.brain_dim[2]/*IS*/; me.brain_D=me.brain_dim[1]; me.brain_Wdim=me.brain_pixdim[0]; me.brain_Hdim=me.brain_pixdim[2]; break; // coronal
-			case 'axi':	me.brain_W=me.brain_dim[0]/*LR*/; me.brain_H=me.brain_dim[1]/*PA*/; me.brain_D=me.brain_dim[2]; me.brain_Wdim=me.brain_pixdim[0]; me.brain_Hdim=me.brain_pixdim[1]; break; // axial
+			case 'sag':	me.brain_W=me.brain_dim[1]; me.brain_H=me.brain_dim[2]; me.brain_D=me.brain_dim[0]; me.brain_Wdim=me.brain_pixdim[1]; me.brain_Hdim=me.brain_pixdim[2]; break; // sagital
+			case 'cor':	me.brain_W=me.brain_dim[0]; me.brain_H=me.brain_dim[2]; me.brain_D=me.brain_dim[1]; me.brain_Wdim=me.brain_pixdim[0]; me.brain_Hdim=me.brain_pixdim[2]; break; // coronal
+			case 'axi':	me.brain_W=me.brain_dim[0]; me.brain_H=me.brain_dim[1]; me.brain_D=me.brain_dim[2]; me.brain_Wdim=me.brain_pixdim[0]; me.brain_Hdim=me.brain_pixdim[1]; break; // axial
 		}
+		*/
 		me.canvas.width=me.brain_W;
 		me.canvas.height=me.brain_H*me.brain_Hdim/me.brain_Wdim;
 		me.brain_offcn.width=me.brain_W;
 		me.brain_offcn.height=me.brain_H;
 		me.brain_px=me.brain_offtx.getImageData(0,0,me.brain_offcn.width,me.brain_offcn.height);
 		
+		/*
 		me.User.dim=me.brain_dim;
+		*/
 		if(me.User.slice==null || me.User.slice>=me.brain_D)
 			me.User.slice=parseInt(me.brain_D/2);
 
@@ -596,8 +611,8 @@ var AtlasMakerWidget = {
 			me.displayInformation();
 
 			me.nearestNeighbour(me.context);
+			
 			me.context.drawImage(me.brain_img.img,0,0,me.brain_W,me.brain_H*me.brain_Hdim/me.brain_Wdim);
-
 			me.drawAtlasImage(me.flagLoadingImg.view,me.flagLoadingImg.slice);
 		}
 
@@ -620,15 +635,20 @@ var AtlasMakerWidget = {
 		for(y=0;y<me.brain_H;y++)
 		for(x=0;x<me.brain_W;x++) {
 			switch(view) {
-				case 'sag':s=[ys,x,y]; break;
-				case 'cor':s=[x,yc,y]; break;
-				case 'axi':s=[x,y,ya]; break;
+				case 'sag':s=[ys,x,me.brain_H-1-y]; break;
+				case 'cor':s=[x,yc,me.brain_H-1-y]; break;
+				case 'axi':s=[x,me.brain_H-1-y,ya]; break;
 			}
 			
 /*
 	TRANSFORM SCREEN SPACE INTO VOXEL INDEX
+	DONE.
 */
+			i=me.S2I(s,me.User);
+
+			/*
 			i= s[2]*dim[1]*dim[0]+ s[1]*dim[0]+ s[0];
+			*/
 			
 			var c=me.ontologyValueToColor(data[i]);
 			var alpha=(data[i]>0)?255:0;
@@ -1152,14 +1172,18 @@ var AtlasMakerWidget = {
 		var	dim=me.atlas.dim;
 		var	x,y,z,i;
 		switch(myView) {
-			case 'sag':	x=mz; y=mx; z=my;break; // sagital
-			case 'cor':	x=mx; y=mz; z=my;break; // coronal
-			case 'axi':	x=mx; y=my; z=mz;break; // axial
+			case 'sag':	x=mz; y=mx; z=me.brain_H-1-my;break; // sagital
+			case 'cor':	x=mx; y=mz; z=me.brain_H-1-my;break; // coronal
+			case 'axi':	x=mx; y=me.brain_H-1-my; z=mz;break; // axial
 		}
 /*
 	TRANSFORM SCREEN SPACE INTO VOXEL INDEX
 */
+		var s=[x,y,z];
+		i=me.S2I(s,me.User);
+		/*
 		i=z*dim[1]*dim[0]+y*dim[0]+x;
+		*/
 		return i;
 	},
 	slice2xyzi: function slice2xyzi(mx,my,mz,myView) {
@@ -1169,14 +1193,18 @@ var AtlasMakerWidget = {
 		var	dim=me.atlas.dim;
 		var	x,y,z,i;
 		switch(myView) {
-			case 'sag':	x=mz; y=mx; z=my;break; // sagital
-			case 'cor':	x=mx; y=mz; z=my;break; // coronal
-			case 'axi':	x=mx; y=my; z=mz;break; // axial
+			case 'sag':	x=mz; y=mx; z=me.brain_H-1-my;break; // sagital
+			case 'cor':	x=mx; y=mz; z=me.brain_H-1-my;break; // coronal
+			case 'axi':	x=mx; y=me.brain_H-1-my; z=mz;break; // axial
 		}
 /*
 	TRANSFORM SCREEN SPACE INTO VOXEL INDEX
 */
+		var s=[x,y,z];
+		i=me.S2I(s,me.User);
+		/*
 		i=z*dim[1]*dim[0]+y*dim[0]+x;
+		*/
 		return [x,y,z,i];	
 	},
 
@@ -1312,7 +1340,6 @@ var AtlasMakerWidget = {
 	
 		// Message: interaction message
 		var	data=JSON.parse(msg.data);
-		if(me.debug) console.log("message: "+data.type);
 	
 		// [deprecated]
 		// If we receive a message from an unknown user,
@@ -1427,7 +1454,7 @@ var AtlasMakerWidget = {
 	},
 	receivePaintMessage: function receivePaintMessage(data) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(receivePaintMessage);if(l)console.log(l);
+		var l=me.traceLog(receivePaintMessage,3);if(l)console.log(l);
 	
 		var	msg=data.data;
 		var u=data.uid;	// user
@@ -1586,7 +1613,7 @@ var AtlasMakerWidget = {
 		].join("\n"));
 		me.canvas = me.container.find('canvas')[0];
 		me.context = me.canvas.getContext('2d');
-
+		
 		// Add div to display slice number
 		me.container.find("#resizable").append("<svg id='info'></svg>");
 		
@@ -1712,6 +1739,11 @@ var AtlasMakerWidget = {
 		// (first here, once again further down)
 		me.User.dim=info.dim;
 		me.User.pixdim=info.pixdim;
+
+		// compute space transformations
+		me.User.v2w=info.voxel2world;
+		me.User.wori=info.worldOrigin;
+		me.computeS2VTransformation();
 		
 		me.flagLoadingImg={loading:false};
 		
@@ -1723,9 +1755,88 @@ var AtlasMakerWidget = {
 			me.brain_pixdim=info.pixdim;
 		else
 			me.brain_pixdim=[1,1,1];
+		
 
 		return def.resolve().promise();
 	},
+	/*
+		{Linear algebra
+	*/
+	computeS2VTransformation: function computeS2VTransformation() {
+		var me=AtlasMakerWidget;
+		var l=me.traceLog(computeS2VTransformation);if(l)console.log(l);
+		
+		var v2w=me.User.v2w;
+		var wori=me.User.wori;
+		var wpixdim=me.subVecVec(me.mulMatVec(v2w,[1,1,1]),me.mulMatVec(v2w,[0,0,0]));
+		var wvmax=me.addVecVec(me.mulMatVec(v2w,me.User.dim),wori);
+		var wvmin=me.addVecVec(me.mulMatVec(v2w,[0,0,0]),wori);
+		var wmin=[Math.min(wvmin[0],wvmax[0]),Math.min(wvmin[1],wvmax[1]),Math.min(wvmin[2],wvmax[2])];
+		var wmax=[Math.max(wvmin[0],wvmax[0]),Math.max(wvmin[1],wvmax[1]),Math.max(wvmin[2],wvmax[2])];
+		var w2s=[[1/Math.abs(wpixdim[0]),0,0],[0,1/Math.abs(wpixdim[1]),0],[0,0,1/Math.abs(wpixdim[2])]];
+		var s2w=me.invMat(w2s);
+		me.User.s2v = {
+			sdim: [(wmax[0]-wmin[0])/Math.abs(wpixdim[0]),(wmax[1]-wmin[1])/Math.abs(wpixdim[1]),(wmax[2]-wmin[2])/Math.abs(wpixdim[2])],
+			s2w: s2w,
+			sori: [-wmin[0]/Math.abs(wpixdim[0]),-wmin[1]/Math.abs(wpixdim[1]),-wmin[2]/Math.abs(wpixdim[2])],
+			wpixdim: [Math.abs(wpixdim[0]),Math.abs(wpixdim[1]),Math.abs(wpixdim[2])],
+			w2v: me.invMat(v2w),
+			wori: wori
+		};
+	},
+	S2I: function S2I(s,mri) {
+		var me=AtlasMakerWidget;
+		var l=me.traceLog(S2I,3);if(l)console.log(l);
+		
+		var s2v=mri.s2v;
+		var i=null,w,s,v;
+		w=me.mulMatVec(s2v.s2w,me.subVecVec(s,s2v.sori)); // screen to world: w=s2w*(s-sori)
+		v=me.mulMatVec(s2v.w2v,me.subVecVec(w,mri.wori)); // world to voxel
+		v=[Math.round(v[0]),Math.round(v[1]),Math.round(v[2])]; // round to integer
+		if(v[0]>=0&&v[0]<mri.dim[0]&&v[0]>=0&&v[0]<mri.dim[0]&&v[0]>=0&&v[0]<mri.dim[0])
+			i= v[2]*mri.dim[1]*mri.dim[0]+ v[1]*mri.dim[0] +v[0];
+		return i;
+	},
+	mulMatVec: function mulMatVec(m,v) {
+		return [
+			m[0][0]*v[0]+m[0][1]*v[1]+m[0][2]*v[2],
+			m[1][0]*v[0]+m[1][1]*v[1]+m[1][2]*v[2],
+			m[2][0]*v[0]+m[2][1]*v[1]+m[2][2]*v[2]
+		];
+	},
+	invMat: function invMat(m) {
+		var det;
+		var w=[[],[],[]];
+
+		det=m[0][1]*m[1][2]*m[2][0] + m[0][2]*m[1][0]*m[2][1] + m[0][0]*m[1][1]*m[2][2] - m[0][2]*m[1][1]*m[2][0] - m[0][0]*m[1][2]*m[2][1] - m[0][1]*m[1][0]*m[2][2];
+	
+		w[0][0]=(m[1][1]*m[2][2] - m[1][2]*m[2][1])/det;
+		w[0][1]=(m[0][2]*m[2][1] - m[0][1]*m[2][2])/det;
+		w[0][2]=(m[0][1]*m[1][2] - m[0][2]*m[1][1])/det;
+	
+		w[1][0]=(m[1][2]*m[2][0] - m[1][0]*m[2][2])/det;
+		w[1][1]=(m[0][0]*m[2][2] - m[0][2]*m[2][0])/det;
+		w[1][2]=(m[0][2]*m[1][0] - m[0][0]*m[1][2])/det;
+	
+		w[2][0]=(m[1][0]*m[2][1] - m[1][1]*m[2][0])/det;
+		w[2][1]=(m[0][1]*m[2][0] - m[0][0]*m[2][1])/det;
+		w[2][2]=(m[0][0]*m[1][1] - m[0][1]*m[1][0])/det;
+	
+		return w;
+	},
+	subVecVec: function subVecVec(a,b) {
+		return [a[0]-b[0],a[1]-b[1],a[2]-b[2]];
+	},
+	addVecVec: function addVecVec(a,b) {
+		return [a[0]+b[0],a[1]+b[1],a[2]+b[2]];
+	},
+	/*
+		Linear Algebra}
+	*/
+	
+	/*
+		{GUI Widgets
+	*/
 	slider: function slider(elem,callback) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(slider,2);if(l)console.log(l);
@@ -1786,6 +1897,9 @@ var AtlasMakerWidget = {
 				callback();
 		});
 	}
+	/*
+		GUI Widgets}
+	*/
 };
 /*
 				 0		int   sizeof_hdr;    //!< MUST be 348           //  // int sizeof_hdr;      //
