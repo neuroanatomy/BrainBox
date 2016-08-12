@@ -111,10 +111,6 @@ app.get('/auth/github/callback',
 	});
 //-----}
 
-
-
-app.use('/mri', require('./controller/mri/'));
-
 // GUI routes
 app.get('/', function(req,res) { // /auth/github
 	var login=	(req.isAuthenticated())?
@@ -126,9 +122,14 @@ app.get('/', function(req,res) { // /auth/github
 	});
 });
 
-// app.get('/mri', function(req, res) {
 
+app.use('/mri', require('./controller/mri/'));
+app.use('/project', require('./controller/project/'));
+
+
+// app.get('/mri', function(req, res) {
 // });
+
 app.get('/user/:id', function(req, res) {
 
 	var login=	(req.isAuthenticated())?
@@ -199,44 +200,7 @@ app.get('/user/:id', function(req, res) {
 		});
 	});
 });
-app.get('/project/:id', function(req, res) {
-	var login=	(req.isAuthenticated())?
-				("<a href='/user/"+req.user.username+"'>"+req.user.username+"</a> (<a href='/logout'>Log Out</a>)")
-				:("<a href='/auth/github'>Log in with GitHub</a>");
-	db.get('project').findOne({shortname:req.params.id},"-_id")
-	.then(function(json) {
-		console.log(json);
-		async.each(
-			json.files,
-			function(item,cb) {
-				db.get('mri').find({source:item,backup:{$exists:0}},{name:1,_id:0})
-				.then(function(obj) {
-					if(obj[0]) {
-						json.files[json.files.indexOf(item)]={
-							source: item,
-							name: obj[0].name
-						}
-					} else {
-						json.files[json.files.indexOf(item)]={
-							source: item,
-							name: ""
-						}
-					}
-					cb();
-				});
-			},
-			function() {
- 				res.render('project', {
- 					title: json.name,
- 					projectInfo: JSON.stringify(json),
- 					projectName: json.name,
- 					login: login
- 				});
-			}
-		);
-		
-	});
-});
+
 
 // API routes
 app.get('/api/user/:name', function(req, res) {
@@ -253,21 +217,6 @@ app.get('/api/user/:name', function(req, res) {
 			res.send();
 		}
 	});
-});
-app.get('/api/project/:name', function(req, res) {
-	db.get('project').findOne({shortname:req.params.name,backup:{$exists:false}},"-_id")
-	.then(function(json) {
-		if(json) {
-			if(req.query.var) {
-				var i,arr=req.query.var.split("/");
-				for(i in arr)
-					json=json[arr[i]];
-			}
-			res.send(json);
-		} else {
-			res.send();
-		}
-	})
 });
 
 app.get('/api/getLabelsets', function(req, res) {
@@ -346,7 +295,6 @@ function downloadMRI(myurl,req,res,callback) {
 	if (!fs.existsSync("../../public/data/"+hash)) {
 		fs.mkdirSync("../../public/data/"+hash,0777);
 	}
-
 	var file = fs.createWriteStream(dest,{mode:0777});
 
 	request({uri:myurl})
@@ -391,7 +339,5 @@ function downloadMRI(myurl,req,res,callback) {
 		callback();
 	});
 }
-
-
 
 module.exports = app;
