@@ -713,7 +713,7 @@ function initSocketConnection() {
 					}
 					
 					if( targetUS.User.iAtlas!=sourceUS.User.iAtlas && data.type!="chat" && data.type!="intro" ) {
-						if(debug) console.log("no broadcast to user "+targetUS.User.username+" [uid: "+targetUS.uid+"] of atlas "+targetUS.User.specimenName+"/"+targetUS.User.atlasFilename);
+						if(debug>1) console.log("no broadcast to user "+targetUS.User.username+" [uid: "+targetUS.uid+"] of atlas "+targetUS.User.specimenName+"/"+targetUS.User.atlasFilename);
 						continue;
 					}
 					
