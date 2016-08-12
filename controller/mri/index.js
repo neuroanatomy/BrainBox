@@ -1,11 +1,11 @@
 var express = require('express');
-var controller = require('./mri-download.controller');
+var controller = require('./mri.controller');
 
 var router = express.Router();
 
 //
-router.get('', controller.validator , controller.download);
-router.get('/json', controller.validator , controller.api_download);
+router.get('', controller.validator , controller.mri);
+router.get('/json', controller.validator , controller.api_mri);
 
 
 module.exports = router;
