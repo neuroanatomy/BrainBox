@@ -26,43 +26,38 @@ var project = function(req, res) {
 	.then(function(json) {
 		console.log("this is what I found:")
 		console.log(json);
-		if (json)
-		async.each(
-			json.files,
-			function(item,cb) {
-				db.get('mri').find({source:item,backup:{$exists:0}},{name:1,_id:0})
-				.then(function(obj) {
-					if(obj[0]) {
-						json.files[json.files.indexOf(item)]={
-							source: item,
-							name: obj[0].name
+		if (json) {
+			async.each(
+				json.files,
+				function(item,cb) {
+					db.get('mri').find({source:item,backup:{$exists:0}},{name:1,_id:0})
+					.then(function(obj) {
+						if(obj[0]) {
+							json.files[json.files.indexOf(item)]={
+								source: item,
+								name: obj[0].name
+							}
+						} else {
+							json.files[json.files.indexOf(item)]={
+								source: item,
+								name: ""
+							}
 						}
-					} else {
-						json.files[json.files.indexOf(item)]={
-							source: item,
-							name: ""
-						}
-					}
-					cb();
-				});
-			},
-			function() {
- 				res.render('project', {
- 					title: json.name,
- 					projectInfo: JSON.stringify(json),
- 					projectName: json.name,
- 					login: login
- 				});
-			}
-		);
-		else
-			res.render('project', {
- 				title: "unknown Project",
- 				projectInfo: null,
- 				projectName: null,
- 				login: login
- 			});
-
+						cb();
+					});
+				},
+				function() {
+					res.render('project', {
+						title: json.name,
+						projectInfo: JSON.stringify(json),
+						projectName: json.name,
+						login: login
+					});
+				}
+			);
+		} else {
+ 			res.status(404).send("Project Not Found");
+		}
 	});
 }
 
