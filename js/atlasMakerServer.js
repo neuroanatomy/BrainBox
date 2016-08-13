@@ -559,7 +559,6 @@ var receiveUserDataMessage = function(data,user_socket) {
 				atlasLoadedFlag=true;
 				break;
 			}
-		}
 		User.iAtlas=atlasLoadedFlag?parseInt(i):Atlases.length;	// value i if it was found, or last available if it wasn't
 	
 		// 2. Send the atlas to the user (load it if required)

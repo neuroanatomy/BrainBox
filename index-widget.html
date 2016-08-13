@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> 
+    <title>BrainBox</title>
+	<style>
+	 html {
+		background-color:#222;
+		font: 16px/24px "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
+		-webkit-font-smoothing: antialiased;
+		-moz-font-smoothing: antialiased;
+	 }
+	 img#logo {
+		margin-top:20px;
+		margin-bottom:20px;
+		margin-left:50%;
+		transform:translate(-50%,0);
+		width:250px;
+	 }
+	 input#url {
+		margin-left:50%;
+		transform:translate(-50%,0);
+		width:60%;
+		margin-top:60px;
+	 }
+	 h2, p {
+		margin-left:50%;
+		transform:translate(-50%,0);
+		font-family: sans-serif;
+		color:white;
+		text-align:center;
+		width:500px;
+	 }
+	 a {
+		color:white;
+	 }
+	 .linkNoULine {
+	 	text-decoration: none;
+	 	font-weight: lighter;
+	 }
+	 #MyLogin {
+	 	position:absolute;
+	 	top:5px;
+	 	right: 5px;
+		font: 16px/24px "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
+	 }
+	 #stereotaxic {
+	 	margin-left:50%;
+	 	transform:translate(-50%,0);
+	 }
+	/* Login
+	-----------------------------------------------------------------------------*/
+	.loginbox {
+		border:1px solid lightGrey;
+		position:absolute;
+		top:10px;
+		left:-150px;
+		background-color:white;
+		padding:20px;
+		max-width:80%;
+		margin-left: 50%;
+		width: 300px;
+		line-height:20px;
+		box-shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.5);
+		z-index:20;
+	}
+	.loginbox * {
+		color:black;
+	}
+	.loginbox #username,
+	.loginbox #e-mail,
+	.loginbox #password,
+	.loginbox #repassword,
+	.loginbox #registerLink,
+	.loginbox #remind,
+	.loginbox #warning {
+		display:block;
+	}
+	.loginbox #username,
+	.loginbox #e-mail,
+	.loginbox #password,
+	.loginbox #repassword {
+		width:90%;
+	}
+	.loginbox #registerLink,
+	.loginbox #remind {
+		text-decoration: none;
+		font-size:12px;
+		font-weight: normal;
+		width:40%;
+	}
+	.loginbox #sendLogin, 
+	.loginbox #register,
+	.loginbox #cancel {
+		border-radius: 1px;
+		border:1px solid lightGrey;
+		background-color:white;
+		height:18px;
+		box-shadow: 0 0px 0px 0 rgba(0, 0, 0, 0.5);
+	}
+	/* atlasMaker
+	-----------------------------------------------------------------------------*/
+	#atlasMaker {
+		color: white;
+		font-size:10px;
+	}
+	#atlasMaker #resizable {
+		position: relative;
+	}
+	#atlasMaker #info {
+		position: absolute;
+		bottom:5px;
+		right:5px;
+	}
+	#atlasMaker #canvas {
+		width:100%;
+		height:100%;
+		background-color:black;
+		cursor:none;
+	
+		image-rendering:optimizeSpeed;             /* Legal fallback */
+		image-rendering:-moz-crisp-edges;          /* Firefox        */
+		image-rendering:-o-crisp-edges;            /* Opera          */
+		image-rendering:-webkit-optimize-contrast; /* Safari         */
+		image-rendering:optimize-contrast;         /* CSS3 Proposed  */
+		image-rendering:crisp-edges;               /* CSS4 Proposed  */
+		image-rendering:pixelated;                 /* CSS4 Proposed  */
+		-ms-interpolation-mode:nearest-neighbor;   /* IE8+           */
+	}
+	#atlasMaker #tools-side {
+		position:relative;
+		width:100%;
+	}
+
+	#atlasMaker.fullscreen-mode {
+		position:fixed;
+		top:0px;
+		left:0px;
+		width: calc( 100% - 240px );	/* width of tools */
+		height:100%;
+		z-index:10;
+	}
+	#atlasMaker.fullscreen-mode #tools-side {
+		position:fixed;
+		top:0px;
+		right:0px;
+		width:240px;					/* width of tools */
+		height:100%;
+	}
+	
+	/* cursor
+	------------------------------- */
+	.drawingcursor {
+		border: 1px solid #F00;
+		position: absolute;
+		pointer-events:none;
+	}
+	.hidepaintcursor {
+		display: none;
+	}
+
+	#cursor {
+		pointer-events: none;
+		position:absolute;
+		top:200px;
+		left:200px;
+		border:thin solid white;
+		color:red;
+		z-index:1000;
+	}
+	#finger {
+		display:none;
+	}
+	.display-mode #finger {
+		display:none;
+	}
+	.edit-mode #finger.touchDevice {
+		position:absolute;
+		top:200px;
+		left:250px;
+		width:40px;
+		height:40px;
+		border-style:solid;
+		border-width:4px;
+		border-radius:50%;
+		display:inline;
+	}
+	#finger.move {
+		border-color:yellow;
+	}
+	#finger.draw {
+		border-color:green;
+	}
+	#finger.configure {
+		border-color:orange;
+	}
+	
+	/* chat log
+	----------------------- */
+	#log {
+		width: auto;
+		line-height:1;
+		border: 1px solid #777;
+		overflow: auto;
+		background-color: #333;
+	}
+	
+	.middle {
+		position:absolute;
+		top:50%;
+		left:50%;
+		transform: translate(-50%,-50%);
+	}
+	
+	</style>
+</head>
+
+<body>
+
+<div style="width:100%;height:100%;display:flex;flex-direction:column">
+	<!-- Login (fixed height) -->
+	<div style="flex:0 0 64px">
+		<div id="MyLogin"></div>
+	</div>
+	
+	<!-- Content (variable height) -->
+	<div style="flex:1 1 auto">
+		<div id="intro">
+			<img id="logo" src="img/brainbox-logo.svg" style="text-align:center"/><br />
+			<h2>Real-time collaboration</h2>
+			<p>
+				BrainBox is a web application by <b><a target="_blank" href="http://neuroanatomy.github.io">NAAT</a></b> to
+				visualise and segment collaboratively any brain MRI dataset available online.
+				Segmentations are automatically saved and can be downloaded as Nifti 2 files or
+				triangular meshes. Point BrainBox to your own Nifti 2 data, or try data catalogues
+				created by the community.
+			</p>
+		</div>
+		<div id="stereotaxic" style="width:512px"></div>
+
+	</div>
+	
+	<!-- Space (fixed height) -->
+	<div style="flex:0 0 50px">
+	</div>
+
+	<!-- Footer (fixed height) -->
+	<div style="flex:0 0 100px;background-color:#000">
+		<p style="width:100%;font-size:small;text-align:center"> 
+			<a target="_blank" href="http://neuroanatomy.github.io">
+				<img src="img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/></a>
+			<a target="_blank" href="http://neuroanatomy.github.io" class="linkNoULine">
+				group de neuroanatomie appliquée et théorique
+			</a>
+		</p>
+	</div>
+</div>
+
+<script src="/lib/jquery-1.11.0.min.js"></script>
+<script src="/lib/pako/pako.min.js"></script>
+<script src="/lib/mylogin/login.js"></script>
+<script src="/js/brainbox.js"></script>
+
+<script>
+MyLoginWidget.init($("#MyLogin"));
+var url="http://braincatalogue.org/data/Lion/MRI-n4.nii.gz";
+BrainBox.initBrainBox({url:url,view:"cor",slice:180,fullscreen:false});
+</script>
+
+</body>
+</html>

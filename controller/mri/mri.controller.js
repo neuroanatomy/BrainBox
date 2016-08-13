@@ -86,13 +86,12 @@ console.log(process.cwd());
 	});
 }
 
-var download = function(req, res) {
+var mri = function(req, res) {
 	var login=	(req.isAuthenticated())?
 				("<a href='/user/"+req.user.username+"'>"+req.user.username+"</a> (<a href='/logout'>Log Out</a>)")
 				:("<a href='/auth/github'>Log in with GitHub</a>");
 	var myurl = req.query.url;
-	var hash = crypto.createHash('md5').update(myurl).digest('hex');
-	
+	var hash = crypto.createHash('md5').update(myurl).digest('hex');	
 	req.db.get('mri').find({url:"/data/"+hash+"/"}, {fields:{_id:0},sort:{$natural:-1},limit:1})
 	.then(function(json) {
 		console.log(json);
@@ -123,7 +122,7 @@ var download = function(req, res) {
 	});
 }
 
-var api_download = function(req, res) {
+var api_mri = function(req, res) {
 	var myurl=req.query.url;
 	var hash = crypto.createHash('md5').update(myurl).digest('hex');
 	// shell equivalent: req.db.mri.find({source:"http://braincatalogue.org/data/Pineal/P001/t1wreq.db.nii.gz"}).limit(1).sort({$natural:-1})
@@ -157,8 +156,8 @@ var api_download = function(req, res) {
 
 var mriController = function(){
 	this.validator = validator;
-	this.api_download = api_download;
-	this.download = download;
+	this.api_mri = api_mri;
+	this.mri = mri;
 }
 
 module.exports = new mriController();
