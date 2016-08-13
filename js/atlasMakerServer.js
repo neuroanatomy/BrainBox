@@ -13,19 +13,19 @@ var jpeg=require('jpeg-js'); // jpeg-js library: https://github.com/eugeneware/j
 var keypress = require('keypress');
 var dateFormat = require('dateformat');
 var async = require("async");
+var niijs = require('nifti-js');
 
 var mongo = require('mongodb');
 var monk = require('monk');
 var db = monk('localhost:27017/brainbox');
 
-var atlasMakerServer = function(){
+var atlasMakerServer = function() {
 
-var	debug=1;
+var	debug=2;
 this.dataDirectory = "";
 var	Atlases=[];
 this.Brains=[];
-var	Users=[];
-var	usrsckts=[];
+var	US=[];
 var	uidcounter=1;
 var enterCommands=0;
 var UndoStack=[];
@@ -46,7 +46,7 @@ var mghTag=bufferTag("mgh",8);
 var jpgTag=bufferTag("jpg",8);
 
 var displayAtlases = function() {
-	console.log("\n"+Atlases.filter(function(o){return o!=undefined}).length+" Atlases:");
+	console.log("\n"+Atlases.filter(function(o){return o!==undefined}).length+" Atlases:");
 	for(var i in Atlases) {
 		var sum=numberOfUsersConnectedToAtlas(Atlases[i].dirname,Atlases[i].name);
 		console.log("Atlases["+i+"] path:"+Atlases[i].dirname+Atlases[i].name+", "+sum+" users connected");
@@ -78,7 +78,7 @@ var displayBrains = function() {
 	}
 }
 var displayUsers = function() {
-	console.log("\n"+US.filter(function(o){return o!=undefined}).length+" User Sockets:");
+	console.log("\n"+US.filter(function(o){return o!==undefined}).length+" User Sockets:");
 	for(var i in US) {
 		console.log("US["+i+"].uid=",US[i].uid);
 		console.log("US["+i+"]=",US[i].User);
@@ -87,16 +87,16 @@ var displayUsers = function() {
 keypress(process.stdin);
 process.stdin.on('keypress', function (ch, key) {
 	if(key) {
-		if(key.name=='c' && key.ctrl) {
+		if(key.name==='c' && key.ctrl) {
 			console.log("Exit.");
 			process.exit();
 		}
-		if(key.name=='escape') {
+		if(key.name==='escape') {
 			enterCommands=!enterCommands;
 			console.log("enterCommands: "+enterCommands);
 		}
-		if(enterCommands==0) {
-			if(key.name=='return')
+		if(enterCommands===0) {
+			if(key.name==='return')
 				console.log();
 			else
 				process.stdout.write(key.sequence);
@@ -123,7 +123,7 @@ process.stdin.resume();
 //========================================================================================
 var getUserFromSocket = function(socket) {
 	for(var i in US) {
-		if(socket==US[i].socket)
+		if(socket===US[i].socket)
 			return US[i];
 	}
 	return -1;
@@ -144,7 +144,7 @@ var getUserIdFromSocket = function(socket) {
 }
 var removeUser = function(socket) {
 	for(var i in US) {
-		if(socket==US[i].socket) {
+		if(socket===US[i].socket) {
 			delete US[i];
 			break;
 		}
@@ -153,23 +153,23 @@ var removeUser = function(socket) {
 var numberOfUsersConnectedToMRI = function(path) {
 	var sum=0;
 
-	if(path==undefined)
+	if(path===undefined)
 		return sum;
 		
 	for(var i in US) {
-		if(US[i].User==undefined) {
+		if(US[i].User===undefined) {
 			console.log("ERROR: When counting the number of users connected to MRI, user uid "+i+" was not defined");
 			continue;
 		}
-		if(US[i].User.dirname==undefined) {
+		if(US[i].User.dirname===undefined) {
 			console.log("ERROR: A user uid "+i+" dirname is unknown");
 			continue;
 		}
-		if(US[i].User.mri==undefined) {
+		if(US[i].User.mri===undefined) {
 			console.log("ERROR: A user uid "+i+" MRI is unknown");
 			continue;
 		}
-		if(US[i].User.dirname+US[i].User.mri==path)
+		if(US[i].User.dirname+US[i].User.mri===path)
 			sum++;
 	}
 	/* sum--; */
@@ -180,7 +180,7 @@ var unloadMRI = function(path) {
 		console.log("[unload MRI]",path);
 		
 	for(var i in Brains) {
-		if(Brains[i].path==path) {
+		if(Brains[i].path===path) {
 			Brains.splice(i,1);
 			console.log("free memory",os.freemem());
 			break;
@@ -191,23 +191,23 @@ var unloadMRI = function(path) {
 var numberOfUsersConnectedToAtlas = function(dirname,atlasFilename) {
 	var sum=0;
 
-	if(dirname==undefined || atlasFilename==undefined)
+	if(dirname===undefined || atlasFilename===undefined)
 		return sum;
 		
 	for(i in US) {
-		if(US[i].User==undefined) {
+		if(US[i].User===undefined) {
 			console.log("ERROR: When counting the number of users connected to the atlas, user uid "+i+" was not defined");
 			continue;
 		}
-		if(US[i].User.dirname==undefined) {
+		if(US[i].User.dirname===undefined) {
 			console.log("ERROR: A user uid "+i+" dirname is unknown");
 			continue;
 		}
-		if(US[i].User.atlasFilename==undefined) {
+		if(US[i].User.atlasFilename===undefined) {
 			console.log("ERROR: A user uid "+i+" atlasFilename is unknown");
 			continue;
 		}
-		if(US[i].User.dirname==dirname && US[i].User.atlasFilename==atlasFilename)
+		if(US[i].User.dirname===dirname && US[i].User.atlasFilename===atlasFilename)
 			sum++;
 	}
 	return sum;
@@ -217,7 +217,7 @@ var unloadAtlas = function(dirname,atlasFilename) {
 		console.log("[unload atlas]",dirname,atlasFilename);
 
 	for(var i in Atlases) {
-		if(Atlases[i].dirname==dirname && Atlases[i].name==atlasFilename) {
+		if(Atlases[i].dirname===dirname && Atlases[i].name===atlasFilename) {
 			saveNifti(Atlases[i])
 			.then(function() {
 				console.log("Atlas saved. Unloading it");
@@ -235,6 +235,7 @@ var initSocketConnection = function() {
 	
 	try {
 		websocket = new WebSocketServer({ server: server });
+		
 		websocket.on("connection",function(s) {
 			console.log("[connection open]");
 			console.log("remote_address",s.upgradeReq.connection.remoteAddress);
@@ -246,7 +247,7 @@ var initSocketConnection = function() {
 			sendPreviousUserDataMessage(newUS);
 			
 			s.on('message',function(msg) {
-				if(debug>=2) console.log("[connection: message]",msg);
+				if(debug>2) console.log("[connection: message]",msg);
 				
 				var sourceUS=getUserFromSocket(this);
 				var data={};
@@ -287,24 +288,24 @@ var initSocketConnection = function() {
 					var targetUS=getUserFromSocket(websocket.clients[i]);
 					
 					// do not auto-broadcast
-					if(sourceUS.uid==targetUS.uid) {
+					if(sourceUS.uid===targetUS.uid) {
 						if(debug>1) console.log("no broadcast to self");
 						continue;
 					}
 					
 					// do not broadcast to unknown users
-					if( sourceUS.User==undefined || targetUS.User==undefined) {
-						if(debug) console.log("User "+sourceUS.uid+": "+(sourceUS.User==undefined)?"undefined":"defined");
-						if(debug) console.log("User "+targetUS.uid+": "+(targetUS.User==undefined)?"undefined":"defined");
+					if( sourceUS.User===undefined || targetUS.User===undefined) {
+						if(debug) console.log("User "+sourceUS.uid+": "+(sourceUS.User===undefined)?"undefined":"defined");
+						if(debug) console.log("User "+targetUS.uid+": "+(targetUS.User===undefined)?"undefined":"defined");
 						continue;
 					}
 					
-					if( targetUS.User.iAtlas!=sourceUS.User.iAtlas && data.type!="chat" && data.type!="intro" ) {
+					if( targetUS.User.iAtlas!==sourceUS.User.iAtlas && data.type!=="chat" && data.type!=="intro" ) {
 						if(debug>1) console.log("no broadcast to user "+targetUS.User.username+" [uid: "+targetUS.uid+"] of atlas "+targetUS.User.specimenName+"/"+targetUS.User.atlasFilename);
 						continue;
 					}
 					
-					if(data.type=="atlas") {
+					if(data.type==="atlas") {
 						sendAtlasToUser(data.data,websocket.clients[i],false);
 					} 
 					else {
@@ -319,11 +320,11 @@ var initSocketConnection = function() {
 				console.log("[connection: close]");
 				console.log("US length",US.filter(function(o){return o!=undefined}).length);
 				for(var i in US)
-					if(US[i].socket==s)
+					if(US[i].socket===s)
 						console.log("user",US[i].uid,"is closing connection");
 				var sourceUS=getUserFromSocket(this);
 				console.log("User ID "+sourceUS.uid+" is disconnecting");
-				if(sourceUS.User==undefined) {
+				if(sourceUS.User===undefined) {
 					console.log("<BUG ALERT> User ID "+sourceUS.uid+" is undefined.");
 					console.log("US:",US);
 					console.log("</BUG ALERT>");
@@ -371,11 +372,12 @@ var initSocketConnection = function() {
 				if(debug) console.log(nusers+" connected");
 			});
 		});
+		server.listen(port, function () { console.log('Listening on ' + server.address().port,server.address()) });
 	} catch (ex) {
 		console.log("ERROR: Unable to create a server",ex);
 	}
 }
-this.initSocketConnection = initSocketConnection
+this.initSocketConnection = initSocketConnection;
 
 var receivePaintMessage = function(data) {
 	if(debug>=2) console.log("[receivePaintMessage]");
@@ -406,6 +408,22 @@ var receiveRequestSliceMessage = function(data,user_socket) {
 	sourceUS.User.view=view;
 	sourceUS.User.slice=slice;
 	
+/*
+	WARNING:
+		And here you go... the client-side path expected by getBrainAtPath
+		is changed by an absolute server-side path.
+		This may break the scan for already loaded brains later on.
+*/
+
+/*
+	var fullBrainPath = this.dataDirectory + brainPath;
+	
+	
+	var brain=getBrainAtPath(fullBrainPath,function(data){
+		sendSliceToUser(data,view,slice,user_socket);
+	});
+*/
+
 	var brain=getBrainAtPath(brainPath,function(data){
 		sendSliceToUser(data,view,slice,user_socket);
 	});
@@ -443,22 +461,6 @@ var receiveAtlasFromUserMessage = function(data,user_socket) {
 var getBrainAtPath = function(brainPath,callback) {
 	if(debug>1) console.log("[getBrainAtPath]");
 	
-	
-	var warning=[
-		"getBrainAtPath provides brains to users. If the requested brain is already",
-		"loaded, then it is directly returned. To check for this, the function compares",
-		"the requested client-side path with the stored client-side paths. The paths",
-		"need then to be client-side.",
-		"If the brain is not already loaded, then it is loaded. This can be done either",
-		"from the source or the server. If the brain is loaded from the server, a",
-		"server-side path is required, which is the client-side path pre-pended with the",
-		"absolute location of the data folder in the server.",
-		"This pre-pending was present in the original code (RT) but it's absent now (FD).",
-		"Check that there are no bugs.",
-		"Supposedly client-side brainPath:",brainPath
-	].join("\n");
-	console.log(warning);
-	
 	var i;
 	for(i=0;i<Brains.length;i++) {
 		if(Brains[i].path===brainPath) {
@@ -469,18 +471,8 @@ var getBrainAtPath = function(brainPath,callback) {
 	if(debug) {
 		console.log("loading brain at",brainPath);
 	}
-	
-	/*
-		WARNING: the following path was supposed to be absolute.
-		Check what's the case in the new code
 
-		loadBrainCompressed(__dirname+"/public"+brainPath,function(data) {
-			var brain={path:brainPath,data:data};
-			Brains.push(brain);
-			callback(data); // callback: sendSliceToUser
-		});
-	*/
-	loadBrainCompressed(brainPath,function(data) {
+	loadBrainCompressed(this.dataDirectory+brainPath,function(data) {
 		var brain={path:brainPath,data:data};
 		Brains.push(brain);
 		callback(data); // callback: sendSliceToUser
@@ -495,7 +487,7 @@ var unloadUnusedBrains = function() {
 	for(i=0;i<Brains.length;i++) {
 		var sum=numberOfUsersConnectedToMRI(Brains[i].path);
 
-		if(sum==0) {
+		if(sum===0) {
 			console.log("No user connected to MRI "+Brains[i].path+": unloading it");
 			unloadMRI(Brains[i].path);
 		}
@@ -505,7 +497,7 @@ var unloadUnusedAtlases = function() {
 	var i;
 	for(i in Atlases) {
 		var sum=numberOfUsersConnectedToAtlas(Atlases[i].dirname,Atlases[i].name);
-		if(sum==0) {
+		if(sum===0) {
 			console.log("No user connected to Atlas "+Atlases[i].dirname+Atlases[i].name+": unloading it");
 			unloadAtlas(Atlases[i].dirname,Atlases[i].name);
 		}
@@ -534,7 +526,7 @@ var receiveUserDataMessage = function(data,user_socket) {
 		firstConnectionFlag=false,
 		switchingAtlasFlag=false;
 	
-	if(sourceUS.User==undefined) {
+	if(sourceUS.User===undefined) {
 		firstConnectionFlag=true;
 	} else if(sourceUS.User.isMRILoaded===false) {
 		firstConnectionFlag=true;
@@ -542,23 +534,24 @@ var receiveUserDataMessage = function(data,user_socket) {
 	
 	User.uid=data.uid;
 
-	if(data.description=="sendAtlas") {
+	if(data.description==="sendAtlas") {
 		// 1. Check if the atlas the user is requesting has not been loaded
 		atlasLoadedFlag=false;
 		
 		// check whether user is switching atlas.
 		switchingAtlasFlag=false;
 		if(sourceUS.User) {
-			if((sourceUS.User.atlasFilename!=User.atlasFilename)||(sourceUS.User.dirname!=User.dirname)) {
+			if((sourceUS.User.atlasFilename!==User.atlasFilename)||(sourceUS.User.dirname!==User.dirname)) {
 				switchingAtlasFlag=true;
 			}
 		}
 		
 		for(i in Atlases) {
-			if(Atlases[i].dirname==User.dirname && Atlases[i].name==User.atlasFilename) {
+			if(Atlases[i].dirname===User.dirname && Atlases[i].name===User.atlasFilename) {
 				atlasLoadedFlag=true;
 				break;
 			}
+		}
 		User.iAtlas=atlasLoadedFlag?parseInt(i):Atlases.length;	// value i if it was found, or last available if it wasn't
 	
 		// 2. Send the atlas to the user (load it if required)
@@ -580,14 +573,14 @@ var receiveUserDataMessage = function(data,user_socket) {
 	// If the user didn't have a name (wasn't logged in), but now has one,
 	// display the name in the log
 	if(User.hasOwnProperty('username')) {
-		if(sourceUS.User==undefined) {
+		if(sourceUS.User===undefined) {
 			console.log("No User yet for id "+data.uid);
 		} else if(!sourceUS.User.hasOwnProperty('username')) {
 			console.log("User "+User.username+", id "+data.uid+" logged in");
 		}
 	}
 
-	if(sourceUS.hasOwnProperty('User')==false) {
+	if(sourceUS.hasOwnProperty('User')===false) {
 		sourceUS.User={};
 	}
 	for(var prop in User) {
@@ -599,19 +592,19 @@ var receiveUserDataMessage = function(data,user_socket) {
 		var sumAtlas=0,
 			sumMRI=0;
 		for(i in US) {
-			if(US[i].User.dirname==User.dirname && US[i].User.atlasFilename==User.atlasFilename) {
+			if(US[i].User.dirname===User.dirname && US[i].User.atlasFilename===User.atlasFilename) {
 				sumAtlas++;
 			}
-			if(US[i].User.dirname==User.dirname && US[i].User.mri==User.mri) {
+			if(US[i].User.dirname===User.dirname && US[i].User.mri===User.mri) {
 				sumMRI++;
 			}
 		}
-		console.log(sumMRI+" user"+((sumMRI==1)?" is":"s are")+" requesting MRI "+User.dirname+User.mri);
-		console.log(sumAtlas+" user"+((sumAtlas==1)?" is":"s are")+" requesting atlas "+User.dirname+User.atlasFilename);
+		console.log(sumMRI+" user"+((sumMRI===1)?" is":"s are")+" requesting MRI "+User.dirname+User.mri);
+		console.log(sumAtlas+" user"+((sumAtlas===1)?" is":"s are")+" requesting atlas "+User.dirname+User.atlasFilename);
 	}	
 
 	// 5. Unload unused data (the check is only done if new data has been added)
-	if(data.description=="sendAtlas") {
+	if(data.description==="sendAtlas") {
 		unloadUnusedBrains();
 		unloadUnusedAtlases();
 	}
@@ -624,26 +617,15 @@ var receiveUserDataMessage = function(data,user_socket) {
 var sendPreviousUserDataMessage = function(newUS) {
 	if(debug) console.log("[sendPreviousUserDataMessage]");
 	
-	var msg,found=false;
-	try {
-		var i,n=0;
-
-		if(found) {
-			for(i in US) {
-				if(US[i].socket==newUS.socket)
-					continue;
-				var msg=JSON.stringify({type:"intro",user:US[i].User,uid:US[i].uid,description:"old user intro to new user"});
-				newUS.socket.send(msg);
-				n++;
-			}
-			if(debug) console.log("send user data from "+n+" users");
-		} else {
-			console.log("ERROR: new user socket not found");
-		}
-		
-	} catch (ex) {
-		console.log("ERROR: Unable to sendPreviousUserDataMessage",ex);
+	var i,n=0;
+	for(i in US) {
+		if(US[i].socket==newUS.socket)
+			continue;
+		var msg=JSON.stringify({type:"intro",user:US[i].User,uid:US[i].uid,description:"old user intro to new user"});
+		newUS.socket.send(msg);
+		n++;
 	}
+	if(debug) console.log("  send user data from "+n+" users");		
 }
 var sendAtlasToUser = function(atlasdata,user_socket,flagCompress) {
 	if(debug>=1) console.log("[sendAtlasToUser]");
@@ -783,8 +765,7 @@ var loadNifti = function(nii) {
 	
 	return mri;
 }
-var loadAtlasNifti = function(atlas,User,callback)
-{
+var loadAtlasNifti = function(atlas,User,callback) {
 	if(debug>=1) console.log("[loadAtlasNifti]");
 		
 	// Load nifty label
@@ -944,11 +925,11 @@ var getCurrentUndoLayer = function(User) {
 	
 	for(i=UndoStack.length-1;i>=0;i--) {
 		undoLayer=UndoStack[i];
-		if(undoLayer==undefined)
+		if(undoLayer===undefined)
 			break;
-		if( undoLayer.User.username==User.username &&
-			undoLayer.User.atlasFilename==User.atlasFilename &&
-			undoLayer.User.specimenName==User.specimenName) {
+		if( undoLayer.User.username===User.username &&
+			undoLayer.User.atlasFilename===User.atlasFilename &&
+			undoLayer.User.specimenName===User.specimenName) {
 			found=true;
 			break;
 		}
@@ -970,11 +951,11 @@ var undo = function(User) {
 	// find latest undo layer for user
 	for(i=UndoStack.length-1;i>=0;i--) {
 		undoLayer=UndoStack[i];
-		if(undoLayer==undefined)
+		if(undoLayer===undefined)
 			break;
-		if( undoLayer.User.username==User.username &&
-			undoLayer.User.atlasFilename==User.atlasFilename &&
-			undoLayer.User.specimenName==User.specimenName &&
+		if( undoLayer.User.username===User.username &&
+			undoLayer.User.atlasFilename===User.atlasFilename &&
+			undoLayer.User.specimenName===User.specimenName &&
 			undoLayer.actions.length>0) {
 			found=true;
 			UndoStack.splice(i,1); // remove layer from UndoStack
@@ -1000,7 +981,7 @@ var undo = function(User) {
 	var	vol=atlas.data;
 	var val;
 
-	for(j in undoLayer.actions) {
+	for(var j in undoLayer.actions) {
 		var i=parseInt(j);
 		val=undoLayer.actions[i];
 		arr.push([i,val]);
@@ -1019,14 +1000,13 @@ var undo = function(User) {
 //========================================================================================
 // Painting
 //========================================================================================
-var paintxy = function(u,c,x,y,User,undoLayer)
+var paintxy = function(u,c,x,y,User,undoLayer) {
 /*
 	From 'User' we know slice, atlas, vol, view, dim.
 	[issue: undoLayer also has a User field. Maybe only undoLayer should be kept?]
 */
-{
 	var atlas=Atlases[User.iAtlas];
-	if(atlas.data==undefined) {
+	if(atlas.data===undefined) {
 		console.log("ERROR: No atlas to draw into");
 		return;
 	}
@@ -1085,8 +1065,7 @@ var paintVoxel = function(mx,my,mz,User,vol,val,undoLayer) {
 		vol[i]=val;
 	}
 }
-var sliceXYZ2index = function(mx,my,mz,User)
-{
+var sliceXYZ2index = function(mx,my,mz,User) {
 	var	view=User.view;
 	var atlas=Atlases[User.iAtlas];
 	var	dim=atlas.dim;
@@ -1105,8 +1084,7 @@ var sliceXYZ2index = function(mx,my,mz,User)
 	
 	return i;
 }
-var line = function(x,y,val,User,undoLayer)
-{
+var line = function(x,y,val,User,undoLayer) {
 	// Bresenham's line algorithm adapted from
 	// http://stackoverflow.com/questions/4672279/bresenham-algorithm-in-javascript
 
@@ -1134,7 +1112,7 @@ var line = function(x,y,val,User,undoLayer)
 	for(k=0;k<User.penSize;k++)
 	    paintVoxel(x1+j,y1+k,z,User,vol,val,undoLayer);
     
-	while (!((x1 == x2) && (y1 == y2))) {
+	while (!((x1 === x2) && (y1 === y2))) {
 		var e2 = err << 1;
 		if (e2 > -dy) {
 			err -= dy;
@@ -1149,8 +1127,7 @@ var line = function(x,y,val,User,undoLayer)
 			paintVoxel(x1+j,y1+k,z,User,vol,val,undoLayer);
 	}
 }
-var fill = function(x,y,z,val,User,undoLayer)
-{
+var fill = function(x,y,z,val,User,undoLayer) {
 	var view=User.view;
 	var	vol=Atlases[User.iAtlas].data;
 	var dim=Atlases[User.iAtlas].dim;
@@ -1158,7 +1135,7 @@ var fill = function(x,y,z,val,User,undoLayer)
 	var	i;
 	var bval=vol[sliceXYZ2index(x,y,z,User)]; // background-value: value of the voxel where the click occurred
 
-	if(bval==val)	// nothing to do
+	if(bval===val)	// nothing to do
 		return;
 	
 	Q.push({"x":x,"y":y});
@@ -1166,23 +1143,23 @@ var fill = function(x,y,z,val,User,undoLayer)
 		n=Q.pop();
 		x=n.x;
 		y=n.y;
-		if(vol[sliceXYZ2index(x,y,z,User)]==bval) {
+		if(vol[sliceXYZ2index(x,y,z,User)]===bval) {
 			paintVoxel(x,y,z,User,vol,val,undoLayer);
 			
 			i=sliceXYZ2index(x-1,y,z,User);
-			if(i>=0 && vol[i]==bval)
+			if(i>=0 && vol[i]===bval)
 				Q.push({"x":x-1,"y":y});
 			
 			i=sliceXYZ2index(x+1,y,z,User);
-			if(i>=0 && vol[i]==bval)
+			if(i>=0 && vol[i]===bval)
 				Q.push({"x":x+1,"y":y});
 			
 			i=sliceXYZ2index(x,y-1,z,User);
-			if(i>=0 && vol[i]==bval)
+			if(i>=0 && vol[i]===bval)
 				Q.push({"x":x,"y":y-1});
 			
 			i=sliceXYZ2index(x,y+1,z,User);
-			if(i>=0 && vol[i]==bval)
+			if(i>=0 && vol[i]===bval)
 				Q.push({"x":x,"y":y+1});
 		}
 	}
@@ -1191,7 +1168,7 @@ var fill = function(x,y,z,val,User,undoLayer)
 	Serve brain slices
 */
 var loadBrainNifti = function(nii,callback) {
-	brain=loadNifti(nii);
+	var brain=loadNifti(nii);
 		
 	console.log(new Date());
 	console.log("    brain size:",brain.data.length);
@@ -1220,6 +1197,7 @@ var loadBrainMGZ = function(data,callback) {
 	var hdr_sz=284;
 	var brain={};
 	var datatype;
+	var tmp,j;
 	
 	brain.dim=[];
 	brain.dim[0]=data.readInt32BE(4);
@@ -1236,19 +1214,19 @@ var loadBrainMGZ = function(data,callback) {
 			brain.data=data.slice(hdr_sz);
 			break;
 		case 1: // MGHINT
-			var tmp=data.slice(hdr_sz);
+			tmp=data.slice(hdr_sz);
 			brain.data=new Uint32Array(brain.dim[0]*brain.dim[1]*brain.dim[2]);
 			for(j=0;j<brain.dim[0]*brain.dim[1]*brain.dim[2];j++)
 				brain.data[j]=tmp.readUInt32BE(j*4);
 			break;
 		case 3: // MGHFLOAT
-			var tmp=data.slice(hdr_sz);
+			tmp=data.slice(hdr_sz);
 			brain.data=new Float32Array(brain.dim[0]*brain.dim[1]*brain.dim[2]);
 			for(j=0;j<brain.dim[0]*brain.dim[1]*brain.dim[2];j++)
 				brain.data[j]=tmp.readFloatBE(j*4);
 			break;
 		case 4: // MGHSHORT
-			var tmp=data.slice(hdr_sz);
+			tmp=data.slice(hdr_sz);
 			brain.data=new Int16Array(brain.dim[0]*brain.dim[1]*brain.dim[2]);
 			for(j=0;j<brain.dim[0]*brain.dim[1]*brain.dim[2];j++)
 				brain.data[j]=tmp.readInt16BE(j*2);
@@ -1498,6 +1476,9 @@ var drawSlice = function(brain,view,slice) {
 	return jpeg.encode(rawImageData,99);
 }
 
+return this;
+}
+module.exports = atlasMakerServer();
 
 /*
 	Atlases
