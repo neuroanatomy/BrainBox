@@ -295,10 +295,13 @@ th {
 	font-weight: bold;
 	border-bottom:thin solid white;
 }
-#info td {
+table#annotations {
+	width:100%;
+}
+#annotations td {
 	font-weight: normal;
 }
-#info th, #info td {
+#annotations th, #annotations td {
 	padding:4px;
 }
 ul {

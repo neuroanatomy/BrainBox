@@ -5,7 +5,7 @@
 	Launch using > node atlasMakerServer.js
 */
 
-var	debug=1;
+var	debug=0;
 
 var express = require('express');
 var path = require('path');
@@ -316,6 +316,8 @@ function downloadMRI(myurl,req,res,callback) {
 				included: (new Date()).toJSON(),
 				dim: mri.dim,
 				pixdim: mri.pixdim,
+				voxel2world: mri.v2w,
+				worldOrigin: mri.wori,
 				owner:username,
 				mri: {
 					brain: filename,
