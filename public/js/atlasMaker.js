@@ -503,10 +503,6 @@ var AtlasMakerWidget = {
 		if(me.User.view==null)
 			me.User.view="sag";
 			
-/*
-	TRANSFORMATION FROM VOXEL SPACE TO SCREEN SPACE
-	DONE.
-*/
 		var s2v=me.User.s2v;
 		switch(me.User.view) {
 			case 'sag':	me.brain_W=s2v.sdim[1]; me.brain_H=s2v.sdim[2]; me.brain_D=s2v.sdim[0]; me.brain_Wdim=s2v.wpixdim[1]; me.brain_Hdim=s2v.wpixdim[2]; break; // sagital
@@ -514,23 +510,12 @@ var AtlasMakerWidget = {
 			case 'axi':	me.brain_W=s2v.sdim[0]; me.brain_H=s2v.sdim[1]; me.brain_D=s2v.sdim[2]; me.brain_Wdim=s2v.wpixdim[0]; me.brain_Hdim=s2v.wpixdim[1]; break; // axial
 		}
 
-		// init query image
-		/*
-		switch(me.User.view) {
-			case 'sag':	me.brain_W=me.brain_dim[1]; me.brain_H=me.brain_dim[2]; me.brain_D=me.brain_dim[0]; me.brain_Wdim=me.brain_pixdim[1]; me.brain_Hdim=me.brain_pixdim[2]; break; // sagital
-			case 'cor':	me.brain_W=me.brain_dim[0]; me.brain_H=me.brain_dim[2]; me.brain_D=me.brain_dim[1]; me.brain_Wdim=me.brain_pixdim[0]; me.brain_Hdim=me.brain_pixdim[2]; break; // coronal
-			case 'axi':	me.brain_W=me.brain_dim[0]; me.brain_H=me.brain_dim[1]; me.brain_D=me.brain_dim[2]; me.brain_Wdim=me.brain_pixdim[0]; me.brain_Hdim=me.brain_pixdim[1]; break; // axial
-		}
-		*/
 		me.canvas.width=me.brain_W;
 		me.canvas.height=me.brain_H*me.brain_Hdim/me.brain_Wdim;
 		me.brain_offcn.width=me.brain_W;
 		me.brain_offcn.height=me.brain_H;
 		me.brain_px=me.brain_offtx.getImageData(0,0,me.brain_offcn.width,me.brain_offcn.height);
 		
-		/*
-		me.User.dim=me.brain_dim;
-		*/
 		if(me.User.slice==null || me.User.slice>=me.brain_D)
 			me.User.slice=parseInt(me.brain_D/2);
 
@@ -1284,7 +1269,7 @@ var AtlasMakerWidget = {
 				if(me.debug>1) console.log("type: "+ext);
 				
 				switch(ext) {
-					case "nii": {
+					case 'nii': {
 						var	inflate=new pako.Inflate();
 						inflate.push(data,true);
 						var atlas=new Object();
@@ -1310,10 +1295,13 @@ var AtlasMakerWidget = {
 						link.html("<a class='download' href='"+me.User.dirname+me.User.atlasFilename+"'><img src='/img/download.svg' style='vertical-align:middle'/></a>"+atlas.name);
 						break;
 					}
-					case "jpg": {
+					case 'jpg': {
 						var urlCreator = window.URL || window.webkitURL;
 						var imageUrl = urlCreator.createObjectURL(msg.data);
 						var img = new Image();
+						
+						me.isMRILoaded=true; // receiving a jpg is proof of a loaded MRI
+						
 						img.onload=function from_initSocketConnection(){
 							var flagFirstImage=(me.brain_img.img==null);
 							me.brain_img.img=img;
@@ -1327,6 +1315,9 @@ var AtlasMakerWidget = {
 							if(flagFirstImage || me.flagLoadingImg.view!=me.User.view ||me.flagLoadingImg.slice!=me.User.slice) {
 								me.sendRequestSliceMessage();
 							}
+							
+							// remove loading indicator
+							// $("#loadingIndicator").hide();
 						}
 						img.src=imageUrl;
 						
@@ -1680,6 +1671,8 @@ var AtlasMakerWidget = {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(configureAtlasMaker);if(l)console.log(l);
 		
+		// $("#loadingIndicator").show();
+				
 		// Load segmentation labels
 		return $.getJSON(info.mri.atlas[index].labels,function from_configureAtlasMaker(d){me.configureOntology(d);})
 		.then(function from_configureAtlasMaker() {
@@ -1699,8 +1692,6 @@ var AtlasMakerWidget = {
 				}
 
 				me.sendUserDataMessage();
-
-				console.log("sendAtlas");
 				me.sendUserDataMessage("sendAtlas");
 				def.resolve();
 			});
@@ -1744,6 +1735,7 @@ var AtlasMakerWidget = {
 		me.User.v2w=info.voxel2world;
 		me.User.wori=info.worldOrigin;
 		me.computeS2VTransformation();
+		me.testS2VTransformation();
 		
 		me.flagLoadingImg={loading:false};
 		
@@ -1775,6 +1767,9 @@ var AtlasMakerWidget = {
 		var wmax=[Math.max(wvmin[0],wvmax[0]),Math.max(wvmin[1],wvmax[1]),Math.max(wvmin[2],wvmax[2])];
 		var w2s=[[1/Math.abs(wpixdim[0]),0,0],[0,1/Math.abs(wpixdim[1]),0],[0,0,1/Math.abs(wpixdim[2])]];
 		var s2w=me.invMat(w2s);
+
+		console.log(["v2w",v2w, "wori",wori, "wpixdim",wpixdim, "wvmax",wvmax, "wvmin",wvmin, "wmin",wmin, "wmax",wmax, "w2s",w2s]);
+
 		me.User.s2v = {
 			sdim: [(wmax[0]-wmin[0])/Math.abs(wpixdim[0]),(wmax[1]-wmin[1])/Math.abs(wpixdim[1]),(wmax[2]-wmin[2])/Math.abs(wpixdim[2])],
 			s2w: s2w,
@@ -1784,6 +1779,56 @@ var AtlasMakerWidget = {
 			wori: wori
 		};
 	},
+	testS2VTransformation: function testS2VTransformation() {
+		var me=AtlasMakerWidget;
+		var l=me.traceLog(testS2VTransformation);if(l)console.log(l);
+		
+		/*
+			check the S2V transformation to see if it looks correct.
+			If it does not, reset it
+		*/
+		var mri=me.User; // this line is different from server
+		var doReset=false;
+	
+		console.log("Transformation TEST:");
+
+		console.log("  1. transformation volume");
+		var vv=mri.dim[0]*mri.dim[1]*mri.dim[2];
+		var vs=mri.s2v.sdim[0]*mri.s2v.sdim[1]*mri.s2v.sdim[2];
+		var diff=(vs-vv)/vv;
+		if(Math.abs(diff)>0.001) {
+			console.log("    ERROR: Difference is too large");
+			console.log("    original volume:",vv);
+			console.log("    rotated volume:",vs);
+			console.log("    % difference:",diff*100);
+			doReset=true;
+		} else {
+			console.log("    ok.");
+		}
+	
+		console.log("  2. transformation origin");
+		if(	mri.s2v.sori[0]<0||mri.s2v.sori[0]>mri.s2v.sdim[0] ||
+			mri.s2v.sori[1]<0||mri.s2v.sori[1]>mri.s2v.sdim[1] ||
+			mri.s2v.sori[2]<0||mri.s2v.sori[2]>mri.s2v.sdim[2]) {
+			console.log("    Origin point is outside the dimensions of the data");
+			doReset=true;
+		} else {
+			console.log("    ok.");
+		}
+
+		if(doReset) {
+			console.log("THE TRANSFORMATION WILL BE RESET");
+			mri.v2w=[[mri.pixdim[0],0,0],[0,-mri.pixdim[1],0],[0,0,-mri.pixdim[2]]];
+			mri.wori=[0,mri.dim[1],mri.dim[2]];
+
+			// re-compute the transformation from voxel space to screen space
+			me.computeS2VTransformation(); // this line is different from server
+			console.log(mri.dir);
+			console.log(mri.ori);
+			console.log(mri.s2v);
+		}
+	},
+
 	S2I: function S2I(s,mri) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(S2I,3);if(l)console.log(l);

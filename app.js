@@ -5,7 +5,7 @@
 	Launch using > node atlasMakerServer.js
 */
 
-var	debug=1;
+var	debug=0;
 
 var express = require('express');
 var path = require('path');
@@ -483,7 +483,19 @@ function displayBrains() {
 		console.log("Brains["+i+"].path="+Brains[i].path+", "+sum+" users connected");
 	}
 	for(var i=0;i<Brains.length;i++) {
-		console.log(Brains[i]);
+		console.log("Brains["+i+"]");
+		console.log("           path:",Brains[i].path);
+		console.log("       data.dim:",Brains[i].data.dim);
+		console.log("    data.pixdim:",Brains[i].data.pixdim);
+		console.log("data.vox_offset:",Brains[i].data.vox_offset);
+		console.log("       data.dir:",Brains[i].data.dir);
+		console.log("       data.ori:",Brains[i].data.ori);
+		console.log("       data.s2v:",Brains[i].data.s2v);
+		console.log("       data.v2w:",Brains[i].data.v2w);
+		console.log("      data.wori:",Brains[i].data.wori);
+		console.log("  data.datatype:",Brains[i].data.datatype);
+		console.log("       data.sum:",Brains[i].data.sum);
+		console.log();
 	}
 }
 function displayUsers() {
@@ -592,7 +604,7 @@ function numberOfUsersConnectedToMRI(path) {
 }
 function unloadMRI(path) {
 	if(debug)
-		console.log(new Date(), "[unload MRI]",path);
+		console.log("[unload MRI]",path);
 		
 	for(var i in Brains) {
 		if(Brains[i].path==path) {
@@ -629,22 +641,24 @@ function numberOfUsersConnectedToAtlas(dirname,atlasFilename) {
 }
 function unloadAtlas(dirname,atlasFilename) {
 	if(debug)
-		console.log(new Date(), "[unload atlas]",dirname,atlasFilename);
-		
-	var i;
-	for(i in Atlases) {
+		console.log("[unload atlas]",dirname,atlasFilename);
+
+	for(var i in Atlases) {
 		if(Atlases[i].dirname==dirname && Atlases[i].name==atlasFilename) {
-			saveNifti(Atlases[i]);
-			clearInterval(Atlases[i].timer);
-			delete Atlases[i];
-			console.log("free memory",os.freemem());
+			saveNifti(Atlases[i])
+			.then(function() {
+				console.log("Atlas saved. Unloading it");
+				clearInterval(Atlases[i].timer);
+				delete Atlases[i];
+				console.log("free memory",os.freemem());
+			});
 			break;
 		}
 	}
 }
 function initSocketConnection() {
 	// WS connection
-	if(debug) console.log(new Date(),"[initSocketConnection]");
+	if(debug) console.log("[initSocketConnection]");
 	
 	try {
 		websocket = new WebSocketServer({ server: server });
@@ -729,7 +743,7 @@ function initSocketConnection() {
 			});
 			
 			s.on('close',function(msg) {
-				console.log(new Date(),"[connection: close]");
+				console.log("[connection: close]");
 				console.log("US length",US.filter(function(o){return o!=undefined}).length);
 				for(var i in US)
 					if(US[i].socket==s)
@@ -785,7 +799,7 @@ function initSocketConnection() {
 			});
 		});
 	} catch (ex) {
-		console.log(new Date(),"ERROR: Unable to create a server",ex);
+		console.log("ERROR: Unable to create a server",ex);
 	}
 }
 function receivePaintMessage(data) {
@@ -844,10 +858,11 @@ function receiveAtlasFromUserMessage(data,user_socket) {
 		var sourceUS=getUserFromUserId(data.uid);
 		var iAtlas=sourceUS.User.iAtlas;
 		var atlas=Atlases[iAtlas];
-		saveNifti(atlas);
-
-		// Replace current atlas with new atlas
-		atlas.data=atlasData;
+		saveNifti(atlas)
+		.then(function() {
+			console.log("Replace current atlas with new atlas");
+			atlas.data=atlasData;
+		});
 	});
 }
 function getBrainAtPath(brainPath,callback) {
@@ -900,7 +915,7 @@ function sendSliceToUser(brain,view,slice,user_socket) {
 		var bin=Buffer.concat([jpegImageData.data,jpgTag],length);
 		user_socket.send(bin, {binary: true,mask:false});
 	} catch(e) {
-		console.log(new Date(),"ERROR: Cannot send slice to user");
+		console.log("ERROR: Cannot send slice to user");
 	}
 }
 
@@ -909,12 +924,16 @@ function receiveUserDataMessage(data,user_socket) {
 	
 	var sourceUS=getUserFromUserId(data.uid);
 	var User=data.user;
-	var	i,atlasLoadedFlag,firstConnectionFlag=false,switchingAtlasFlag=false;
+	var	i,
+		atlasLoadedFlag,
+		firstConnectionFlag=false,
+		switchingAtlasFlag=false;
 	
-	if(sourceUS.User==undefined)
+	if(sourceUS.User==undefined) {
 		firstConnectionFlag=true;
-	else if(sourceUS.User.isMRILoaded===false)
+	} else if(sourceUS.User.isMRILoaded===false) {
 		firstConnectionFlag=true;
+	}
 	
 	User.uid=data.uid;
 
@@ -930,11 +949,12 @@ function receiveUserDataMessage(data,user_socket) {
 			}
 		}
 		
-		for(i in Atlases)
+		for(i in Atlases) {
 			if(Atlases[i].dirname==User.dirname && Atlases[i].name==User.atlasFilename) {
 				atlasLoadedFlag=true;
 				break;
 			}
+		}
 		User.iAtlas=atlasLoadedFlag?parseInt(i):Atlases.length;	// value i if it was found, or last available if it wasn't
 	
 		// 2. Send the atlas to the user (load it if required)
@@ -956,26 +976,31 @@ function receiveUserDataMessage(data,user_socket) {
 	// If the user didn't have a name (wasn't logged in), but now has one,
 	// display the name in the log
 	if(User.hasOwnProperty('username')) {
-		if(sourceUS.User==undefined)
+		if(sourceUS.User==undefined) {
 			console.log("No User yet for id "+data.uid);
-		else
-		if(!sourceUS.User.hasOwnProperty('username')) {
+		} else if(!sourceUS.User.hasOwnProperty('username')) {
 			console.log("User "+User.username+", id "+data.uid+" logged in");
 		}
 	}
 
-	if(sourceUS.hasOwnProperty('User')==false) sourceUS.User={};
-	for(var prop in User) sourceUS.User[prop]=User[prop];
+	if(sourceUS.hasOwnProperty('User')==false) {
+		sourceUS.User={};
+	}
+	for(var prop in User) {
+		sourceUS.User[prop]=User[prop];
+	}
 
 	// 4. Update number of users connected to atlas
 	if(firstConnectionFlag) {
 		var sumAtlas=0,
 			sumMRI=0;
 		for(i in US) {
-			if(US[i].User.dirname==User.dirname && US[i].User.atlasFilename==User.atlasFilename)
+			if(US[i].User.dirname==User.dirname && US[i].User.atlasFilename==User.atlasFilename) {
 				sumAtlas++;
-			if(US[i].User.dirname==User.dirname && US[i].User.mri==User.mri)
+			}
+			if(US[i].User.dirname==User.dirname && US[i].User.mri==User.mri) {
 				sumMRI++;
+			}
 		}
 		console.log(sumMRI+" user"+((sumMRI==1)?" is":"s are")+" requesting MRI "+User.dirname+User.mri);
 		console.log(sumAtlas+" user"+((sumAtlas==1)?" is":"s are")+" requesting atlas "+User.dirname+User.atlasFilename);
@@ -1024,14 +1049,14 @@ function sendAtlasToUser(atlasdata,user_socket,flagCompress) {
 			try {
 				user_socket.send(Buffer.concat([atlasdatagz,niiTag]), {binary: true, mask: false});
 			} catch(e) {
-				console.log(new Date(),"ERROR: Cannot send atlas data to user");
+				console.log("ERROR: Cannot send atlas data to user");
 			}
 		});
 	} else {
 		try {
 			user_socket.send(Buffer.concat([atlasdata,niiTag]), {binary: true, mask: false});
 		} catch(e) {
-			console.log(new Date(),"ERROR: Cannot send atlas data to user");
+			console.log("ERROR: Cannot send atlas data to user");
 		}
 	}
 }
@@ -1084,12 +1109,15 @@ function addAtlas(User,callback) {
 
 	console.log("User requests atlas "+atlas.name+" from "+atlas.dirname);
 	
-	loadAtlasNifti(atlas,User,callback);
+	loadAtlasNifti(atlas,User,function() {
+		Atlases.push(atlas);
+		User.iAtlas=Atlases.indexOf(atlas);
 
-	Atlases.push(atlas);
-	User.iAtlas=Atlases.indexOf(atlas);
+		atlas.timer=setInterval(function(){saveNifti(atlas)},60*60*1000); // 60 minutes
+		
+		callback();
+	});
 
-	atlas.timer=setInterval(function(){saveNifti(atlas)},60*60*1000); // 60 minutes
 }
 function loadNifti(nii) {
 	if(debug>=1) console.log("[loadNifti]");
@@ -1112,7 +1140,12 @@ function loadNifti(nii) {
 		mri.dir=[[mri.pixdim[0],0,0],[0,mri.pixdim[1],0],[0,0,mri.pixdim[2]]];
 		mri.ori=[0,0,0];
 	}
-	computeS2VTransformation(mri); // compute the transformation from voxel space to screen space
+	
+	// compute the transformation from voxel space to screen space
+	computeS2VTransformation(mri);
+	
+	// test if the transformation looks incorrect. Reset it if it does
+	testS2VTransformation(mri);
 
 	// manually parsed information
 	mri.hdr=nii.slice(0,352);
@@ -1210,7 +1243,7 @@ function loadAtlasNifti(atlas,User,callback)
 				callback(atlas.data);
 			});
 		} catch(e) {
-			console.log(new Date(),"ERROR: Cannot read atlas data");
+			console.log("ERROR: Cannot read atlas data");
 		}
 	}
 }
@@ -1237,36 +1270,47 @@ function saveNifti(atlas) {
 
 	if(atlas && atlas.dim ) {
 		if(atlas.data==undefined) {
-			console.log("ERROR: [saveNifti] atlas is still in Atlas array, but it has not data");
-			return;
-		}
-		
-		var i,sum=0;
-		for(i=0;i<atlas.dim[0]*atlas.dim[1]*atlas.dim[2];i++)
-			sum+=atlas.data[i];
-		if(sum==atlas.sum) {
-			console.log("Atlas",atlas.specimen,atlas.name,
-						"no change, no save, freemem",os.freemem());
-			return;
-		}
-		atlas.sum=sum;
+			displayAtlases();
+			console.log("ERROR: [saveNifti] atlas in Atlas array has no data");
+			console.log(atlas);
+			return Promise.resolve();
+		} else {
+			var i,sum=0;
+			for(i=0;i<atlas.dim[0]*atlas.dim[1]*atlas.dim[2];i++)
+				sum+=atlas.data[i];
+			if(sum==atlas.sum) {
+				console.log("Atlas",atlas.specimen,atlas.name,
+							"no change, no save, freemem",os.freemem());
+				return Promise.resolve();
+			}
+			atlas.sum=sum;
 
-		var	voxel_offset=352;
-		var	nii=new Buffer(atlas.dim[0]*atlas.dim[1]*atlas.dim[2]+voxel_offset);
-		console.log("Atlas",atlas.dirname,atlas.name,
-					"data length",atlas.data.length+voxel_offset,
-					"buff length",nii.length);
-		atlas.hdr.copy(nii);
-		atlas.data.copy(nii,voxel_offset);
-		zlib.gzip(nii,function(err,niigz) {
-			var	ms=+new Date;
-			var path1=__dirname+"/public"+atlas.dirname+atlas.name;
-			var	path2=__dirname+"/public"+atlas.dirname+ms+"_"+atlas.name;
-			fs.rename(path1,path2,function(){
-				fs.writeFile(path1,niigz);
+			var	voxel_offset=352;
+			var	nii=new Buffer(atlas.dim[0]*atlas.dim[1]*atlas.dim[2]+voxel_offset);
+			console.log("Atlas",atlas.dirname,atlas.name,
+						"data length",atlas.data.length+voxel_offset,
+						"buff length",nii.length);
+			atlas.hdr.copy(nii);
+			atlas.data.copy(nii,voxel_offset);
+			
+			var pr=new Promise(function(resolve, reject) {
+				zlib.gzip(nii,function(err,niigz) {
+					var	ms=+new Date;
+					var path1=__dirname+"/public"+atlas.dirname+atlas.name;
+					var	path2=__dirname+"/public"+atlas.dirname+ms+"_"+atlas.name;
+					fs.rename(path1,path2,function(){
+						fs.writeFileSync(path1,niigz);
+						resolve();
+					});
+				});
 			});
-		});
+		}
+	} else {
+		return Promise.resolve();
 	}
+
+
+	return pr;
 }
 //========================================================================================
 // Undo
@@ -1377,7 +1421,7 @@ function paintxy(u,c,x,y,User,undoLayer)
 {
 	var atlas=Atlases[User.iAtlas];
 	if(atlas.data==undefined) {
-		console.log(new Date(),"ERROR: No atlas to draw into");
+		console.log("ERROR: No atlas to draw into");
 		return;
 	}
 	
@@ -1662,9 +1706,7 @@ function loadBrainCompressed(path,callback) {
 		try {
 			datagz=fs.readFileSync(path);
 			var ft=fileType(datagz);
-			console.log("fileType",ft);
 			var ext=path.split('.').pop();
-			console.log("extension",ext);
 			
 			switch(ft.ext) {
 				case 'gz': {
@@ -1683,7 +1725,7 @@ function loadBrainCompressed(path,callback) {
 					break;
 			}
 		} catch(e) {
-			console.log(new Date(),"ERROR: Cannot read brain data");
+			console.log("ERROR: Cannot read brain data");
 		}
 	}
 	return null;
@@ -1727,16 +1769,22 @@ function computeS2VTransformation(mri) {
 		The basic transformation is
 		w = v2w * v + wori
 		
+		Where:
+		w: world coordinates
+		wori: origin of the world coordinates
+		v: voxel coordinates
+		v2w: rotation matrix from v to w
+		
 		In what follows:
-		v: native voxel coordinates
-		w: world dimensions
-		s: screen pixel coordinates
+		v refers to native voxel coordinates
+		w refers to world coordinates
+		s refers screen pixel coordinates
 	*/ 
 	var wori=mri.ori;
 	// space directions are transposed!
 	var v2w=[[],[],[]];
 	for(j in mri.dir)
-		for(i in mri.dir[j]) v2w[i][j]=mri.dir[j][i];
+		for(i in mri.dir[j]) v2w[i][j]=mri.dir[j][i];	// transpose
 	var wpixdim=subVecVec(mulMatVec(v2w,[1,1,1]),mulMatVec(v2w,[0,0,0]));
 	// min and max world coordinates
 	var wvmax=addVecVec(mulMatVec(v2w,mri.dim),wori);
@@ -1744,6 +1792,8 @@ function computeS2VTransformation(mri) {
 	var wmin=[Math.min(wvmin[0],wvmax[0]),Math.min(wvmin[1],wvmax[1]),Math.min(wvmin[2],wvmax[2])];
 	var wmax=[Math.max(wvmin[0],wvmax[0]),Math.max(wvmin[1],wvmax[1]),Math.max(wvmin[2],wvmax[2])];
 	var w2s=[[1/Math.abs(wpixdim[0]),0,0],[0,1/Math.abs(wpixdim[1]),0],[0,0,1/Math.abs(wpixdim[2])]];
+
+	// console.log(["v2w",v2w, "wori",wori, "wpixdim",wpixdim, "wvmax",wvmax, "wvmin",wvmin, "wmin",wmin, "wmax",wmax, "w2s",w2s]);
 
 	mri.s2v = {
 		sdim: [(wmax[0]-wmin[0])/Math.abs(wpixdim[0]),(wmax[1]-wmin[1])/Math.abs(wpixdim[1]),(wmax[2]-wmin[2])/Math.abs(wpixdim[2])],
@@ -1754,6 +1804,51 @@ function computeS2VTransformation(mri) {
 	};
 	mri.v2w=v2w;
 	mri.wori=wori;
+}
+function testS2VTransformation(mri) {
+	/*
+		check the S2V transformation to see if it looks correct.
+		If it does not, reset it
+	*/
+	var doReset=false;
+	
+	console.log("Transformation TEST:");
+
+	if(debug) process.stdout.write("1. transformation volume: ");
+	var vv=mri.dim[0]*mri.dim[1]*mri.dim[2];
+	var vs=mri.s2v.sdim[0]*mri.s2v.sdim[1]*mri.s2v.sdim[2];
+	var diff=(vs-vv)/vv;
+	if(Math.abs(diff)>0.001) {
+		doReset=true;
+		if(debug) console.log("fail");
+	} else {
+		if(debug) console.log("ok");
+	}
+	
+	if(debug) process.stdout.write("2. transformation origin: ");
+	if(	mri.s2v.sori[0]<0||mri.s2v.sori[0]>mri.s2v.sdim[0] ||
+		mri.s2v.sori[1]<0||mri.s2v.sori[1]>mri.s2v.sdim[1] ||
+		mri.s2v.sori[2]<0||mri.s2v.sori[2]>mri.s2v.sdim[2]) {
+		doReset=true;
+		if(debug) console.log("fail");
+	} else {
+		if(debug) console.log("ok");
+	}
+
+	if(doReset) {
+		console.log("FAIL: TRANSFORMATION WILL BE RESET");
+		mri.dir=[[mri.pixdim[0],0,0],[0,-mri.pixdim[1],0],[0,0,-mri.pixdim[2]]];
+		mri.ori=[0,mri.dim[1],mri.dim[2]];
+		computeS2VTransformation(mri);
+
+		if(debug) {
+			console.log("dir",mri.dir);
+			console.log("ori",mri.ori);
+			console.log("s2v",mri.s2v);
+		}
+	} else {
+		console.log("ok");
+	}
 }
 function S2V(s,mri) {
 	var s2v=mri.s2v;
