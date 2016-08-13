@@ -1317,7 +1317,7 @@ var AtlasMakerWidget = {
 							}
 							
 							// remove loading indicator
-							// $("#loadingIndicator").hide();
+							$("#loadingIndicator").hide();
 						}
 						img.src=imageUrl;
 						
@@ -1388,7 +1388,7 @@ var AtlasMakerWidget = {
 	
 		var u=data.uid;
 	
-		if(me.Collab[u]==undefined) {
+		if(me.Collab[u]===undefined) {
 			try {
 				//var	msg="<b>"+data.user.username+"</b> entered atlas "+data.user.specimenName+"/"+data.user.atlasFilename+"<br />"
 				var	msg="<b>"+data.user.username+"</b> entered<br />"
@@ -1671,7 +1671,7 @@ var AtlasMakerWidget = {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(configureAtlasMaker);if(l)console.log(l);
 		
-		// $("#loadingIndicator").show();
+		$("#loadingIndicator").show();
 				
 		// Load segmentation labels
 		return $.getJSON(info.mri.atlas[index].labels,function from_configureAtlasMaker(d){me.configureOntology(d);})
