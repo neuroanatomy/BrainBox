@@ -62,6 +62,8 @@ console.log(process.cwd());
 				included: (new Date()).toJSON(),
 				dim: mri.dim,
 				pixdim: mri.pixdim,
+				voxel2world: mri.v2w,
+				worldOrigin: mri.wori,
 				owner:username,
 				mri: {
 					brain: filename,
