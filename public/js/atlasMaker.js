@@ -2,7 +2,7 @@ var AtlasMakerWidget = {
 	//========================================================================================
 	// Globals
 	//========================================================================================
-	debug:			1,
+	debug:			2,
 	container:		null,	// Element where atlasMaker lives
 	brain_offcn:	null,
 	brain_offtx:	null,
@@ -1423,6 +1423,7 @@ var AtlasMakerWidget = {
 	receiveChatMessage: function receiveChatMessage(data) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(receiveChatMessage);if(l)console.log(l);
+		console.log(data);
 	
 		var	theView=me.Collab[data.uid].view;
 		var	theSlice=me.Collab[data.uid].slice;

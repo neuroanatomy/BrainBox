@@ -575,10 +575,6 @@ var receiveUserDataMessage = function receiveUserDataMessage(data, user_socket) 
 				// send the new user our data
 				sendAtlasToUser(Atlases[i].data,user_socket,true);
 				sourceUS.User.isMRILoaded=true;
-				
-                var msg=JSON.stringify({type:"chat",uid:sourceUS.uid,msg:"hope you like it from 1"});
-                sourceUS.socket.send(msg);
-				
 			}
 		} else {
 			// The atlas requested has not been loaded before:
@@ -587,8 +583,6 @@ var receiveUserDataMessage = function receiveUserDataMessage(data, user_socket) 
 			    .then(function(atlas) {
                     sendAtlasToUser(atlas.data,user_socket,true);
                     sourceUS.User.isMRILoaded=true;
-                    var msg=JSON.stringify({type:"chat",uid:sourceUS.uid,msg:"hope you like it from 2"});
-                    sourceUS.socket.send(msg);
 			    });
 		}
 	}
