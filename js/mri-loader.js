@@ -4,6 +4,7 @@ var fileType=require("file-type");
 
 var MRILoader = function() {
 
+/*
 var loadNifti = function(nii) {
 	var	vox_offset=352;
 	var	sizeof_hdr=nii.readUInt32LE(0);
@@ -171,6 +172,7 @@ this.loadBrain = function(path,callback) {
 	}
 	return null;
 }
+*/
 
 };
 
