@@ -254,7 +254,7 @@
 	width:100%;
 	height:100%;
 	text-align:left;
-	background:#333;
+	background-color:#333;
 	z-index:21;
 }
 .label-color {
@@ -333,7 +333,7 @@ img.icon {
 	cursor:pointer;
 }
 
-#NAATlogo {
+#NAATlogo .project-page {
 	position:absolute;
     right:10px;
     top:10px;
@@ -361,7 +361,7 @@ img.icon {
 
 select {
 	border:none;
-	background:none;
+	background:none; /* no color, no decoration */
 	color:white;
 	-webkit-appearance: none;
 	-moz-appearance: none;
@@ -384,7 +384,7 @@ select {
 	height:20px;
 	top:50%;
 	left:100%;
-	background:#333;
+	background-color:#333;
 	transform:translate(-50%, -50%);
 	border-radius:5px;
 	z-index:5;
