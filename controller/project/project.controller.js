@@ -24,8 +24,6 @@ var project = function(req, res) {
 				:("<a href='/auth/github'>Log in with GitHub</a>");
 	req.db.get('project').findOne({shortname:req.params.projectName},"-_id")
 	.then(function(json) {
-		console.log("this is what I found:")
-		console.log(json);
 		if (json) {
 			async.each(
 				json.files,
