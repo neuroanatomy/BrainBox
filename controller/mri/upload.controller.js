@@ -1,6 +1,6 @@
 "use strict";
 
-
+var atlasMakerServer = require('../../js/atlasMakerServer');
 //expressValidator = require('express-validator')
 
 var validator = function (req, res, next) {
@@ -27,9 +27,6 @@ var other_validations = function(req, res, next) {
     .then(function(json){
         if (json && req.files) {
             req.mri = json;
-
-            console.log(req.files);
-            console.log(json);
             next();
         }
         else {return res.send(errors).status(403).end();}
@@ -44,6 +41,9 @@ var upload = function(req, res) {
     console.log(req.body.url);
 
     //do the "getBrainAtPath thingy"
+    var atlas = {};
+    atlasMakerServer.readAtlasNifti(req.files[0].path, atlas)
+    console.log(atlas);
     //check for the validity with the niftii thingy
 
     //create the atlas object

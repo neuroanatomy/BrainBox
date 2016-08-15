@@ -767,44 +767,51 @@ var loadAtlasNifti = function loadAtlasNifti(atlas, User) {
                 });
         } else {
             console.log("    Atlas found. Loading it");
-            var niigz;
-            try {
-                niigz=fs.readFileSync(path);
-                zlib.gunzip(niigz, function (err, nii) {
-                    loadNifti(nii)
-                        .then(function(mri) {
-                            atlas.hdr=mri.hdr;
-                            atlas.dim=mri.dim;
-                            atlas.datatype=mri.datatype;
-                            atlas.pixdim=mri.pixdim;
-                            atlas.data=mri.data;
-                
-                            var i,sum=0;
-                            for(i=0;i<atlas.dim[0]*atlas.dim[1]*atlas.dim[2];i++)
-                                sum+=atlas.data[i];
-                            atlas.sum=sum;
-
-                            console.log(new Date());
-                            console.log("    atlas size:",atlas.data.length);
-                            console.log("     atlas dim:",atlas.dim);
-                            console.log("atlas datatype:",atlas.datatype);
-                            console.log("   free memory:",os.freemem());
-                    
-                            resolve(atlas.data);
-                        })
-                        .catch(function(err) {
-                            console.log("ERROR:",err);
-                            reject(err);
-                        });
-                });
-            } catch(e) {
-                console.log("ERROR: loadAtlasNifti cannot read atlas data");
-            }
+            atlas = readAtlasNifti(path, atlas);
+            resolve(atlas.data);
+            
         }
     });
     
     return pr;
 };
+
+var readAtlasNifti = function readAtlasNifti(path, atlas) 
+{
+	var niigz;
+    try {
+        niigz=fs.readFileSync(path);
+        zlib.gunzip(niigz, function (err, nii) {
+            loadNifti(nii)
+                .then(function(mri) {
+                    atlas.hdr=mri.hdr;
+                    atlas.dim=mri.dim;
+                    atlas.datatype=mri.datatype;
+                    atlas.pixdim=mri.pixdim;
+                    atlas.data=mri.data;
+        
+                    var i,sum=0;
+                    for(i=0;i<atlas.dim[0]*atlas.dim[1]*atlas.dim[2];i++)
+                        sum+=atlas.data[i];
+                    atlas.sum=sum;
+
+                    console.log(new Date());
+                    console.log("    atlas size:",atlas.data.length);
+                    console.log("     atlas dim:",atlas.dim);
+                    console.log("atlas datatype:",atlas.datatype);
+                    console.log("   free memory:",os.freemem());
+                })
+                .catch(function(err) {
+                    console.log("ERROR:",err);
+                    reject(err);
+                });
+        });
+    } catch(e) {
+        console.log("ERROR: loadAtlasNifti cannot read atlas data");
+    }
+}
+this.readAtlasNifti = readAtlasNifti;
+
 var loadBrainCompressed = function loadBrainCompressed(path) {
     traceLog(loadBrainCompressed);
     
