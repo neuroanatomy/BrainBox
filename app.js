@@ -20,7 +20,6 @@ var crypto = require('crypto');
 var request = require("request");
 var url = require("url");
 var async = require("async");
-
 var mongo = require('mongodb');
 var monk = require('monk');
 var db = monk('localhost:27017/brainbox');
