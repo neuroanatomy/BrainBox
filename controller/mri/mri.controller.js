@@ -45,7 +45,6 @@ function downloadMRI(myurl, req, res, callback) {
         .pipe(fs.createWriteStream(dest))
         .on('close', function () {
             // NOTE: getBrainAtPath has to be called with a client-side path like "/data/[md5hash/..."
-            console.log("call getBrainAtPath 1");
             atlasMakerServer.getBrainAtPath("/data/" + hash  + "/" + filename)
                 .then(function (mri) {
                     // create json file for new dataset
@@ -79,7 +78,6 @@ function downloadMRI(myurl, req, res, callback) {
                                 }]
                             }
                         };
-                    //req.db.get('mri').insert(json);
                     callback(json);
                 });
         })

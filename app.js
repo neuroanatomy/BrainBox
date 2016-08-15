@@ -15,7 +15,6 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-var dateFormat = require('dateformat');
 var mustacheExpress = require('mustache-express');
 var crypto = require('crypto');
 var request = require("request");
@@ -136,11 +135,12 @@ app.get('/', function (req, res) { // /auth/github
 
 app.use('/mri', require('./controller/mri/'));
 app.use('/project', require('./controller/project/'));
-
+app.use('/user', require('./controller/user/'));
 
 // app.get('/mri', function (req, res) {
 // });
 
+/*
 app.get('/user/:id', function (req, res) {
 
     var login = (req.isAuthenticated()) ?
@@ -231,6 +231,7 @@ app.get('/api/user/:name', function (req, res) {
             }
         });
 });
+*/
 
 app.get('/api/getLabelsets', function (req, res) {
     var i, arr = fs.readdirSync(dirname + "/public/labels/"), info = [];
