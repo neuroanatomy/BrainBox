@@ -67,12 +67,11 @@ var BrainBox={
 
 					// Configure MRI into atlasMaker
 					//data=JSON.parse(data);
-					if(data.success==false) {
+					if(data.success===false) {
 						date=new Date();
 						$("#msgLog").append("<p>ERROR: "+data.message+".");
 						console.log("<p>ERROR: "+data.message+".");
-						def.reject();
-						return;
+						return def.promise().reject();
 					}
 					BrainBox.info=data;
 			
