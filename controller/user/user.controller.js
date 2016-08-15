@@ -78,6 +78,7 @@ var user = function(req, res) {
                         context.numMRI = context.MRIFiles.length;
                         context.numAtlas = context.atlasFiles.length;
                         context.numProjects = context.projects.length;
+
                         res.render('user',context);
                     })
             } else {
