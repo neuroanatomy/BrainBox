@@ -56,7 +56,7 @@ var user = function(req, res) {
                         });
                         atlas.map(function (o) {
                             var i;
-                            console.log("WARNING: this is not working");
+                            console.log("WARNING: THE APPROPRIATE projectURL HAS TO BE SETUP");
                             for (i in o.mri.atlas) {
                                 context.atlasFiles.push({
                                     url: o.source,
