@@ -20,7 +20,6 @@ var user = function(req, res) {
     var username = req.params.userName;
     req.db.get('user').findOne({nickname: username}, "-_id")
         .then(function (json) {
-            console.log(json);
             if(json) {
                 // gather user information on mri, atlas and projects
                 var mri, atlas, projects;
