@@ -9,21 +9,21 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="94.304131mm"
-   height="68.824051mm"
-   viewBox="0 0 334.1485 243.86475"
+   width="33.17865mm"
+   height="33.17865mm"
+   viewBox="0 0 0 117.56215"
    id="svg2"
    version="1.1"
    inkscape:version="0.91 r13725"
-   sodipodi:docname="brainbox.svg">
+   sodipodi:docname="brainbox_.svg">
   <defs
      id="defs4">
     <inkscape:perspective
        sodipodi:type="inkscape:persp3d"
        inkscape:vp_x="0 : 526.1811 : 1"
-       inkscape:vp_y="0 : 1000 : 0"
-       inkscape:vp_z="744.09449 : 526.1811 : 1"
-       inkscape:persp3d-origin="372.04724 : 350.7874 : 1"
+       inkscape:vp_y="0 : 999.99999 : 0"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:persp3d-origin="372.04723 : 350.7874 : 1"
        id="perspective4198" />
     <clipPath
        clipPathUnits="userSpaceOnUse"
@@ -105,10 +105,10 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.3095647"
-     inkscape:cx="245.9363"
-     inkscape:cy="99.410504"
+     inkscape:cx="63.763767"
+     inkscape:cy="3.6524114"
      inkscape:document-units="px"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="g4189"
      showgrid="false"
      inkscape:window-width="1440"
      inkscape:window-height="855"
@@ -127,7 +127,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -135,7 +135,7 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(-233.29586,-422.67515)">
+     transform="translate(-343.68882,-422.67515)">
     <g
        id="g4189"
        transform="matrix(0.86464604,0,0,0.86464604,47.577517,57.210754)">
@@ -151,7 +151,7 @@
            id="tspan13288"
            sodipodi:role="line">BrainBox</tspan></text>
       <g
-         transform="translate(-2467.9649,610.43727)"
+         transform="translate(-2457.8868,610.43727)"
          id="g14073">
         <path
            transform="matrix(0.98013866,0,0,0.99655992,10.76486,-110.01033)"
