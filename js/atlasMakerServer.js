@@ -803,7 +803,6 @@ var readAtlasNifti = function readAtlasNifti(path, atlas)
                 })
                 .catch(function(err) {
                     console.log("ERROR:",err);
-                    reject(err);
                 });
         });
     } catch(e) {
