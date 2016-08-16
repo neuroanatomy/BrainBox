@@ -48,6 +48,7 @@ var other_validations = function(req, res, next) {
             if(obj.expiryDate.getTime()-now.getTime() < tokenDuration) {
                 req.db.get('mri').findOne({source:req.body.url, backup: {$exists: false}})
                 .then(function (json) {
+                    console.log("get MRI:", json);
                     if (json && req.files) {
                         req.atlasUpload = {
                         mri: json,
@@ -116,14 +117,14 @@ var upload = function(req, res) {
     var atlas = {};
     atlasMakerServer.readAtlasNifti(files[0].path, atlas)
     .then(function(atlas){
-        console.log("atlas.dim: ",atlas);
-        console.log("mri.dim: ",mri);
+        console.log("atlas.dim: ",atlas.dim);
+        console.log("mri.dim: ",mri.dim);
 
-        if (atlas.dim[0] !== mri.dim[0] ||
-            atlas.dim[1] !== mri.dim[1] ||
-            atlas.dim[2] !== mri.dim[2]) 
+        if (atlas.dim[0] != mri.dim[0] ||
+            atlas.dim[1] != mri.dim[1] ||
+            atlas.dim[2] != mri.dim[2]) 
         {return res.json({error:"the Atlas doesn't match with the mri"}).status(400).end();}
-    })
+    
     
 
 
@@ -148,7 +149,10 @@ var upload = function(req, res) {
     //update the database
 
     //return the full mri object ???
-    return res.json(mri).status(400).end();
+    return res.json(mri).status(200).end();
+    })
+    .catch(function(){return res.json({error:"mri file is not valid"}).status(400).end();});
+    
 }
 
 var token = function token(req, res) {
