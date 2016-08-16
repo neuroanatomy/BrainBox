@@ -767,8 +767,8 @@ var loadAtlasNifti = function loadAtlasNifti(atlas, User) {
                 });
         } else {
             console.log("    Atlas found. Loading it");
-            atlas = readAtlasNifti(path, atlas);
-            resolve(atlas.data);
+            atlas = readAtlasNifti(path, atlas)
+            .then(function(atlas){resolve(atlas.data)});
             
         }
     });
@@ -778,6 +778,7 @@ var loadAtlasNifti = function loadAtlasNifti(atlas, User) {
 
 var readAtlasNifti = function readAtlasNifti(path, atlas) 
 {
+	var pr = new Promise(function promise_fromreadAtlasNifti(resolve,reject) {
 	var niigz;
     try {
         niigz=fs.readFileSync(path);
@@ -800,14 +801,17 @@ var readAtlasNifti = function readAtlasNifti(path, atlas)
                     console.log("     atlas dim:",atlas.dim);
                     console.log("atlas datatype:",atlas.datatype);
                     console.log("   free memory:",os.freemem());
+                    resolve(atlas);
                 })
                 .catch(function(err) {
+                	reject();
                     console.log("ERROR:",err);
                 });
         });
     } catch(e) {
         console.log("ERROR: loadAtlasNifti cannot read atlas data");
-    }
+    }});
+    return pr;
 }
 this.readAtlasNifti = readAtlasNifti;
 

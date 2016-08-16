@@ -8,8 +8,16 @@ var tokenDuration = 24 * (1000 * 3600); // in milliseconds
 var validator = function (req, res, next) {
     //CHECK URL
     req.checkBody('url', 'please enter a valid URL')
+        .notEmpty()
         .isURL();
-
+    req.checkBody('atlasName', 'please enter an Atlas Name')
+        .notEmpty()
+        .isAlphanumeric();
+    req.checkBody('atlasProject', 'please enter an Atlas Project')
+        .notEmpty()
+        .isAlphanumeric();
+    req.checkBody('atlasLabelSet', 'please enter an Atlas Project')
+        .notEmpty()
     /*
         Check for all these required fields:
         url: url
@@ -29,38 +37,58 @@ var validator = function (req, res, next) {
 };
 
 var other_validations = function(req, res, next) {
-    // CHECK USER AUTHENTICITY
+
     var token = req.body.token;
     req.db.get("log").findOne({"token":token})
-        .then(function (obj) {
-            if(obj) {
-                // Check token expiry date
-                var now = new Date();
-                if(obj.expiryDate.getTime()-now.getTime() < tokenDuration) {
-                    //Check that MRI exists in the database
-                    // (for each mri, there may be many backup versions, we don't want those)
-                    req.db.get('mri').find({source:req.body.url, backup: {$exists: false}})
-                    .then(function (json) {
-                        if (json && req.files) {
-                            req.atlasUpload = {
-                                mri: json,
-                                username: obj.username
-                            };
-                            next();
-                        }
-                        else {return res.send(errors).status(403).end();}
-                    })
-                } else {
-                    return res.send("ERROR: Token expired").status(403).end();
-                }
+    .then(function (obj) {
+        console.log(obj);
+        if(obj) {
+            // Check token expiry date
+            var now = new Date();
+            if(obj.expiryDate.getTime()-now.getTime() < tokenDuration) {
+                req.db.get('mri').findOne({source:req.body.url, backup: {$exists: false}})
+                .then(function (json) {
+                    if (json && req.files) {
+                        req.atlasUpload = {
+                        mri: json,
+                        username: obj.username
+                        };
+                        next();
+                    }
+                    else {return res.send({error:"Unkown URL"}).status(403).end();}
+                })
             } else {
-                return res.send("ERROR: Cannot find token").status(403).end();
-            }                
-        })
-        .catch(function (err) {
-            console.log("ERROR:",err);
-            res.send().status(403).end();
-        });
+                return res.send("ERROR: Token expired").status(403).end();
+            }
+        } else {
+            return res.send("ERROR: Cannot find token").status(403).end();
+        }                
+    })
+    .catch(function (err) {
+        console.log("ERROR:",err);
+        res.send().status(403).end();
+    });
+
+    // // CHECK USER AUTHENTICITY
+    // if (!req.isAuthenticated)
+    // {
+    //     return res.send({error:"Forbidden Access"}).status(401).end();
+    // }
+
+    // //Check that MRI exists in the database
+    // //(for each mri, there may be many backup versions, we don't want those)
+
+    // req.db.get('mri').find({source:req.body.url, backup: {$exists: false}})
+    // .then(function (json) {
+    //     if (json && req.files) {
+    //         req.atlasUpload = {
+    //         mri: json,
+    //         username: obj.username
+    //         };
+    //         next();
+    //     }
+    //     else {return res.send({error:"Unkown URL"}).status(403).end();}
+    // })
 }
 
 var upload = function(req, res) {
@@ -86,8 +114,18 @@ var upload = function(req, res) {
     
     // Check that the dimensions of the nifti atlas are the same as its parent mri
     var atlas = {};
-    atlasMakerServer.readAtlasNifti(files[0].path, atlas);
-    console.log(atlas);
+    atlasMakerServer.readAtlasNifti(files[0].path, atlas)
+    .then(function(atlas){
+        console.log("atlas.dim: ",atlas);
+        console.log("mri.dim: ",mri);
+
+        if (atlas.dim[0] !== mri.dim[0] ||
+            atlas.dim[1] !== mri.dim[1] ||
+            atlas.dim[2] !== mri.dim[2]) 
+        {return res.json({error:"the Atlas doesn't match with the mri"}).status(400).end();}
+    })
+    
+
 
     //create the atlas object
     var date = new Date();
@@ -104,13 +142,13 @@ var upload = function(req, res) {
         type: "volume"
     };
 
-    /*
+    mri.mri.atlas.push(atlasMetadata);
+
+    req.db.get('mri').update({source:req.body.url, backup: {$exists: false}}, mri);
     //update the database
 
     //return the full mri object ???
-
-    */
-    res.json({hello:"world"}).status(200).end();
+    return res.json(mri).status(400).end();
 }
 
 var token = function token(req, res) {
