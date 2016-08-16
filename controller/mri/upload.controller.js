@@ -48,15 +48,20 @@ var other_validations = function(req, res, next) {
             if(obj.expiryDate.getTime()-now.getTime() < tokenDuration) {
                 req.db.get('mri').findOne({source:req.body.url, backup: {$exists: false}})
                 .then(function (json) {
-                    console.log("get MRI:", json);
-                    if (json && req.files) {
+                    if (json && req.files.length > 0) {
                         req.atlasUpload = {
                         mri: json,
                         username: obj.username
                         };
                         next();
                     }
-                    else {return res.send({error:"Unkown URL"}).status(403).end();}
+                    else {
+                        var err = new Array();
+                        if (req.files.length == 0 || !req.files) {err.push({error:"there is no File"});}
+                        if (!json) {err.push({error:"Unkown URL"});}
+                        console.log(err);
+                        return res.json(err).status(403).end();
+                    }
                 })
             } else {
                 return res.send("ERROR: Token expired").status(403).end();

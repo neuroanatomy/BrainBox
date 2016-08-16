@@ -911,7 +911,7 @@ var loadNifti = function loadNifti(nii) {
     traceLog(loadNifti);
 	
 	var mri={};
-
+	try {
 	// standard nii header
 	var niiHdr=niijs.parseNIfTIHeader(nii);
 	var	sizeof_hdr=niiHdr.sizeof_hdr;
@@ -928,7 +928,10 @@ var loadNifti = function loadNifti(nii) {
 		mri.dir=[[mri.pixdim[0],0,0],[0,mri.pixdim[1],0],[0,0,mri.pixdim[2]]];
 		mri.ori=[0,0,0];
 	}
-	
+	} catch (e) {
+		console.log(e);
+		return Promise.reject();
+	}
 	// compute the transformation from voxel space to screen space
 	computeS2VTransformation(mri);
 	
