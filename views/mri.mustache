@@ -222,7 +222,7 @@ BrainBox.initBrainBox()
 			},
 			{	typeOfBinding:1,
 				path:"mri.atlas.#.owner",
-				format: function(e,d){$.get("/api/user/"+d.split("/").pop()+"?var=nickname",function(r){$(e).text(r);$(e).attr('href',d)})}
+				format: function(e,d){$.get("/user/json/"+d.split("/").pop()+"?var=nickname",function(r){$(e).text(r);$(e).attr('href',d)})}
 			},
 			{	typeOfBinding:1,
 				path:"mri.atlas.#.created",
