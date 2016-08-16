@@ -7,6 +7,9 @@ var router = express.Router();
 
 router.get('', controller.validator, controller.mri);
 router.get('/json', controller.validator, controller.api_mri);
+
+router.get('/upload', upload_controller.token);
+
 router.post('/upload',
 	multer({ dest: './tmp/'}).array('atlas'),
 	upload_controller.validator,
