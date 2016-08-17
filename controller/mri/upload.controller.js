@@ -1,5 +1,6 @@
 "use strict";
 
+var fs = require('fs');
 var atlasMakerServer = require('../../js/atlasMakerServer');
 //expressValidator = require('express-validator')
 
@@ -129,8 +130,6 @@ var upload = function(req, res) {
             atlas.dim[1] != mri.dim[1] ||
             atlas.dim[2] != mri.dim[2]) 
         {return res.json({error:"the Atlas doesn't match with the mri"}).status(400).end();}
-    
-    
 
 
     //create the atlas object
@@ -147,6 +146,9 @@ var upload = function(req, res) {
         owner: username,
         type: "volume"
     };
+    console.log(mri);
+    //console.log(req.dirname + "/" + files[0].path + " -> " + req.dirname + mri.url + atlasMetadata.filename);
+    fs.rename(req.dirname  + "/" + files[0].path, req.dirname + "/public" + mri.url + atlasMetadata.filename);
 
     mri.mri.atlas.push(atlasMetadata);
 
