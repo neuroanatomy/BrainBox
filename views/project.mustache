@@ -185,8 +185,14 @@ function loadProjectFile(url) {
 	var params={url:url,view:"cor",slice:180,fullscreen:false};
 	$.get("/mri/json",{url:url})
 	.done(function from_loadProjectFile(data) {
-		params.info=data;
-		BrainBox.configureBrainBox(params)
+	    if($.isEmptyObject(data) === false) {
+            params.info=data;
+            BrainBox.configureBrainBox(params)
+        } else {
+            var info=AtlasMakerWidget.container.find("#info");
+            info.html("<text x='5' y='15' fill='white'>ERROR: File is unreadable</text>");
+            console.log("ERROR: Cannot read data. The file is maybe corrupt?");
+        }
 	})
 	.then(function from_loadProjectFile() {
 		// binding prototype

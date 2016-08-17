@@ -43,10 +43,10 @@ function downloadMRI(myurl, req, res, callback) {
 
     request({uri: myurl})
         .pipe(fs.createWriteStream(dest))
-        .on('close', function () {
+        .on('close', function request_fromDownloadMRI() {
             // NOTE: getBrainAtPath has to be called with a client-side path like "/data/[md5hash/..."
             atlasMakerServer.getBrainAtPath("/data/" + hash  + "/" + filename)
-                .then(function (mri) {
+                .then(function getBrainAtPath_fromDownloadMRI(mri) {
                     // create json file for new dataset
                     var ip = req.headers['x-forwarded-for'] ||
                              req.connection.remoteAddress ||
@@ -79,7 +79,12 @@ function downloadMRI(myurl, req, res, callback) {
                             }
                         };
                     callback(json);
+                })
+                .catch(function(err) {
+                    console.log("ERROR Cannot get brain at path /data/" + hash  + "/" + filename + ": ", err);
+                    callback();
                 });
+                    
         })
         .on('error', function (err) {
             console.error("ERROR in downloadMRI", err);
@@ -107,14 +112,24 @@ var mri = function (req, res) {
             } else {
                 (function (my, rq, rs) {
                     downloadMRI(my, rq, rs, function (obj) {
-                        console.log(obj);
-                        req.db.get('mri').insert(obj);
-                        rs.render('mri', {
-                            title: obj.name || 'Untitled MRI',
-                            params: JSON.stringify(rq.query),
-                            mriInfo: JSON.stringify(obj),
-                            login: login
-                        });
+                        if(obj) {
+                            req.db.get('mri').insert(obj);
+                            rs.render('mri', {
+                                title: obj.name || 'Untitled MRI',
+                                params: JSON.stringify(rq.query),
+                                mriInfo: JSON.stringify(obj),
+                                login: login
+                            });
+                        } else {
+                            console.log("ERROR: Cannot read file");
+                            rs.render('mri', {
+                                title: 'ERROR: Unreadable file',
+                                params: JSON.stringify(rq.query),
+                                mriInfo: JSON.stringify({}),
+                                login: login
+                            });
+                            
+                        }
                     });
                 }(myurl, req, res));
             }
@@ -145,8 +160,13 @@ var api_mri = function (req, res) {
                 } else {
                     (function (my, rq, rs) {
                         downloadMRI(my, rq, rs, function (obj) {
-                            rq.db.get('mri').insert(obj);
-                            rs.json(obj);
+                            if(obj) {
+                                rq.db.get('mri').insert(obj);
+                                rs.json(obj);
+                            } else {
+                                console.log("ERROR: Cannot read file");
+                                rs.json({});
+                            }
                         });
                     }(myurl, req, res));
                 }
