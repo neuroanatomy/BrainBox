@@ -462,36 +462,6 @@ var receiveAtlasFromUserMessage = function receiveAtlasFromUserMessage(data,user
             });
 	});
 };
-var getBrainAtPath = function getBrainAtPath(brainPath) {
-    traceLog(getBrainAtPath,1);
-	
-	var i;
-	for(i=0;i<Brains.length;i++) {
-		if(Brains[i].path===brainPath) {
-			if(debug>1) console.log("    brain already loaded");
-			return Promise.resolve(Brains[i].data);
-		}
-	}
-	
-	if(debug) {
-		console.log("    Loading brain at",brainPath);
-	}
-    var pr = new Promise(function promise_fromGetBrainAtPath(resolve, reject) {
-        loadBrain(this.dataDirectory+brainPath)
-            .then(function _fromGetBrainAtPath(data) {
-                var brain={path:brainPath,data:data};
-                Brains.push(brain);
-                resolve(data); // callback: sendSliceToUser
-            })
-            .catch(function (err) {
-                console.log("ERROR: getBrainAtPath cannot fullfil promise",err);
-                reject(err);
-            });
-    });
-		
-	return pr;
-}
-this.getBrainAtPath = getBrainAtPath;
 
 var unloadUnusedBrains = function unloadUnusedBrains() {
     traceLog(unloadUnusedBrains);
@@ -705,6 +675,14 @@ var sendDisconnectMessage = function sendDisconnectMessage(uid) {
 var addAtlas = function addAtlas(User) {
     traceLog(addAtlas);
 
+    /*
+        addAtlas
+        input: A User structure providing information about the requested atlas
+        process: an atlas is obtained, and added to the Atlases[] array if it
+                wasn't already loaded.
+        output: an atlas (mri structure) 
+    */
+
     var atlas = {
         name:User.atlasFilename,
         specimen:User.specimenName,
@@ -726,9 +704,55 @@ var addAtlas = function addAtlas(User) {
     
     return pr;
 };
+var getBrainAtPath = function getBrainAtPath(brainPath) {
+    traceLog(getBrainAtPath,1);
+	
+    /*
+        getBrainAtPath
+        input: A client-side path identifying the requested brain
+        process: a brain is obtained, and added to the Brains[] array if it
+                wasn't already loaded.
+        output: a brain (mri structure) 
+    */
+	var i;
+	for(i=0;i<Brains.length;i++) {
+		if(Brains[i].path===brainPath) {
+			if(debug>1) console.log("    brain already loaded");
+			return Promise.resolve(Brains[i].data);
+		}
+	}
+	
+	if(debug) {
+		console.log("    Loading brain at",brainPath);
+	}
+    var pr = new Promise(function promise_fromGetBrainAtPath(resolve, reject) {
+        loadBrain(this.dataDirectory+brainPath)
+            .then(function _fromGetBrainAtPath(mri) {
+                var brain={path:brainPath,data:mri};
+                Brains.push(brain);
+                resolve(mri); // callback: sendSliceToUser
+            })
+            .catch(function (err) {
+                console.log("ERROR: getBrainAtPath cannot load brain. Corrupted file?",err);
+                reject(err);
+            });
+    });
+		
+	return pr;
+}
+this.getBrainAtPath = getBrainAtPath;
+
 var loadAtlas = function loadAtlas(User) {
     traceLog(loadAtlas);
 		
+    /*
+        loadAtlas
+        input: A User structure providing information about the requested atlas
+        process: the requested atlas is sent if it was already loaded, loaded from disk
+                if it was already downloaded but not yet loaded, or created if it's a
+                new atlas.
+        output: an atlas (mri structure) 
+    */
     var pr = new Promise(function promise_fromloadAtlas(resolve,reject) {
         var path=this.dataDirectory+User.dirname+User.atlasFilename;
     
@@ -791,6 +815,11 @@ var loadAtlas = function loadAtlas(User) {
 var loadBrain = function loadBrain(path) {
     traceLog(loadBrain);
     
+    /*
+        loadBrain
+        input: path to an mri file, .nii.gz and .mgz formats are recognised
+        output: an mri structure
+    */
 	var pr = new Promise(function promise_fromloadBrain(resolve, reject) {
         if(path.match(/.nii.gz$/)) {
             readNifti(path)
@@ -861,6 +890,12 @@ var readAtlasNifti = function readAtlasNifti(path, atlas)
 
 var readNifti = function readNifti(path) {
     traceLog(readNifti);
+    
+    /*
+        readNifti
+        input: path to a .nii.gz file
+        output: an mri structure
+    */
 	
 	var pr = new Promise(function (resolve, reject) {
         try {
@@ -991,6 +1026,12 @@ var loadNifti = function loadNifti(nii) {
 var readMGZ = function readMGZ(data) {
     traceLog(readMGZ);
     
+    /*
+        readMGZ
+        input: path to a .mgz file
+        output: an mri structure
+    */
+
 	var pr = new Promise(function (resolve, reject) {
         try {
             var mgz=fs.readFileSync(path);
@@ -1069,6 +1110,12 @@ var readMGZ = function readMGZ(data) {
 var createNifti = function createNifti(templateMRI) {
     traceLog(createNifti);
 	
+    /*
+        createNifti
+        input: a template mri structure
+        output: a new empty mri structure, datatype=2 (1 byte per voxel), same dimensions as template
+    */
+
     var mri = {},
         props = ["dim", "pixdim", "hdr"],
         datatype = 2,
@@ -1102,6 +1149,13 @@ var createNifti = function createNifti(templateMRI) {
 };
 var saveNifti = function saveNifti(atlas) {
     traceLog(saveNifti);
+
+    /*
+        saveNifti
+        input: an mri structure
+        process: a .nii.gz file is saved at the position indicated in the mri structure
+        output: success message
+    */
 
 	if(atlas && atlas.dim ) {
 		if(atlas.data==undefined) {
