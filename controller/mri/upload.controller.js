@@ -119,48 +119,6 @@ var upload = function(req, res) {
     // ==> something like this should be empty: db.get("mri").find({"mri.atlas.$.name":atlasName, "mri.atlas.$.project":atlasProject})
     
     // Check that the dimensions of the nifti atlas are the same as its parent mri
-<<<<<<< HEAD
-    var atlas = {};
-    atlasMakerServer.readAtlasNifti(files[0].path, atlas)
-    .then(function(atlas){
-        console.log("atlas.dim: ",atlas.dim);
-        console.log("mri.dim: ",mri.dim);
-
-        if (atlas.dim[0] != mri.dim[0] ||
-            atlas.dim[1] != mri.dim[1] ||
-            atlas.dim[2] != mri.dim[2]) 
-        {return res.json({error:"the Atlas doesn't match with the mri"}).status(400).end();}
-
-
-    //create the atlas object
-    var date = new Date();
-    var atlasMetadata = {
-        name: atlasName,
-        project: atlasProject,
-        access: "Read/Write", 
-        created: date.toJSON(), 
-        modified: date.toJSON(), 
-        filename: Math.random().toString(36).slice(2)+".nii.gz",	// automatically generated filename
-        originalname: files[0].originalname,
-        labels: atlasLabelSet,
-        owner: username,
-        type: "volume"
-    };
-    console.log(mri);
-    //console.log(req.dirname + "/" + files[0].path + " -> " + req.dirname + mri.url + atlasMetadata.filename);
-    fs.rename(req.dirname  + "/" + files[0].path, req.dirname + "/public" + mri.url + atlasMetadata.filename);
-
-    mri.mri.atlas.push(atlasMetadata);
-
-    req.db.get('mri').update({source:req.body.url, backup: {$exists: false}}, mri);
-    //update the database
-
-    //return the full mri object ???
-    return res.json(mri).status(200).end();
-    })
-    .catch(function(){return res.json({error:"mri file is not valid"}).status(400).end();});
-    
-
     atlasMakerServer.readNifti(files[0].path)
         .then(function(atlas){
             console.log("atlas.dim: ",atlas.dim);
