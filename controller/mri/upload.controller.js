@@ -160,7 +160,7 @@ var upload = function(req, res) {
     })
     .catch(function(){return res.json({error:"mri file is not valid"}).status(400).end();});
     
-=======
+
     atlasMakerServer.readNifti(files[0].path)
         .then(function(atlas){
             console.log("atlas.dim: ",atlas.dim);
@@ -199,7 +199,6 @@ var upload = function(req, res) {
         .catch(function (err) {
             return res.json({error:"mri file is not valid: "+err}).status(400).end();
         });
->>>>>>> 62f679379f120d9c8e21a827d29f2c0242e7af03
 }
 
 var token = function token(req, res) {
