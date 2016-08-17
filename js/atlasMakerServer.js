@@ -21,7 +21,7 @@ var db = monk('localhost:27017/brainbox');
 
 var atlasMakerServer = function() {
 
-var	debug=2;
+var	debug=1;
 this.dataDirectory = "";
 var	Atlases=[];
 this.Brains=[];
@@ -131,7 +131,7 @@ process.stdin.resume();
 // Web socket
 //========================================================================================
 var getUserFromSocket = function getUserFromSocket(socket) {
-    traceLog(getUserFromSocket);
+    traceLog(getUserFromSocket,1);
 	for(var i in US) {
 		if(socket===US[i].socket)
 			return US[i];
@@ -139,7 +139,7 @@ var getUserFromSocket = function getUserFromSocket(socket) {
 	return -1;
 };
 var getUserFromUserId = function getUserFromUserId(uid) {
-    traceLog(getUserFromUserId);
+    traceLog(getUserFromUserId,1);
 	for(var i in US) {
 		if(uid==US[i].uid)
 			return US[i];
@@ -192,9 +192,10 @@ var numberOfUsersConnectedToMRI = function numberOfUsersConnectedToMRI(path) {
 var unloadMRI = function unloadMRI(path) {
     traceLog(unloadMRI);
 		
-	for(var i in Brains) {
+	var i;
+	for(i in Brains) {
 		if(Brains[i].path===path) {
-			Brains.splice(i,1);
+			delete Brains[i];
 			console.log("    free memory",os.freemem());
 			break;
 		}
@@ -229,7 +230,8 @@ var numberOfUsersConnectedToAtlas = function numberOfUsersConnectedToAtlas(dirna
 var unloadAtlas = function unloadAtlas(dirname,atlasFilename) {
     traceLog(unloadAtlas);
 
-	for(var i in Atlases) {
+	var i;
+	for(i in Atlases) {
 		if(Atlases[i].dirname===dirname && Atlases[i].name===atlasFilename) {
 			saveNifti(Atlases[i])
                 .then(function () {
@@ -261,10 +263,8 @@ var initSocketConnection = function initSocketConnection() {
 			sendPreviousUserDataMessage(newUS);
 			
 			s.on('message',function message_fromInitSocketConnection(msg) {
-			    traceLog(message_fromInitSocketConnection);
+			    traceLog(message_fromInitSocketConnection,1);
 			    
-			    console.log();
-			    console.log("--->getUserFromSocket for sourceUS");
 				var sourceUS=getUserFromSocket(this);
 				var data={};
 				
@@ -275,8 +275,12 @@ var initSocketConnection = function initSocketConnection() {
 					data=JSON.parse(msg);
 				data.uid=sourceUS.uid;
 				
+				if(debug>1) {
+				    console.log();
+				    console.log("data type:",data.type);
+				}
+
 				// integrate paint messages
-				console.log("data type:",data.type);
 				switch(data.type) {
 					case "intro":
 						receiveUserDataMessage(data,this);
@@ -302,7 +306,6 @@ var initSocketConnection = function initSocketConnection() {
 				var n=0;
 				for(var i in websocket.clients) {
 					// i-th user
-                    console.log("--->getUserFromSocket for targetUS");
 					var targetUS=getUserFromSocket(websocket.clients[i]);
 					
 					// do not auto-broadcast
@@ -411,7 +414,7 @@ var receivePaintMessage = function receivePaintMessage(data) {
 	paintxy(sourceUS.uid,c,x,y,sourceUS.User,undoLayer);
 };
 var receiveRequestSliceMessage = function receiveRequestSliceMessage(data,user_socket) {
-    traceLog(receiveRequestSliceMessage);
+    traceLog(receiveRequestSliceMessage,1);
 
 	// get slice information from message
 	var view=data.view;		// user view
@@ -426,10 +429,9 @@ var receiveRequestSliceMessage = function receiveRequestSliceMessage(data,user_s
 	// update User object
 	sourceUS.User.view=view;
 	sourceUS.User.slice=slice;
-	
+	if(debug>1) console.log(sourceUS.User.view,sourceUS.User.slice);
+
 	// getBrainAtPath() uses a client-side path, starting with "/data/[md5hash]"
-	console.log("    Calling getBrainAtPath 2: during a slice-request message");
-	console.log(sourceUS.User.view,sourceUS.User.slice);
 	getBrainAtPath(brainPath)
 	    .then(function promise_fromReceiveRequestSliceMessage(data) {
     		sendSliceToUser(data,view,slice,user_socket);
@@ -462,41 +464,11 @@ var receiveAtlasFromUserMessage = function receiveAtlasFromUserMessage(data,user
             });
 	});
 };
-var getBrainAtPath = function getBrainAtPath(brainPath) {
-    traceLog(getBrainAtPath);
-	
-	var i;
-	for(i=0;i<Brains.length;i++) {
-		if(Brains[i].path===brainPath) {
-			if(debug>1) console.log("    brain already loaded");
-			return Promise.resolve(Brains[i].data);
-		}
-	}
-	
-	if(debug) {
-		console.log("    Loading brain at",brainPath);
-	}
-    var pr = new Promise(function promise_fromGetBrainAtPath(resolve, reject) {
-        loadBrainCompressed(this.dataDirectory+brainPath)
-            .then(function _fromGetBrainAtPath(data) {
-                var brain={path:brainPath,data:data};
-                Brains.push(brain);
-                resolve(data); // callback: sendSliceToUser
-            })
-            .catch(function (err) {
-                console.log("ERROR: getBrainAtPath cannot fullfil promise",err);
-                reject(err);
-            });
-    });
-		
-	return pr;
-}
-this.getBrainAtPath = getBrainAtPath;
 
 var unloadUnusedBrains = function unloadUnusedBrains() {
     traceLog(unloadUnusedBrains);
 	var i;
-	for(i=0;i<Brains.length;i++) {
+	for(i in Brains) {
 		var sum=numberOfUsersConnectedToMRI(Brains[i].path);
 
 		if(sum===0) {
@@ -517,7 +489,7 @@ var unloadUnusedAtlases = function unloadUnusedAtlases() {
 	}
 };
 var sendSliceToUser = function sendSliceToUser(brain, view, slice, user_socket) {
-    traceLog(sendSliceToUser);
+    traceLog(sendSliceToUser,1);
     
 	try {
 		var jpegImageData=drawSlice(brain,view,slice);
@@ -597,7 +569,6 @@ var receiveUserDataMessage = function receiveUserDataMessage(data, user_socket) 
 			console.log("    User "+User.username+", id "+data.uid+" logged in");
 		}
 	}
-
 	if(sourceUS.hasOwnProperty('User')===false) {
 		sourceUS.User={};
 	}
@@ -605,6 +576,7 @@ var receiveUserDataMessage = function receiveUserDataMessage(data, user_socket) 
 		sourceUS.User[prop]=User[prop];
 	}
 
+/*
 	// 4. Update number of users connected to atlas
 	if(firstConnectionFlag) {
 		var sumAtlas=0,
@@ -620,6 +592,7 @@ var receiveUserDataMessage = function receiveUserDataMessage(data, user_socket) 
 		console.log(sumMRI+" user"+((sumMRI===1)?" is":"s are")+" requesting MRI "+User.dirname+User.mri);
 		console.log(sumAtlas+" user"+((sumAtlas===1)?" is":"s are")+" requesting atlas "+User.dirname+User.atlasFilename);
 	}	
+*/
 
 	// 5. Unload unused data (the check is only done if new data has been added)
 	if(data.description==="sendAtlas") {
@@ -704,6 +677,14 @@ var sendDisconnectMessage = function sendDisconnectMessage(uid) {
 var addAtlas = function addAtlas(User) {
     traceLog(addAtlas);
 
+    /*
+        addAtlas
+        input: A User structure providing information about the requested atlas
+        process: an atlas is obtained, and added to the Atlases[] array if it
+                wasn't already loaded.
+        output: an atlas (mri structure) 
+    */
+
     var atlas = {
         name:User.atlasFilename,
         specimen:User.specimenName,
@@ -713,9 +694,8 @@ var addAtlas = function addAtlas(User) {
     console.log("    User requests atlas "+atlas.name+" from "+atlas.dirname);
 
     var pr = new Promise(function promise_fromAddAtlas(resolve,reject) {
-        loadAtlasNifti(atlas,User)
-            .then(function (data) {
-                atlas.data=data;
+        loadAtlas(User)
+            .then(function (atlas) {
                 Atlases.push(atlas);
                 User.iAtlas=Atlases.indexOf(atlas);
                 atlas.timer=setInterval(function () {saveNifti(atlas)},60*60*1000); // 60 minutes
@@ -726,55 +706,149 @@ var addAtlas = function addAtlas(User) {
     
     return pr;
 };
-var loadAtlasNifti = function loadAtlasNifti(atlas, User) {
-    traceLog(loadAtlasNifti);
+var getBrainAtPath = function getBrainAtPath(brainPath) {
+    traceLog(getBrainAtPath,1);
+	
+    /*
+        getBrainAtPath
+        input: A client-side path identifying the requested brain
+        process: a brain is obtained, and added to the Brains[] array if it
+                wasn't already loaded.
+        output: a brain (mri structure) 
+    */
+	var i;
+	for(i=0;i<Brains.length;i++) {
+		if(Brains[i].path===brainPath) {
+			if(debug>1) console.log("    brain already loaded");
+			return Promise.resolve(Brains[i].data);
+		}
+	}
+	
+	if(debug) {
+		console.log("    Loading brain at",brainPath);
+	}
+    var pr = new Promise(function promise_fromGetBrainAtPath(resolve, reject) {
+        loadBrain(this.dataDirectory+brainPath)
+            .then(function _fromGetBrainAtPath(mri) {
+                var brain={path:brainPath,data:mri};
+                Brains.push(brain);
+                resolve(mri); // callback: sendSliceToUser
+            })
+            .catch(function (err) {
+                console.log("ERROR: getBrainAtPath cannot load brain. Corrupted file?",err);
+                reject(err);
+            });
+    });
 		
-    var pr = new Promise(function promise_fromLoadAtlasNifti(resolve,reject) {
-        var path=this.dataDirectory+atlas.dirname+atlas.name;
-        var datatype=2;
-        var	vox_offset=352;
+	return pr;
+}
+this.getBrainAtPath = getBrainAtPath;
+
+var loadAtlas = function loadAtlas(User) {
+    traceLog(loadAtlas);
+		
+    /*
+        loadAtlas
+        input: A User structure providing information about the requested atlas
+        process: the requested atlas is sent if it was already loaded, loaded from disk
+                if it was already downloaded but not yet loaded, or created if it's a
+                new atlas.
+        output: an atlas (mri structure) 
+    */
+    var pr = new Promise(function promise_fromloadAtlas(resolve,reject) {
+        var path=this.dataDirectory+User.dirname+User.atlasFilename;
     
         if(!fs.existsSync(path)) {
+            // Create new empty atlas
             console.log("    Atlas "+path+" does not exists. Create a new one");
-            encodeAtlasNiftiHeader(User)
-                .then(function (hdr) {
-                    atlas.hdr=hdr;
-                    atlas.data=new Buffer(atlas.dim[0]*atlas.dim[1]*atlas.dim[2]);
-                    for(var i=0;i<atlas.dim[0]*atlas.dim[1]*atlas.dim[2];i++)
-                        atlas.data[i]=0;
-                    atlas.sum=0;
+            var brainPath=User.dirname+User.mri;
+            getBrainAtPath(brainPath)
+                .then(function _fromLoadAtlas(mri) {
+                    createNifti(mri)
+                        .then(function (newAtlas) {
+                            newAtlas.name = User.atlasFilename;
+                            newAtlas.dirname = User.dirname;
+                            
+                            // log atlas creation
+                            db.get('log').insert({
+                                key: "createAtlas",
+                                value: JSON.stringify({atlasDirectory:User.dirname,atlasFilename:User.atlasFilename}),
+                                username: User.username,
+                                date: (new Date()).toJSON()
+                            });
 
-                    console.log(new Date());
-                    console.log("      atlas size:",atlas.data.length);
-                    console.log("       atlas dim:",atlas.dim);
-                    console.log("  atlas datatype:",datatype);
-                    console.log("atlas vox_offset:",vox_offset);
-                    console.log("     free memory:",os.freemem());
-    
-                    // log atlas creation
-                    db.get('log').insert({
-                        key: "createAtlas",
-                        value: JSON.stringify({specimen:atlas.specimen,atlas:atlas.name}),
-                        username: User.username,
-                        date: (new Date()).toJSON()
-                    });
-
-                    resolve(atlas.data);
+                            resolve(newAtlas);
+                       })
+                        .catch(function (err) {
+                            console.log("ERROR Cannot create nifti",err);
+                            reject(err);
+                            return;
+                        });
                 })
                 .catch(function (err) {
-                    console.log("ERROR: encodeAtlasNiftiHeader");
-                    reject();
+                    console.log("ERROR Cannot get template brain for new atlas", err);
+                    reject(err);
                 });
         } else {
+            // Load existing atlas
             console.log("    Atlas found. Loading it");
+// <<<<<<< HEAD
+            readNifti(path)
+                .then(function (loadedAtlas) {
+                    loadedAtlas.name = User.atlasFilename;
+                    loadedAtlas.dirname = User.dirname;
+                    resolve(loadedAtlas);
+                })
+                .catch(function (err) {
+                    console.log("ERROR Cannot read nifti", err);
+                    reject(err);
+                });
+/*=======
             atlas = readAtlasNifti(path, atlas)
             .then(function(atlas){resolve(atlas.data)});
+>>>>>>> origin/dev-felix
+*/
             
         }
     });
-    
     return pr;
 };
+//<<<<<<< HEAD
+var loadBrain = function loadBrain(path) {
+    traceLog(loadBrain);
+    
+    /*
+        loadBrain
+        input: path to an mri file, .nii.gz and .mgz formats are recognised
+        output: an mri structure
+    */
+	var pr = new Promise(function promise_fromloadBrain(resolve, reject) {
+        if(path.match(/.nii.gz$/)) {
+            readNifti(path)
+                .then(function (mri) {
+                    resolve(mri);
+                })
+                .catch(function (err) {
+                    console.log("ERROR reading nii.gz file:",err);
+                    reject();
+                });
+        } else
+        if(path.match(/.mgz$/)) {
+            readMGZ(path)
+                .then(function(mri) {
+                    resolve(mri);
+                })
+                .catch(function (err) {
+                    console.log("ERROR reading mgz file:",err);
+                });
+        } else {
+            reject();
+        }
+    });
+
+	return pr;
+}
+/*=======
 
 var readAtlasNifti = function readAtlasNifti(path, atlas) 
 {
@@ -813,121 +887,131 @@ var readAtlasNifti = function readAtlasNifti(path, atlas)
     }});
     return pr;
 }
-this.readAtlasNifti = readAtlasNifti;
+>>>>>>> origin/dev-felix
+*/
 
-var loadBrainCompressed = function loadBrainCompressed(path) {
-    traceLog(loadBrainCompressed);
+var readNifti = function readNifti(path) {
+    traceLog(readNifti);
     
-	if(!fs.existsSync(path)) {
-		console.log("ERROR: File does not exist:",path);
-		return Promise.reject("ERROR: File does not exist:",path);
-	}
+    /*
+        readNifti
+        input: path to a .nii.gz file
+        output: an mri structure
+    */
 	
-	var pr = new Promise(function promise_fromLoadBrainCompressed(resolve, reject) {
-		var datagz;
-		
-		try {
-			datagz=fs.readFileSync(path);
-			var ft=fileType(datagz);
-			var ext=path.split('.').pop();
-			
-			if(ft.ext==='gz' && ext==='gz') {
-                zlib.gunzip(datagz, function _fromLoadBrainCompressed(err, nii) {
-                    if(err) {
-                        reject("ERROR: "+err);
+	var pr = new Promise(function (resolve, reject) {
+        try {
+            var niigz=fs.readFileSync(path);
+            zlib.gunzip(niigz, function (err, nii) {
+                var i, j, tmp, sum, mri={};
+
+                // standard nii header
+                try {
+                    var niiHdr=niijs.parseNIfTIHeader(nii);
+                    var	sizeof_hdr=niiHdr.sizeof_hdr;
+                    mri.dim=niiHdr.dim.slice(1);
+                    mri.pixdim=niiHdr.pixdim.slice(1);
+                    mri.vox_offset=niiHdr.vox_offset;
+
+                    // nrrd-compatible header, computes space directions and space origin
+                    if(niiHdr.qform_code>0) {
+                        var nrrdHdr=niijs.parseHeader(nii);
+                        mri.dir=nrrdHdr.spaceDirections;
+                        mri.ori=nrrdHdr.spaceOrigin;
                     } else {
-                        loadBrainNifti(nii)
-                            .then(function(brain) {
-                                resolve(brain);
-                            });
+                        mri.dir=[[mri.pixdim[0],0,0],[0,mri.pixdim[1],0],[0,0,mri.pixdim[2]]];
+                        mri.ori=[0,0,0];
                     }
-                });
-            } else
-            if(ft.ext==='gz' && ext==='mgz') {
-                zlib.gunzip(datagz, function _fromLoadBrainCompressed(err, nii) {
-                    if(err) {
-                        reject("ERROR: "+err);
-                    } else {
-                        loadBrainMGZ(nii)
-                            .then(function(brain) {
-                                resolve(brain);
-                            });
-                    }
-                });
-            } else
-            if(ft.ext==='zip') {
-                zlib.inflate(datagz, function _fromLoadBrainCompressed(err,nii) {
-                    if(err) {
-                        reject("ERROR: "+err);
-                    } else {
-                        loadBrainNifti(nii)
-                            .then(function(brain) {
-                                resolve(brain);
-                            });
-                    }
-                });
-            }
-		} catch(e) {
-			reject("ERROR: Cannot read brain data");
-		}
-	});
-	
-	return pr;
-}
-var loadBrainNifti = function loadBrainNifti(nii) {
-    traceLog(loadBrainNifti);
-    
-	var pr = new Promise(function promise_fromLoadBrainNifti(resolve, reject) {
-        loadNifti(nii)
-            .then(function _fromLoadBrainNifti(brain) {
-                console.log(new Date());
-                console.log("    brain size:",brain.data.length);
-                console.log("     brain dim:",brain.dim);
-                console.log("brain datatype:",brain.datatype);
-                console.log("   free memory:",os.freemem());
-    
-                var i,sum=0,min,max;
-                min=brain.data[0];
-                max=min;
-                for(i=0;i<brain.dim[0]*brain.dim[1]*brain.dim[2];i++) {
-                    sum+=brain.data[i];
-        
-                    if(brain.data[i]<min) min=brain.data[i];
-                    if(brain.data[i]>max) max=brain.data[i];
+                } catch(err) {
+                    console.log("ERROR Cannot read nifti header:", err);
+                    reject("ERROR Cannot read nifti header: " + err);
+                    return;
                 }
-                brain.sum=sum;
-                brain.min=min;
-                brain.max=max;
 
-                console.log("    nii file loaded, sum:",sum);
-                console.log("    min:",min,"max:",max);
-                
-                resolve(brain);
+                // compute the transformation from voxel space to screen space
+                computeS2VTransformation(mri);
+
+                // test if the transformation looks incorrect. Reset it if it does
+                testS2VTransformation(mri);
+
+                // manually parsed information
+                mri.hdr=nii.slice(0,352);
+                mri.datatype=nii.readUInt16LE(70);
+
+                switch(mri.datatype) {
+                    case 2: // UCHAR
+                        mri.data=nii.slice(mri.vox_offset);
+                        break;
+                    case 4: // SHORT
+                        tmp=nii.slice(mri.vox_offset);
+                        mri.data=new Int16Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);
+                        for(j=0;j<mri.dim[0]*mri.dim[1]*mri.dim[2];j++)
+                            mri.data[j]=tmp.readInt16LE(j*2);
+                        break;
+                    case 8: // INT
+                        tmp=nii.slice(mri.vox_offset);
+                        mri.data=new Uint32Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);
+                        for(j=0;j<mri.dim[0]*mri.dim[1]*mri.dim[2];j++)
+                            mri.data[j]=tmp.readUInt32LE(j*4);
+                        break;
+                    case 16: // FLOAT
+                        tmp=nii.slice(mri.vox_offset);
+                        mri.data=new Float32Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);
+                        for(j=0;j<mri.dim[0]*mri.dim[1]*mri.dim[2];j++)
+                            mri.data[j]=tmp.readFloatLE(j*4);
+                        break;
+                    default: {
+                        reject("ERROR: Unknown dataType: "+mri.datatype);
+                        return;
+                    }
+                }
+
+                // compute sum, min and max
+                var i,sum=0,min,max;
+                min=mri.data[0];
+                max=min;
+                for(i=0;i<mri.dim[0]*mri.dim[1]*mri.dim[2];i++) {
+                    sum+=mri.data[i];
+        
+                    if(mri.data[i]<min) min=mri.data[i];
+                    if(mri.data[i]>max) max=mri.data[i];
+                }
+                mri.sum=sum;
+                mri.min=min;
+                mri.max=max;
+
+                resolve(mri);
             });
+        } catch(e) {
+            reject("ERROR Cannot uncompress nifti file:" + e);
+        }
     });
     return pr;
 };
+//<<<<<<< HEAD
+this.readNifti = readNifti;
+/*=======
 var loadNifti = function loadNifti(nii) {
     traceLog(loadNifti);
 	
 	var mri={};
 	try {
-	// standard nii header
-	var niiHdr=niijs.parseNIfTIHeader(nii);
-	var	sizeof_hdr=niiHdr.sizeof_hdr;
-	mri.dim=niiHdr.dim.slice(1);
-	mri.pixdim=niiHdr.pixdim.slice(1);
-	mri.vox_offset=niiHdr.vox_offset;
-	
-	// nrrd-compatible header, computes space directions and space origin
-	if(niiHdr.qform_code>0) {
-		var nrrdHdr=niijs.parseHeader(nii);
-		mri.dir=nrrdHdr.spaceDirections;
-		mri.ori=nrrdHdr.spaceOrigin;
-	} else {
-		mri.dir=[[mri.pixdim[0],0,0],[0,mri.pixdim[1],0],[0,0,mri.pixdim[2]]];
-		mri.ori=[0,0,0];
-	}
+        // standard nii header
+        var niiHdr=niijs.parseNIfTIHeader(nii);
+        var	sizeof_hdr=niiHdr.sizeof_hdr;
+        mri.dim=niiHdr.dim.slice(1);
+        mri.pixdim=niiHdr.pixdim.slice(1);
+        mri.vox_offset=niiHdr.vox_offset;
+    
+        // nrrd-compatible header, computes space directions and space origin
+        if(niiHdr.qform_code>0) {
+            var nrrdHdr=niijs.parseHeader(nii);
+            mri.dir=nrrdHdr.spaceDirections;
+            mri.ori=nrrdHdr.spaceOrigin;
+        } else {
+            mri.dir=[[mri.pixdim[0],0,0],[0,mri.pixdim[1],0],[0,0,mri.pixdim[2]]];
+            mri.ori=[0,0,0];
+        }
 	} catch (e) {
 		console.log(e);
 		return Promise.reject();
@@ -937,148 +1021,157 @@ var loadNifti = function loadNifti(nii) {
 	
 	// test if the transformation looks incorrect. Reset it if it does
 	testS2VTransformation(mri);
+}
+>>>>>>> origin/dev-felix
+*/
 
-	// manually parsed information
-	mri.hdr=nii.slice(0,352);
-	mri.datatype=nii.readUInt16LE(70);
-	
-	switch(mri.datatype) {
-		case 2: // UCHAR
-			mri.data=nii.slice(mri.vox_offset);
-			break;
-		case 4: // SHORT
-			var tmp=nii.slice(mri.vox_offset);
-			mri.data=new Int16Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);
-			for(j=0;j<mri.dim[0]*mri.dim[1]*mri.dim[2];j++)
-				mri.data[j]=tmp.readInt16LE(j*2);
-			break;
-		case 8: // INT
-			var tmp=nii.slice(mri.vox_offset);
-			mri.data=new Uint32Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);
-			for(j=0;j<mri.dim[0]*mri.dim[1]*mri.dim[2];j++)
-				mri.data[j]=tmp.readUInt32LE(j*4);
-			break;
-		case 16: // FLOAT
-			var tmp=nii.slice(mri.vox_offset);
-			mri.data=new Float32Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);
-			for(j=0;j<mri.dim[0]*mri.dim[1]*mri.dim[2];j++)
-				mri.data[j]=tmp.readFloatLE(j*4);
-			break;
-		default:
-			console.log("ERROR: Unknown dataType: "+mri.datatype);
-	}
-	
-	return Promise.resolve(mri);
-};
-var loadBrainMGZ = function loadBrainMGZ(data) {
-    traceLog(loadBrainMGZ);
+var readMGZ = function readMGZ(data) {
+    traceLog(readMGZ);
     
-	var hdr_sz=284;
-	var brain={};
-	var datatype;
-	var tmp,j;
-	
-	brain.dim=[];
-	brain.dim[0]=data.readInt32BE(4);
-	brain.dim[1]=data.readInt32BE(8);
-	brain.dim[2]=data.readInt32BE(12);
-	datatype=data.readInt32BE(20);
-	brain.pixdim=[];
-	brain.pixdim[0]=data.readFloatBE(30);
-	brain.pixdim[1]=data.readFloatBE(34);
-	brain.pixdim[2]=data.readFloatBE(38);
-	
-	switch(datatype) {
-		case 0: // MGHUCHAR
-			brain.data=data.slice(hdr_sz);
-			break;
-		case 1: // MGHINT
-			tmp=data.slice(hdr_sz);
-			brain.data=new Uint32Array(brain.dim[0]*brain.dim[1]*brain.dim[2]);
-			for(j=0;j<brain.dim[0]*brain.dim[1]*brain.dim[2];j++)
-				brain.data[j]=tmp.readUInt32BE(j*4);
-			break;
-		case 3: // MGHFLOAT
-			tmp=data.slice(hdr_sz);
-			brain.data=new Float32Array(brain.dim[0]*brain.dim[1]*brain.dim[2]);
-			for(j=0;j<brain.dim[0]*brain.dim[1]*brain.dim[2];j++)
-				brain.data[j]=tmp.readFloatBE(j*4);
-			break;
-		case 4: // MGHSHORT
-			tmp=data.slice(hdr_sz);
-			brain.data=new Int16Array(brain.dim[0]*brain.dim[1]*brain.dim[2]);
-			for(j=0;j<brain.dim[0]*brain.dim[1]*brain.dim[2];j++)
-				brain.data[j]=tmp.readInt16BE(j*2);
-			break;
-		default:
-			console.log("ERROR: Unknown dataType: "+datatype);
-	}
-		
-	console.log(new Date());
-	console.log("    brain size:",brain.data.length);
-	console.log("     brain dim:",brain.dim);
-	console.log("brain datatype:",datatype);
-	console.log("   free memory:",os.freemem());
-	
-	var i,sum=0,min,max;
-	min=brain.data[0];
-	max=min;
-	for(i=0;i<brain.dim[0]*brain.dim[1]*brain.dim[2];i++) {
-		sum+=brain.data[i];
-		
-		if(brain.data[i]<min) min=brain.data[i];
-		if(brain.data[i]>max) max=brain.data[i];
-	}
-	brain.sum=sum;
-	brain.min=min;
-	brain.max=max;
+    /*
+        readMGZ
+        input: path to a .mgz file
+        output: an mri structure
+    */
 
-	console.log("    mgh file loaded, sum:",sum);
-	console.log("    min:",min,"max:",max);
+	var pr = new Promise(function (resolve, reject) {
+        try {
+            var mgz=fs.readFileSync(path);
+            zlib.gunzip(mgz, function (err, mgh) {
+                if(err) {
+                    reject(err);
+                    return;
+                }
+                
+                var i, j, tmp, sum, mri={};
+                var datatype;
+                var sz;
+                var hdr_sz=284;
+                var mri={};
+
+                mri.dim=[];
+                mri.dim[0]=mgh.readInt32BE(4);
+                mri.dim[1]=mgh.readInt32BE(8);
+                mri.dim[2]=mgh.readInt32BE(12);
+                datatype=mgh.readInt32BE(20);
+                mri.pixdim=[];
+                mri.pixdim[0]=mgh.readFloatBE(30);
+                mri.pixdim[1]=mgh.readFloatBE(34);
+                mri.pixdim[2]=mgh.readFloatBE(38);
+                sz = mri.dim[0]*mri.dim[1]*mri.dim[2];
+
+                switch(datatype) {
+                    case 0: // MGHUCHAR
+                        mri.data=mgh.slice(hdr_sz);
+                        break;
+                    case 1: // MGHINT
+                        tmp=mgh.slice(hdr_sz);
+                        mri.data=new Uint32Array(sz);
+                        for(j=0;j<sz;j++)
+                            mri.data[j]=tmp.readUInt32BE(j*4);
+                        break;
+                    case 3: // MGHFLOAT
+                        tmp=mgh.slice(hdr_sz);
+                        mri.data=new Float32Array(sz);
+                        for(j=0;j<sz;j++)
+                            mri.data[j]=tmp.readFloatBE(j*4);
+                        break;
+                    case 4: // MGHSHORT
+                        tmp=mgh.slice(hdr_sz);
+                        mri.data=new Int16Array(sz);
+                        for(j=0;j<sz;j++)
+                            mri.data[j]=tmp.readInt16BE(j*2);
+                        break;
+                    default:
+                        console.log("ERROR: Unknown dataType: "+datatype);
+                }
+
+                var i,sum=0,min,max;
+                min=mri.data[0];
+                max=min;
+                for(i=0;i<sz;i++) {
+                    sum+=mri.data[i];
+
+                    if(mri.data[i]<min) min=mri.data[i];
+                    if(mri.data[i]>max) max=mri.data[i];
+                }
+                mri.sum=sum;
+                mri.min=min;
+                mri.max=max;
+                
+                resolve(mri);
+            });
+        } catch(e) {
+            reject("ERROR Cannot uncompress mgz file: "+e);
+        }
+    });
 	
-	return Promise.resolve(brain);
+	return pr;
 };
 
-var encodeAtlasNiftiHeader = function encodeAtlasNiftiHeader(User) {
-    traceLog(encodeAtlasNiftiHeader);
+var createNifti = function createNifti(templateMRI) {
+    traceLog(createNifti);
 	
-	var pr = new Promise(function promise_fromEncodeAtlasNiftiHeader(resolve, reject) {
-		// NOTE: getBrainAtPath uses a client-side path, such as "/data/[md5hash]/..."
-		var brainPath=User.dirname+User.mri;
-		console.log("    Calling getBrainAtPath 3: during the creation of a new atlas file");
-		console.log(brainPath,User.dirname,User.mri);
-		getBrainAtPath(brainPath)
-		    .then(function _fromEncodeAtlasNiftiHeader(mri) {
-                console.log("    getBrainAtPath got its data: resolving the promise");
+    /*
+        createNifti
+        input: a template mri structure
+        output: a new empty mri structure, datatype=2 (1 byte per voxel), same dimensions as template
+    */
 
-                var hdr=new Buffer(mri.hdr);
-                var datatype=2;
-                var vox_offset=352;
-                hdr.writeUInt16LE(datatype,70,2);	// set datatype to 2:unsigned char (8 bits/voxel)
-                hdr.writeFloatLE(vox_offset,108,4);	// set voxel_offset to 352 (minimum size of a nii header)
+    var mri = {},
+        props = ["dim", "pixdim", "hdr"],
+        datatype = 2,
+        vox_offset = 352,
+        sz,
+        i;
 
-                resolve(hdr);
-		    });
-    });
-    return pr;
+    // clone templateMRI
+    for( i in props)
+        mri[props[i]] = templateMRI[props[i]];
+    
+    // get volume size
+    sz = mri.dim[0]*mri.dim[1]*mri.dim[2];
+
+    // update the header
+    mri.hdr = new Buffer(templateMRI.hdr);
+    mri.hdr.writeUInt16LE(datatype,70,2);	// set datatype to 2:unsigned char (8 bits/voxel)
+    mri.hdr.writeFloatLE(vox_offset,108,4);	// set voxel_offset to 352 (minimum size of a nii header)
+    
+    // zero the data
+    mri.data = new Buffer(sz);
+    for(i = 0; i<sz; i++)
+        mri.data[i] = 0;
+    
+    // zero statistics
+    mri.sum = 0;
+    mri.min = 0;
+    mri.max = 0;
+
+    return Promise.resolve(mri);
 };
 var saveNifti = function saveNifti(atlas) {
     traceLog(saveNifti);
 
+    /*
+        saveNifti
+        input: an mri structure
+        process: a .nii.gz file is saved at the position indicated in the mri structure
+        output: success message
+    */
+
 	if(atlas && atlas.dim ) {
 		if(atlas.data==undefined) {
-			displayAtlases();
 			console.log("ERROR: [saveNifti] atlas in Atlas array has no data");
-			console.log(atlas);
-			return Promise.resolve();
+			if(debug) console.log(atlas);
+			return Promise.reject("ERROR: [saveNifti] atlas in Atlas array has no data");
 		} else {
 			var i,sum=0;
 			for(i=0;i<atlas.dim[0]*atlas.dim[1]*atlas.dim[2];i++)
 				sum+=atlas.data[i];
 			if(sum==atlas.sum) {
-				console.log("    Atlas",atlas.specimen,atlas.name,
+				console.log("    Atlas",atlas.dirname,atlas.name,
 							"no change, no save, freemem",os.freemem());
-				return Promise.resolve();
+				return Promise.resolve("Done. No save required");
 			}
 			atlas.sum=sum;
 
@@ -1097,13 +1190,13 @@ var saveNifti = function saveNifti(atlas) {
 					var	path2=this.dataDirectory+atlas.dirname+ms+"_"+atlas.name;
 					fs.rename(path1,path2, function () {
 						fs.writeFileSync(path1,niigz);
-						resolve();
+						resolve("Atlas saved");
 					});
 				});
 			});
 		}
 	} else {
-		return Promise.resolve();
+		return Promise.reject("ERROR: No atlas to save");
 	}
 
 
@@ -1131,7 +1224,7 @@ var pushUndoLayer = function pushUndoLayer(User) {
 	return undoLayer;
 };
 var getCurrentUndoLayer = function getCurrentUndoLayer(User) {
-    traceLog(getCurrentUndoLayer);
+    traceLog(getCurrentUndoLayer,1);
 		
 	var i,undoLayer,found=false;
 	
@@ -1507,7 +1600,7 @@ var testS2VTransformation = function testS2VTransformation(mri) {
 		mri.ori=[0,mri.dim[1],mri.dim[2]];
 		computeS2VTransformation(mri);
 
-		if(debug) {
+		if(debug>2) {
 			console.log("dir",mri.dir);
 			console.log("ori",mri.ori);
 			console.log("s2v",mri.s2v);
@@ -1539,7 +1632,7 @@ var S2I = function S2I(s, mri) {
 	return i;
 };
 var drawSlice = function drawSlice(brain, view, slice) {
-    traceLog(drawSlice);
+    traceLog(drawSlice,1);
     
 	var x,y,i,j;
 	var brain_W, brain_H, brain_D;

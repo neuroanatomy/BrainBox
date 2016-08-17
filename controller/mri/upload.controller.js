@@ -51,8 +51,8 @@ var other_validations = function(req, res, next) {
                 .then(function (json) {
                     if (json && req.files.length > 0) {
                         req.atlasUpload = {
-                        mri: json,
-                        username: obj.username
+                            mri: json,
+                            username: obj.username
                         };
                         next();
                     }
@@ -84,7 +84,6 @@ var other_validations = function(req, res, next) {
 
     // //Check that MRI exists in the database
     // //(for each mri, there may be many backup versions, we don't want those)
-
     // req.db.get('mri').find({source:req.body.url, backup: {$exists: false}})
     // .then(function (json) {
     //     if (json && req.files) {
@@ -120,6 +119,7 @@ var upload = function(req, res) {
     // ==> something like this should be empty: db.get("mri").find({"mri.atlas.$.name":atlasName, "mri.atlas.$.project":atlasProject})
     
     // Check that the dimensions of the nifti atlas are the same as its parent mri
+<<<<<<< HEAD
     var atlas = {};
     atlasMakerServer.readAtlasNifti(files[0].path, atlas)
     .then(function(atlas){
@@ -160,6 +160,46 @@ var upload = function(req, res) {
     })
     .catch(function(){return res.json({error:"mri file is not valid"}).status(400).end();});
     
+=======
+    atlasMakerServer.readNifti(files[0].path)
+        .then(function(atlas){
+            console.log("atlas.dim: ",atlas.dim);
+            console.log("mri.dim: ",mri.dim);
+
+            // check volume dimensions
+            if (atlas.dim[0] != mri.dim[0] ||
+                atlas.dim[1] != mri.dim[1] ||
+                atlas.dim[2] != mri.dim[2]) {
+                return res.json({error:"the Atlas doesn't match with the mri"}).status(400).end();
+            }
+
+            //create the atlas object
+            var date = new Date();
+            var atlasMetadata = {
+                name: atlasName,
+                project: atlasProject,
+                access: "Read/Write", 
+                created: date.toJSON(), 
+                modified: date.toJSON(), 
+                filename: Math.random().toString(36).slice(2)+".nii.gz",	// automatically generated filename
+                originalname: files[0].originalname,
+                labels: atlasLabelSet,
+                owner: username,
+                type: "volume"
+            };
+
+            mri.mri.atlas.push(atlasMetadata);
+
+            req.db.get('mri').update({source:req.body.url, backup: {$exists: false}}, mri);
+            //update the database
+
+            //return the full mri object ???
+            return res.json(mri).status(200).end();
+        })
+        .catch(function (err) {
+            return res.json({error:"mri file is not valid: "+err}).status(400).end();
+        });
+>>>>>>> 62f679379f120d9c8e21a827d29f2c0242e7af03
 }
 
 var token = function token(req, res) {
