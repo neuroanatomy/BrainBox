@@ -766,6 +766,7 @@ var loadAtlas = function loadAtlas(User) {
         } else {
             // Load existing atlas
             console.log("    Atlas found. Loading it");
+// <<<<<<< HEAD
             readNifti(path)
                 .then(function (loadedAtlas) {
                     loadedAtlas.name = User.atlasFilename;
@@ -776,11 +777,17 @@ var loadAtlas = function loadAtlas(User) {
                     console.log("ERROR Cannot read nifti", err);
                     reject(err);
                 });
+/*=======
+            atlas = readAtlasNifti(path, atlas)
+            .then(function(atlas){resolve(atlas.data)});
+>>>>>>> origin/dev-felix
+*/
             
         }
     });
     return pr;
 };
+//<<<<<<< HEAD
 var loadBrain = function loadBrain(path) {
     traceLog(loadBrain);
     
@@ -810,6 +817,47 @@ var loadBrain = function loadBrain(path) {
 
 	return pr;
 }
+/*=======
+
+var readAtlasNifti = function readAtlasNifti(path, atlas) 
+{
+	var pr = new Promise(function promise_fromreadAtlasNifti(resolve,reject) {
+	var niigz;
+    try {
+        niigz=fs.readFileSync(path);
+        zlib.gunzip(niigz, function (err, nii) {
+            loadNifti(nii)
+                .then(function(mri) {
+                    atlas.hdr=mri.hdr;
+                    atlas.dim=mri.dim;
+                    atlas.datatype=mri.datatype;
+                    atlas.pixdim=mri.pixdim;
+                    atlas.data=mri.data;
+        
+                    var i,sum=0;
+                    for(i=0;i<atlas.dim[0]*atlas.dim[1]*atlas.dim[2];i++)
+                        sum+=atlas.data[i];
+                    atlas.sum=sum;
+
+                    console.log(new Date());
+                    console.log("    atlas size:",atlas.data.length);
+                    console.log("     atlas dim:",atlas.dim);
+                    console.log("atlas datatype:",atlas.datatype);
+                    console.log("   free memory:",os.freemem());
+                    resolve(atlas);
+                })
+                .catch(function(err) {
+                	reject();
+                    console.log("ERROR:",err);
+                });
+        });
+    } catch(e) {
+        console.log("ERROR: loadAtlasNifti cannot read atlas data");
+    }});
+    return pr;
+}
+>>>>>>> origin/dev-felix
+*/
 
 var readNifti = function readNifti(path) {
     traceLog(readNifti);
@@ -903,7 +951,42 @@ var readNifti = function readNifti(path) {
     });
     return pr;
 };
+//<<<<<<< HEAD
 this.readNifti = readNifti;
+/*=======
+var loadNifti = function loadNifti(nii) {
+    traceLog(loadNifti);
+	
+	var mri={};
+	try {
+        // standard nii header
+        var niiHdr=niijs.parseNIfTIHeader(nii);
+        var	sizeof_hdr=niiHdr.sizeof_hdr;
+        mri.dim=niiHdr.dim.slice(1);
+        mri.pixdim=niiHdr.pixdim.slice(1);
+        mri.vox_offset=niiHdr.vox_offset;
+    
+        // nrrd-compatible header, computes space directions and space origin
+        if(niiHdr.qform_code>0) {
+            var nrrdHdr=niijs.parseHeader(nii);
+            mri.dir=nrrdHdr.spaceDirections;
+            mri.ori=nrrdHdr.spaceOrigin;
+        } else {
+            mri.dir=[[mri.pixdim[0],0,0],[0,mri.pixdim[1],0],[0,0,mri.pixdim[2]]];
+            mri.ori=[0,0,0];
+        }
+	} catch (e) {
+		console.log(e);
+		return Promise.reject();
+	}
+	// compute the transformation from voxel space to screen space
+	computeS2VTransformation(mri);
+	
+	// test if the transformation looks incorrect. Reset it if it does
+	testS2VTransformation(mri);
+}
+>>>>>>> origin/dev-felix
+*/
 
 var readMGZ = function readMGZ(data) {
     traceLog(readMGZ);
