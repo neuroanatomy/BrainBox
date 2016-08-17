@@ -192,9 +192,10 @@ var numberOfUsersConnectedToMRI = function numberOfUsersConnectedToMRI(path) {
 var unloadMRI = function unloadMRI(path) {
     traceLog(unloadMRI);
 		
-	for(var i in Brains) {
+	var i;
+	for(i in Brains) {
 		if(Brains[i].path===path) {
-			Brains.splice(i,1);
+			delete Brains[i];
 			console.log("    free memory",os.freemem());
 			break;
 		}
@@ -229,7 +230,8 @@ var numberOfUsersConnectedToAtlas = function numberOfUsersConnectedToAtlas(dirna
 var unloadAtlas = function unloadAtlas(dirname,atlasFilename) {
     traceLog(unloadAtlas);
 
-	for(var i in Atlases) {
+	var i;
+	for(i in Atlases) {
 		if(Atlases[i].dirname===dirname && Atlases[i].name===atlasFilename) {
 			saveNifti(Atlases[i])
                 .then(function () {

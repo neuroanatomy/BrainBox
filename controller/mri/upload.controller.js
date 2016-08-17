@@ -50,8 +50,8 @@ var other_validations = function(req, res, next) {
                 .then(function (json) {
                     if (json && req.files.length > 0) {
                         req.atlasUpload = {
-                        mri: json,
-                        username: obj.username
+                            mri: json,
+                            username: obj.username
                         };
                         next();
                     }
@@ -83,7 +83,6 @@ var other_validations = function(req, res, next) {
 
     // //Check that MRI exists in the database
     // //(for each mri, there may be many backup versions, we don't want those)
-
     // req.db.get('mri').find({source:req.body.url, backup: {$exists: false}})
     // .then(function (json) {
     //     if (json && req.files) {
