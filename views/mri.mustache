@@ -59,7 +59,7 @@
 					</div>
 				
 					<!-- Annotations -->
-					<div style="flex:0 1 600px;vertical-align:top;padding-left:0.5rem">
+					<div id="annotationsPane" style="flex:0 1 600px;vertical-align:top;padding-left:0.5rem">
 						<ul>
 							<li><b>Name</b><br/> <span id="name" contentEditable=true class='noEmpty'></span></li>
 							<li><b>Data source</b></br> <span id="source" style="word-break:break-all"></span></li>
@@ -169,135 +169,144 @@ var version=1;
 var info_proxy={};
 var hash_old;
 
-params.info=mriInfo;
+if( $.isEmptyObject(mriInfo)) {
+    $("#stereotaxic").prepend("<h2>ERROR: Cannot read the data.</h2><p>The file is maybe corrupt?</p>");
+    console.log("ERROR: Cannot read data. The file is maybe corrupt?");
 
-var fullscreen=false;
-if(params.fullscreen)
-	params.fullscreen=(params.fullscreen=="true");
+    $("#annotationsPane").hide();
+    $("#data").show();
 
-// Present a splash screen while loading
-$("#intro").hide();
-$("#splash").show();	
+} else {
 
-// Load data
-BrainBox.initBrainBox()
-.then(function(){return BrainBox.loadLabelsets()})
-.then(function(){return BrainBox.configureBrainBox(params)})
-.then(function(){
-	// Remove splash
-	$("#splash").hide();
+    params.info=mriInfo;
 
-	var aParam = {
-		table: $("table#annotations"),
-		info_proxy: info_proxy,
-		info: BrainBox.info,
-		saveWarning: $("#saveAnnotations"),
-		trTemplate: $.map([
-			"<tr>",
-			" <td contentEditable=true class='noEmpty'></td>",
-			" <td contentEditable=true class='noEmpty'></td>",
-			" <td><select>",$.map(BrainBox.labelSets,function(o){return "<option>"+o.name+"</option>"}),"</select></td>",	// append label sets
-			" <td><a></a></td>",
-			" <td></td>",
-			" <td></td>",
-			" <td><select>",BrainBox.access.map(function(o){return "<option>"+o+"</option>"}),"</select></td>",	// append label sets
-			"</tr>"],function(o){return o}).join(),
-		objTemplate: [
-			{	typeOfBinding:2,
-				path:"mri.atlas.#.name"
-			},
-			{	typeOfBinding:2,
-				path:"mri.atlas.#.project"
-			},
-			{	typeOfBinding:2,
-				path:"mri.atlas.#.labels",
-				format: function(e,d){$(e).find("select").prop('selectedIndex',$.map(BrainBox.labelSets,function(o){return o.source}).indexOf(d))},
-				/*
-					-----------------------------------------------------------
-					NOTE: this is a temporary fix, the final version should be:
-					-----------------------------------------------------------
-					format: function(e,d){$(e).find("select").prop('selectedIndex',$.map(BrainBox.labelSets,function(o){return o.source}).indexOf(d))},
-				*/
-				parse: function(e){var name=$(e).find("select").val(),i=$.map(BrainBox.labelSets,function(o){return o.name}).indexOf(name);return BrainBox.labelSets[i].source}
-			},
-			{	typeOfBinding:1,
-				path:"mri.atlas.#.owner",
-				format: function(e,d){$.get("/api/user/"+d.split("/").pop()+"?var=nickname",function(r){$(e).text(r);$(e).attr('href',d)})}
-			},
-			{	typeOfBinding:1,
-				path:"mri.atlas.#.created",
-				format: date_format
-			},
-			{	typeOfBinding:1,
-				path:"mri.atlas.#.modified",
-				format: date_format
-			},
-			{	typeOfBinding:2,path:"mri.atlas.#.access",
-				format: function(e,d){$(e).find("select").prop('selectedIndex',BrainBox.access.indexOf(d))},
-				parse: function(e){return $(e).find("select").val()}
-			}
-		]
+    var fullscreen=false;
+    if(params.fullscreen)
+        params.fullscreen=(params.fullscreen=="true");
 
-	};
+    // Present a splash screen while loading
+    $("#intro").hide();
+    $("#splash").show();	
 
-	// bind interface
-	bind2(info_proxy,BrainBox.info,"name",$("#name"));
-	bind1(info_proxy,BrainBox.info,"source",$("#source"));
-	bind1(info_proxy,BrainBox.info,"included",$("#included"),date_format);
-	for(var i=0;i<BrainBox.info.mri.atlas.length;i++) {
-		BrainBox.appendAnnotationTableRow(i,aParam);
-	}
+    // Load data
+    BrainBox.initBrainBox()
+    .then(function(){return BrainBox.loadLabelsets()})
+    .then(function(){return BrainBox.configureBrainBox(params)})
+    .then(function(){
+        // Remove splash
+        $("#splash").hide();
 
-	// connect colours close button
-	$(document).on('click', "#labels-close", function(){$("#labelset").hide()});
+        var aParam = {
+            table: $("table#annotations"),
+            info_proxy: info_proxy,
+            info: BrainBox.info,
+            saveWarning: $("#saveAnnotations"),
+            trTemplate: $.map([
+                "<tr>",
+                " <td contentEditable=true class='noEmpty'></td>",
+                " <td contentEditable=true class='noEmpty'></td>",
+                " <td><select>",$.map(BrainBox.labelSets,function(o){return "<option>"+o.name+"</option>"}),"</select></td>",	// append label sets
+                " <td><a></a></td>",
+                " <td></td>",
+                " <td></td>",
+                " <td><select>",BrainBox.access.map(function(o){return "<option>"+o+"</option>"}),"</select></td>",	// append label sets
+                "</tr>"],function(o){return o}).join(),
+            objTemplate: [
+                {	typeOfBinding:2,
+                    path:"mri.atlas.#.name"
+                },
+                {	typeOfBinding:2,
+                    path:"mri.atlas.#.project"
+                },
+                {	typeOfBinding:2,
+                    path:"mri.atlas.#.labels",
+                    format: function(e,d){$(e).find("select").prop('selectedIndex',$.map(BrainBox.labelSets,function(o){return o.source}).indexOf(d))},
+                    /*
+                        -----------------------------------------------------------
+                        NOTE: this is a temporary fix, the final version should be:
+                        -----------------------------------------------------------
+                        format: function(e,d){$(e).find("select").prop('selectedIndex',$.map(BrainBox.labelSets,function(o){return o.source}).indexOf(d))},
+                    */
+                    parse: function(e){var name=$(e).find("select").val(),i=$.map(BrainBox.labelSets,function(o){return o.name}).indexOf(name);return BrainBox.labelSets[i].source}
+                },
+                {	typeOfBinding:1,
+                    path:"mri.atlas.#.owner",
+                    format: function(e,d){$.get("/user/json/"+d.split("/").pop()+"?var=nickname",function(r){$(e).text(r);$(e).attr('href',d)})}
+                },
+                {	typeOfBinding:1,
+                    path:"mri.atlas.#.created",
+                    format: date_format
+                },
+                {	typeOfBinding:1,
+                    path:"mri.atlas.#.modified",
+                    format: date_format
+                },
+                {	typeOfBinding:2,path:"mri.atlas.#.access",
+                    format: function(e,d){$(e).find("select").prop('selectedIndex',BrainBox.access.indexOf(d))},
+                    parse: function(e){return $(e).find("select").val()}
+                }
+            ]
 
-	// annotations table: connect pop-down menus
-	$(document).on('change', "table#annotations select", function(){
-		var col=$("table#annotations tr:eq(0) th:eq("+$(this).closest('td')[0].cellIndex+")").text();
-		var index=$(this).closest('tr')[0].rowIndex-1;
-		switch(col) {
-			case "Label Set":
-				var url=info_proxy["mri.atlas."+index+".labels"];
-				$.getJSON(url,function(json) {
-					AtlasMakerWidget.configureOntology(json);
-					AtlasMakerWidget.brain_img.img=null; // to force redraw with new colors
-					AtlasMakerWidget.drawImages();
-				});
-				break;
-			case "Access":
-				break;
-		}
-	});
+        };
 
-	// annotation table: select row
-	$(document).on('click', "#annotations tr",BrainBox.selectAnnotationTableRow);
-	
-	// annotations table: add, remove and save annotations
-	$(document).on('click', "#addAnnotation", function(){BrainBox.addAnnotation(aParam)});
-	$(document).on('click', "#removeAnnotation", function(){BrainBox.removeAnnotation(aParam)});
-	$(document).on('click', "#saveAnnotations", function(){BrainBox.saveAnnotations(aParam)});
-	
-	// annotations table: select the first row by default
-	$("table#annotations tr").removeClass("selected");
-	$("table#annotations tr").eq(1).addClass("selected");
+        // bind interface
+        bind2(info_proxy,BrainBox.info,"name",$("#name"));
+        bind1(info_proxy,BrainBox.info,"source",$("#source"));
+        bind1(info_proxy,BrainBox.info,"included",$("#included"),date_format);
+        for(var i=0;i<BrainBox.info.mri.atlas.length;i++) {
+            BrainBox.appendAnnotationTableRow(i,aParam);
+        }
 
-	$("#data").show();
-	
-	// autosave
-	hash_old=BrainBox.hash(JSON.stringify(BrainBox.info));
-	$("#saveAnnotations").hide();
-	setInterval(function() {
-		JSON.stringify(info_proxy);
-		var hash=BrainBox.hash(JSON.stringify(BrainBox.info));
-		if(hash!=hash_old) {
-			$("#saveAnnotations").show();
-		}
-	},1000*10); // every 10 seconds
-		
-},function(){
-	$("#msgLog").html("ERROR: Can't load data");
-});
+        // connect colours close button
+        $(document).on('click', "#labels-close", function(){$("#labelset").hide()});
 
+        // annotations table: connect pop-down menus
+        $(document).on('change', "table#annotations select", function(){
+            var col=$("table#annotations tr:eq(0) th:eq("+$(this).closest('td')[0].cellIndex+")").text();
+            var index=$(this).closest('tr')[0].rowIndex-1;
+            switch(col) {
+                case "Label Set":
+                    var url=info_proxy["mri.atlas."+index+".labels"];
+                    $.getJSON(url,function(json) {
+                        AtlasMakerWidget.configureOntology(json);
+                        AtlasMakerWidget.brain_img.img=null; // to force redraw with new colors
+                        AtlasMakerWidget.drawImages();
+                    });
+                    break;
+                case "Access":
+                    break;
+            }
+        });
+
+        // annotation table: select row
+        $(document).on('click', "#annotations tr",BrainBox.selectAnnotationTableRow);
+    
+        // annotations table: add, remove and save annotations
+        $(document).on('click', "#addAnnotation", function(){BrainBox.addAnnotation(aParam)});
+        $(document).on('click', "#removeAnnotation", function(){BrainBox.removeAnnotation(aParam)});
+        $(document).on('click', "#saveAnnotations", function(){BrainBox.saveAnnotations(aParam)});
+    
+        // annotations table: select the first row by default
+        $("table#annotations tr").removeClass("selected");
+        $("table#annotations tr").eq(1).addClass("selected");
+
+        $("#data").show();
+    
+        // autosave
+        hash_old=BrainBox.hash(JSON.stringify(BrainBox.info));
+        $("#saveAnnotations").hide();
+        setInterval(function() {
+            JSON.stringify(info_proxy);
+            var hash=BrainBox.hash(JSON.stringify(BrainBox.info));
+            if(hash!=hash_old) {
+                $("#saveAnnotations").show();
+            }
+        },1000*10); // every 10 seconds
+        
+    },function(){
+        $("#msgLog").html("ERROR: Can't load data");
+    });
+}
 </script>
 
 

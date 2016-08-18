@@ -2,8 +2,11 @@ var async = require("async");
 var dateFormat = require('dateformat');
 
 var validator = function(req, res, next) {
-
-	req.checkParams('userName', 'incorrect project name').isAlphanumeric();
+	
+	// userName can be an ip address (for anonymous users)
+	
+	/*
+	req.checkParams('userName', 'incorrect user name').isAlphanumeric();
 	var errors = req.validationErrors();
 	console.log(errors);
 	if (errors) {
@@ -11,6 +14,8 @@ var validator = function(req, res, next) {
 	} else {
 		return next();
 	}
+	*/
+	next();
 }
 
 var user = function(req, res) {

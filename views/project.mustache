@@ -185,8 +185,14 @@ function loadProjectFile(url) {
 	var params={url:url,view:"cor",slice:180,fullscreen:false};
 	$.get("/mri/json",{url:url})
 	.done(function from_loadProjectFile(data) {
-		params.info=data;
-		BrainBox.configureBrainBox(params)
+	    if($.isEmptyObject(data) === false) {
+            params.info=data;
+            BrainBox.configureBrainBox(params)
+        } else {
+            var info=AtlasMakerWidget.container.find("#info");
+            info.html("<text x='5' y='15' fill='white'>ERROR: File is unreadable</text>");
+            console.log("ERROR: Cannot read data. The file is maybe corrupt?");
+        }
 	})
 	.then(function from_loadProjectFile() {
 		// binding prototype
@@ -208,17 +214,11 @@ function loadProjectFile(url) {
 				{	typeOfBinding:1,
 					path:"mri.atlas.#.labels",
 					format: function(e,d){$(e).find("select").prop('selectedIndex',$.map(BrainBox.labelSets,function(o){return o.source}).indexOf(d))},
-					/*
-						-----------------------------------------------------------
-						NOTE: this is a temporary fix, the final version should be:
-						-----------------------------------------------------------
-						format: function(e,d){$(e).find("select").prop('selectedIndex',$.map(BrainBox.labelSets,function(o){return o.source}).indexOf(d))},
-					*/
 					parse: function(e){var name=$(e).find("select").val(),i=$.map(BrainBox.labelSets,function(o){return o.name}).indexOf(name);return BrainBox.labelSets[i].source}
 				},
 				{	typeOfBinding:1,
 					path:"mri.atlas.#.owner",
-					format: function(e,d){$.get("/api/user/"+d.split("/").pop()+"?var=nickname",function(r){$(e).text(r);$(e).attr('href',d)})}
+					format: function(e,d){$.get("/user/json/"+d.split("/").pop()+"?var=nickname",function(r){$(e).text(r);$(e).attr('href',d)})}
 				}
 			]
 		};
