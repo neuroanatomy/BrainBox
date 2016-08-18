@@ -64,12 +64,13 @@ var displayAtlases = function displayAtlases() {
 };
 var displayBrains = function displayBrains() {
     traceLog(displayBrains);
-	console.log("\n"+Brains.length+" Brains:");
-	for(var i=0;i<Brains.length;i++) {
+	console.log("\n"+Brains.filter(function(o){return o!==undefined}).length+" Brains:");
+	var i;
+	for(i in Brains) {
 		var sum=numberOfUsersConnectedToMRI(Brains[i].path);
 		console.log("Brains["+i+"].path="+Brains[i].path+", "+sum+" users connected");
 	}
-	for(var i=0;i<Brains.length;i++) {
+	for(i in Brains) {
 		console.log("Brains["+i+"]");
 		console.log("           path:",Brains[i].path);
 		console.log("       data.dim:",Brains[i].data.dim);
@@ -717,7 +718,7 @@ var getBrainAtPath = function getBrainAtPath(brainPath) {
         output: a brain (mri structure) 
     */
 	var i;
-	for(i=0;i<Brains.length;i++) {
+	for(i in Brains) {
 		if(Brains[i].path===brainPath) {
 			if(debug>1) console.log("    brain already loaded");
 			return Promise.resolve(Brains[i].data);
