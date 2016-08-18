@@ -75,26 +75,6 @@ var other_validations = function(req, res, next) {
         console.log("ERROR:",err);
         res.send().status(403).end();
     });
-
-    // // CHECK USER AUTHENTICITY
-    // if (!req.isAuthenticated)
-    // {
-    //     return res.send({error:"Forbidden Access"}).status(401).end();
-    // }
-
-    // //Check that MRI exists in the database
-    // //(for each mri, there may be many backup versions, we don't want those)
-    // req.db.get('mri').find({source:req.body.url, backup: {$exists: false}})
-    // .then(function (json) {
-    //     if (json && req.files) {
-    //         req.atlasUpload = {
-    //         mri: json,
-    //         username: obj.username
-    //         };
-    //         next();
-    //     }
-    //     else {return res.send({error:"Unkown URL"}).status(403).end();}
-    // })
 }
 
 var upload = function(req, res) {
@@ -131,7 +111,7 @@ var upload = function(req, res) {
                 return res.json({error:"the Atlas doesn't match with the mri"}).status(400).end();
             }
 
-            //create the atlas object
+            // create the atlas object
             var date = new Date();
             var atlasMetadata = {
                 name: atlasName,
@@ -146,12 +126,17 @@ var upload = function(req, res) {
                 type: "volume"
             };
 
+            // move atlas file to final directory
+            fs.rename(req.dirname  + "/" + files[0].path, req.dirname + "/public" + mri.url + atlasMetadata.filename);
+
+            // update the database
             mri.mri.atlas.push(atlasMetadata);
+            // mark previous version as backup
+            db.get('mri').update({url:req.body.url,backup:{$exists:false}},{$set:{backup:true}},{multi:true});
+            // insert new version
+            db.get('mri').insert(mri);
 
-            req.db.get('mri').update({source:req.body.url, backup: {$exists: false}}, mri);
-            //update the database
-
-            //return the full mri object ???
+            // return the full mri object ???
             return res.json(mri).status(200).end();
         })
         .catch(function (err) {
