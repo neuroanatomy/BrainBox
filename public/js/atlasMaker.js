@@ -2,7 +2,7 @@ var AtlasMakerWidget = {
 	//========================================================================================
 	// Globals
 	//========================================================================================
-	debug:			1,
+	debug:			2,
 	container:		null,	// Element where atlasMaker lives
 	brain_offcn:	null,
 	brain_offtx:	null,
@@ -15,14 +15,21 @@ var AtlasMakerWidget = {
 	brain_Wdim:		null,
 	brain_Hdim:		null,
 	max:			0,
+	/*
+		{FIX: TRY TO KEEP ALL 3D STUFF INSIDE Users
+	*/
 	brain_dim:		new Array(3),
 	brain_pixdim:	new Array(3),
 	brain_datatype:	null,
+	/*
+		}
+	*/
 	brain_img:      {     img: null,
 						 view: null,
 						slice: null
 					},
 	brain:			0,
+	alphaLevel:		0.5,
 	annotationLength:0,
 	measureLength:	null,
 	User:			{  view:null,
@@ -110,17 +117,26 @@ var AtlasMakerWidget = {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(changeTool);if(l)console.log(l);
 	
+		if(theTool.toLowerCase()==me.User.tool)
+			return;
+		
 		switch(theTool) {
 			case 'Paint':
 				me.User.tool='paint';
-				//me.User.penValue=1;
 				break;
 			case 'Erase':
 				me.User.tool='erase';
-				//me.User.penValue=0;
 				break;
 			case 'Measure':
 				me.User.tool='measure';
+				break;
+			case 'Adjust':
+				me.User.tool='adjust';
+				if($("#adjust").length==0) {
+					$.get("/templates/adjust.html",function(html) {
+						me.container.find("#resizable").append(html);
+					});
+				}
 				break;
 		}
 		me.sendUserDataMessage("change tool");
@@ -137,14 +153,12 @@ var AtlasMakerWidget = {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(changeSlice,1);if(l)console.log(l);
 
-		console.log("to",x);
-
 		var max=$("#slice").data("max");
 		$("#slice").data("val",x);
 		$("#slice .thumb")[0].style.left=(x*100/max)+"%";
 	
 		me.User.slice=x;
-		me.sendUserDataMessage("change slice");
+		//me.sendUserDataMessage("change slice");
 
 		me.drawImages();
 	},
@@ -230,7 +244,7 @@ var AtlasMakerWidget = {
 	},
 	render3D: function render3D() {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(reder3D);if(l)console.log(l);
+		var l=me.traceLog(render3D);if(l)console.log(l);
 		
 		// puts a fresh version of the segmentation in localStorage
 		localStorage.brainbox=URL.createObjectURL(new Blob([me.encodeNifti()]));
@@ -461,6 +475,7 @@ var AtlasMakerWidget = {
 		mri.pixdim[1]=dv.getFloat32(84,true);
 		mri.pixdim[2]=dv.getFloat32(88,true);
 		vox_offset=dv.getFloat32(108,true);	
+		
 		switch(mri.datatype)
 		{
 			case 2: // UCHAR
@@ -487,20 +502,20 @@ var AtlasMakerWidget = {
 	
 		if(me.User.view==null)
 			me.User.view="sag";
-
-		// init query image
+			
+		var s2v=me.User.s2v;
 		switch(me.User.view) {
-			case 'sag':	me.brain_W=me.brain_dim[1]/*PA*/; me.brain_H=me.brain_dim[2]/*IS*/; me.brain_D=me.brain_dim[0]; me.brain_Wdim=me.brain_pixdim[1]; me.brain_Hdim=me.brain_pixdim[2]; break; // sagital
-			case 'cor':	me.brain_W=me.brain_dim[0]/*LR*/; me.brain_H=me.brain_dim[2]/*IS*/; me.brain_D=me.brain_dim[1]; me.brain_Wdim=me.brain_pixdim[0]; me.brain_Hdim=me.brain_pixdim[2]; break; // coronal
-			case 'axi':	me.brain_W=me.brain_dim[0]/*LR*/; me.brain_H=me.brain_dim[1]/*PA*/; me.brain_D=me.brain_dim[2]; me.brain_Wdim=me.brain_pixdim[0]; me.brain_Hdim=me.brain_pixdim[1]; break; // axial
+			case 'sag':	me.brain_W=s2v.sdim[1]; me.brain_H=s2v.sdim[2]; me.brain_D=s2v.sdim[0]; me.brain_Wdim=s2v.wpixdim[1]; me.brain_Hdim=s2v.wpixdim[2]; break; // sagital
+			case 'cor':	me.brain_W=s2v.sdim[0]; me.brain_H=s2v.sdim[2]; me.brain_D=s2v.sdim[1]; me.brain_Wdim=s2v.wpixdim[0]; me.brain_Hdim=s2v.wpixdim[2]; break; // coronal
+			case 'axi':	me.brain_W=s2v.sdim[0]; me.brain_H=s2v.sdim[1]; me.brain_D=s2v.sdim[2]; me.brain_Wdim=s2v.wpixdim[0]; me.brain_Hdim=s2v.wpixdim[1]; break; // axial
 		}
+
 		me.canvas.width=me.brain_W;
 		me.canvas.height=me.brain_H*me.brain_Hdim/me.brain_Wdim;
 		me.brain_offcn.width=me.brain_W;
 		me.brain_offcn.height=me.brain_H;
 		me.brain_px=me.brain_offtx.getImageData(0,0,me.brain_offcn.width,me.brain_offcn.height);
 		
-		me.User.dim=me.brain_dim;
 		if(me.User.slice==null || me.User.slice>=me.brain_D)
 			me.User.slice=parseInt(me.brain_D/2);
 
@@ -576,17 +591,17 @@ var AtlasMakerWidget = {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(drawImages,1);if(l)console.log(l);
 	
-		if(me.brain_img.img && me.brain_img.view==me.User.view && me.brain_img.slice==me.User.slice) {
+		if(me.brain_img.img) {
 			me.context.clearRect(0,0,me.context.canvas.width,me.canvas.height);
 			me.displayInformation();
 
 			me.nearestNeighbour(me.context);
+			
 			me.context.drawImage(me.brain_img.img,0,0,me.brain_W,me.brain_H*me.brain_Hdim/me.brain_Wdim);
-
-			me.context.globalAlpha = 0.8;
-			me.context.globalCompositeOperation = "lighter";
 			me.drawAtlasImage(me.flagLoadingImg.view,me.flagLoadingImg.slice);
-		} else {
+		}
+
+		if(!me.brain_img.img || me.brain_img.view!=me.User.view || me.brain_img.slice!=me.User.slice) {
 			me.sendRequestSliceMessage();
 		}
 	},
@@ -599,23 +614,34 @@ var AtlasMakerWidget = {
 
 		var	data=me.atlas.data;
 		var	dim=me.atlas.dim;
-		var	val;
+		var	s,val;
 
 		ys=yc=ya=slice;
 		for(y=0;y<me.brain_H;y++)
 		for(x=0;x<me.brain_W;x++) {
 			switch(view) {
-				case 'sag':i= y*dim[1]/*PA*/*dim[0]/*LR*/+ x*dim[0]/*LR*/+ys; break;
-				case 'cor':i= y*dim[1]/*PA*/*dim[0]/*LR*/+yc*dim[0]/*LR*/+x; break;
-				case 'axi':i=ya*dim[1]/*PA*/*dim[0]/*LR*/+ y*dim[0]/*LR*/+x; break;
+				case 'sag':s=[ys,x,me.brain_H-1-y]; break;
+				case 'cor':s=[x,yc,me.brain_H-1-y]; break;
+				case 'axi':s=[x,me.brain_H-1-y,ya]; break;
 			}
 			
+/*
+	TRANSFORM SCREEN SPACE INTO VOXEL INDEX
+	DONE.
+*/
+			i=me.S2I(s,me.User);
+
+			/*
+			i= s[2]*dim[1]*dim[0]+ s[1]*dim[0]+ s[0];
+			*/
+			
 			var c=me.ontologyValueToColor(data[i]);
+			var alpha=(data[i]>0)?255:0;
 			i=(y*me.atlas_offcn.width+x)*4;
 			me.atlas_px.data[ i ]  =c[0];
 			me.atlas_px.data[ i+1 ]=c[1];
 			me.atlas_px.data[ i+2 ]=c[2];
-			me.atlas_px.data[ i+3 ]=255;
+			me.atlas_px.data[ i+3 ]=alpha*me.alphaLevel;
 		}
 		me.atlas_offtx.putImageData(me.atlas_px, 0, 0);
 
@@ -872,6 +898,11 @@ var AtlasMakerWidget = {
 				else
 					me.User.measureLength.push({x:x,y:y});
 				break;
+			case 'adjust':
+				me.User.mouseIsDown = true;
+				me.info.x=x/me.brain_W;
+				me.info.y=1-y/me.brain_H;
+				break;
 		}
 	
 		// init annotation length counter
@@ -897,6 +928,11 @@ var AtlasMakerWidget = {
 				break;
 			case 'erase':
 				me.paintxy(-1,'le',x,y,me.User);
+				break;
+			case 'adjust':
+				me.info.x=x/me.brain_W;
+				me.info.y=1-y/me.brain_H;
+				me.drawImages();
 				break;
 		}
 		
@@ -983,8 +1019,7 @@ var AtlasMakerWidget = {
 			me.msg0=msg;
 		}
 	
-		var	layer=me.atlas;
-		var	dim=layer.dim;
+		var	dim=me.atlas.dim;
 	
 		var	coord={"x":x,"y":y,"z":usr.slice};
 		if(usr.x0<0) {
@@ -1018,16 +1053,12 @@ var AtlasMakerWidget = {
 	
 		var	i,
 			ind,			// voxel index
-			val,			// voxel delta-value, such that -=val undoes
-			layer=me.atlas;
+			val;			// voxel delta-value, such that -=val undoes
 		for(i=0;i<voxels.length;i++) {
 			ind=voxels[i][0];
 			val=voxels[i][1];
 			
-			/*
-			layer.data[ind]-=val;	// TODO-UNDO: move from delta-value to absolute
-			*/
-			layer.data[ind]=val;
+			me.atlas.data[ind]=val;
 		}
 
 		me.drawImages();
@@ -1037,10 +1068,10 @@ var AtlasMakerWidget = {
 		var l=me.traceLog(fill);if(l)console.log(l);
 	
 		var	Q=[],n;
-		var	layer=me.atlas;
-		var	dim=layer.dim;
+		var	atlas=me.atlas;
+		var	dim=atlas.dim;
 		var	i;
-		var bval=layer.data[me.slice2index(x,y,z,myView)]; // background-value: value of the voxel where the click occurred
+		var bval=atlas.data[me.slice2index(x,y,z,myView)]; // background-value: value of the voxel where the click occurred
 		
 		if(bval==val)	// nothing to do
 			return;
@@ -1050,15 +1081,15 @@ var AtlasMakerWidget = {
 			n=Q.pop();
 			x=n.x;
 			y=n.y;
-			if(layer.data[me.slice2index(x,y,z,myView)]==bval) {
-				layer.data[me.slice2index(x,y,z,myView)]=val;
-				if(x-1>=0         && layer.data[me.slice2index(x-1,y,z,myView)]==bval)
+			if(atlas.data[me.slice2index(x,y,z,myView)]==bval) {
+				atlas.data[me.slice2index(x,y,z,myView)]=val;
+				if(x-1>=0         && atlas.data[me.slice2index(x-1,y,z,myView)]==bval)
 					Q.push({"x":x-1,"y":y});
-				if(x+1<me.brain_W && layer.data[me.slice2index(x+1,y,z,myView)]==bval)
+				if(x+1<me.brain_W && atlas.data[me.slice2index(x+1,y,z,myView)]==bval)
 					Q.push({"x":x+1,"y":y});
-				if(y-1>=0         && layer.data[me.slice2index(x,y-1,z,myView)]==bval)
+				if(y-1>=0         && atlas.data[me.slice2index(x,y-1,z,myView)]==bval)
 					Q.push({"x":x,"y":y-1});
-				if(y+1<me.brain_H && layer.data[me.slice2index(x,y+1,z,myView)]==bval)
+				if(y+1<me.brain_H && atlas.data[me.slice2index(x,y+1,z,myView)]==bval)
 					Q.push({"x":x,"y":y+1});
 			}
 		}
@@ -1071,8 +1102,8 @@ var AtlasMakerWidget = {
 		// Bresenham's line algorithm adapted from
 		// http://stackoverflow.com/questions/4672279/bresenham-algorithm-in-javascript
 
-		var	layer=me.atlas;
-		var	dim=layer.dim;
+		var	atlas=me.atlas;
+		var	dim=atlas.dim;
 		var	xyzi1=new Array(4);
 		var	xyzi2=new Array(4);
 		var	i;
@@ -1098,7 +1129,7 @@ var AtlasMakerWidget = {
 		for(j=0;j<usr.penSize;j++)
 		for(k=0;k<usr.penSize;k++) {
 			i=me.slice2index(x1+j,y1+k,z,usr.view);
-			layer.data[i]=val;
+			atlas.data[i]=val;
 		}
 	
 		while (!((x1 == x2) && (y1 == y2))) {
@@ -1114,7 +1145,7 @@ var AtlasMakerWidget = {
 			for(j=0;j<usr.penSize;j++)
 			for(k=0;k<usr.penSize;k++) {
 				i=me.slice2index(x1+j,y1+k,z,usr.view);
-				layer.data[i]=val;
+				atlas.data[i]=val;
 			}
 		}
 		me.drawImages();
@@ -1123,42 +1154,43 @@ var AtlasMakerWidget = {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(slice2index,3);if(l)console.log(l);
 	
-		var	layer=me.atlas;
-		var	dim=layer.dim;
-		var	x,y,z;
+		var	dim=me.atlas.dim;
+		var	x,y,z,i;
 		switch(myView) {
-			case 'sag':	x=mz; y=mx; z=my;break; // sagital
-			case 'cor':	x=mx; y=mz; z=my;break; // coronal
-			case 'axi':	x=mx; y=my; z=mz;break; // axial
-		}	
-		return z*dim[1]*dim[0]+y*dim[0]+x;	
+			case 'sag':	x=mz; y=mx; z=me.brain_H-1-my;break; // sagital
+			case 'cor':	x=mx; y=mz; z=me.brain_H-1-my;break; // coronal
+			case 'axi':	x=mx; y=me.brain_H-1-my; z=mz;break; // axial
+		}
+/*
+	TRANSFORM SCREEN SPACE INTO VOXEL INDEX
+*/
+		var s=[x,y,z];
+		i=me.S2I(s,me.User);
+		/*
+		i=z*dim[1]*dim[0]+y*dim[0]+x;
+		*/
+		return i;
 	},
 	slice2xyzi: function slice2xyzi(mx,my,mz,myView) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(slice2xyzi,1);if(l)console.log(l);
 	
-		var	layer=me.atlas;
-		var	dim=layer.dim;
+		var	dim=me.atlas.dim;
 		var	x,y,z,i;
 		switch(myView) {
-			case 'sag':	x=mz; y=mx; z=my;break; // sagital
-			case 'cor':	x=mx; y=mz; z=my;break; // coronal
-			case 'axi':	x=mx; y=my; z=mz;break; // axial
+			case 'sag':	x=mz; y=mx; z=me.brain_H-1-my;break; // sagital
+			case 'cor':	x=mx; y=mz; z=me.brain_H-1-my;break; // coronal
+			case 'axi':	x=mx; y=me.brain_H-1-my; z=mz;break; // axial
 		}
+/*
+	TRANSFORM SCREEN SPACE INTO VOXEL INDEX
+*/
+		var s=[x,y,z];
+		i=me.S2I(s,me.User);
+		/*
 		i=z*dim[1]*dim[0]+y*dim[0]+x;
+		*/
 		return [x,y,z,i];	
-	},
-	xyz2slice: function xyz2slice(x,y,z,myView) {
-		var me=AtlasMakerWidget;
-		var l=me.traceLog(xyz2slice);if(l)console.log(l);
-	
-		var	mx,my,mz;
-		switch(myView) {
-			case 'sag':	mz=x; mx=y; my=z;break; // sagital
-			case 'cor':	mx=x; mz=y; my=z;break; // coronal
-			case 'axi':	mx=x; my=y; mz=z;break; // axial
-		}	
-		return new Object({"x":x,"y":y,"z":z});	
 	},
 
 	//====================================================================================
@@ -1185,7 +1217,7 @@ var AtlasMakerWidget = {
 		var def=$.Deferred();
 	
 		// WS connection
-		var host = "ws://" + window.location.host + ":8080/";
+		var host = "ws://" + window.location.hostname + ":8080/";
 		
 		if(me.debug)
 			console.log("[initSocketConnection] host:",host);
@@ -1223,29 +1255,29 @@ var AtlasMakerWidget = {
 	},
 	receiveSocketMessage: function receiveSocketMessage(msg) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(receiveSocketMessage);if(l)console.log(l);
+		var l=me.traceLog(receiveSocketMessage,1);if(l)console.log(l);
 
 		// Message: atlas data initialisation
 		if(msg.data instanceof Blob) {
-			if(me.debug) console.log("received binary blob",msg.data.size,"bytes long");
+			if(me.debug>1) console.log("received binary blob",msg.data.size,"bytes long");
 			var fileReader = new FileReader();
 			fileReader.onload = function from_receiveSocketMessage() {
 				var data=new Uint8Array(this.result);
 				var sz=data.length;
 				var ext=String.fromCharCode(data[sz-8],data[sz-7],data[sz-6]);
 
-				if(me.debug) console.log("type: "+ext);
+				if(me.debug>1) console.log("type: "+ext);
 				
 				switch(ext) {
-					case "nii": {
+					case 'nii': {
 						var	inflate=new pako.Inflate();
 						inflate.push(data,true);
-						var layer=new Object();
-						layer.data=inflate.result;
-						layer.name=me.atlasFilename;
-						layer.dim=me.brain_dim;
+						var atlas=new Object();
+						atlas.data=inflate.result;
+						atlas.name=me.atlasFilename;
+						atlas.dim=me.brain_dim;
 				
-						me.atlas=layer;
+						me.atlas=atlas;
 
 						me.configureBrainImage();
 						me.configureAtlasImage();
@@ -1260,13 +1292,16 @@ var AtlasMakerWidget = {
 
 						// setup download link
 						var	link=me.container.find("span#download_atlas");
-						link.html("<a class='download' href='"+me.User.dirname+me.User.atlasFilename+"'><img src='/img/download.svg' style='vertical-align:middle'/></a>"+layer.name);
+						link.html("<a class='download' href='"+me.User.dirname+me.User.atlasFilename+"'><img src='/img/download.svg' style='vertical-align:middle'/></a>"+atlas.name);
 						break;
 					}
-					case "jpg": {
+					case 'jpg': {
 						var urlCreator = window.URL || window.webkitURL;
 						var imageUrl = urlCreator.createObjectURL(msg.data);
 						var img = new Image();
+						
+						me.isMRILoaded=true; // receiving a jpg is proof of a loaded MRI
+						
 						img.onload=function from_initSocketConnection(){
 							var flagFirstImage=(me.brain_img.img==null);
 							me.brain_img.img=img;
@@ -1280,6 +1315,9 @@ var AtlasMakerWidget = {
 							if(flagFirstImage || me.flagLoadingImg.view!=me.User.view ||me.flagLoadingImg.slice!=me.User.slice) {
 								me.sendRequestSliceMessage();
 							}
+							
+							// remove loading indicator
+							$("#loadingIndicator").hide();
 						}
 						img.src=imageUrl;
 						
@@ -1293,7 +1331,6 @@ var AtlasMakerWidget = {
 	
 		// Message: interaction message
 		var	data=JSON.parse(msg.data);
-		if(me.debug) console.log("message: "+data.type);
 	
 		// [deprecated]
 		// If we receive a message from an unknown user,
@@ -1351,7 +1388,7 @@ var AtlasMakerWidget = {
 	
 		var u=data.uid;
 	
-		if(me.Collab[u]==undefined) {
+		if(me.Collab[u]===undefined) {
 			try {
 				//var	msg="<b>"+data.user.username+"</b> entered atlas "+data.user.specimenName+"/"+data.user.atlasFilename+"<br />"
 				var	msg="<b>"+data.user.username+"</b> entered<br />"
@@ -1386,6 +1423,7 @@ var AtlasMakerWidget = {
 	receiveChatMessage: function receiveChatMessage(data) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(receiveChatMessage);if(l)console.log(l);
+		console.log(data);
 	
 		var	theView=me.Collab[data.uid].view;
 		var	theSlice=me.Collab[data.uid].slice;
@@ -1408,7 +1446,7 @@ var AtlasMakerWidget = {
 	},
 	receivePaintMessage: function receivePaintMessage(data) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(receivePaintMessage);if(l)console.log(l);
+		var l=me.traceLog(receivePaintMessage,3);if(l)console.log(l);
 	
 		var	msg=data.data;
 		var u=data.uid;	// user
@@ -1448,7 +1486,11 @@ var AtlasMakerWidget = {
 		if(me.flagLoadingImg.loading==true)
 			return;
 		try {
-			me.socket.send(JSON.stringify({type:"requestSlice"}));
+			me.socket.send(JSON.stringify({
+				type:"requestSlice",
+				view:me.User.view,
+				slice:me.User.slice
+			}));
 			me.flagLoadingImg.loading=true;
 			me.flagLoadingImg.view=me.User.view;
 			me.flagLoadingImg.slice=me.User.slice;
@@ -1563,7 +1605,7 @@ var AtlasMakerWidget = {
 		].join("\n"));
 		me.canvas = me.container.find('canvas')[0];
 		me.context = me.canvas.getContext('2d');
-
+		
 		// Add div to display slice number
 		me.container.find("#resizable").append("<svg id='info'></svg>");
 		
@@ -1600,7 +1642,7 @@ var AtlasMakerWidget = {
 			$(document).keydown(function(e){me.keyDown(e)});
 
 			// configure annotation tools
-			me.slider($(".slider#slice"),me.changeSlice);
+			me.slider($(".slider#slice"),function(x){me.changeSlice(Math.round(x))});
 			me.chose($(".chose#plane"),me.changeView);
 			me.chose($(".chose#paintTool"),me.changeTool);
 			me.chose($(".chose#penSize"),me.changePenSize);
@@ -1619,7 +1661,7 @@ var AtlasMakerWidget = {
 		})
 		.then(function from_initAtlasMaker() {
 			// Init web socket connection
-			me.initSocketConnection();
+			return me.initSocketConnection();
 		}).then(function() {
 			def.resolve()
 		});
@@ -1630,6 +1672,8 @@ var AtlasMakerWidget = {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(configureAtlasMaker);if(l)console.log(l);
 		
+		$("#loadingIndicator").show();
+				
 		// Load segmentation labels
 		return $.getJSON(info.mri.atlas[index].labels,function from_configureAtlasMaker(d){me.configureOntology(d);})
 		.then(function from_configureAtlasMaker() {
@@ -1648,6 +1692,7 @@ var AtlasMakerWidget = {
 					$(".chose#plane .a:contains('"+view+"')").addClass("pressed");
 				}
 
+				me.sendUserDataMessage();
 				me.sendUserDataMessage("sendAtlas");
 				def.resolve();
 			});
@@ -1680,11 +1725,18 @@ var AtlasMakerWidget = {
 		me.User.mri=info.mri.brain;
 		me.User.specimenName=me.name;
 		me.User.atlasFilename=info.mri.atlas[index].filename;
+		me.User.isMRILoaded=false;
 		
 		// TODO: it's silly to have to put vol dim twice...
 		// (first here, once again further down)
 		me.User.dim=info.dim;
 		me.User.pixdim=info.pixdim;
+
+		// compute space transformations
+		me.User.v2w=info.voxel2world;
+		me.User.wori=info.worldOrigin;
+		me.computeS2VTransformation();
+		me.testS2VTransformation();
 		
 		me.flagLoadingImg={loading:false};
 		
@@ -1696,9 +1748,141 @@ var AtlasMakerWidget = {
 			me.brain_pixdim=info.pixdim;
 		else
 			me.brain_pixdim=[1,1,1];
+		
 
 		return def.resolve().promise();
 	},
+	/*
+		{Linear algebra
+	*/
+	computeS2VTransformation: function computeS2VTransformation() {
+		var me=AtlasMakerWidget;
+		var l=me.traceLog(computeS2VTransformation);if(l)console.log(l);
+		
+		var v2w=me.User.v2w;
+		var wori=me.User.wori;
+		var wpixdim=me.subVecVec(me.mulMatVec(v2w,[1,1,1]),me.mulMatVec(v2w,[0,0,0]));
+		var wvmax=me.addVecVec(me.mulMatVec(v2w,me.User.dim),wori);
+		var wvmin=me.addVecVec(me.mulMatVec(v2w,[0,0,0]),wori);
+		var wmin=[Math.min(wvmin[0],wvmax[0]),Math.min(wvmin[1],wvmax[1]),Math.min(wvmin[2],wvmax[2])];
+		var wmax=[Math.max(wvmin[0],wvmax[0]),Math.max(wvmin[1],wvmax[1]),Math.max(wvmin[2],wvmax[2])];
+		var w2s=[[1/Math.abs(wpixdim[0]),0,0],[0,1/Math.abs(wpixdim[1]),0],[0,0,1/Math.abs(wpixdim[2])]];
+		var s2w=me.invMat(w2s);
+
+		console.log(["v2w",v2w, "wori",wori, "wpixdim",wpixdim, "wvmax",wvmax, "wvmin",wvmin, "wmin",wmin, "wmax",wmax, "w2s",w2s]);
+
+		me.User.s2v = {
+			sdim: [(wmax[0]-wmin[0])/Math.abs(wpixdim[0]),(wmax[1]-wmin[1])/Math.abs(wpixdim[1]),(wmax[2]-wmin[2])/Math.abs(wpixdim[2])],
+			s2w: s2w,
+			sori: [-wmin[0]/Math.abs(wpixdim[0]),-wmin[1]/Math.abs(wpixdim[1]),-wmin[2]/Math.abs(wpixdim[2])],
+			wpixdim: [Math.abs(wpixdim[0]),Math.abs(wpixdim[1]),Math.abs(wpixdim[2])],
+			w2v: me.invMat(v2w),
+			wori: wori
+		};
+	},
+	testS2VTransformation: function testS2VTransformation() {
+		var me=AtlasMakerWidget;
+		var l=me.traceLog(testS2VTransformation);if(l)console.log(l);
+		
+		/*
+			check the S2V transformation to see if it looks correct.
+			If it does not, reset it
+		*/
+		var mri=me.User; // this line is different from server
+		var doReset=false;
+	
+		console.log("Transformation TEST:");
+
+		console.log("  1. transformation volume");
+		var vv=mri.dim[0]*mri.dim[1]*mri.dim[2];
+		var vs=mri.s2v.sdim[0]*mri.s2v.sdim[1]*mri.s2v.sdim[2];
+		var diff=(vs-vv)/vv;
+		if(Math.abs(diff)>0.001) {
+			console.log("    ERROR: Difference is too large");
+			console.log("    original volume:",vv);
+			console.log("    rotated volume:",vs);
+			console.log("    % difference:",diff*100);
+			doReset=true;
+		} else {
+			console.log("    ok.");
+		}
+	
+		console.log("  2. transformation origin");
+		if(	mri.s2v.sori[0]<0||mri.s2v.sori[0]>mri.s2v.sdim[0] ||
+			mri.s2v.sori[1]<0||mri.s2v.sori[1]>mri.s2v.sdim[1] ||
+			mri.s2v.sori[2]<0||mri.s2v.sori[2]>mri.s2v.sdim[2]) {
+			console.log("    Origin point is outside the dimensions of the data");
+			doReset=true;
+		} else {
+			console.log("    ok.");
+		}
+
+		if(doReset) {
+			console.log("THE TRANSFORMATION WILL BE RESET");
+			mri.v2w=[[mri.pixdim[0],0,0],[0,-mri.pixdim[1],0],[0,0,-mri.pixdim[2]]];
+			mri.wori=[0,mri.dim[1],mri.dim[2]];
+
+			// re-compute the transformation from voxel space to screen space
+			me.computeS2VTransformation(); // this line is different from server
+			console.log(mri.dir);
+			console.log(mri.ori);
+			console.log(mri.s2v);
+		}
+	},
+
+	S2I: function S2I(s,mri) {
+		var me=AtlasMakerWidget;
+		var l=me.traceLog(S2I,3);if(l)console.log(l);
+		
+		var s2v=mri.s2v;
+		var i=null,w,s,v;
+		w=me.mulMatVec(s2v.s2w,me.subVecVec(s,s2v.sori)); // screen to world: w=s2w*(s-sori)
+		v=me.mulMatVec(s2v.w2v,me.subVecVec(w,mri.wori)); // world to voxel
+		v=[Math.round(v[0]),Math.round(v[1]),Math.round(v[2])]; // round to integer
+		if(v[0]>=0&&v[0]<mri.dim[0]&&v[0]>=0&&v[0]<mri.dim[0]&&v[0]>=0&&v[0]<mri.dim[0])
+			i= v[2]*mri.dim[1]*mri.dim[0]+ v[1]*mri.dim[0] +v[0];
+		return i;
+	},
+	mulMatVec: function mulMatVec(m,v) {
+		return [
+			m[0][0]*v[0]+m[0][1]*v[1]+m[0][2]*v[2],
+			m[1][0]*v[0]+m[1][1]*v[1]+m[1][2]*v[2],
+			m[2][0]*v[0]+m[2][1]*v[1]+m[2][2]*v[2]
+		];
+	},
+	invMat: function invMat(m) {
+		var det;
+		var w=[[],[],[]];
+
+		det=m[0][1]*m[1][2]*m[2][0] + m[0][2]*m[1][0]*m[2][1] + m[0][0]*m[1][1]*m[2][2] - m[0][2]*m[1][1]*m[2][0] - m[0][0]*m[1][2]*m[2][1] - m[0][1]*m[1][0]*m[2][2];
+	
+		w[0][0]=(m[1][1]*m[2][2] - m[1][2]*m[2][1])/det;
+		w[0][1]=(m[0][2]*m[2][1] - m[0][1]*m[2][2])/det;
+		w[0][2]=(m[0][1]*m[1][2] - m[0][2]*m[1][1])/det;
+	
+		w[1][0]=(m[1][2]*m[2][0] - m[1][0]*m[2][2])/det;
+		w[1][1]=(m[0][0]*m[2][2] - m[0][2]*m[2][0])/det;
+		w[1][2]=(m[0][2]*m[1][0] - m[0][0]*m[1][2])/det;
+	
+		w[2][0]=(m[1][0]*m[2][1] - m[1][1]*m[2][0])/det;
+		w[2][1]=(m[0][1]*m[2][0] - m[0][0]*m[2][1])/det;
+		w[2][2]=(m[0][0]*m[1][1] - m[0][1]*m[1][0])/det;
+	
+		return w;
+	},
+	subVecVec: function subVecVec(a,b) {
+		return [a[0]-b[0],a[1]-b[1],a[2]-b[2]];
+	},
+	addVecVec: function addVecVec(a,b) {
+		return [a[0]+b[0],a[1]+b[1],a[2]+b[2]];
+	},
+	/*
+		Linear Algebra}
+	*/
+	
+	/*
+		{GUI Widgets
+	*/
 	slider: function slider(elem,callback) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(slider,2);if(l)console.log(l);
@@ -1711,20 +1895,20 @@ var AtlasMakerWidget = {
 			max:100
 		});
 		
-		var movex=function(clientX) {
-			if ($(elem).data("drag")==true) {
-				var R=$("#slice .track")[0].getBoundingClientRect();
+		var movex=function(el,clientX) {
+			if ($(el).data("drag")==true) {
+				var R=$(el).find(".track")[0].getBoundingClientRect();
 				var x=(clientX-R.left)/R.width;
 				if(x<0) x=0;
 				if(x>1) x=1;
-				x=Math.round(x*$("#slice").data("max"));
-				if(x!=$("#slice").data("val")) {
-					me.changeSlice(x);
+				x=x*$(el).data("max");
+				if(x!=$(el).data("val")) {
+					callback(x);
 				}
 			}
 		};
-		$(document).on("mousemove",function from_slider(ev){movex(ev.clientX);});
-		$(document).on("touchmove",function from_slider(ev){movex(ev.originalEvent.changedTouches[0].pageX);});		
+		$(document).on("mousemove",function from_slider(ev){movex(elem,ev.clientX);});
+		$(document).on("touchmove",function from_slider(ev){movex(elem,ev.originalEvent.changedTouches[0].pageX);});		
 		$(document).on("mouseup touchend",function from_slider(){$(elem).data({drag:false})});
 		$(elem).on('mousedown touchstart',function from_slider(){$(elem).data({drag:true})});
 	},
@@ -1733,6 +1917,10 @@ var AtlasMakerWidget = {
 		var ch=$(elem).find(".a");
 		ch.each(function(c,d){
 			$(d).click(function(){
+				if($(this).hasClass("pressed")) {
+					callback($(this).attr('title'));
+					return;
+				}
 				ch.each(function(){$(this).removeClass("pressed")});
 				$(this).addClass("pressed");
 				if(callback)
@@ -1755,6 +1943,9 @@ var AtlasMakerWidget = {
 				callback();
 		});
 	}
+	/*
+		GUI Widgets}
+	*/
 };
 /*
 				 0		int   sizeof_hdr;    //!< MUST be 348           //  // int sizeof_hdr;      //

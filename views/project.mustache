@@ -16,6 +16,9 @@
 		border:thin solid #555;
 		padding: 5px;
 	}
+	#right {
+	    background-color: black;
+	}
 	</style>
 
 </head>
@@ -51,7 +54,7 @@
 			
 				<div style="display:flex;flex-direction:column;height:100%">
 					<!-- Tools -->
-					<div id="tools" class="block" style="flex:1 1 auto">
+					<div id="tools" class="block" style="flex:1 0 auto">
 					</div>
 				
 					<!-- Project Files -->
@@ -88,14 +91,55 @@
 				</div>
 				
 			</div>
-			<div id="right" style="flex:1 0">
-				<div id="stereotaxic" style="width:100%"></div>
+			
+			<div id="right" style="flex:1 0;position:relative">
+				<div id="stereotaxic" style="width:100%">
+				</div>
+				
+				<style>
+				    @-webkit-keyframes loading {
+                        0% {left: 40%;}
+                        50% {left: 60%;}
+                        100% {left: 40%;}
+                    }
+                    #loadingIndicator {
+                        display:none;
+                        position:absolute;
+                        left:0;
+                        top:0;
+                        width:100%;
+                        height:100%;
+                        background:rgba(0,0,0,0.5);
+                    }
+                    #loadingIndicator .disc {
+                        position:absolute;
+                        left:50%;
+                        transform:translate( -50% , 0 );
+                        width:8px;
+                        height:8px;
+                        border-radius:8px;
+                        background:white;
+                        -webkit-animation-name: loading;
+                        -webkit-animation-duration: 1s;
+                        -webkit-animation-iteration-count: infinite;
+                        -webkit-animation-timing-function: ease-in-out;
+                        animation-name: loading;
+                        animation-duration: 1s;
+                        animation-iteration-count: infinite;
+                        animation-timing-function: ease-in-out;
+                    }
+				</style>
+				
+				<div id="loadingIndicator">
+				    <p>Loading...</p>
+				    <div class="disc"></div>
+				</div
 			</div>
 
 		</div>
 	</div>
 	<!-- NAAT logo down right corner -->
-	<div id="NAATlogo" style="margin-left:97%;margin-bottom:10px">
+	<div id="NAATlogo" class="project-page">
 		<a target="_blank" href="http://neuroanatomy.github.io">
 			<img src="/img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/>
 		</a>
@@ -139,10 +183,16 @@ var str;
 
 function loadProjectFile(url) {
 	var params={url:url,view:"cor",slice:180,fullscreen:false};
-	$.get("/api/mri",{url:url})
+	$.get("/mri/json",{url:url})
 	.done(function from_loadProjectFile(data) {
-		params.info=data;
-		BrainBox.configureBrainBox(params)
+	    if($.isEmptyObject(data) === false) {
+            params.info=data;
+            BrainBox.configureBrainBox(params)
+        } else {
+            var info=AtlasMakerWidget.container.find("#info");
+            info.html("<text x='5' y='15' fill='white'>ERROR: File is unreadable</text>");
+            console.log("ERROR: Cannot read data. The file is maybe corrupt?");
+        }
 	})
 	.then(function from_loadProjectFile() {
 		// binding prototype
@@ -164,17 +214,11 @@ function loadProjectFile(url) {
 				{	typeOfBinding:1,
 					path:"mri.atlas.#.labels",
 					format: function(e,d){$(e).find("select").prop('selectedIndex',$.map(BrainBox.labelSets,function(o){return o.source}).indexOf(d))},
-					/*
-						-----------------------------------------------------------
-						NOTE: this is a temporary fix, the final version should be:
-						-----------------------------------------------------------
-						format: function(e,d){$(e).find("select").prop('selectedIndex',$.map(BrainBox.labelSets,function(o){return o.source}).indexOf(d))},
-					*/
 					parse: function(e){var name=$(e).find("select").val(),i=$.map(BrainBox.labelSets,function(o){return o.name}).indexOf(name);return BrainBox.labelSets[i].source}
 				},
 				{	typeOfBinding:1,
 					path:"mri.atlas.#.owner",
-					format: function(e,d){$.get("/api/user/"+d.split("/").pop()+"?var=nickname",function(r){$(e).text(r);$(e).attr('href',d)})}
+					format: function(e,d){$.get("/user/json/"+d.split("/").pop()+"?var=nickname",function(r){$(e).text(r);$(e).attr('href',d)})}
 				}
 			]
 		};
@@ -198,9 +242,8 @@ MyLoginWidget.init($("#MyLogin"));
 	This variable contains project metadata
 	and is filled by the server, from the database.
 */
-var projectInfo='{{{projectInfo}}}';
+var projectInfo={{{projectInfo}}};
 
-projectInfo=JSON.parse(projectInfo);
 $("#projectName").text(projectInfo.name);
 $("#projectOwner").html("<a href='"+projectInfo.owner+"'>"+projectInfo.owner+"</a>");
 var creation=new Date(projectInfo.created);
@@ -231,24 +274,21 @@ $("#collaborators").append(str);
 */
 str=[];
 for(var i=0;i<projectInfo.files.length;i++) {
-	var name=projectInfo.files[i].split("/").pop();
+	var filename=projectInfo.files[i].source.split("/").pop();
 	str+=[	"<tr>",
 			"	<td contentEditable=true class='noEmpty'></td>",
-			"	<td><a href='"+location.origin+"/mri?url="+projectInfo.files[i]+"'>"+name+"</a></td>",
+			"	<td><a href='"+location.origin+"/mri?url="+projectInfo.files[i].source+"'>"+filename+"</a></td>",
 			"	<td contentEditable=true class='noEmpty'></td>",
 			"	<td contentEditable=true class='noEmpty'></td>",
 			"</tr>"].join("");
 }
 $("#projectFiles tbody").append(str);
 for(var i=0;i<projectInfo.files.length;i++) {
-	(function(irow) {
-		$.get("/api/mri",{url:projectInfo.files[i],"var":"name"})
-		.done(function(name){$("#projectFiles tbody tr:eq("+irow+") td:eq(0)").text(name)});
-	})(i);
+	$("#projectFiles tbody tr:eq("+i+") td:eq(0)").text(projectInfo.files[i].name);
 }
 
 // select first file by default (should come from localStorage)
-var url=projectInfo.files[0];	
+var url=projectInfo.files[0].source;	
 $("#projectFiles tbody tr:eq(0)").addClass("selected");
 
 BrainBox.initBrainBox()
@@ -275,7 +315,7 @@ $(document).on('click', "#projectFiles tbody tr",function() {
 		$(this).addClass("selected");
 		
 		// new url
-		url=projectInfo.files[index];
+		url=projectInfo.files[index].source;
 		
 		// remove table with previous annotations
 		$("table#info tbody").html("");
@@ -306,7 +346,7 @@ $(document).on('keydown', function(e){
 	$(table).find("tr:eq("+index+")").addClass("selected");
 	
 	// new url
-	url=projectInfo.files[index];
+	url=projectInfo.files[index].source;
 	
 	// remove table with previous annotations
 	$("table#info tbody").html("");

@@ -67,12 +67,11 @@ var BrainBox={
 
 					// Configure MRI into atlasMaker
 					//data=JSON.parse(data);
-					if(data.success==false) {
+					if(data.success===false) {
 						date=new Date();
 						$("#msgLog").append("<p>ERROR: "+data.message+".");
 						console.log("<p>ERROR: "+data.message+".");
-						def.reject();
-						return;
+						return def.promise().reject();
 					}
 					BrainBox.info=data;
 			
@@ -141,8 +140,8 @@ var BrainBox={
 			stored={version:BrainBox.version,history:[]};
 		stored.history.push({	
 			url:BrainBox.info.source,
-			view:AtlasMakerWidget.User.view.toLowerCase(),
-			slice:AtlasMakerWidget.User.slice,
+			view:AtlasMakerWidget.User.view?AtlasMakerWidget.User.view.toLowerCase():"sag",
+			slice:AtlasMakerWidget.User.slice?AtlasMakerWidget.User.slice:0,
 			lastVisited:(new Date()).toJSON()
 		});			
 		localStorage.AtlasMaker=JSON.stringify(stored);
@@ -200,14 +199,14 @@ var BrainBox={
 		var date=new Date();
 		// add data to annotations array
 		BrainBox.info.mri.atlas.push({
-			name:"Untitled",
-			project:"Untitled",
+			name:"",
+			project:"",
 			access: "Read/Write", 
 			created: date.toJSON(), 
 			modified: date.toJSON(), 
 			filename: Math.random().toString(36).slice(2)+".nii.gz",	// automatically generated filename
 			labels: "/labels/foreground.json",
-			owner: "/user/"+AtlasMakerWidget.User.username,
+			owner: AtlasMakerWidget.User.username,
 			type: "volume"
 		});
 	
