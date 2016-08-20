@@ -14,7 +14,6 @@ var keypress = require('keypress');
 var dateFormat = require('dateformat');
 var async = require('async');
 var Struct = require('struct');
-var niijs = require('nifti-js');
 var child_process = require('child_process');
 
 var mongo = require('mongodb');
@@ -31,6 +30,64 @@ var	US = [];
 var	uidcounter = 1;
 var enterCommands = false;
 var UndoStack = [];
+
+var NiiHdr = new Struct()
+    .word32Sle('sizeof_hdr')        // Size of the header. Must be 348 (bytes)
+    .chars('data_type',10)          // Not used; compatibility with analyze.
+    .chars('db_name',18)            // Not used; compatibility with analyze.
+    .word32Sle('extents')           // Not used; compatibility with analyze.
+    .word16Sle('session_error')     // Not used; compatibility with analyze.
+    .word8('regular')               // Not used; compatibility with analyze.
+    .word8('dim_info')              // Encoding directions (phase, frequency, slice).
+    .array('dim',8,'word16Sle')     // Data array dimensions.
+    .floatle('intent_p1')           // 1st intent parameter.
+    .floatle('intent_p2')           // 2nd intent parameter.
+    .floatle('intent_p3')           // 3rd intent parameter.
+    .word16Sle('intent_code')       // nifti intent.
+    .word16Sle('datatype')	        // Data type.
+    .word16Sle('bitpix')	        // Number of bits per voxel.
+    .word16Sle('slice_start')	    // First slice index.
+    .array('pixdim',8,'floatle')    // Grid spacings (unit per dimension).
+    .floatle('vox_offset')	        // Offset into a .nii file.
+    .floatle('scl_slope')	        // Data scaling, slope.
+    .floatle('scl_inter')	        // Data scaling, offset.
+    .word16Sle('slice_end')	        // Last slice index.
+    .word8('slice_code')	        // Slice timing order.
+    .word8('xyzt_units')	        // Units of pixdim[1..4].
+    .floatle('cal_max')	            // Maximum display intensity.
+    .floatle('cal_min')	            // Minimum display intensity.
+    .floatle('slice_duration')	    // Time for one slice.
+    .floatle('toffset')	            // Time axis shift.
+    .word32Sle('glmax')	            // Not used; compatibility with analyze.
+    .word32Sle('glmin')	            // Not used; compatibility with analyze.
+    .chars('descrip',80)	        // Any text.
+    .chars('aux_file',24)	        // Auxiliary filename.
+    .word16Sle('qform_code')	    // Use the quaternion fields.
+    .word16Sle('sform_code')	    // Use of the affine fields.
+    .floatle('quatern_b')	        // Quaternion b parameter.
+    .floatle('quatern_c')	        // Quaternion c parameter.
+    .floatle('quatern_d')	        // Quaternion d parameter.
+    .floatle('qoffset_x')	        // Quaternion x shift.
+    .floatle('qoffset_y')	        // Quaternion y shift.
+    .floatle('qoffset_z')	        // Quaternion z shift.
+    .array('srow_x',4,'floatle')    // 1st row affine transform
+    .array('srow_y',4,'floatle')    // 2nd row affine transform.
+    .array('srow_z',4,'floatle')    // 3rd row affine transform.
+    .chars('intent_name',16)	    // Name or meaning of the data.
+    .chars('magic',4);	            // Magic string.
+var MghHdr = Struct()
+    .word32Sbe('v')
+    .word32Sbe('ndim1')
+    .word32Sbe('ndim2')
+    .word32Sbe('ndim3')
+    .word32Sbe('nframes')
+    .word32Sbe('type')
+    .word32Sbe('dof')
+    .word16Sbe('ras_good_flag')
+    .array('delta',3,'floatbe')
+    .array('Mdc',9,'floatbe')
+    .array('Pxyz_c',3,'floatbe');
+
 
 console.log("atlasMakerServer.js");
 console.log(new Date());
@@ -865,7 +922,7 @@ var readNifti = function readNifti(path) {
         input: path to a .nii.gz file
         output: an mri structure
     */
-	
+
 	var pr = new Promise(function (resolve, reject) {
         try {
             var niigz=fs.readFileSync(path);
@@ -874,17 +931,25 @@ var readNifti = function readNifti(path) {
 
                 // standard nii header
                 try {
-                    var niiHdr=niijs.parseNIfTIHeader(nii);
-                    var	sizeof_hdr=niiHdr.sizeof_hdr;
-                    mri.dim=niiHdr.dim.slice(1);
-                    mri.pixdim=niiHdr.pixdim.slice(1);
-                    mri.vox_offset=niiHdr.vox_offset;
+                    NiiHdr.allocate();
+                    NiiHdr._setBuff(nii);
+                    var h=JSON.parse(JSON.stringify(NiiHdr.fields));
+                    
+                    console.log(h);
+
+                    var	sizeof_hdr=h.sizeof_hdr;
+                    mri.dim=[h.dim[1],h.dim[2],h.dim[3]];
+                    mri.pixdim=[h.pixdim[1],h.pixdim[2],h.pixdim[3]];
+                    mri.vox_offset=h.vox_offset;
 
                     // nrrd-compatible header, computes space directions and space origin
-                    if(niiHdr.qform_code>0) {
-                        var nrrdHdr=niijs.parseHeader(nii);
-                        mri.dir=nrrdHdr.spaceDirections;
-                        mri.ori=nrrdHdr.spaceOrigin;
+                    if(h.sform_code>0) {
+                        mri.dir = [
+                            [h.srow_x[0], h.srow_x[1], h.srow_x[2]],
+                            [h.srow_y[0], h.srow_y[1], h.srow_y[2]],
+                            [h.srow_z[0], h.srow_z[1], h.srow_z[2]]
+                        ];
+                        mri.ori = [h.srow_x[3], h.srow_y[3], h.srow_z[3]];
                     } else {
                         mri.dir=[[mri.pixdim[0],0,0],[0,mri.pixdim[1],0],[0,0,mri.pixdim[2]]];
                         mri.ori=[0,0,0];
@@ -976,21 +1041,9 @@ var readMGZ = function readMGZ(path) {
                 var i, j, tmp, sum, mri = {};
                 var sz;
                 var hdr_sz=284;
-                var mghHdr = Struct()
-                    .word32Sbe('v')
-                    .word32Sbe('ndim1')
-                    .word32Sbe('ndim2')
-                    .word32Sbe('ndim3')
-                    .word32Sbe('nframes')
-                    .word32Sbe('type')
-                    .word32Sbe('dof')
-                    .word16Sbe('ras_good_flag')
-                    .array('delta',3,'floatbe')
-                    .array('Mdc',9,'floatbe')
-                    .array('Pxyz_c',3,'floatbe');
-                mghHdr.allocate();
-                mghHdr._setBuff(mgh);
-                var h=JSON.parse(JSON.stringify(mghHdr.fields));
+                MghHdr.allocate();
+                MghHdr._setBuff(mgh);
+                var h=JSON.parse(JSON.stringify(MghHdr.fields));
     
                 // Equations from freesurfer/matlab/load_mgh.m
                 var Pcrs_c = [h.ndim1/2,h.ndim2/2,h.ndim3/2];
@@ -1086,10 +1139,59 @@ var createNifti = function createNifti(templateMRI) {
         props = ["dim", "pixdim", "hdr"],
         datatype = 2,
         vox_offset = 352,
-        sz,
-        i;
-
-    // clone templateMRI
+        sz,i, niihdr;
+    var newHdr =     {
+            sizeof_hdr: 348,
+            data_type: '',
+            db_name: '',
+            extents: 0,
+            session_error: 0,
+            regular: 0,
+            dim_info: 0,
+            dim: [3, templateMRI.dim[0], templateMRI.dim[1], templateMRI.dim[2], 1, 1, 1, 1],
+            intent_p1: 0,
+            intent_p2: 0,
+            intent_p3: 0,
+            intent_code: 0,
+            datatype: 2,    // uchar
+            bitpix: 8,
+            slice_start: 0,
+            pixdim: [-1, templateMRI.pixdim[0], templateMRI.pixdim[1], templateMRI.pixdim[2], 0, 1, 1, 1],
+            vox_offset: 352,
+            scl_slope: 0,
+            scl_inter: 0,
+            slice_end: 0,
+            slice_code: 0,
+            xyzt_units: 10,
+            cal_max: 0,
+            cal_min: 0,
+            slice_duration: 0,
+            toffset: 0,
+            glmax: 0,
+            glmin: 0,
+            descrip: 'BrainBox, 20 August 2016',
+            aux_file: '',
+            qform_code: 0,
+            sform_code: 1,
+            quatern_b: 0,
+            quatern_c: 0,
+            quatern_d: 0,
+            qoffset_x: 0,
+            qoffset_y: 0,
+            qoffset_z: 0,
+            srow_x: [templateMRI.dir[0][0], templateMRI.dir[0][1], templateMRI.dir[0][2], templateMRI.ori[0]],
+            srow_y: [templateMRI.dir[1][0], templateMRI.dir[1][1], templateMRI.dir[1][2], templateMRI.ori[1]],
+            srow_z: [templateMRI.dir[2][0], templateMRI.dir[2][1], templateMRI.dir[2][2], templateMRI.ori[2]],
+            intent_name: '',
+            magic: 'n+1'
+        };
+        
+    NiiHdr.allocate();
+    niihdr = NiiHdr.buffer();
+    for(i in newHdr)
+        NiiHdr.fields[i] = newHdr[i];
+        
+    // copy information from templateMRI
     for( i in props)
         mri[props[i]] = templateMRI[props[i]];
     
@@ -1097,7 +1199,7 @@ var createNifti = function createNifti(templateMRI) {
     sz = mri.dim[0]*mri.dim[1]*mri.dim[2];
 
     // update the header
-    mri.hdr = new Buffer(templateMRI.hdr);
+    mri.hdr = niihdr;
     mri.hdr.writeUInt16LE(datatype,70,2);	// set datatype to 2:unsigned char (8 bits/voxel)
     mri.hdr.writeFloatLE(vox_offset,108,4);	// set voxel_offset to 352 (minimum size of a nii header)
     
