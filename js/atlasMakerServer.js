@@ -15,6 +15,7 @@ var dateFormat = require('dateformat');
 var async = require('async');
 var Struct = require('struct');
 var niijs = require('nifti-js');
+var child_process = require('child_process');
 
 var mongo = require('mongodb');
 var monk = require('monk');
@@ -970,13 +971,8 @@ var readMGZ = function readMGZ(path) {
 
 	var pr = new Promise(function (resolve, reject) {
         try {
-            var mgz=fs.readFileSync(path);
-            zlib.gunzip(mgz, function (err, mgh) {
-                if(err) {
-                    reject(err);
-                    return;
-                }
-
+            child_process.execFile("gunzip", ["-c",path], {encoding: 'binary', maxBuffer: 200*1024*1024}, function(err, stdout) {
+                var mgh = new Buffer(stdout, 'binary');
                 var i, j, tmp, sum, mri = {};
                 var sz;
                 var hdr_sz=284;
@@ -1014,9 +1010,15 @@ var readMGZ = function readMGZ(path) {
 
                 mri.dim=[h.ndim1,h.ndim2,h.ndim3];
                 mri.pixdim=[h.delta[0],h.delta[1],h.delta[2]];
-                mri.dir=[[M[0],M[1],M[2]],[M[4],M[5],M[6]],[M[8],M[9],M[10]]];
+                mri.dir=[[M[0],M[4],M[8]],[M[1],M[5],M[9]],[M[2],M[6],M[10]]];
                 mri.ori=[M[3],M[7],M[11]];
-                
+ 
+                 // compute the transformation from voxel space to screen space
+                computeS2VTransformation(mri);
+
+                // test if the transformation looks incorrect. Reset it if it does
+                testS2VTransformation(mri);
+               
                 sz = mri.dim[0]*mri.dim[1]*mri.dim[2];
 
                 switch(h.type) {
