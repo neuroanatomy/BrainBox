@@ -215,7 +215,7 @@ var AtlasMakerWidget = {
 	
 			// configure display mode
 			//    $("#atlasMaker").removeClass('display-mode');
-			$("#atlasMaker").addClass('fullscreen-mode');
+			$("body").addClass('fullscreen-mode');
 			$("#atlasMaker").detach().appendTo('body');
 			
 			//    me.editMode=1;
@@ -233,7 +233,7 @@ var AtlasMakerWidget = {
 			$("#blackOverlay").remove();
 	
 			// go back to display mode
-			$("#atlasMaker").removeClass('fullscreen-mode');
+			$("body").removeClass('fullscreen-mode');
 			//    $("#atlasMaker").addClass('display-mode');
 			$("#atlasMaker").detach().appendTo('#stereotaxic');
 			//    me.editMode=0;
@@ -1761,6 +1761,10 @@ var AtlasMakerWidget = {
 		
 		var v2w=me.User.v2w;
 		var wori=me.User.wori;
+		if(v2w == undefined ) {
+		    console.log("v2w undefined");
+		    return;
+		}
 		var wpixdim=me.subVecVec(me.mulMatVec(v2w,[1,1,1]),me.mulMatVec(v2w,[0,0,0]));
 		var wvmax=me.addVecVec(me.mulMatVec(v2w,me.User.dim),wori);
 		var wvmin=me.addVecVec(me.mulMatVec(v2w,[0,0,0]),wori);
