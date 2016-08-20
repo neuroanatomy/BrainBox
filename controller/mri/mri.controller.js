@@ -41,7 +41,7 @@ function downloadMRI(myurl, req, res, callback) {
         fs.mkdirSync(req.dirname + "/public/data/" + hash, '0777');
     }
 
-    request({uri: myurl})
+    request({uri: myurl, followAllRedirects: true})
         .pipe(fs.createWriteStream(dest))
         .on('close', function request_fromDownloadMRI() {
             // NOTE: getBrainAtPath has to be called with a client-side path like "/data/[md5hash/..."
