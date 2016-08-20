@@ -81,7 +81,7 @@ function SurfaceNets(data, dims, pixdims, level)
 			for(var j=0; j<2; ++j, idx += dims[0]-2)      
 			for(var i=0; i<2; ++i, ++g, ++idx)
 			{
-				var p = data[idx]-level;
+				var p = data[idx] - level; // to select a single value: (Math.abs(data[idx]-level)<0.5)?1.0:-1.0;
 				grid[g] = p;
 				mask |= (p < 0) ? (1<<g) : 0;
 			}
