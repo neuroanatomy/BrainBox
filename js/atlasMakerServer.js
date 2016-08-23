@@ -935,8 +935,6 @@ var readNifti = function readNifti(path) {
                     NiiHdr._setBuff(nii);
                     var h=JSON.parse(JSON.stringify(NiiHdr.fields));
                     
-                    console.log(h);
-
                     var	sizeof_hdr=h.sizeof_hdr;
                     mri.dim=[h.dim[1],h.dim[2],h.dim[3]];
                     mri.pixdim=[h.pixdim[1],h.pixdim[2],h.pixdim[3]];
@@ -945,9 +943,9 @@ var readNifti = function readNifti(path) {
                     // nrrd-compatible header, computes space directions and space origin
                     if(h.sform_code>0) {
                         mri.dir = [
-                            [h.srow_x[0], h.srow_x[1], h.srow_x[2]],
-                            [h.srow_y[0], h.srow_y[1], h.srow_y[2]],
-                            [h.srow_z[0], h.srow_z[1], h.srow_z[2]]
+                            [h.srow_x[0], h.srow_y[0], h.srow_z[0]],
+                            [h.srow_x[1], h.srow_y[1], h.srow_z[1]],
+                            [h.srow_x[2], h.srow_y[2], h.srow_z[2]]
                         ];
                         mri.ori = [h.srow_x[3], h.srow_y[3], h.srow_z[3]];
                     } else {
@@ -959,7 +957,7 @@ var readNifti = function readNifti(path) {
                     reject("ERROR Cannot read nifti header: " + err);
                     return;
                 }
-
+                
                 // compute the transformation from voxel space to screen space
                 computeS2VTransformation(mri);
 
@@ -1012,9 +1010,6 @@ var readNifti = function readNifti(path) {
                 mri.min=min;
                 mri.max=max;
 
-                console.log("----> result from readNifti");
-                console.log(mri);
-
                 resolve(mri);
             });
         } catch(e) {
@@ -1065,7 +1060,7 @@ var readMGZ = function readMGZ(path) {
                 mri.pixdim=[h.delta[0],h.delta[1],h.delta[2]];
                 mri.dir=[[M[0],M[4],M[8]],[M[1],M[5],M[9]],[M[2],M[6],M[10]]];
                 mri.ori=[M[3],M[7],M[11]];
- 
+                
                  // compute the transformation from voxel space to screen space
                 computeS2VTransformation(mri);
 
@@ -1112,9 +1107,6 @@ var readMGZ = function readMGZ(path) {
                 mri.sum=sum;
                 mri.min=min;
                 mri.max=max;
-                
-                console.log("----> result from readMGZ");
-                console.log(mri);
                 
                 resolve(mri);
             });
