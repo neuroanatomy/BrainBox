@@ -208,6 +208,9 @@ var AtlasMakerWidget = {
 			me.push($(".push#undo"),me.sendUndoMessage);
 			me.push($(".push#prev"),me.prevSlice);
 			me.push($(".push#next"),me.nextSlice);
+			
+			// connect chat message input
+			$("#msg").keypress(function keypress_fromInitAtlasMaker(e) {me.onkey(e)});
 		})
 		.then(function from_initAtlasMaker() {
 			// Init web socket connection

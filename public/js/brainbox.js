@@ -168,7 +168,7 @@ var BrainBox={
 		});			
 		localStorage.AtlasMaker=JSON.stringify(stored);
 	},
-		/*
+    /*
 		Annotation related functions
 	*/
 	selectAnnotationTableRow: function selectAnnotationTableRow() {

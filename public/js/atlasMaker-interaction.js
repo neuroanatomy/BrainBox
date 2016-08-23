@@ -644,7 +644,7 @@ var AtlasMakerInteraction = {
 	},
 	onkey: function onkey(e) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(onkey);if(l)console.log(l);
+		var l=me.traceLog(onkey,2);if(l)console.log(l);
 	
 		if (e.keyCode == 13) {
 			me.sendChatMessage();
