@@ -153,8 +153,7 @@
 	image-rendering:pixelated;                 /* CSS4 Proposed  */
 	-ms-interpolation-mode:nearest-neighbor;   /* IE8+           */
 }
-#atlasMaker #tools-side {
-	position:relative;
+#tools-side {
 	width:100%;
 }
 
