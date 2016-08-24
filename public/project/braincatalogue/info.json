@@ -1,67 +1,87 @@
 {
-	"name": "Brain Catalogue",
-	"shortname":"braincatalogue",
-	"url":"http://braincatalogue.org",
-	"brainboxURL":"http://brainbox.pasteur.fr/project/braincatalogue",
-	"created": "2016-07-11T16:03:47+0200",
-	"owner":"r03ert0",
-	"collaborators":[
-		"katjaq",
-		"aniv0s"
-	],
-	"files":[
-		"http://braincatalogue.org/data/Baboon/MRI.nii.gz",
-		"http://braincatalogue.org/data/Black_rhinoceros/MRI-n4.nii.gz",
-		"http://braincatalogue.org/data/Blackbuck/MRI-n4.nii.gz",
-		"http://braincatalogue.org/data/Bottlenose_dolphin/MRI-n4.nii.gz",
-		"http://braincatalogue.org/data/Cat/MRI-n4.nii.gz",
-		"http://braincatalogue.org/data/Cheetah/MRI.nii.gz",
-		"http://braincatalogue.org/data/Chimpanzee/MRI-n4.nii.gz",
-		"http://braincatalogue.org/data/Crab-eating_macaque/MRI.nii.gz",
-		"http://braincatalogue.org/data/Ferret/MRI-n4.nii.gz",
-		"http://braincatalogue.org/data/Giant_panda/MRI.nii.gz",
-		"http://braincatalogue.org/data/Giraffe/MRI.nii.gz",
-		"http://braincatalogue.org/data/Gorilla/MRI-n4.nii.gz",
-		"http://braincatalogue.org/data/Gray_wolf/MRI.nii.gz",
-		"http://braincatalogue.org/data/Grey-cheeked_mangabey/MRI.nii.gz",
-		"http://braincatalogue.org/data/House_mouse/Mouse.nii.gz",
-		"http://braincatalogue.org/data/Human/MRI-n4.nii.gz",
-		"http://braincatalogue.org/data/La_Plata_dolphin/MRI.nii.gz",
-		"http://braincatalogue.org/data/Leopard/MRI-n4.nii.gz",
-		"http://braincatalogue.org/data/Lion/MRI-n4.nii.gz",
-		"http://braincatalogue.org/data/Night_monkey/MRI.nii.gz",
-		"http://braincatalogue.org/data/Nile_crocodile/MRI.nii.gz",
-		"http://braincatalogue.org/data/Nursehound/MRI.nii.gz",
-		"http://braincatalogue.org/data/Okapi/MRI.nii.gz",
-		"http://braincatalogue.org/data/Orangutan/MRI-n4.nii.gz",
-		"http://braincatalogue.org/data/Ostrich/MRI.nii.gz",
-		"http://braincatalogue.org/data/Plains_zebra/MRI.nii.gz",
-		"http://braincatalogue.org/data/Platypus/MRI.nii.gz",
-		"http://braincatalogue.org/data/Red_kangaroo/MRI-n4.nii.gz",
-		"http://braincatalogue.org/data/Red_squirrel/MRI-n4.nii.gz",
-		"http://braincatalogue.org/data/Red-necked_wallaby/MRI-n4.nii.gz",
-		"http://braincatalogue.org/data/Rhesus_macaque/MRI.nii.gz",
-		"http://braincatalogue.org/data/Sloth_bear/MRI-n4.nii.gz",
-		"http://braincatalogue.org/data/Slow_loris/MRI-n4.nii.gz",
-		"http://braincatalogue.org/data/Thylacine/MRI.nii.gz",
-		"http://braincatalogue.org/data/White-headed_capuchin/MRI.nii.gz"
-	],
-	
-	"access":{
-		"files":{
-			"view":"public",
-			"add":"collaborators",
-			"edit":"collaborators",
-			"remove":"owner"
-		},
-		"collaborators": {
-			"view":"public",
-			"add":"owner",
-			"remove":"owner"
-		}
-	},
-	"tags":[
-		"comparative anatomy",
-		"non-human"
-	]
+    "name": "Brain Catalogue",
+    "shortname": "braincatalogue",
+    "url": "http://braincatalogue.org",
+    "brainboxURL": "http://brainbox.pasteur.fr/project/braincatalogue",
+    "created": "2016-07-11T16:03:47+0200",
+    "owner": "r03ert0",
+    "collaborators": {
+        "access": {
+            "owner": "r03ert0",
+            "public": "edit",
+            "whitelist": [
+                { "userId": "katjaq", "access": "add"},
+                { "userId": "aniv0s", "access": "add"}
+            ]
+        },
+        "list": [
+            "katjaq",
+            "aniv0s"
+        ]
+    },
+    "files": {
+        "access": {
+            "owner": "r03ert0",
+            "public": "edit",
+            "whitelist": [
+                { "userId": "katjaq", "access": "add"},
+                { "userId": "aniv0s", "access": "add"}
+            ]
+        },
+        "list": [
+            "http://braincatalogue.org/data/Baboon/MRI.nii.gz",
+            "http://braincatalogue.org/data/Black_rhinoceros/MRI-n4.nii.gz",
+            "http://braincatalogue.org/data/Blackbuck/MRI-n4.nii.gz",
+            "http://braincatalogue.org/data/Bottlenose_dolphin/MRI-n4.nii.gz",
+            "http://braincatalogue.org/data/Cat/MRI-n4.nii.gz",
+            "http://braincatalogue.org/data/Cheetah/MRI.nii.gz",
+            "http://braincatalogue.org/data/Chimpanzee/MRI-n4.nii.gz",
+            "http://braincatalogue.org/data/Crab-eating_macaque/MRI.nii.gz",
+            "http://braincatalogue.org/data/Ferret/MRI-n4.nii.gz",
+            "http://braincatalogue.org/data/Giant_panda/MRI.nii.gz",
+            "http://braincatalogue.org/data/Giraffe/MRI.nii.gz",
+            "http://braincatalogue.org/data/Gorilla/MRI-n4.nii.gz",
+            "http://braincatalogue.org/data/Gray_wolf/MRI.nii.gz",
+            "http://braincatalogue.org/data/Grey-cheeked_mangabey/MRI.nii.gz",
+            "http://braincatalogue.org/data/House_mouse/Mouse.nii.gz",
+            "http://braincatalogue.org/data/Human/MRI-n4.nii.gz",
+            "http://braincatalogue.org/data/La_Plata_dolphin/MRI.nii.gz",
+            "http://braincatalogue.org/data/Leopard/MRI-n4.nii.gz",
+            "http://braincatalogue.org/data/Lion/MRI-n4.nii.gz",
+            "http://braincatalogue.org/data/Night_monkey/MRI.nii.gz",
+            "http://braincatalogue.org/data/Nile_crocodile/MRI.nii.gz",
+            "http://braincatalogue.org/data/Nursehound/MRI.nii.gz",
+            "http://braincatalogue.org/data/Okapi/MRI.nii.gz",
+            "http://braincatalogue.org/data/Orangutan/MRI-n4.nii.gz",
+            "http://braincatalogue.org/data/Ostrich/MRI.nii.gz",
+            "http://braincatalogue.org/data/Plains_zebra/MRI.nii.gz",
+            "http://braincatalogue.org/data/Platypus/MRI.nii.gz",
+            "http://braincatalogue.org/data/Red_kangaroo/MRI-n4.nii.gz",
+            "http://braincatalogue.org/data/Red_squirrel/MRI-n4.nii.gz",
+            "http://braincatalogue.org/data/Red-necked_wallaby/MRI-n4.nii.gz",
+            "http://braincatalogue.org/data/Rhesus_macaque/MRI.nii.gz",
+            "http://braincatalogue.org/data/Sloth_bear/MRI-n4.nii.gz",
+            "http://braincatalogue.org/data/Slow_loris/MRI-n4.nii.gz",
+            "http://braincatalogue.org/data/Thylacine/MRI.nii.gz",
+            "http://braincatalogue.org/data/White-headed_capuchin/MRI.nii.gz"
+        ]
+    },
+    "annotations": {
+        "access": {
+            "owner": "r03ert0",
+            "public": "edit",
+            "whitelist": [
+                { "userId": "katjaq", "access": "add"},
+                { "userId": "aniv0s", "access": "add"}
+            ]
+        },
+        "list": [
+            { "name": "Cerebrum", "type": "volume", "labelSet": "/labels/foreground.json", "display": true },
+            { "name": "Hippocampus", "type": "volume", "labelSet": "/labels/foreground.json", "display": true },
+            { "name": "Striatum", "type": "volume", "labelSet": "/labels/foreground.json", "display": true},
+            { "name": "MRI quality", "type": "text", "values": ["Good", "Medium", "Bad"], "acceptFreeform": false, "display": true },
+            { "name": "Specimen quality", "type": "text", "values": ["Good", "Damaged", "Very damaged"], "acceptFreeform": false, "display": true },
+            { "name": "Comments", "type": "text", "acceptFreeform": true, "display": true }
+        ]
+    }
 }
