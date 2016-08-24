@@ -18,12 +18,96 @@ var validator = function(req, res, next) {
 	next();
 }
 
+var accessLevels=["none","view","edit","add","remove"];
+
+var checkAccessToMRI = function checkAccessToMRI(mri, projects, user, access) {
+    var p, requestedLevel = accessLevels.indexOf("access");
+    
+    user = user || "public";
+    
+    for(p in projects) {
+        if(projects[p].files.list.indexOf(mri.source)>=0) {
+            var publicLevel = accessLevels.indexOf(projects[p].files.access.public);
+            var c, collaborators;
+            
+            // check if user has owner access
+            if(user === projects[p].files.access.owner) {
+                continue;
+            }
+            
+            // check if user has collaborator access
+            var accessOk = false;
+            collaborators=projects[p].files.access.whitelist;
+            for(c in collaborators) {
+                if(c.userID === user) {
+                    var collaboratorAccessLevel = accessLevels.indexOf(c.access);
+                    if(requestedLevel>collaboratorAccessLevel) {
+                        console.log("Collaborator access refused from project",projects[p]);
+                        return false;
+                    } else {
+                        accessOk = true;
+                    }
+                    break;
+                }
+            }
+            if(accessOk) {
+                continue;
+            }
+
+            // check if user has public access
+            if(requestedLevel>publicLevel) {
+                console.log("Public access refused from project",projects[p]);
+                return false;
+            }
+        }
+    }
+    
+    return true;
+}
+var checkAccessToProject = function checkAccessToProject(project, user, access) {
+    var p, requestedLevel = accessLevels.indexOf("access");
+    
+    user = user || "public";
+    
+    console.log(project);
+    
+    var publicLevel = accessLevels.indexOf(project.files.access.public);
+    var c, collaborators;
+    
+    // check if user has owner access
+    if(user === project.files.access.owner) {
+        return true;
+    }
+    
+    // check if user has collaborator access
+    collaborators=project.files.access.whitelist;
+    for(c in collaborators) {
+        if(c.userID === user) {
+            var collaboratorAccessLevel = accessLevels.indexOf(c.access);
+            if(requestedLevel>collaboratorAccessLevel) {
+                console.log("Collaborator access refused to project",project);
+                return false;
+            } else {
+                return true;
+            }
+        }
+    }
+
+    // check if user has public access
+    if(requestedLevel>publicLevel) {
+        console.log("Public access refused to project",project);
+        return false;
+    }
+    
+    return true;
+}
+
 var user = function(req, res) {
     var login = (req.isAuthenticated()) ?
                 ("<a href='/user/" + req.user.username + "'>" + req.user.username + "</a> (<a href='/logout'>Log Out</a>)")
                 : ("<a href='/auth/github'>Log in with GitHub</a>");
     var requestedUser = req.params.userName;
-    var loggedUser = req.user.username;
+    var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
     req.db.get('user').findOne({nickname: requestedUser}, "-_id")
         .then(function (json) {
             if(json) {
@@ -33,10 +117,23 @@ var user = function(req, res) {
                     req.db.get('mri').find({"mri.atlas": {$elemMatch: {owner: requestedUser}}, backup: {$exists: false}}),
                     req.db.get('project').find({owner: requestedUser, backup: {$exists: false}})
                 ]).then(function(values) {
-                    var mri = values[0],
-                        atlas = values[1],
-                        projects = values[2];
-
+                    var i,
+                        unfilteredMRI = values[0],
+                        unfilteredAtlas = values[1],
+                        unfilteredProjects = values[2],
+                        mri = [], atlas = [], projects = [];
+                    
+                    // filter for view access
+                    for(i in unfilteredMRI)
+                        if(checkAccessToMRI(unfilteredMRI[i],projects,loggedUser,"view"))
+                            mri.push(unfilteredMRI[i]);
+                    for(i in unfilteredAtlas)
+                        if(checkAccessToMRI(unfilteredAtlas[i],projects,loggedUser,"view"))
+                            atlas.push(unfilteredAtlas[i]);
+                    for(i in unfilteredProjects)
+                        if(checkAccessToProject(unfilteredProjects[i],loggedUser,"view"))
+                            projects.push(unfilteredProjects[i]);
+                    
                     var context = {
                         username: json.name,
                         nickname: json.nickname,
