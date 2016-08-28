@@ -1419,13 +1419,13 @@ var paintxy = function paintxy(u, c, x, y, User, undoLayer) {
 			User.x0=coord.x;
 			User.y0=coord.y;
 			break;
-		case 'f': // Fill, painting
-			fill(coord.x,coord.y,coord.z,User.penValue,User,undoLayer);
+		case 'e': // Fill, erasing
+			fill(coord.x,coord.y,coord.z,0,User,undoLayer);
 			User.x0=coord.x;
 			User.y0=coord.y;
 			break;
-		case 'e': // Fill, erasing
-			fill(coord.x,coord.y,coord.z,0,User,undoLayer);
+		case 'f': // Fill, painting
+			fill(coord.x,coord.y,coord.z,User.penValue,User,undoLayer);
 			User.x0=coord.x;
 			User.y0=coord.y;
 			break;
@@ -1495,8 +1495,12 @@ var line = function line(x, y, val, User, undoLayer) {
 	var y2=y;
 	var	i;
 	
-	if(Math.pow(x1-x2,2)+Math.pow(y1-y2,2)>10*10)
-		console.log("WARNING: long line from",x1,y1,"to",x2,y2,User);
+	if(Math.pow(x1-x2,2)+Math.pow(y1-y2,2)>10*10) {
+		console.log("WARNING: long line from",x1,y1,"to",x2,y2);
+		console.log("User.uid:",User.uid);
+		displayUsers();
+		console.log("END WARNING");
+	}
 
     // Define differences and error check
     var dx = Math.abs(x2 - x1);
