@@ -1400,14 +1400,14 @@ var paintxy = function paintxy(u, c, x, y, User, undoLayer) {
 	}
 	
 	var coord={"x":x,"y":y,"z":User.slice};
+    if(User.x0<0) {
+        User.x0=coord.x;
+        User.y0=coord.y;
+    }
 		
 	switch(c) {
 		case 'me':
 		case 'mf':
-			if(User.x0<0) {
-				User.x0=coord.x;
-				User.y0=coord.y;
-			}
 			break;
 		case 'le': // Line, erasing
 			line(coord.x,coord.y,0,User,undoLayer);
@@ -1421,19 +1421,19 @@ var paintxy = function paintxy(u, c, x, y, User, undoLayer) {
 			break;
 		case 'e': // Fill, erasing
 			fill(coord.x,coord.y,coord.z,0,User,undoLayer);
-			User.x0=coord.x;
-			User.y0=coord.y;
+			User.x0=-1;
 			break;
 		case 'f': // Fill, painting
 			fill(coord.x,coord.y,coord.z,User.penValue,User,undoLayer);
-			User.x0=coord.x;
-			User.y0=coord.y;
+			User.x0=-1;
 			break;
 		case 'mu': // Mouse up (touch ended)
 			pushUndoLayer(User);
+			User.x0=-1;
 			break;
 		case 'u':
 			undo(User);
+			User.x0=-1;
 			break;
 	}
 };
