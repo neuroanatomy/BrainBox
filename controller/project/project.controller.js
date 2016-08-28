@@ -10,7 +10,6 @@ var validator = function(req, res, next) {
 	// .optional()
 	// .matches("localpath|filename|source|url|dim|pixdim");						//todo: decent regexp
 	var errors = req.validationErrors();
-	console.log(errors);
 	if (errors) {
 		res.send(errors).status(403).end();
 	} else {

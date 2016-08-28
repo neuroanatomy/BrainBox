@@ -186,6 +186,22 @@ process.stdin.on('keypress', function (ch, key) {
                 case 'u':
                     displayUsers();
                     break;
+                case '0':
+                    debug=0;
+                    console.log("debug level:",debug);
+                    break;
+                case '1':
+                    debug=1;
+                    console.log("debug level:",debug);
+                    break;
+                case '2':
+                    debug=2;
+                    console.log("debug level:",debug);
+                    break;
+                case '3':
+                    debug=3;
+                    console.log("debug level:",debug);
+                    break;
             }
         } else {    
             process.stdout.write(ch);
@@ -350,7 +366,7 @@ var initSocketConnection = function initSocketConnection() {
 
 				// integrate paint messages
 				switch(data.type) {
-					case "intro":
+					case "userData":
 						receiveUserDataMessage(data,this);
 						break;
 					case "paint":
@@ -389,7 +405,7 @@ var initSocketConnection = function initSocketConnection() {
 						continue;
 					}
 					
-					if( targetUS.User.iAtlas!==sourceUS.User.iAtlas && data.type!=="chat" && data.type!=="intro" ) {
+					if( targetUS.User.iAtlas!==sourceUS.User.iAtlas && data.type!=="chat" && data.type!=="userData" ) {
 						if(debug>1) console.log("    no broadcast to user "+targetUS.User.username+" [uid: "+targetUS.uid+"] of atlas "+targetUS.User.specimenName+"/"+targetUS.User.atlasFilename);
 						continue;
 					}
@@ -573,13 +589,13 @@ var sendSliceToUser = function sendSliceToUser(brain, view, slice, user_socket) 
 }
 
 var receiveUserDataMessage = function receiveUserDataMessage(data, user_socket) {
-    traceLog(receiveUserDataMessage);
-    
-    console.log("    data.description:", data.description);
+    traceLog(receiveUserDataMessage,1);
+    if(debug>1) console.log("    data.description:", data.description);
 	
 	var sourceUS=getUserFromUserId(data.uid);
-	var User=data.user;
-	var	i,
+
+    var User,
+        i,
 		atlasLoadedFlag,
 		firstConnectionFlag=false,
 		switchingAtlasFlag=false;
@@ -590,45 +606,53 @@ var receiveUserDataMessage = function receiveUserDataMessage(data, user_socket) 
 		firstConnectionFlag=true;
 	}
 	
-	User.uid=data.uid;
-
-	if(data.description==="sendAtlas") {
-		// 1. Check if the atlas the user is requesting has not been loaded
-		atlasLoadedFlag=false;
-		
-		// check whether user is switching atlas.
-		switchingAtlasFlag=false;
-		if(sourceUS.User) {
-			if((sourceUS.User.atlasFilename!==User.atlasFilename)||(sourceUS.User.dirname!==User.dirname)) {
-				switchingAtlasFlag=true;
-			}
-		}
-		
-		for(i in Atlases) {
-			if(Atlases[i].dirname===User.dirname && Atlases[i].name===User.atlasFilename) {
-				atlasLoadedFlag=true;
-				break;
-			}
-		}
-		User.iAtlas=atlasLoadedFlag?parseInt(i):Atlases.length;	// value i if it was found, or last available if it wasn't
-	
-		// 2. Send the atlas to the user (load it if required)
-		if(atlasLoadedFlag) {
-			if(firstConnectionFlag || switchingAtlasFlag) {
-				// send the new user our data
-				sendAtlasToUser(Atlases[i].data,user_socket,true);
-				sourceUS.User.isMRILoaded=true;
-			}
-		} else {
-			// The atlas requested has not been loaded before:
-			// Load the atlas s/he's requesting
-			addAtlas(User)
-			    .then(function(atlas) {
-                    sendAtlasToUser(atlas.data,user_socket,true);
+    if(data.description === "allUserData" ) {
+	    User=data.user;
+        User.uid=data.uid;
+    } else {
+	    User=sourceUS.User;
+        if(data.description==="sendAtlas") {
+            // 1. Check if the atlas the user is requesting has not been loaded
+            atlasLoadedFlag=false;
+        
+            // check whether user is switching atlas.
+            switchingAtlasFlag=false;
+            if(sourceUS.User) {
+                if((sourceUS.User.atlasFilename!==User.atlasFilename)||(sourceUS.User.dirname!==User.dirname)) {
+                    switchingAtlasFlag=true;
+                }
+            }
+        
+            for(i in Atlases) {
+                if(Atlases[i].dirname===User.dirname && Atlases[i].name===User.atlasFilename) {
+                    atlasLoadedFlag=true;
+                    break;
+                }
+            }
+            User.iAtlas=atlasLoadedFlag?parseInt(i):Atlases.length;	// value i if it was found, or last available if it wasn't
+    
+            // 2. Send the atlas to the user (load it if required)
+            if(atlasLoadedFlag) {
+                if(firstConnectionFlag || switchingAtlasFlag) {
+                    // send the new user our data
+                    sendAtlasToUser(Atlases[i].data,user_socket,true);
                     sourceUS.User.isMRILoaded=true;
-			    });
-		}
-	}
+                }
+            } else {
+                // The atlas requested has not been loaded before:
+                // Load the atlas s/he's requesting
+                addAtlas(User)
+                    .then(function(atlas) {
+                        sendAtlasToUser(atlas.data,user_socket,true);
+                        sourceUS.User.isMRILoaded=true;
+                    });
+            }
+        } else {
+            var changes = JSON.parse(data.description);
+            for(i in changes)
+                User[i]=changes[i];
+        }
+    }
 	
 	// 3. Update user data
 	// If the user didn't have a name (wasn't logged in), but now has one,
@@ -683,7 +707,7 @@ var sendPreviousUserDataMessage = function sendPreviousUserDataMessage(newUS) {
 	for(i in US) {
 		if(US[i].socket==newUS.socket)
 			continue;
-		var msg=JSON.stringify({type:"intro",user:US[i].User,uid:US[i].uid,description:"old user intro to new user"});
+		var msg=JSON.stringify({type:"userData",user:US[i].User,uid:US[i].uid,description:"allUserData"});
 		newUS.socket.send(msg);
 		n++;
 	}
@@ -1397,9 +1421,13 @@ var paintxy = function paintxy(u, c, x, y, User, undoLayer) {
 			break;
 		case 'f': // Fill, painting
 			fill(coord.x,coord.y,coord.z,User.penValue,User,undoLayer);
+			User.x0=coord.x;
+			User.y0=coord.y;
 			break;
 		case 'e': // Fill, erasing
 			fill(coord.x,coord.y,coord.z,0,User,undoLayer);
+			User.x0=coord.x;
+			User.y0=coord.y;
 			break;
 		case 'mu': // Mouse up (touch ended)
 			pushUndoLayer(User);
@@ -1506,8 +1534,10 @@ var fill = function fill(x, y, z, val, User, undoLayer) {
 	var	i;
 	var bval=vol[sliceXYZ2index(x,y,z,User)]; // background-value: value of the voxel where the click occurred
 
-	if(bval===val)	// nothing to do
+	if(bval===val) {	// nothing to do
+	    console.log("fill: nothing to do. Asked to fill with value",val,"and the existing value was",bval,"sampled at coordinates",x,y,z);
 		return;
+	}
 	
 	Q.push({"x":x,"y":y});
 	while(Q.length>0) {

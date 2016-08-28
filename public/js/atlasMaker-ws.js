@@ -65,73 +65,7 @@ var AtlasMakerWS = {
 
 		// Message: atlas data initialisation
 		if(msg.data instanceof Blob) {
-			if(me.debug>1) console.log("received binary blob",msg.data.size,"bytes long");
-			var fileReader = new FileReader();
-			fileReader.onload = function from_receiveSocketMessage() {
-				var data=new Uint8Array(this.result);
-				var sz=data.length;
-				var ext=String.fromCharCode(data[sz-8],data[sz-7],data[sz-6]);
-
-				if(me.debug>1) console.log("type: "+ext);
-				
-				switch(ext) {
-					case 'nii': {
-						var	inflate=new pako.Inflate();
-						inflate.push(data,true);
-						var atlas=new Object();
-						atlas.data=inflate.result;
-						atlas.name=me.atlasFilename;
-						atlas.dim=me.brain_dim;
-				
-						me.atlas=atlas;
-
-						me.configureBrainImage();
-						me.configureAtlasImage();
-						me.resizeWindow();
-
-						me.brain_img.img=null;
-						me.drawImages();
-						
-						// compute total segmented volume
-						var vol=me.computeSegmentedVolume();
-						me.info.volume=parseInt(vol)+" mm3";
-
-						// setup download link
-						var	link=me.container.find("span#download_atlas");
-						link.html("<a class='download' href='"+me.User.dirname+me.User.atlasFilename+"'><img src='/img/download.svg' style='vertical-align:middle'/></a>"+atlas.name);
-						break;
-					}
-					case 'jpg': {
-						var urlCreator = window.URL || window.webkitURL;
-						var imageUrl = urlCreator.createObjectURL(msg.data);
-						var img = new Image();
-						
-						me.isMRILoaded=true; // receiving a jpg is proof of a loaded MRI
-						
-						img.onload=function from_initSocketConnection(){
-							var flagFirstImage=(me.brain_img.img==null);
-							me.brain_img.img=img;
-							me.brain_img.view=me.flagLoadingImg.view;
-							me.brain_img.slice=me.flagLoadingImg.slice;
-
-							me.drawImages();
-																
-							me.flagLoadingImg.loading=false;
-
-							if(flagFirstImage || me.flagLoadingImg.view!=me.User.view ||me.flagLoadingImg.slice!=me.User.slice) {
-								me.sendRequestSliceMessage();
-							}
-							
-							// remove loading indicator
-							$("#loadingIndicator").hide();
-						}
-						img.src=imageUrl;
-						
-						break;
-					}
-				}
-			};
-			fileReader.readAsArrayBuffer(msg.data);
+		    me.receiveBinaryMessage(msg.data);
 			return;
 		}
 	
@@ -150,7 +84,7 @@ var AtlasMakerWS = {
 		*/
 	
 		switch(data.type) {
-			case "intro":
+			case "userData":
 				me.receiveUserDataMessage(data);
 				break;
 			case "volInfo":
@@ -179,12 +113,86 @@ var AtlasMakerWS = {
 
 		if(me.debug>1) console.log("message: "+description);
 		
-		var msg={"type":"intro","user":me.User,"description":description};
+		if(description === "allUserData")
+    		var msg={"type":"userData","user":me.User,"description":description};
+    	else
+    		var msg={"type":"userData","description":description};
 		try {
 			me.socket.send(JSON.stringify(msg));
 		} catch (ex) {
 			console.log("ERROR: Unable to sendUserDataMessage",ex);
 		}
+	},
+	receiveBinaryMessage: function receiveBinaryMessage(msgData) {
+		var me=AtlasMakerWidget;
+		var l=me.traceLog(receiveBinaryMessage,1);if(l)console.log(l);
+		
+        var fileReader = new FileReader();
+        fileReader.onload = function from_receiveSocketMessage() {
+            var data=new Uint8Array(this.result);
+            var sz=data.length;
+            var ext=String.fromCharCode(data[sz-8],data[sz-7],data[sz-6]);
+
+            if(me.debug>1) console.log("type: "+ext);
+            
+            switch(ext) {
+                case 'nii': {
+                    var	inflate=new pako.Inflate();
+                    inflate.push(data,true);
+                    var atlas=new Object();
+                    atlas.data=inflate.result;
+                    atlas.name=me.atlasFilename;
+                    atlas.dim=me.brain_dim;
+            
+                    me.atlas=atlas;
+
+                    me.configureBrainImage();
+                    me.configureAtlasImage();
+                    me.resizeWindow();
+
+                    me.brain_img.img=null;
+                    me.drawImages();
+                    
+                    // compute total segmented volume
+                    var vol=me.computeSegmentedVolume();
+                    me.info.volume=parseInt(vol)+" mm3";
+
+                    // setup download link
+                    var	link=me.container.find("span#download_atlas");
+                    link.html("<a class='download' href='"+me.User.dirname+me.User.atlasFilename+"'><img src='/img/download.svg' style='vertical-align:middle'/></a>"+atlas.name);
+                    break;
+                }
+                case 'jpg': {
+                    var urlCreator = window.URL || window.webkitURL;
+                    var imageUrl = urlCreator.createObjectURL(msgData);
+                    var img = new Image();
+                    
+                    me.isMRILoaded=true; // receiving a jpg is proof of a loaded MRI
+                    
+                    img.onload=function from_initSocketConnection(){
+                        var flagFirstImage=(me.brain_img.img==null);
+                        me.brain_img.img=img;
+                        me.brain_img.view=me.flagLoadingImg.view;
+                        me.brain_img.slice=me.flagLoadingImg.slice;
+
+                        me.drawImages();
+                                                            
+                        me.flagLoadingImg.loading=false;
+
+                        if(flagFirstImage || me.flagLoadingImg.view!=me.User.view ||me.flagLoadingImg.slice!=me.User.slice) {
+                            me.sendRequestSliceMessage();
+                        }
+                        
+                        // remove loading indicator
+                        $("#loadingIndicator").hide();
+                    }
+                    img.src=imageUrl;
+                    
+                    break;
+                }
+            }
+        };
+        fileReader.readAsArrayBuffer(msgData);
 	},
 	receiveUserDataMessage: function receiveUserDataMessage(data) {
 		var me=AtlasMakerWidget;
@@ -194,6 +202,7 @@ var AtlasMakerWS = {
 	
 		var u=data.uid;
 	
+		// First time the user is observed
 		if(me.Collab[u]===undefined) {
 			try {
 				//var	msg="<b>"+data.user.username+"</b> entered atlas "+data.user.specimenName+"/"+data.user.atlasFilename+"<br />"
@@ -204,7 +213,19 @@ var AtlasMakerWS = {
 				console.log(e);
 			}
 		}
-		me.Collab[u]=data.user;
+		
+		if(data.description === "allUserData")
+    		me.Collab[u]=data.user;
+    	else {
+    	    try {
+                var changes = JSON.parse(data.description);
+                var i;
+                for(i in changes)
+                    me.Collab[u][i] = changes[i];
+            } catch (e) {
+                console.log(e);
+            }
+    	}
 
 		var	v,nusers=1; for(v in me.Collab) nusers++;
 		$("#chat").text("Chat ("+nusers+" connected)");

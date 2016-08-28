@@ -228,7 +228,9 @@ var AtlasMakerWidget = {
 		$("#loadingIndicator").show();
 				
 		// Load segmentation labels
-		return $.getJSON(info.mri.atlas[index].labels,function from_configureAtlasMaker(d){me.configureOntology(d);})
+		return $.getJSON(info.mri.atlas[index].labels, function from_configureAtlasMaker(d) {
+		    me.configureOntology(d);
+		})
 		.then(function from_configureAtlasMaker() {
 			var def=$.Deferred();
 			me.configureMRI(info,index)
@@ -245,7 +247,7 @@ var AtlasMakerWidget = {
 					$(".chose#plane .a:contains('"+view+"')").addClass("pressed");
 				}
 
-				me.sendUserDataMessage();
+				me.sendUserDataMessage("allUserData");
 				me.sendUserDataMessage("sendAtlas");
 				def.resolve();
 			});
@@ -259,7 +261,6 @@ var AtlasMakerWidget = {
 		me.ontology=json
 		me.ontology.valueToIndex=[];
 		me.ontology.labels.forEach(function(o,i){me.ontology.valueToIndex[o.value]=i});
-		me.changePenColor(0);
 	},
 	configureMRI: function configureMRI(info,index) {
 		var me=AtlasMakerWidget;
@@ -292,6 +293,8 @@ var AtlasMakerWidget = {
 		me.testS2VTransformation();
 		
 		me.flagLoadingImg={loading:false};
+		
+		me.User.penValue=me.ontology.labels[0].value;
 		
 		me.brain_img.img=null;
 		
