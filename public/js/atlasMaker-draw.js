@@ -52,7 +52,7 @@ var AtlasMakerDraw = {
 		if(me.User.slice==null || me.User.slice>=me.brain_D)
 			me.User.slice=parseInt(me.brain_D/2);
 
-		me.sendUserDataMessage("configure brain image");
+		me.sendUserDataMessage(JSON.stringify({'view':me.User.view,'slice':me.User.slice}));
 		
 		// configure toolbar slider
 		$(".slider#slice").data({max:me.brain_D,val:me.User.slice});

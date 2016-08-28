@@ -269,6 +269,7 @@ if( $.isEmptyObject(mriInfo)) {
                     var url=info_proxy["mri.atlas."+index+".labels"];
                     $.getJSON(url,function(json) {
                         AtlasMakerWidget.configureOntology(json);
+                        AtlasMakerWidget.changePenColor(0);
                         AtlasMakerWidget.brain_img.img=null; // to force redraw with new colors
                         AtlasMakerWidget.drawImages();
                     });
