@@ -248,7 +248,7 @@ $("#projectName").text(projectInfo.name);
 $("#projectOwner").html("<a href='"+projectInfo.owner+"'>"+projectInfo.owner+"</a>");
 var creation=new Date(projectInfo.created);
 $("#projectCreated").text("Created on "+creation.toLocaleString());
-$("#projectFilesNumber").text(projectInfo.files.length+" Files");
+$("#projectFilesNumber").text(projectInfo.files.list.length+" Files");
 $("#projectCollaboratorsNumber").text(projectInfo.collaborators.length+" Collaborators");
 
 /*
@@ -273,22 +273,22 @@ $("#collaborators").append(str);
 	The list of all files included in the project
 */
 str=[];
-for(var i=0;i<projectInfo.files.length;i++) {
-	var filename=projectInfo.files[i].source.split("/").pop();
+for(var i=0;i<projectInfo.files.list.length;i++) {
+	var filename=projectInfo.files.list[i].source.split("/").pop();
 	str+=[	"<tr>",
 			"	<td contentEditable=true class='noEmpty'></td>",
-			"	<td><a href='"+location.origin+"/mri?url="+projectInfo.files[i].source+"'>"+filename+"</a></td>",
+			"	<td><a href='"+location.origin+"/mri?url="+projectInfo.files.list[i].source+"'>"+filename+"</a></td>",
 			"	<td contentEditable=true class='noEmpty'></td>",
 			"	<td contentEditable=true class='noEmpty'></td>",
 			"</tr>"].join("");
 }
 $("#projectFiles tbody").append(str);
-for(var i=0;i<projectInfo.files.length;i++) {
-	$("#projectFiles tbody tr:eq("+i+") td:eq(0)").text(projectInfo.files[i].name);
+for(var i=0;i<projectInfo.files.list.length;i++) {
+	$("#projectFiles tbody tr:eq("+i+") td:eq(0)").text(projectInfo.files.list[i].name);
 }
 
 // select first file by default (should come from localStorage)
-var url=projectInfo.files[0].source;	
+var url=projectInfo.files.list[0].source;	
 $("#projectFiles tbody tr:eq(0)").addClass("selected");
 
 BrainBox.initBrainBox()
@@ -315,7 +315,7 @@ $(document).on('click', "#projectFiles tbody tr",function() {
 		$(this).addClass("selected");
 		
 		// new url
-		url=projectInfo.files[index].source;
+		url=projectInfo.files.list[index].source;
 		
 		// remove table with previous annotations
 		$("table#info tbody").html("");
@@ -335,10 +335,10 @@ $(document).on('keydown', function(e){
 
 	switch(e.keyCode) {
 		case 38: // up
-			index=(index+projectInfo.files.length-1)%projectInfo.files.length;
+			index=(index+projectInfo.files.list.length-1)%projectInfo.files.list.length;
 			break;
 		case 40: // down
-			index=(index+1)%projectInfo.files.length;
+			index=(index+1)%projectInfo.files.list.length;
 			break;
 	}
 	console.log(">>  change selected file:",index);
@@ -346,7 +346,7 @@ $(document).on('keydown', function(e){
 	$(table).find("tr:eq("+index+")").addClass("selected");
 	
 	// new url
-	url=projectInfo.files[index].source;
+	url=projectInfo.files.list[index].source;
 	
 	// remove table with previous annotations
 	$("table#info tbody").html("");

@@ -25,17 +25,17 @@ var project = function(req, res) {
 	.then(function(json) {
 		if (json) {
 			async.each(
-				json.files,
+				json.files.list,
 				function(item,cb) {
 					req.db.get('mri').find({source:item,backup:{$exists:0}},{name:1,_id:0})
 					.then(function(obj) {
 						if(obj[0]) {
-							json.files[json.files.indexOf(item)]={
+							json.files.list[json.files.list.indexOf(item)]={
 								source: item,
 								name: obj[0].name
 							}
 						} else {
-							json.files[json.files.indexOf(item)]={
+							json.files.list[json.files.list.indexOf(item)]={
 								source: item,
 								name: ""
 							}
