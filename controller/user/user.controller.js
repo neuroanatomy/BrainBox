@@ -116,7 +116,7 @@ var user = function(req, res) {
                             {"collaborators.list": requestedUser}
                         ],
                         backup: {$exists: false}
-                    });
+                    })
                 ]).then(function(values) {
                     var i,
                         unfilteredMRI = values[0],
