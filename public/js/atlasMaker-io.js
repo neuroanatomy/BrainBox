@@ -7,7 +7,7 @@ var AtlasMakerIO = {
 		var	dimensions=4;			// number of dimension values provided
 		var	spacetimeunits=2+8;		// 2=nifti code for millimetres | 8=nifti code for seconds
 		var	datatype=2;				// datatype for 8 bits (DT_UCHAR8 in nifti or UCHAR in analyze)
-		var	voxel_offset=348;
+		var	voxel_offset=352;
 		var	hdr=new ArrayBuffer(sizeof_hdr);
 		var	dv=new DataView(hdr);
 		dv.setInt32(0,sizeof_hdr,true);
