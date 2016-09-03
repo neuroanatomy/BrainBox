@@ -23,8 +23,6 @@ var accessLevels=["none","view","edit","add","remove"];
 var checkAccessToMRI = function checkAccessToMRI(mri, projects, user, access) {
     var p, requestedLevel = accessLevels.indexOf(access);
     
-    user = user || "anonymous";
-        
     for(p in projects) {
         if(projects[p].files.list.indexOf(mri.source)>=0) {
             console.log(mri.source,user,access,projects[p].files.list.indexOf(mri.source));
@@ -67,8 +65,6 @@ var checkAccessToMRI = function checkAccessToMRI(mri, projects, user, access) {
 }
 var checkAccessToProject = function checkAccessToProject(project, user, access) {
     var p, requestedLevel = accessLevels.indexOf(access);
-    
-    user = user || "anonymous";
     
     var publicLevel = accessLevels.indexOf(project.files.access.public);
     var c, collaborators;
