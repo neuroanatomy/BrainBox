@@ -110,7 +110,13 @@ var user = function(req, res) {
                 Promise.all([
                     req.db.get('mri').find({owner: requestedUser, backup: {$exists: false}}),
                     req.db.get('mri').find({"mri.atlas": {$elemMatch: {owner: requestedUser}}, backup: {$exists: false}}),
-                    req.db.get('project').find({owner: requestedUser, backup: {$exists: false}})
+                    req.db.get('project').find({
+                        $or: [
+                            {owner: requestedUser},
+                            {"collaborators.list": requestedUser}
+                        ],
+                        backup: {$exists: false}
+                    });
                 ]).then(function(values) {
                     var i,
                         unfilteredMRI = values[0],
