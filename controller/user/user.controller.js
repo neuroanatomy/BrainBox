@@ -38,8 +38,8 @@ var checkAccessToMRI = function checkAccessToMRI(mri, projects, user, access) {
             var accessOk = false;
             collaborators=projects[p].files.access.whitelist;
             for(c in collaborators) {
-                if(c.userID === user) {
-                    var collaboratorAccessLevel = accessLevels.indexOf(c.access);
+                if(collaborators[c].userID === user) {
+                    var collaboratorAccessLevel = accessLevels.indexOf(collaborators[c].access);
                     if(requestedLevel>collaboratorAccessLevel) {
                         console.log("Collaborator access refused from project",projects[p].shortname);
                         return false;
@@ -77,8 +77,8 @@ var checkAccessToProject = function checkAccessToProject(project, user, access) 
     // check if user has collaborator access
     collaborators=project.files.access.whitelist;
     for(c in collaborators) {
-        if(c.userID === user) {
-            var collaboratorAccessLevel = accessLevels.indexOf(c.access);
+        if(collaborators[c].userID === user) {
+            var collaboratorAccessLevel = accessLevels.indexOf(collaborators[c].access);
             if(requestedLevel>collaboratorAccessLevel) {
                 console.log("Collaborator access refused to project",project.shortname);
                 return false;
