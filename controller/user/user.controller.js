@@ -21,12 +21,11 @@ var validator = function(req, res, next) {
 var accessLevels=["none","view","edit","add","remove"];
 
 var checkAccessToMRI = function checkAccessToMRI(mri, projects, user, access) {
-    var p, requestedLevel = accessLevels.indexOf("access");
-    
-    user = user || "public";
+    var p, requestedLevel = accessLevels.indexOf(access);
     
     for(p in projects) {
         if(projects[p].files.list.indexOf(mri.source)>=0) {
+            console.log(mri.source,user,access,projects[p].files.list.indexOf(mri.source));
             var publicLevel = accessLevels.indexOf(projects[p].files.access.public);
             var c, collaborators;
             
@@ -42,7 +41,7 @@ var checkAccessToMRI = function checkAccessToMRI(mri, projects, user, access) {
                 if(c.userID === user) {
                     var collaboratorAccessLevel = accessLevels.indexOf(c.access);
                     if(requestedLevel>collaboratorAccessLevel) {
-                        console.log("Collaborator access refused from project",projects[p]);
+                        console.log("Collaborator access refused from project",projects[p].shortname);
                         return false;
                     } else {
                         accessOk = true;
@@ -56,7 +55,7 @@ var checkAccessToMRI = function checkAccessToMRI(mri, projects, user, access) {
 
             // check if user has public access
             if(requestedLevel>publicLevel) {
-                console.log("Public access refused from project",projects[p]);
+                console.log("Public access refused from project",projects[p].shortname);
                 return false;
             }
         }
@@ -65,11 +64,7 @@ var checkAccessToMRI = function checkAccessToMRI(mri, projects, user, access) {
     return true;
 }
 var checkAccessToProject = function checkAccessToProject(project, user, access) {
-    var p, requestedLevel = accessLevels.indexOf("access");
-    
-    user = user || "public";
-    
-    console.log(project);
+    var p, requestedLevel = accessLevels.indexOf(access);
     
     var publicLevel = accessLevels.indexOf(project.files.access.public);
     var c, collaborators;
@@ -85,7 +80,7 @@ var checkAccessToProject = function checkAccessToProject(project, user, access) 
         if(c.userID === user) {
             var collaboratorAccessLevel = accessLevels.indexOf(c.access);
             if(requestedLevel>collaboratorAccessLevel) {
-                console.log("Collaborator access refused to project",project);
+                console.log("Collaborator access refused to project",project.shortname);
                 return false;
             } else {
                 return true;
@@ -95,7 +90,7 @@ var checkAccessToProject = function checkAccessToProject(project, user, access) 
 
     // check if user has public access
     if(requestedLevel>publicLevel) {
-        console.log("Public access refused to project",project);
+        console.log("Public access refused to project",project.shortname);
         return false;
     }
     
@@ -125,14 +120,17 @@ var user = function(req, res) {
                     
                     // filter for view access
                     for(i in unfilteredMRI)
-                        if(checkAccessToMRI(unfilteredMRI[i],projects,loggedUser,"view"))
+                        if(checkAccessToMRI(unfilteredMRI[i],unfilteredProjects,loggedUser,"view"))
                             mri.push(unfilteredMRI[i]);
                     for(i in unfilteredAtlas)
-                        if(checkAccessToMRI(unfilteredAtlas[i],projects,loggedUser,"view"))
+                        if(checkAccessToMRI(unfilteredAtlas[i],unfilteredProjects,loggedUser,"view"))
                             atlas.push(unfilteredAtlas[i]);
                     for(i in unfilteredProjects)
                         if(checkAccessToProject(unfilteredProjects[i],loggedUser,"view"))
                             projects.push(unfilteredProjects[i]);
+                    console.log(values[0].length-mri.length,"MRIs filtered");
+                    console.log(values[1].length-atlas.length,"atlases filtered");
+                    console.log(values[2].length-projects.length,"projects filtered");
                     
                     var context = {
                         username: json.name,
@@ -169,7 +167,7 @@ var user = function(req, res) {
                     context.projects = projects.map(function (o) {return {
                         project: o.name,
                         projectURL: o.brainboxURL,
-                        numFiles: o.files.length,
+                        numFiles: o.files.list.length,
                         numCollaborators: o.collaborators.length,
                         owner: o.owner,
                         modified: dateFormat(o.modified, "d mmm yyyy, HH:MM")
