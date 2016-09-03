@@ -4,80 +4,80 @@
 
 1. Introduction
     * Visualisation
-    	* Stereotaxic viewer
-			* Supported data formats 
-    	* 3D render
-	* Segmentation and annotations
-		* Volume segmentation
-			* Adding a new label set
-		* Text annotations and tags
-		* Length measurements
-		* Auto-save
-	* Collaboration
-		* Projects
+        * Stereotaxic viewer
+            * Supported data formats 
+        * 3D render
+    * Segmentation and annotations
+        * Volume segmentation
+            * Adding a new label set
+        * Text annotations and tags
+        * Length measurements
+        * Auto-save
+    * Collaboration
+        * Projects
 2. Interface
-	* Home page
-	* MRI page
-	* Project page
-	* User page
-	* BrainBox API
-		* GET mri
-		* GET mri/json
-		* GET mri/upload
-		* POST mri/upload
-		* GET user
-		* GET user/json
-		* GET project
-		* GET project/json
+    * Home page
+    * MRI page
+    * Project page
+    * User page
+    * BrainBox API
+        * GET mri
+        * GET mri/json
+        * GET mri/upload
+        * POST mri/upload
+        * GET user
+        * GET user/json
+        * GET project
+        * GET project/json
 3. Tutorials
-	* Examples of uses of BrainBox
-	* Visualise an MRI
-		* Log in
-		* Enter the URL of an MRI
-		* Upload a brain to internet
-			* Your own website
-			* Dropbox
-			* FigShare
-			* Zenodo
-			* GitHub
-	* Collaboratively segment an MRI
-		* Follow the steps to Visualise an MRI
-		* Share the link with collaborators
-		* Use the chat
-		* Create, Duplicate and Delete atlases
-	* Create a project
-		* Upload data to internet
-		* Create a project
-			* Add files
-			* Add collaborators
-			* Configure permissions
-			* Configure text annotations
-	* A quality assessment project
-		* Upload data to internet
-		* Create a project
-			* Add files
-			* Add collaborators
-			* Configure permissions
-			* Configure text annotations
-		* Upload precomputed atlases to BrainBox
-		* Export the results
-	* A collaborative segmentation project
-		* Upload data to internet
-		* Create a project
-			* Add files
-			* Add collaborators
-			* Configure permissions
-			* Configure volume segmentations
-				* Atlas name
-				* Atlas label set
-		* Upload precomputed atlases to BrainBox
-		* Download the results for offline analysis
+    * Examples of uses of BrainBox
+    * Visualise an MRI
+        * Log in
+        * Enter the URL of an MRI
+        * Upload a brain to internet
+            * Your own website
+            * Dropbox
+            * FigShare
+            * Zenodo
+            * GitHub
+    * Collaboratively segment an MRI
+        * Follow the steps to Visualise an MRI
+        * Share the link with collaborators
+        * Use the chat
+        * Create, Duplicate and Delete atlases
+    * Create a project
+        * Upload data to internet
+        * Create a project
+            * Add files
+            * Add collaborators
+            * Configure permissions
+            * Configure text annotations
+    * A quality assessment project
+        * Upload data to internet
+        * Create a project
+            * Add files
+            * Add collaborators
+            * Configure permissions
+            * Configure text annotations
+        * Upload precomputed atlases to BrainBox
+        * Export the results
+    * A collaborative segmentation project
+        * Upload data to internet
+        * Create a project
+            * Add files
+            * Add collaborators
+            * Configure permissions
+            * Configure volume segmentations
+                * Atlas name
+                * Atlas label set
+        * Upload precomputed atlases to BrainBox
+        * Download the results for offline analysis
 4. BrainBox code development
-	* Local setup
-	* Technologies
-	* Code organisation
+    * Local setup
+    * Technologies
+    * Code organisation
 5. Frequently asked questions
-	* Auto-save
+    * Auto-save
 
 ##1. Introduction
 
@@ -141,38 +141,38 @@ Supported data formats: For the moment, BrainBox supports nifti file format. Fre
  * Documentation
 
 ###MRI Page
- * Viewer
- 	* Navigate through slices: Slider, Previous and next slice
- 	* Change the view: Sagittal, Coronal and Axial
- 	* Tools:
- 		* Paint
- 		* Erase
- 		* Fill
- 		* Measure
- 		* Image adjustments
- 		* Color/region
- 		* Full screen
- 		* Share link
- 		* Render in 3D
- 		* Upload
- 		* Download
- 		* Chat
- * Annotations
- 	* MRI information
- 		* Name
-	 	* Source
-	 	* Date of inclusion
-	 	* Owner
- 	* Atlases
- 		* Name
- 		* Project
- 		* Label set
- 		* Owner
- 		* Date of creation
- 		* Date of latest modification
- 		* Add and delete atlases
- 		
-###2.2	MRI page
+* Viewer
+    * Navigate through slices: Slider, Previous and next slice
+    * Change the view: Sagittal, Coronal and Axial
+    * Tools:
+        * Paint
+        * Erase
+        * Fill
+        * Measure
+        * Image adjustments
+        * Color/region
+        * Full screen
+        * Share link
+        * Render in 3D
+        * Upload
+        * Download
+        * Chat
+* Annotations
+    * MRI information
+        * Name
+        * Source
+        * Date of inclusion
+        * Owner
+    * Atlases
+        * Name
+        * Project
+        * Label set
+        * Owner
+        * Date of creation
+        * Date of latest modification
+        * Add and delete atlases
+         
+###2.2    MRI page
 
 Once you enter the link to an  MRI in the home page, or if you click on a shared BrainBox link, you’ll be taken to the MRI’s page. This page contains a stereotaxic viewer with segmentation tools, as well as general information about the MRI and the annotations and segmentations available.
 
@@ -198,8 +198,8 @@ You can use BrainBox in a desktop computer or in a tablet. In a desktop computer
 
 **Table 1.** Summary of BrainBox’s tools
 
-| Icon|Function|
-|-----|--------|
+|Icon|Function|
+|:-----|:--------|
 |**[-]**|Move to the previous slice|
 |**[--o--]**|Change slice|
 |**[+]**|Move to the next slice|
@@ -236,19 +236,19 @@ You can add, duplicate or remove a label set by using the **[+]**, **[Copy]**, a
 
 
 ###Project Page
-	* Tools
-		* Segmentation tools
-		* List of MRIs
-		* List of atlases
-	* Viewer
+    * Tools
+        * Segmentation tools
+        * List of MRIs
+        * List of atlases
+    * Viewer
 
 ###User Page
-	* General information
-	* MRI tab
-	* Atlases tab
-	* Projects tab
-	* Settings tab
-		* Change password
+    * General information
+    * MRI tab
+    * Atlases tab
+    * Projects tab
+    * Settings tab
+        * Change password
 
 ##3. Tutorials
 
@@ -274,12 +274,12 @@ mri_convert /pathToYourFreesurferFolder/subjects/subjectID/mri/aseg.mgz /pathToY
 
 
 upload & download
-	upload and download buttons to upload a local segmentation file or download one 
-	from brainbox (this can be also done programmatically using curl)
+    upload and download buttons to upload a local segmentation file or download one 
+    from brainbox (this can be also done programmatically using curl)
 
 link: we can UPLOAD BRAIN EXTRACTIONS PROGRAMMATICALLY USING CURL
-	for example, this:
-	curl -F "action=upload" -F "user=yourGithubUserName" -F "password=yourPassword" -F "url=http://braincatalogue.dev/data/Sloth_bear/MRI-n4.nii.gz" -F "atlas=@/Library/			WebServer/Documents/braincatalogue/data/Sloth_bear/Atlas.nii.gz" http://brainbox.dev/php/brainbox.php
+    for example, this:
+    curl -F "action=upload" -F "user=yourGithubUserName" -F "password=yourPassword" -F "url=http://braincatalogue.dev/data/Sloth_bear/MRI-n4.nii.gz" -F "atlas=@/Library/            WebServer/Documents/braincatalogue/data/Sloth_bear/Atlas.nii.gz" http://brainbox.dev/php/brainbox.php
 
 PROJECT PAGES
 
@@ -295,25 +295,25 @@ set up YOUR awesome project
 
 
 LOOK AT META DATA
-you can get metadata associated with an MRI file:	http://brainbox.pasteur.fr/api/mri?url=http://yourWeb.com/MRI.nii.gz
+you can get metadata associated with an MRI file:    http://brainbox.pasteur.fr/api/mri?url=http://yourWeb.com/MRI.nii.gz
 
 TO KEEP IN MIND
 
 VALIDATION?
-	tutorial intro with Mindboggle 101 brains, 
+    tutorial intro with Mindboggle 101 brains, 
 do one brain (maybe five slices?) then get authorized to go segment : )
-	OR
+    OR
 every ten / 15 slices a neuroscienctist would do?
 
 KEYBOARD SHORTCUTS
-	could be added – but
-	keyboard commands do not work on tablets...
+    could be added – but
+    keyboard commands do not work on tablets...
 
 BrainBox Code || Code
-		for coders & interested people (like how some things work, which libs..)
+        for coders & interested people (like how some things work, which libs..)
 
 BrainBox local setup || Setup locally
-		for local setup
+        for local setup
 
 BrainBox media/ or about or something like this || Contact || Media
-		(You can find us here, links to our article, open science prize?)
+        (You can find us here, links to our article, open science prize?)
