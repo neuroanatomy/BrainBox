@@ -1636,7 +1636,7 @@ var computeS2VTransformation = function computeS2VTransformation(mri) {
 		for(i in mri.dir[j]) v2w[i][j]=mri.dir[j][i];	// transpose
 	var wpixdim=subVecVec(mulMatVec(v2w,[1,1,1]),mulMatVec(v2w,[0,0,0]));
 	// min and max world coordinates
-	var wvmax=addVecVec(mulMatVec(v2w,mri.dim),wori);
+	var wvmax=addVecVec(mulMatVec(v2w,[mri.dim[0]-1,mri.dim[1]-1,mri.dim[2]-1]),wori);
 	var wvmin=addVecVec(mulMatVec(v2w,[0,0,0]),wori);
 	var wmin=[Math.min(wvmin[0],wvmax[0]),Math.min(wvmin[1],wvmax[1]),Math.min(wvmin[2],wvmax[2])];
 	var wmax=[Math.max(wvmin[0],wvmax[0]),Math.max(wvmin[1],wvmax[1]),Math.max(wvmin[2],wvmax[2])];
@@ -1645,7 +1645,7 @@ var computeS2VTransformation = function computeS2VTransformation(mri) {
 	// console.log(["v2w",v2w, "wori",wori, "wpixdim",wpixdim, "wvmax",wvmax, "wvmin",wvmin, "wmin",wmin, "wmax",wmax, "w2s",w2s]);
 
 	mri.s2v = {
-		sdim: [(wmax[0]-wmin[0])/Math.abs(wpixdim[0]),(wmax[1]-wmin[1])/Math.abs(wpixdim[1]),(wmax[2]-wmin[2])/Math.abs(wpixdim[2])],
+		sdim: [(wmax[0]-wmin[0])/Math.abs(wpixdim[0])+1,(wmax[1]-wmin[1])/Math.abs(wpixdim[1])+1,(wmax[2]-wmin[2])/Math.abs(wpixdim[2])+1],
 		s2w: invMat(w2s),
 		sori: [-wmin[0]/Math.abs(wpixdim[0]),-wmin[1]/Math.abs(wpixdim[1]),-wmin[2]/Math.abs(wpixdim[2])],
 		w2v: invMat(v2w),
@@ -1689,7 +1689,7 @@ var testS2VTransformation = function testS2VTransformation(mri) {
 	if(doReset) {
 		console.log("    FAIL: TRANSFORMATION WILL BE RESET");
 		mri.dir=[[mri.pixdim[0],0,0],[0,-mri.pixdim[1],0],[0,0,-mri.pixdim[2]]];
-		mri.ori=[0,mri.dim[1],mri.dim[2]];
+		mri.ori=[0,mri.dim[1]-1,mri.dim[2]-1];
 		computeS2VTransformation(mri);
 
 		if(debug>2) {
@@ -1718,6 +1718,16 @@ var S2I = function S2I(s, mri) {
 	var i=null,w,s,v;
 	w=mulMatVec(s2v.s2w,subVecVec(s,s2v.sori)); // screen to world: w=s2w*(s-sori)
 	v=mulMatVec(s2v.w2v,subVecVec(w,s2v.wori)); // world to voxel
+
+/*
+	if(flag) {
+	    console.log("s",s);
+	    console.log("w",w),
+	    console.log("v",v);
+	    console.log("dim",mri.dim);
+	}
+*/
+
 	v=[Math.round(v[0]),Math.round(v[1]),Math.round(v[2])]; // round to integer
 	if(v[0]>=0&&v[0]<mri.dim[0]&&v[0]>=0&&v[0]<mri.dim[0]&&v[0]>=0&&v[0]<mri.dim[0])
 		i= v[2]*mri.dim[1]*mri.dim[0]+ v[1]*mri.dim[0] +v[0];
@@ -1746,6 +1756,7 @@ var drawSlice = function drawSlice(brain, view, slice) {
 		case 'cor':yc=slice; break;
 		case 'axi':ya=slice; break;
 	}
+//	console.log("slice:",slice);
 	for(y=0;y<brain_H;y++)
 	for(x=0;x<brain_W;x++) {
 		switch(view) {
@@ -1753,7 +1764,14 @@ var drawSlice = function drawSlice(brain, view, slice) {
 			case 'cor': s=[x,yc,s2v.sdim[2]-1-y]; break;
 			case 'axi': s=[x,s2v.sdim[1]-1-y,ya]; break;
 		}
-		i=S2I(s,brain);
+		/*
+		if(x%(brain_W-1)==0 && y%(brain_H-1)==0) {
+    		i=S2I(s,brain);
+		    console.log(s,i);
+		} else
+		*/
+        i=S2I(s,brain);
+		
 		val=255*(brain.data[i]-brain.min)/(brain.max-brain.min);
 		frameData[4*j+0] = val; // red
 		frameData[4*j+1] = val; // green
