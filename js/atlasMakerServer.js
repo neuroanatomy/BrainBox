@@ -20,6 +20,16 @@ var mongo = require('mongodb');
 var monk = require('monk');
 var db = monk('localhost:27017/brainbox');
 
+const createDOMPurify = require('dompurify');
+const jsdom = require('jsdom');
+const window = jsdom.jsdom('', {
+  features: {
+    FetchExternalResources: false, // disables resource loading over HTTP / filesystem
+    ProcessExternalResources: false // do not execute JS within script blocks
+  }
+}).defaultView;
+const DOMPurify = createDOMPurify(window);
+
 var atlasMakerServer = function() {
 
 var	debug = 1;
@@ -414,7 +424,9 @@ var initSocketConnection = function initSocketConnection() {
 						sendAtlasToUser(data.data,websocket.clients[i],false);
 					} 
 					else {
-						websocket.clients[i].send(JSON.stringify(data));
+					    // sanitise data
+					    const cleanData=DOMPurify.sanitize(JSON.stringify(data));
+						websocket.clients[i].send(cleanData);
 					}
 					n++;
 				}
@@ -531,6 +543,8 @@ var receiveSaveMetadataMessage = function receiveSaveMetadataMessage(data,user_s
 	var json=data.metadata;
 	json.modified=(new Date()).toJSON();
 	json.modifiedBy=sourceUS.User.username||"unknown";
+	// sanitise json
+	json=JSON.parse(DOMPurify.sanitize(JSON.stringify(json))); // sanitize works on strings, not objects
 	// mark previous one as backup
 	db.get('mri').update({url:json.url,backup:{$exists:false}},{$set:{backup:true}},{multi:true});
 	// insert new one
@@ -869,7 +883,7 @@ var loadAtlas = function loadAtlas(User) {
                             // log atlas creation
                             db.get('log').insert({
                                 key: "createAtlas",
-                                value: JSON.stringify({atlasDirectory:User.dirname,atlasFilename:User.atlasFilename}),
+                                value: DOMPurify.sanitize(JSON.stringify({atlasDirectory:User.dirname,atlasFilename:User.atlasFilename})),
                                 username: User.username,
                                 date: (new Date()).toJSON()
                             });
