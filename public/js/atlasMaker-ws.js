@@ -236,7 +236,7 @@ var AtlasMakerWS = {
 	
 		if(me.flagConnected==0)
 			return;
-		var msg = $('input#msg')[0].value;
+		var msg = DOMPurify.sanitize($('input#msg')[0].value);
 		try {
 			me.socket.send(JSON.stringify({"type":"chat","msg":msg,"username":me.User.username}));
 			var	msg="<b>me: </b>"+msg+"<br />";
