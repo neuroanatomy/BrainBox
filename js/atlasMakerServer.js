@@ -15,6 +15,7 @@ var dateFormat = require('dateformat');
 var async = require('async');
 var Struct = require('struct');
 var child_process = require('child_process');
+var merge = require('merge')
 
 var mongo = require('mongodb');
 var monk = require('monk');
@@ -530,11 +531,21 @@ var receiveSaveMetadataMessage = function receiveSaveMetadataMessage(data,user_s
 	var sourceUS=getUserFromUserId(data.uid);
 	var json=data.metadata;
 	json.modified=(new Date()).toJSON();
-	json.modifiedBy=sourceUS.User.username||"unknown";
+	json.modifiedBy= (sourceUS.User && sourceUS.User.username) ? sourceUS.User.username : "unknown";
 	// mark previous one as backup
-	db.get('mri').update({url:json.url,backup:{$exists:false}},{$set:{backup:true}},{multi:true});
+	db.get('mri').find({source:json.source}, {backup:{$exists:false} , limit: 1})
+	.then(function(ret){
+		json = merge(ret, json);
+		delete json["_id"];
+		console.log("FFF", json);
+		db.get('mri').update({source:json.source},{$set:{backup:true}},{multi:true});
+		db.get('mri').insert(json);
+	})
+
+	// db.get('mri').update({url:json.url},json);
+	// db.get('mri').insert(json);
+	//db.get('mri').update({url:json.url,backup:{$exists:false}},{$set:{backup:true}},{multi:true});  //TODO DO THE MERGE
 	// insert new one
-	db.get('mri').insert(json);
 };
 var receiveAtlasFromUserMessage = function receiveAtlasFromUserMessage(data,user_socket) {
     traceLog(receiveAtlasFromUserMessage);
