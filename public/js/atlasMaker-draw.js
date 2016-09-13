@@ -49,14 +49,14 @@ var AtlasMakerDraw = {
 		me.brain_offcn.height=me.brain_H;
 		me.brain_px=me.brain_offtx.getImageData(0,0,me.brain_offcn.width,me.brain_offcn.height);
 		
-		if(me.User.slice==null || me.User.slice>=me.brain_D)
+		if(me.User.slice==null || me.User.slice>=me.brain_D-1)
 			me.User.slice=parseInt(me.brain_D/2);
 
 		me.sendUserDataMessage(JSON.stringify({'view':me.User.view,'slice':me.User.slice}));
 		
 		// configure toolbar slider
-		$(".slider#slice").data({max:me.brain_D,val:me.User.slice});
-		if($("#slice .thumb")[0]) $("#slice .thumb")[0].style.left=(me.User.slice/me.brain_D*100)+"%";
+		$(".slider#slice").data({max:me.brain_D-1,val:me.User.slice});
+		if($("#slice .thumb")[0]) $("#slice .thumb")[0].style.left=(me.User.slice/(me.brain_D-1)*100)+"%";
 
 		me.drawImages();
 		

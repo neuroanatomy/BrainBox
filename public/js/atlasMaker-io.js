@@ -103,7 +103,7 @@ var AtlasMakerIO = {
 		var v2w=me.User.v2w;
 		var wori=me.User.wori;
 		var wpixdim=me.subVecVec(me.mulMatVec(v2w,[1,1,1]),me.mulMatVec(v2w,[0,0,0]));
-		var wvmax=me.addVecVec(me.mulMatVec(v2w,me.User.dim),wori);
+		var wvmax=me.addVecVec(me.mulMatVec(v2w,[me.User.dim[0]-1,me.User.dim[1]-1,me.User.dim[2]-1]),wori);
 		var wvmin=me.addVecVec(me.mulMatVec(v2w,[0,0,0]),wori);
 		var wmin=[Math.min(wvmin[0],wvmax[0]),Math.min(wvmin[1],wvmax[1]),Math.min(wvmin[2],wvmax[2])];
 		var wmax=[Math.max(wvmin[0],wvmax[0]),Math.max(wvmin[1],wvmax[1]),Math.max(wvmin[2],wvmax[2])];
@@ -113,7 +113,7 @@ var AtlasMakerIO = {
 		console.log(["v2w",v2w, "wori",wori, "wpixdim",wpixdim, "wvmax",wvmax, "wvmin",wvmin, "wmin",wmin, "wmax",wmax, "w2s",w2s]);
 
 		me.User.s2v = {
-			sdim: [(wmax[0]-wmin[0])/Math.abs(wpixdim[0]),(wmax[1]-wmin[1])/Math.abs(wpixdim[1]),(wmax[2]-wmin[2])/Math.abs(wpixdim[2])],
+			sdim: [(wmax[0]-wmin[0])/Math.abs(wpixdim[0])+1,(wmax[1]-wmin[1])/Math.abs(wpixdim[1])+1,(wmax[2]-wmin[2])/Math.abs(wpixdim[2])+1],
 			s2w: s2w,
 			sori: [-wmin[0]/Math.abs(wpixdim[0]),-wmin[1]/Math.abs(wpixdim[1]),-wmin[2]/Math.abs(wpixdim[2])],
 			wpixdim: [Math.abs(wpixdim[0]),Math.abs(wpixdim[1]),Math.abs(wpixdim[2])],
@@ -161,7 +161,7 @@ var AtlasMakerIO = {
 		if(doReset) {
 			console.log("THE TRANSFORMATION WILL BE RESET");
 			mri.v2w=[[mri.pixdim[0],0,0],[0,-mri.pixdim[1],0],[0,0,-mri.pixdim[2]]];
-			mri.wori=[0,mri.dim[1],mri.dim[2]];
+			mri.wori=[0,mri.dim[1]-1,mri.dim[2]-1];
 
 			// re-compute the transformation from voxel space to screen space
 			me.computeS2VTransformation(); // this line is different from server

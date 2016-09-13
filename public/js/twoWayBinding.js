@@ -32,12 +32,13 @@ function bind2(proxy,original,path,el,format,parse) {
 	Object.defineProperty(proxy,path,{
 		get: function(){
 			if(parse)
-				o[k[i]]=parse(el);
+				o[k[i]]=DOMPurify.sanitize(parse(el));
 			else
-				o[k[i]]=$(el).text();
+				o[k[i]]=DOMPurify.sanitize($(el).text());
 			return o[k[i]];
 		},
 		set: function(v) {
+		    v=DOMPurify.sanitize(v);
 			o[k[i]]=v;
 			if(format)
 				format(el,v);
@@ -63,9 +64,10 @@ function bind2(proxy,original,path,el,format,parse) {
 		o=o[k[i]];
 	Object.defineProperty(proxy,path,{
 		get: function(){
-			return o[k[i]];
+			return DOMPurify.sanitize(o[k[i]]);
 		},
 		set: function(v) {
+		    v=DOMPurify.sanitize(v);
 			o[k[i]]=v;
 			if(format)
 				format(el,v);

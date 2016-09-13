@@ -65,6 +65,15 @@ var AtlasMakerInteraction = {
 		me.User.penSize=parseInt(theSize);
 		me.sendUserDataMessage(JSON.stringify({'penSize':me.User.penSize}));
 	},
+	changePenColor: function changePenColor(index) {
+		var me=AtlasMakerWidget;
+		var l=me.traceLog(changePenColor);if(l)console.log(l);
+		
+		var c=me.ontology.labels[index].color;
+		$("#color").css({backgroundColor:'rgb('+c[0]+','+c[1]+','+c[2]+')'});
+		me.User.penValue=me.ontology.labels[index].value;
+		me.sendUserDataMessage(JSON.stringify({'penValue':me.User.penValue}));
+	},
 	changeSlice: function changeSlice(x) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(changeSlice,1);if(l)console.log(l);
@@ -77,15 +86,6 @@ var AtlasMakerInteraction = {
 		me.sendUserDataMessage(JSON.stringify({'slice':me.User.slice}));
 
 		me.drawImages();
-	},
-	changePenColor: function changePenColor(index) {
-		var me=AtlasMakerWidget;
-		var l=me.traceLog(changePenColor);if(l)console.log(l);
-		
-		var c=me.ontology.labels[index].color;
-		$("#color").css({backgroundColor:'rgb('+c[0]+','+c[1]+','+c[2]+')'});
-		me.User.penValue=me.ontology.labels[index].value;
-		me.sendUserDataMessage(JSON.stringify({'penValue':me.User.penValue}));
 	},
 	prevSlice: function prevSlice() {
 		var me=AtlasMakerWidget;
@@ -616,6 +616,11 @@ var AtlasMakerInteraction = {
 		var l=me.traceLog(keyDown,2);if(l)console.log(l);
 	
 		// console.log("key:",e.which);
+		
+		if(e.which==13 && $(e.target).attr('contenteditable')) {
+            e.preventDefault();
+            return;
+        }  
 		
 		if(e.target.tagName!="BODY")
 			return;
