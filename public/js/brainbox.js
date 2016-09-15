@@ -32,23 +32,45 @@ var BrainBox={
 		}
 		return res;
 	},
+	loadScript: function loadScript(path) {
+	    var def = new $.Deferred();
+        var s = document.createElement("script");
+        s.src = path;
+        s.onload=function () {
+            def.resolve();
+        };
+        document.body.appendChild(s);
+    	return def.promise();
+	},
 	initBrainBox: function initBrainBox() {
 		console.log(BrainBox.traceLog(initBrainBox));
 		
 		var def=$.Deferred();
 
-		// Add AtlasMaker
+		// Add AtlasMaker and friends
 		$("#stereotaxic").html('<div id="atlasMaker"></div>');
 		$("#atlasMaker").addClass('edit-mode');
-		var s = document.createElement("script");
-		s.src = "/js/atlasMaker.js";
-		s.onload=function from_initBrainBox(){
-			AtlasMakerWidget.initAtlasMaker($("#atlasMaker"))
-			.then(function() {
-				def.resolve();
-			});
-		}
-		document.body.appendChild(s);
+		
+        $.when(
+            BrainBox.loadScript('/js/atlasMaker-draw.js'),
+            BrainBox.loadScript('/js/atlasMaker-interaction.js'),
+            BrainBox.loadScript('/js/atlasMaker-io.js'),
+            BrainBox.loadScript('/js/atlasMaker-paint.js'),
+            BrainBox.loadScript('/js/atlasMaker-ui.js'),
+            BrainBox.loadScript('/js/atlasMaker-ws.js'),
+            BrainBox.loadScript('/js/atlasMaker.js')
+        ).then(function () {
+            $.extend(AtlasMakerWidget,AtlasMakerDraw);
+            $.extend(AtlasMakerWidget,AtlasMakerInteraction);
+            $.extend(AtlasMakerWidget,AtlasMakerIO);
+            $.extend(AtlasMakerWidget,AtlasMakerPaint);
+            $.extend(AtlasMakerWidget,AtlasMakerUI);
+            $.extend(AtlasMakerWidget,AtlasMakerWS);
+            AtlasMakerWidget.initAtlasMaker($("#atlasMaker"))
+                .then(function() {
+                    def.resolve();
+                });
+        });
 		
 		// store state on exit
 		$(window).unload(BrainBox.unload);
@@ -146,7 +168,7 @@ var BrainBox={
 		});			
 		localStorage.AtlasMaker=JSON.stringify(stored);
 	},
-		/*
+    /*
 		Annotation related functions
 	*/
 	selectAnnotationTableRow: function selectAnnotationTableRow() {
@@ -192,6 +214,7 @@ var BrainBox={
 					  break;
 			}
 		}
+		return param.table.find("td");
 	},
 	addAnnotation: function addAnnotation(param) {
 		console.log(BrainBox.traceLog(addAnnotation));
@@ -239,8 +262,10 @@ var BrainBox={
 	},
 	saveAnnotations: function saveAnnotations(param) {
 		console.log(BrainBox.traceLog(saveAnnotations));
+		console.log(BrainBox.info);
 
 		JSON.stringify(param.info_proxy); // update BrainBox.info from info_proxy
+		console.log(BrainBox.info);
 		AtlasMakerWidget.sendSaveMetadataMessage(BrainBox.info);
 		hash_old=BrainBox.hash(JSON.stringify(BrainBox.info));
 		$(param.saveWarning).hide();

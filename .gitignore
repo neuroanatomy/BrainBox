@@ -3,3 +3,14 @@ public/data
 public/project/braincatalogue-dev
 node_modules
 tmp
+js/mghtest.js
+js/orig.gz
+js/orig.mgh
+js/orig.mgz
+js/orig.nii.gz
+js/sample-001.mgz
+js/sample-001.nii.gz
+js/sample-002.mgz
+js/sample-002.nii.gz
+public/.DS_Store
+.DS_Store

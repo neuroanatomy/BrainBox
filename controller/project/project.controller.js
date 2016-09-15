@@ -10,7 +10,6 @@ var validator = function(req, res, next) {
 	// .optional()
 	// .matches("localpath|filename|source|url|dim|pixdim");						//todo: decent regexp
 	var errors = req.validationErrors();
-	console.log(errors);
 	if (errors) {
 		res.send(errors).status(403).end();
 	} else {
@@ -26,17 +25,15 @@ var project = function(req, res) {
 	.then(function(json) {
 		if (json) {
 			async.each(
-				json.files,
+				json.files.list,
 				function(item,cb) {
 					req.db.get('mri').find({source:item,backup:{$exists:0}},{name:1,_id:0})
 					.then(function(obj) {
 						if(obj[0]) {
-							json.files[json.files.indexOf(item)]={
-								source: item,
-								name: obj[0].name
-							}
+							json.files.list[json.files.list.indexOf(item)]=obj[0];
 						} else {
-							json.files[json.files.indexOf(item)]={
+							//create entry in database????
+							json.files.list[json.files.list.indexOf(item)]={
 								source: item,
 								name: ""
 							}

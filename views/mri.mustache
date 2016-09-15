@@ -150,9 +150,7 @@ https://dl.dropboxusercontent.com/u/363467/mprage003.nii.gz
 
 <script src="/lib/jquery-1.11.0.min.js"></script>
 <script src="/lib/pako/pako.min.js"></script>
-<!--
-<script src="/lib/mylogin/login.js"></script>
--->
+<script src="/lib/purify.min.js"></script>
 <script src="/js/twoWayBinding.js"></script>
 <script src="/js/brainbox.js"></script>
 
@@ -201,7 +199,7 @@ if( $.isEmptyObject(mriInfo)) {
             info_proxy: info_proxy,
             info: BrainBox.info,
             saveWarning: $("#saveAnnotations"),
-            trTemplate: $.map([
+            trTemplate: [
                 "<tr>",
                 " <td contentEditable=true class='noEmpty'></td>",
                 " <td contentEditable=true class='noEmpty'></td>",
@@ -210,7 +208,7 @@ if( $.isEmptyObject(mriInfo)) {
                 " <td></td>",
                 " <td></td>",
                 " <td><select>",BrainBox.access.map(function(o){return "<option>"+o+"</option>"}),"</select></td>",	// append label sets
-                "</tr>"],function(o){return o}).join(),
+                "</tr>"].join(),
             objTemplate: [
                 {	typeOfBinding:2,
                     path:"mri.atlas.#.name"
@@ -269,6 +267,7 @@ if( $.isEmptyObject(mriInfo)) {
                     var url=info_proxy["mri.atlas."+index+".labels"];
                     $.getJSON(url,function(json) {
                         AtlasMakerWidget.configureOntology(json);
+                        AtlasMakerWidget.changePenColor(0);
                         AtlasMakerWidget.brain_img.img=null; // to force redraw with new colors
                         AtlasMakerWidget.drawImages();
                     });

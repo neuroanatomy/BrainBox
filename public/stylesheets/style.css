@@ -153,12 +153,11 @@
 	image-rendering:pixelated;                 /* CSS4 Proposed  */
 	-ms-interpolation-mode:nearest-neighbor;   /* IE8+           */
 }
-#atlasMaker #tools-side {
-	position:relative;
+#tools-side {
 	width:100%;
 }
 
-#atlasMaker.fullscreen-mode {
+.fullscreen-mode #atlasMaker {
 	position:absolute;
 	top:0px;
 	left:0px;
@@ -167,12 +166,13 @@
 	z-index:10;
 }
 
-#atlasMaker.fullscreen-mode #tools-side {
+.fullscreen-mode #tools-side {
 	position:fixed;
 	top:0px;
 	right:0px;
 	width:240px;
 	height:100%;
+	z-index:10;
 }
 
 /* cursor
@@ -234,6 +234,7 @@
 }
 #msg {
 	color: black;
+	box-sizing: border-box;
 }
 
 .middle {
