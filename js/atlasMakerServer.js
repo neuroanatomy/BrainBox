@@ -1509,7 +1509,7 @@ var line = function line(x, y, val, User, undoLayer) {
 	var y2=y;
 	var	i;
 	
-	if(Math.pow(x1-x2,2)+Math.pow(y1-y2,2)>10*10) {
+	if(Math.pow(x1-x2,2)+Math.pow(y1-y2,2)>20*20) {
 		console.log("WARNING: long line from",x1,y1,"to",x2,y2);
 		console.log("User.uid:",User.uid);
 		displayUsers();
