@@ -425,6 +425,8 @@ var initSocketConnection = function initSocketConnection() {
 						sendAtlasToUser(data.data,websocket.clients[i],false);
 					} 
 					else {
+						console.log("ABOUT TO BROADCAST");
+						console.log("msg",msg);
 					    // sanitise data
 					    const cleanData=DOMPurify.sanitize(JSON.stringify(data));
 						websocket.clients[i].send(cleanData);
@@ -552,8 +554,9 @@ var receiveSaveMetadataMessage = function receiveSaveMetadataMessage(data,user_s
 		json = merge(ret, json);
 		delete json["_id"];
 		console.log("FFF", json);
-		db.get('mri').update({source:json.source},{$set:{backup:true}},{multi:true});
-		db.get('mri').insert(json);
+		db.get('mri').update({source:json.source},{$set:{backup:true}},{multi:true})
+		.then(function(){db.get('mri').insert(json);})
+		
 	})
 
 	// db.get('mri').update({url:json.url},json);
