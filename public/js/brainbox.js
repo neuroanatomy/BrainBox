@@ -248,6 +248,7 @@ var BrainBox={
 					  break;
 			}
 		}
+		return param.table.find("td");
 	},
     /**
      * @function addAnnotation
@@ -304,8 +305,10 @@ var BrainBox={
      */
     saveAnnotations: function saveAnnotations(param) {
 		console.log(BrainBox.traceLog(saveAnnotations));
+		console.log(BrainBox.info);
 
 		JSON.stringify(param.info_proxy); // update BrainBox.info from info_proxy
+		console.log(BrainBox.info);
 		AtlasMakerWidget.sendSaveMetadataMessage(BrainBox.info);
 		hash_old=BrainBox.hash(JSON.stringify(BrainBox.info));
 		$(param.saveWarning).hide();
