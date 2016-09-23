@@ -105,7 +105,12 @@ var newProject = function(req, res) {
     
 
     var context = {
-        owner: loggedUser
+        owner: loggedUser,
+        collaborators: [
+            {username: 'public', name: 'public'},
+            {username: 'katjaq', name: 'Katja Heuer'},
+            {username: 'r03rt0', name: 'Roberto Toro'}
+        ]
     };
     res.render('newProject',context);                    
 };
