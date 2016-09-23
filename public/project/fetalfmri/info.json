@@ -1,20 +1,22 @@
 {
-    "name": "Fetal f-MRI",
+    "name": "Fetal fMRI",
     "shortname": "fetalfmri",
     "url": "http://www2.med.wayne.edu/prb/fellowship_faculty_thomason.htm",
     "brainboxURL": "http://brainbox.pasteur.fr/project/fetalfmri",
-    "created": "",
+    "created": "2016-09-23T14:32:40.296Z",
     "owner": "moriaht",
     "collaborators": {
         "access": {
             "owner": "moriaht",
             "public": "edit",
             "whitelist": [
-                { "userId": "jasminehect", "access": "add"}
+                { "userId": "jasminehect", "access": "add" },
+                { "userId": "katjaq", "access": "add" }
             ]
         },
         "list": [
-            "jasminehect"
+            "jasminehect",
+            "katjaq"
         ]
     },
     "files": {
@@ -22,7 +24,8 @@
             "owner": "moriaht",
             "public": "edit",
             "whitelist": [
-                { "userId": "jasminehect", "access": "add"}
+                { "userId": "jasminehect", "access": "add" },
+                { "userId": "katjaq", "access": "add" }
             ]
         },
         "list": [
@@ -38,15 +41,13 @@
             "owner": "moriaht",
             "public": "edit",
             "whitelist": [
-                { "userId": "jasminehect", "access": "add"}
+                { "userId": "jasminehect", "access": "add" },
+                { "userId": "katjaq", "access": "add" }
             ]
         },
         "list": [
-            { "name": "Cerebrum", "type": "volume", "labelSet": "/labels/foreground.json", "display": true },
-            { "name": "Hippocampus", "type": "volume", "labelSet": "/labels/foreground.json", "display": true },
-            { "name": "Striatum", "type": "volume", "labelSet": "/labels/foreground.json", "display": true},
+            { "name": "Brain mask", "type": "volume", "labelSet": "/labels/foreground.json", "display": true },
             { "name": "MRI quality", "type": "text", "values": ["Good", "Medium", "Bad"], "acceptFreeform": false, "display": true },
-            { "name": "Specimen quality", "type": "text", "values": ["Good", "Damaged", "Very damaged"], "acceptFreeform": false, "display": true },
             { "name": "Comments", "type": "text", "acceptFreeform": true, "display": true }
         ]
     }
