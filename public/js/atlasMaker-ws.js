@@ -84,6 +84,9 @@ var AtlasMakerWS = {
 		*/
 	
 		switch(data.type) {
+			case "saveMetadata" :
+				me.receiveMetaData(data);
+				break;
 			case "userData":
 				me.receiveUserDataMessage(data);
 				break;
@@ -325,6 +328,20 @@ var AtlasMakerWS = {
 		} catch (ex) {
 			console.log("ERROR: Unable to sendRequestSliceMessage",ex);
 		}
+	},
+	receiveMetaData: function receiveMetaData(data) {
+		console.log(info_proxy);
+		console.log(info_proxy.files);
+		for (var i in projectInfo.files.list) {
+			if (projectInfo.files.list[i].source == data.metadata.source) {
+				for (var key in projectInfo.files.list[i].mri.annotation) {
+					info_proxy["files.list." + i + ".mri.annotation." + key] = data.metadata.mri.annotation[key];
+				}
+				info_proxy["files.list." + i + ".name"] = data.metadata.name;
+				break;
+			}
+		}
+		console.log("JUST RECIEVED SOME MORE DATA", data.metadata);
 	},
 	sendSaveMetadataMessage: function sendSaveMetadataMessage(info) {
 		var me=AtlasMakerWidget;

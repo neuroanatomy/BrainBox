@@ -265,6 +265,7 @@ var BrainBox={
 		console.log(BrainBox.info);
 
 		JSON.stringify(param.info_proxy); // update BrainBox.info from info_proxy
+		
 		console.log(BrainBox.info);
 		AtlasMakerWidget.sendSaveMetadataMessage(BrainBox.info);
 		hash_old=BrainBox.hash(JSON.stringify(BrainBox.info));

@@ -400,6 +400,8 @@ var initSocketConnection = function initSocketConnection() {
 				// broadcast
 				var n=0;
 				for(var i in websocket.clients) {
+					console.log("US: ", US)
+
 					// i-th user
 					var targetUS=getUserFromSocket(websocket.clients[i]);
 					
@@ -416,21 +418,29 @@ var initSocketConnection = function initSocketConnection() {
 						continue;
 					}
 					
-					if( targetUS.User.iAtlas!==sourceUS.User.iAtlas && data.type!=="chat" && data.type!=="userData" ) {
+					//TODO Change that of inclusive IFs instead of exclusive
+					if (( targetUS.User.projectPage && targetUS.User.projectPage === sourceUS.User.projectPage)
+						|| (targetUS.User.iAtlas === sourceUS.User.iAtlas)
+						|| (data.type === "userData")
+						|| (data.type === "chat"))
+					{
+						if(data.type==="atlas") {
+							sendAtlasToUser(data.data,websocket.clients[i],false);
+						} 
+						else {
+							console.log("ABOUT TO BROADCAST");
+							console.log("msg",msg);
+						    // sanitise data
+						    const cleanData=DOMPurify.sanitize(JSON.stringify(data));
+							websocket.clients[i].send(cleanData);
+						}
+					}
+					else {
 						if(debug>1) console.log("    no broadcast to user "+targetUS.User.username+" [uid: "+targetUS.uid+"] of atlas "+targetUS.User.specimenName+"/"+targetUS.User.atlasFilename);
 						continue;
 					}
 					
-					if(data.type==="atlas") {
-						sendAtlasToUser(data.data,websocket.clients[i],false);
-					} 
-					else {
-						console.log("ABOUT TO BROADCAST");
-						console.log("msg",msg);
-					    // sanitise data
-					    const cleanData=DOMPurify.sanitize(JSON.stringify(data));
-						websocket.clients[i].send(cleanData);
-					}
+					
 					n++;
 				}
 				if(debug>2) console.log("    broadcasted to",n,"users");
@@ -677,6 +687,8 @@ var receiveUserDataMessage = function receiveUserDataMessage(data, user_socket) 
             }
         } else {
             var changes = JSON.parse(data.description);
+            console.log("USER: ", User);
+            console.log("CHANGES: ", changes)
             for(i in changes)
                 User[i]=changes[i];
         }
@@ -985,8 +997,10 @@ var readNifti = function readNifti(path) {
                 try {
                     NiiHdr.allocate();
                     NiiHdr._setBuff(nii);
-                    var h=JSON.parse(JSON.stringify(NiiHdr.fields));
+                    var h= NiiHdr.fields;
                     
+                    console.log("YAY I GOT YA", h)
+
                     var	sizeof_hdr=h.sizeof_hdr;
                     mri.dim=[h.dim[1],h.dim[2],h.dim[3]];
                     mri.pixdim=[h.pixdim[1],h.pixdim[2],h.pixdim[3]];
