@@ -135,6 +135,7 @@ app.get('/', function (req, res) { // /auth/github
 app.use('/mri', require('./controller/mri/'));
 app.use('/project', require('./controller/project/'));
 app.use('/user', require('./controller/user/'));
+app.use('/newProject', require('./controller/newProject/'));
 
 // app.get('/mri', function (req, res) {
 // });

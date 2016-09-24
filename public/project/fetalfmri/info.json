@@ -1,0 +1,54 @@
+{
+    "name": "Fetal fMRI",
+    "shortname": "fetalfmri",
+    "url": "http://www2.med.wayne.edu/prb/fellowship_faculty_thomason.htm",
+    "brainboxURL": "http://brainbox.pasteur.fr/project/fetalfmri",
+    "created": "2016-09-23T14:32:40.296Z",
+    "owner": "moriaht",
+    "collaborators": {
+        "access": {
+            "owner": "moriaht",
+            "public": "edit",
+            "whitelist": [
+                { "userId": "jasminehect", "access": "add" },
+                { "userId": "katjaq", "access": "add" }
+            ]
+        },
+        "list": [
+            "jasminehect",
+            "katjaq"
+        ]
+    },
+    "files": {
+        "access": {
+            "owner": "moriaht",
+            "public": "edit",
+            "whitelist": [
+                { "userId": "jasminehect", "access": "add" },
+                { "userId": "katjaq", "access": "add" }
+            ]
+        },
+        "list": [
+            "https://github.com/moriaht/fetal-fMRI/blob/aa02a608abb812b7eaded66aa1517ed7c493839b/2131-T1_V-0311.nii.gz?raw=true",
+            "https://github.com/moriaht/fetal-fMRI/blob/aa02a608abb812b7eaded66aa1517ed7c493839b/2186-T2_V-0060.nii.gz?raw=true",
+            "https://github.com/moriaht/fetal-fMRI/blob/aa02a608abb812b7eaded66aa1517ed7c493839b/2198-T2_V-0016.nii.gz?raw=true",
+            "https://github.com/moriaht/fetal-fMRI/blob/aa02a608abb812b7eaded66aa1517ed7c493839b/2208-T2_V-0215.nii.gz?raw=true",
+            "https://github.com/moriaht/fetal-fMRI/blob/aa02a608abb812b7eaded66aa1517ed7c493839b/2219-T1_V-0353.nii.gz?raw=true"
+        ]
+    },
+    "annotations": {
+        "access": {
+            "owner": "moriaht",
+            "public": "edit",
+            "whitelist": [
+                { "userId": "jasminehect", "access": "add" },
+                { "userId": "katjaq", "access": "add" }
+            ]
+        },
+        "list": [
+            { "name": "Brain mask", "type": "volume", "labelSet": "/labels/foreground.json", "display": true },
+            { "name": "MRI quality", "type": "text", "values": ["Good", "Medium", "Bad"], "acceptFreeform": false, "display": true },
+            { "name": "Comments", "type": "text", "acceptFreeform": true, "display": true }
+        ]
+    }
+}
