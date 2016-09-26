@@ -33,9 +33,8 @@
 		width:100%;
 		border-collapse:collapse;
 	}
-	#MRIFiles td, #atlasFiles td, #access td,
-	#MRIFiles th, #atlasFiles th, #access th {
-		padding:0px 4px;
+	#MRIFiles tr, #atlasFiles tr, #access tr {
+		margin:0px 4px;
 	}
 	#MRIFiles, #atlasFiles, #access,
 	#MRIFiles th, #atlasFiles th, #access th {
@@ -44,25 +43,39 @@
 	#MRIFiles a, #atlasFiles a, #access a {
 		text-decoration:none;
 	}
-	#nameThingy{
+	#nameDropdown{
 		background: #444;
-		border: none;
-		width: 100%;
-		height: 100%;
+		border:none;
+		width:100%;
+		padding: 2px;
 	}
 	.ui-widget.ui-widget-content{
 		background: #222;
+		color: white;
 		border: none;
 	}
-	.ui-widget-content:hover {
-		background-color: green;
-	}
-	.ui-selectee:hover {
-		background-color: red;
+
+	.ui-widget-header:active {
+		border:none;
 	}
 
+	.ui-state-active,
+    .ui-widget-content .ui-state-active,
+    .ui-widget-header .ui-state-active,
+    a.ui-button:active,
+    .ui-button:active,
+    .ui-button.ui-state-active:hover {
+        background: #555 !important;
+		color:white;
+		border: none;
+    }
+
+    input {
+    	border: none;
+    }
+
 li div {
-  color: black; /* text color */
+  color: white; /* text color */
 }
 	/*body {
 		background-color: #333;
@@ -254,8 +267,8 @@ li div {
 										</tr>
 									{{/collaborators}}
 									<tr>
-											<td style="padding-top:5px">
-												<input id="nameThingy"></input>
+											<td>
+												<input id="nameDropdown"></input>
 											</td>
 										</tr>
 								</tbody>
@@ -379,7 +392,7 @@ li div {
 	});
 $(function(){
 	var users = ["Katja", "Totoro"];
-	$("#nameThingy").autocomplete({source:users});
+	$("#nameDropdown").autocomplete({source:users});
 });
 
 
