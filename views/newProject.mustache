@@ -5,9 +5,12 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> 
 	<link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
     <title>{{title}}</title>
+	<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 	<link rel="stylesheet" href="/stylesheets/style.css" />
 	<link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
 	<script src="http://code.jquery.com/jquery-2.2.4.min.js"></script>
+	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+
 
 
 	<style>
@@ -20,6 +23,9 @@
 	}
 	.tab.selected {
 		background:#333;
+	}
+	tr.selected{
+		background-color:#444;
 	}
 	#MRIFiles, #atlasFiles, #access {
 		color:white;
@@ -38,10 +44,29 @@
 	#MRIFiles a, #atlasFiles a, #access a {
 		text-decoration:none;
 	}
-
-	body {
-		background-color: #333;
+	#nameThingy{
+		background: #444;
+		border: none;
+		width: 100%;
+		height: 100%;
 	}
+	.ui-widget.ui-widget-content{
+		background: #222;
+		border: none;
+	}
+	.ui-widget-content:hover {
+		background-color: green;
+	}
+	.ui-selectee:hover {
+		background-color: red;
+	}
+
+li div {
+  color: black; /* text color */
+}
+	/*body {
+		background-color: #333;
+	}*/
 
 	/* view */
 	.view, .edit, .add, .remove {
@@ -228,11 +253,16 @@
 											</td>
 										</tr>
 									{{/collaborators}}
+									<tr>
+											<td style="padding-top:5px">
+												<input id="nameThingy"></input>
+											</td>
+										</tr>
 								</tbody>
 							</table>
 							<div style="text-align:right">
-								<img class="button" src='/img/plus-circle.svg'/>
-								<img class="button" src='/img/minus-circle.svg'/>
+								<img class="button" src='/img/plus-circle.svg' onclick="addRow()" />
+								<img class="button" src='/img/minus-circle.svg' onclick="removeRow()" />
 							</div>
 							
 							
@@ -314,7 +344,6 @@
 	
 </div>
 
-<script src="/lib/jquery-1.11.0.min.js"></script>
 <script>
 	//var userInfo='{{{userInfo}}}';
 	//userInfo=JSON.parse(userInfo);
@@ -323,6 +352,7 @@
 	$(".edit").click(onEditClicked);
 	$(".add").click(onAddClicked);
 	$(".remove").click(onRemoveClicked);
+	$("#access tbody tr").click(selectRow);
 
 	// switch tabs
 	$("a.tab").click(function() {
@@ -347,6 +377,30 @@
 				break;
 		}
 	});
+$(function(){
+	var users = ["Katja", "Totoro"];
+	$("#nameThingy").autocomplete({source:users});
+});
+
+
+var selected;
+function selectRow(e)
+{
+	$("#access tbody tr").each(function(index, tag){
+		$(tag).removeClass("selected");})
+	$(e.currentTarget).addClass("selected");
+	selected = e.currentTarget;
+}
+
+function addRow()
+{
+	console.log("addRow");
+}
+
+function removeRow()
+{
+	console.log(selected);
+}
 
 function onViewClicked( e ) {
 	// access level 
