@@ -184,6 +184,12 @@ function loadProjectFile(url) {
 	    if($.isEmptyObject(data) === false) {
             params.info=data;
             BrainBox.configureBrainBox(params)
+			.then(function from_project(){
+				console.log("USER: ", AtlasMakerWidget.User);
+				console.log("PROJECT: ", projectInfo);
+				AtlasMakerWidget.User.projectPage = projectInfo.shortname;
+				AtlasMakerWidget.sendUserDataMessage(JSON.stringify({projectPage:projectInfo.shortname}))
+			})
         } else {
             var info=AtlasMakerWidget.container.find("#info");
             info.html("<text x='5' y='15' fill='white'>ERROR: File is unreadable</text>");
@@ -293,38 +299,6 @@ for (k in projectInfo.annotations.list)
 
 str=[];
 
-//LEGACY
-// var tr = ""
-// for(var i=0;i<projectInfo.files.list.length;i++) {
-// 	var filename=projectInfo.files.list[i].source.split("/").pop();
-// 	tr +=[	"<tr>",
-// 			"	<td contentEditable=true class='noEmpty'>" + projectInfo.files.list[i].name + "</td>",
-// 			"	<td><a href='"+location.origin+"/mri?url="+projectInfo.files.list[i].source+"'>"+filename+"</a></td>"];
-// 			for (var g in txtAnnotations)
-// 			{
-// 				if (txtAnnotations[g].values) {
-// 					tr += "<td><select>";
-// 					for (var o in txtAnnotations[g].values)
-// 					{
-// 						tr+= "<option value=\"" + txtAnnotations[g].values[o] + "\"" + (projectInfo.files.list[i][txtAnnotations[g].name] == txtAnnotations[g].values[o] ? " selected " : "" ) + ">" + txtAnnotations[g].values[o] + "</option>"
-// 					}
-// 					tr += "</select></td>" 
-// 				}
-// 				else {
-// 					tr += "	<td contentEditable=true class='noEmpty'>" + projectInfo.files.list[i][txtAnnotations[g].name] + "</td>"
-// 				}
-// 			}
-// 		tr  += "</tr>"
-// 	str += tr ;
-// }
-
-
-// $("#projectFiles tbody").append(str);
-// for(var i=0;i<projectInfo.files.list.length;i++) {
-// 	$("#projectFiles tbody tr:eq("+i+") td:eq(0)").text(projectInfo.files.list[i].name);
-// }
-
-
 // select first file by default (should come from localStorage)
 var url=projectInfo.files.list[0].source;	
 $("#projectFiles tbody tr:eq(0)").addClass("selected");
@@ -407,7 +381,6 @@ $(document).on('blur', "#projectFiles table tbody", function(e){
 	console.log(e.target.closest('tr'));
 	tr = e.target.closest('tr');
 	var index = $(tr).index();
-	console.log("YOLO SWAG NUMBER" , index)
 	console.log(projectInfo.files.list[index]);
 
 	// BrainBox.info = projectInfo.files.list[index];
