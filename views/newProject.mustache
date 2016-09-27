@@ -43,12 +43,14 @@
 	#MRIFiles a, #atlasFiles a, #access a {
 		text-decoration:none;
 	}
-	#nameDropdown{
-		background: #444;
+	.dropdown {
 		border:none;
-		width:100%;
-		padding: 2px;
+		border-radius: 0px;
+		outline: none;
+		padding: 0px 0px 5px 0px;
+		vertical-align: bottom;
 	}
+
 	.ui-widget.ui-widget-content{
 		background: #222;
 		color: white;
@@ -68,15 +70,16 @@
         background: #555 !important;
 		color:white;
 		border: none;
+		outline: none;
+		display: block;
     }
-
-    input {
-    	border: none;
-    }
-
-li div {
-  color: white; /* text color */
-}
+ 
+	li div {
+	  	color: white; /* text color */
+	  	border:none;
+	  	margin: none;
+	  	padding: none;
+	}
 	/*body {
 		background-color: #333;
 	}*/
@@ -267,8 +270,35 @@ li div {
 										</tr>
 									{{/collaborators}}
 									<tr>
+											<td id="nameDropdown" class="noEmpty dropdown" contenteditable="true"></td>
+											<td id="fullnameDropdown" class="noEmpty dropdown" contenteditable="true"></td>
 											<td>
-												<input id="nameDropdown"></input>
+												<!-- data level: access level from 0 to 4; access cascade: no access > view > edit > add > remove -->
+												<!-- for the collaborators -->
+												<div class="access" data-level=2 style="padding-top:5px; text-decoration:none; border:none">
+													<span class="view" title="view collaborators" style="padding:5px 5px 5px 0px"></span>
+													<span class="edit" title="edit list of collaborators" style="padding:5px 5px 5px 0px"></span>
+													<span class="add" title="add collaborators" style="padding:5px 5px 5px 0px"></span>
+													<span class="remove" title="remove collaborators" style="padding-top:5px 5px 5px 0px"></span>
+												</div>
+											</td>
+											<td>
+												<!-- for the atlas files -->
+												<div class="access" data-level=2 style="padding-top:5px; text-decoration:none; border:none">
+													<span class="view" title="view atlas files" style="padding:5px 5px 5px 0px"></span>
+													<span class="edit" title="edit atlas files" style="padding:5px 5px 5px 0px"></span>
+													<span class="add" title="add atlas files" style="padding:5px 5px 5px 0px"></span>
+													<span class="remove" title="remove atlas files" style="padding:5px 5px 5px 0px"></span>
+												</div>
+											</td>
+											<td>
+												<!-- for the MRI files --> 
+												<div class="access" data-level=2 style="padding-top:5px; text-decoration:none; border:none">
+													<span class="view" title="view MRI files" style="padding:5px 5px 5px 0px"></span>
+													<span class="edit" title="edit MRI files"  style="padding:5px 5px 5px 0px"></span>
+													<span class="add" title="add MRI files" style="padding:5px 5px 5px 0px"></span>
+													<span class="remove" title="remove MRI files" style="padding:5px 5px 5px 0px"></span>
+												</div>
 											</td>
 										</tr>
 								</tbody>
@@ -366,6 +396,7 @@ li div {
 	$(".add").click(onAddClicked);
 	$(".remove").click(onRemoveClicked);
 	$("#access tbody tr").click(selectRow);
+	//TODO add onblur event to the dropdown menu so it empties the content
 
 	// switch tabs
 	$("a.tab").click(function() {
