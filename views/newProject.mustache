@@ -210,17 +210,11 @@
 				</td>			
 				<td style="margin:1rem;vertical-align:top">
 					<div style="width:100%">
-						
-						<!-- Tab heads -->
-						<div>
-							<a class="tab selected">Access</a>
-							<a class="tab">Annotations</a>
-							<a class="tab">MRI Files</a>
-						</div>
-						
+												
 						<div style="width:100%;min-height:400px;background:#333;padding:20px; text-decoration:none">
 						
 							<!-- Tab Content 1: Access -->
+							<a class="tab selected">Access</a>
 							<table id="access" class="tabContent" style="padding:10px;display:table">
 								<thead>
 									<tr>
@@ -311,7 +305,8 @@
 							
 							
 							<!-- Tab Content 2: Annotations -->
-							<table id="atlasFiles" class="tabContent" style="padding:10px;display:none">
+							<a class="tab">Annotations</a>
+							<table id="atlasFiles" class="tabContent" style="padding:10px">
 								<thead>
 									<tr>
 										<th>Name</th>
@@ -335,7 +330,8 @@
 							</table>
 							
 							<!-- Tab Content 3: MRIs -->
-							<table id="MRIFiles" class="tabContent" style="padding:10px; display:none">
+							<a class="tab">MRI Files</a>
+							<table id="MRIFiles" class="tabContent" style="padding:10px">
 								<thead>
 									<tr>
 										<th>Name</th>
@@ -389,8 +385,8 @@
 </div>
 
 <script>
-	//var userInfo='{{{userInfo}}}';
-	//userInfo=JSON.parse(userInfo);
+	var newProjInfo='{{{newProjInfo}}}';
+	newProjInfo=JSON.parse(newProjInfo);
 	
 	$(".view").click(onViewClicked);
 	$(".edit").click(onEditClicked);
@@ -399,6 +395,7 @@
 	$("#access tbody tr").click(selectRow);
 	//TODO add onblur event to the dropdown menu so it empties the content
 
+	/*
 	// switch tabs
 	$("a.tab").click(function() {
 		$("a.tab").removeClass("selected");
@@ -422,6 +419,7 @@
 				break;
 		}
 	});
+	*/
 $(function(){
 	var users = ["katjaq", "r03rt0", "fdelencl42", "pithosaumon", "aniv0s"];
 	$("#nameDropdown").autocomplete({source:users});
