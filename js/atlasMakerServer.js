@@ -15,6 +15,7 @@ var dateFormat = require('dateformat');
 var async = require('async');
 var Struct = require('struct');
 var child_process = require('child_process');
+var merge = require('merge')
 
 var mongo = require('mongodb');
 var monk = require('monk');
@@ -399,6 +400,8 @@ var initSocketConnection = function initSocketConnection() {
 				// broadcast
 				var n=0;
 				for(var i in websocket.clients) {
+					console.log("US: ", US)
+
 					// i-th user
 					var targetUS=getUserFromSocket(websocket.clients[i]);
 					
@@ -415,19 +418,29 @@ var initSocketConnection = function initSocketConnection() {
 						continue;
 					}
 					
-					if( targetUS.User.iAtlas!==sourceUS.User.iAtlas && data.type!=="chat" && data.type!=="userData" ) {
+					//TODO Change that of inclusive IFs instead of exclusive
+					if (( targetUS.User.projectPage && targetUS.User.projectPage === sourceUS.User.projectPage)
+						|| (targetUS.User.iAtlas === sourceUS.User.iAtlas)
+						|| (data.type === "userData")
+						|| (data.type === "chat"))
+					{
+						if(data.type==="atlas") {
+							sendAtlasToUser(data.data,websocket.clients[i],false);
+						} 
+						else {
+							console.log("ABOUT TO BROADCAST");
+							console.log("msg",msg);
+						    // sanitise data
+						    const cleanData=DOMPurify.sanitize(JSON.stringify(data));
+							websocket.clients[i].send(cleanData);
+						}
+					}
+					else {
 						if(debug>1) console.log("    no broadcast to user "+targetUS.User.username+" [uid: "+targetUS.uid+"] of atlas "+targetUS.User.specimenName+"/"+targetUS.User.atlasFilename);
 						continue;
 					}
 					
-					if(data.type==="atlas") {
-						sendAtlasToUser(data.data,websocket.clients[i],false);
-					} 
-					else {
-					    // sanitise data
-					    const cleanData=DOMPurify.sanitize(JSON.stringify(data));
-						websocket.clients[i].send(cleanData);
-					}
+					
 					n++;
 				}
 				if(debug>2) console.log("    broadcasted to",n,"users");
@@ -542,13 +555,24 @@ var receiveSaveMetadataMessage = function receiveSaveMetadataMessage(data,user_s
 	var sourceUS=getUserFromUserId(data.uid);
 	var json=data.metadata;
 	json.modified=(new Date()).toJSON();
-	json.modifiedBy=sourceUS.User.username||"unknown";
+	json.modifiedBy= (sourceUS.User && sourceUS.User.username) ? sourceUS.User.username : "unknown";
 	// sanitise json
 	json=JSON.parse(DOMPurify.sanitize(JSON.stringify(json))); // sanitize works on strings, not objects
 	// mark previous one as backup
-	db.get('mri').update({url:json.url,backup:{$exists:false}},{$set:{backup:true}},{multi:true});
+	db.get('mri').find({source:json.source}, {backup:{$exists:false} , limit: 1})
+	.then(function(ret){
+		json = merge(ret, json);
+		delete json["_id"];
+		console.log("FFF", json);
+		db.get('mri').update({source:json.source},{$set:{backup:true}},{multi:true})
+		.then(function(){db.get('mri').insert(json);})
+		
+	})
+
+	// db.get('mri').update({url:json.url},json);
+	// db.get('mri').insert(json);
+	//db.get('mri').update({url:json.url,backup:{$exists:false}},{$set:{backup:true}},{multi:true});  //TODO DO THE MERGE
 	// insert new one
-	db.get('mri').insert(json);
 };
 var receiveAtlasFromUserMessage = function receiveAtlasFromUserMessage(data,user_socket) {
     traceLog(receiveAtlasFromUserMessage);
@@ -663,6 +687,8 @@ var receiveUserDataMessage = function receiveUserDataMessage(data, user_socket) 
             }
         } else {
             var changes = JSON.parse(data.description);
+            console.log("USER: ", User);
+            console.log("CHANGES: ", changes)
             for(i in changes)
                 User[i]=changes[i];
         }
@@ -971,8 +997,10 @@ var readNifti = function readNifti(path) {
                 try {
                     NiiHdr.allocate();
                     NiiHdr._setBuff(nii);
-                    var h=JSON.parse(JSON.stringify(NiiHdr.fields));
+                    var h= NiiHdr.fields;
                     
+                    console.log("YAY I GOT YA", h)
+
                     var	sizeof_hdr=h.sizeof_hdr;
                     mri.dim=[h.dim[1],h.dim[2],h.dim[3]];
                     mri.pixdim=[h.pixdim[1],h.pixdim[2],h.pixdim[3]];
@@ -1509,7 +1537,7 @@ var line = function line(x, y, val, User, undoLayer) {
 	var y2=y;
 	var	i;
 	
-	if(Math.pow(x1-x2,2)+Math.pow(y1-y2,2)>10*10) {
+	if(Math.pow(x1-x2,2)+Math.pow(y1-y2,2)>20*20) {
 		console.log("WARNING: long line from",x1,y1,"to",x2,y2);
 		console.log("User.uid:",User.uid);
 		displayUsers();

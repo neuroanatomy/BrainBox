@@ -1,3 +1,13 @@
+/**
+ * @library BrainBox
+ * @version 0.0.1
+ * @brief Real-time collaboration in neuroimaging
+ */
+ 
+/**
+ * @page BrainBox
+ */
+
 var BrainBox={
 	version: 1,
 	debug: 1,
@@ -5,7 +15,10 @@ var BrainBox={
 	labelSets:null,
 	access:["Read/Write","Read"],
 
-	traceLog: function traceLog(f,l) {
+    /**
+     * @function traceLog
+     */
+    traceLog: function traceLog(f,l) {
 		if(l==undefined || BrainBox.debug>l)
 			return "bb> "+(f.name)+" "+(f.caller?(f.caller.name||"annonymous"):"root");
 	},
@@ -14,7 +27,10 @@ var BrainBox={
 		JavaScript implementation of Java's hashCode method from
 		http://werxltd.com/wp/2010/05/13/javascript-implementation-of-javas-string-hashcode-method/
 	*/
-	hash: function hash(str) {
+    /**
+     * @function hash
+     */
+    hash: function hash(str) {
 		console.log(BrainBox.traceLog(hash));
 		
 		var v0=0,v1,abc="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -32,7 +48,10 @@ var BrainBox={
 		}
 		return res;
 	},
-	loadScript: function loadScript(path) {
+    /**
+     * @function loadScript
+     */
+    loadScript: function loadScript(path) {
 	    var def = new $.Deferred();
         var s = document.createElement("script");
         s.src = path;
@@ -42,7 +61,10 @@ var BrainBox={
         document.body.appendChild(s);
     	return def.promise();
 	},
-	initBrainBox: function initBrainBox() {
+    /**
+     * @function initBrainBox
+     */
+    initBrainBox: function initBrainBox() {
 		console.log(BrainBox.traceLog(initBrainBox));
 		
 		var def=$.Deferred();
@@ -77,7 +99,10 @@ var BrainBox={
 		
 		return def.promise();
 	},
-	configureBrainBox: function configureBrainBox(param) {
+    /**
+     * @function configureBrainBox
+     */
+    configureBrainBox: function configureBrainBox(param) {
 		console.log(BrainBox.traceLog(configureBrainBox));
 		
 		var def=$.Deferred();
@@ -142,7 +167,10 @@ var BrainBox={
 		
 		return def.promise();
 	},
-	unload: function unload() {
+    /**
+     * @function unload
+     */
+    unload: function unload() {
 		console.log(BrainBox.traceLog(unload));
 		var foundStored=false;
 		var stored=localStorage.AtlasMaker;
@@ -171,7 +199,10 @@ var BrainBox={
     /*
 		Annotation related functions
 	*/
-	selectAnnotationTableRow: function selectAnnotationTableRow() {
+    /**
+     * @function selectAnnotationTableRow
+     */
+    selectAnnotationTableRow: function selectAnnotationTableRow() {
 		console.log(BrainBox.traceLog(selectAnnotationTableRow));
 	
 		var table=$(this).closest("tbody");
@@ -186,7 +217,10 @@ var BrainBox={
 			AtlasMakerWidget.configureAtlasMaker(BrainBox.info,index);
 		}
 	},
-	appendAnnotationTableRow: function appendAnnotationTableRow(irow,param) {
+    /**
+     * @function appendAnnotationTableRow
+     */
+    appendAnnotationTableRow: function appendAnnotationTableRow(irow,param) {
 		console.log(BrainBox.traceLog(appendAnnotationTableRow));
 		
 		$(param.table).append(param.trTemplate);
@@ -214,8 +248,12 @@ var BrainBox={
 					  break;
 			}
 		}
+		return param.table.find("td");
 	},
-	addAnnotation: function addAnnotation(param) {
+    /**
+     * @function addAnnotation
+     */
+    addAnnotation: function addAnnotation(param) {
 		console.log(BrainBox.traceLog(addAnnotation));
 		
 		var date=new Date();
@@ -239,7 +277,10 @@ var BrainBox={
 		// update in server
 		BrainBox.saveAnnotations(param);
 	},
-	removeAnnotation: function removeAnnotation(param) {
+    /**
+     * @function removeAnnotation
+     */
+    removeAnnotation: function removeAnnotation(param) {
 		console.log(BrainBox.traceLog(removeAnnotation));
 
 		// remove row from table
@@ -259,15 +300,24 @@ var BrainBox={
 		// update in server
 		BrainBox.saveAnnotations(param);
 	},
-	saveAnnotations: function saveAnnotations(param) {
+    /**
+     * @function saveAnnotations
+     */
+    saveAnnotations: function saveAnnotations(param) {
 		console.log(BrainBox.traceLog(saveAnnotations));
+		console.log(BrainBox.info);
 
 		JSON.stringify(param.info_proxy); // update BrainBox.info from info_proxy
+		
+		console.log(BrainBox.info);
 		AtlasMakerWidget.sendSaveMetadataMessage(BrainBox.info);
 		hash_old=BrainBox.hash(JSON.stringify(BrainBox.info));
 		$(param.saveWarning).hide();
 	},
-	loadLabelsets: function loadLabelsets() {
+    /**
+     * @function loadLabelsets
+     */
+    loadLabelsets: function loadLabelsets() {
 		console.log(BrainBox.traceLog(loadLabelsets));
 		
 		return $.getJSON("/api/getLabelsets",function(data) {
