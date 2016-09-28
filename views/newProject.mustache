@@ -9,6 +9,7 @@
 	<link rel="stylesheet" href="/stylesheets/style.css" />
 	<link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
 	<script src="http://code.jquery.com/jquery-2.2.4.min.js"></script>
+
 	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
 
 
@@ -226,7 +227,7 @@
 										<th>Nickname</th>
 										<th>Name</th>
 										<th>Collaborators</th>
-										<th>Atlas Files</th>
+										<th>Annotations</th>
 										<th>MRI Files</th>
 									<tr>
 								</thead>
@@ -250,7 +251,7 @@
 												</div>
 											</td>
 											<td>
-												<!-- for the atlas files -->
+												<!-- for the annotations -->
 												<div class="access" data-level=2 style="padding-top:5px; text-decoration:none; border:none">
 													<span class="view" title="view atlas files" style="padding:5px 5px 5px 0px"></span>
 													<span class="edit" title="edit atlas files" style="padding:5px 5px 5px 0px"></span>
@@ -283,7 +284,7 @@
 												</div>
 											</td>
 											<td>
-												<!-- for the atlas files -->
+												<!-- for the annotations -->
 												<div class="access" data-level=2 style="padding-top:5px; text-decoration:none; border:none">
 													<span class="view" title="view atlas files" style="padding:5px 5px 5px 0px"></span>
 													<span class="edit" title="edit atlas files" style="padding:5px 5px 5px 0px"></span>
@@ -309,7 +310,7 @@
 							</div>
 							
 							
-							<!-- Tab Content 2: Atlas Files -->
+							<!-- Tab Content 2: Annotations -->
 							<table id="atlasFiles" class="tabContent" style="padding:10px;display:none">
 								<thead>
 									<tr>
@@ -422,7 +423,7 @@
 		}
 	});
 $(function(){
-	var users = ["Katja", "Totoro"];
+	var users = ["katjaq", "r03rt0", "fdelencl42", "pithosaumon", "aniv0s"];
 	$("#nameDropdown").autocomplete({source:users});
 });
 
