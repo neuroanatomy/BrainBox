@@ -164,11 +164,7 @@ var AtlasMakerWidget = {
 		}
 		
 		// Init drawing canvas
-		me.container.append([
-			'<div id="resizable">',
-			'	<canvas id="canvas"></canvas>',
-			'</div>'
-		].join("\n"));
+		me.container.append('<div id="resizable"><canvas id="canvas"></canvas></div>');
 		me.canvas = me.container.find('canvas')[0];
 		me.context = me.canvas.getContext('2d');
 		

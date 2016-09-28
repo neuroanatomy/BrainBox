@@ -95,7 +95,7 @@ var BrainBox={
         });
 		
 		// store state on exit
-		$(window).unload(BrainBox.unload);
+		$(window).on('unload',BrainBox.unload);
 		
 		return def.promise();
 	},
