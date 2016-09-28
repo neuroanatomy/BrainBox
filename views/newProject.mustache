@@ -395,33 +395,11 @@
 	$(".add").click(onAddClicked);
 	$(".remove").click(onRemoveClicked);
 	$("#access tbody tr").click(selectRow);
-	//TODO add onblur event to the dropdown menu so it empties the content
+	/**
+	 * @todo add onblur event to the dropdown menu so it empties the content
+	 */
 
-	/*
-	// switch tabs
-	$("a.tab").click(function() {
-		$("a.tab").removeClass("selected");
-		$(this).addClass("selected");
-		$(".tabContent").hide();
-		switch($(this).text()) {
-			case "Access":
-				$("#access").show();
-				$("#atlasFiles").hide();
-				$("#MRIFiles").hide();
-				break;
-			case "Atlas Files":
-				$("#atlasFiles").show();
-				$("#access").hide();
-				$("#MRIFiles").hide();
-				break;
-			case "MRI Files":
-				$("#MRIFiles").show();
-				$("#atlasFiles").hide();
-				$("#access").hide();
-				break;
-		}
-	});
-	*/
+	
 $(function(){
 	var users = ["katjaq", "r03rt0", "fdelencl42", "pithosaumon", "aniv0s"];
 	$("#nameDropdown").autocomplete({source:users});
