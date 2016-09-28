@@ -15,15 +15,17 @@
 
 
 	<style>
-	.tab {
-		padding-right:12px;
-		padding-left:12px;
+	.selection-header {
 		padding-bottom:4px;
+		text-align:left;
 		cursor: pointer;
 		height:20px;
 	}
 	.tab.selected {
 		background:#333;
+	}
+	.tabContent {
+	    margin-left:10px;
 	}
 	tr.selected{
 		background-color:#444;
@@ -214,7 +216,7 @@
 						<div style="width:100%;min-height:400px;background:#333;padding:20px; text-decoration:none">
 						
 							<!-- Tab Content 1: Access -->
-							<a class="tab selected">Access</a>
+							<h2 class="selection-header">Access</h2>
 							<table id="access" class="tabContent" style="padding:10px;display:table">
 								<thead>
 									<tr>
@@ -305,7 +307,7 @@
 							
 							
 							<!-- Tab Content 2: Annotations -->
-							<a class="tab">Annotations</a>
+							<h2 class="selection-header">Annotations</h2>
 							<table id="atlasFiles" class="tabContent" style="padding:10px">
 								<thead>
 									<tr>
@@ -330,7 +332,7 @@
 							</table>
 							
 							<!-- Tab Content 3: MRIs -->
-							<a class="tab">MRI Files</a>
+							<h2 class="selection-header">MRI Files</h2>
 							<table id="MRIFiles" class="tabContent" style="padding:10px">
 								<thead>
 									<tr>
@@ -385,8 +387,8 @@
 </div>
 
 <script>
-	var newProjInfo='{{{newProjInfo}}}';
-	newProjInfo=JSON.parse(newProjInfo);
+	//var newProjInfo='{{{newProjInfo}}}';
+	//newProjInfo=JSON.parse(newProjInfo);
 	
 	$(".view").click(onViewClicked);
 	$(".edit").click(onEditClicked);
