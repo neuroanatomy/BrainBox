@@ -199,7 +199,7 @@ if( $.isEmptyObject(mriInfo)) {
             info_proxy: info_proxy,
             info: BrainBox.info,
             saveWarning: $("#saveAnnotations"),
-            trTemplate: [
+            trTemplate: $.map([
                 "<tr>",
                 " <td contentEditable=true class='noEmpty'></td>",
                 " <td contentEditable=true class='noEmpty'></td>",
@@ -208,7 +208,7 @@ if( $.isEmptyObject(mriInfo)) {
                 " <td></td>",
                 " <td></td>",
                 " <td><select>",BrainBox.access.map(function(o){return "<option>"+o+"</option>"}),"</select></td>",	// append label sets
-                "</tr>"].join(),
+                "</tr>"],function(o){return o}).join(),
             objTemplate: [
                 {	typeOfBinding:2,
                     path:"mri.atlas.#.name"

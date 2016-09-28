@@ -1,15 +1,8 @@
-/**
- * @page AtlasMaker: Painting commands
- */
-
 var AtlasMakerPaint = {
 	//====================================================================================
 	// Paint functions common to all users
 	//====================================================================================
-    /**
-     * @function paintxy
-     */
-    paintxy: function paintxy(u,c,x,y,usr) {
+	paintxy: function paintxy(u,c,x,y,usr) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(paintxy,1);if(l)console.log(l);
 	
@@ -49,10 +42,7 @@ var AtlasMakerPaint = {
 		usr.x0=coord.x;
 		usr.y0=coord.y;
 	},
-    /**
-     * @function paintvol
-     */
-    paintvol: function paintvol(voxels) {
+	paintvol: function paintvol(voxels) {
 		/* this function is exclusively used for undoing */
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(paintvol);if(l)console.log(l);
@@ -69,10 +59,7 @@ var AtlasMakerPaint = {
 
 		me.drawImages();
 	},
-    /**
-     * @function fill
-     */
-    fill: function fill(x,y,z,val,myView) {
+	fill: function fill(x,y,z,val,myView) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(fill);if(l)console.log(l);
 	
@@ -104,10 +91,7 @@ var AtlasMakerPaint = {
 		}
 		me.drawImages();
 	},
-    /**
-     * @function line
-     */
-    line: function line(x,y,val,usr) {
+	line: function line(x,y,val,usr) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(line,1);if(l)console.log(l);
 	
@@ -162,10 +146,7 @@ var AtlasMakerPaint = {
 		}
 		me.drawImages();
 	},
-    /**
-     * @function slice2index
-     */
-    slice2index: function slice2index(mx,my,mz,myView) {
+	slice2index: function slice2index(mx,my,mz,myView) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(slice2index,3);if(l)console.log(l);
 	
@@ -186,10 +167,7 @@ var AtlasMakerPaint = {
 		*/
 		return i;
 	},
-    /**
-     * @function slice2xyzi
-     */
-    slice2xyzi: function slice2xyzi(mx,my,mz,myView) {
+	slice2xyzi: function slice2xyzi(mx,my,mz,myView) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(slice2xyzi,1);if(l)console.log(l);
 	

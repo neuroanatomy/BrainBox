@@ -10,12 +10,6 @@ router.get('/json', controller.validator, controller.api_mri);
 
 router.get('/upload', upload_controller.token);
 
-router.post('', function(req, res){
-	console.log(req.isAuthenticated() ? req.username : "unknown user");
-
-	console.log(req);
-})
-
 router.post('/upload',
 	multer({ dest: './tmp/'}).array('atlas'),
 	upload_controller.validator,

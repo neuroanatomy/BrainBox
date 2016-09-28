@@ -64,6 +64,8 @@
 								<tr>
 									<th>Name</th>
 									<th>File</th>
+									<th>QC</th>
+									<th>QC Comment</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -183,12 +185,6 @@ function loadProjectFile(url) {
 	    if($.isEmptyObject(data) === false) {
             params.info=data;
             BrainBox.configureBrainBox(params)
-			.then(function from_project(){
-				console.log("USER: ", AtlasMakerWidget.User);
-				console.log("PROJECT: ", projectInfo);
-				AtlasMakerWidget.User.projectPage = projectInfo.shortname;
-				AtlasMakerWidget.sendUserDataMessage(JSON.stringify({projectPage:projectInfo.shortname}))
-			})
         } else {
             var info=AtlasMakerWidget.container.find("#info");
             info.html("<text x='5' y='15' fill='white'>ERROR: File is unreadable</text>");
@@ -244,7 +240,6 @@ MyLoginWidget.init($("#MyLogin"));
 	and is filled by the server, from the database.
 */
 var projectInfo={{{projectInfo}}};
-console.log(projectInfo);
 
 $("#projectName").text(projectInfo.name);
 $("#projectOwner").html("<a href='"+projectInfo.owner+"'>"+projectInfo.owner+"</a>");
@@ -274,29 +269,20 @@ $("#collaborators").append(str);
 /*
 	The list of all files included in the project
 */
-
-//setup the names of the columns
-var txtAnnotations = [];
-for (k in projectInfo.annotations.list)
-{
-	if (projectInfo.annotations.list[k].type === "text")
-	{
-		$("#projectFiles thead tr").append("<th>" + projectInfo.annotations.list[k].name + "</th>");
-		txtAnnotations.push(projectInfo.annotations.list[k]);
-		for (var f in projectInfo.files.list)
-		{
-			if (!(projectInfo.files.list[f].mri))
-				projectInfo.files.list[f].mri = {};
-			if (!(projectInfo.files.list[f].mri.annotation))
-				projectInfo.files.list[f].mri.annotation = {};
-			if (!(projectInfo.files.list[f].mri.annotation[projectInfo.annotations.list[k].name]))
-				projectInfo.files.list[f].mri.annotation[projectInfo.annotations.list[k].name] = "";
-		}
-	}
-}
-
-
 str=[];
+for(var i=0;i<projectInfo.files.list.length;i++) {
+	var filename=projectInfo.files.list[i].source.split("/").pop();
+	str+=[	"<tr>",
+			"	<td contentEditable=true class='noEmpty'></td>",
+			"	<td><a href='"+location.origin+"/mri?url="+projectInfo.files.list[i].source+"'>"+filename+"</a></td>",
+			"	<td contentEditable=true class='noEmpty'></td>",
+			"	<td contentEditable=true class='noEmpty'></td>",
+			"</tr>"].join("");
+}
+$("#projectFiles tbody").append(str);
+for(var i=0;i<projectInfo.files.list.length;i++) {
+	$("#projectFiles tbody tr:eq("+i+") td:eq(0)").text(projectInfo.files.list[i].name);
+}
 
 // select first file by default (should come from localStorage)
 var url=projectInfo.files.list[0].source;	
@@ -310,98 +296,6 @@ BrainBox.initBrainBox()
 	// connect colours close button
 	$(document).on('click', "#labels-close", function(){$("#labelset").hide()});
 });
-
-var info_proxy = {};
-
-var trTemplate = "";
-trTemplate+=[	"<tr>",
-			"	<td contentEditable=true class='noEmpty'>" + "</td>",
-			"	<td><a></a></td>"];
-
-console.log("trTemplate" , trTemplate);
-
-objTemplate = [{	typeOfBinding:2,
-                    path:"files.list.#.name"
-                },
-                {
-                	typeOfBinding:1,
-                	path:"files.list.#.source",
-                	format:function(e, d){
-                		$(e).find("a").prop("href", location.origin+"/mri?url=" + d);
-                		$(e).find("a").html(d.split("/").pop());},
-                	parse:function(e){}
-                }];
-
-
-for (var g in txtAnnotations)
-{
-	if (txtAnnotations[g].values) {
-		trTemplate += "<td><select>";
-		for (var o in txtAnnotations[g].values)
-		{
-			trTemplate+= "<option value=\"" + txtAnnotations[g].values[o] + "\"" + ">" + txtAnnotations[g].values[o] + "</option>"
-		}
-		trTemplate+= "</select></td>"
-
-		objTemplate.push({
-			typeOfBinding:2, path:"files.list.#.mri.annotation." + txtAnnotations[g].name,
-			format: (function(gg){return function(e, d){
-				$(e).find("select").prop('selectedIndex', d);}})(g),
-			parse: (function(gg){return function(e){
-				var name=$(e).find("select").val()
-				return txtAnnotations[gg].values.indexOf(name);}})(g)
-		})
-
-	}
-	else {
-		trTemplate+= "	<td contentEditable=true class='noEmpty'>" + "</td>"
-		objTemplate.push({typeOfBinding:2, path:"files.list.#.mri.annotation." + txtAnnotations[g].name})
-	}
-}
-
-trTemplate += "</tr>"
-
-var aParam = {
-            table: $("#projectFiles table"),
-            info_proxy: info_proxy, //
-            info: projectInfo, //?
-            saveWarning: null,
-            trTemplate: trTemplate,
-            objTemplate: objTemplate
-        };
-
-// BrainBox.appendAnnotationTableRow(0,bParam);
-for(var i=0;i<projectInfo.files.list.length;i++) {
-	var td = BrainBox.appendAnnotationTableRow(i,aParam);
-	td.on('blur')
-}
-
-$(document).on('blur', "#projectFiles table tbody", function(e){
-	console.log(e.target.closest('tr'));
-	tr = e.target.closest('tr');
-	var index = $(tr).index();
-	console.log(projectInfo.files.list[index]);
-
-	// BrainBox.info = projectInfo.files.list[index];
-	// BrainBox.saveAnnotations(aParam);
-
-	console.log(JSON.stringify(info_proxy));
-	console.log(projectInfo.files.list[index]);
-
-	AtlasMakerWidget.sendSaveMetadataMessage(projectInfo.files.list[index]);
-
-	//merge (projectInfo.files.list[index])
-	//saveAnnotation
-
-});
-
-//$("#projectFiles table tbody").each(function(tr){
-	
-
-//});
-
-// $(document).on('click', "#saveAnnotations", function(){BrainBox.saveAnnotations(aParam)});
-
 
 // listen to changes in file selection by clicking of the file table
 $(document).on('click', "#projectFiles tbody tr",function() {

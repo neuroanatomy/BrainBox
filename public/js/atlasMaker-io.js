@@ -1,12 +1,5 @@
-/**
- * @page AtlasMaker: Input/Output
- */
-
 var AtlasMakerIO = {
-    /**
-     * @function encodeNifti
-     */
-    encodeNifti: function encodeNifti() {
+	encodeNifti: function encodeNifti() {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(encodeNifti);if(l)console.log(l);
 	
@@ -48,10 +41,7 @@ var AtlasMakerIO = {
 				
 		return niigz.result;
 	},
-    /**
-     * @function saveNifti
-     */
-    saveNifti: function saveNifti() {
+	saveNifti: function saveNifti() {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(saveNifti);if(l)console.log(l);
 	
@@ -61,10 +51,7 @@ var AtlasMakerIO = {
 		$("a#download_atlas").attr("href",window.URL.createObjectURL(niigzBlob));
 		$("a#download_atlas").attr("download",me.User.atlasFilename);
 	},
-    /**
-     * @function loadNifti
-     */
-    loadNifti: function loadNifti(nii) {
+	loadNifti: function loadNifti(nii) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(loadNifti,1);if(l)console.log(l);
 
@@ -109,10 +96,7 @@ var AtlasMakerIO = {
 	/*
 		{Linear algebra
 	*/
-    /**
-     * @function computeS2VTransformation
-     */
-    computeS2VTransformation: function computeS2VTransformation() {
+	computeS2VTransformation: function computeS2VTransformation() {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(computeS2VTransformation);if(l)console.log(l);
 		
@@ -137,10 +121,7 @@ var AtlasMakerIO = {
 			wori: wori
 		};
 	},
-    /**
-     * @function testS2VTransformation
-     */
-    testS2VTransformation: function testS2VTransformation() {
+	testS2VTransformation: function testS2VTransformation() {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(testS2VTransformation);if(l)console.log(l);
 		
@@ -189,10 +170,7 @@ var AtlasMakerIO = {
 			console.log(mri.s2v);
 		}
 	},
-    /**
-     * @function S2I
-     */
-    S2I: function S2I(s,mri) {
+	S2I: function S2I(s,mri) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(S2I,3);if(l)console.log(l);
 		
@@ -205,20 +183,14 @@ var AtlasMakerIO = {
 			i= v[2]*mri.dim[1]*mri.dim[0]+ v[1]*mri.dim[0] +v[0];
 		return i;
 	},
-    /**
-     * @function mulMatVec
-     */
-    mulMatVec: function mulMatVec(m,v) {
+	mulMatVec: function mulMatVec(m,v) {
 		return [
 			m[0][0]*v[0]+m[0][1]*v[1]+m[0][2]*v[2],
 			m[1][0]*v[0]+m[1][1]*v[1]+m[1][2]*v[2],
 			m[2][0]*v[0]+m[2][1]*v[1]+m[2][2]*v[2]
 		];
 	},
-    /**
-     * @function invMat
-     */
-    invMat: function invMat(m) {
+	invMat: function invMat(m) {
 		var det;
 		var w=[[],[],[]];
 
@@ -238,16 +210,10 @@ var AtlasMakerIO = {
 	
 		return w;
 	},
-    /**
-     * @function subVecVec
-     */
-    subVecVec: function subVecVec(a,b) {
+	subVecVec: function subVecVec(a,b) {
 		return [a[0]-b[0],a[1]-b[1],a[2]-b[2]];
 	},
-    /**
-     * @function addVecVec
-     */
-    addVecVec: function addVecVec(a,b) {
+	addVecVec: function addVecVec(a,b) {
 		return [a[0]+b[0],a[1]+b[1],a[2]+b[2]];
 	},
 	/*

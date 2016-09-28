@@ -30,9 +30,11 @@ var project = function(req, res) {
 					req.db.get('mri').find({source:item,backup:{$exists:0}},{name:1,_id:0})
 					.then(function(obj) {
 						if(obj[0]) {
-							json.files.list[json.files.list.indexOf(item)]=obj[0];
+							json.files.list[json.files.list.indexOf(item)]={
+								source: item,
+								name: obj[0].name
+							}
 						} else {
-							//create entry in database????
 							json.files.list[json.files.list.indexOf(item)]={
 								source: item,
 								name: ""
