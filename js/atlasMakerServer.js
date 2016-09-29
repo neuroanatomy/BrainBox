@@ -403,7 +403,8 @@ var initSocketConnection = function initSocketConnection() {
 						.then(function(obj){
 							data.metadata = obj;
 							sender.send(JSON.stringify(data));
-							});
+							})
+						.catch(function(){});
 						break;
 					default :
 						break;

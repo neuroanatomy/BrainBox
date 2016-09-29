@@ -387,7 +387,6 @@
 </div>
 
 <script>
-<<<<<<< HEAD
 
 	// var newProjInfo='{{{newProjInfo}}}';
 	// newProjInfo=JSON.parse(newProjInfo);
@@ -410,15 +409,22 @@
 		if (message.type === "userNameQuery")
 		{
 			for (var i = message.metadata.length - 1; i >= 0; i--) {
-				if (usersNickname.indexOf(message.metadata[i].nickname) == -1)
+				if (usersNickname.indexOf(message.metadata[i].nickname) == -1 && message.metadata[i].nickname)
 					usersNickname.push(message.metadata[i].nickname);
-				if (usersFullname.indexOf(message.metadata[i].name) == -1)
+				if (usersFullname.indexOf(message.metadata[i].name) == -1 && message.metadata[i].name)
 					usersFullname.push(message.metadata[i].name);
+				for (var j = users.length - 1; j >= 0; j--) {
+					if (users[j]._id == message.metadata[i]._id)
+						break;
+				}
+				if (j == -1)
+					users.push(message.metadata[i]);
 			}
 			$("#nameDropdown").autocomplete({source:usersNickname});
-			$("#fullnameDropdown").autocomplete({source:usersFullname})
+			$("#fullnameDropdown").autocomplete({source:usersFullname});
 			console.log("usersNickname", usersNickname);
 			console.log("usersFullname", usersFullname);
+			console.log("users", users);
 		}
 	}
 
@@ -432,39 +438,28 @@
 	}
 	$(".newFullName").keyup(QueryUserFullnames);
 	
+	function selectUserName(event, ui){
+		for (var k = 0; k < users.length; k++) {
+			if (users[k].name == ui.item.value)
+				console.log("You have Selected :", users[k]);
+		}
+	}
+	function selectUserNickname(event, ui){
+		for (var k = 0; k < users.length; k++) {
+			if (users[k].nickname == ui.item.value)
+				console.log("You have Selected :", users[k]);
+		}
+	}
 
-	
-	// // switch tabs
-	// $("a.tab").click(function() {
-	// 	$("a.tab").removeClass("selected");
-	// 	$(this).addClass("selected");
-	// 	$(".tabContent").hide();
-	// 	switch($(this).text()) {
-	// 		case "Access":
-	// 			$("#access").show();
-	// 			$("#atlasFiles").hide();
-	// 			$("#MRIFiles").hide();
-	// 			break;
-	// 		case "Atlas Files":
-	// 			$("#atlasFiles").show();
-	// 			$("#access").hide();
-	// 			$("#MRIFiles").hide();
-	// 			break;
-	// 		case "MRI Files":
-	// 			$("#MRIFiles").show();
-	// 			$("#atlasFiles").hide();
-	// 			$("#access").hide();
-	// 			break;
-	// 	}
-	// });
 var usersNickname;
 var usersFullname;
+var users = [];
 
 $(function(){
 	usersNickname = [];
 	usersFullname = [];
-	$("#nameDropdown").autocomplete({source:usersNickname});
-	$("#fullnameDropdown").autocomplete({source:usersFullname});
+	$("#nameDropdown").autocomplete({source:usersNickname, select:selectUserNickname});
+	$("#fullnameDropdown").autocomplete({source:usersFullname, select:selectUserName});
 });
 
 
