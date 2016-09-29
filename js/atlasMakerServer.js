@@ -358,7 +358,7 @@ var initSocketConnection = function initSocketConnection() {
 			
 			s.on('message',function message_fromInitSocketConnection(msg) {
 			    traceLog(message_fromInitSocketConnection,1);
-			    
+			    var sender = this;
 				var sourceUS=getUserFromSocket(this);
 				var data={};
 				
@@ -396,6 +396,19 @@ var initSocketConnection = function initSocketConnection() {
 						break;
 				}
 
+
+				switch(data.type) {
+					case "userNameQuery":
+						var result = queryUserName(data)
+						.then(function(obj){
+							data.metadata = obj;
+							sender.send(JSON.stringify(data));
+							});
+						break;
+					default :
+						break;
+				}
+
 				// broadcast
 				var n=0;
 				for(var i in websocket.clients) {
@@ -404,6 +417,7 @@ var initSocketConnection = function initSocketConnection() {
 					
 					// do not auto-broadcast
 					if(sourceUS.uid===targetUS.uid) {
+						sender = websocket.clients[i];
 						if(debug>1) console.log("    no broadcast to self");
 						continue;
 					}
@@ -499,6 +513,33 @@ var initSocketConnection = function initSocketConnection() {
 	}
 }
 this.initSocketConnection = initSocketConnection;
+
+var queryUserName = function queryUserName(data){
+	return new Promise(function(resolve, reject){
+		if (data.metadata && data.metadata.nickname) {
+			db.get('user')
+			.find(
+				{"nickname": {'$regex': data.metadata.nickname}},
+				{fields:["nickname", "name"],limit:10})
+				.then(function(obj){
+					console.log(obj);
+					resolve(obj);
+				});
+		}
+		else if (data.metadata && data.metadata.name) {
+			db.get('user')
+			.find(
+				{"name": {'$regex': data.metadata.name}},
+				{fields:["nickname", "name"],limit:10})
+				.then(function(obj){
+					console.log(obj);
+					resolve(obj);
+				});
+		}
+		else
+			reject();
+	});
+}
 
 var receivePaintMessage = function receivePaintMessage(data) {
     traceLog(receivePaintMessage,2);

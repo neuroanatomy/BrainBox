@@ -265,8 +265,8 @@
 										</tr>
 									{{/collaborators}}
 									<tr>
-											<td id="nameDropdown" class="noEmpty dropdown" contenteditable="true"></td>
-											<td id="fullnameDropdown" class="noEmpty dropdown" contenteditable="true"></td>
+											<td id="nameDropdown" class="noEmpty dropdown newSurname" contenteditable="true"></td>
+											<td id="fullnameDropdown" class="noEmpty dropdown newFullName" contenteditable="true"></td>
 											<td>
 												<!-- data level: access level from 0 to 4; access cascade: no access > view > edit > add > remove -->
 												<!-- for the collaborators -->
@@ -385,6 +385,7 @@
 </div>
 
 <script>
+
 	// var newProjInfo='{{{newProjInfo}}}';
 	// newProjInfo=JSON.parse(newProjInfo);
 	
@@ -393,7 +394,41 @@
 	$(".add").click(onAddClicked);
 	$(".remove").click(onRemoveClicked);
 	$("#access tbody tr").click(selectRow);
-	//TODO add onblur event to the dropdown menu so it empties the content
+
+	var host = "ws://" + window.location.hostname + ":8080/";
+	if (window.WebSocket) {
+		ws=new WebSocket(host);
+	} else if (window.MozWebSocket) {
+		ws=new MozWebSocket(host);
+	}
+
+	ws.onmessage = function(message){
+		message = JSON.parse(message.data)
+		if (message.type === "userNameQuery")
+		{
+			for (var i = message.metadata.length - 1; i >= 0; i--) {
+				if (usersNickname.indexOf(message.metadata[i].nickname) == -1)
+					usersNickname.push(message.metadata[i].nickname);
+				if (usersFullname.indexOf(message.metadata[i].name) == -1)
+					usersFullname.push(message.metadata[i].name);
+			}
+			$("#nameDropdown").autocomplete({source:usersNickname});
+			$("#fullnameDropdown").autocomplete({source:usersFullname})
+			console.log("usersNickname", usersNickname);
+			console.log("usersFullname", usersFullname);
+		}
+	}
+
+	function QueryUserNicknames(e){
+		ws.send(JSON.stringify({"type":"userNameQuery", "metadata":{"nickname":$(e.currentTarget).text()}}));
+	}
+	$(".newSurname").keyup(QueryUserNicknames);
+
+	function QueryUserFullnames(e){
+		ws.send(JSON.stringify({"type":"userNameQuery", "metadata":{"name":$(e.currentTarget).text()}}));
+	}
+	$(".newFullName").keyup(QueryUserFullnames);
+	
 
 	
 	// // switch tabs
@@ -419,10 +454,13 @@
 	// 			break;
 	// 	}
 	// });
-	
+var usersNickname;
+var usersFullname;
 $(function(){
-	var users = ["katjaq", "r03rt0", "fdelencl42", "pithosaumon", "aniv0s"];
-	$("#nameDropdown").autocomplete({source:users});
+	usersNickname = [];
+	usersFullname = [];
+	$("#nameDropdown").autocomplete({source:usersNickname});
+	$("#fullnameDropdown").autocomplete({source:usersFullname});
 });
 
 

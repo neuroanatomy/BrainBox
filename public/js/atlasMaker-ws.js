@@ -27,7 +27,8 @@ var AtlasMakerWS = {
 		
 		if(me.debug)
 			console.log("[initSocketConnection] host:",host);
-		me.progress.html("Connecting...");
+		if (me.progress)
+			me.progress.html("Connecting...");
 		
 		try {
 			me.socket = me.createSocket(host);
