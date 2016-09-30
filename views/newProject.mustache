@@ -11,10 +11,10 @@
 	<link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
 
 	<style>
+	/******************************** table ***************************************/
 	.selection-header {
 		padding-bottom:4px;
 		text-align:left;
-		cursor: pointer;
 		height:20px;
 	}
 	.tab.selected {
@@ -42,6 +42,8 @@
 	#MRIFiles a, #annotations a, #access a {
 		text-decoration:none;
 	}
+
+	/************************************ drobdown menu ********************************/
 	.autocomplete {
 		border:none;
 		border-radius: 0px;
@@ -79,15 +81,16 @@
 	  	margin: none;
 	  	padding: none;
 	}
-	/*body {
-		background-color: #333;
-	}*/
 
 	.access {
         padding-top:5px;
         text-decoration:none;
         border:none;
     }
+
+	/**************************************** access cascade icons ********************************/ 
+	/* view */
+
 	.view, .edit, .add, .remove {
 		cursor: pointer;
 		padding:5px 5px 5px 0px;
@@ -168,6 +171,188 @@
 		display: inline-block;
 	}
 
+	/*************************** resizable layout **************************/
+
+
+	#littleDescription:empty:before {
+	content:'Enter project description';
+	color:rgba(255,255,255,0.4);
+	outline: none;
+}
+	#littleDescription:focus:before {
+	content: none !important;
+	}
+
+	#littleDescription {
+	outline: none;
+}
+
+	#projImage {
+		background:#333;
+		width:200px;
+		height:200px;
+		display: inline-block;
+		vertical-align: top;
+	}
+
+	#projDescription {
+		display: inline-block;
+		position: relative;
+		top: 220px;
+		left: 0px;
+		
+	}
+
+	#projTable {		
+		min-height:400px;
+		max-width: 900px;
+		background:#333;
+		padding:20px; 
+		text-decoration:none;
+		display:block;
+	}
+	
+	/* for larger screen (computer, big iPad, small iPad landscape) */
+	@media all and (min-width: 1023px) {
+		#centeringDiv {
+			display:block;
+			width:984px;
+			margin:0 auto;
+			padding:20px;
+			position:relative;
+			height:100%
+		}
+		#projImage {
+			position:relative;
+			top: 0px;
+			left: 0px;
+		}
+		
+		#projDescription {
+			position: absolute;
+			top: 220px;
+			left: 20px;
+			width: 200px;
+		}
+		
+		#projTable {
+			position: absolute;
+			max-width: 900px;
+			width: calc(100% - 300px);
+			top:20px;
+			padding:20px;
+			left:240px;
+		}
+	}
+
+	/* for smaller screen (small iPad portrait) */ 
+	@media not all and (min-width: 1023px) {
+		#centeringDiv {
+			display:block;
+			width:700px;
+			margin:0 auto;
+			padding:20px;
+			position:relative;
+			height:100%
+		}
+		#projImage {
+			position:relative;
+			top: 0px;
+			left: 0px;
+		}
+		#projDescription {
+			position: relative;
+			display: inline-block;
+			top: 0px;
+			left: 0px;
+			padding-left:20px;
+			padding-right: 20px;
+			width:calc(100% - 250px);
+			text-align: justify;
+		}
+		#projTable {
+			position: relative;
+			max-width: 700px;
+			width:calc(100% - 40px);
+			vertical-align: top;
+			top: 20px;
+			left: 0px;
+		}
+	}
+
+	/* for even smaller screen (phone) */ 
+	@media not all and (min-width: 739px) {
+		#centeringDiv {
+			display:block;
+			text-align: center;
+			width:600px;
+			margin:0 auto;
+			padding:10px;
+			position:relative;
+			height:100%
+		}
+		#projImage {
+			position:relative;
+			top: 0px;
+			left: 0px;
+		}
+		#projDescription {
+			position: relative;
+			/*display: inline-block;*/
+			vertical-align: top;
+			top: 0px;
+			left: 0px;
+			padding-left:10px;
+			width:calc(100% - 20px);
+			text-align: justify;
+		}
+		#projTable {
+			position: relative;
+			max-width: 600px;
+			width:calc(100% - 40px);
+			vertical-align: top;
+			top: 20px;
+			left: 0px;
+		}
+	}
+	/* for even still smaller screen (phone) */ 
+	@media not all and (min-width: 639px) {
+		#centeringDiv {
+			display:block;
+			text-align: center;
+			width:480px;
+			margin:0 auto;
+			padding:10px;
+			position:relative;
+			height:100%
+		}
+		#projImage {
+			position:relative;
+			top: 0px;
+			left: 0px;
+		}
+		#projDescription {
+			position: relative;
+			/*display: inline-block;*/
+			vertical-align: top;
+			top: 0px;
+			left: 0px;
+			padding-left:10px;
+			width:calc(100% - 20px);
+			text-align: justify;
+		}
+		#projTable {
+			position: relative;
+			max-width: 420px;
+			width:calc(100% - 40px);
+			vertical-align: top;
+			top: 20px;
+			left: 0px;
+		}
+	}
+
+
+
 	</style>
 
 </head>
@@ -196,17 +381,16 @@
 	</div>
 	
 	<!-- Content (variable height) -->
-	<div id="content" style="flex:1 0 auto;justify-content:center">
+	<div id="content" style="flex:1 0 auto;justify-content:center;position:relative">
 	
-		<table style="margin:auto;width:1000px">
-			<tr>
-				<td style="width:250px;margin:1rem;vertical-align:top">
-					<div style="background:#333;width:200px;height:200px;margin-left:25px">
-						<!--
-						<img src='{{{avatar}}}' style="width:100%"/>
-						-->
-						<svg width="100%" height="100%"></svg>
-					</div>
+		<!-- to center -->
+		<div id="centeringDiv">
+
+				<div id="projImage">
+					<svg width="100%" height="100%"></svg>
+				</div>
+				
+				<div id="projectDescription">
 					<h1>{{project}} project</h1>
 					<h2> link to project's website</h2>
 					<p>little project description</p>
@@ -214,10 +398,9 @@
 					<p>{{numAtlas}} Atlas Files
 					<p>{{username}} Owner
 					<p>{{numCollaborators}} Collaborators
-				</td>			
-				<td style="margin:1rem;vertical-align:top">
-					<div style="width:100%">
-						<div style="width:100%;min-height:400px;background:#333;padding:20px; text-decoration:none">
+				</div>
+				
+				<div id="projTable">
 						
 							<!-- Tab Content 1: Access -->
 							<h2 class="selection-header">Access</h2>
@@ -280,11 +463,9 @@
 							<h2>Save Changes</h2>
 							<h2>Cancel</h2>
 	
-						</div>
-					</div>
-				</td>
-			</tr>
-		</table>
+				</div>
+		</div>
+		<!-- end of centering div -->
 
 	</div>
 	<!-- End Content -->
