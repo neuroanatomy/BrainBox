@@ -374,7 +374,6 @@ var initSocketConnection = function initSocketConnection() {
 				    console.log("data type:",data.type);
 				}
 
-				// integrate paint messages
 				switch(data.type) {
 					case "userData":
 						receiveUserDataMessage(data,this);
@@ -394,16 +393,12 @@ var initSocketConnection = function initSocketConnection() {
 					case "echo":
 						console.log("ECHO: '"+data.msg+"' from user "+data.username);
 						break;
-				}
-
-
-				switch(data.type) {
 					case "userNameQuery":
 						var result = queryUserName(data)
 						.then(function(obj){
 							data.metadata = obj;
 							sender.send(JSON.stringify(data));
-							})
+                        })
 						.catch(function(){});
 						break;
 					default :

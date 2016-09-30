@@ -620,7 +620,7 @@ var AtlasMakerInteraction = {
 		if(e.which==13 && $(e.target).attr('contenteditable')) {
             e.preventDefault();
             return;
-        }  
+        }
 		
 		if(e.target.tagName!="BODY")
 			return;
