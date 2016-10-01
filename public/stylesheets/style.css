@@ -17,7 +17,7 @@
 	transform:translate(-50%,0);
 	width:250px;
  }
- input#url {
+ input#url, input#projectName {
 	width:calc(100% - 8px);
 	height:32px;
 	border:0px;
@@ -27,11 +27,6 @@
  #go {
 	 height:30px;
 	 width:30px;
-	 border:1px solid #ddd;
-	 border-radius:6px;
-	 color:#ddd;
-	 text-align:center;
-	 -webkit-appearance:none;
  }
  h1 {
  	font-size: 1rem;
@@ -314,6 +309,14 @@ li {
 	margin-bottom:1rem;
 }
 
+.pushButton {
+    border:1px solid #ddd;
+    border-radius:6px;
+    color:#ddd;
+    text-align:center;
+    -webkit-appearance:none;
+    cursor: pointer;
+}
 /* svg buttons
 ----------------------- */
 img.button {

@@ -1,7 +1,3 @@
-/**
- * @page AtlasMaker
- */
-
 var AtlasMakerWidget = {
 	//========================================================================================
 	// Globals
@@ -81,18 +77,12 @@ var AtlasMakerWidget = {
 	/* DEPRECATED Undo:[], */
 	version:	1, // version of the configuration file (slice number, plane, etc). Default=1
 
-	/**
-	 * @function traceLog
-	 */
 	traceLog: function traceLog(f,l) {
 		var me=AtlasMakerWidget;
 		if(l==undefined || me.debug>l)
 			return "am> "+(f.name)+" "+(f.caller?(f.caller.name||"annonymous"):"root");
 	},
-    /**
-     * @function quit
-     */
-    quit: function quit() {
+	quit: function quit() {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(quit);if(l)console.log(l);
 	
@@ -103,10 +93,7 @@ var AtlasMakerWidget = {
 	//==========
 	// Database
 	//==========
-    /**
-     * @function logToDatabase
-     */
-    logToDatabase: function logToDatabase(key,value) {
+	logToDatabase: function logToDatabase(key,value) {
 		var def=$.Deferred();
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(logToDatabase,1);if(l)console.log(l);
@@ -131,10 +118,7 @@ var AtlasMakerWidget = {
 	//====================================================================================
 	// Configuration
 	//====================================================================================
-    /**
-     * @function initAtlasMaker
-     */
-    initAtlasMaker: function initAtlasMaker(elem) {
+	initAtlasMaker: function initAtlasMaker(elem) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(initAtlasMaker);if(l)console.log(l);
 	
@@ -233,10 +217,7 @@ var AtlasMakerWidget = {
 						
 		return def.promise();
 	},
-    /**
-     * @function configureAtlasMaker
-     */
-    configureAtlasMaker: function configureAtlasMaker(info,index) {
+	configureAtlasMaker: function configureAtlasMaker(info,index) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(configureAtlasMaker);if(l)console.log(l);
 		
@@ -269,10 +250,7 @@ var AtlasMakerWidget = {
 			return def.promise();
 		});
 	},
-    /**
-     * @function configureOntology
-     */
-    configureOntology: function configureOntology(json) {
+	configureOntology: function configureOntology(json) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(configureOntology);if(l)console.log(l);
 
@@ -280,10 +258,7 @@ var AtlasMakerWidget = {
 		me.ontology.valueToIndex=[];
 		me.ontology.labels.forEach(function(o,i){me.ontology.valueToIndex[o.value]=i});
 	},
-    /**
-     * @function configureMRI
-     */
-    configureMRI: function configureMRI(info,index) {
+	configureMRI: function configureMRI(info,index) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(configureMRI);if(l)console.log(l);
 

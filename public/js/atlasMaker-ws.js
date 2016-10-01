@@ -1,15 +1,8 @@
-/**
- * @page AtlasMaker: WebSockets
- */
-
 var AtlasMakerWS = {
 	//====================================================================================
 	// Web sockets
 	//====================================================================================
-    /**
-     * @function createSocket
-     */
-    createSocket: function createSocket(host) {
+	createSocket: function createSocket(host) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(createSocket);if(l)console.log(l);
 	
@@ -23,10 +16,7 @@ var AtlasMakerWS = {
 
 		return ws;
 	},
-    /**
-     * @function initSocketConnection
-     */
-    initSocketConnection: function initSocketConnection() {
+	initSocketConnection: function initSocketConnection() {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(initSocketConnection);if(l)console.log(l);
 			
@@ -37,7 +27,8 @@ var AtlasMakerWS = {
 		
 		if(me.debug)
 			console.log("[initSocketConnection] host:",host);
-		me.progress.html("Connecting...");
+		if (me.progress)
+			me.progress.html("Connecting...");
 		
 		try {
 			me.socket = me.createSocket(host);
@@ -69,10 +60,7 @@ var AtlasMakerWS = {
 		
 		return def.promise();
 	},
-    /**
-     * @function receiveSocketMessage
-     */
-    receiveSocketMessage: function receiveSocketMessage(msg) {
+	receiveSocketMessage: function receiveSocketMessage(msg) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(receiveSocketMessage,1);if(l)console.log(l);
 
@@ -97,9 +85,6 @@ var AtlasMakerWS = {
 		*/
 	
 		switch(data.type) {
-			case "saveMetadata" :
-				me.receiveMetaData(data);
-				break;
 			case "userData":
 				me.receiveUserDataMessage(data);
 				break;
@@ -120,10 +105,7 @@ var AtlasMakerWS = {
 				break;
 		}
 	},
-    /**
-     * @function sendUserDataMessage
-     */
-    sendUserDataMessage: function sendUserDataMessage(description) {
+	sendUserDataMessage: function sendUserDataMessage(description) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(sendUserDataMessage,1);if(l)console.log(l);
 
@@ -142,10 +124,7 @@ var AtlasMakerWS = {
 			console.log("ERROR: Unable to sendUserDataMessage",ex);
 		}
 	},
-    /**
-     * @function receiveBinaryMessage
-     */
-    receiveBinaryMessage: function receiveBinaryMessage(msgData) {
+	receiveBinaryMessage: function receiveBinaryMessage(msgData) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(receiveBinaryMessage,1);if(l)console.log(l);
 		
@@ -216,10 +195,7 @@ var AtlasMakerWS = {
         };
         fileReader.readAsArrayBuffer(msgData);
 	},
-    /**
-     * @function receiveUserDataMessage
-     */
-    receiveUserDataMessage: function receiveUserDataMessage(data) {
+	receiveUserDataMessage: function receiveUserDataMessage(data) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(receiveUserDataMessage);if(l)console.log(l);
 
@@ -255,10 +231,7 @@ var AtlasMakerWS = {
 		var	v,nusers=1; for(v in me.Collab) nusers++;
 		$("#chat").text("Chat ("+nusers+" connected)");
 	},
-    /**
-     * @function sendChatMessage
-     */
-    sendChatMessage: function sendChatMessage() {
+	sendChatMessage: function sendChatMessage() {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(sendChatMessage);if(l)console.log(l);
 	
@@ -275,10 +248,7 @@ var AtlasMakerWS = {
 			console.log("ERROR: Unable to sendChatMessage",ex);
 		}
 	},
-    /**
-     * @function receiveChatMessage
-     */
-    receiveChatMessage: function receiveChatMessage(data) {
+	receiveChatMessage: function receiveChatMessage(data) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(receiveChatMessage);if(l)console.log(l);
 		console.log(data);
@@ -290,10 +260,7 @@ var AtlasMakerWS = {
 		$("#log").append(msg);
 		$("#log").scrollTop($("#log")[0].scrollHeight);
 	},
-    /**
-     * @function sendPaintMessage
-     */
-    sendPaintMessage: function sendPaintMessage(msg) {
+	sendPaintMessage: function sendPaintMessage(msg) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(sendPaintMessage,1);if(l)console.log(l);
 	
@@ -305,10 +272,7 @@ var AtlasMakerWS = {
 			console.log("ERROR: Unable to sendPaintMessage",ex);
 		}
 	},
-    /**
-     * @function receivePaintMessage
-     */
-    receivePaintMessage: function receivePaintMessage(data) {
+	receivePaintMessage: function receivePaintMessage(data) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(receivePaintMessage,3);if(l)console.log(l);
 	
@@ -320,10 +284,7 @@ var AtlasMakerWS = {
 
 		me.paintxy(u,c,x,y,me.Collab[u]);
 	},
-    /**
-     * @function receivePaintVolumeMessage
-     */
-    receivePaintVolumeMessage: function receivePaintVolumeMessage(data) {
+	receivePaintVolumeMessage: function receivePaintVolumeMessage(data) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(receivePaintVolumeMessage);if(l)console.log(l);
 	
@@ -332,10 +293,7 @@ var AtlasMakerWS = {
 		voxels=data.data;
 		me.paintvol(voxels.data);
 	},
-    /**
-     * @function sendUndoMessage
-     */
-    sendUndoMessage: function sendUndoMessage() {
+	sendUndoMessage: function sendUndoMessage() {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(sendUndoMessage);if(l)console.log(l);
 	
@@ -347,10 +305,7 @@ var AtlasMakerWS = {
 			console.log("ERROR: Unable to sendUndoMessage",ex);
 		}
 	},
-    /**
-     * @function sendRequestSliceMessage
-     */
-    sendRequestSliceMessage: function sendRequestSliceMessage() {
+	sendRequestSliceMessage: function sendRequestSliceMessage() {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(sendRequestSliceMessage,1);if(l)console.log(l);
 
@@ -372,24 +327,7 @@ var AtlasMakerWS = {
 			console.log("ERROR: Unable to sendRequestSliceMessage",ex);
 		}
 	},
-	receiveMetaData: function receiveMetaData(data) {
-		console.log(info_proxy);
-		console.log(info_proxy.files);
-		for (var i in projectInfo.files.list) {
-			if (projectInfo.files.list[i].source == data.metadata.source) {
-				for (var key in projectInfo.files.list[i].mri.annotation) {
-					info_proxy["files.list." + i + ".mri.annotation." + key] = data.metadata.mri.annotation[key];
-				}
-				info_proxy["files.list." + i + ".name"] = data.metadata.name;
-				break;
-			}
-		}
-		console.log("JUST RECIEVED SOME MORE DATA", data.metadata);
-	},
-    /**
-     * @function sendSaveMetadataMessage
-     */
-    sendSaveMetadataMessage: function sendSaveMetadataMessage(info) {
+	sendSaveMetadataMessage: function sendSaveMetadataMessage(info) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(sendSaveMetadataMessage,1);if(l)console.log(l);
 			
@@ -401,10 +339,7 @@ var AtlasMakerWS = {
 			console.log("ERROR: Unable to sendSaveMetadataMessage",ex);
 		}
 	},
-    /**
-     * @function receiveDisconnectMessage
-     */
-    receiveDisconnectMessage: function receiveDisconnectMessage(data) {
+	receiveDisconnectMessage: function receiveDisconnectMessage(data) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(receiveDisconnectMessage);if(l)console.log(l);
 
