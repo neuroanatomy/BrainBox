@@ -366,7 +366,7 @@ $("body").on('mousemove',function(e) {
 $("body").on('mouseup',function(e){$("#resizeButton").data({flag:-1})});
 
 $("#addProject").click(function(){location="/project/new"});
-$("#settings").click(function(){location+="settings"});
+$("#settings").click(function(){var arr=location.split("/");arr.push("settings");location=arr.join("/")});
 
 </script>
 
