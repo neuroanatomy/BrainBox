@@ -4,6 +4,7 @@ var BrainBox={
 	info:{},
 	labelSets:null,
 	access:["Read/Write","Read"],
+	annotationType:["volume","text"],
 
 	traceLog: function traceLog(f,l) {
 		if(l==undefined || BrainBox.debug>l)
