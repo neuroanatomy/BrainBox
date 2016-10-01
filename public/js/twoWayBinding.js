@@ -45,7 +45,8 @@ function bind2(proxy,original,path,el,format,parse) {
 			else
 				$(el).text(v);
 		},
-		enumerable:true
+		configurable: true,
+		enumerable: true
 	});
 	proxy[path]=o[k[i]];
 }
@@ -74,7 +75,8 @@ function bind2(proxy,original,path,el,format,parse) {
 			else
 				$(el).text(v);
 		},
-		enumerable:true
+		configurable: true,
+		enumerable: true
 	});
 	proxy[path]=o[k[i]];
 }
