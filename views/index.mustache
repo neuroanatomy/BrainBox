@@ -16,10 +16,9 @@
 	<!-- Login (fixed height) -->
 	<div style="flex:0 0 64px">
 		<div id="menu">
-			<img id="addProject" title="add project" style='width:13px' src='/img/plus.svg'/>
-			<img id="settings" title="settings" style='width:13px' src='/img/settings.svg'/>
-			<img id="search" title="search" style='width:13px' src='/img/search.svg'/>
-			<img id="doc" title="documentation" style='width:13px' src='/img/doc.svg'/>
+			<img id="addProject" class="button" title="add project" style='width:13px' src='/img/plus.svg'/>
+			<img id="search" class="button" title="search" style='width:13px' src='/img/search.svg'/>
+			<img id="doc" class="button" title="documentation" style='width:13px' src='/img/doc.svg'/>
 			<div id="MyLogin">
 				<span>{{{login}}}</span>
 			</div>
@@ -49,7 +48,7 @@
 							<input id="url" type="text" placeholder="Enter the URL of an MRI (.nii.gz)"></input>
 						</div>
 						<div style="flex:0 0 32px">
-							<div id="go" onclick="goToURL()">Go</div>
+							<div id="go" class="pushButton" onclick="goToURL()">Go</div>
 						</div>
 					</div>
 				</div>
@@ -225,6 +224,7 @@ function goToURL(e) {
 	var url=$("#url").val();
 	location="/mri?url="+url;
 };
+$("#addProject").click(function(){location="/project/new"});
 </script>
 
 
