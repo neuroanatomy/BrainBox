@@ -30,16 +30,16 @@
 	<!-- Header -->
 	<div style="flex:0 0 100px">
 		<a href='/'>
-			<img style='position:fixed;left:10px;top:5px;width:200px' src='/img/brainbox-logo-small_noFont.svg'/>
+			<img style='position:absolute;left:10px;top:5px;width:200px' src='/img/brainbox-logo-small_noFont.svg'/>
 		</a>
-		<div style="position:fixed;left:73px;top:21px;width:auto; font-family: Roboto, sans-serif; font-size: 36px; font-weight:300">
+		<div style="position:absolute;left:73px;top:21px;width:auto; font-family: Roboto, sans-serif; font-size: 36px; font-weight:300">
 			{{projectName}}
 		</div>
 		<div id="menu">
-			<img id="addProject" title="Add project" style='width:13px' src='/img/plus.svg'/>
-			<img id="settings" title="Settings" style='width:13px' src='/img/settings.svg'/>
-			<img id="search" title="Search" style='width:13px' src='/img/search.svg'/>
-			<img id="doc" title="Documentation" style='width:13px' src='/img/doc.svg'/>
+			<img id="addProject" class="button" title="Add project" style='width:13px' src='/img/plus.svg'/>
+			<img id="settings" class="button" title="Settings" style='width:13px' src='/img/settings.svg'/>
+			<img id="search" class="button" title="Search" style='width:13px' src='/img/search.svg'/>
+			<img id="doc" class="button" title="Documentation" style='width:13px' src='/img/doc.svg'/>
 			<div id="MyLogin">
 				<span>{{{login}}}</span>
 			</div>
@@ -137,12 +137,6 @@
 			</div>
 
 		</div>
-	</div>
-	<!-- NAAT logo down right corner -->
-	<div id="NAATlogo" class="project-page">
-		<a target="_blank" href="http://neuroanatomy.github.io">
-			<img src="/img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/>
-		</a>
 	</div>
 </div>
 
@@ -370,6 +364,9 @@ $("body").on('mousemove',function(e) {
 	}
 });
 $("body").on('mouseup',function(e){$("#resizeButton").data({flag:-1})});
+
+$("#addProject").click(function(){location="/project/new"});
+$("#settings").click(function(){location+="settings"});
 
 </script>
 

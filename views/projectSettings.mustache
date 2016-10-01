@@ -7,8 +7,9 @@
     <title>{{title}}</title>
 	
 	<link rel="stylesheet" href="/stylesheets/style.css" />
+	
 	<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-	<link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
+	<link rel="stylesheet" href='https://fonts.googleapis.com/css?family=Roboto:100' type='text/css'>
 
 	<style>
 	/******************************** table ***************************************/
@@ -43,7 +44,7 @@
 		text-decoration:none;
 	}
 
-	/************************************ drobdown menu ********************************/
+	/************************************ dropdown menu ********************************/
 	.autocomplete {
 		border:none;
 		border-radius: 0px;
@@ -175,66 +176,63 @@
 
 
 	#littleDescription:empty:before {
-	content:'Enter project description';
-	color:rgba(255,255,255,0.4);
-	outline: none;
+        content:'Enter project description';
+        color:rgba(255,255,255,0.4);
+        outline: none;
 }
 	#littleDescription:focus:before {
-	content: none !important;
+        content: none !important;
 	}
 
 	#littleDescription {
-	outline: none;
-}
+        outline: none;
+    }
 
+    #centeringDiv {
+        display:block;
+        position:relative;
+        margin:0 auto;
+    }
 	#projImage {
+		display: inline-block;
 		background:#333;
 		width:200px;
 		height:200px;
-		display: inline-block;
+        position:relative;
+        top: 0px;
+        left: 0px;
 		vertical-align: top;
 	}
-
 	#projDescription {
 		display: inline-block;
 		position: relative;
 		top: 220px;
 		left: 0px;
-		
+        vertical-align: top;
 	}
-
 	#projTable {		
+		display:inline-block;
 		min-height:400px;
 		max-width: 900px;
 		background:#333;
 		padding:20px; 
 		text-decoration:none;
-		display:block;
+        vertical-align: top;
 	}
 	
 	/* for larger screen (computer, big iPad, small iPad landscape) */
 	@media all and (min-width: 1023px) {
 		#centeringDiv {
-			display:block;
 			width:984px;
-			margin:0 auto;
 			padding:20px;
-			position:relative;
 			height:100%
 		}
-		#projImage {
-			position:relative;
-			top: 0px;
-			left: 0px;
-		}
-		
 		#projDescription {
 			position: absolute;
 			top: 220px;
 			left: 20px;
 			width: 200px;
-		}
-		
+		}		
 		#projTable {
 			position: absolute;
 			max-width: 900px;
@@ -248,21 +246,12 @@
 	/* for smaller screen (small iPad portrait) */ 
 	@media not all and (min-width: 1023px) {
 		#centeringDiv {
-			display:block;
 			width:700px;
-			margin:0 auto;
 			padding:20px;
-			position:relative;
 			height:100%
-		}
-		#projImage {
-			position:relative;
-			top: 0px;
-			left: 0px;
 		}
 		#projDescription {
 			position: relative;
-			display: inline-block;
 			top: 0px;
 			left: 0px;
 			padding-left:20px;
@@ -274,7 +263,6 @@
 			position: relative;
 			max-width: 700px;
 			width:calc(100% - 40px);
-			vertical-align: top;
 			top: 20px;
 			left: 0px;
 		}
@@ -283,23 +271,13 @@
 	/* for even smaller screen (phone) */ 
 	@media not all and (min-width: 739px) {
 		#centeringDiv {
-			display:block;
 			text-align: center;
 			width:600px;
-			margin:0 auto;
 			padding:10px;
-			position:relative;
 			height:100%
-		}
-		#projImage {
-			position:relative;
-			top: 0px;
-			left: 0px;
 		}
 		#projDescription {
 			position: relative;
-			/*display: inline-block;*/
-			vertical-align: top;
 			top: 0px;
 			left: 0px;
 			padding-left:10px;
@@ -310,7 +288,6 @@
 			position: relative;
 			max-width: 600px;
 			width:calc(100% - 40px);
-			vertical-align: top;
 			top: 20px;
 			left: 0px;
 		}
@@ -318,23 +295,13 @@
 	/* for even still smaller screen (phone) */ 
 	@media not all and (min-width: 639px) {
 		#centeringDiv {
-			display:block;
 			text-align: center;
 			width:480px;
-			margin:0 auto;
 			padding:10px;
-			position:relative;
 			height:100%
-		}
-		#projImage {
-			position:relative;
-			top: 0px;
-			left: 0px;
 		}
 		#projDescription {
 			position: relative;
-			/*display: inline-block;*/
-			vertical-align: top;
 			top: 0px;
 			left: 0px;
 			padding-left:10px;
@@ -345,13 +312,10 @@
 			position: relative;
 			max-width: 420px;
 			width:calc(100% - 40px);
-			vertical-align: top;
 			top: 20px;
 			left: 0px;
 		}
 	}
-
-
 
 	</style>
 
@@ -364,16 +328,17 @@
 	<!-- Header -->
 	<div style="flex:0 0 100px">
 		<a href='/'>
-			<img style='position:fixed;left:10px;top:5px;width:200px' src='/img/brainbox-logo-small_noFont.svg'/>
+			<img style='position:absolute;left:10px;top:5px;width:200px' src='/img/brainbox-logo-small_noFont.svg'/>
 		</a>
-		<div style="position:fixed;left:73px;top:21px;width:auto; font-family: Roboto, sans-serif; font-size: 36px; font-weight:300">
-			{{nickname}}
-		</div>
+        <a href='{{projectURL}}'>
+            <div style="position:absolute;left:73px;top:21px;width:auto; font-family: Roboto, sans-serif; font-size: 36px; font-weight:300">
+                    {{projectName}}
+            </div>
+        </a>
 		<div id="menu">
-			<img id="addProject" title="add project" style='width:13px' src='/img/plus.svg'/>
-			<img id="settings" title="settings" style='width:13px' src='/img/settings.svg'/>
-			<img id="search" title="search" style='width:13px' src='/img/search.svg'/>
-			<img id="doc" title="documentation" style='width:13px' src='/img/doc.svg'/>
+			<img id="addProject" class="button" title="add project" style='width:13px' src='/img/plus.svg'/>
+			<img id="search" class="button" title="search" style='width:13px' src='/img/search.svg'/>
+			<img id="doc" class="button" title="documentation" style='width:13px' src='/img/doc.svg'/>
 			<div id="MyLogin">
 				<span>{{{login}}}</span>
 			</div>
@@ -390,9 +355,9 @@
 					<svg width="100%" height="100%"></svg>
 				</div>
 				
-				<div id="projectDescription">
+				<div id="projDescription">
 					<h1>{{project}} project</h1>
-					<h2> link to project's website</h2>
+					<h2>link to project's website</h2>
 					<p>little project description</p>
 					<p>{{numMRI}} MRI Files
 					<p>{{numAtlas}} Atlas Files
@@ -460,9 +425,10 @@
 							</div>
 							
 							<!-- Save or Cancel -->
-							<h2>Save Changes</h2>
-							<h2>Cancel</h2>
-	
+							<div style="display:block;margin:0 auto;width:200px">
+                                <h2 id="saveChanges" class="pushButton">Save Changes</h2>
+                                <h2 id="cancelChanges" class="pushButton">Cancel</h2>
+                            </div>
 				</div>
 		</div>
 		<!-- end of centering div -->
@@ -506,6 +472,8 @@ $("body").on('click',".remove",function(e){onAccessClicked(e,3)});
 $("#access tbody").on('click','tr',selectRow);
 $("#annotations tbody").on('click','tr',selectRow);
 $("#MRIFiles tbody").on('click','tr',selectRow);
+$("#saveChanges").click(saveChanges);
+$("#cancelChanges").click(function cancelChanges(){location.pathname='{{{projectURL}}}'});
 /**
  * @todo add onblur event to the dropdown menu so it empties the content
  */
@@ -514,7 +482,7 @@ $("#MRIFiles tbody").on('click','tr',selectRow);
 jdenticon.update($("svg")[0],md5("{{project}}"));
 
 // WS Autocompletion
-var users = [];
+var cb, label;
 var host = "ws://" + window.location.hostname + ":8080/";
 if (window.WebSocket) {
     ws=new WebSocket(host);
@@ -525,84 +493,13 @@ ws.onmessage = function(message) {
     message = JSON.parse(message.data);
     if (message.type === "userNameQuery")
     {
-        //if(message.path=="user.nickname") {
-            //var usersNickname=$.map(message.metadata,function(o){return o.nickname});
-            var usersNickname=$.map(message.metadata,function(o){return {label:o.nickname,nickname:o.nickname,name:o.name}});
-            cb(usersNickname);
-        //}
-
-        if(message.path=="user.name") {
-            var usersFullname=$.map(message.metadata,function(o){return o.name});
-            $(".autocomplete[data-autocomplete='user.name']").autocomplete({source:usersFullname});
-        }
-        /*
-        for (var i = message.metadata.length - 1; i >= 0; i--) {
-            if (usersNickname.indexOf(message.metadata[i].nickname) == -1 && message.metadata[i].nickname)
-                usersNickname.push(message.metadata[i].nickname);
-            if (usersFullname.indexOf(message.metadata[i].name) == -1 && message.metadata[i].name)
-                usersFullname.push(message.metadata[i].name);
-            for (var j = users.length - 1; j >= 0; j--) {
-                if (users[j]._id == message.metadata[i]._id)
-                    break;
-            }
-            if (j == -1)
-                users.push(message.metadata[i]);
-        }
-        $("#nameDropdown").autocomplete({source:usersNickname});
-        $("#fullnameDropdown").autocomplete({source:usersFullname});
-        console.log("usersNickname", usersNickname);
-        console.log("usersFullname", usersFullname);
-        console.log("users", users);
-        */
+        var arr;
+        if(label=="nickname")
+            arr=$.map(message.metadata,function(o){return {label:o.nickname,nickname:o.nickname,name:o.name}});
+        if(label=="name")
+            arr=$.map(message.metadata,function(o){return {label:o.name,nickname:o.nickname,name:o.name}});
+        cb(arr);
     }
-}
-/*
-$(function(){
-	usersNickname = [];
-	usersFullname = [];
-	$("#nameDropdown").autocomplete({source:usersNickname, select:selectUserNickname});
-	$("#fullnameDropdown").autocomplete({source:usersFullname, select:selectUserName});
-});
-*/
-
-// moved .newSurname to .autocomplete
-// moved queryUserNicknames to queryAutocomplete
-var cb;
-function queryAutocomplete(e) {
-    def=new $.Deferred();
-    ws.send(JSON.stringify({"type":"userNameQuery", "metadata":{"nickname":$(e.currentTarget).text()}}));
-    return def.promise();
-}
-//$("body").on('keyup','.autocomplete',queryAutocomplete);
-
-function queryUserFullnames(e){
-    ws.send(JSON.stringify({"type":"userNameQuery", "metadata":{"name":$(e.currentTarget).text()}}));
-}
-//$(".newFullName").keyup(queryUserFullnames);
-function selectUserName(event, ui){
-    for (var k = 0; k < users.length; k++) {
-        if (users[k].name == ui.item.value)
-            console.log("You have Selected :", users[k]);
-    }
-}
-function selectUserNickname(event, ui){
-    for (var k = 0; k < users.length; k++) {
-        if (users[k].nickname == ui.item.value)
-            console.log("You have Selected :", users[k]);
-    }
-}
-
-/*
-Select rows in tables
-*/
-var selected;
-function selectRow(e)
-{
-	$(e.currentTarget).closest("tbody").find("tr").each(function(index, tag){
-		$(tag).removeClass("selected");
-	})
-	$(e.currentTarget).addClass("selected");
-	selected = e.currentTarget;
 }
 
 /**
@@ -617,10 +514,18 @@ function onAccessClicked( e, l ) {
     $( e.target ).closest( "div" ).attr( "data-level",l+( al != (l+1) ) );
 }
 
-var accProxy={}, annProxy={}, filesProxy={};
+function selectRow(e)
+{
+	$(e.currentTarget).closest("tbody").find("tr").each(function(index, tag){
+		$(tag).removeClass("selected");
+	})
+	$(e.currentTarget).addClass("selected");
+}
+
+var projectInfoProxy={};
 var accParam = {
     table: $("table#access"),
-    info_proxy: accProxy,
+    info_proxy: projectInfoProxy,
     info: projectInfo,
     trTemplate: $.map([
         "<tr>",
@@ -677,33 +582,37 @@ var accParam = {
 };
 var annParam = {
     table: $("table#annotations"),
-    info_proxy: annProxy,
+    info_proxy: projectInfoProxy,
     info: projectInfo,
     trTemplate: $.map([
         "<tr>",
         "    <td contentEditable=true class='noEmpty'></td>",
+        "    <td><select>",BrainBox.annotationType.map(function(o){return "<option>"+o+"</option>"}),"</select></td>",	// append annotation types
         "    <td contentEditable=true class='noEmpty'></td>",
-        "    <td contentEditable=true class='noEmpty'></td>",
-        "    <td contentEditable=true class='noEmpty'></td>",
+        "    <td><input type='checkbox'/></td>",
         "</tr>"],function(o){return o}).join(""),
     objTemplate: [
         {	typeOfBinding:2,
             path:"annotations.list.#.name"
         },
         {	typeOfBinding:2,
-            path:"annotations.list.#.type"
+            path:"annotations.list.#.type",
+            format: function(e,d){$(e).find("select").prop('selectedIndex',BrainBox.annotationType.indexOf(d))},
+            parse: function(e){return $(e).find("select").val()}
         },
         {	typeOfBinding:2,
             path:"annotations.list.#.values"
         },
         {	typeOfBinding:2,
-            path:"annotations.list.#.display"
+            path:"annotations.list.#.display",
+            format: function(e,d){$(e).find("input").prop("checked",d=='true')},
+            parse: function(e){return $(e).find("input").prop("checked")?'true':'false'}
         }
     ]
 };
 var filesParam = {
     table: $("table#MRIFiles"),
-    info_proxy: filesProxy,
+    info_proxy: projectInfoProxy,
     info: projectInfo,
     trTemplate: $.map([
         "<tr>",
@@ -745,10 +654,8 @@ $(document).on('click', "#removeFile", function(){removeFile(filesParam)});
 $("table#MRIFiles tr").removeClass("selected");
 $("table#MRIFiles tbody tr").eq(0).addClass("selected");
 
-// $(".autocomplete").autocomplete({source:users,select:function(e,u){console.log(e,u);}});
-
 function addCollaborator(param) {
-    projectInfo.collaborators.list.push("");
+    projectInfo.collaborators.list.push({});
     projectInfo.collaborators.access.whitelist.push({userID:"",access:"view"});
     projectInfo.annotations.access.whitelist.push({userID:"",access:"view"});
     projectInfo.files.access.whitelist.push({userID:"",access:"view"});
@@ -756,40 +663,111 @@ function addCollaborator(param) {
     // add and bind new table row
     var i=projectInfo.collaborators.list.length-1;
     BrainBox.appendAnnotationTableRow(i,param);
+    
     $(".autocomplete").autocomplete({
-        minLength: 2,
+        minLength: 0,
         source: function(req,res) {
-            ws.send(JSON.stringify({"type":"userNameQuery", "metadata":{"nickname":req.term}}));
+            var key = $(this.element).attr('data-autocomplete');
+            switch(key) {
+                case "user.nickname":
+                    ws.send(JSON.stringify({"type":"userNameQuery", "metadata":{"nickname":req.term}}));
+                    label="nickname";
+                    break;
+                case "user.name":
+                    ws.send(JSON.stringify({"type":"userNameQuery", "metadata":{"name":req.term}}));
+                    label="name";
+                    break;
+            }
             cb=res;
         },
         select:function(e,ui) {
             var irow=$(e.target).closest('tr').index();
-            console.log(irow,ui.nickname,ui.name);
-            accProxy["collaborators.list."+irow+".username"]=ui.nickname;
-            accProxy["collaborators.list."+irow+".name"]=ui.name;
+            projectInfoProxy["collaborators.list."+irow+".name"]=ui.item.name;
+            projectInfoProxy["collaborators.list."+irow+".username"]=ui.item.nickname;
+
+            // add user to access objects
+            /**
+             * @todo Combine all access settings for a subject in a single place
+             */
+            projectInfo.collaborators.access.whitelist[irow].userID=ui.item.nickname;
+            projectInfo.annotations.access.whitelist[irow].userID=ui.item.nickname;
+            projectInfo.files.access.whitelist[irow].userID=ui.item.nickname;
         }
     });
 }
-
 function removeCollaborator(param) {
     // remove row from table
     var index=$(param.table).find("tbody .selected").index();
     $(param.table).find('tbody tr:eq('+index+')').remove();
-
+    
     // remove binding
-    JSON.stringify(param.info_proxy); // update BrainBox.info from info_proxy
-    var irow=BrainBox.info.mri.atlas.length-1;
+    JSON.stringify(param.info_proxy); // update projectInfo from projectInfoProxy
+    var irow=projectInfo.collaborators.list.length-1;
     for(var icol=0; icol<param.objTemplate.length; icol++) {
         unbind2(param.info_proxy,param.objTemplate[icol].path.replace("#", irow));
     }
-
+    
     // remove row from BrainBox.info.mri.atlas
-    BrainBox.info.mri.atlas.splice(index,1);
-
-    // update in server
-    BrainBox.saveAnnotations(param);
+    projectInfo.collaborators.list.splice(index,1);
+    projectInfo.collaborators.access.whitelist.splice(index,1);
+    projectInfo.annotations.access.whitelist.splice(index,1);
+    projectInfo.files.access.whitelist.splice(index,1);
 }
 
+function addAnnotation(param) {
+    projectInfo.annotations.list.push({});
+
+    // add and bind new table row
+    var i=projectInfo.annotations.list.length-1;
+    BrainBox.appendAnnotationTableRow(i,param);
+}
+function removeAnnotation(param) {
+    // remove row from table
+    var index=$(param.table).find("tbody .selected").index();
+    $(param.table).find('tbody tr:eq('+index+')').remove();
+    
+    // remove binding
+    JSON.stringify(param.info_proxy); // update projectInfo from projectInfoProxy
+    var irow=projectInfo.annotations.list.length-1;
+    for(var icol=0; icol<param.objTemplate.length; icol++) {
+        unbind2(param.info_proxy,param.objTemplate[icol].path.replace("#", irow));
+    }
+    
+    // remove row from BrainBox.info.mri.atlas
+    projectInfo.annotations.list.splice(index,1);
+}
+
+function addFile(param) {
+    projectInfo.files.list.push({});
+
+    // add and bind new table row
+    var i=projectInfo.files.list.length-1;
+    BrainBox.appendAnnotationTableRow(i,param);
+}
+function removeFile(param) {
+    // remove row from table
+    var index=$(param.table).find("tbody .selected").index();
+    $(param.table).find('tbody tr:eq('+index+')').remove();
+    
+    // remove binding
+    JSON.stringify(param.info_proxy); // update projectInfo from projectInfoProxy
+    var irow=projectInfo.files.list.length-1;
+    for(var icol=0; icol<param.objTemplate.length; icol++) {
+        unbind2(param.info_proxy,param.objTemplate[icol].path.replace("#", irow));
+    }
+    
+    // remove row from BrainBox.info.mri.atlas
+    projectInfo.files.list.splice(index,1);
+}
+
+function saveChanges() {
+    // update projectInfo from projectInfoProxy
+    JSON.stringify(projectInfoProxy);
+    
+    console.log(projectInfo);
+}
+
+$("#addProject").click(function(){location="/project/new"});
 </script>
 
 </body>

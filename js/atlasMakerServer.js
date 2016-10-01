@@ -401,6 +401,14 @@ var initSocketConnection = function initSocketConnection() {
                         })
 						.catch(function(){});
 						break;
+					case "projectNameQuery":
+						var result = queryProjectName(data)
+						.then(function(obj){
+							data.metadata = obj;
+							sender.send(JSON.stringify(data));
+                        })
+						.catch(function(){});
+						break;
 					default :
 						break;
 				}
@@ -533,6 +541,18 @@ var queryUserName = function queryUserName(data){
 				});
 		}
 		else
+			reject();
+	});
+}
+var queryProjectName = function queryProjectName(data){
+	return new Promise(function(resolve, reject){
+		if (data.metadata && data.metadata.name) {
+			db.get('project')
+                .findOne({"shortname": data.metadata.name},{fields:["name","shortname"]})
+				.then(function(obj) {
+					resolve(obj);
+				});
+		} else
 			reject();
 	});
 }
