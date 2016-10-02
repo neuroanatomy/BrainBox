@@ -619,6 +619,7 @@ var filesParam = {
 
 bind2(projectInfoProxy,projectInfo,"url","#projDescription #url");
 bind2(projectInfoProxy,projectInfo,"description","#projDescription #description");
+bind2(projectInfoProxy,projectInfo,"name","#projectName");
 
 for(var i=0;i<projectInfo.collaborators.list.length;i++) {
     BrainBox.appendAnnotationTableRow(i,accParam);
