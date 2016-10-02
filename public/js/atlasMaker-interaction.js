@@ -2,6 +2,19 @@ var AtlasMakerInteraction = {
 	//========================================================================================
 	// Local user interaction
 	//========================================================================================
+	changeToolbarDisplay: function changeToolbarDisplay(display) {
+		var me=AtlasMakerWidget;
+		var l=me.traceLog(changeToolbarDisplay);if(l)console.log(l);
+		
+		switch(display) {
+		    case "left":
+        		$("body").attr("data-toolbarDisplay","left");
+        		break;
+        	case "right":
+        		$("body").attr("data-toolbarDisplay","right");
+        	    break;
+        }
+	},
 	changeView: function changeView(theView) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(changeView);if(l)console.log(l);

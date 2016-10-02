@@ -139,7 +139,7 @@ var AtlasMakerWidget = {
 
 		// Set widget div (create one if none)
 		if(elem==undefined) {
-			me.container=$("<div class='atlasMaker'>");
+			me.container=$("<div class='atlasMaker'");
 			$(document.body).append(me.container);
 		}
 		else {
@@ -153,10 +153,15 @@ var AtlasMakerWidget = {
 		me.context = me.canvas.getContext('2d');
 		
 		// Add div to display slice number
-		me.container.find("#resizable").append("<svg id='info'></svg>");
+		me.container.find("#resizable").append("<div id='text-layer'></div>");
+
+		// Add div to display slice number
+		me.container.find("#resizable").append("<svg id='vector-layer'></svg>");
 		
 		// Add cursor (a small div)
 		me.container.find("#resizable").append("<div id='cursor'></div>");
+		
+		$("body").attr('data-toolbarDisplay','right');
 		
 		// Add precise cursor
 		var isTouchArr=[];//["iPad","iPod"];
@@ -188,6 +193,9 @@ var AtlasMakerWidget = {
 			$(document).keydown(function(e){me.keyDown(e)});
 
 			// configure annotation tools
+			me.push($(".push#minimize"),me.minimize);
+			me.push($(".push#display-left"),function(){me.changeToolbarDisplay("left")});
+			me.push($(".push#display-right"),function(){me.changeToolbarDisplay("right")});
 			me.slider($(".slider#slice"),function(x){me.changeSlice(Math.round(x))});
 			me.chose($(".chose#plane"),me.changeView);
 			me.chose($(".chose#paintTool"),me.changeTool);

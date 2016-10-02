@@ -97,13 +97,17 @@ var AtlasMakerDraw = {
 		var l=me.traceLog(displayInformation,1);if(l)console.log(l);
 			
 		me.info.slice=me.User.slice;
-		var i=0,info=me.container.find("#info");
+		var i=0,str;
+		var text=me.container.find("#text-layer");
+		var vector=me.container.find("#vector-layer");
 		
-		var str="";
+		str="";
 		for(var k in me.info) {
-			str+="<text x='5' y='"+(15+15*i++)+"' fill='white'>"+k+": "+me.info[k]+"</text>";
+			str+="<span>"+k+": "+me.info[k]+"</span><br/>";
 		}
+		text.html(str);
 		
+		str="";
 		if(me.User.measureLength) {
 			var W=parseFloat($('#atlasMaker canvas').css('width'));
 			var w=parseFloat($('#atlasMaker canvas').attr('width'));
@@ -117,8 +121,7 @@ var AtlasMakerDraw = {
 					"<path stroke='#00ff00' fill='none' d='"+str1+"'/>",
 					(i>0)?"<circle fill='#00ff00' cx="+zx*p[i-1].x+" cy="+zy*p[i-1].y+" r=3 />":""].join("\n");
 		}
-		
-		info.html(str);
+		vector.html(str);
 	},
 	drawImages: function drawImages() {
 		var me=AtlasMakerWidget;

@@ -124,7 +124,18 @@
 #atlasMaker #resizable {
 	position: relative;
 }
-#atlasMaker #info {
+#atlasMaker #text-layer {
+	position: absolute;
+	bottom:0px;
+	right:0px;
+	width:100%;
+	height:100%;
+	z-index:11;
+	box-sizing: border-box;
+	padding: 5px;
+	pointer-events: none;
+}
+#atlasMaker #vector-layer {
 	position: absolute;
 	bottom:0px;
 	right:0px;
@@ -151,23 +162,40 @@
 #tools-side {
 	width:100%;
 }
-
 .fullscreen-mode #atlasMaker {
 	position:absolute;
 	top:0px;
 	left:0px;
-	width: calc( 100% - 240px );	/* width of tools */
+	/*width: calc( 100% - 240px );*/	/* width of tools */
+	width: 100%;
 	height:100%;
 	z-index:10;
 }
-
 .fullscreen-mode #tools-side {
 	position:fixed;
 	top:0px;
-	right:0px;
 	width:240px;
 	height:100%;
 	z-index:10;
+}
+.fullscreen-mode[data-toolbarDisplay=left] #tools-side {
+    left: 0;
+}
+.fullscreen-mode[data-toolbarDisplay=right] #tools-side {
+    right: 0;
+}
+.fullscreen-mode[data-toolbarDisplay=left] #text-layer {
+    text-align: right;
+}
+.fullscreen-mode[data-toolbarDisplay=right] #text-layer {
+    text-align: left;
+}
+
+#toolbar-header {
+    display: none;
+}
+.fullscreen-mode #toolbar-header {
+    display: block;
 }
 
 /* cursor
