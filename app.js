@@ -114,6 +114,13 @@ app.get('/auth/github/callback',
                         joined: (new Date()).toJSON()
                     };
                     db.get('user').insert(json);
+                } else {
+                    console.log("Update user data from GitHub");
+                    db.get('user').update({nickname: req.user.username},{$set:{
+                        name: req.user.displayName,
+                        url: req.user._json.blog,
+                        avatarURL: req.user._json.avatar_url
+                    }});
                 }
             });
         res.redirect('/');
