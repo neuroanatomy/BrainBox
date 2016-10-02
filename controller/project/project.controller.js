@@ -85,10 +85,10 @@ var settings = function(req, res) {
 	.then(function(json) {
 		if(!json) {
 		    json = {
-                    name: "Untitled",
-                    shortname: "untitled",
-                    url: "/",
-                    brainboxURL: "/project/",
+                    name: "",
+                    shortname: req.params.projectName,
+                    url: "",
+                    brainboxURL: "/project/"+req.params.projectName,
                     created: (new Date()).toJSON(),
                     owner: loggedUser,
                     collaborators: {
