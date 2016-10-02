@@ -191,6 +191,26 @@
     text-align: left;
 }
 
+#tools-minimized div {
+    display:inline-block;
+    width:48px;
+    height:48px;
+    border: thin solid #777;
+    border-radius:48px;
+    background-color:#333;
+    position:fixed;
+    margin: 10px;
+    cursor: pointer;
+}
+.fullscreen-mode[data-toolbarDisplay=left] #tools-minimized div {
+    top: 0;
+    left: 0;
+}
+.fullscreen-mode[data-toolbarDisplay=right] #tools-minimized div {
+    top: 0;
+    right: 0;
+}
+
 #toolbar-header {
     display: none;
 }

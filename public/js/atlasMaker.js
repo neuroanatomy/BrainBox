@@ -193,7 +193,8 @@ var AtlasMakerWidget = {
 			$(document).keydown(function(e){me.keyDown(e)});
 
 			// configure annotation tools
-			me.push($(".push#minimize"),me.minimize);
+			$("#tools-minimized").click(function(){me.changeToolbarDisplay("maximize")});
+			me.push($(".push#display-minimize"),function(){me.changeToolbarDisplay("minimize")});
 			me.push($(".push#display-left"),function(){me.changeToolbarDisplay("left")});
 			me.push($(".push#display-right"),function(){me.changeToolbarDisplay("right")});
 			me.slider($(".slider#slice"),function(x){me.changeSlice(Math.round(x))});
@@ -215,6 +216,8 @@ var AtlasMakerWidget = {
 			
 			// connect chat message input
 			$("#msg").keypress(function keypress_fromInitAtlasMaker(e) {me.onkey(e)});
+			
+            $("#tools-minimized").hide();
 		})
 		.then(function from_initAtlasMaker() {
 			// Init web socket connection

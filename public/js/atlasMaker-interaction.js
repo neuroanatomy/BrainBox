@@ -7,6 +7,14 @@ var AtlasMakerInteraction = {
 		var l=me.traceLog(changeToolbarDisplay);if(l)console.log(l);
 		
 		switch(display) {
+		    case "minimize":
+        		$("#tools").hide();
+        		$("#tools-minimized").show();
+        		break;
+		    case "maximize":
+        		$("#tools").show();
+        		$("#tools-minimized").hide();
+        		break;
 		    case "left":
         		$("body").attr("data-toolbarDisplay","left");
         		break;
