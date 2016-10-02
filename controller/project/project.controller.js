@@ -164,9 +164,8 @@ var settings = function(req, res) {
                     },
                     function() {
                         var context = {
-                            title: json.name,
-                            projectName: json.name,
-                            projectURL: "/project/"+json.shortname,
+                            projectShortname: json.shortname,
+                            owner: json.owner,
                             projectInfo: JSON.stringify(json),
                             login: login
                         };

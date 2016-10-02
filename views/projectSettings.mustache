@@ -4,7 +4,7 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> 
 	<link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
-    <title>{{title}}</title>
+    <title>{{projectShortname}}</title>
 	
 	<link rel="stylesheet" href="/stylesheets/style.css" />
 	
@@ -173,13 +173,6 @@
 	}
 
 	/*************************** resizable layout **************************/
-
-
-	#littleDescription:empty:before {
-        content:'Enter project description';
-        color:rgba(255,255,255,0.4);
-        outline: none;
-}
 	#littleDescription:focus:before {
         content: none !important;
 	}
@@ -189,28 +182,25 @@
     }
 
     #centeringDiv {
-        display:block;
         position:relative;
+        display:block;
         margin:0 auto;
     }
 	#projImage {
+        position:relative;
 		display: inline-block;
 		background:#333;
 		width:200px;
 		height:200px;
-        position:relative;
-        top: 0px;
-        left: 0px;
 		vertical-align: top;
 	}
 	#projDescription {
-		display: inline-block;
 		position: relative;
-		top: 220px;
-		left: 0px;
+		display: inline-block;
         vertical-align: top;
 	}
 	#projTable {		
+		position: relative;
 		display:inline-block;
 		min-height:400px;
 		max-width: 900px;
@@ -220,26 +210,29 @@
         vertical-align: top;
 	}
 	
+	#projDescription p {
+	    margin: 0;
+	}
+	
 	/* for larger screen (computer, big iPad, small iPad landscape) */
 	@media all and (min-width: 1023px) {
 		#centeringDiv {
 			width:984px;
 			padding:20px;
-			height:100%
 		}
+        #projImage {
+            float: left;
+        }
 		#projDescription {
-			position: absolute;
-			top: 220px;
-			left: 20px;
+			float: left;
+			clear: both;
 			width: 200px;
 		}		
 		#projTable {
-			position: absolute;
 			max-width: 900px;
 			width: calc(100% - 300px);
-			top:20px;
-			padding:20px;
-			left:240px;
+			padding: 20px;
+			margin-left: 20px;
 		}
 	}
 
@@ -248,7 +241,6 @@
 		#centeringDiv {
 			width:700px;
 			padding:20px;
-			height:100%
 		}
 		#projDescription {
 			position: relative;
@@ -274,7 +266,6 @@
 			text-align: center;
 			width:600px;
 			padding:10px;
-			height:100%
 		}
 		#projDescription {
 			position: relative;
@@ -298,7 +289,6 @@
 			text-align: center;
 			width:480px;
 			padding:10px;
-			height:100%
 		}
 		#projDescription {
 			position: relative;
@@ -330,11 +320,9 @@
 		<a href='/'>
 			<img style='position:absolute;left:10px;top:5px;width:200px' src='/img/brainbox-logo-small_noFont.svg'/>
 		</a>
-        <a href='{{projectURL}}'>
-            <div style="position:absolute;left:73px;top:21px;width:auto; font-family: Roboto, sans-serif; font-size: 36px; font-weight:300">
-                    {{projectName}}
-            </div>
-        </a>
+        <div style="position:absolute;left:73px;top:21px;width:auto">
+            <span id="projectName" contentEditable=true class="noEmptyWithPlaceholder" placeholder="Enter a project name" style="font-family:Roboto,sans-serif;font-size:36px;font-weight:300"></span>
+        </div>
 		<div id="menu">
 			<img id="addProject" class="button" title="add project" style='width:13px' src='/img/plus.svg'/>
 			<img id="search" class="button" title="search" style='width:13px' src='/img/search.svg'/>
@@ -356,13 +344,13 @@
 				</div>
 				
 				<div id="projDescription">
-					<h1>{{project}} project</h1>
-					<h2>link to project's website</h2>
-					<p>little project description</p>
-					<p>{{numMRI}} MRI Files
-					<p>{{numAtlas}} Atlas Files
-					<p>{{username}} Owner
-					<p>{{numCollaborators}} Collaborators
+					<h1>{{projectShortname}}</h1>
+					<h2 id="url" contentEditable=true class="noEmpty">project URL</h2>
+					<p>by <a href='/user/{{owner}}'>{{owner}}</a></p>
+					<p id="description" contentEditable=true class="noEmptyWithPlaceholder" placeholder="Enter a project description"></p>
+					<p><span id="numCollaborators"></span> Collaborators</p>
+					<p><span id="numAnnotations"></span> Annotations</p>
+					<p><span id="numFiles"></span> MRI Files</p>
 				</div>
 				
 				<div id="projTable">
@@ -479,7 +467,7 @@ $("#cancelChanges").click(function cancelChanges(){location.pathname='{{{project
  */
 
 // Add avatar based on project's name
-jdenticon.update($("svg")[0],md5("{{project}}"));
+jdenticon.update($("svg")[0],md5("{{projectShortname}}"));
 
 // WS Autocompletion
 var cb, label;
@@ -629,6 +617,9 @@ var filesParam = {
     ]
 };
 
+bind2(projectInfoProxy,projectInfo,"url","#projDescription #url");
+bind2(projectInfoProxy,projectInfo,"description","#projDescription #description");
+
 for(var i=0;i<projectInfo.collaborators.list.length;i++) {
     BrainBox.appendAnnotationTableRow(i,accParam);
 }
@@ -638,6 +629,11 @@ for(var i=0;i<projectInfo.annotations.list.length;i++) {
 for(var i=0;i<projectInfo.files.list.length;i++) {
     BrainBox.appendAnnotationTableRow(i,filesParam);
 }
+
+$("#projDescription #numFiles").text(projectInfo.files.list.length);
+$("#projDescription #numAnnotations").text(projectInfo.annotations.list.length);
+$("#projDescription #numCollaborators").text(projectInfo.collaborators.list.length);
+
 
 $(document).on('click', "#addCollaborator", function(){addCollaborator(accParam)});
 $(document).on('click', "#removeCollaborator", function(){removeCollaborator(accParam)});
@@ -694,6 +690,7 @@ function addCollaborator(param) {
             projectInfo.files.access.whitelist[irow].userID=ui.item.nickname;
         }
     });
+    $("#projDescription #numCollaborators").text(projectInfo.collaborators.list.length);
 }
 function removeCollaborator(param) {
     // remove row from table
@@ -712,6 +709,8 @@ function removeCollaborator(param) {
     projectInfo.collaborators.access.whitelist.splice(index,1);
     projectInfo.annotations.access.whitelist.splice(index,1);
     projectInfo.files.access.whitelist.splice(index,1);
+
+    $("#projDescription #numCollaborators").text(projectInfo.collaborators.list.length);
 }
 
 function addAnnotation(param) {
@@ -720,6 +719,8 @@ function addAnnotation(param) {
     // add and bind new table row
     var i=projectInfo.annotations.list.length-1;
     BrainBox.appendAnnotationTableRow(i,param);
+
+    $("#projDescription #numAnnotations").text(projectInfo.annotations.list.length);
 }
 function removeAnnotation(param) {
     // remove row from table
@@ -735,6 +736,8 @@ function removeAnnotation(param) {
     
     // remove row from BrainBox.info.mri.atlas
     projectInfo.annotations.list.splice(index,1);
+
+    $("#projDescription #numAnnotations").text(projectInfo.annotations.list.length);
 }
 
 function addFile(param) {
@@ -743,6 +746,8 @@ function addFile(param) {
     // add and bind new table row
     var i=projectInfo.files.list.length-1;
     BrainBox.appendAnnotationTableRow(i,param);
+
+    $("#projDescription #numFiles").text(projectInfo.files.list.length);
 }
 function removeFile(param) {
     // remove row from table
@@ -758,6 +763,8 @@ function removeFile(param) {
     
     // remove row from BrainBox.info.mri.atlas
     projectInfo.files.list.splice(index,1);
+
+    $("#projDescription #numFiles").text(projectInfo.files.list.length);
 }
 
 function saveChanges() {

@@ -379,6 +379,12 @@ select {
 	color:rgba(255,255,255,0.4);
 }
 
+.noEmptyWithPlaceholder:empty:before {
+	content:attr(placeholder);
+	color:rgba(255,255,255,0.4);
+}
+
+
 /* Project Page, Left Bar, Resize Button
 -----------------------------------------*/
 #resizeButton {
