@@ -161,6 +161,7 @@
 }
 #tools-side {
 	width:100%;
+	position-relative;
 }
 .fullscreen-mode #atlasMaker {
 	position:absolute;
@@ -176,7 +177,7 @@
 	top:0px;
 	width:240px;
 	height:100%;
-	z-index:10;
+	z-index:11;
 }
 .fullscreen-mode[data-toolbarDisplay=left] #tools-side {
     left: 0;
@@ -268,6 +269,9 @@
 /* chat log
 ----------------------- */
 
+.fullscreen-mode #chatBlockContent {
+    height:100%
+}
 #log {
 	width: auto;
 	line-height:1;

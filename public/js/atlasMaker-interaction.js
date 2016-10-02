@@ -8,11 +8,11 @@ var AtlasMakerInteraction = {
 		
 		switch(display) {
 		    case "minimize":
-        		$("#tools").hide();
+        		$("#tools-maximized").hide();
         		$("#tools-minimized").show();
         		break;
 		    case "maximize":
-        		$("#tools").show();
+        		$("#tools-maximized").show();
         		$("#tools-minimized").hide();
         		break;
 		    case "left":

@@ -350,10 +350,7 @@ $(document).on('keydown', function(e){
 $(document).on('click', "#info tbody tr",BrainBox.selectAnnotationTableRow);
 
 // resize left tool bar
-$("#resizeButton").data({flag:-1,x0:0,y0:0});
-$("#resizeButton").on('mousedown',function(e){$(this).data({flag:0,x0:e.pageX,y0:e.pageY})});
-$("body").on('mousemove',function(e) {
-	var p={x:e.pageX,y:e.pageY};
+function resizeButton(p) {
 	if($("#resizeButton").data("flag")==0) {
 		$("#resizeButton").data({flag:1,x0:p.x,y0:p.y});
 	} else if($("#resizeButton").data("flag")==1) {
@@ -362,8 +359,12 @@ $("body").on('mousemove',function(e) {
 		$("#resizeButton").data({x0:p.x,y0:p.y});
 		AtlasMakerWidget.resizeWindow();
 	}
-});
-$("body").on('mouseup',function(e){$("#resizeButton").data({flag:-1})});
+}
+$("#resizeButton").data({flag:-1,x0:0,y0:0});
+$("#resizeButton").on('mousedown touchstart',function(e){$(this).data({flag:0,x0:e.pageX,y0:e.pageY})});
+$("body").on('mousemove',function(e){resizeButton({x:e.pageX,y:e.pageY})});
+$("body").on('touchmove',function(e){resizeButton({x:e.originalEvent.changedTouches[0].pageX,y:e.originalEvent.changedTouches[0].pageY})});
+$("body").on('mouseup touchend',function(e){$("#resizeButton").data({flag:-1})});
 
 $("#addProject").click(function(){location="/project/new"});
 $("#settings").click(function(){
