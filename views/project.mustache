@@ -174,7 +174,7 @@ var str;
 
 function loadProjectFile(url) {
 	var params={url:url,view:"cor",slice:180,fullscreen:false};
-	$.get("/mri/json",{url:url})
+	$.post("/mri/json",{url:url})
 	.done(function from_loadProjectFile(data) {
 	    if($.isEmptyObject(data) === false) {
             params.info=data;
