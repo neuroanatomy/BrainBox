@@ -1,4 +1,10 @@
+/**
+ * @page AtlasMaker: Input/Output
+ */
 var AtlasMakerIO = {
+    /**
+     * @function encodeNifti
+     */
 	encodeNifti: function encodeNifti() {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(encodeNifti);if(l)console.log(l);
@@ -41,6 +47,9 @@ var AtlasMakerIO = {
 				
 		return niigz.result;
 	},
+    /**
+     * @function saveNifti
+     */
 	saveNifti: function saveNifti() {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(saveNifti);if(l)console.log(l);
@@ -51,6 +60,9 @@ var AtlasMakerIO = {
 		$("a#download_atlas").attr("href",window.URL.createObjectURL(niigzBlob));
 		$("a#download_atlas").attr("download",me.User.atlasFilename);
 	},
+    /**
+     * @function loadNifti
+     */
 	loadNifti: function loadNifti(nii) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(loadNifti,1);if(l)console.log(l);
@@ -96,6 +108,9 @@ var AtlasMakerIO = {
 	/*
 		{Linear algebra
 	*/
+    /**
+     * @function computeS2VTransformation
+     */
 	computeS2VTransformation: function computeS2VTransformation() {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(computeS2VTransformation);if(l)console.log(l);
@@ -110,7 +125,7 @@ var AtlasMakerIO = {
 		var w2s=[[1/Math.abs(wpixdim[0]),0,0],[0,1/Math.abs(wpixdim[1]),0],[0,0,1/Math.abs(wpixdim[2])]];
 		var s2w=me.invMat(w2s);
 
-		console.log(["v2w",v2w, "wori",wori, "wpixdim",wpixdim, "wvmax",wvmax, "wvmin",wvmin, "wmin",wmin, "wmax",wmax, "w2s",w2s]);
+		// console.log(["v2w",v2w, "wori",wori, "wpixdim",wpixdim, "wvmax",wvmax, "wvmin",wvmin, "wmin",wmin, "wmax",wmax, "w2s",w2s]);
 
 		me.User.s2v = {
 			sdim: [(wmax[0]-wmin[0])/Math.abs(wpixdim[0])+1,(wmax[1]-wmin[1])/Math.abs(wpixdim[1])+1,(wmax[2]-wmin[2])/Math.abs(wpixdim[2])+1],
@@ -121,6 +136,9 @@ var AtlasMakerIO = {
 			wori: wori
 		};
 	},
+    /**
+     * @function testS2VTransformation
+     */
 	testS2VTransformation: function testS2VTransformation() {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(testS2VTransformation);if(l)console.log(l);
@@ -132,44 +150,51 @@ var AtlasMakerIO = {
 		var mri=me.User; // this line is different from server
 		var doReset=false;
 	
-		console.log("Transformation TEST:");
-
-		console.log("  1. transformation volume");
+		// console.log("Transformation TEST:");
+		// console.log("  1. transformation volume");
+		
 		var vv=mri.dim[0]*mri.dim[1]*mri.dim[2];
 		var vs=mri.s2v.sdim[0]*mri.s2v.sdim[1]*mri.s2v.sdim[2];
 		var diff=(vs-vv)/vv;
 		if(Math.abs(diff)>0.001) {
+			/*
 			console.log("    ERROR: Difference is too large");
 			console.log("    original volume:",vv);
 			console.log("    rotated volume:",vs);
 			console.log("    % difference:",diff*100);
+			*/
 			doReset=true;
 		} else {
-			console.log("    ok.");
+			// console.log("    ok.");
 		}
 	
-		console.log("  2. transformation origin");
+		// console.log("  2. transformation origin");
 		if(	mri.s2v.sori[0]<0||mri.s2v.sori[0]>mri.s2v.sdim[0] ||
 			mri.s2v.sori[1]<0||mri.s2v.sori[1]>mri.s2v.sdim[1] ||
 			mri.s2v.sori[2]<0||mri.s2v.sori[2]>mri.s2v.sdim[2]) {
-			console.log("    Origin point is outside the dimensions of the data");
+			// console.log("    Origin point is outside the dimensions of the data");
 			doReset=true;
 		} else {
-			console.log("    ok.");
+			// console.log("    ok.");
 		}
 
 		if(doReset) {
-			console.log("THE TRANSFORMATION WILL BE RESET");
+			// console.log("THE TRANSFORMATION WILL BE RESET");
 			mri.v2w=[[mri.pixdim[0],0,0],[0,-mri.pixdim[1],0],[0,0,-mri.pixdim[2]]];
 			mri.wori=[0,mri.dim[1]-1,mri.dim[2]-1];
 
 			// re-compute the transformation from voxel space to screen space
 			me.computeS2VTransformation(); // this line is different from server
+			/*
 			console.log(mri.dir);
 			console.log(mri.ori);
 			console.log(mri.s2v);
+			*/
 		}
 	},
+    /**
+     * @function S2I
+     */
 	S2I: function S2I(s,mri) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(S2I,3);if(l)console.log(l);
@@ -183,6 +208,9 @@ var AtlasMakerIO = {
 			i= v[2]*mri.dim[1]*mri.dim[0]+ v[1]*mri.dim[0] +v[0];
 		return i;
 	},
+    /**
+     * @function mulMatVec
+     */
 	mulMatVec: function mulMatVec(m,v) {
 		return [
 			m[0][0]*v[0]+m[0][1]*v[1]+m[0][2]*v[2],
@@ -190,6 +218,9 @@ var AtlasMakerIO = {
 			m[2][0]*v[0]+m[2][1]*v[1]+m[2][2]*v[2]
 		];
 	},
+    /**
+     * @function invMat
+     */
 	invMat: function invMat(m) {
 		var det;
 		var w=[[],[],[]];
@@ -210,9 +241,15 @@ var AtlasMakerIO = {
 	
 		return w;
 	},
+    /**
+     * @function subVecVec
+     */
 	subVecVec: function subVecVec(a,b) {
 		return [a[0]-b[0],a[1]-b[1],a[2]-b[2]];
 	},
+    /**
+     * @function addVecVec
+     */
 	addVecVec: function addVecVec(a,b) {
 		return [a[0]+b[0],a[1]+b[1],a[2]+b[2]];
 	},

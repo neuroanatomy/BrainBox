@@ -139,6 +139,16 @@ Supported data formats: For the moment, BrainBox supports nifti file format. Fre
  * Project settings
  * Search
  * Documentation
+ 
+ ###2.1 Home page
+
+BrainBox wants to facilitate data discovery. On the home page, you will find the option to either enter a link to a new MRI file ((that you would like to view)) or to choose from a list of previously visited links. Each will open an MRI page with the viewer and annotation tools. When visiting BrainBox for the first time, this list will hold example links to proposed brain data and, once you start working, will update to a list of links to your recently visited brains. In the URL field, you can point BrainBox to any MRI data available online, as for instance on FigShare, Zenodo, Dropbox, GitHub or your own website. If you upload your data to Dropbox, you need to modify the share link by replacing www by dl and deleting everything after .nii.gz
+
+In the top menu, the **[+]** icon is used to add a new project. Projects are collections of MRIs and annotations, and are discussed more deeply in section 2.3. Next to the **[+]** icon, the **[cog]** icon allows you to configure your existing projects, for example, to restrict access to a list of collaborators. In addition to that, BrainBox allows you to search for MRIs via their filename using the **[magnifying lens]** icon, for a user or a project, and to access the documentation.
+
+To be able to use full BrainBox functionalities, you need to login. BrainBox asks you to login with your GitHub account so that annotations can profit from GitHub’s versioning system and be saved to your user account as well as easily be shared with the BrainBox GitHub repository. Once logged in, a click on your username will take you to your user page.
+
+You can always come back to the home page by clicking on the BrainBox logo.
 
 ###MRI Page
 * Viewer
