@@ -1,5 +1,5 @@
 /**
- * @page Two-Way Binding
+ * @namespace Two-Way Binding
  */
 
 var date_format=function(e,d){$(e).text(new Date(d).toLocaleDateString())};
@@ -17,8 +17,7 @@ var date_format=function(e,d){$(e).text(new Date(d).toLocaleDateString())};
  */
 
 /**
- * @function bind2
- * @desc Bind a javascript object with a DOM element and viceversa
+ * Bind a javascript object with a DOM element and viceversa
  * @param {object} proxy The object that will bind the source object and the DOM element
  * @param {object} original The source object to bind
  * @param {string} path Path to the property in the original object to bind
@@ -53,8 +52,7 @@ function bind2(proxy,original,path,el,format,parse) {
 }
 
 /**
- * @function bind1
- * @desc Bind the content of a DOM element to javascript object, but not the other way around
+ * Bind the content of a DOM element to javascript object, but not the other way around
  * @param {object} proxy The object that will bind the source object and the DOM element
  * @param {object} original The source object to bind
  * @param {string} path Path to the property in the original object to bind
@@ -84,8 +82,7 @@ function bind2(proxy,original,path,el,format,parse) {
 }
 
 /**
- * @function unbind2
- * @desc Unbind a javascript object and a DOM element
+ * Unbind a javascript object and a DOM element
  * @param {object} proxy The object that will bind the source object and the DOM element
  * @param {string} path Path to the property in the original object to bind
  */

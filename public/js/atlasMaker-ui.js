@@ -1,10 +1,4 @@
-/**
- * @page AtlasMaker: User Interface Elements
- */
 var AtlasMakerUI = {
-    /**
-     * @function slider
-     */
     slider: function slider(elem,callback) {
         var me=AtlasMakerWidget;
         var l=me.traceLog(slider,2);if(l)console.log(l);
@@ -34,9 +28,6 @@ var AtlasMakerUI = {
         $(document).on("mouseup touchend",function from_slider(){$(elem).data({drag:false})});
         $(elem).on('mousedown touchstart',function from_slider(){$(elem).data({drag:true})});
     },
-    /**
-     * @function chose
-     */
     chose: function chose(elem,callback) {
         // Initialise a 'chose' control
         var ch=$(elem).find(".a");
@@ -53,9 +44,6 @@ var AtlasMakerUI = {
             });
         });
     },
-    /**
-     * @function toggle
-     */
     toggle: function toggle(elem,callback) {
         // Initialise a 'toggle' control
         $(elem).click(function(){
@@ -64,9 +52,6 @@ var AtlasMakerUI = {
                 callback($(this).hasClass("pressed"));
         });
     },
-    /**
-     * @function push
-     */
     push: function push(elem,callback) {
         // Initialise a 'push' control
         $(elem).click(function(){

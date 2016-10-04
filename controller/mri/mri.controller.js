@@ -114,13 +114,11 @@ var mri = function (req, res) {
                 : ("<a href='/auth/github'>Log in with GitHub</a>");
     var myurl = req.query.url,
         hash = crypto.createHash('md5').update(myurl).digest('hex');
-    console.log("query",myurl,hash);
-    req.db.get('mri').find({url: "/data/" + hash + "/", backup:{$exists:0}}, {fields: {_id: 0}, sort: {$natural: -1}, limit: 1})
+    req.db.get('mri').find({url: "/data/" + hash + "/"}, {fields: {_id: 0}, sort: {$natural: -1}, limit: 1})
         .then(function (json) {
-            console.log("json",json);
+            console.log(json);
             json = json[0];
             if (json) {
-                console.log("render with json");
                 res.render('mri', {
                     title: json.name || 'Untitled MRI',
                     params: JSON.stringify(req.query),
@@ -128,7 +126,6 @@ var mri = function (req, res) {
                     login: login
                 });
             } else {
-                console.log("download anew, calling downloadMRI");
                 (function (my, rq, rs) {
                     downloadMRI(my, rq, rs, function (obj) {
                         if(obj) {
@@ -164,12 +161,8 @@ var api_mri_post = function (req, res) {
         hash = crypto.createHash('md5').update(myurl).digest('hex');
     // shell equivalent: req.db.mri.find({source:"http://braincatalogue.org/data/Pineal/P001/t1wreq.db.nii.gz"}).limit(1).sort({$natural:-1})
 
-    console.log("myurl from api_mri",myurl);
-    console.log("hash from api_mri",hash);
-
     req.db.get('mri').find({url: "/data/" + hash + "/", backup: {$exists: false}}, "-_id", {sort: {$natural: -1}, limit: 1})
         .then(function (json) {
-            console.log("json from api_mri",json);
             json = json[0];
             if (json) {
                 if (req.body.var) {

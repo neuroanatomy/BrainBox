@@ -1,26 +1,13 @@
-/**
- * @library BrainBox
- * @version 0.0.1
- * @brief Real-time collaboration in neuroimaging
- */
- 
-/**
- * @page BrainBox
- */
-
 var BrainBox={
 	version: 1,
-	debug: 0,
+	debug: 1,
 	info:{},
 	labelSets:null,
 	access:["Read/Write","Read"],
 	annotationType:["volume","text"],
 
-    /**
-     * @function traceLog
-     */
 	traceLog: function traceLog(f,l) {
-		if(BrainBox.debug && (l==undefined || BrainBox.debug>l))
+		if(l==undefined || BrainBox.debug>l)
 			return "bb> "+(f.name)+" "+(f.caller?(f.caller.name||"annonymous"):"root");
 	},
 
@@ -28,9 +15,6 @@ var BrainBox={
 		JavaScript implementation of Java's hashCode method from
 		http://werxltd.com/wp/2010/05/13/javascript-implementation-of-javas-string-hashcode-method/
 	*/
-	/**
-     * @function hash
-     */
 	hash: function hash(str) {
 		console.log(BrainBox.traceLog(hash));
 		
@@ -49,9 +33,6 @@ var BrainBox={
 		}
 		return res;
 	},
-	/**
-     * @function loadScript
-     */
 	loadScript: function loadScript(path) {
 	    var def = new $.Deferred();
         var s = document.createElement("script");
@@ -62,9 +43,6 @@ var BrainBox={
         document.body.appendChild(s);
     	return def.promise();
 	},
-	/**
-     * @function initBrainBox
-     */
 	initBrainBox: function initBrainBox() {
 		console.log(BrainBox.traceLog(initBrainBox));
 		
@@ -100,9 +78,6 @@ var BrainBox={
 		
 		return def.promise();
 	},
-	/**
-     * @function configureBrainBox
-     */
 	configureBrainBox: function configureBrainBox(param) {
 		console.log(BrainBox.traceLog(configureBrainBox));
 		
@@ -168,9 +143,6 @@ var BrainBox={
 		
 		return def.promise();
 	},
-	/**
-     * @function unload
-     */
 	unload: function unload() {
 		console.log(BrainBox.traceLog(unload));
 		var foundStored=false;
@@ -200,9 +172,6 @@ var BrainBox={
     /*
 		Annotation related functions
 	*/
-	/**
-     * @function selectAnnotationTableRow
-     */
 	selectAnnotationTableRow: function selectAnnotationTableRow() {
 		console.log(BrainBox.traceLog(selectAnnotationTableRow));
 	
@@ -218,9 +187,6 @@ var BrainBox={
 			AtlasMakerWidget.configureAtlasMaker(BrainBox.info,index);
 		}
 	},
-	/**
-     * @function appendAnnotationTableRow
-     */
 	appendAnnotationTableRow: function appendAnnotationTableRow(irow,param) {
 		console.log(BrainBox.traceLog(appendAnnotationTableRow));
 		
@@ -250,9 +216,6 @@ var BrainBox={
 			}
 		}
 	},
-	/**
-     * @function addAnnotation
-     */
 	addAnnotation: function addAnnotation(param) {
 		console.log(BrainBox.traceLog(addAnnotation));
 		
@@ -277,9 +240,6 @@ var BrainBox={
 		// update in server
 		BrainBox.saveAnnotations(param);
 	},
-	/**
-     * @function removeAnnotation
-     */
 	removeAnnotation: function removeAnnotation(param) {
 		console.log(BrainBox.traceLog(removeAnnotation));
 
@@ -300,9 +260,6 @@ var BrainBox={
 		// update in server
 		BrainBox.saveAnnotations(param);
 	},
-	/**
-     * @function saveAnnotations
-     */
 	saveAnnotations: function saveAnnotations(param) {
 		console.log(BrainBox.traceLog(saveAnnotations));
 
@@ -311,9 +268,6 @@ var BrainBox={
 		hash_old=BrainBox.hash(JSON.stringify(BrainBox.info));
 		$(param.saveWarning).hide();
 	},
-	/**
-     * @function loadLabelsets
-     */
 	loadLabelsets: function loadLabelsets() {
 		console.log(BrainBox.traceLog(loadLabelsets));
 		
