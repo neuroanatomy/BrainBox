@@ -15,7 +15,7 @@ var dateFormat = require('dateformat');
 var async = require('async');
 var Struct = require('struct');
 var child_process = require('child_process');
-var merge = require('merge')
+var merge = require('merge');
 
 var mongo = require('mongodb');
 var monk = require('monk');
@@ -359,7 +359,7 @@ var initSocketConnection = function initSocketConnection() {
 			
 			s.on('message',function message_fromInitSocketConnection(msg) {
 			    traceLog(message_fromInitSocketConnection,1);
-			    
+			    var sender = this;
 				var sourceUS=getUserFromSocket(this);
 				var data={};
 				
@@ -375,7 +375,6 @@ var initSocketConnection = function initSocketConnection() {
 				    console.log("data type:",data.type);
 				}
 
-				// integrate paint messages
 				switch(data.type) {
 					case "userData":
 						receiveUserDataMessage(data,this);
@@ -395,6 +394,24 @@ var initSocketConnection = function initSocketConnection() {
 					case "echo":
 						console.log("ECHO: '"+data.msg+"' from user "+data.username);
 						break;
+					case "userNameQuery":
+						var result = queryUserName(data)
+						.then(function(obj){
+							data.metadata = obj;
+							sender.send(JSON.stringify(data));
+                        })
+						.catch(function(){});
+						break;
+					case "projectNameQuery":
+						var result = queryProjectName(data)
+						.then(function(obj){
+							data.metadata = obj;
+							sender.send(JSON.stringify(data));
+                        })
+						.catch(function(){});
+						break;
+					default :
+						break;
 				}
 
 				// broadcast
@@ -405,31 +422,32 @@ var initSocketConnection = function initSocketConnection() {
 					
 					// do not auto-broadcast
 					if(sourceUS.uid===targetUS.uid) {
+						sender = websocket.clients[i];
 						if(debug>1) console.log("    no broadcast to self");
 						continue;
 					}
 					
-					// do not broadcast to unknown users
+					// do not broadcast to undefined users
 					if( sourceUS.User===undefined || targetUS.User===undefined) {
 						if(debug) console.log("    User "+sourceUS.uid+": "+(sourceUS.User===undefined)?"undefined":"defined");
 						if(debug) console.log("    User "+targetUS.uid+": "+(targetUS.User===undefined)?"undefined":"defined");
 						continue;
 					}
-					
-					if( targetUS.User.iAtlas!==sourceUS.User.iAtlas && data.type!=="chat" && data.type!=="userData" ) {
+										
+					if (( targetUS.User.projectPage && targetUS.User.projectPage === sourceUS.User.projectPage)
+						|| (targetUS.User.iAtlas === sourceUS.User.iAtlas)
+						|| (data.type === "userData")
+						|| (data.type === "chat")
+					) {
+						if(data.type==="atlas") {
+							sendAtlasToUser(data.data,websocket.clients[i],false);
+						} else {
+						    // sanitise data
+						    const cleanData=DOMPurify.sanitize(JSON.stringify(data));
+							websocket.clients[i].send(cleanData);
+						}
+					} else {
 						if(debug>1) console.log("    no broadcast to user "+targetUS.User.username+" [uid: "+targetUS.uid+"] of atlas "+targetUS.User.specimenName+"/"+targetUS.User.atlasFilename);
-						continue;
-					}
-					
-					if(data.type==="atlas") {
-						sendAtlasToUser(data.data,websocket.clients[i],false);
-					} 
-					else {
-						console.log("ABOUT TO BROADCAST");
-						console.log("msg",msg);
-					    // sanitise data
-					    const cleanData=DOMPurify.sanitize(JSON.stringify(data));
-						websocket.clients[i].send(cleanData);
 					}
 					n++;
 				}
@@ -503,6 +521,45 @@ var initSocketConnection = function initSocketConnection() {
 }
 this.initSocketConnection = initSocketConnection;
 
+var queryUserName = function queryUserName(data){
+	return new Promise(function(resolve, reject){
+		if (data.metadata && data.metadata.nickname) {
+			db.get('user')
+			.find(
+				{"nickname": {'$regex': data.metadata.nickname}},
+				{fields:["nickname", "name"],limit:10})
+				.then(function(obj){
+					console.log(obj);
+					resolve(obj);
+				});
+		}
+		else if (data.metadata && data.metadata.name) {
+			db.get('user')
+			.find(
+				{"name": {'$regex': data.metadata.name}},
+				{fields:["nickname", "name"],limit:10})
+				.then(function(obj){
+					console.log(obj);
+					resolve(obj);
+				});
+		}
+		else
+			reject();
+	});
+}
+var queryProjectName = function queryProjectName(data){
+	return new Promise(function(resolve, reject){
+		if (data.metadata && data.metadata.name) {
+			db.get('project')
+                .findOne({"shortname": data.metadata.name},{fields:["name","shortname"]})
+				.then(function(obj) {
+					resolve(obj);
+				});
+		} else
+			reject();
+	});
+}
+
 var receivePaintMessage = function receivePaintMessage(data) {
     traceLog(receivePaintMessage,2);
 
@@ -545,24 +602,27 @@ var receiveSaveMetadataMessage = function receiveSaveMetadataMessage(data,user_s
 	var sourceUS=getUserFromUserId(data.uid);
 	var json=data.metadata;
 	json.modified=(new Date()).toJSON();
-	json.modifiedBy= (sourceUS.User && sourceUS.User.username) ? sourceUS.User.username : "unknown";
+	json.modifiedBy = (sourceUS.User && sourceUS.User.username) ? sourceUS.User.username : "unknown";
+
 	// sanitise json
 	json=JSON.parse(DOMPurify.sanitize(JSON.stringify(json))); // sanitize works on strings, not objects
-	// mark previous one as backup
-	db.get('mri').find({source:json.source}, {backup:{$exists:false} , limit: 1})
-	.then(function(ret){
-		json = merge(ret, json);
-		delete json["_id"];
-		console.log("FFF", json);
-		db.get('mri').update({source:json.source},{$set:{backup:true}},{multi:true})
-		.then(function(){db.get('mri').insert(json);})
-		
-	})
 
-	// db.get('mri').update({url:json.url},json);
-	// db.get('mri').insert(json);
-	//db.get('mri').update({url:json.url,backup:{$exists:false}},{$set:{backup:true}},{multi:true});  //TODO DO THE MERGE
-	// insert new one
+	// mark previous one as backup
+	console.log("source:",json.source);
+	
+    db.get('mri').find({source:json.source, backup:{$exists:false}})
+        .then(function (ret) {
+            console.log("original ret:", JSON.stringify(ret));
+            console.log("original json:", json);
+            json = merge.recursive(ret[0], json);
+            delete json["_id"];
+            console.log("merged json:", json);
+            db.get('mri').update({source:json.source},{$set:{backup:true}},{multi:true})
+                .then(function () {
+                    console.log("new version:",json);
+                    db.get('mri').insert(json);
+                });
+        });
 };
 var receiveAtlasFromUserMessage = function receiveAtlasFromUserMessage(data,user_socket) {
     traceLog(receiveAtlasFromUserMessage);
@@ -1523,7 +1583,7 @@ var line = function line(x, y, val, User, undoLayer) {
 	var y2=y;
 	var	i;
 	
-	if(Math.pow(x1-x2,2)+Math.pow(y1-y2,2)>10*10) {
+	if(Math.pow(x1-x2,2)+Math.pow(y1-y2,2)>20*20) {
 		console.log("WARNING: long line from",x1,y1,"to",x2,y2);
 		console.log("User.uid:",User.uid);
 		displayUsers();

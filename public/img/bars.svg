@@ -7,12 +7,13 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="1792"
+   height="1792"
+   viewBox="0 0 1792 1792"
    id="svg2"
    version="1.1"
    inkscape:version="0.91 r13725"
-   sodipodi:docname="minus-circle.svg"
-   width="1536"
-   height="1536">
+   sodipodi:docname="bars.svg">
   <metadata
      id="metadata10">
     <rdf:RDF>
@@ -21,7 +22,6 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -36,31 +36,19 @@
      guidetolerance="10"
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
-     inkscape:window-width="1421"
-     inkscape:window-height="927"
+     inkscape:window-width="1367"
+     inkscape:window-height="912"
      id="namedview6"
      showgrid="false"
-     fit-margin-top="0"
-     fit-margin-left="0"
-     fit-margin-right="0"
-     fit-margin-bottom="0"
-     inkscape:zoom="0.24983578"
-     inkscape:cx="-460.99972"
-     inkscape:cy="557.47415"
-     inkscape:window-x="28"
-     inkscape:window-y="89"
+     inkscape:zoom="0.3755406"
+     inkscape:cx="896"
+     inkscape:cy="896"
+     inkscape:window-x="4"
+     inkscape:window-y="23"
      inkscape:window-maximized="0"
      inkscape:current-layer="svg2" />
-  <ellipse
-     style="opacity:1;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:50;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:3.27590013;stroke-opacity:0"
-     id="path4163"
-     cx="768.14667"
-     cy="770.16949"
-     rx="747.83289"
-     ry="758.46558" />
   <path
-     style="fill:#333333;fill-opacity:1"
-     d="m 320,733.01907 q 0,-14.21101 19,-24.59597 19,-10.38497 45,-10.38497 l 768,0 q 26,0 45,10.38496 19,10.38496 19,24.59597 l 0,69.96187 q 0,14.21101 -19,24.59598 -19,10.38496 -45,10.38496 l -768,0 q -26,0 -45,-10.38496 -19,-10.38496 -19,-24.59598 l 0,-69.96187 z"
+     d="M1664 1344v128q0 26-19 45t-45 19h-1408q-26 0-45-19t-19-45v-128q0-26 19-45t45-19h1408q26 0 45 19t19 45zm0-512v128q0 26-19 45t-45 19h-1408q-26 0-45-19t-19-45v-128q0-26 19-45t45-19h1408q26 0 45 19t19 45zm0-512v128q0 26-19 45t-45 19h-1408q-26 0-45-19t-19-45v-128q0-26 19-45t45-19h1408q26 0 45 19t19 45z"
      id="path4"
-     inkscape:connector-curvature="0" />
+     style="fill:#ffffff;fill-opacity:1" />
 </svg>

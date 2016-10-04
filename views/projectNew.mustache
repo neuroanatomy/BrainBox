@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+	<link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
+    <title>{{title}}</title>
+	<link rel="stylesheet" href="/stylesheets/style.css" />
+	<link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
+	<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+</head>
+
+<body>
+
+<div style="width:100%;height:100%;display:flex;flex-direction:column">
+	
+	<!-- Header -->
+	<div style="flex:0 0 100px">
+		<a href='/'>
+			<img style='position:absolute;left:10px;top:5px;width:200px' src='/img/brainbox-logo-small_noFont.svg'/>
+		</a>
+        <div style="position:absolute;left:73px;top:21px;width:auto; font-family: Roboto, sans-serif; font-size: 36px; font-weight:100" id="fontLogo"> 
+            <a href='/' style="font-family: Roboto, sans-serif; font-size: 36px; font-weight:100; text-decoration:none">BrainBox</a>
+        </div>
+		<div id="menu">
+			<img id="addProject" class="button" title="Add project" style='width:13px' src='/img/plus.svg'/>
+			<img id="search" class="button" title="search" style='width:13px' src='/img/search.svg'/>
+			<img id="doc" class="button" title="documentation" style='width:13px' src='/img/doc.svg'/>
+			<div id="MyLogin">
+				<span>{{{login}}}</span>
+			</div>
+		</div>
+	</div>
+	
+	<!-- Content (variable height) -->
+	<div id="content" style="flex:1 0 auto">
+
+        <!-- New Project Name -->
+	    <div style="display:block;width:1000px;margin:0 auto;padding:20px;background:#333">
+
+            <div style="max-width:480px;display:block;margin:0 auto">
+                <h1>Create a new project</h1>
+                <p>
+                    A project contains a list of MRI files, a set of volume or
+                    text annotations, and a list of collaborators with their access rights.
+                </p>
+
+                <input id="projectName" type="text" placeholder="Enter the project name"></input>
+                <div id='warning' style="display:none">
+                    The project <a><strong></strong></a> already exists
+                </div>
+            </div>
+
+            <!-- Save or Cancel -->
+            <div style="display:block;margin:0 auto;width:200px">
+                <h2 id="createProject" class="pushButton">Create Project</h2>
+                <h2 id="cancelChanges" class="pushButton">Cancel</h2>
+            </div>
+	    </div>
+	</div>
+	<!-- End Content -->
+	
+	<!-- Space (fixed height) -->
+	<div style="flex:0 0 50px">
+	</div>
+
+	<!-- Footer (fixed height) -->
+	<div style="flex:0 0 100px;background-color:#000">
+		<p style="width:100%;font-size:small;text-align:center"> 
+			<a target="_blank" href="http://neuroanatomy.github.io">
+				<img src="/img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/></a>
+			<a target="_blank" href="http://neuroanatomy.github.io" class="linkNoULine">
+				group de neuroanatomie appliquée et théorique
+			</a>
+		</p>
+	</div>
+</div>
+
+<script src="/lib/jquery-3.1.1.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script src="https://cdn.jsdelivr.net/jdenticon/1.3.2/jdenticon.min.js"></script>
+<script src="https://cdn.jsdelivr.net/js-md5/0.3.0/md5.min.js"></script>
+
+<script>
+var host = "ws://" + window.location.hostname + ":8080/";
+if (window.WebSocket) {
+    ws=new WebSocket(host);
+} else if (window.MozWebSocket) {
+    ws=new MozWebSocket(host);
+}
+ws.onmessage = function(message) {
+    message = JSON.parse(message.data);
+    console.log(message);
+    if (message.type === "projectNameQuery") {
+        if(message.metadata) {
+            $("#warning strong").text(message.metadata.shortname);
+            $("#warning a").attr('href','/project/'+message.metadata.shortname);
+            $("#warning").show();
+            $("#createProject").css({'pointer-events':'none',opacity:0.5});
+        } else {
+            $("#warning").hide();
+            $("#createProject").css({'pointer-events':'auto',opacity:1});
+        }
+    }
+}
+
+$("#projectName").on('keyup',function(e) {
+    var name=$("#projectName").val();
+    ws.send(JSON.stringify({"type":"projectNameQuery", "metadata":{"name":name}}));
+});
+
+$("#createProject").click(function cancelChanges(){location.pathname='/project/'+$("#projectName").val()+'/settings'});
+$("#cancelChanges").click(function cancelChanges(){location.pathname='{{{projectURL}}}'});
+
+$("#addProject").click(function(){location="/project/new"});
+</script>
+
+
+
+</body>
+</html>

@@ -30,16 +30,16 @@
 	<!-- Header -->
 	<div style="flex:0 0 100px">
 		<a href='/'>
-			<img style='position:fixed;left:10px;top:5px;width:200px' src='/img/brainbox-logo-small_noFont.svg'/>
+			<img style='position:absolute;left:10px;top:5px;width:200px' src='/img/brainbox-logo-small_noFont.svg'/>
 		</a>
-		<div style="position:fixed;left:73px;top:21px;width:auto; font-family: Roboto, sans-serif; font-size: 36px; font-weight:300">
+		<div style="position:absolute;left:73px;top:21px;width:auto; font-family: Roboto, sans-serif; font-size: 36px; font-weight:300">
 			{{projectName}}
 		</div>
 		<div id="menu">
-			<img id="addProject" title="Add project" style='width:13px' src='/img/plus.svg'/>
-			<img id="settings" title="Settings" style='width:13px' src='/img/settings.svg'/>
-			<img id="search" title="Search" style='width:13px' src='/img/search.svg'/>
-			<img id="doc" title="Documentation" style='width:13px' src='/img/doc.svg'/>
+			<img id="addProject" class="button" title="Add project" style='width:13px' src='/img/plus.svg'/>
+			<img id="settings" class="button" title="Settings" style='width:13px' src='/img/settings.svg'/>
+			<img id="search" class="button" title="Search" style='width:13px' src='/img/search.svg'/>
+			<img id="doc" class="button" title="Documentation" style='width:13px' src='/img/doc.svg'/>
 			<div id="MyLogin">
 				<span>{{{login}}}</span>
 			</div>
@@ -136,12 +136,6 @@
 
 		</div>
 	</div>
-	<!-- NAAT logo down right corner -->
-	<div id="NAATlogo" class="project-page">
-		<a target="_blank" href="http://neuroanatomy.github.io">
-			<img src="/img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/>
-		</a>
-	</div>
 </div>
 
 <!-- Labels -->
@@ -168,8 +162,7 @@
 </div>
 <!-- End Labels -->
 
-
-<script src="/lib/jquery-1.11.0.min.js"></script>
+<script src="/lib/jquery-3.1.1.min.js"></script>
 <script src="/lib/pako/pako.min.js"></script>
 <script src="/lib/purify.min.js"></script>
 <script src="/js/twoWayBinding.js"></script>
@@ -184,6 +177,10 @@ function loadProjectFile(url) {
 	    if($.isEmptyObject(data) === false) {
             params.info=data;
             BrainBox.configureBrainBox(params)
+                .then(function from_project(){
+                    AtlasMakerWidget.User.projectPage = projectInfo.shortname;
+                    AtlasMakerWidget.sendUserDataMessage(JSON.stringify({projectPage:projectInfo.shortname}))
+                });
         } else {
             var info=AtlasMakerWidget.container.find("#info");
             info.html("<text x='5' y='15' fill='white'>ERROR: File is unreadable</text>");
@@ -239,7 +236,6 @@ MyLoginWidget.init($("#MyLogin"));
 	and is filled by the server, from the database.
 */
 var projectInfo={{{projectInfo}}};
-console.log(projectInfo);
 
 $("#projectName").text(projectInfo.name);
 $("#projectOwner").html("<a href='"+projectInfo.owner+"'>"+projectInfo.owner+"</a>");
@@ -249,85 +245,34 @@ $("#projectFilesNumber").text(projectInfo.files.list.length+" Files");
 $("#projectCollaboratorsNumber").text(projectInfo.collaborators.length+" Collaborators");
 
 /*
-	The list of all collaborators participating in the project
-	(should be recovered from the database)
-*/
-str=[	"<tr>",
-		"<th>Name</th>",
-		"<th>Last visited</th>",
-		"<tr>"].join();
-for(var i=0;i<projectInfo.collaborators.length;i++) {
-	str+=[	"<tr>",
-			"	<td>",
-			"		<a href='"+projectInfo.collaborators[i]+"'>"+projectInfo.collaborators[i]+"</a>",
-			"	</td>",
-			"	<td>14 July 2016</td>",
-			"</tr>"].join("");
-}
-$("#collaborators").append(str);
-
-/*
 	The list of all files included in the project
 */
 
-//setup the names of the columns
-var txtAnnotations = [];
-for (k in projectInfo.annotations.list)
-{
-	if (projectInfo.annotations.list[k].type === "text")
-	{
-		$("#projectFiles thead tr").append("<th>" + projectInfo.annotations.list[k].name + "</th>");
-		txtAnnotations.push(projectInfo.annotations.list[k]);
-		for (var f in projectInfo.files.list)
-		{
-			if (!(projectInfo.files.list[f].mri))
-				projectInfo.files.list[f].mri = {};
-			if (!(projectInfo.files.list[f].mri.annotation))
-				projectInfo.files.list[f].mri.annotation = {};
-			if (!(projectInfo.files.list[f].mri.annotation[projectInfo.annotations.list[k].name]))
-				projectInfo.files.list[f].mri.annotation[projectInfo.annotations.list[k].name] = "";
-		}
-	}
-}
+            //setup the names of the columns
+            var k, txtAnnotations = [];
+            for(k in projectInfo.annotations.list) {
+                if (projectInfo.annotations.list[k].type === "text") {
+                    $("#projectFiles thead tr").append("<th>" + projectInfo.annotations.list[k].name + "</th>");
+                    txtAnnotations.push(projectInfo.annotations.list[k]);
+                }
+            }
 
-
-str=[];
-
-//LEGACY
-// var tr = ""
-// for(var i=0;i<projectInfo.files.list.length;i++) {
-// 	var filename=projectInfo.files.list[i].source.split("/").pop();
-// 	tr +=[	"<tr>",
-// 			"	<td contentEditable=true class='noEmpty'>" + projectInfo.files.list[i].name + "</td>",
-// 			"	<td><a href='"+location.origin+"/mri?url="+projectInfo.files.list[i].source+"'>"+filename+"</a></td>"];
-// 			for (var g in txtAnnotations)
-// 			{
-// 				if (txtAnnotations[g].values) {
-// 					tr += "<td><select>";
-// 					for (var o in txtAnnotations[g].values)
-// 					{
-// 						tr+= "<option value=\"" + txtAnnotations[g].values[o] + "\"" + (projectInfo.files.list[i][txtAnnotations[g].name] == txtAnnotations[g].values[o] ? " selected " : "" ) + ">" + txtAnnotations[g].values[o] + "</option>"
-// 					}
-// 					tr += "</select></td>" 
-// 				}
-// 				else {
-// 					tr += "	<td contentEditable=true class='noEmpty'>" + projectInfo.files.list[i][txtAnnotations[g].name] + "</td>"
-// 				}
-// 			}
-// 		tr  += "</tr>"
-// 	str += tr ;
-// }
-
-
-// $("#projectFiles tbody").append(str);
-// for(var i=0;i<projectInfo.files.list.length;i++) {
-// 	$("#projectFiles tbody tr:eq("+i+") td:eq(0)").text(projectInfo.files.list[i].name);
-// }
-
+            // Add the 'annotations' object to mri if it does not exist
+            var k;
+            for(k in projectInfo.files.list) {
+                if (!(projectInfo.files.list[k].mri))
+                    projectInfo.files.list[k].mri = {};
+                if (!(projectInfo.files.list[k].mri.annotations))
+                    projectInfo.files.list[k].mri.annotations = {};
+                /**
+                 * @todo delete: undefined properties are created on assignment as far as the object exists
+                 */
+//                         if (!(projectInfo.files.list[f].mri.annotations[projectInfo.annotations.list[k].name]))
+//                             projectInfo.files.list[f].mri.annotations[projectInfo.annotations.list[k].name] = "";
+            }
 
 // select first file by default (should come from localStorage)
 var url=projectInfo.files.list[0].source;	
-$("#projectFiles tbody tr:eq(0)").addClass("selected");
 
 BrainBox.initBrainBox()
 .then(function from_project(){return BrainBox.loadLabelsets()})
@@ -338,102 +283,89 @@ BrainBox.initBrainBox()
 	$(document).on('click', "#labels-close", function(){$("#labelset").hide()});
 });
 
-var info_proxy = {};
-
-var trTemplate = "";
-trTemplate+=[	"<tr>",
-			"	<td contentEditable=true class='noEmpty'>" + "</td>",
-			"	<td><a></a></td>"];
-
-console.log("trTemplate" , trTemplate);
-
-objTemplate = [{	typeOfBinding:2,
+            var info_proxy = {};
+            var trTemplate;
+            var objTemplate = [
+                {	typeOfBinding:2,
                     path:"files.list.#.name"
                 },
                 {
-                	typeOfBinding:1,
-                	path:"files.list.#.source",
-                	format:function(e, d){
-                		$(e).find("a").prop("href", location.origin+"/mri?url=" + d);
-                		$(e).find("a").html(d.split("/").pop());},
-                	parse:function(e){}
-                }];
+                    typeOfBinding:1,
+                    path:"files.list.#.source",
+                    format:function(e, d){
+                        $(e).find("a").prop("href", location.origin+"/mri?url=" + d);
+                        $(e).find("a").html(d.split("/").pop());
+                    }
+                }
+            ];
+            trTemplate=[
+                "<tr>",
+                "	<td contentEditable=true class='noEmpty'></td>",
+                "	<td><a></a></td>"
+            ];
+            for(var g in txtAnnotations) {
+                if(txtAnnotations[g].values) {
+                    trTemplate.push("<td><select>");
+                    for (var o in txtAnnotations[g].values) {
+                        trTemplate.push("<option value=\"" + txtAnnotations[g].values[o] + "\"" + ">" + txtAnnotations[g].values[o] + "</option>");
+                    }
+                    trTemplate.push("</select></td>");
+                    
+                    /**
+                     * @todo Why the closures if there's nothing asynchronous??
+                     */
+                    objTemplate.push({
+                        typeOfBinding:2,
+                        path:"files.list.#.mri.annotations." + txtAnnotations[g].name,
+                        format: function(e, d){$(e).find("select").get(0).value=d},
+                        parse: function(e){return $(e).find("select").val()}
+                    });
 
+                } else {
+                    trTemplate.push("<td contentEditable=true class='noEmpty'></td>");
+                    objTemplate.push({
+                        typeOfBinding:2,
+                        path:"files.list.#.mri.annotations." + txtAnnotations[g].name
+                    });
+                }
+            }
+            trTemplate.push("</tr>");
+            var aParam = {
+                table: $("#projectFiles table"),
+                info_proxy: info_proxy,
+                info: projectInfo,
+                trTemplate: trTemplate.join("\n"),
+                objTemplate: objTemplate
+            };
 
-for (var g in txtAnnotations)
-{
-	if (txtAnnotations[g].values) {
-		trTemplate += "<td><select>";
-		for (var o in txtAnnotations[g].values)
-		{
-			trTemplate+= "<option value=\"" + txtAnnotations[g].values[o] + "\"" + ">" + txtAnnotations[g].values[o] + "</option>"
-		}
-		trTemplate+= "</select></td>"
+            for(var i=0;i<projectInfo.files.list.length;i++) {
+                BrainBox.appendAnnotationTableRow(i,aParam);
+            }
 
-		objTemplate.push({
-			typeOfBinding:2, path:"files.list.#.mri.annotation." + txtAnnotations[g].name,
-			format: (function(gg){return function(e, d){
-				$(e).find("select").prop('selectedIndex', d);}})(g),
-			parse: (function(gg){return function(e){
-				var name=$(e).find("select").val()
-				return txtAnnotations[gg].values.indexOf(name);}})(g)
-		})
+            // mark first row as selected
+            $("#projectFiles tbody tr:eq(0)").addClass("selected");
+            
+            // send data when focus is lost (on blur)
+            $(document).on('blur', "#projectFiles table tbody td", function(e) {
+                //console.log("blur target:",e.target);
+                var index = $(e.target).closest('tr').index();
+                JSON.stringify(info_proxy); // update content of projectInfo object from proxy by calling all getters
+                AtlasMakerWidget.sendSaveMetadataMessage(projectInfo.files.list[index]);
+            });
+            // blur when [enter] is clicked, to trigger data sending
+            $(document).on('keydown', "#projectFiles table tbody td", function(e) {
+                if(e.which==13 && $(e.target).attr('contenteditable')) {
+                    e.preventDefault();
+                    $(e.target).blur();
+                }
+            });
+            // blur when <select> changes value to trigger data sending
+            $("#projectFiles table tbody").on('change', "select", function(e) {
+                $(e.target).blur();
+            });
 
-	}
-	else {
-		trTemplate+= "	<td contentEditable=true class='noEmpty'>" + "</td>"
-		objTemplate.push({typeOfBinding:2, path:"files.list.#.mri.annotation." + txtAnnotations[g].name})
-	}
-}
-
-trTemplate += "</tr>"
-
-var aParam = {
-            table: $("#projectFiles table"),
-            info_proxy: info_proxy, //
-            info: projectInfo, //?
-            saveWarning: null,
-            trTemplate: trTemplate,
-            objTemplate: objTemplate
-        };
-
-// BrainBox.appendAnnotationTableRow(0,bParam);
-for(var i=0;i<projectInfo.files.list.length;i++) {
-	var td = BrainBox.appendAnnotationTableRow(i,aParam);
-	td.on('blur')
-}
-
-$(document).on('blur', "#projectFiles table tbody", function(e){
-	console.log(e.target.closest('tr'));
-	tr = e.target.closest('tr');
-	var index = $(tr).index();
-	console.log("YOLO SWAG NUMBER" , index)
-	console.log(projectInfo.files.list[index]);
-
-	// BrainBox.info = projectInfo.files.list[index];
-	// BrainBox.saveAnnotations(aParam);
-
-	console.log(JSON.stringify(info_proxy));
-	console.log(projectInfo.files.list[index]);
-
-	AtlasMakerWidget.sendSaveMetadataMessage(projectInfo.files.list[index]);
-
-	//merge (projectInfo.files.list[index])
-	//saveAnnotation
-
-});
-
-//$("#projectFiles table tbody").each(function(tr){
-	
-
-//});
-
-// $(document).on('click', "#saveAnnotations", function(){BrainBox.saveAnnotations(aParam)});
-
-
-// listen to changes in file selection by clicking of the file table
+// listen to changes in file selection by clicking on the file table
 $(document).on('click', "#projectFiles tbody tr",function() {
-	console.log(">> selectProjectFilesTableRow()");
 
 	var table=$(this).closest("table");
 	var currentIndex=$(table).find("tr.selected").index();
@@ -490,10 +422,7 @@ $(document).on('keydown', function(e){
 $(document).on('click', "#info tbody tr",BrainBox.selectAnnotationTableRow);
 
 // resize left tool bar
-$("#resizeButton").data({flag:-1,x0:0,y0:0});
-$("#resizeButton").on('mousedown',function(e){$(this).data({flag:0,x0:e.pageX,y0:e.pageY})});
-$("body").on('mousemove',function(e) {
-	var p={x:e.pageX,y:e.pageY};
+function resizeButton(p) {
 	if($("#resizeButton").data("flag")==0) {
 		$("#resizeButton").data({flag:1,x0:p.x,y0:p.y});
 	} else if($("#resizeButton").data("flag")==1) {
@@ -502,8 +431,21 @@ $("body").on('mousemove',function(e) {
 		$("#resizeButton").data({x0:p.x,y0:p.y});
 		AtlasMakerWidget.resizeWindow();
 	}
+}
+$("#resizeButton").data({flag:-1,x0:0,y0:0});
+$("#resizeButton").on('mousedown touchstart',function(e){$(this).data({flag:0,x0:e.pageX,y0:e.pageY})});
+$("body").on('mousemove',function(e){resizeButton({x:e.pageX,y:e.pageY})});
+$("body").on('touchmove',function(e){resizeButton({x:e.originalEvent.changedTouches[0].pageX,y:e.originalEvent.changedTouches[0].pageY})});
+$("body").on('mouseup touchend',function(e){$("#resizeButton").data({flag:-1})});
+
+$("#addProject").click(function(){location="/project/new"});
+$("#settings").click(function(){
+    var pathname=location.pathname;
+    if(pathname.slice(-1)=="/")
+        location=pathname+"settings";
+    else
+        location=pathname+"/settings";
 });
-$("body").on('mouseup',function(e){$("#resizeButton").data({flag:-1})});
 
 </script>
 

@@ -47,16 +47,15 @@
 	<!-- Header -->
 	<div style="flex:0 0 100px">
 		<a href='/'>
-			<img style='position:fixed;left:10px;top:5px;width:200px' src='/img/brainbox-logo-small_noFont.svg'/>
+			<img style='position:absolute;left:10px;top:5px;width:200px' src='/img/brainbox-logo-small_noFont.svg'/>
 		</a>
-		<div style="position:fixed;left:73px;top:21px;width:auto; font-family: Roboto, sans-serif; font-size: 36px; font-weight:300">
+		<div style="position:absolute;left:73px;top:21px;width:auto; font-family: Roboto, sans-serif; font-size: 36px; font-weight:300">
 			{{nickname}}
 		</div>
 		<div id="menu">
-			<img id="addProject" title="add project" style='width:13px' src='/img/plus.svg'/>
-			<img id="settings" title="settings" style='width:13px' src='/img/settings.svg'/>
-			<img id="search" title="search" style='width:13px' src='/img/search.svg'/>
-			<img id="doc" title="documentation" style='width:13px' src='/img/doc.svg'/>
+			<img id="addProject" class="button" title="add project" style='width:13px' src='/img/plus.svg'/>
+			<img id="search" class="button" title="search" style='width:13px' src='/img/search.svg'/>
+			<img id="doc" class="button" title="documentation" style='width:13px' src='/img/doc.svg'/>
 			<div id="MyLogin">
 				<span>{{{login}}}</span>
 			</div>
@@ -189,7 +188,7 @@
 	
 </div>
 
-<script src="/lib/jquery-1.11.0.min.js"></script>
+<script src="/lib/jquery-3.1.1.min.js"></script>
 <script>
 	var userInfo='{{{userInfo}}}';
 	userInfo=JSON.parse(userInfo);
@@ -211,6 +210,8 @@
 				break;
 		}
 	});
+	
+    $("#addProject").click(function(){location="/project/new"});
 </script>
 
 </body>

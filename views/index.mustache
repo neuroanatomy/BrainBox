@@ -16,10 +16,9 @@
 	<!-- Login (fixed height) -->
 	<div style="flex:0 0 64px">
 		<div id="menu">
-			<img id="addProject" title="add project" style='width:13px' src='/img/plus.svg'/>
-			<img id="settings" title="settings" style='width:13px' src='/img/settings.svg'/>
-			<img id="search" title="search" style='width:13px' src='/img/search.svg'/>
-			<img id="doc" title="documentation" style='width:13px' src='/img/doc.svg'/>
+			<img id="addProject" class="button" title="add project" style='width:13px' src='/img/plus.svg'/>
+			<img id="search" class="button" title="search" style='width:13px' src='/img/search.svg'/>
+			<img id="doc" class="button" title="documentation" style='width:13px' src='/img/doc.svg'/>
 			<div id="MyLogin">
 				<span>{{{login}}}</span>
 			</div>
@@ -49,7 +48,7 @@
 							<input id="url" type="text" placeholder="Enter the URL of an MRI (.nii.gz)"></input>
 						</div>
 						<div style="flex:0 0 32px">
-							<div id="go" onclick="goToURL()">Go</div>
+							<div id="go" class="pushButton" onclick="goToURL()">Go</div>
 						</div>
 					</div>
 				</div>
@@ -173,7 +172,7 @@ http://braincatalogue.org/data/Human/MRI-n4.nii.gz
 https://dl.dropboxusercontent.com/u/363467/mprage003.nii.gz
 -->
 
-<script src="/lib/jquery-1.11.0.min.js"></script>
+<script src="/lib/jquery-3.1.1.min.js"></script>
 <script src="/js/brainbox.js"></script>
 
 <script>
@@ -225,6 +224,7 @@ function goToURL(e) {
 	var url=$("#url").val();
 	location="/mri?url="+url;
 };
+$("#addProject").click(function(){location="/project/new"});
 </script>
 
 

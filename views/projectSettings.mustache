@@ -1,0 +1,782 @@
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> 
+	<link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
+    <title>{{projectShortname}}</title>
+	
+	<link rel="stylesheet" href="/stylesheets/style.css" />
+	
+	<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+	<link rel="stylesheet" href='https://fonts.googleapis.com/css?family=Roboto:100' type='text/css'>
+
+	<style>
+	/******************************** table ***************************************/
+	.selection-header {
+		padding-bottom:4px;
+		text-align:left;
+		height:20px;
+	}
+	.tab.selected {
+		background:#333;
+	}
+	.tabContent {
+	    margin-left:10px;
+	}
+	tr.selected{
+		background-color:#444;
+	}
+	#MRIFiles, #annotations, #access {
+		color:white;
+		text-align:left;
+		width:100%;
+		border-collapse:collapse;
+	}
+	#MRIFiles tr, #annotations tr, #access tr {
+		margin:0px 4px;
+	}
+	#MRIFiles, #annotations, #access,
+	#MRIFiles th, #annotations th, #access th {
+		border-bottom:thin solid white;
+	}
+	#MRIFiles a, #annotations a, #access a {
+		text-decoration:none;
+	}
+
+	/************************************ dropdown menu ********************************/
+	.autocomplete {
+		border:none;
+		border-radius: 0px;
+		outline: none;
+		padding: 0px 0px 5px 0px;
+		vertical-align: bottom;
+	}
+
+	.ui-widget.ui-widget-content{
+		background: #222;
+		color: white;
+		border: none;
+	}
+
+	.ui-widget-header:active {
+		border:none;
+	}
+
+	.ui-state-active,
+    .ui-widget-content .ui-state-active,
+    .ui-widget-header .ui-state-active,
+    a.ui-button:active,
+    .ui-button:active,
+    .ui-button.ui-state-active:hover {
+        background: #555 !important;
+		color:white;
+		border: none;
+		outline: none;
+		display: block;
+    }
+ 
+	li div {
+	  	color: white; /* text color */
+	  	border:none;
+	  	margin: none;
+	  	padding: none;
+	}
+
+	.access {
+        padding-top:5px;
+        text-decoration:none;
+        border:none;
+    }
+
+	/**************************************** access cascade icons ********************************/ 
+	/* view */
+
+	.view, .edit, .add, .remove {
+		cursor: pointer;
+		padding:5px 5px 5px 0px;
+	}
+	/* view */
+	[data-level="0"] .view:before {
+		background-image: url("/img/eye.svg");
+		background-size: 15px 15px;
+		width: 15px;
+		height: 15px;
+		content:"";
+		display:inline-block;
+		text-decoration: none;
+	}
+
+	[data-level="1"] .view:before, [data-level="2"] .view:before, [data-level="3"] .view:before, [data-level="4"] .view:before {
+		background-image: url("/img/eye-circle.svg");
+		background-size: 15px 15px;
+		width: 15px;
+		height: 15px;
+		content: "";
+		display:inline-block;
+		text-decoration: none;
+	}
+
+	/* edit */
+	[data-level="0"] .edit:before, [data-level="1"] .edit:before {
+		background-image: url("/img/pencil.svg");
+		background-size: 15px 15px;
+		width: 15px;
+		height: 15px;
+		content:"";
+		display: inline-block;
+		text-decoration: none;
+	}
+	[data-level="2"] .edit:before, [data-level="3"] .edit:before, [data-level="4"] .edit:before {
+		background-image: url("/img/pencil-circle.svg");
+		background-size: 15px 15px;
+		width: 15px;
+		height: 15px;
+		content:"";
+		display: inline-block;
+	}
+
+	/* add */
+	[data-level="0"] .add:before, [data-level="1"] .add:before, [data-level="2"] .add:before {
+		background-image: url("/img/plus-small.svg");
+		background-size: 15px 15px;
+		width: 15px;
+		height: 15px;
+		content:"";
+		display: inline-block;
+	}
+	[data-level="3"] .add:before, [data-level="4"] .add:before {
+		background-image: url("/img/plus-small-circle.svg");
+		background-size: 15px 15px;
+		width: 15px;
+		height: 15px;
+		content:"";
+		display: inline-block;
+	}
+
+	/* remove */
+	[data-level="0"] .remove:before, [data-level="1"] .remove:before, [data-level="2"] .remove:before, [data-level="3"] .remove:before {
+		background-image: url("/img/minus-small.svg");
+		background-size: 15px 15px;
+		width: 15px;
+		height: 15px;
+		content:"";
+		display: inline-block;
+	}
+	[data-level="4"] .remove:before {
+		background-image: url("/img/minus-small-circle.svg");
+		background-size: 15px 15px;
+		width: 15px;
+		height: 15px;
+		content:"";
+		display: inline-block;
+	}
+
+	/*************************** resizable layout **************************/
+	#littleDescription:focus:before {
+        content: none !important;
+	}
+
+	#littleDescription {
+        outline: none;
+    }
+
+    #centeringDiv {
+        position:relative;
+        display:block;
+        margin:0 auto;
+    }
+	#projImage {
+        position:relative;
+		display: inline-block;
+		background:#333;
+		width:200px;
+		height:200px;
+		vertical-align: top;
+	}
+	#projDescription {
+		position: relative;
+		display: inline-block;
+        vertical-align: top;
+	}
+	#projTable {		
+		position: relative;
+		display:inline-block;
+		min-height:400px;
+		max-width: 900px;
+		background:#333;
+		padding:20px; 
+		text-decoration:none;
+        vertical-align: top;
+	}
+	
+	#projDescription p {
+	    margin: 0;
+	}
+	
+	/* for larger screen (computer, big iPad, small iPad landscape) */
+	@media all and (min-width: 1023px) {
+		#centeringDiv {
+			width:984px;
+			padding:20px;
+		}
+        #projImage {
+            float: left;
+        }
+		#projDescription {
+			float: left;
+			clear: both;
+			width: 200px;
+		}		
+		#projTable {
+			max-width: 900px;
+			width: calc(100% - 300px);
+			padding: 20px;
+			margin-left: 20px;
+		}
+	}
+
+	/* for smaller screen (small iPad portrait) */ 
+	@media not all and (min-width: 1023px) {
+		#centeringDiv {
+			width:700px;
+			padding:20px;
+		}
+		#projDescription {
+			position: relative;
+			top: 0px;
+			left: 0px;
+			padding-left:20px;
+			padding-right: 20px;
+			width:calc(100% - 250px);
+			text-align: justify;
+		}
+		#projTable {
+			position: relative;
+			max-width: 700px;
+			width:calc(100% - 40px);
+			top: 20px;
+			left: 0px;
+		}
+	}
+
+	/* for even smaller screen (phone) */ 
+	@media not all and (min-width: 739px) {
+		#centeringDiv {
+			text-align: center;
+			width:600px;
+			padding:10px;
+		}
+		#projDescription {
+			position: relative;
+			top: 0px;
+			left: 0px;
+			padding-left:10px;
+			width:calc(100% - 20px);
+			text-align: justify;
+		}
+		#projTable {
+			position: relative;
+			max-width: 600px;
+			width:calc(100% - 40px);
+			top: 20px;
+			left: 0px;
+		}
+	}
+	/* for even still smaller screen (phone) */ 
+	@media not all and (min-width: 639px) {
+		#centeringDiv {
+			text-align: center;
+			width:480px;
+			padding:10px;
+		}
+		#projDescription {
+			position: relative;
+			top: 0px;
+			left: 0px;
+			padding-left:10px;
+			width:calc(100% - 20px);
+			text-align: justify;
+		}
+		#projTable {
+			position: relative;
+			max-width: 420px;
+			width:calc(100% - 40px);
+			top: 20px;
+			left: 0px;
+		}
+	}
+
+	</style>
+
+</head>
+
+<body>
+
+<div style="width:100%;height:100%;display:flex;flex-direction:column">
+	
+	<!-- Header -->
+	<div style="flex:0 0 100px">
+		<a href='/'>
+			<img style='position:absolute;left:10px;top:5px;width:200px' src='/img/brainbox-logo-small_noFont.svg'/>
+		</a>
+        <div style="position:absolute;left:73px;top:21px;width:auto">
+            <span id="projectName" contentEditable=true class="noEmptyWithPlaceholder" placeholder="Enter a project name" style="font-family:Roboto,sans-serif;font-size:36px;font-weight:300"></span>
+        </div>
+		<div id="menu">
+			<img id="addProject" class="button" title="add project" style='width:13px' src='/img/plus.svg'/>
+			<img id="search" class="button" title="search" style='width:13px' src='/img/search.svg'/>
+			<img id="doc" class="button" title="documentation" style='width:13px' src='/img/doc.svg'/>
+			<div id="MyLogin">
+				<span>{{{login}}}</span>
+			</div>
+		</div>
+	</div>
+	
+	<!-- Content (variable height) -->
+	<div id="content" style="flex:1 0 auto;justify-content:center;position:relative">
+	
+		<!-- to center -->
+		<div id="centeringDiv">
+
+				<div id="projImage">
+					<svg width="100%" height="100%"></svg>
+				</div>
+				
+				<div id="projDescription">
+					<h1>{{projectShortname}}</h1>
+					<h2 id="url" contentEditable=true class="noEmptyWithPlaceholder" placeholder="Enter a project website"></h2>
+					<p>by <a href='/user/{{owner}}'>{{owner}}</a></p>
+					<p id="description" contentEditable=true class="noEmptyWithPlaceholder" placeholder="Enter a project description"></p>
+					<p><span id="numCollaborators"></span> Collaborators</p>
+					<p><span id="numAnnotations"></span> Annotations</p>
+					<p><span id="numFiles"></span> MRI Files</p>
+				</div>
+				
+				<div id="projTable">
+						
+							<!-- Tab Content 1: Access -->
+							<h2 class="selection-header">Access</h2>
+							<table id="access" class="tabContent" style="padding:10px;display:table">
+								<thead>
+									<tr>
+										<th>Nickname</th>
+										<th>Name</th>
+										<th>Collaborators</th>
+										<th>Annotations</th>
+										<th>MRI Files</th>
+									</tr>
+								</thead>
+								<tbody>
+								</tbody>
+							</table>
+							<div style="text-align:right">
+								<img id="addCollaborator" class="button" src='/img/plus-circle.svg' />
+								<img id="removeCollaborator" class="button" src='/img/minus-circle.svg' />
+							</div>
+							
+							
+							<!-- Tab Content 2: Annotations -->
+							<h2 class="selection-header">Annotations</h2>
+							<table id="annotations" class="tabContent" style="padding:10px">
+								<thead>
+									<tr>
+										<th>Name</th>
+										<th>Type</th>
+										<th>Value</th>
+										<th>Display</th>
+									</tr>
+								</thead>
+								<tbody>
+								</tbody>
+							</table>
+							<div style="text-align:right">
+								<img id="addAnnotation" class="button" src='/img/plus-circle.svg' />
+								<img id="removeAnnotation" class="button" src='/img/minus-circle.svg' />
+							</div>
+							
+							<!-- Tab Content 3: MRIs -->
+							<h2 class="selection-header">MRI Files</h2>
+							<table id="MRIFiles" class="tabContent" style="padding:10px">
+								<thead>
+									<tr>
+										<th>URL</th>
+										<th>Name</th>
+									</tr>
+								</thead>
+								<tbody>
+								</tbody>
+							</table>
+							<div style="text-align:right">
+								<img id="addFile" class="button" src='/img/plus-circle.svg' />
+								<img id="removeFile" class="button" src='/img/minus-circle.svg' />
+							</div>
+							
+							<!-- Save or Cancel -->
+							<div style="display:block;margin:0 auto;width:200px">
+                                <h2 id="saveChanges" class="pushButton">Save Changes</h2>
+                                <h2 id="cancelChanges" class="pushButton">Cancel</h2>
+                            </div>
+				</div>
+		</div>
+		<!-- end of centering div -->
+
+	</div>
+	<!-- End Content -->
+	
+	<!-- Space (fixed height) -->
+	<div style="flex:0 0 50px">
+	</div>
+
+	<!-- Footer (fixed height) -->
+	<div style="flex:0 0 100px;background-color:#000">
+		<p style="width:100%;font-size:small;text-align:center"> 
+			<a target="_blank" href="http://neuroanatomy.github.io">
+				<img src="/img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/></a>
+			<a target="_blank" href="http://neuroanatomy.github.io" class="linkNoULine">
+				group de neuroanatomie appliquée et théorique
+			</a>
+		</p>
+	</div>
+	
+</div>
+
+<script src="/lib/jquery-3.1.1.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script src="https://cdn.jsdelivr.net/jdenticon/1.3.2/jdenticon.min.js"></script>
+<script src="https://cdn.jsdelivr.net/js-md5/0.3.0/md5.min.js"></script>
+<script src="/lib/purify.min.js"></script>
+<script src="/js/twoWayBinding.js"></script>
+<script src="/js/brainbox.js"></script>
+
+<script>
+var projectInfo='{{{projectInfo}}}';
+projectInfo=JSON.parse(projectInfo);
+
+$("body").on('click',".view",function(e){onAccessClicked(e,0)});
+$("body").on('click',".edit",function(e){onAccessClicked(e,1)});
+$("body").on('click',".add",function(e){onAccessClicked(e,2)});
+$("body").on('click',".remove",function(e){onAccessClicked(e,3)});
+$("#access tbody").on('click','tr',selectRow);
+$("#annotations tbody").on('click','tr',selectRow);
+$("#MRIFiles tbody").on('click','tr',selectRow);
+$("#saveChanges").click(saveChanges);
+$("#cancelChanges").click(function cancelChanges(){location.pathname='{{{projectURL}}}'});
+/**
+ * @todo add onblur event to the dropdown menu so it empties the content
+ */
+
+// Add avatar based on project's name
+jdenticon.update($("svg")[0],md5("{{projectShortname}}"));
+
+// WS Autocompletion
+var cb, label;
+var host = "ws://" + window.location.hostname + ":8080/";
+if (window.WebSocket) {
+    ws=new WebSocket(host);
+} else if (window.MozWebSocket) {
+    ws=new MozWebSocket(host);
+}
+ws.onmessage = function(message) {
+    message = JSON.parse(message.data);
+    if (message.type === "userNameQuery")
+    {
+        var arr;
+        if(label=="nickname")
+            arr=$.map(message.metadata,function(o){return {label:o.nickname,nickname:o.nickname,name:o.name}});
+        if(label=="name")
+            arr=$.map(message.metadata,function(o){return {label:o.name,nickname:o.nickname,name:o.name}});
+        cb(arr);
+    }
+}
+
+/**
+ * @function onAccessClicked
+ * @desc Handles click on one of the 5 access levels: 0=none, 1=view, 2=edit, 3=add, 4=remove
+ * @param {Event} e Event triggered by the click
+ * @param {int} l Base level of the access icon clicked
+ */
+function onAccessClicked( e, l ) {
+	// access level 
+	var al = $( e.target ).closest( "div" ).attr( "data-level" );
+    $( e.target ).closest( "div" ).attr( "data-level",l+( al != (l+1) ) );
+}
+
+function selectRow(e)
+{
+	$(e.currentTarget).closest("tbody").find("tr").each(function(index, tag){
+		$(tag).removeClass("selected");
+	})
+	$(e.currentTarget).addClass("selected");
+}
+
+var projectInfoProxy={};
+var accParam = {
+    table: $("table#access"),
+    info_proxy: projectInfoProxy,
+    info: projectInfo,
+    trTemplate: $.map([
+        "<tr>",
+        "    <td contentEditable=true class='noEmpty autocomplete' data-autocomplete='user.nickname'></td>",
+        "    <td contentEditable=true class='noEmpty autocomplete' data-autocomplete='user.name'></td>",
+        "    <td>",
+        "        <div class='access' data-level=2>",
+        "            <span class='view' title='view collaborators'></span>",
+        "            <span class='edit' title='edit list of collaborators'></span>",
+        "            <span class='add' title='add collaborators'></span>",
+        "            <span class='remove' title='remove collaborators'></span>",
+        "        </div>",
+        "    </td>",
+        "    <td>",
+        "        <div class='access' data-level=2>",
+        "            <span class='view' title='view atlas files'></span>",
+        "            <span class='edit' title='edit atlas files'></span>",
+        "            <span class='add' title='add atlas files'></span>",
+        "            <span class='remove' title='remove atlas files'></span>",
+        "        </div>",
+        "    </td>",
+        "    <td>",
+        "        <div class='access' data-level=2>",
+        "            <span class='view' title='view MRI files'></span>",
+        "            <span class='edit' title='edit MRI files' ></span>",
+        "            <span class='add' title='add MRI files'></span>",
+        "            <span class='remove' title='remove MRI files'></span>",
+        "        </div>",
+        "    </td>",
+        "</tr>"],function(o){return o}).join(""),
+    objTemplate: [
+        {	typeOfBinding:2,
+            path:"collaborators.list.#.username" // nickname
+        },
+        {	typeOfBinding:2,
+            path:"collaborators.list.#.name" // full name
+        },
+        {	typeOfBinding:2,
+            path:"collaborators.access.whitelist.#.access",
+            format: function(e,d){$(e).find(".access").attr('data-level',["none","view","edit","add","remove"].indexOf(d))},
+            parse: function(e){var level=$(e).find(".access").attr("data-level");return ["none","view","edit","add","remove"][level]}
+        },
+        {	typeOfBinding:2,
+            path:"annotations.access.whitelist.#.access",
+            format: function(e,d){$(e).find(".access").attr('data-level',["none","view","edit","add","remove"].indexOf(d))},
+            parse: function(e){var level=$(e).find(".access").attr("data-level");return ["none","view","edit","add","remove"][level]}
+        },
+        {	typeOfBinding:2,
+            path:"files.access.whitelist.#.access",
+            format: function(e,d){$(e).find(".access").attr('data-level',["none","view","edit","add","remove"].indexOf(d))},
+            parse: function(e){var level=$(e).find(".access").attr("data-level");return ["none","view","edit","add","remove"][level]}
+        }
+    ]
+};
+var annParam = {
+    table: $("table#annotations"),
+    info_proxy: projectInfoProxy,
+    info: projectInfo,
+    trTemplate: $.map([
+        "<tr>",
+        "    <td contentEditable=true class='noEmpty'></td>",
+        "    <td><select>",BrainBox.annotationType.map(function(o){return "<option>"+o+"</option>"}),"</select></td>",	// append annotation types
+        "    <td contentEditable=true class='noEmpty'></td>",
+        "    <td><input type='checkbox'/></td>",
+        "</tr>"],function(o){return o}).join(""),
+    objTemplate: [
+        {	typeOfBinding:2,
+            path:"annotations.list.#.name"
+        },
+        {	typeOfBinding:2,
+            path:"annotations.list.#.type",
+            format: function(e,d){$(e).find("select").prop('selectedIndex',BrainBox.annotationType.indexOf(d))},
+            parse: function(e){return $(e).find("select").val()}
+        },
+        {	typeOfBinding:2,
+            path:"annotations.list.#.values"
+        },
+        {	typeOfBinding:2,
+            path:"annotations.list.#.display",
+            format: function(e,d){$(e).find("input").prop("checked",d=='true')},
+            parse: function(e){return $(e).find("input").prop("checked")?'true':'false'}
+        }
+    ]
+};
+var filesParam = {
+    table: $("table#MRIFiles"),
+    info_proxy: projectInfoProxy,
+    info: projectInfo,
+    trTemplate: $.map([
+        "<tr>",
+        "    <td contentEditable=true class='noEmpty'></td>",
+        "    <td contentEditable=true class='noEmpty'></td>",
+        "</tr>"],function(o){return o}).join(""),
+    objTemplate: [
+        {	typeOfBinding:2,
+            path:"files.list.#.source"
+        },
+        {	typeOfBinding:2,
+            path:"files.list.#.name"
+        }
+    ]
+};
+
+bind2(projectInfoProxy,projectInfo,"url","#projDescription #url");
+bind2(projectInfoProxy,projectInfo,"description","#projDescription #description");
+bind2(projectInfoProxy,projectInfo,"name","#projectName");
+
+for(var i=0;i<projectInfo.collaborators.list.length;i++) {
+    BrainBox.appendAnnotationTableRow(i,accParam);
+}
+for(var i=0;i<projectInfo.annotations.list.length;i++) {
+    BrainBox.appendAnnotationTableRow(i,annParam);
+}
+for(var i=0;i<projectInfo.files.list.length;i++) {
+    BrainBox.appendAnnotationTableRow(i,filesParam);
+}
+
+$("#projDescription #numFiles").text(projectInfo.files.list.length);
+$("#projDescription #numAnnotations").text(projectInfo.annotations.list.length);
+$("#projDescription #numCollaborators").text(projectInfo.collaborators.list.length);
+
+
+$(document).on('click', "#addCollaborator", function(){addCollaborator(accParam)});
+$(document).on('click', "#removeCollaborator", function(){removeCollaborator(accParam)});
+$("table#access tr").removeClass("selected");
+$("table#access tbody tr").eq(0).addClass("selected");
+
+$(document).on('click', "#addAnnotation", function(){addAnnotation(annParam)});
+$(document).on('click', "#removeAnnotation", function(){removeAnnotation(annParam)});
+$("table#annotations tr").removeClass("selected");
+$("table#annotations tbody tr").eq(0).addClass("selected");
+
+$(document).on('click', "#addFile", function(){addFile(filesParam)});
+$(document).on('click', "#removeFile", function(){removeFile(filesParam)});
+$("table#MRIFiles tr").removeClass("selected");
+$("table#MRIFiles tbody tr").eq(0).addClass("selected");
+
+function addCollaborator(param) {
+    projectInfo.collaborators.list.push({});
+    projectInfo.collaborators.access.whitelist.push({userID:"",access:"view"});
+    projectInfo.annotations.access.whitelist.push({userID:"",access:"view"});
+    projectInfo.files.access.whitelist.push({userID:"",access:"view"});
+
+    // add and bind new table row
+    var i=projectInfo.collaborators.list.length-1;
+    BrainBox.appendAnnotationTableRow(i,param);
+    
+    $(".autocomplete").autocomplete({
+        minLength: 0,
+        source: function(req,res) {
+            var key = $(this.element).attr('data-autocomplete');
+            switch(key) {
+                case "user.nickname":
+                    ws.send(JSON.stringify({"type":"userNameQuery", "metadata":{"nickname":req.term}}));
+                    label="nickname";
+                    break;
+                case "user.name":
+                    ws.send(JSON.stringify({"type":"userNameQuery", "metadata":{"name":req.term}}));
+                    label="name";
+                    break;
+            }
+            cb=res;
+        },
+        select:function(e,ui) {
+            var irow=$(e.target).closest('tr').index();
+            projectInfoProxy["collaborators.list."+irow+".name"]=ui.item.name;
+            projectInfoProxy["collaborators.list."+irow+".username"]=ui.item.nickname;
+
+            // add user to access objects
+            /**
+             * @todo Combine all access settings for a subject in a single place
+             */
+            projectInfo.collaborators.access.whitelist[irow].userID=ui.item.nickname;
+            projectInfo.annotations.access.whitelist[irow].userID=ui.item.nickname;
+            projectInfo.files.access.whitelist[irow].userID=ui.item.nickname;
+        }
+    });
+    $("#projDescription #numCollaborators").text(projectInfo.collaborators.list.length);
+}
+function removeCollaborator(param) {
+    // remove row from table
+    var index=$(param.table).find("tbody .selected").index();
+    $(param.table).find('tbody tr:eq('+index+')').remove();
+    
+    // remove binding
+    JSON.stringify(param.info_proxy); // update projectInfo from projectInfoProxy
+    var irow=projectInfo.collaborators.list.length-1;
+    for(var icol=0; icol<param.objTemplate.length; icol++) {
+        unbind2(param.info_proxy,param.objTemplate[icol].path.replace("#", irow));
+    }
+    
+    // remove row from BrainBox.info.mri.atlas
+    projectInfo.collaborators.list.splice(index,1);
+    projectInfo.collaborators.access.whitelist.splice(index,1);
+    projectInfo.annotations.access.whitelist.splice(index,1);
+    projectInfo.files.access.whitelist.splice(index,1);
+
+    $("#projDescription #numCollaborators").text(projectInfo.collaborators.list.length);
+}
+
+function addAnnotation(param) {
+    projectInfo.annotations.list.push({});
+
+    // add and bind new table row
+    var i=projectInfo.annotations.list.length-1;
+    BrainBox.appendAnnotationTableRow(i,param);
+
+    $("#projDescription #numAnnotations").text(projectInfo.annotations.list.length);
+}
+function removeAnnotation(param) {
+    // remove row from table
+    var index=$(param.table).find("tbody .selected").index();
+    $(param.table).find('tbody tr:eq('+index+')').remove();
+    
+    // remove binding
+    JSON.stringify(param.info_proxy); // update projectInfo from projectInfoProxy
+    var irow=projectInfo.annotations.list.length-1;
+    for(var icol=0; icol<param.objTemplate.length; icol++) {
+        unbind2(param.info_proxy,param.objTemplate[icol].path.replace("#", irow));
+    }
+    
+    // remove row from BrainBox.info.mri.atlas
+    projectInfo.annotations.list.splice(index,1);
+
+    $("#projDescription #numAnnotations").text(projectInfo.annotations.list.length);
+}
+
+function addFile(param) {
+    projectInfo.files.list.push({});
+
+    // add and bind new table row
+    var i=projectInfo.files.list.length-1;
+    BrainBox.appendAnnotationTableRow(i,param);
+
+    $("#projDescription #numFiles").text(projectInfo.files.list.length);
+}
+function removeFile(param) {
+    // remove row from table
+    var index=$(param.table).find("tbody .selected").index();
+    $(param.table).find('tbody tr:eq('+index+')').remove();
+    
+    // remove binding
+    JSON.stringify(param.info_proxy); // update projectInfo from projectInfoProxy
+    var irow=projectInfo.files.list.length-1;
+    for(var icol=0; icol<param.objTemplate.length; icol++) {
+        unbind2(param.info_proxy,param.objTemplate[icol].path.replace("#", irow));
+    }
+    
+    // remove row from BrainBox.info.mri.atlas
+    projectInfo.files.list.splice(index,1);
+
+    $("#projDescription #numFiles").text(projectInfo.files.list.length);
+}
+
+function saveChanges() {
+    // update projectInfo from projectInfoProxy
+    JSON.stringify(projectInfoProxy);
+    
+    console.log(projectInfo);
+}
+
+$("#addProject").click(function(){location="/project/new"});
+</script>
+
+</body>
+</html>

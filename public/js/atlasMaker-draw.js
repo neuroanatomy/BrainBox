@@ -1,4 +1,11 @@
+/**
+ * @page AtlasMaker: Image Drawing
+ */
+
 var AtlasMakerDraw = {
+    /**
+     * @function resizeWindow
+     */
 	resizeWindow: function resizeWindow() {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(resizeWindow,1);if(l)console.log(l);
@@ -29,6 +36,9 @@ var AtlasMakerDraw = {
 			
 		}
 	},
+    /**
+     * @function configureBrainImage
+     */
 	configureBrainImage: function configureBrainImage() {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(configureBrainImage);if(l)console.log(l);
@@ -62,6 +72,9 @@ var AtlasMakerDraw = {
 		
 		me.initCursor();
 	},
+    /**
+     * @function configureAtlasImage
+     */
 	configureAtlasImage: function configureAtlasImage() {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(configureAtlasImage);if(l)console.log(l);
@@ -71,6 +84,9 @@ var AtlasMakerDraw = {
 		me.atlas_offcn.height=me.brain_H;
 		me.atlas_px=me.atlas_offtx.getImageData(0,0,me.atlas_offcn.width,me.atlas_offcn.height);
 	},
+    /**
+     * @function nearestNeighbour
+     */
 	nearestNeighbour: function nearestNeighbour(ctx) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(nearestNeighbour,1);if(l)console.log(l);
@@ -78,6 +94,9 @@ var AtlasMakerDraw = {
 		ctx.imageSmoothingEnabled = false;
 		ctx.mozImageSmoothingEnabled = false;
 	},
+    /**
+     * @function computeSegmentedVolume
+     */
 	computeSegmentedVolume: function computeSegmentedVolume() {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(computeSegmentedVolume,1);if(l)console.log(l);
@@ -92,18 +111,25 @@ var AtlasMakerDraw = {
 		}
 		return sum*me.User.pixdim[0]*me.User.pixdim[1]*me.User.pixdim[2];
 	},
+    /**
+     * @function displayInformation
+     */
 	displayInformation: function displayInformation() {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(displayInformation,1);if(l)console.log(l);
 			
 		me.info.slice=me.User.slice;
-		var i=0,info=me.container.find("#info");
+		var i=0,str;
+		var text=me.container.find("#text-layer");
+		var vector=me.container.find("#vector-layer");
 		
-		var str="";
+		str="";
 		for(var k in me.info) {
-			str+="<text x='5' y='"+(15+15*i++)+"' fill='white'>"+k+": "+me.info[k]+"</text>";
+			str+="<span>"+k+": "+me.info[k]+"</span><br/>";
 		}
+		text.html(str);
 		
+		str="";
 		if(me.User.measureLength) {
 			var W=parseFloat($('#atlasMaker canvas').css('width'));
 			var w=parseFloat($('#atlasMaker canvas').attr('width'));
@@ -117,9 +143,11 @@ var AtlasMakerDraw = {
 					"<path stroke='#00ff00' fill='none' d='"+str1+"'/>",
 					(i>0)?"<circle fill='#00ff00' cx="+zx*p[i-1].x+" cy="+zy*p[i-1].y+" r=3 />":""].join("\n");
 		}
-		
-		info.html(str);
+		vector.html(str);
 	},
+    /**
+     * @function drawImages
+     */
 	drawImages: function drawImages() {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(drawImages,1);if(l)console.log(l);
@@ -138,6 +166,9 @@ var AtlasMakerDraw = {
 			me.sendRequestSliceMessage();
 		}
 	},
+    /**
+     * @function drawAtlasImage
+     */
 	drawAtlasImage: function drawAtlasImage(view,slice) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(drawAtlasImage,1);if(l)console.log(l);

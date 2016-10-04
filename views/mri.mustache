@@ -16,10 +16,9 @@
 	<!-- Login (fixed height) -->
 	<div style="flex:0 0 64px">
 		<div id="menu">
-			<img id="addProject" title="add project" style='width:13px' src='/img/plus.svg'/>
-			<img id="settings" title="settings" style='width:13px' src='/img/settings.svg'/>
-			<img id="search" title="search" style='width:13px' src='/img/search.svg'/>
-			<img id="doc" title="documentation" style='width:13px' src='/img/doc.svg'/>
+			<img id="addProject" class="button" title="add project" style='width:13px' src='/img/plus.svg'/>
+			<img id="search" class="button" title="search" style='width:13px' src='/img/search.svg'/>
+			<img id="doc" class="button" title="documentation" style='width:13px' src='/img/doc.svg'/>
 			<div id="MyLogin">
 				<span>{{{login}}}</span>
 			</div>
@@ -42,9 +41,9 @@
 		<div id="data">		
 			<!-- Small left-top logo -->
 			<a href='/'>
-				<img style='position:fixed;left:10px;top:5px;width:200px' src='/img/brainbox-logo-small_noFont.svg'/>
+				<img style='position:absolute;left:10px;top:5px;width:200px' src='/img/brainbox-logo-small_noFont.svg'/>
 			</a>
-			<div style="position:fixed;left:73px;top:21px;width:auto; font-family: Roboto, sans-serif; font-size: 36px; font-weight:100" id="fontLogo"> 
+			<div style="position:absolute;left:73px;top:21px;width:auto; font-family: Roboto, sans-serif; font-size: 36px; font-weight:100" id="fontLogo"> 
 				<a href='/' style="font-family: Roboto, sans-serif; font-size: 36px; font-weight:100; text-decoration:none">BrainBox</a>
 			</div>
 
@@ -148,7 +147,7 @@ https://dl.dropboxusercontent.com/u/363467/mprage003.nii.gz
 <div id="myStereo"></div>
 -->
 
-<script src="/lib/jquery-1.11.0.min.js"></script>
+<script src="/lib/jquery-3.1.1.min.js"></script>
 <script src="/lib/pako/pako.min.js"></script>
 <script src="/lib/purify.min.js"></script>
 <script src="/js/twoWayBinding.js"></script>
@@ -199,7 +198,7 @@ if( $.isEmptyObject(mriInfo)) {
             info_proxy: info_proxy,
             info: BrainBox.info,
             saveWarning: $("#saveAnnotations"),
-            trTemplate: [
+            trTemplate: $.map([
                 "<tr>",
                 " <td contentEditable=true class='noEmpty'></td>",
                 " <td contentEditable=true class='noEmpty'></td>",
@@ -208,7 +207,7 @@ if( $.isEmptyObject(mriInfo)) {
                 " <td></td>",
                 " <td></td>",
                 " <td><select>",BrainBox.access.map(function(o){return "<option>"+o+"</option>"}),"</select></td>",	// append label sets
-                "</tr>"].join(),
+                "</tr>"],function(o){return o}).join(),
             objTemplate: [
                 {	typeOfBinding:2,
                     path:"mri.atlas.#.name"
@@ -219,12 +218,6 @@ if( $.isEmptyObject(mriInfo)) {
                 {	typeOfBinding:2,
                     path:"mri.atlas.#.labels",
                     format: function(e,d){$(e).find("select").prop('selectedIndex',$.map(BrainBox.labelSets,function(o){return o.source}).indexOf(d))},
-                    /*
-                        -----------------------------------------------------------
-                        NOTE: this is a temporary fix, the final version should be:
-                        -----------------------------------------------------------
-                        format: function(e,d){$(e).find("select").prop('selectedIndex',$.map(BrainBox.labelSets,function(o){return o.source}).indexOf(d))},
-                    */
                     parse: function(e){var name=$(e).find("select").val(),i=$.map(BrainBox.labelSets,function(o){return o.name}).indexOf(name);return BrainBox.labelSets[i].source}
                 },
                 {	typeOfBinding:1,
@@ -239,12 +232,12 @@ if( $.isEmptyObject(mriInfo)) {
                     path:"mri.atlas.#.modified",
                     format: date_format
                 },
-                {	typeOfBinding:2,path:"mri.atlas.#.access",
+                {	typeOfBinding:2,
+                    path:"mri.atlas.#.access",
                     format: function(e,d){$(e).find("select").prop('selectedIndex',BrainBox.access.indexOf(d))},
                     parse: function(e){return $(e).find("select").val()}
                 }
             ]
-
         };
 
         // bind interface
@@ -306,6 +299,8 @@ if( $.isEmptyObject(mriInfo)) {
         $("#msgLog").html("ERROR: Can't load data");
     });
 }
+
+$("#addProject").click(function(){location="/project/new"});
 </script>
 
 
