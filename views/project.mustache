@@ -9,6 +9,10 @@
 	<link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
 
 	<style>
+	#projectFiles>table>tbody>tr>td>select{
+		color:rgba(255,255,255,0.4);
+	}
+
 	#projectFiles {
 		overflow:scroll;
 	}
@@ -206,7 +210,8 @@ function loadProjectFile(url) {
 				},
 				{	typeOfBinding:1,
 					path:"mri.atlas.#.labels",
-					format: function(e,d){$(e).find("select").prop('selectedIndex',$.map(BrainBox.labelSets,function(o){return o.source}).indexOf(d))},
+					format: function(e,d){
+						$(e).find("select").prop('selectedIndex',$.map(BrainBox.labelSets,function(o){return o.source}).indexOf(d))},
 					parse: function(e){var name=$(e).find("select").val(),i=$.map(BrainBox.labelSets,function(o){return o.name}).indexOf(name);return BrainBox.labelSets[i].source}
 				},
 				{	typeOfBinding:1,
@@ -305,7 +310,7 @@ BrainBox.initBrainBox()
             ];
             for(var g in txtAnnotations) {
                 if(txtAnnotations[g].values) {
-                    trTemplate.push("<td><select>");
+                    trTemplate.push("<td><select value=0><option value='' disabled selected hidden>Empty</option>");
                     for (var o in txtAnnotations[g].values) {
                         trTemplate.push("<option value=\"" + txtAnnotations[g].values[o] + "\"" + ">" + txtAnnotations[g].values[o] + "</option>");
                     }
@@ -317,8 +322,12 @@ BrainBox.initBrainBox()
                     objTemplate.push({
                         typeOfBinding:2,
                         path:"files.list.#.mri.annotations." + txtAnnotations[g].name,
-                        format: function(e, d){$(e).find("select").get(0).value=d},
-                        parse: function(e){return $(e).find("select").val()}
+                        format: function(e, d){
+                        	if (d !=0) {$(e).find("select").css("color", "rgba(255,255,255,1)");}
+                        	$(e).find("select").get(0).value=d},
+                        parse: function(e){
+                        	if ($(e).find("select").val()) {$(e).find("select").css("color", "rgba(255,255,255,1)");}
+                        	return $(e).find("select").val()}
                     });
 
                 } else {
