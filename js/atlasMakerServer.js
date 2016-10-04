@@ -15,6 +15,7 @@ var dateFormat = require('dateformat');
 var async = require('async');
 var Struct = require('struct');
 var child_process = require('child_process');
+var merge = require('merge');
 
 var mongo = require('mongodb');
 var monk = require('monk');
@@ -426,25 +427,27 @@ var initSocketConnection = function initSocketConnection() {
 						continue;
 					}
 					
-					// do not broadcast to unknown users
+					// do not broadcast to undefined users
 					if( sourceUS.User===undefined || targetUS.User===undefined) {
 						if(debug) console.log("    User "+sourceUS.uid+": "+(sourceUS.User===undefined)?"undefined":"defined");
 						if(debug) console.log("    User "+targetUS.uid+": "+(targetUS.User===undefined)?"undefined":"defined");
 						continue;
 					}
-					
-					if( targetUS.User.iAtlas!==sourceUS.User.iAtlas && data.type!=="chat" && data.type!=="userData" ) {
+										
+					if (( targetUS.User.projectPage && targetUS.User.projectPage === sourceUS.User.projectPage)
+						|| (targetUS.User.iAtlas === sourceUS.User.iAtlas)
+						|| (data.type === "userData")
+						|| (data.type === "chat")
+					) {
+						if(data.type==="atlas") {
+							sendAtlasToUser(data.data,websocket.clients[i],false);
+						} else {
+						    // sanitise data
+						    const cleanData=DOMPurify.sanitize(JSON.stringify(data));
+							websocket.clients[i].send(cleanData);
+						}
+					} else {
 						if(debug>1) console.log("    no broadcast to user "+targetUS.User.username+" [uid: "+targetUS.uid+"] of atlas "+targetUS.User.specimenName+"/"+targetUS.User.atlasFilename);
-						continue;
-					}
-					
-					if(data.type==="atlas") {
-						sendAtlasToUser(data.data,websocket.clients[i],false);
-					} 
-					else {
-					    // sanitise data
-					    const cleanData=DOMPurify.sanitize(JSON.stringify(data));
-						websocket.clients[i].send(cleanData);
 					}
 					n++;
 				}
@@ -599,13 +602,27 @@ var receiveSaveMetadataMessage = function receiveSaveMetadataMessage(data,user_s
 	var sourceUS=getUserFromUserId(data.uid);
 	var json=data.metadata;
 	json.modified=(new Date()).toJSON();
-	json.modifiedBy=sourceUS.User.username||"unknown";
+	json.modifiedBy = (sourceUS.User && sourceUS.User.username) ? sourceUS.User.username : "unknown";
+
 	// sanitise json
 	json=JSON.parse(DOMPurify.sanitize(JSON.stringify(json))); // sanitize works on strings, not objects
+
 	// mark previous one as backup
-	db.get('mri').update({url:json.url,backup:{$exists:false}},{$set:{backup:true}},{multi:true});
-	// insert new one
-	db.get('mri').insert(json);
+	console.log("source:",json.source);
+	
+    db.get('mri').find({source:json.source, backup:{$exists:false}})
+        .then(function (ret) {
+            console.log("original ret:", JSON.stringify(ret));
+            console.log("original json:", json);
+            json = merge.recursive(ret[0], json);
+            delete json["_id"];
+            console.log("merged json:", json);
+            db.get('mri').update({source:json.source},{$set:{backup:true}},{multi:true})
+                .then(function () {
+                    console.log("new version:",json);
+                    db.get('mri').insert(json);
+                });
+        });
 };
 var receiveAtlasFromUserMessage = function receiveAtlasFromUserMessage(data,user_socket) {
     traceLog(receiveAtlasFromUserMessage);
@@ -1566,7 +1583,7 @@ var line = function line(x, y, val, User, undoLayer) {
 	var y2=y;
 	var	i;
 	
-	if(Math.pow(x1-x2,2)+Math.pow(y1-y2,2)>10*10) {
+	if(Math.pow(x1-x2,2)+Math.pow(y1-y2,2)>20*20) {
 		console.log("WARNING: long line from",x1,y1,"to",x2,y2);
 		console.log("User.uid:",User.uid);
 		displayUsers();
