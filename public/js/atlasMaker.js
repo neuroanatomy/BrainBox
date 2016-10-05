@@ -261,6 +261,8 @@ var AtlasMakerWidget = {
 			me.configureMRI(info,index)
 			.then(function from_configureAtlasMaker() {
 
+				delete me.info.region;
+				
 				if(me.fullscreen==true) { // WARNING: HACK... would be better to implement enter/exit fullscreen
 					me.fullscreen=false;
 					me.toggleFullscreen();
