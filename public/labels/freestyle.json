@@ -1,0 +1,14 @@
+{
+	"name":"Individual label",
+	"source":"http://brainbox.pasteur.fr/labels/freestyle.json",
+	"labels":[
+		{"name":"Label 1","value":7,"color":[220,248,164],"url":""},
+		{"name":"Label 2","value":3,"color":[205,62,78],"url":""},
+		{"name":"Label 3","value":49,"color":[0,118,14],"url":""},
+		{"name":"Label 4","value":54,"color":[103,255,255],"url":""},
+		{"name":"Label 5","value":52,"color":[13,48,255],"url":""},
+		{"name":"Label 6","value":77,"color":[200,70,255],"url":""},
+		{"name":"Label 7","value":78,"color":[255,148,10],"url":""}
+		]
+}
+
