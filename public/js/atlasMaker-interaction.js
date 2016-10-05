@@ -87,6 +87,9 @@ var AtlasMakerInteraction = {
 					});
 				}
 				break;
+			case 'Eyedrop':
+				me.User.tool='eyedrop';
+				break;
 		}
 		me.sendUserDataMessage(JSON.stringify({'tool':me.User.tool}));
 		me.User.measureLength=null;
@@ -648,6 +651,11 @@ var AtlasMakerInteraction = {
 				me.User.mouseIsDown = true;
 				me.info.x=x/me.brain_W;
 				me.info.y=1-y/me.brain_H;
+				break;
+			case 'eyedrop':
+				var value = me.eyedrop( x,y,me.User );
+				console.log("huhu");
+				console.log( "value = " + value );
 				break;
 		}
 	
