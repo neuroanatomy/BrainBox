@@ -8,6 +8,7 @@ var atlasMakerServer = require('../../js/atlasMakerServer');
 //expressValidator = require('express-validator')
 
 var validator = function (req, res, next) {
+    console.log("post query, ", req.body);
     req.checkQuery('url', 'please enter a valid URL')
         .isURL();
 
@@ -70,7 +71,6 @@ function downloadMRI(myurl, req, res, callback) {
                              req.connection.socket.remoteAddress,
                         username = (req.isAuthenticated()) ? req.user.username : ip,
                         json = {
-                            localpath: dest,
                             filename: filename,
                             success: true,
                             source: myurl,
@@ -214,7 +214,6 @@ var api_mri_get = function (req, res) {
             res.json(err);
         });
 };
-
 
 var mriController = function () {
     this.validator = validator;

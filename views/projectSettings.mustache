@@ -8,7 +8,7 @@
 	
 	<link rel="stylesheet" href="/stylesheets/style.css" />
 	
-	<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+	<link rel="stylesheet" href="/lib/jquery-ui.css"><!--https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css-->
 	<link rel="stylesheet" href='https://fonts.googleapis.com/css?family=Roboto:100' type='text/css'>
 
 	<style>
@@ -408,6 +408,7 @@
 								</tbody>
 							</table>
 							<div style="text-align:right">
+								<img id="importFiles" class="button" src='/img/upload.svg' />
 								<img id="addFile" class="button" src='/img/plus-circle.svg' />
 								<img id="removeFile" class="button" src='/img/minus-circle.svg' />
 							</div>
@@ -439,12 +440,37 @@
 		</p>
 	</div>
 	
+    <!-- Import files -->
+    <!-- black overlay -->
+    <div id='importFilesDialog' style='display:none;position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(0,0,0,0.7);z-index:100'>
+        <!-- centered content -->
+        <div style='position:relative;padding:1rem;margin:2rem auto;background-color:#333;max-width:600px;text-align:center;border:1px solid #777;height:calc(100% - 4rem);box-sizing:border-box'>
+            <!-- overflow: scroll -->
+            <div style='display:inline-block;max-width:600px;padding:2rem;overflow:scroll;max-height:calc(100% - 10rem)'>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>URL</th>
+                            <th>Name</th>
+                        </tr>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+            <!-- Import/Cancel buttons -->
+            <div style="display:block;margin:0 auto;max-width:200px">
+                <h2 id="importFilesDialogOk" class="pushButton">Import</h2>
+                <h2 id="importFilesDialogCancel" class="pushButton">Cancel</h2>
+            </div>
+        </div>
+    </div>
+	
 </div>
 
 <script src="/lib/jquery-3.1.1.min.js"></script>
-<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
-<script src="https://cdn.jsdelivr.net/jdenticon/1.3.2/jdenticon.min.js"></script>
-<script src="https://cdn.jsdelivr.net/js-md5/0.3.0/md5.min.js"></script>
+<script src="/lib/jquery-ui.min.js"></script><!--https://code.jquery.com/ui/1.12.1/jquery-ui.min.js-->
+<script src="/lib/jdenticon.min.js"></script><!--https://cdn.jsdelivr.net/jdenticon/1.3.2/jdenticon.min.js-->
+<script src="/lib/md5.min.js"></script><!--https://cdn.jsdelivr.net/js-md5/0.3.0/md5.min.js"-->
 <script src="/lib/purify.min.js"></script>
 <script src="/js/twoWayBinding.js"></script>
 <script src="/js/brainbox.js"></script>
@@ -648,8 +674,49 @@ $("table#annotations tbody tr").eq(0).addClass("selected");
 
 $(document).on('click', "#addFile", function(){addFile(filesParam)});
 $(document).on('click', "#removeFile", function(){removeFile(filesParam)});
+$(document).on('click', "#importFiles", function(){importFiles()});
 $("table#MRIFiles tr").removeClass("selected");
 $("table#MRIFiles tbody tr").eq(0).addClass("selected");
+
+$("#importFilesDialogOk").click(function() {
+    var sum=0;
+    $("#importFilesDialog tbody tr").each(function(i,o) {
+        var url=$(o).find("td:eq(0)").text();
+        var name=$(o).find("td:eq(1)").text();
+        var i,found;
+        
+        if(url.length<10)
+            return;
+        
+        // update the projectInfo object by calling the proxy's getters
+        JSON.stringify(projectInfoProxy);
+        
+        // look if the MRI file is not already in the list
+        found=false;
+        for(i in projectInfo.files.list) {
+            if(projectInfo.files.list[i].source==url) {
+                found=true;
+                break;
+            }
+        }
+        if(found===false) {
+            projectInfo.files.list.push({source:url, name:name});
+
+            // add and bind new table row
+            var i=projectInfo.files.list.length-1;
+            BrainBox.appendAnnotationTableRow(i,filesParam);
+
+            $("#projDescription #numFiles").text(projectInfo.files.list.length);
+            
+            sum++;
+        }
+    });
+    $("#importFilesDialog").hide();
+    console.log(sum,"files added");
+});
+$("#importFilesDialogCancel").click(function() {
+    $("#importFilesDialog").hide();
+});
 
 function addCollaborator(param) {
     projectInfo.collaborators.list.push({});
@@ -767,7 +834,32 @@ function removeFile(param) {
 
     $("#projDescription #numFiles").text(projectInfo.files.list.length);
 }
-
+function importFiles() {
+    // var input=document.getElementById("i-open-mesh");
+    console.log("importing files...");
+    $("body").append("<input id='importFilesInput' style='display:none'>");
+    var input=$("#importFilesInput")[0];
+    console.log(input);
+    input.type="file";
+    input.onchange=function(e){
+        var file=this.files[0];
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            $("#importFilesInput").remove();
+            $("#importFilesDialog").show();
+            var result=e.target.result;
+            var lines=result.split("\n");
+            var html=[];           
+            for(i in lines) {
+                cols=lines[i].split(", ");
+                html.push("<tr><td contentEditable='true'>"+cols[0]+"</td><td>"+cols[1]+"</td></tr>");
+            }
+            $("#importFilesDialog tbody").append(html.join("\n"));
+        }
+        reader.readAsText(file);
+    }
+    input.click();
+}
 function saveChanges() {
     // update projectInfo from projectInfoProxy
     JSON.stringify(projectInfoProxy);
