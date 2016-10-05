@@ -23,6 +23,22 @@ var validator = function (req, res, next) {
     }
 };
 
+var validator_post = function (req, res, next) {
+    req.checkBody('url', 'please enter a valid URL')
+        .isURL();
+
+    // req.checkQuery('var', 'please enter one of the variables that are indicated')
+    // .optional()
+    // .matches("localpath|filename|source|url|dim|pixdim");    // todo: decent regexp
+    var errors = req.validationErrors();
+    console.log(errors);
+    if (errors) {
+        res.send(errors).status(403).end();
+    } else {
+        return next();
+    }
+};
+
 /* Download MRI file
 ---------------------*/
 function downloadMRI(myurl, req, res, callback) {
@@ -141,8 +157,10 @@ var mri = function (req, res) {
         });
 };
 
-var api_mri = function (req, res) {
-    var myurl = req.query.url,
+var api_mri_post = function (req, res) {
+    console.log("post query, ", req.params);
+
+    var myurl = req.body.url,
         hash = crypto.createHash('md5').update(myurl).digest('hex');
     // shell equivalent: req.db.mri.find({source:"http://braincatalogue.org/data/Pineal/P001/t1wreq.db.nii.gz"}).limit(1).sort({$natural:-1})
 
@@ -154,29 +172,26 @@ var api_mri = function (req, res) {
             console.log("json from api_mri",json);
             json = json[0];
             if (json) {
-                if (req.query.var) {
-                    var i, arr = req.query.var.split("/");
+                if (req.body.var) {
+                    var i, arr = req.body.var.split("/");
                     for (i in arr) {
                         json = json[arr[i]];
                     }
                 }
                 res.json(json);
             } else {
-                if (req.query.var) {
+                if (req.body.var) {
                     res.json({});
                 } else {
-                    (function (my, rq, rs) {
-                        console.log("calling downloadMRI from api_mri");
-                        downloadMRI(my, rq, rs, function (obj) {
-                            if(obj) {
-                                rq.db.get('mri').insert(obj);
-                                rs.json(obj);
-                            } else {
-                                console.log("ERROR: Cannot read file");
-                                rs.json({});
-                            }
-                        });
-                    }(myurl, req, res));
+                    downloadMRI(myurl, req, res, function (obj) {
+                        if(obj) {
+                            req.db.get('mri').insert(obj);
+                            res.json(obj);
+                        } else {
+                            console.log("ERROR: Cannot read file");
+                            res.json({});
+                        }
+                    });
                 }
             }
         }, function (err) {
@@ -184,9 +199,28 @@ var api_mri = function (req, res) {
         });
 };
 
+var api_mri_get = function (req, res) {
+    var myurl = req.query.url,
+    hash = crypto.createHash('md5').update(myurl).digest('hex');
+    // shell equivalent: req.db.mri.find({source:"http://braincatalogue.org/data/Pineal/P001/t1wreq.db.nii.gz"}).limit(1).sort({$natural:-1})
+
+    req.db.get('mri').find({url: "/data/" + hash + "/", backup: {$exists: false}}, "-_id", {sort: {$natural: -1}, limit: 1})
+        .then(function (json) {
+            res.status(200);
+            res.json(json);
+        })
+        .catch(function(err) {
+            res.status(500);
+            res.json(err);
+        });
+};
+
+
 var mriController = function () {
     this.validator = validator;
-    this.api_mri = api_mri;
+    this.validator_post = validator_post;
+    this.api_mri_get = api_mri_get;
+    this.api_mri_post = api_mri_post;
     this.mri = mri;
 };
 
