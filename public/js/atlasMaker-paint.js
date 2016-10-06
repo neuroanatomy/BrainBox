@@ -103,17 +103,6 @@ var AtlasMakerPaint = {
 		}
 		me.drawImages();
 	},
-	/**
-     * @function eyedrop
-     */
-	eyedrop : function eyedrop( x,y,usr) {
-		console.log( "eyedrop get" );
-		var	z = usr.slice;
-		var me = AtlasMakerWidget;
-		var i = me.slice2index( x,y,z,usr.view );
-		return me.atlas.data[i];
-
-	},
     /**
      * @function line
      */

@@ -360,6 +360,17 @@ var AtlasMakerInteraction = {
 		}
 		return c;
 	},
+	/**
+     * @function eyedrop
+     */
+	eyedrop : function eyedrop( x,y,usr) {
+		var me = AtlasMakerWidget;
+		var l = me.traceLog(eyedrop);if(l)console.log(l);
+		
+		var	z = usr.slice;
+		var i = me.slice2index( x,y,z,usr.view );
+		return me.atlas.data[i];
+	},
     /**
      * @function togglePreciseCursor
      */
