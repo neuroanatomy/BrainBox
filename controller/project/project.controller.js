@@ -1,6 +1,8 @@
 var async = require("async");
 var dateFormat = require('dateformat');
 var validatorNPM = require('validator');
+var async = require('async');
+
 const createDOMPurify = require('dompurify');
 const jsdom = require('jsdom');
 const window = jsdom.jsdom('', {
@@ -30,50 +32,83 @@ var validator = function(req, res, next) {
 
 var isProjectObject = function(object)
 {
-    if (!object.owner || !object.shortname)
-    {
-        console.log("required fields are not here");
-        return false;
-    }
+    var goodOwner = false;
+    var goodCollaborators = false;
 
-    //object.annotations
+    var ret = new Promise(function(resolve, reject){
 
-    //object.brainboxURL
-    validatorNPM.isURL(object.brainboxURL)
-    //object.collaborators
-    for (itm in object.collaborators)
-    {
-        //{nickname:'anyone',collaboratorsAccess:'view',annotationsAccess:'view',filesAccess:'view'}
-        db.get('user').find({nickname:object.collaborators[itm].nickname});
-        validatorNPM.matches(object.collaborators[itm].collaboratorsAccess, "none|view|edit|add|remove");
-        validatorNPM.matches(object.collaborators[itm].annotationsAccess, "none|view|edit|add|remove");
-        validatorNPM.matches(object.collaborators[itm].filesAccess, "none|view|edit|add|remove");
-    }
-
-    //object.files
-    if (object.files && object.files.isArray())
-    {
-        for (k in object.files)
-        {
-            validatorNPM.isURL(object.files[k].source);
-            validatorNPM.isAlphanumeric(object.files[k].name);
+        //object.brainboxURL
+        if (object.brainboxURL) {
+            if (!validatorNPM.isURL(object.brainboxURL))
+                delete object.brainboxURL;
         }
-    }
-    //object.name
-    if (object.name && validatorNPM.isAlphanumeric(object.name)) {
 
-    }
+        //object.files
+        if (object.files)
+        {
+            for (k in object.files)
+            {
+                if (!validatorNPM.isURL(object.files[k].source)
+                    || !validatorNPM.isAlphanumeric(object.files[k].name))
+                {
+                    delete object.files[k];
+                }
+            }
+        }
 
-    //object.shortname *
-    validatorNPM.isAlphanumeric(object.shortname);
-    db.get('project').find({shortname:object.shortname});
+        //object.name
+        if (object.name && !validatorNPM.isAlphanumeric(object.name)) {
+            delete object.name;
+        }
 
-    //object.owner *
-    validatorNPM.isAlphanumeric(object.owner);
-    db.get('user').find({nickname:object.owner});
-    //object.url
-    if (object.url && validatorNPM.isURL(object.url))
-    {}
+        //object.collaborators
+        async.filter(object.collaborators, function(itm, callback){
+            if (!validatorNPM.matches(itm.collaboratorsAccess, "none|view|edit|add|remove")
+                || validatorNPM.matches(itm.annotationsAccess, "none|view|edit|add|remove")
+                || validatorNPM.matches(itm.filesAccess, "none|view|edit|add|remove"))
+                callback("access does not match", false);
+            else
+                db.get('user').findOne({nickname:itm.nickname})
+                .then(function(user){
+                    if (!user)
+                        callback("unknown user", false);
+                    else
+                        callback(null, true);
+                });
+        }, function(err, itm){
+            if (!err)
+            {
+                object.collaborators = itm;
+                goodCollaborators = true;
+                if (goodOwner)
+                    resolve(object);
+            }
+        });
+
+        //object.owner * and object.shortname *
+        if (!object.owner
+            || !object.shortname
+            || !validatorNPM.isAlphanumeric(object.shortname))
+        {
+            console.log("required fields are not here");
+            reject(403, "required fields are not here");
+        }
+        else
+        {
+            db.get('user').find({"nickname":owner})
+            .then(function(own){
+                if (!own){reject(403, "unknown owner")}
+                else {goodOwner = true;
+                    if (goodCollaborators)
+                        resolve(object);
+                }
+            });
+        }
+    });
+
+    return ret
+
+    // TODO object.annotations ??
 }
 
 var project = function(req, res) {
@@ -252,15 +287,30 @@ var newProject = function(req, res) {
 
 
 var post_project = function(req, res) {
+    if (!req.isAuthenticated())
+    {
+        console.log("not Authenticated");
+        res.status(403);
+        res.json({})
+    }
+
     console.log(req.params);
-    console.log("WTF?");
     console.log(req.body);
     var obj = JSON.parse(DOMPurify.sanitize(req.body.data));
     console.log("object: ",obj);
-    //TODO DataValidate params
-    
-    //check if it already exists
-    req.db.get('project').findOne({"sortname":obj.shortname}).then(function(result){
+    //TODO Data validation obj
+
+    isProjectObject(obj)
+    .catch(function(error){
+        console.log(error);
+        res.status(300);
+        res.json({"error":error});
+    })
+    .then(function(){
+        //check if it already exists
+        //then insert or update in the database
+        req.db.get('project').findOne({"sortname":obj.shortname}).then(function(result){
+        //check if the user has the rights to modify the project
         if (result)
             req.db.get('project').update({"sortname":obj.shortname}, obj).then(function(shit, othershit){
                 console.log(shit);
@@ -277,9 +327,8 @@ var post_project = function(req, res) {
                 res.status(200);
                 res.json({inserted:true});
             });
-
+        });
     });
-    //insert in the database
 }
 
 
