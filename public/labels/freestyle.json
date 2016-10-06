@@ -1,14 +1,17 @@
 {
-	"name":"Individual label",
+	"name":"10 regions",
 	"source":"http://brainbox.pasteur.fr/labels/freestyle.json",
 	"labels":[
-		{"name":"Label 1","value":7,"color":[220,248,164],"url":""},
-		{"name":"Label 2","value":3,"color":[205,62,78],"url":""},
-		{"name":"Label 3","value":49,"color":[0,118,14],"url":""},
-		{"name":"Label 4","value":54,"color":[103,255,255],"url":""},
-		{"name":"Label 5","value":52,"color":[13,48,255],"url":""},
-		{"name":"Label 6","value":77,"color":[200,70,255],"url":""},
-		{"name":"Label 7","value":78,"color":[255,148,10],"url":""}
+		{"name":"Region 1","value":1,"color":[205,62,78],"url":""},
+		{"name":"Region 2","value":2,"color":[255,165,0],"url":""},
+		{"name":"Region 3","value":3,"color":[255,255,0],"url":""},
+		{"name":"Region 4","value":4,"color":[255,137,241],"url":""},
+		{"name":"Region 5","value":5,"color":[236,13,176],"url":""},
+		{"name":"Region 6","value":6,"color":[120,18,134],"url":""},
+		{"name":"Region 7","value":7,"color":[103,255,255],"url":""},
+		{"name":"Region 8","value":8,"color":[21,86,225],"url":""},
+		{"name":"Region 9","value":9,"color":[135,237,121],"url":""},
+		{"name":"Region 10","value":10,"color":[0,118,14],"url":""}
 		]
 }
 
