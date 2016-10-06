@@ -477,6 +477,15 @@
 <script src="/js/brainbox.js"></script>
 
 <script>
+
+//TODO  set the public row so it can not be removed
+//TODO  check and be sure the user picks a username from the dropdown menu
+//TODO  select the full name when the nickname has been selected and reverse
+//TODO  implement the placeholder for the select tags in the anotation table
+//TODO  find a way for the user to give a set of values for the annotations and make it obvious that it works this way
+//TODO  make the saveChanges function do its stuff
+//TODO  have a feedback for the user telling him that his modifications have indeed been implemented
+
 var projectInfo='{{{projectInfo}}}';
 projectInfo=JSON.parse(projectInfo);
 
@@ -489,7 +498,7 @@ $("#annotations tbody").on('click','tr',selectRow);
 $("#MRIFiles tbody").on('click','tr',selectRow);
 $("#saveChanges").click(saveChanges);
 $("#cancelChanges").click(function cancelChanges(){location.pathname='{{{projectURL}}}'});
-/**
+/**4
  * @todo add onblur event to the dropdown menu so it empties the content
  */
 
@@ -536,6 +545,7 @@ function selectRow(e)
 	})
 	$(e.currentTarget).addClass("selected");
 }
+
 
 var projectInfoProxy={};
 var accParam = {
@@ -866,6 +876,10 @@ function saveChanges() {
     JSON.stringify(projectInfoProxy);
     
     console.log(projectInfo);
+    $.post("/project/json/"+projectInfo.shortname, {data:JSON.stringify(projectInfo)}).done(function(shit, other_shit){
+    	console.log(shit);
+    	console.log(other_shit);
+    });
 }
 
 $("#addProject").click(function(){location="/project/new"});
