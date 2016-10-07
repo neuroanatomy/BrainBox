@@ -38,8 +38,7 @@ var isProjectObject = function(object)
     var ret = new Promise(function(resolve, reject){
 
         //object.brainboxURL
-        if (object.brainboxURL) {
-            if (!validatorNPM.isURL(object.brainboxURL))
+        if (object.brainboxURL && !validatorNPM.isURL(object.brainboxURL)) {
                 delete object.brainboxURL;
         }
 
@@ -56,19 +55,26 @@ var isProjectObject = function(object)
             }
         }
 
+        //object.description
+        if (object.description && !validatorNPM.isAlphanumeric(object.description))
+        {
+            delete object.description;
+        }
+
         //object.name
         if (object.name && !validatorNPM.isAlphanumeric(object.name)) {
             delete object.name;
         }
 
         //object.collaborators
+        //TODO check if the "anyone" collaborator is here
         async.filter(object.collaborators, function(itm, callback){
             if (!validatorNPM.matches(itm.collaboratorsAccess, "none|view|edit|add|remove")
-                || validatorNPM.matches(itm.annotationsAccess, "none|view|edit|add|remove")
-                || validatorNPM.matches(itm.filesAccess, "none|view|edit|add|remove"))
+                || !validatorNPM.matches(itm.annotationsAccess, "none|view|edit|add|remove")
+                || !validatorNPM.matches(itm.filesAccess, "none|view|edit|add|remove"))
                 callback("access does not match", false);
             else
-                db.get('user').findOne({nickname:itm.nickname})
+                req.db.get('user').findOne({nickname:itm.nickname})
                 .then(function(user){
                     if (!user)
                         callback("unknown user", false);
@@ -95,7 +101,7 @@ var isProjectObject = function(object)
         }
         else
         {
-            db.get('user').find({"nickname":owner})
+            req.db.get('user').find({"nickname":owner})
             .then(function(own){
                 if (!own){reject(403, "unknown owner")}
                 else {goodOwner = true;
@@ -107,7 +113,6 @@ var isProjectObject = function(object)
     });
 
     return ret
-
     // TODO object.annotations ??
 }
 

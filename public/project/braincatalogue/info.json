@@ -5,30 +5,11 @@
     "brainboxURL": "http://brainbox.pasteur.fr/project/braincatalogue",
     "created": "2016-07-11T16:03:47+0200",
     "owner": "r03ert0",
-    "collaborators": {
-        "access": {
-            "owner": "r03ert0",
-            "public": "edit",
-            "whitelist": [
-                { "userId": "katjaq", "access": "add"},
-                { "userId": "aniv0s", "access": "add"}
-            ]
-        },
-        "list": [
+    "collaborators": [
             "katjaq",
             "aniv0s"
-        ]
-    },
-    "files": {
-        "access": {
-            "owner": "r03ert0",
-            "public": "edit",
-            "whitelist": [
-                { "userId": "katjaq", "access": "add"},
-                { "userId": "aniv0s", "access": "add"}
-            ]
-        },
-        "list": [
+        ],
+    "files": [
             "http://braincatalogue.org/data/Baboon/MRI.nii.gz",
             "http://braincatalogue.org/data/Black_rhinoceros/MRI-n4.nii.gz",
             "http://braincatalogue.org/data/Blackbuck/MRI-n4.nii.gz",
@@ -64,18 +45,8 @@
             "http://braincatalogue.org/data/Slow_loris/MRI-n4.nii.gz",
             "http://braincatalogue.org/data/Thylacine/MRI.nii.gz",
             "http://braincatalogue.org/data/White-headed_capuchin/MRI.nii.gz"
-        ]
-    },
-    "annotations": {
-        "access": {
-            "owner": "r03ert0",
-            "public": "edit",
-            "whitelist": [
-                { "userId": "katjaq", "access": "add"},
-                { "userId": "aniv0s", "access": "add"}
-            ]
-        },
-        "list": [
+        ],
+    "annotations": [
             { "name": "Cerebrum", "type": "volume", "labelSet": "/labels/foreground.json", "display": true },
             { "name": "Hippocampus", "type": "volume", "labelSet": "/labels/foreground.json", "display": true },
             { "name": "Striatum", "type": "volume", "labelSet": "/labels/foreground.json", "display": true},
@@ -83,5 +54,4 @@
             { "name": "Specimen quality", "type": "text", "values": ["Good", "Damaged", "Very damaged"], "acceptFreeform": false, "display": true },
             { "name": "Comments", "type": "text", "acceptFreeform": true, "display": true }
         ]
-    }
 }
