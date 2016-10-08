@@ -874,11 +874,15 @@ function importFiles() {
 function saveChanges() {
     // update projectInfo from projectInfoProxy
     JSON.stringify(projectInfoProxy);
-    
-    console.log(projectInfo);
-    $.post("/project/json/"+projectInfo.shortname, {data:JSON.stringify(projectInfo)}).done(function(shit, other_shit){
-    	console.log(shit);
-    	console.log(other_shit);
+
+    $.post(
+        "/project/json/"+projectInfo.shortname,
+        {
+            data:JSON.stringify(projectInfo)
+        }
+    ).done(function(a, b) {
+    	console.log("a",a);
+    	console.log("b",b);
     });
 }
 
