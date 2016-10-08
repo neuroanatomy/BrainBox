@@ -55,7 +55,7 @@ var isProjectObject = function(req,res,object) {
                     reject({success:false,error:"Invalid file URL"});
                     return;
                 }
-                if(!validatorNPM.isWhitelisted(object.files.list[k].name,allowed)) {
+                if(!validatorNPM.isWhitelisted(object.files.list[k].name, allowed)) {
                     reject({success:false,error:"Invalid file name"});
                     return;
                 }
@@ -69,7 +69,7 @@ var isProjectObject = function(req,res,object) {
         console.log("files ok");
 
         // description
-        if (object.description && !validatorNPM.isAlphanumeric(object.description)) {
+        if (object.description && !validatorNPM.isWhitelisted(object.description, allowed)) {
             reject({success:false,error:"Invalid project description"});
             return;
             // delete object.description;
@@ -77,7 +77,7 @@ var isProjectObject = function(req,res,object) {
         console.log("description ok");
 
         // name
-        if (object.name && !validatorNPM.isAlphanumeric(object.name)) {
+        if (object.name && !validatorNPM.isWhitelisted(object.name, allowed)) {
             reject({success:false,error:"Invalid name"});
             return;
             //delete object.name;
@@ -361,11 +361,13 @@ var post_project = function(req, res) {
                     req.db.get('project').update({shortname:obj.shortname},{$set:{backup:true}},{multi:true})
                         .then(function () {
                             req.db.get('project').insert(obj);
+                            res.json({success:true,message:"Project settings updated"});
                         });
                 } else {
                     // new project, insert
                     console.log("inserting...");
                     req.db.get('project').insert(obj);
+                    res.json({success:true,message:"New project inserted"});
                 }
             });
     })
