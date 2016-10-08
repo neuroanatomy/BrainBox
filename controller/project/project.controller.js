@@ -30,90 +30,141 @@ var validator = function(req, res, next) {
 	}
 }
 
-var isProjectObject = function(req,res,object)
-{
+/**
+ * @func isProjectObject
+ * @param {Object} req Express req object
+ * @param {Object} res Express res object
+ * @param {Object} object Project definition object
+ * @todo object.annotations??
+ */
+var isProjectObject = function(req,res,object) {
     var goodOwner = false;
     var goodCollaborators = false;
 
     var pr = new Promise(function(resolve, reject) {
-        //object.brainboxURL
-        if (object.brainboxURL && !validatorNPM.isURL(object.brainboxURL)) {
-                delete object.brainboxURL;
-        }
-
-        //object.files
+        var i, k, flag, arr;
+        var allowed="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_- ".split("");
+        
+        // 1. Synchronous checks
+        //----------------------
+        
+        // files
         if (object.files) {
-            for (k in object.files) {
-                if (!validatorNPM.isURL(object.files[k].source)
-                    || !validatorNPM.isAlphanumeric(object.files[k].name)) {
-                    delete object.files[k];
+            for (k in object.files.list) {
+                if (!validatorNPM.isURL(object.files.list[k].source)) {
+                    reject({success:false,error:"Invalid file URL"});
+                    return;
                 }
+                if(!validatorNPM.isWhitelisted(object.files.list[k].name,allowed)) {
+                    reject({success:false,error:"Invalid file name"});
+                    return;
+                }
+                
+                /**
+                 * @todo This is a momentary fix: list object contains only source (URL). It should also record the name change in the mri db
+                 */
+                 object.files.list[k]=object.files.list[k].source;
             }
         }
+        console.log("files ok");
 
-        //object.description
+        // description
         if (object.description && !validatorNPM.isAlphanumeric(object.description)) {
-            delete object.description;
+            reject({success:false,error:"Invalid project description"});
+            return;
+            // delete object.description;
         }
+        console.log("description ok");
 
-        //object.name
+        // name
         if (object.name && !validatorNPM.isAlphanumeric(object.name)) {
-            delete object.name;
+            reject({success:false,error:"Invalid name"});
+            return;
+            //delete object.name;
         }
+        console.log("name ok");
 
-        //object.collaborators
-        //TODO check if the "anyone" collaborator is here
-        async.filter(object.collaborators, function(itm, callback) {
-            if (!validatorNPM.matches(itm.collaboratorsAccess, "none|view|edit|add|remove")
-                || !validatorNPM.matches(itm.annotationsAccess, "none|view|edit|add|remove")
-                || !validatorNPM.matches(itm.filesAccess, "none|view|edit|add|remove"))
-                callback("access does not match", false);
-            else {
-                req.db.get('user').findOne({nickname:itm.nickname})
-                .then(function(user){
-                    if (!user)
-                        callback("unknown user", false);
-                    else
-                        callback(null, true);
-                });
-            }
-        }, function(err, itm){
-            if (!err) {
-                object.collaborators = itm;
-                goodCollaborators = true;
-                if (goodOwner)
-                    resolve(object);
-            }
-        });
+        // check that owner and shortname are present
+        if (!object.owner || !object.shortname) {
+            reject({success:false,error:"Invalid owner or project shortname, not present"});
+            return;
+        }
+        console.log("owner and project shortname present")
+        
+        // check that shortname is alphanumeric
+        if(!validatorNPM.isAlphanumeric(object.owner) || !validatorNPM.isAlphanumeric(object.shortname)) {
+            reject({success:false,error:"Invalid owner or project shortname, not alphanumeric"});
+            return;
+        }
+        console.log("owner and project shortname present")
 
-        //object.owner * and object.shortname *
-        if (!object.owner
-            || !object.shortname
-            || !validatorNPM.isAlphanumeric(object.shortname)) {
-            console.log("required fields are not here");
-            reject(403, "required fields are not here");
-        } else {
-            req.db.get('user').find({"nickname":object.owner})
-            req.db.get('user').find({"nickname":object.owner})
-            .then(function(own) {
-                if (!own){reject(403, "unknown owner")}
-                else {goodOwner = true;
-                    if (goodCollaborators)
-                        resolve(object);
+        // check that access values are valid
+        flag=true; // validation ok
+        arr=object.collaborators.access.whitelist;
+        for(i=0;i<arr.length;i++) {
+            if (validatorNPM.matches(arr[i].access, "none|view|edit|add|remove") === false ) {
+                console.log("collaborators",arr[i]);
+                flag = false;
+                break;
+            }
+        }
+        arr=object.annotations.access.whitelist;
+        for(i=0;i<arr.length;i++) {
+            if (validatorNPM.matches(arr[i].access, "none|view|edit|add|remove") === false ) {
+                console.log("annotations",arr[i]);
+                flag = false;
+                break;
+            }
+        }
+        arr=object.files.access.whitelist;
+        for(i=0;i<arr.length;i++) {
+            if (validatorNPM.matches(arr[i].access, "none|view|edit|add|remove") === false ) {
+                console.log("files",arr[i]);
+                flag = false;
+                break;
+            }
+        }
+        if(flag === false) {
+            reject({success:false,error:"Access values are invalid"});
+            return;
+        }
+        console.log("Access values ok");
+                
+        
+        // 2. Asynchronous checks------------------------------------
+        
+        arr=[];
+        arr.push(req.db.get('user').find({nickname:object.owner}));
+        for(i in object.collaborators.list) {
+            arr.push(req.db.get('user').find({nickname:object.collaborators.list[i].username}));
+        }
+        Promise.all(arr).then(function(val) {
+            var i, notFound=false;
+            for(i=0;i<val.length;i++) {
+                if(!val[i]) {
+                    notFound=true;
+                    break;
                 }
-            });
-        }
+            }
+            if(notFound === true) {
+                reject({success:false,error:"Users are invalid, do not exist"});
+                return;
+            }
+            
+            // All checks are successful, resolve the promisse
+            console.log({success:true,message:"All checks ok. Project object looks valid"});
+            resolve(object);
+        });
     });
 
-    return pr
-    // TODO object.annotations ??
+    return pr;
 }
 
 var project = function(req, res) {
 	var login=	(req.isAuthenticated())?
 				("<a href='/user/"+req.user.username+"'>"+req.user.username+"</a> (<a href='/logout'>Log Out</a>)")
 				:("<a href='/auth/github'>Log in with GitHub</a>");
-	req.db.get('project').findOne({shortname:req.params.projectName},"-_id")
+	req.db.get('project').findOne({shortname:req.params.projectName,backup:{$exists:0}},"-_id")
 	.then(function(json) {
 		if (json) {
 			async.each(
@@ -154,7 +205,7 @@ var project = function(req, res) {
 }
 
 var api_project = function(req, res) {
-	req.db.get('project').findOne({shortname:req.params.projectName,backup:{$exists:false}},"-_id")
+	req.db.get('project').findOne({shortname:req.params.projectName,backup:{$exists:0}},"-_id")
 	.then(function(json) {
 		if(json) {
 			if(req.query.var) {
@@ -175,7 +226,7 @@ var settings = function(req, res) {
                 : ("<a href='/auth/github'>Log in with GitHub</a>");
     var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
 
-	req.db.get('project').findOne({shortname:req.params.projectName},"-_id")
+	req.db.get('project').findOne({shortname:req.params.projectName,backup:{$exists:0}},"-_id")
 	.then(function(json) {
 		if(!json) {
 		    json = {
@@ -295,37 +346,33 @@ var post_project = function(req, res) {
     console.log(req.params);
     console.log(req.body);
     var obj = JSON.parse(DOMPurify.sanitize(req.body.data));
-    console.log("object: ",obj);
+    console.log("object: ",JSON.stringify(obj));
     //TODO Data validation obj
 
     isProjectObject(req,res,obj)
-    .catch(function(error){
+    .then(function(obj) {
+        console.log("obj",obj);
+        req.db.get('project').find({shortname:obj.shortname, backup:{$exists:false}})
+            .then(function (result) {
+                console.log("result",result);
+                if(result.length) {
+                    // project exists, save update
+                    console.log("updating...");
+                    req.db.get('project').update({shortname:obj.shortname},{$set:{backup:true}},{multi:true})
+                        .then(function () {
+                            req.db.get('project').insert(obj);
+                        });
+                } else {
+                    // new project, insert
+                    console.log("inserting...");
+                    req.db.get('project').insert(obj);
+                }
+            });
+    })
+    .catch(function(error) {
         console.log(error);
         res.status(300);
         res.json({"error":error});
-    })
-    .then(function(){
-        //check if it already exists
-        //then insert or update in the database
-        req.db.get('project').findOne({"sortname":obj.shortname}).then(function(result){
-        //check if the user has the rights to modify the project
-        if (result)
-            req.db.get('project').update({"sortname":obj.shortname}, obj).then(function(shit, othershit){
-                console.log(shit);
-                console.log(othershit);
-
-                res.status(200);
-                res.json({updated:true});
-            });
-        else
-            req.db.get('project').insert(obj).then(function(shit, othershit){
-                console.log(shit);
-                console.log(othershit);
-
-                res.status(200);
-                res.json({inserted:true});
-            });
-        });
     });
 }
 
