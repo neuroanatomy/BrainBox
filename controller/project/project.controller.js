@@ -160,6 +160,12 @@ var isProjectObject = function(req,res,object) {
     return pr;
 }
 
+/**
+ * @function project
+ * @desc Render the project page GUI
+ * @param {Object} req Req object from express
+ * @param {Object} res Res object from express
+ */
 var project = function(req, res) {
 	var login=	(req.isAuthenticated())?
 				("<a href='/user/"+req.user.username+"'>"+req.user.username+"</a> (<a href='/logout'>Log Out</a>)")
@@ -204,6 +210,13 @@ var project = function(req, res) {
 	});
 }
 
+/**
+ * @function api_project
+ * @desc Writes json data for a project
+ * @param {Object} req Req object from express
+ * @param {Object} res Res object from express
+ * @result A json object with project data
+ */
 var api_project = function(req, res) {
 	req.db.get('project').findOne({shortname:req.params.projectName,backup:{$exists:0}},"-_id")
 	.then(function(json) {
@@ -220,6 +233,12 @@ var api_project = function(req, res) {
 	})
 };
 
+/**
+ * @function settings
+ * @desc Render the settings page GUI
+ * @param {Object} req Req object from express
+ * @param {Object} res Res object from express
+ */
 var settings = function(req, res) {
     var login = (req.isAuthenticated()) ?
                 ("<a href='/user/" + req.user.username + "'>" + req.user.username + "</a> (<a href='/logout'>Log Out</a>)")
@@ -321,6 +340,13 @@ var settings = function(req, res) {
 	    );
 	});
 };
+
+/**
+ * @function newProject
+ * @desc Render the page with the GUI for entering a new project
+ * @param {Object} req Req object from express
+ * @param {Object} res Res object from express
+ */
 var newProject = function(req, res) {
     var login = (req.isAuthenticated()) ?
                 ("<a href='/user/" + req.user.username + "'>" + req.user.username + "</a> (<a href='/logout'>Log Out</a>)")
@@ -334,7 +360,12 @@ var newProject = function(req, res) {
     res.render('projectNew',context);
 };
 
-
+/**
+ * @function post_project
+ * @desc Receives data for creating a new project or updating the settings of an existing one
+ * @param {Object} req Req object from express
+ * @param {Object} res Res object from express
+ */
 var post_project = function(req, res) {
     if (!req.isAuthenticated())
     {
