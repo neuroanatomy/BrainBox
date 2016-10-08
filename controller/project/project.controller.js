@@ -30,7 +30,7 @@ var validator = function(req, res, next) {
 	}
 }
 
-var isProjectObject = function(object)
+var isProjectObject = function(req,res,object)
 {
     var goodOwner = false;
     var goodCollaborators = false;
@@ -101,7 +101,8 @@ var isProjectObject = function(object)
         }
         else
         {
-            req.db.get('user').find({"nickname":owner})
+            req.db.get('user').find({"nickname":object.owner})
+            req.db.get('user').find({"nickname":object.owner})
             .then(function(own){
                 if (!own){reject(403, "unknown owner")}
                 else {goodOwner = true;
@@ -305,7 +306,7 @@ var post_project = function(req, res) {
     console.log("object: ",obj);
     //TODO Data validation obj
 
-    isProjectObject(obj)
+    isProjectObject(req,res,obj)
     .catch(function(error){
         console.log(error);
         res.status(300);
