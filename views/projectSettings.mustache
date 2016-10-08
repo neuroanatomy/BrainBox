@@ -418,6 +418,7 @@
 							<div style="display:block;margin:0 auto;width:200px">
                                 <h2 id="saveChanges" class="pushButton">Save Changes</h2>
                                 <h2 id="cancelChanges" class="pushButton">Cancel</h2>
+                                <p id="saveFeedback"></p>
                             </div>
 				</div>
 		</div>
@@ -883,6 +884,23 @@ function saveChanges() {
     ).done(function(a, b) {
     	console.log("a",a);
     	console.log("b",b);
+    	if(a.success) {
+            $("#saveFeedback").text("Successfully saved");
+    	    setTimeout(function() {
+    	        $("#saveFeedback").text("");
+    	    },2000);
+    	} else {
+            $("#saveFeedback").text("Unable to save. Please try again later");
+    	    setTimeout(function() {
+    	        $("#saveFeedback").text("");
+    	    },3000);
+    	}
+    }).catch(function(err) {
+        $("#saveFeedback").text("Unable to save. Please try again later");
+        setTimeout(function() {
+            $("#saveFeedback").text("");
+        },3000);
+        console.log(err);
     });
 }
 

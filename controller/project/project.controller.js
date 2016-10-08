@@ -21,7 +21,7 @@ var validator = function(req, res, next) {
 	
 	// req.checkQuery('var', 'please enter one of the variables that are indicated')
 	// .optional()
-	// .matches("localpath|filename|source|url|dim|pixdim");						//todo: decent regexp
+	// .matches("localpath|filename|source|url|dim|pixdim"); //todo: decent regexp
 	var errors = req.validationErrors();
 	if (errors) {
 		res.send(errors).status(403).end();
