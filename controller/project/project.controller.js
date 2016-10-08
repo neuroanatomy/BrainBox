@@ -35,29 +35,24 @@ var isProjectObject = function(req,res,object)
     var goodOwner = false;
     var goodCollaborators = false;
 
-    var ret = new Promise(function(resolve, reject){
-
+    var pr = new Promise(function(resolve, reject) {
         //object.brainboxURL
         if (object.brainboxURL && !validatorNPM.isURL(object.brainboxURL)) {
                 delete object.brainboxURL;
         }
 
         //object.files
-        if (object.files)
-        {
-            for (k in object.files)
-            {
+        if (object.files) {
+            for (k in object.files) {
                 if (!validatorNPM.isURL(object.files[k].source)
-                    || !validatorNPM.isAlphanumeric(object.files[k].name))
-                {
+                    || !validatorNPM.isAlphanumeric(object.files[k].name)) {
                     delete object.files[k];
                 }
             }
         }
 
         //object.description
-        if (object.description && !validatorNPM.isAlphanumeric(object.description))
-        {
+        if (object.description && !validatorNPM.isAlphanumeric(object.description)) {
             delete object.description;
         }
 
@@ -68,12 +63,12 @@ var isProjectObject = function(req,res,object)
 
         //object.collaborators
         //TODO check if the "anyone" collaborator is here
-        async.filter(object.collaborators, function(itm, callback){
+        async.filter(object.collaborators, function(itm, callback) {
             if (!validatorNPM.matches(itm.collaboratorsAccess, "none|view|edit|add|remove")
                 || !validatorNPM.matches(itm.annotationsAccess, "none|view|edit|add|remove")
                 || !validatorNPM.matches(itm.filesAccess, "none|view|edit|add|remove"))
                 callback("access does not match", false);
-            else
+            else {
                 req.db.get('user').findOne({nickname:itm.nickname})
                 .then(function(user){
                     if (!user)
@@ -81,9 +76,9 @@ var isProjectObject = function(req,res,object)
                     else
                         callback(null, true);
                 });
+            }
         }, function(err, itm){
-            if (!err)
-            {
+            if (!err) {
                 object.collaborators = itm;
                 goodCollaborators = true;
                 if (goodOwner)
@@ -94,16 +89,13 @@ var isProjectObject = function(req,res,object)
         //object.owner * and object.shortname *
         if (!object.owner
             || !object.shortname
-            || !validatorNPM.isAlphanumeric(object.shortname))
-        {
+            || !validatorNPM.isAlphanumeric(object.shortname)) {
             console.log("required fields are not here");
             reject(403, "required fields are not here");
-        }
-        else
-        {
+        } else {
             req.db.get('user').find({"nickname":object.owner})
             req.db.get('user').find({"nickname":object.owner})
-            .then(function(own){
+            .then(function(own) {
                 if (!own){reject(403, "unknown owner")}
                 else {goodOwner = true;
                     if (goodCollaborators)
@@ -113,7 +105,7 @@ var isProjectObject = function(req,res,object)
         }
     });
 
-    return ret
+    return pr
     // TODO object.annotations ??
 }
 
