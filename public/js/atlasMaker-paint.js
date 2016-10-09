@@ -200,6 +200,8 @@ var AtlasMakerPaint = {
 	},
     /**
      * @function slice2xyzi
+     * @desc Convert slice coordinates into voxel coordinates
+     * @return An array [x,y,z,i] where the first 3 values are the voxel coordinates and the 4th value is the voxel index (value from 0 to dim[0]*dim[1]*dim[2]-1)
      */
 	slice2xyzi: function slice2xyzi(mx,my,mz,myView) {
 		var me=AtlasMakerWidget;

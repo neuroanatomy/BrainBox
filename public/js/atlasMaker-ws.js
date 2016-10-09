@@ -292,6 +292,8 @@ var AtlasMakerWS = {
 	},
 	/**
      * @function sendPaintMessage
+     * @desc On user painting, this function broadcasts the painting event to all other connected users
+     * @param {Object} msg Painting event object: {"c":c,"x":x,"y":y}, where "c" is the command (l,e,lf,ef) and x and y are the coordinates in slice space
      */
 	sendPaintMessage: function sendPaintMessage(msg) {
 		var me=AtlasMakerWidget;
@@ -307,6 +309,7 @@ var AtlasMakerWS = {
 	},
 	/**
      * @function receivePaintMessage
+     * @desc Receive paint events from other connected users
      */
 	receivePaintMessage: function receivePaintMessage(data) {
 		var me=AtlasMakerWidget;

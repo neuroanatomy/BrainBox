@@ -113,6 +113,7 @@ var AtlasMakerDraw = {
 	},
     /**
      * @function displayInformation
+     * @desc Overlays text and vectorial information on top of the annotation volume slice. Text information is added from the AtlasMakerWidget.info object. Vectorial information is displayed using svg format
      */
 	displayInformation: function displayInformation() {
 		var me=AtlasMakerWidget;
