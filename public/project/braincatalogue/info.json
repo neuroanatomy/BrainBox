@@ -1,15 +1,29 @@
 {
-    "name": "Brain Catalogue",
-    "shortname": "braincatalogue",
-    "url": "http://braincatalogue.org",
-    "brainboxURL": "http://brainbox.pasteur.fr/project/braincatalogue",
-    "created": "2016-07-11T16:03:47+0200",
-    "owner": "r03ert0",
-    "collaborators": [
-            "katjaq",
-            "aniv0s"
-        ],
-    "files": [
+    "name":"Brain Catalogue",
+    "shortname":"braincatalogue",
+    "url":"http://braincatalogue.org",
+    "brainboxURL":"http://brainbox.pasteur.fr/project/braincatalogue",
+    "created":"2016-07-11T16:03:47+0200",
+    "owner":"r03ert0",
+    "description":"Our aim is to celebrate the diversity of the vertebrate brain by making high quality data, open and freely available to everyone.",
+    "collaborators":{
+        "list":[
+            {"userID":"anyone","access":{"collaborators":"view","annotations":"edit","file":"view"}},
+            {"userID":"katjaq","access":{"collaborators":"remove","annotations":"remove","file":"remove"}}
+        ]
+    },
+    "annotations":{
+        "list":[
+            {"name":"Cerebrum",        "type":"volume","values":"/labels/foreground.json","display":"true","labelSet":"/labels/foreground.json"},
+            {"name":"Hippocampus",     "type":"volume","values":"/labels/foreground.json","display":"true","labelSet":"/labels/foreground.json"},
+            {"name":"Striatum",        "type":"volume","values":"/labels/foreground.json","display":"true","labelSet":"/labels/foreground.json"},
+            {"name":"MRI quality",     "type":"text",  "values":"Good,Medium,Bad",        "display":"true","acceptFreeform":false},
+            {"name":"Specimen quality","type":"text",  "values":"Good,Damaged",           "display":"true","acceptFreeform":false},
+            {"name":"Comments",        "type":"text",  "values":"freeform",               "display":"true","acceptFreeform":true}
+        ]
+    },
+    "files":{
+        "list":[
             "http://braincatalogue.org/data/Baboon/MRI.nii.gz",
             "http://braincatalogue.org/data/Black_rhinoceros/MRI-n4.nii.gz",
             "http://braincatalogue.org/data/Blackbuck/MRI-n4.nii.gz",
@@ -45,13 +59,6 @@
             "http://braincatalogue.org/data/Slow_loris/MRI-n4.nii.gz",
             "http://braincatalogue.org/data/Thylacine/MRI.nii.gz",
             "http://braincatalogue.org/data/White-headed_capuchin/MRI.nii.gz"
-        ],
-    "annotations": [
-            { "name": "Cerebrum", "type": "volume", "labelSet": "/labels/foreground.json", "display": true },
-            { "name": "Hippocampus", "type": "volume", "labelSet": "/labels/foreground.json", "display": true },
-            { "name": "Striatum", "type": "volume", "labelSet": "/labels/foreground.json", "display": true},
-            { "name": "MRI quality", "type": "text", "values": ["Good", "Medium", "Bad"], "acceptFreeform": false, "display": true },
-            { "name": "Specimen quality", "type": "text", "values": ["Good", "Damaged", "Very damaged"], "acceptFreeform": false, "display": true },
-            { "name": "Comments", "type": "text", "acceptFreeform": true, "display": true }
         ]
+    }
 }
