@@ -684,15 +684,6 @@ var AtlasMakerInteraction = {
 				me.drawImages();
 				break;
 		}
-		
-		/*
-		if(me.User.tool=='paint')
-			me.paintxy(-1,'lf',x,y,me.User);
-		else
-		if(me.User.tool=='erase')
-			me.paintxy(-1,'le',x,y,me.User);
-		*/
-
 	},
     /**
      * @function up
