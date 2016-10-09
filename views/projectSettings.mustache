@@ -494,7 +494,7 @@ $("body").on('click',".view",function(e){onAccessClicked(e,0)});
 $("body").on('click',".edit",function(e){onAccessClicked(e,1)});
 $("body").on('click',".add",function(e){onAccessClicked(e,2)});
 $("body").on('click',".remove",function(e){onAccessClicked(e,3)});
-$("#access tbody").on('click','tr',selectRow);
+$("#access tbody").on('click','tr',function(e){selectRow(e);disableDeleteOnAnyoneUser(e);});
 $("#annotations tbody").on('click','tr',selectRow);
 $("#MRIFiles tbody").on('click','tr',selectRow);
 $("#saveChanges").click(saveChanges);
@@ -539,14 +539,17 @@ function onAccessClicked( e, l ) {
     $( e.target ).closest( "div" ).attr( "data-level",l+( al != (l+1) ) );
 }
 
-function selectRow(e)
-{
+function selectRow(e) {
 	$(e.currentTarget).closest("tbody").find("tr").each(function(index, tag){
 		$(tag).removeClass("selected");
 	})
 	$(e.currentTarget).addClass("selected");
 }
-
+function disableDeleteOnAnyoneUser(e) {
+    /**
+     * @todo disable 'delete' on 'anyone' user
+     */
+}
 
 var projectInfoProxy={};
 var accParam = {
@@ -739,7 +742,7 @@ function addCollaborator(param) {
             files:"view"
         }
     });
-    /*
+    /* DELETE
     projectInfo.collaborators.access.whitelist.push({userID:"",access:"view"});
     projectInfo.annotations.access.whitelist.push({userID:"",access:"view"});
     projectInfo.files.access.whitelist.push({userID:"",access:"view"});
