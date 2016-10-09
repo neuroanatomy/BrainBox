@@ -143,13 +143,13 @@ var isProjectObject = function(req,res,object) {
         Promise.all(arr).then(function(val) {
             var i, notFound=false;
             for(i=0;i<val.length;i++) {
-                if(!val[i]) {
+                if(val[i].length === 0) {
                     notFound=true;
                     break;
                 }
             }
             if(notFound === true) {
-                reject({success:false,error:"Users are invalid, do not exist"});
+                reject({success:false,error:"Users are invalid, one or more do not exist"});
                 return;
             }
             
