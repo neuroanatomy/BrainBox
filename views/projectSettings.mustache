@@ -590,17 +590,17 @@ var accParam = {
             path:"collaborators.list.#.name" // full name
         },
         {	typeOfBinding:2,
-            path:"collaborators.access.whitelist.#.access",
+            path:"collaborators.list.#.access.collaborators",
             format: function(e,d){$(e).find(".access").attr('data-level',["none","view","edit","add","remove"].indexOf(d))},
             parse: function(e){var level=$(e).find(".access").attr("data-level");return ["none","view","edit","add","remove"][level]}
         },
         {	typeOfBinding:2,
-            path:"annotations.access.whitelist.#.access",
+            path:"collaborators.list.#.access.annotations",
             format: function(e,d){$(e).find(".access").attr('data-level',["none","view","edit","add","remove"].indexOf(d))},
             parse: function(e){var level=$(e).find(".access").attr("data-level");return ["none","view","edit","add","remove"][level]}
         },
         {	typeOfBinding:2,
-            path:"files.access.whitelist.#.access",
+            path:"collaborators.list.#.access.files",
             format: function(e,d){$(e).find(".access").attr('data-level',["none","view","edit","add","remove"].indexOf(d))},
             parse: function(e){var level=$(e).find(".access").attr("data-level");return ["none","view","edit","add","remove"][level]}
         }
@@ -731,10 +731,19 @@ $("#importFilesDialogCancel").click(function() {
 });
 
 function addCollaborator(param) {
-    projectInfo.collaborators.list.push({});
+    projectInfo.collaborators.list.push({
+        userID: "",
+        access: {
+            collaborators:"view",
+            annotations:"view",
+            files:"view"
+        }
+    });
+    /*
     projectInfo.collaborators.access.whitelist.push({userID:"",access:"view"});
     projectInfo.annotations.access.whitelist.push({userID:"",access:"view"});
     projectInfo.files.access.whitelist.push({userID:"",access:"view"});
+    */
 
     // add and bind new table row
     var i=projectInfo.collaborators.list.length-1;
@@ -762,12 +771,15 @@ function addCollaborator(param) {
             projectInfoProxy["collaborators.list."+irow+".username"]=ui.item.nickname;
 
             // add user to access objects
+            projectInfo.collaborators.list[irow].userID=ui.item.nickname;
             /**
              * @todo Combine all access settings for a subject in a single place
              */
+            /* DELETE
             projectInfo.collaborators.access.whitelist[irow].userID=ui.item.nickname;
             projectInfo.annotations.access.whitelist[irow].userID=ui.item.nickname;
             projectInfo.files.access.whitelist[irow].userID=ui.item.nickname;
+            */
         }
     });
     $("#projDescription #numCollaborators").text(projectInfo.collaborators.list.length);
@@ -786,9 +798,12 @@ function removeCollaborator(param) {
     
     // remove row from BrainBox.info.mri.atlas
     projectInfo.collaborators.list.splice(index,1);
+    /* DELETE
+    projectInfo.collaborators.list.splice(index,1);
     projectInfo.collaborators.access.whitelist.splice(index,1);
     projectInfo.annotations.access.whitelist.splice(index,1);
     projectInfo.files.access.whitelist.splice(index,1);
+    */
 
     $("#projDescription #numCollaborators").text(projectInfo.collaborators.list.length);
 }
