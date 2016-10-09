@@ -14,12 +14,12 @@
     },
     "annotations":{
         "list":[
-            {"name":"Cerebrum",        "type":"volume","values":"/labels/foreground.json","display":"true","labelSet":"/labels/foreground.json"},
-            {"name":"Hippocampus",     "type":"volume","values":"/labels/foreground.json","display":"true","labelSet":"/labels/foreground.json"},
-            {"name":"Striatum",        "type":"volume","values":"/labels/foreground.json","display":"true","labelSet":"/labels/foreground.json"},
-            {"name":"MRI quality",     "type":"text",  "values":"Good,Medium,Bad",        "display":"true"},
-            {"name":"Specimen quality","type":"text",  "values":"Good,Damaged",           "display":"true"},
-            {"name":"Comments",        "type":"text",  "values":"freeform",               "display":"true"}
+            {"name":"Cerebrum",        "type":"volume","values":"foreground.json",      "display":"true","labelSet":"/labels/foreground.json"},
+            {"name":"Hippocampus",     "type":"volume","values":"foreground.json",      "display":"true","labelSet":"/labels/foreground.json"},
+            {"name":"Striatum",        "type":"volume","values":"foreground.json",      "display":"true","labelSet":"/labels/foreground.json"},
+            {"name":"MRI quality",     "type":"text",  "values":["Good","Medium","Bad"],"display":"true"},
+            {"name":"Specimen quality","type":"text",  "values":["Good","Damaged"],     "display":"true"},
+            {"name":"Comments",        "type":"text",  "values":"freeform",             "display":"true"}
         ]
     },
     "files":{
