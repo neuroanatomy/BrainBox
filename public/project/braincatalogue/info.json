@@ -8,8 +8,8 @@
     "description":"Our aim is to celebrate the diversity of the vertebrate brain by making high quality data, open and freely available to everyone.",
     "collaborators":{
         "list":[
-            {"userID":"anyone","access":{"collaborators":"view","annotations":"edit","file":"view"}},
-            {"userID":"katjaq","access":{"collaborators":"remove","annotations":"remove","file":"remove"}}
+            {"userID":"anyone","access":{"collaborators":"view","annotations":"edit","files":"view"}},
+            {"userID":"katjaq","access":{"collaborators":"remove","annotations":"remove","files":"remove"}}
         ]
     },
     "annotations":{
