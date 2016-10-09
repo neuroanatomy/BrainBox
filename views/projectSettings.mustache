@@ -306,6 +306,12 @@
 			left: 0px;
 		}
 	}
+	
+	/* button disabled */
+	.disabled {
+	    opacity: 0.4;
+	    pointer-events: none;
+	}
 
 	</style>
 
@@ -546,9 +552,19 @@ function selectRow(e) {
 	$(e.currentTarget).addClass("selected");
 }
 function disableDeleteOnAnyoneUser(e) {
-    /**
-     * @todo disable 'delete' on 'anyone' user
-     */
+    var curTable = $(e.currentTarget).closest("table").attr("id");
+
+    // check if the selected row belongs to the #access table
+    if(curTable === "access") {
+        // check if the selected user is 'anyone'
+        var rowIndex = $(e.currentTarget).closest("tbody").find("tr.selected").index();
+        if(projectInfo.collaborators.list[rowIndex].userID === 'anyone') {
+            // if yes, disable the 'remove' button
+            $("#removeCollaborator").addClass('disabled');
+        } else {
+            $("#removeCollaborator").removeClass('disabled');
+        }
+    }
 }
 
 var projectInfoProxy={};
@@ -681,6 +697,8 @@ $(document).on('click', "#addCollaborator", function(){addCollaborator(accParam)
 $(document).on('click', "#removeCollaborator", function(){removeCollaborator(accParam)});
 $("table#access tr").removeClass("selected");
 $("table#access tbody tr").eq(0).addClass("selected");
+$("table#access tbody tr:eq(0) td").removeAttr("contentEditable");
+$("#removeCollaborator").addClass("disabled");
 
 $(document).on('click', "#addAnnotation", function(){addAnnotation(annParam)});
 $(document).on('click', "#removeAnnotation", function(){removeAnnotation(annParam)});

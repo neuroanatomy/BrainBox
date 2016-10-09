@@ -175,6 +175,12 @@
 <script src="/js/twoWayBinding.js"></script>
 <script src="/js/brainbox.js"></script>
 <script>
+
+/*
+	This variable contains project metadata
+	and is filled by the server, from the database.
+*/
+var projectInfo={{{projectInfo}}};
 var str;
 
 function loadProjectFile(url) {
@@ -234,17 +240,6 @@ function loadProjectFile(url) {
 	});
 }
 
-/*
-// Init login widget
-MyLoginWidget.init($("#MyLogin"));
-*/
-
-/*
-	This variable contains project metadata
-	and is filled by the server, from the database.
-*/
-var projectInfo={{{projectInfo}}};
-
 $("#projectName").text(projectInfo.name);
 $("#projectOwner").html("<a href='"+projectInfo.owner+"'>"+projectInfo.owner+"</a>");
 var creation=new Date(projectInfo.created);
@@ -255,29 +250,22 @@ $("#projectCollaboratorsNumber").text(projectInfo.collaborators.length+" Collabo
 /*
 	The list of all files included in the project
 */
+// setup the names of the columns
+var k, txtAnnotations = [];
+for(k in projectInfo.annotations.list) {
+    if (projectInfo.annotations.list[k].type === "text") {
+        $("#projectFiles thead tr").append("<th>" + projectInfo.annotations.list[k].name + "</th>");
+        txtAnnotations.push(projectInfo.annotations.list[k]);
+    }
+}
 
-            //setup the names of the columns
-            var k, txtAnnotations = [];
-            for(k in projectInfo.annotations.list) {
-                if (projectInfo.annotations.list[k].type === "text") {
-                    $("#projectFiles thead tr").append("<th>" + projectInfo.annotations.list[k].name + "</th>");
-                    txtAnnotations.push(projectInfo.annotations.list[k]);
-                }
-            }
-
-            // Add the 'annotations' object to mri if it does not exist
-            var k;
-            for(k in projectInfo.files.list) {
-                if (!(projectInfo.files.list[k].mri))
-                    projectInfo.files.list[k].mri = {};
-                if (!(projectInfo.files.list[k].mri.annotations))
-                    projectInfo.files.list[k].mri.annotations = {};
-                /**
-                 * @todo delete: undefined properties are created on assignment as far as the object exists
-                 */
-//                         if (!(projectInfo.files.list[f].mri.annotations[projectInfo.annotations.list[k].name]))
-//                             projectInfo.files.list[f].mri.annotations[projectInfo.annotations.list[k].name] = "";
-            }
+// add the 'annotations' object to mri if it does not exist
+for(k in projectInfo.files.list) {
+    if (!(projectInfo.files.list[k].mri))
+        projectInfo.files.list[k].mri = {};
+    if (!(projectInfo.files.list[k].mri.annotations))
+        projectInfo.files.list[k].mri.annotations = {};
+}
 
 // select first file by default (should come from localStorage)
 var url=projectInfo.files.list[0].source;	
@@ -291,90 +279,96 @@ BrainBox.initBrainBox()
 	$(document).on('click', "#labels-close", function(){$("#labelset").hide()});
 });
 
-            var info_proxy = {};
-            var trTemplate;
-            var objTemplate = [
-                {	typeOfBinding:2,
-                    path:"files.list.#.name"
-                },
-                {
-                    typeOfBinding:1,
-                    path:"files.list.#.source",
-                    format:function(e, d){
-                        $(e).find("a").prop("href", location.origin+"/mri?url=" + d);
-                        $(e).find("a").html(d.split("/").pop());
-                    }
+var info_proxy = {};
+var trTemplate;
+var objTemplate = [
+    {	typeOfBinding:2,
+        path:"files.list.#.name"
+    },
+    {
+        typeOfBinding:1,
+        path:"files.list.#.source",
+        format:function(e, d){
+            $(e).find("a").prop("href", location.origin+"/mri?url=" + d);
+            $(e).find("a").html(d.split("/").pop());
+        }
+    }
+];
+trTemplate=[
+    "<tr>",
+    "	<td contentEditable=true class='noEmpty'></td>",
+    "	<td><a></a></td>"
+];
+for(var g in txtAnnotations) {
+    if(txtAnnotations[g].values) {
+        trTemplate.push("<td><select value=0><option value='' disabled selected hidden>Empty</option>");
+        for (var o in txtAnnotations[g].values) {
+            trTemplate.push("<option value=\"" + txtAnnotations[g].values[o] + "\"" + ">" + txtAnnotations[g].values[o] + "</option>");
+        }
+        trTemplate.push("</select></td>");
+        
+        /**
+         * @todo Why the closures if there's nothing asynchronous??
+         */
+        objTemplate.push({
+            typeOfBinding:2,
+            path:"files.list.#.mri.annotations." + txtAnnotations[g].name,
+            format: function(e, d) {
+                if (d !=0) {
+                    $(e).find("select").css("color", "rgba(255,255,255,1)");
                 }
-            ];
-            trTemplate=[
-                "<tr>",
-                "	<td contentEditable=true class='noEmpty'></td>",
-                "	<td><a></a></td>"
-            ];
-            for(var g in txtAnnotations) {
-                if(txtAnnotations[g].values) {
-                    trTemplate.push("<td><select value=0><option value='' disabled selected hidden>Empty</option>");
-                    for (var o in txtAnnotations[g].values) {
-                        trTemplate.push("<option value=\"" + txtAnnotations[g].values[o] + "\"" + ">" + txtAnnotations[g].values[o] + "</option>");
-                    }
-                    trTemplate.push("</select></td>");
-                    
-                    /**
-                     * @todo Why the closures if there's nothing asynchronous??
-                     */
-                    objTemplate.push({
-                        typeOfBinding:2,
-                        path:"files.list.#.mri.annotations." + txtAnnotations[g].name,
-                        format: function(e, d){
-                        	if (d !=0) {$(e).find("select").css("color", "rgba(255,255,255,1)");}
-                        	$(e).find("select").get(0).value=d},
-                        parse: function(e){
-                        	if ($(e).find("select").val()) {$(e).find("select").css("color", "rgba(255,255,255,1)");}
-                        	return $(e).find("select").val()}
-                    });
-
-                } else {
-                    trTemplate.push("<td contentEditable=true class='noEmpty'></td>");
-                    objTemplate.push({
-                        typeOfBinding:2,
-                        path:"files.list.#.mri.annotations." + txtAnnotations[g].name
-                    });
+                $(e).find("select").get(0).value=d
+            },
+            parse: function(e) {
+                if ($(e).find("select").val()) {
+                    $(e).find("select").css("color", "rgba(255,255,255,1)");
                 }
+                return $(e).find("select").val()
             }
-            trTemplate.push("</tr>");
-            var aParam = {
-                table: $("#projectFiles table"),
-                info_proxy: info_proxy,
-                info: projectInfo,
-                trTemplate: trTemplate.join("\n"),
-                objTemplate: objTemplate
-            };
+        });
 
-            for(var i=0;i<projectInfo.files.list.length;i++) {
-                BrainBox.appendAnnotationTableRow(i,aParam);
-            }
+    } else {
+        trTemplate.push("<td contentEditable=true class='noEmpty'></td>");
+        objTemplate.push({
+            typeOfBinding:2,
+            path:"files.list.#.mri.annotations." + txtAnnotations[g].name
+        });
+    }
+}
+trTemplate.push("</tr>");
+var aParam = {
+    table: $("#projectFiles table"),
+    info_proxy: info_proxy,
+    info: projectInfo,
+    trTemplate: trTemplate.join("\n"),
+    objTemplate: objTemplate
+};
 
-            // mark first row as selected
-            $("#projectFiles tbody tr:eq(0)").addClass("selected");
-            
-            // send data when focus is lost (on blur)
-            $(document).on('blur', "#projectFiles table tbody td", function(e) {
-                //console.log("blur target:",e.target);
-                var index = $(e.target).closest('tr').index();
-                JSON.stringify(info_proxy); // update content of projectInfo object from proxy by calling all getters
-                AtlasMakerWidget.sendSaveMetadataMessage(projectInfo.files.list[index]);
-            });
-            // blur when [enter] is clicked, to trigger data sending
-            $(document).on('keydown', "#projectFiles table tbody td", function(e) {
-                if(e.which==13 && $(e.target).attr('contenteditable')) {
-                    e.preventDefault();
-                    $(e.target).blur();
-                }
-            });
-            // blur when <select> changes value to trigger data sending
-            $("#projectFiles table tbody").on('change', "select", function(e) {
-                $(e.target).blur();
-            });
+for(var i=0;i<projectInfo.files.list.length;i++) {
+    BrainBox.appendAnnotationTableRow(i,aParam);
+}
+
+// mark first row as selected
+$("#projectFiles tbody tr:eq(0)").addClass("selected");
+
+// send data when focus is lost (on blur)
+$(document).on('blur', "#projectFiles table tbody td", function(e) {
+    //console.log("blur target:",e.target);
+    var index = $(e.target).closest('tr').index();
+    JSON.stringify(info_proxy); // update content of projectInfo object from proxy by calling all getters
+    AtlasMakerWidget.sendSaveMetadataMessage(projectInfo.files.list[index]);
+});
+// blur when [enter] is clicked, to trigger data sending
+$(document).on('keydown', "#projectFiles table tbody td", function(e) {
+    if(e.which==13 && $(e.target).attr('contenteditable')) {
+        e.preventDefault();
+        $(e.target).blur();
+    }
+});
+// blur when <select> changes value to trigger data sending
+$("#projectFiles table tbody").on('change', "select", function(e) {
+    $(e.target).blur();
+});
 
 // listen to changes in file selection by clicking on the file table
 $(document).on('click', "#projectFiles tbody tr",function() {
