@@ -99,27 +99,35 @@ var isProjectObject = function(req,res,object) {
         }
         console.log("owner and project shortname present")
 
-        // check that access values are valid
-        flag=true; // validation ok
-        //arr=object.collaborators.access.whitelist;
+        // convenience array for collaborator checks
         arr=object.collaborators.list;
+
+        // check that the 'anyone' user is present
+        flag=false;
+        for(i=0;i<arr.length;i++) {
+            if(arr[i].userID === 'anyone') {
+                flag = true;
+                break;
+            }
+        }
+        if(flag === false) {
+            reject({success:false,error:"User 'anynone' is not present"});
+            return;
+        }
+        
+        // check that collaborator's access values are valid
+        flag=true;
         for(i=0;i<arr.length;i++) {
             if (validatorNPM.matches(arr[i].access.collaborators, "none|view|edit|add|remove") === false ) {
                 console.log("collaborators",arr[i]);
                 flag = false;
                 break;
             }
-        }
-        //arr=object.annotations.access.whitelist;
-        for(i=0;i<arr.length;i++) {
             if (validatorNPM.matches(arr[i].access.annotations, "none|view|edit|add|remove") === false ) {
                 console.log("annotations",arr[i]);
                 flag = false;
                 break;
             }
-        }
-        //arr=object.files.access.whitelist;
-        for(i=0;i<arr.length;i++) {
             if (validatorNPM.matches(arr[i].access.files, "none|view|edit|add|remove") === false ) {
                 console.log("files",arr[i]);
                 flag = false;
