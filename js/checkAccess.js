@@ -17,7 +17,8 @@ var toMRI = function(mri, projects, user, access) {
                 }
             }
             if(found === false) {
-                console.log("ERROR: require 'anyone' user not found");
+                console.log("ERROR: required 'anyone' user not found [checkAcces.toMRI]");
+                console.log(projects[p].collaborators.list);
             }
             
             // check file access level of 'anyone'
@@ -74,7 +75,7 @@ var toProject = function(project, user, access) {
         }
     }
     if(found === false) {
-        console.log("ERROR: require 'anyone' user not found");
+        console.log("ERROR: required 'anyone' user not found [checkAccess.toProject]");
     }
 
     // find file access level of 'anyone'
