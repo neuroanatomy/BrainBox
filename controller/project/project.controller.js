@@ -2,6 +2,7 @@ var async = require("async");
 var dateFormat = require('dateformat');
 var validatorNPM = require('validator');
 var async = require('async');
+var checkAccess = require("../../js/checkAccess.js");
 
 const createDOMPurify = require('dompurify');
 const jsdom = require('jsdom');
@@ -131,7 +132,8 @@ var isProjectObject = function(req,res,object) {
         console.log("Access values ok");
                 
         
-        // 2. Asynchronous checks------------------------------------
+        // 2. Asynchronous checks
+        //-----------------------
         
         arr=[];
         arr.push(req.db.get('user').find({nickname:object.owner}));
@@ -247,6 +249,13 @@ var settings = function(req, res) {
 
 	req.db.get('project').findOne({shortname:req.params.projectName,backup:{$exists:0}},"-_id")
 	.then(function(json) {
+
+        // check that the logged user has access to view this project
+        if(checkAccess.toProject(json, loggedUser, "view") === false) {
+            res.status(401).send("Authorization required");
+            return;
+        }
+
 		if(!json) {
 		    json = {
                     name: "",
@@ -353,11 +362,20 @@ var newProject = function(req, res) {
                 : ("<a href='/auth/github'>Log in with GitHub</a>");
     var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
 
-    var context = {
-        title: "BrainBox: New Project",
-        login: login
-    };
-    res.render('projectNew',context);
+    if(loggedUser === "anonymous" ) {
+        var context = {
+            title: "BrainBox: New Project",
+            functionality: "create a new project",
+            login: login
+        };
+        res.render('askForLogin',context);
+    } else {
+        var context = {
+            title: "BrainBox: New Project",
+            login: login
+        };
+        res.render('projectNew',context);
+    }
 };
 
 /**
