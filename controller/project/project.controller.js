@@ -101,25 +101,26 @@ var isProjectObject = function(req,res,object) {
 
         // check that access values are valid
         flag=true; // validation ok
-        arr=object.collaborators.access.whitelist;
+        //arr=object.collaborators.access.whitelist;
+        arr=object.collaborators.list;
         for(i=0;i<arr.length;i++) {
-            if (validatorNPM.matches(arr[i].access, "none|view|edit|add|remove") === false ) {
+            if (validatorNPM.matches(arr[i].access.collaborators, "none|view|edit|add|remove") === false ) {
                 console.log("collaborators",arr[i]);
                 flag = false;
                 break;
             }
         }
-        arr=object.annotations.access.whitelist;
+        //arr=object.annotations.access.whitelist;
         for(i=0;i<arr.length;i++) {
-            if (validatorNPM.matches(arr[i].access, "none|view|edit|add|remove") === false ) {
+            if (validatorNPM.matches(arr[i].access.annotations, "none|view|edit|add|remove") === false ) {
                 console.log("annotations",arr[i]);
                 flag = false;
                 break;
             }
         }
-        arr=object.files.access.whitelist;
+        //arr=object.files.access.whitelist;
         for(i=0;i<arr.length;i++) {
-            if (validatorNPM.matches(arr[i].access, "none|view|edit|add|remove") === false ) {
+            if (validatorNPM.matches(arr[i].access.files, "none|view|edit|add|remove") === false ) {
                 console.log("files",arr[i]);
                 flag = false;
                 break;
@@ -249,48 +250,63 @@ var settings = function(req, res) {
 
 	req.db.get('project').findOne({shortname:req.params.projectName,backup:{$exists:0}},"-_id")
 	.then(function(json) {
-
-        // check that the logged user has access to view this project
-        if(checkAccess.toProject(json, loggedUser, "view") === false) {
-            res.status(401).send("Authorization required");
-            return;
-        }
-
-		if(!json) {
+		if(json) {
+            // check that the logged user has access to view this project
+            if(checkAccess.toProject(json, loggedUser, "view") === false) {
+                res.status(401).send("Authorization required");
+                return;
+            }
+		} else {
 		    json = {
-                    name: "",
-                    shortname: req.params.projectName,
-                    url: "",
-                    brainboxURL: "/project/"+req.params.projectName,
-                    created: (new Date()).toJSON(),
-                    owner: loggedUser,
-                    collaborators: {
-                        access: {
-                            owner: loggedUser,
-                            public: "edit",
-                            whitelist: []
-                        },
-                        list: []
+                name: "",
+                shortname: req.params.projectName,
+                url: "",
+                brainboxURL: "/project/"+req.params.projectName,
+                created: (new Date()).toJSON(),
+                owner: loggedUser,
+                collaborators: {
+                    /*
+                    access: {
+                        owner: loggedUser,
+                        public: "edit",
+                        whitelist: []
                     },
-                    files: {
-                        access: {
-                            owner: loggedUser,
-                            public: "edit",
-                            whitelist: []
-                        },
-                        list: []
+                    */
+                    list: [
+                        {
+                            userID: 'anyone',
+                            access: {
+                                collaborators: 'view',
+                                annotations: 'edit',
+                                files: 'view'
+                            }
+                        }
+                    ]
+                },
+                files: {
+                    /*
+                    access: {
+                        owner: loggedUser,
+                        public: "edit",
+                        whitelist: []
                     },
-                    annotations: {
-                        access: {
-                            owner: loggedUser,
-                            public: "edit",
-                            whitelist: []
-                        },
-                        list: []
-                    }
-                };
+                    */
+                    list: []
+                },
+                annotations: {
+                    /*
+                    access: {
+                        owner: loggedUser,
+                        public: "edit",
+                        whitelist: []
+                    },
+                    */
+                    list: []
+                }
+            };
         }
 
+        // find source URL and name for each of the files in the project
         async.each(
             json.files.list,
             function(item,cb) {
@@ -314,23 +330,27 @@ var settings = function(req, res) {
              * @todo replace the nested async calls
              */
             function() {
+                // find username and name for each of the collaborators in the project
                 async.each(
-                    json.collaborators.list,
+                    json.collaborators.list.map(function(o){return o.userID}), // convert array of objects into array of userIDs
                     function(item,cb) {
                         console.log("item",item);
                         req.db.get('user').find({nickname:item,backup:{$exists:0}},{name:1,_id:0})
                         .then(function(obj) {
                             console.log("user",obj);
-                            if(obj[0]) {
-                                json.collaborators.list[json.collaborators.list.indexOf(item)]={
-                                    username: item,
-                                    name: obj[0].name
+                            var i, found = false;
+                            for(i=0;i<json.collaborators.list.length;i++) {
+                                if(json.collaborators.list[i].userID === item) {
+                                    found = true;
+                                    break;
                                 }
-                            } else {
-                                json.files.list[json.files.list.indexOf(item)]={
-                                    username: item,
-                                    name: ""
-                                }
+                            }
+                            if(obj[0]) {    // name found
+                                json.collaborators.list[i].username=item;
+                                json.collaborators.list[i].name=obj[0].name;
+                            } else {    // name not found: set to empty
+                                json.collaborators.list[i].username=item;
+                                json.collaborators.list[i].name="";
                             }
                             cb();
                         });
