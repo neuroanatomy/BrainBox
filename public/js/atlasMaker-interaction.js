@@ -89,6 +89,9 @@ var AtlasMakerInteraction = {
 					});
 				}
 				break;
+			case 'Eyedrop':
+				me.User.tool='eyedrop';
+				break;
 		}
 		me.sendUserDataMessage(JSON.stringify({'tool':me.User.tool}));
 		me.User.measureLength=null;
@@ -358,6 +361,17 @@ var AtlasMakerInteraction = {
 			c=[255,0,0]; // unavailable labels are set to pure red
 		}
 		return c;
+	},
+	/**
+     * @function eyedrop
+     */
+	eyedrop : function eyedrop( x,y,usr) {
+		var me = AtlasMakerWidget;
+		var l = me.traceLog(eyedrop);if(l)console.log(l);
+		
+		var	z = usr.slice;
+		var i = me.slice2index( x,y,z,usr.view );
+		return me.atlas.data[i];
 	},
     /**
      * @function togglePreciseCursor
@@ -655,6 +669,24 @@ var AtlasMakerInteraction = {
 				me.User.mouseIsDown = true;
 				me.info.x=x/me.brain_W;
 				me.info.y=1-y/me.brain_H;
+				break;
+			case 'eyedrop':
+				var value = me.eyedrop( x,y,me.User );
+				console.log( "value = " + value );
+
+				var index = me.ontology.valueToIndex[ value ];
+				console.log( "index: " + index );
+
+				var selRegionName = me.ontology.labels[ index ].name;
+				me.info.region = selRegionName;
+
+				me.changePenColor( index );
+
+				var selRegionColor = me.ontology.labels[ index ].color;
+
+				console.log( "name: " + selRegionName );
+				console.log( "color: " + selRegionColor );
+
 				break;
 		}
 	

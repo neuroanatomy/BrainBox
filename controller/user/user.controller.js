@@ -103,7 +103,7 @@ var user = function(req, res) {
                     context.numMRI = context.MRIFiles.length;
                     context.numAtlas = context.atlasFiles.length;
                     context.numProjects = context.projects.length;
-
+ 
                     res.render('user',context);                    
                 }).catch(function(err) {
                     console.log("ERROR Cannot get user information:",err);
