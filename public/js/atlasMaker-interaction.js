@@ -680,8 +680,6 @@ var AtlasMakerInteraction = {
 				console.log( "name: " + selRegionName );
 				console.log( "color: " + selRegionColor );
 
-
-
 				break;
 		}
 	

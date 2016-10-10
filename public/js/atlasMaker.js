@@ -274,6 +274,9 @@ var AtlasMakerWidget = {
 
 				me.sendUserDataMessage("allUserData");
 				me.sendUserDataMessage("sendAtlas");
+
+			    me.changePenColor( 0 );
+
 				def.resolve();
 			});
 			return def.promise();
