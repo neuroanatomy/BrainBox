@@ -5,7 +5,7 @@ var AtlasMakerWidget = {
 	//========================================================================================
 	// Globals
 	//========================================================================================
-	debug:			0,
+	debug:			1,
 	container:		null,	// Element where atlasMaker lives
 	brain_offcn:	null,
 	brain_offtx:	null,
@@ -260,7 +260,7 @@ var AtlasMakerWidget = {
 			var def=$.Deferred();
 			me.configureMRI(info,index)
 			.then(function from_configureAtlasMaker() {
-
+				
 				if(me.fullscreen==true) { // WARNING: HACK... would be better to implement enter/exit fullscreen
 					me.fullscreen=false;
 					me.toggleFullscreen();
@@ -274,6 +274,9 @@ var AtlasMakerWidget = {
 
 				me.sendUserDataMessage("allUserData");
 				me.sendUserDataMessage("sendAtlas");
+
+			    me.changePenColor( 0 );
+
 				def.resolve();
 			});
 			return def.promise();
@@ -289,6 +292,8 @@ var AtlasMakerWidget = {
 		me.ontology=json
 		me.ontology.valueToIndex=[];
 		me.ontology.labels.forEach(function(o,i){me.ontology.valueToIndex[o.value]=i});
+		// to clear the region name being displayed on the info text-layer when having used eyedrop
+		delete me.info.region;
 	},
     /**
      * @function configureMRI
