@@ -16,6 +16,18 @@
 	<!-- Login (fixed height) -->
 	<div style="flex:0 0 64px">
 		<div id="menu">
+
+
+			<!-- include audio -->
+  			<audio id="brainAudio" >
+  			</audio>
+  			<!-- if we want to enable user 'pick from BrainBox playlist' -->
+			<!--<div>
+				<input type="text" id="audioFile" value="audio.mp3" size="60" />
+				<input type="text" id="audioFile" value="audio.mp3" size="0" />
+			</div>-->
+
+			<img id="playMusic" class="button" title="play brain music" style='width:13px' src='/img/music.svg' onclick="togglePlay();"/>  
 			<img id="addProject" class="button" title="add project" style='width:13px' src='/img/plus.svg'/>
 			<img id="search" class="button" title="search" style='width:13px' src='/img/search.svg'/>
 			<img id="doc" class="button" title="documentation" style='width:13px' src='/img/doc.svg'/>
@@ -226,6 +238,57 @@ function goToURL(e) {
 	location="/mri?url="+url;
 };
 $("#addProject").click(function(){location="/project/new"});
+
+
+
+/********* audio functionality **************/
+
+/* create global audio element */
+var audioElm = document.getElementById("brainAudio"); 
+/* add event listener to play next song */
+audioElm.addEventListener("ended", playNext);
+/* create playlist */
+var playlist = [ "music/RAubry_Amnesie.mp3", "music/RAubry_TrouDeMemoire.mp3", "music/RAubry_ApresLaPluie.mp3", "music/Morphine_MyBrain.mp3", "music/Morphine_MyBrain2.mp3", "music/RAubry_Aquarelle.mp3", "music/RAubry_Cortege.mp3", "music/RAubry_Deferlante.mp3", "music/RAubry_Derives.mp3", "music/RAubry_Faceties.mp3", "music/RAubry_LAbime.mp3", "music/RAubry_MemoiresDeFutur.mp3", "music/RAubry_PassagersDuVent.mp3", "music/RAubry_Peril.mp3", "music/RAubry_Refuges.mp3", "music/RAubry_Seduction.mp3", "music/RAubry_Solitaire.mp3", "music/RAubry_SteppeFull.mp3", "music/RAubry_Tension.mp3", "music/RAubry_Trouble.mp3", "music/RAubry_TrouDeMemoire.mp3", "music/RAubry_TrouNoir.mp3" ];
+
+/* Alternate between play and pause based on the value of the paused property */
+function togglePlay() {
+ 	if (document.getElementById("brainAudio")) {
+ 		/* if player is paused, then play the file */
+   		if (audioElm.paused == true) {
+     		playAudio(audioElm);    
+     	/* if player is playing, then pause */
+   		} else {
+     		pauseAudio(audioElm);  
+   		}
+ 	}
+}
+
+function playNext() {
+	playAudio(audioElm);
+}
+
+function playAudio(audioElm) {
+	/* sets button to 'pause' button */
+ 	document.getElementById("playMusic").innerHTML = "."; 
+
+ 	/* can we try to addClass('selected'); ? :) */
+ 	/*document.getElementById("#playMusic").addClass( "selected" );
+ 	$("#playMusic").addClass( "selected" );*/
+
+ 	/* Get file from text box and assign it to the source of the audio element */
+ 	//audioElm.src = document.getElementById("brainAudio").source;
+ 	
+ 	/* Math.floor( (Math.random() * [maxIndex]) ) */
+ 	audioElm.src = playlist[ Math.floor( (Math.random() * 21) ) ];
+ 	audioElm.play();
+}
+
+function pauseAudio(audioElm) {
+	/* sets button to 'play' button */
+ 	document.getElementById("playMusic").innerHTML = "."; 
+ 	audioElm.pause();
+}
+
 </script>
 
 
