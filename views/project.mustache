@@ -234,8 +234,6 @@ function loadProjectFile(url) {
                         type: "volume"
                     };
                     info.mri.atlas.push(atlas);
-                    console.log("added atlas:");
-                    console.log(atlas);
                 }
                 
                 annotations.volume[irow].annotationItemIndex=iarr;
@@ -397,7 +395,6 @@ $("#projectCollaboratorsNumber").text(projectInfo.collaborators.length+" Collabo
 //--------------------
     // send data when focus is lost (on blur)
     $(document).on('blur', "#projectFiles table tbody td", function(e) {
-        //console.log("blur target:",e.target);
         var index = $(e.target).closest('tr').index();
         JSON.stringify(info_proxy); // update content of projectInfo object from proxy by calling all getters
         AtlasMakerWidget.sendSaveMetadataMessage(projectInfo.files.list[index]);
@@ -421,7 +418,6 @@ $(document).on('click', "#projectFiles tbody tr",function() {
 	var index=$(this).index();
 
 	if(index>=0 && currentIndex!=index) {
-		console.log(">>  change selected file:",index);
 		$(table).find("tr").removeClass("selected");
 		$(this).addClass("selected");
 		// new url
@@ -449,7 +445,6 @@ $(document).on('keydown', function(e){
 			index=(index+1)%projectInfo.files.list.length;
 			break;
 	}
-	console.log(">>  change selected file:",index);
 	$(table).find("tr").removeClass("selected");
 	$(table).find("tr:eq("+index+")").addClass("selected");
 	

@@ -53,7 +53,6 @@ var AtlasMakerInteraction = {
 		me.configureAtlasImage();
 		me.resizeWindow();
 
-		console.log(">>changeView:drawImages");
 		me.drawImages();
 		
 		me.initCursor();
@@ -443,8 +442,6 @@ var AtlasMakerInteraction = {
 			case "draw": $("#finger").addClass("draw");	break;
 			case "configure": $("#finger").addClass("configure");	break;
 		}
-		//$("#msg").html(C.state);
-		//console.log(Crsr.state);
 	},
     /**
      * @function mousedown
@@ -558,7 +555,7 @@ var AtlasMakerInteraction = {
 		var l=me.traceLog(touchmove,2);if(l)console.log(l);
 		
 		if(me.Crsr.touchStarted==false && me.debug) {
-			console.log("WARNING TO MYSELF: touch can move without having started");
+			console.log("WARNING: touch can move without having started");
 		}
 	
 		e.preventDefault();
@@ -632,11 +629,6 @@ var AtlasMakerInteraction = {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(down,2);if(l)console.log(l);
 	
-		/*
-		if(MyLoginWidget.loggedin==0 || me.editMode==0)
-			return;
-		*/
-	
 		var z=me.User.slice;
 
 		
@@ -672,21 +664,11 @@ var AtlasMakerInteraction = {
 				break;
 			case 'eyedrop':
 				var value = me.eyedrop( x,y,me.User );
-				console.log( "value = " + value );
-
 				var index = me.ontology.valueToIndex[ value ];
-				console.log( "index: " + index );
-
 				var selRegionName = me.ontology.labels[ index ].name;
 				me.info.region = selRegionName;
-
 				me.changePenColor( index );
-
 				var selRegionColor = me.ontology.labels[ index ].color;
-
-				console.log( "name: " + selRegionName );
-				console.log( "color: " + selRegionColor );
-
 				break;
 		}
 	

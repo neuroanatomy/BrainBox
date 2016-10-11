@@ -10,12 +10,6 @@ var AtlasMakerDraw = {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(resizeWindow,1);if(l)console.log(l);
 
-		console.log("{");
-		console.log(me.container);
-		console.log(me.container.height());
-		console.log(me.container.width());
-		console.log("}");
-
 		var wH=me.container.height();
 		var wW=me.container.width();	
 		var	wAspect=wW/wH;

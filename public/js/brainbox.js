@@ -32,7 +32,7 @@ var BrainBox={
      * @function hash
      */
 	hash: function hash(str) {
-		console.log(BrainBox.traceLog(hash));
+		var l=BrainBox.traceLog(hash);if(l)console.log(l);
 		
 		var v0=0,v1,abc="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 		for(i=0;i<str.length;i++) {
@@ -66,7 +66,7 @@ var BrainBox={
      * @function initBrainBox
      */
 	initBrainBox: function initBrainBox() {
-		console.log(BrainBox.traceLog(initBrainBox));
+		var l=BrainBox.traceLog(initBrainBox);if(l)console.log(l);
 		
 		var def=$.Deferred();
 
@@ -104,7 +104,7 @@ var BrainBox={
      * @function configureBrainBox
      */
 	configureBrainBox: function configureBrainBox(param) {
-		console.log(BrainBox.traceLog(configureBrainBox));
+		var l=BrainBox.traceLog(configureBrainBox);if(l)console.log(l);
 		
 		var def=$.Deferred();
 		var date=new Date();
@@ -172,7 +172,7 @@ var BrainBox={
      * @function unload
      */
 	unload: function unload() {
-		console.log(BrainBox.traceLog(unload));
+		var l=BrainBox.traceLog(unload);if(l)console.log(l);
 		var foundStored=false;
 		var stored=localStorage.AtlasMaker;
 		if(stored) {
@@ -204,7 +204,7 @@ var BrainBox={
      * @function selectAnnotationTableRow
      */
 	selectAnnotationTableRow: function selectAnnotationTableRow() {
-		console.log(BrainBox.traceLog(selectAnnotationTableRow));
+		var l=BrainBox.traceLog(selectAnnotationTableRow);if(l)console.log(l);
 	
 		var table=$(this).closest("tbody");
 		var currentIndex=$(table).find("tr.selected").index();
@@ -222,7 +222,7 @@ var BrainBox={
      * @function appendAnnotationTableRow
      */
 	appendAnnotationTableRow: function appendAnnotationTableRow(irow,param) {
-		console.log(BrainBox.traceLog(appendAnnotationTableRow));
+		var l=BrainBox.traceLog(appendAnnotationTableRow);if(l)console.log(l);
 		
 		$(param.table).append(param.trTemplate);
 
@@ -254,7 +254,7 @@ var BrainBox={
      * @function appendAnnotationTableRow
      */
 	appendAnnotationTableRow2: function appendAnnotationTableRow(irow,iarr,param) {
-		console.log(BrainBox.traceLog(appendAnnotationTableRow));
+		var l=BrainBox.traceLog(appendAnnotationTableRow);if(l)console.log(l);
 		
 		$(param.table).append(param.trTemplate);
 
@@ -286,7 +286,7 @@ var BrainBox={
      * @function addAnnotation
      */
 	addAnnotation: function addAnnotation(param) {
-		console.log(BrainBox.traceLog(addAnnotation));
+		var l=BrainBox.traceLog(addAnnotation);if(l)console.log(l);
 		
 		var date=new Date();
 		// add data to annotations array
@@ -313,7 +313,7 @@ var BrainBox={
      * @function removeAnnotation
      */
 	removeAnnotation: function removeAnnotation(param) {
-		console.log(BrainBox.traceLog(removeAnnotation));
+		var l=BrainBox.traceLog(removeAnnotation);if(l)console.log(l);
 
 		// remove row from table
 		var index=$(param.table).find("tbody .selected").index();
@@ -336,20 +336,17 @@ var BrainBox={
      * @function saveAnnotations
      */
 	saveAnnotations: function saveAnnotations(param) {
-		console.log(BrainBox.traceLog(saveAnnotations));
+		var l=BrainBox.traceLog(saveAnnotations);if(l)console.log(l);
 
 		JSON.stringify(param.info_proxy); // update BrainBox.info from info_proxy
 		AtlasMakerWidget.sendSaveMetadataMessage(BrainBox.info);
 		hash_old=BrainBox.hash(JSON.stringify(BrainBox.info));
-		
-		console.log("====> Save annotations");
-		console.log(BrainBox.info);
 	},
 	/**
      * @function loadLabelsets
      */
 	loadLabelsets: function loadLabelsets() {
-		console.log(BrainBox.traceLog(loadLabelsets));
+		var l=BrainBox.traceLog(loadLabelsets);if(l)console.log(l);
 		
 		return $.getJSON("/api/getLabelsets",function(data) {
 			BrainBox.labelSets=data;
