@@ -67,9 +67,7 @@ var AtlasMakerDraw = {
 		// configure toolbar slider
 		$(".slider#slice").data({max:me.brain_D-1,val:me.User.slice});
 		if($("#slice .thumb")[0]) $("#slice .thumb")[0].style.left=(me.User.slice/(me.brain_D-1)*100)+"%";
-
 		me.drawImages();
-		
 		me.initCursor();
 	},
     /**
@@ -113,6 +111,7 @@ var AtlasMakerDraw = {
 	},
     /**
      * @function displayInformation
+     * @desc Overlays text and vectorial information on top of the annotation volume slice. Text information is added from the AtlasMakerWidget.info object. Vectorial information is displayed using svg format
      */
 	displayInformation: function displayInformation() {
 		var me=AtlasMakerWidget;

@@ -7,6 +7,12 @@ var AtlasMakerPaint = {
 	//====================================================================================
     /**
      * @function paintxy
+     * @desc Dispatches paint/erase commands to the annotation volume and to the server for broadcast
+     * @param {integer} u The number of the user producing the paint event. u === -1 means that the paint event was produced by a different user, and it is not broadcasted (to prevent loops)
+     * @param {character} c The paint command: le, lf, e, f.
+     * @param {integer} x X coordinate in slice space
+     * @param {integer} y Y coordinate in slice space
+     * @param {Object} usr User object for the current user. Contains the painting value, view and slice
      */
 	paintxy: function paintxy(u,c,x,y,usr) {
 		var me=AtlasMakerWidget;
@@ -50,9 +56,10 @@ var AtlasMakerPaint = {
 	},
     /**
      * @function paintvol
+     * @desc Paints a series of voxels as indicated in an array. This function is exclusively used for undoing
+     * @param {Array} voxels Array where each object contains a voxel index and a voxel value. The voxel index goes from 0 to dim[0]*dim[1]*dim[2]-1
      */
 	paintvol: function paintvol(voxels) {
-		/* this function is exclusively used for undoing */
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(paintvol);if(l)console.log(l);
 	
@@ -70,6 +77,12 @@ var AtlasMakerPaint = {
 	},
     /**
      * @function fill
+     * @desc Fills a 2D slice in an annotation volume starting at coordinates x, y, z replacing all the connected pixels of same value as the original value at x, y, z
+     * @param {Integer} x X coordinate in voxel space
+     * @param {Integer} y Y coordinate in voxel space
+     * @param {Integer} z Z coordinate in voxel space
+     * @param {Integer} val Value to fill with
+     * @param {String} myView The stereotaxic plane along which to fill: either 'cor', 'axi' or 'sag'
      */
 	fill: function fill(x,y,z,val,myView) {
 		var me=AtlasMakerWidget;
@@ -187,6 +200,8 @@ var AtlasMakerPaint = {
 	},
     /**
      * @function slice2xyzi
+     * @desc Convert slice coordinates into voxel coordinates
+     * @return An array [x,y,z,i] where the first 3 values are the voxel coordinates and the 4th value is the voxel index (value from 0 to dim[0]*dim[1]*dim[2]-1)
      */
 	slice2xyzi: function slice2xyzi(mx,my,mz,myView) {
 		var me=AtlasMakerWidget;
