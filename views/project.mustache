@@ -83,7 +83,6 @@
 								<tr>
 									<th>Name</th>
 									<th>Label Set</th>
-									<th>Owner</th>
 								</tr>
 							</thead>
                             <tbody>
@@ -98,7 +97,7 @@
 			</div>
 			
 			<div id="right" style="flex:1 0;position:relative">
-				<div id="stereotaxic" style="width:100%">
+				<div id="stereotaxic" style="width:100%;height:100%">
 				</div>
 				
 				<style>
@@ -181,62 +180,112 @@
 	and is filled by the server, from the database.
 */
 var projectInfo={{{projectInfo}}};
-var str;
+var annotations = {
+    text: [],   // collect text annotations
+    volume: []  // collect volume annotations
+};
+var k, str;
+
+// collect the project's text annotations
+for(k in projectInfo.annotations.list) {
+    if (projectInfo.annotations.list[k].type === "text") {
+        $("#projectFiles thead tr").append("<th>" + projectInfo.annotations.list[k].name + "</th>");
+        annotations.text.push(projectInfo.annotations.list[k]);
+    }
+}
+
+// collect the project's volume annotations
+for(k in projectInfo.annotations.list) {
+    if (projectInfo.annotations.list[k].type === "volume") {
+        annotations.volume.push(projectInfo.annotations.list[k]);
+    }
+}
 
 function loadProjectFile(url) {
 	var params={url:url,view:"cor",slice:180,fullscreen:false};
 	$.post("/mri/json",{url:url})
-	.done(function from_loadProjectFile(data) {
-	    if($.isEmptyObject(data) === false) {
-            params.info=data;
+	.done(function from_loadProjectFile(info) {
+	    if($.isEmptyObject(info) === false) {
+            
+            // check if the mri contains the required annotations
+            var irow; // index of the table row
+            var iarr; // index of the object in the data array
+            for(irow=0;irow<annotations.volume.length;irow++) {
+                found = false;
+                for(iarr=0;iarr<info.mri.atlas.length;iarr++) {
+                    if(annotations.volume[irow].name == info.mri.atlas[iarr].name
+                       && projectInfo.shortname == info.mri.atlas[iarr].project) {
+                        found=true;
+                        break;
+                    }
+                }
+                // if it doesn't, create them
+                if(found==false) {
+                    // add annotation
+                    var date=new Date();
+                    // add data to annotations array
+                    var atlas = {
+                        name:annotations.volume[irow].name,
+                        project:projectInfo.shortname,
+                        created: date.toJSON(), 
+                        filename: Math.random().toString(36).slice(2)+".nii.gz",	// automatically generated filename
+                        labels: "/labels/"+annotations.volume[irow].values,
+                        owner: AtlasMakerWidget.User.username,
+                        type: "volume"
+                    };
+                    info.mri.atlas.push(atlas);
+                    console.log("added atlas:");
+                    console.log(atlas);
+                }
+                
+                annotations.volume[irow].annotationItemIndex=iarr;
+            }
+            params.info=info;
+            params.annotationItemIndex = annotations.volume[0].annotationItemIndex;
+            
             BrainBox.configureBrainBox(params)
                 .then(function from_project(){
+
+                    // bind volume annotations to table#info
+                    var annvol_proxy={};
+                    var aParam = {
+                        table: $("table#info"),
+                        info_proxy: annvol_proxy,
+                        info: BrainBox.info,
+                        trTemplate: $.map([
+                            "<tr>",
+                            " <td></td>",           // volume name
+                            " <td></td>",	        // volume label set
+                            "</tr>"],function(o){return o}).join(),
+                        objTemplate: [
+                            {	typeOfBinding:1,
+                                path:"mri.atlas.#.name"
+                            },
+                            {	typeOfBinding:1,
+                                path:"mri.atlas.#.labels"
+                            }
+                        ]
+                    };
+
+                    // add and bind new table row
+                    for(irow=0;irow<annotations.volume.length;irow++) {    
+                        BrainBox.appendAnnotationTableRow2(irow,annotations.volume[irow].annotationItemIndex,aParam);
+                    }
+                    // update in server
+                    BrainBox.saveAnnotations(aParam);
+
+                    // select the first annotation by default
+                    // (should be read from project settings)
+                    $("#annotations tbody tr:eq(0)").addClass("selected");
+
                     AtlasMakerWidget.User.projectPage = projectInfo.shortname;
                     AtlasMakerWidget.sendUserDataMessage(JSON.stringify({projectPage:projectInfo.shortname}))
                 });
         } else {
-            var info=AtlasMakerWidget.container.find("#info");
+            var info=AtlasMakerWidget.container.find("#text-layer");
             info.html("<text x='5' y='15' fill='white'>ERROR: File is unreadable</text>");
             console.log("ERROR: Cannot read data. The file is maybe corrupt?");
         }
-	})
-	.then(function from_loadProjectFile() {
-		// binding prototype
-		var info_proxy={};
-		var aParam = {
-			table: $("table#info"),
-			info_proxy: info_proxy,
-			info: BrainBox.info,
-			trTemplate: $.map([
-				"<tr>",
-				" <td></td>",
-				" <td><select>",BrainBox.labelSets.map(function(o){return "<option>"+o.name+"</option>"}),"</select></td>",	// append label sets
-				" <td><a></a></td>",
-				"</tr>"],function(o){return o}).join(),
-			objTemplate: [
-				{	typeOfBinding:1,
-					path:"mri.atlas.#.name"
-				},
-				{	typeOfBinding:1,
-					path:"mri.atlas.#.labels",
-					format: function(e,d){
-						$(e).find("select").prop('selectedIndex',$.map(BrainBox.labelSets,function(o){return o.source}).indexOf(d))},
-					parse: function(e){var name=$(e).find("select").val(),i=$.map(BrainBox.labelSets,function(o){return o.name}).indexOf(name);return BrainBox.labelSets[i].source}
-				},
-				{	typeOfBinding:1,
-					path:"mri.atlas.#.owner",
-					format: function(e,d){$.get("/user/json/"+d.split("/").pop()+"?var=nickname",function(r){$(e).text(r);$(e).attr('href',d)})}
-				}
-			]
-		};
-
-		// bind interface
-		for(var i=0;i<BrainBox.info.mri.atlas.length;i++)
-			BrainBox.appendAnnotationTableRow(i,aParam);
-
-		// select the first annotation by default
-		// (should be read from project settings)
-		$("#annotations tbody tr:eq(0)").addClass("selected");
 	});
 }
 
@@ -247,148 +296,138 @@ $("#projectCreated").text("Created on "+creation.toLocaleString());
 $("#projectFilesNumber").text(projectInfo.files.list.length+" Files");
 $("#projectCollaboratorsNumber").text(projectInfo.collaborators.length+" Collaborators");
 
-/*
-	The list of all files included in the project
-*/
-// setup the names of the columns
-var k, txtAnnotations = [];
-for(k in projectInfo.annotations.list) {
-    if (projectInfo.annotations.list[k].type === "text") {
-        $("#projectFiles thead tr").append("<th>" + projectInfo.annotations.list[k].name + "</th>");
-        txtAnnotations.push(projectInfo.annotations.list[k]);
-    }
-}
 
-// add the 'annotations' object to mri if it does not exist
-for(k in projectInfo.files.list) {
-    if (!(projectInfo.files.list[k].mri))
-        projectInfo.files.list[k].mri = {};
-    if (!(projectInfo.files.list[k].mri.annotations))
-        projectInfo.files.list[k].mri.annotations = {};
-}
+// Init BrainBox
+//---------------
+    // select first file by default (should come from localStorage)
+    var url=projectInfo.files.list[0].source;	
+    BrainBox.initBrainBox()
+    .then(function from_project(){return BrainBox.loadLabelsets()})
+    .then(function from_project(){return loadProjectFile(url)})
+    .then(function from_project(){
+        $("#tools-side").detach().appendTo('#tools');
+        // connect colours close button
+        $(document).on('click', "#labels-close", function(){$("#labelset").hide()});
+    });
 
-// select first file by default (should come from localStorage)
-var url=projectInfo.files.list[0].source;	
-
-BrainBox.initBrainBox()
-.then(function from_project(){return BrainBox.loadLabelsets()})
-.then(function from_project(){return loadProjectFile(url)})
-.then(function from_project(){
-	$("#tools-side").detach().appendTo('#tools');
-	// connect colours close button
-	$(document).on('click', "#labels-close", function(){$("#labelset").hide()});
-});
-
-var info_proxy = {};
-var trTemplate;
-var objTemplate = [
-    {	typeOfBinding:2,
-        path:"files.list.#.name"
-    },
-    {
-        typeOfBinding:1,
-        path:"files.list.#.source",
-        format:function(e, d){
-            $(e).find("a").prop("href", location.origin+"/mri?url=" + d);
-            $(e).find("a").html(d.split("/").pop());
-        }
-    }
-];
-trTemplate=[
-    "<tr>",
-    "	<td contentEditable=true class='noEmpty'></td>",
-    "	<td><a></a></td>"
-];
-for(var g in txtAnnotations) {
-    if(txtAnnotations[g].values) {
-        trTemplate.push("<td><select value=0><option value='' disabled selected hidden>Empty</option>");
-        for (var o in txtAnnotations[g].values) {
-            trTemplate.push("<option value=\"" + txtAnnotations[g].values[o] + "\"" + ">" + txtAnnotations[g].values[o] + "</option>");
-        }
-        trTemplate.push("</select></td>");
-        
-        /**
-         * @todo Why the closures if there's nothing asynchronous??
-         */
-        objTemplate.push({
-            typeOfBinding:2,
-            path:"files.list.#.mri.annotations." + txtAnnotations[g].name,
-            format: function(e, d) {
-                if (d !=0) {
-                    $(e).find("select").css("color", "rgba(255,255,255,1)");
-                }
-                $(e).find("select").get(0).value=d
-            },
-            parse: function(e) {
-                if ($(e).find("select").val()) {
-                    $(e).find("select").css("color", "rgba(255,255,255,1)");
-                }
-                return $(e).find("select").val()
+// Bind the project's files to the table within #projectFiles
+//------------------------------------------------------------
+    var info_proxy = {};
+    var objTemplate = [
+        {	typeOfBinding:2,
+            path:"files.list.#.name"
+        },
+        {
+            typeOfBinding:1,
+            path:"files.list.#.source",
+            format:function(e, d){
+                $(e).find("a").prop("href", location.origin+"/mri?url=" + d);
+                $(e).find("a").html(d.split("/").pop());
             }
-        });
-
-    } else {
-        trTemplate.push("<td contentEditable=true class='noEmpty'></td>");
-        objTemplate.push({
-            typeOfBinding:2,
-            path:"files.list.#.mri.annotations." + txtAnnotations[g].name
-        });
+        }
+    ];
+    var trTemplate=[
+        "<tr>",
+        "	<td contentEditable=true class='noEmpty'></td>",
+        "	<td><a></a></td>"
+    ];
+    // add the 'annotations' object to mri if not present
+    for(k in projectInfo.files.list) {
+        if (!(projectInfo.files.list[k].mri))
+            projectInfo.files.list[k].mri = {};
+        if (!(projectInfo.files.list[k].mri.annotations))
+            projectInfo.files.list[k].mri.annotations = {};
     }
-}
-trTemplate.push("</tr>");
-var aParam = {
-    table: $("#projectFiles table"),
-    info_proxy: info_proxy,
-    info: projectInfo,
-    trTemplate: trTemplate.join("\n"),
-    objTemplate: objTemplate
-};
+    // determine the type of display based on data type
+    for(var g in annotations.text) {
+        var annType = Object.prototype.toString.call(annotations.text[g].values);
 
-for(var i=0;i<projectInfo.files.list.length;i++) {
-    BrainBox.appendAnnotationTableRow(i,aParam);
-}
+        // array of values
+        if(annType === "[object Array]") {
+            trTemplate.push("<td><select value=0><option value='' disabled selected hidden>Empty</option>");
+            for (var o in annotations.text[g].values) {
+                trTemplate.push("<option value=\"" + annotations.text[g].values[o] + "\"" + ">" + annotations.text[g].values[o] + "</option>");
+            }
+            trTemplate.push("</select></td>");
+        
+            objTemplate.push({
+                typeOfBinding:2,
+                path:"files.list.#.mri.annotations." + annotations.text[g].name,
+                format: function(e, d) {
+                    if (d !=0) {
+                        $(e).find("select").css("color", "rgba(255,255,255,1)");
+                    }
+                    $(e).find("select").get(0).value=d
+                },
+                parse: function(e) {
+                    if ($(e).find("select").val()) {
+                        $(e).find("select").css("color", "rgba(255,255,255,1)");
+                    }
+                    return $(e).find("select").val()
+                }
+            });
+        } else
+        // freeform text
+        if(annType === "[object String]" || annotations.text[g].values === "freeform") {
+            trTemplate.push("<td contentEditable=true class='noEmpty'></td>");
+            objTemplate.push({
+                typeOfBinding:2,
+                path:"files.list.#.mri.annotations." + annotations.text[g].name
+            });
+        }
+        /**
+         * @todo This is the place where 'position' or 'length' annotations should be added
+         */
+    }
+    trTemplate.push("</tr>");
+    var aParam = {
+        table: $("#projectFiles table"),
+        info_proxy: info_proxy,
+        info: projectInfo,
+        trTemplate: trTemplate.join("\n"),
+        objTemplate: objTemplate
+    };
+    for(var i=0;i<projectInfo.files.list.length;i++) {
+        BrainBox.appendAnnotationTableRow(i,aParam);
+    }
+    // mark first row as selected
+    $("#projectFiles tbody tr:eq(0)").addClass("selected");
 
-// mark first row as selected
-$("#projectFiles tbody tr:eq(0)").addClass("selected");
-
-// send data when focus is lost (on blur)
-$(document).on('blur', "#projectFiles table tbody td", function(e) {
-    //console.log("blur target:",e.target);
-    var index = $(e.target).closest('tr').index();
-    JSON.stringify(info_proxy); // update content of projectInfo object from proxy by calling all getters
-    AtlasMakerWidget.sendSaveMetadataMessage(projectInfo.files.list[index]);
-});
-// blur when [enter] is clicked, to trigger data sending
-$(document).on('keydown', "#projectFiles table tbody td", function(e) {
-    if(e.which==13 && $(e.target).attr('contenteditable')) {
-        e.preventDefault();
+// Autosave text data
+//--------------------
+    // send data when focus is lost (on blur)
+    $(document).on('blur', "#projectFiles table tbody td", function(e) {
+        //console.log("blur target:",e.target);
+        var index = $(e.target).closest('tr').index();
+        JSON.stringify(info_proxy); // update content of projectInfo object from proxy by calling all getters
+        AtlasMakerWidget.sendSaveMetadataMessage(projectInfo.files.list[index]);
+    });
+    // blur when [enter] is clicked, to trigger data sending
+    $(document).on('keydown', "#projectFiles table tbody td", function(e) {
+        if(e.which==13 && $(e.target).attr('contenteditable')) {
+            e.preventDefault();
+            $(e.target).blur();
+        }
+    });
+    // blur when <select> changes value to trigger data sending
+    $("#projectFiles table tbody").on('change', "select", function(e) {
         $(e.target).blur();
-    }
-});
-// blur when <select> changes value to trigger data sending
-$("#projectFiles table tbody").on('change', "select", function(e) {
-    $(e.target).blur();
-});
+    });
 
 // listen to changes in file selection by clicking on the file table
 $(document).on('click', "#projectFiles tbody tr",function() {
-
 	var table=$(this).closest("table");
 	var currentIndex=$(table).find("tr.selected").index();
 	var index=$(this).index();
-	var nodeName=$(this).prop('nodeName');
 
 	if(index>=0 && currentIndex!=index) {
 		console.log(">>  change selected file:",index);
 		$(table).find("tr").removeClass("selected");
 		$(this).addClass("selected");
-		
 		// new url
 		url=projectInfo.files.list[index].source;
-		
-		// remove table with previous annotations
+				// remove table with previous annotations
 		$("table#info tbody").html("");
-
 		// load and bind new file
 		loadProjectFile(url);
 	}
@@ -425,7 +464,29 @@ $(document).on('keydown', function(e){
 });
 
 // listen to changes in selected annotation
-$(document).on('click', "#info tbody tr",BrainBox.selectAnnotationTableRow);
+$(document).on('click', "#info tbody tr", function () {
+    var table=$(this).closest("tbody");
+    var currentIndex=$(table).find("tr.selected").index();
+    var index=$(this).index();
+
+    if(index>=0 && currentIndex!=index) {
+        $(table).find("tr").removeClass("selected");
+        $(this).addClass("selected");
+        
+        var iarr,found=false;
+        for(iarr=0;iarr<BrainBox.info.mri.atlas.length;iarr++) {
+            if(BrainBox.info.mri.atlas[iarr].name==annotations.volume[index].name
+                && BrainBox.info.mri.atlas[iarr].project==projectInfo.shortname) {
+                found=true;
+                break;
+            }
+        }
+        if(found)
+            AtlasMakerWidget.configureAtlasMaker(BrainBox.info,iarr);
+        else
+            console.log("ERROR: A quite unexpected one too...");
+    }
+});
 
 // resize left tool bar
 function resizeButton(p) {

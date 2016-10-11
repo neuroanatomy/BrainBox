@@ -522,8 +522,7 @@ if (window.WebSocket) {
 }
 ws.onmessage = function(message) {
     message = JSON.parse(message.data);
-    if (message.type === "userNameQuery")
-    {
+    if (message.type === "userNameQuery") {
         var arr;
         if(label=="nickname")
             arr=$.map(message.metadata,function(o){return {label:o.nickname,nickname:o.nickname,name:o.name}});
@@ -546,7 +545,7 @@ function onAccessClicked( e, l ) {
 }
 
 function selectRow(e) {
-	$(e.currentTarget).closest("tbody").find("tr").each(function(index, tag){
+	$(e.currentTarget).closest("tbody").find("tr").each(function(index, tag) {
 		$(tag).removeClass("selected");
 	})
 	$(e.currentTarget).addClass("selected");

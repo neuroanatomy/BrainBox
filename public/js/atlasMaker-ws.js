@@ -182,6 +182,7 @@ var AtlasMakerWS = {
                     // setup download link
                     var	link=me.container.find("span#download_atlas");
                     link.html("<a class='download' href='"+me.User.dirname+me.User.atlasFilename+"'><img src='/img/download.svg' style='vertical-align:middle'/></a>"+atlas.name);
+
                     break;
                 }
                 case 'jpg': {
@@ -209,7 +210,7 @@ var AtlasMakerWS = {
                         $("#loadingIndicator").hide();
                     }
                     img.src=imageUrl;
-                    
+
                     break;
                 }
             }

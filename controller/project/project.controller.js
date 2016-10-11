@@ -181,8 +181,9 @@ var project = function(req, res) {
 	var login=	(req.isAuthenticated())?
 				("<a href='/user/"+req.user.username+"'>"+req.user.username+"</a> (<a href='/logout'>Log Out</a>)")
 				:("<a href='/auth/github'>Log in with GitHub</a>");
-	req.db.get('project').findOne({shortname:req.params.projectName,backup:{$exists:0}},"-_id")
+	req.db.get('project').find({shortname:req.params.projectName,backup:{$exists:0}},"-_id")
 	.then(function(json) {
+	    json=json[0];
 		if (json) {
 			async.each(
 				json.files.list,
