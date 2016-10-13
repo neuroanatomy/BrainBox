@@ -251,7 +251,7 @@ var AtlasMakerWidget = {
 		var l=me.traceLog(configureAtlasMaker);if(l)console.log(l);
 		
 		$("#loadingIndicator").show();
-				
+
 		// Load segmentation labels
 		return $.getJSON(info.mri.atlas[index].labels, function from_configureAtlasMaker(d) {
 		    me.configureOntology(d);
@@ -260,7 +260,6 @@ var AtlasMakerWidget = {
 			var def=$.Deferred();
 			me.configureMRI(info,index)
 			.then(function from_configureAtlasMaker() {
-				
 				if(me.fullscreen==true) { // WARNING: HACK... would be better to implement enter/exit fullscreen
 					me.fullscreen=false;
 					me.toggleFullscreen();
@@ -276,7 +275,6 @@ var AtlasMakerWidget = {
 				me.sendUserDataMessage("sendAtlas");
 
 			    me.changePenColor( 0 );
-
 				def.resolve();
 			});
 			return def.promise();

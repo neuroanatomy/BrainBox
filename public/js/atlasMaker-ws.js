@@ -182,6 +182,7 @@ var AtlasMakerWS = {
                     // setup download link
                     var	link=me.container.find("span#download_atlas");
                     link.html("<a class='download' href='"+me.User.dirname+me.User.atlasFilename+"'><img src='/img/download.svg' style='vertical-align:middle'/></a>"+atlas.name);
+
                     break;
                 }
                 case 'jpg': {
@@ -209,7 +210,7 @@ var AtlasMakerWS = {
                         $("#loadingIndicator").hide();
                     }
                     img.src=imageUrl;
-                    
+
                     break;
                 }
             }
@@ -292,6 +293,8 @@ var AtlasMakerWS = {
 	},
 	/**
      * @function sendPaintMessage
+     * @desc On user painting, this function broadcasts the painting event to all other connected users
+     * @param {Object} msg Painting event object: {"c":c,"x":x,"y":y}, where "c" is the command (l,e,lf,ef) and x and y are the coordinates in slice space
      */
 	sendPaintMessage: function sendPaintMessage(msg) {
 		var me=AtlasMakerWidget;
@@ -307,6 +310,7 @@ var AtlasMakerWS = {
 	},
 	/**
      * @function receivePaintMessage
+     * @desc Receive paint events from other connected users
      */
 	receivePaintMessage: function receivePaintMessage(data) {
 		var me=AtlasMakerWidget;
