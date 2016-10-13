@@ -89,10 +89,16 @@
         border:none;
     }
 
+    .display {
+        padding-top:5px;
+        text-decoration:none;
+        border:none;
+    }
+
 	/**************************************** access cascade icons ********************************/ 
 	/* view */
 
-	.view, .edit, .add, .remove {
+	.view, .edit, .add, .remove, .check {
 		cursor: pointer;
 		padding:5px 5px 5px 0px;
 	}
@@ -172,7 +178,30 @@
 		display: inline-block;
 	}
 
-	/*************************** resizable layout **************************/
+	/************************************ checkbox for display ******************************/ 
+	[data-check="0"] .check:before {
+		background-image: url("/img/check.svg");
+		background-size: 15px 15px;
+		width: 15px;
+		height: 15px;
+		content:"";
+		display:inline-block;
+		text-decoration: none;
+	}
+
+	[data-check="1"] .check:before {
+		background-image: url("/img/checked.svg");
+		background-size: 15px 15px;
+		width: 15px;
+		height: 15px;
+		content: "";
+		display:inline-block;
+		text-decoration: none;
+	}
+
+
+
+	/******************************** resizable layout ******************************/
 	#littleDescription:focus:before {
         content: none !important;
 	}
@@ -496,6 +525,7 @@
 var projectInfo='{{{projectInfo}}}';
 projectInfo=JSON.parse(projectInfo);
 
+// for the access widget
 $("body").on('click',".view",function(e){onAccessClicked(e,0)});
 $("body").on('click',".edit",function(e){onAccessClicked(e,1)});
 $("body").on('click',".add",function(e){onAccessClicked(e,2)});
@@ -508,6 +538,9 @@ $("#cancelChanges").click(function cancelChanges(){location.pathname='{{{project
 /**4
  * @todo add onblur event to the dropdown menu so it empties the content
  */
+
+// for the display option
+$("body").on('click',".check",function(e){onCheckClicked(e)});
 
 // Add avatar based on project's name
 jdenticon.update($("svg")[0],md5("{{projectShortname}}"));
@@ -542,6 +575,22 @@ function onAccessClicked( e, l ) {
 	// access level 
 	var al = $( e.target ).closest( "div" ).attr( "data-level" );
     $( e.target ).closest( "div" ).attr( "data-level",l+( al != (l+1) ) );
+}
+
+/** 
+ * @function onCheckClicked
+ * @desc Handles click on 'display' option for annotations in the project settings; 0=do not display; 1=display
+ * @param {Event} e Event triggered by click
+ */
+function onCheckClicked( e, l ) {
+	// checkbox toggle for 'display' option
+	var checkbox = ($( e.target ).closest("div").attr( "data-check" ) === "1");
+	if( checkbox == false ) {
+    	$( e.target ).closest("div").attr( "data-check", "1" );
+    }
+    else {
+    	$( e.target ).closest("div").attr( "data-check", "0" );
+    }
 }
 
 function selectRow(e) {
@@ -633,7 +682,11 @@ var annParam = {
         "    <td contentEditable=true class='noEmpty'></td>",
         "    <td><select>",BrainBox.annotationType.map(function(o){return "<option>"+o+"</option>"}),"</select></td>",	// append annotation types
         "    <td contentEditable=true class='noEmpty'></td>",
-        "    <td><input type='checkbox'/></td>",
+        "	 <td>",
+        "		<div class='display' data-check=0>",
+        "    	 	<span class='check' title='display'></span>",
+        "    	</div>",
+        "	 </td>",
         "</tr>"],function(o){return o}).join(""),
     objTemplate: [
         {	typeOfBinding:2,
@@ -649,8 +702,8 @@ var annParam = {
         },
         {	typeOfBinding:2,
             path:"annotations.list.#.display",
-            format: function(e,d){$(e).find("input").prop("checked",d=='true')},
-            parse: function(e){return $(e).find("input").prop("checked")?'true':'false'}
+            format: function(e,d){$(e).find(".display").attr("data-check",(d=='true')?"1":"0")},
+            parse: function(e){return ($(e).find(".display").attr("data-check")=="1"?'true':'false')}
         }
     ]
 };
