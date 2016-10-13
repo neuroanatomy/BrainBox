@@ -162,6 +162,10 @@
 #tools-side {
 	width:100%;
 	position-relative;
+	pointer-events:none;
+}
+#tools-minimized, #tools-maximized {
+    pointer-events: all;
 }
 .fullscreen-mode #atlasMaker {
 	position:absolute;

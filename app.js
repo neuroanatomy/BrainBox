@@ -143,102 +143,6 @@ app.use('/mri', require('./controller/mri/'));
 app.use('/project', require('./controller/project/'));
 app.use('/user', require('./controller/user/'));
 
-// app.get('/mri', function (req, res) {
-// });
-
-/*
-app.get('/user/:id', function (req, res) {
-
-    var login = (req.isAuthenticated()) ?
-                ("<a href='/user/" + req.user.username + "'>" + req.user.username + "</a> (<a href='/logout'>Log Out</a>)")
-                : ("<a href='/auth/github'>Log in with GitHub</a>");
-    var username = req.params.id;
-    db.get('user').findOne({nickname: username}, "-_id")
-        .then(function (json) {
-            // gather user information on mri, atlas and projects
-            var mri, atlas, projects;
-            db.get('mri').find({owner: username, backup: {$exists: false}})
-                .then(function (arr) {
-                    console.log(arr);
-                    mri = arr;
-                    return db.get('mri').find({"mri.atlas": {$elemMatch: {owner: username}}, backup: {$exists: false}});
-                })
-                .then(function (arr) {
-                    console.log(arr);
-                    atlas = arr;
-                    return db.get('project').find({owner: username, backup: {$exists: false}});
-                })
-                .then(function (arr) {
-                    projects = arr;
-                    console.log(arr);
-                    var context = {
-                        title: req.params.id,
-                        userInfo: JSON.stringify(json),
-                        login: login,
-                        atlasFiles: []
-                    };
-                    context.MRIFiles = mri.map(function (o) {return {
-                        url: o.source,
-                        name: o.name,
-                        included: dateFormat(o.included, "d mmm yyyy, HH:MM"),
-                        volDimensions: o.dim.join(" x ")
-                    }; });
-                    atlas.map(function (o) {
-                        var i;
-                        console.log("WARNING: this is not working");
-                        for (i in o.mri.atlas) {
-                            context.atlasFiles.push({
-                                url: o.source,
-                                parentName: o.name,
-                                name: o.mri.atlas[i].name,
-                                project: o.mri.atlas[i].project,
-                                projectURL: '/project/braincatalogue',
-                                modified: dateFormat(o.mri.atlas[i].modified, "d mmm yyyy, HH:MM")
-                            });
-                        }
-                    });
-                    context.projects = projects.map(function (o) {return {
-                        project: o.name,
-                        projectURL: o.brainboxURL,
-                        numFiles: o.files.length,
-                        numCollaborators: o.collaborators.length,
-                        owner: o.owner,
-                        modified: dateFormat(o.modified, "d mmm yyyy, HH:MM")
-                    }; });
-
-                    context.username = json.name;
-                    context.nickname = json.nickname;
-                    context.joined = dateFormat(json.joined, "dddd d mmm yyyy, HH:MM");
-                    context.numMRI = context.MRIFiles.length;
-                    context.numAtlas = context.atlasFiles.length;
-                    context.numProjects = context.projects.length;
-                    context.avatar = json.avatarURL;
-
-                    res.render('user', context).end();
-                });
-        });
-});
-
-
-// API routes
-app.get('/api/user/:name', function (req, res) {
-    db.get('user').findOne({nickname: req.params.name, backup: {$exists: false}}, "-_id")
-        .then(function (json) {
-            if (json) {
-                if (req.query.var) {
-                    var i, arr = req.query.var.split("/");
-                    for (i in arr) {
-                        json = json[arr[i]];
-                    }
-                }
-                res.send(json);
-            } else {
-                res.send();
-            }
-        });
-});
-*/
-
 app.get('/api/getLabelsets', function (req, res) {
     var i, arr = fs.readdirSync(dirname + "/public/labels/"), info = [];
     for (i in arr) {
@@ -269,6 +173,23 @@ app.post('/api/log', function (req, res) {
 // init web socket server
 atlasMakerServer.initSocketConnection();
 atlasMakerServer.dataDirectory = dirname + "/public";
+
+// check that the 'anyone' user exists. Insert it otherwise
+db.get('user').findOne({nickname:'anyone'})
+    .then(function(obj) {
+        if(!obj) {
+            var anyone = {
+                name:'Any BrainBox User',
+                nickname:'anyone',
+                brainboxURL:'http://brainbox.dev/user/anyone',
+                joined:(new Date()).toJSON()
+            };
+            console.log("WARNING: 'anyone' user absent: inserting it");
+            db.get('user').insert(anyone);
+        } else {
+            console.log("'anyone' user correctly configured.");
+        }
+    });
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

@@ -8,8 +8,6 @@ var router = express.Router();
 router.get('', controller.validator, controller.mri);
 router.post('/json', controller.validator_post, controller.api_mri_post);
 router.get('/json', controller.validator, controller.api_mri_get);
-//TODO get->post
-//todo new get route without download
 
 router.get('/upload', upload_controller.token);
 

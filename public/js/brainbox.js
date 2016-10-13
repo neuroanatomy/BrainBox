@@ -10,7 +10,7 @@
 
 var BrainBox={
 	version: 1,
-	debug: 0,
+	debug: 1,
 	info:{},
 	labelSets:null,
 	access:["Read/Write","Read"],
@@ -32,7 +32,7 @@ var BrainBox={
      * @function hash
      */
 	hash: function hash(str) {
-		console.log(BrainBox.traceLog(hash));
+		var l=BrainBox.traceLog(hash);if(l)console.log(l);
 		
 		var v0=0,v1,abc="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 		for(i=0;i<str.length;i++) {
@@ -66,7 +66,7 @@ var BrainBox={
      * @function initBrainBox
      */
 	initBrainBox: function initBrainBox() {
-		console.log(BrainBox.traceLog(initBrainBox));
+		var l=BrainBox.traceLog(initBrainBox);if(l)console.log(l);
 		
 		var def=$.Deferred();
 
@@ -104,67 +104,67 @@ var BrainBox={
      * @function configureBrainBox
      */
 	configureBrainBox: function configureBrainBox(param) {
-		console.log(BrainBox.traceLog(configureBrainBox));
+		var l=BrainBox.traceLog(configureBrainBox);if(l)console.log(l);
 		
 		var def=$.Deferred();
 		var date=new Date();
 		var data=param.info;
+		var index=param.annotationItemIndex||0;
 	
 		// Copy MRI from source
 		$("#msgLog").html("<p>Downloading from source to server...");
 
-					// Configure MRI into atlasMaker
-					//data=JSON.parse(data);
-					if(data.success===false) {
-						date=new Date();
-						$("#msgLog").append("<p>ERROR: "+data.message+".");
-						console.log("<p>ERROR: "+data.message+".");
-						return def.promise().reject();
-					}
-					BrainBox.info=data;
-			
-					var arr=param.url.split("/");
-					var name=arr[arr.length-1];
-					date=new Date();
-					$("#msgLog").append("<p>Downloading from server...");
-	
-					param.dim=BrainBox.info.dim; // this allows to keep dim and pixdim through annotation changes
-					param.pixdim=BrainBox.info.pixdim;
+        // Configure MRI into atlasMaker
+        if(data.success===false) {
+            date=new Date();
+            $("#msgLog").append("<p>ERROR: "+data.message+".");
+            console.log("<p>ERROR: "+data.message+".");
+            return def.promise().reject();
+        }
+        BrainBox.info=data;
 
-					// re-instance stored configuration
-					var stored=localStorage.AtlasMaker;
-					if(stored) {
-						var stored=JSON.parse(stored);
-						if(stored.version && stored.version==BrainBox.version) {
-							for(var i=0;i<stored.history.length;i++) {
-								if(stored.history[i].url==param.url) {
-									AtlasMakerWidget.User.view=stored.history[i].view;
-									AtlasMakerWidget.User.slice=stored.history[i].slice;
-									break;
-								}
-							}	
-						}
-					}
-			
-					// enact configuration in param, eventually overriding the stored one
-					if(param.view) {
-						AtlasMakerWidget.User.view=param.view;
-						AtlasMakerWidget.User.slice=null; // this will set the slider to the middle slice in case no slice were specified
-					}
-					if(param.slice)
-						AtlasMakerWidget.User.slice=param.slice;
+        var arr=param.url.split("/");
+        var name=arr[arr.length-1];
+        date=new Date();
+        $("#msgLog").append("<p>Downloading from server...");
 
-					if(param.fullscreen)
-						AtlasMakerWidget.fullscreen=param.fullscreen;
-					else
-						AtlasMakerWidget.fullscreen=false;
-				
-					AtlasMakerWidget.editMode=1;
+        param.dim=BrainBox.info.dim; // this allows to keep dim and pixdim through annotation changes
+        param.pixdim=BrainBox.info.pixdim;
 
-					AtlasMakerWidget.configureAtlasMaker(BrainBox.info,0)
-					.then(function() {
-						def.resolve();
-					});
+        // re-instance stored configuration
+        var stored=localStorage.AtlasMaker;
+        if(stored) {
+            var stored=JSON.parse(stored);
+            if(stored.version && stored.version==BrainBox.version) {
+                for(var i=0;i<stored.history.length;i++) {
+                    if(stored.history[i].url==param.url) {
+                        AtlasMakerWidget.User.view=stored.history[i].view;
+                        AtlasMakerWidget.User.slice=stored.history[i].slice;
+                        break;
+                    }
+                }	
+            }
+        }
+
+        // enact configuration in param, eventually overriding the stored one
+        if(param.view) {
+            AtlasMakerWidget.User.view=param.view;
+            AtlasMakerWidget.User.slice=null; // this will set the slider to the middle slice in case no slice were specified
+        }
+        if(param.slice)
+            AtlasMakerWidget.User.slice=param.slice;
+
+        if(param.fullscreen)
+            AtlasMakerWidget.fullscreen=param.fullscreen;
+        else
+            AtlasMakerWidget.fullscreen=false;
+    
+        AtlasMakerWidget.editMode=1;
+
+        AtlasMakerWidget.configureAtlasMaker(BrainBox.info,index)
+        .then(function() {
+            def.resolve();
+        });
 		
 		return def.promise();
 	},
@@ -172,7 +172,7 @@ var BrainBox={
      * @function unload
      */
 	unload: function unload() {
-		console.log(BrainBox.traceLog(unload));
+		var l=BrainBox.traceLog(unload);if(l)console.log(l);
 		var foundStored=false;
 		var stored=localStorage.AtlasMaker;
 		if(stored) {
@@ -204,7 +204,7 @@ var BrainBox={
      * @function selectAnnotationTableRow
      */
 	selectAnnotationTableRow: function selectAnnotationTableRow() {
-		console.log(BrainBox.traceLog(selectAnnotationTableRow));
+		var l=BrainBox.traceLog(selectAnnotationTableRow);if(l)console.log(l);
 	
 		var table=$(this).closest("tbody");
 		var currentIndex=$(table).find("tr.selected").index();
@@ -222,7 +222,7 @@ var BrainBox={
      * @function appendAnnotationTableRow
      */
 	appendAnnotationTableRow: function appendAnnotationTableRow(irow,param) {
-		console.log(BrainBox.traceLog(appendAnnotationTableRow));
+		var l=BrainBox.traceLog(appendAnnotationTableRow);if(l)console.log(l);
 		
 		$(param.table).append(param.trTemplate);
 
@@ -251,10 +251,42 @@ var BrainBox={
 		}
 	},
 	/**
+     * @function appendAnnotationTableRow
+     */
+	appendAnnotationTableRow2: function appendAnnotationTableRow(irow,iarr,param) {
+		var l=BrainBox.traceLog(appendAnnotationTableRow);if(l)console.log(l);
+		
+		$(param.table).append(param.trTemplate);
+
+		for(var icol=0;icol<param.objTemplate.length;icol++) {
+			switch(param.objTemplate[icol].typeOfBinding) {
+				case 1:
+					bind1(
+						param.info_proxy,
+						param.info,
+						param.objTemplate[icol].path.replace("#",iarr),
+						$(param.table).find("tr:eq("+(irow+1)+") td:eq("+icol+")"),
+						param.objTemplate[icol].format
+					);
+					break;
+				case 2:
+					bind2(
+						param.info_proxy,
+						param.info,
+						param.objTemplate[icol].path.replace("#",iarr),
+						$(param.table).find("tr:eq("+(irow+1)+") td:eq("+icol+")"),
+						param.objTemplate[icol].format,
+						param.objTemplate[icol].parse
+					);
+					  break;
+			}
+		}
+	},
+	/**
      * @function addAnnotation
      */
 	addAnnotation: function addAnnotation(param) {
-		console.log(BrainBox.traceLog(addAnnotation));
+		var l=BrainBox.traceLog(addAnnotation);if(l)console.log(l);
 		
 		var date=new Date();
 		// add data to annotations array
@@ -281,7 +313,7 @@ var BrainBox={
      * @function removeAnnotation
      */
 	removeAnnotation: function removeAnnotation(param) {
-		console.log(BrainBox.traceLog(removeAnnotation));
+		var l=BrainBox.traceLog(removeAnnotation);if(l)console.log(l);
 
 		// remove row from table
 		var index=$(param.table).find("tbody .selected").index();
@@ -304,18 +336,17 @@ var BrainBox={
      * @function saveAnnotations
      */
 	saveAnnotations: function saveAnnotations(param) {
-		console.log(BrainBox.traceLog(saveAnnotations));
+		var l=BrainBox.traceLog(saveAnnotations);if(l)console.log(l);
 
 		JSON.stringify(param.info_proxy); // update BrainBox.info from info_proxy
 		AtlasMakerWidget.sendSaveMetadataMessage(BrainBox.info);
 		hash_old=BrainBox.hash(JSON.stringify(BrainBox.info));
-		$(param.saveWarning).hide();
 	},
 	/**
      * @function loadLabelsets
      */
 	loadLabelsets: function loadLabelsets() {
-		console.log(BrainBox.traceLog(loadLabelsets));
+		var l=BrainBox.traceLog(loadLabelsets);if(l)console.log(l);
 		
 		return $.getJSON("/api/getLabelsets",function(data) {
 			BrainBox.labelSets=data;

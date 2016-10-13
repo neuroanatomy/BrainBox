@@ -2,7 +2,7 @@
 <head>
 	<meta charset="utf-8">
     <meta name=viewport content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" href="/css/common.css" type="text/css" media="screen, projection" />
+	<link rel="stylesheet" href="/stylesheets/default.css" type="text/css" media="screen, projection" />
 	<link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
     <title>BrainBox</title>
 	<style>
@@ -27,14 +27,14 @@
 		<div style="display:inline-block">
 			<img style='width:200px' src='/img/brainbox-logo-small.svg'/>
 			<div id="dot" style="display:block;width:8px;height:8px;border-radius:8px;background-color:#fff"></div>
-			<p style="color:#fff">Computing mesh from segmentation</p>
+			<p style="color:#fff; font-family:Helvetica; font-size:16px; -webkit-font-smoothing:antialiased">Computing mesh from segmentation</p>
 		</div>
 	</div>
 	<div style="flex:1 1">
 	</div>
 </div>
 
-<script src="/lib/jquery-1.11.0.min.js"></script>
+<script src="/lib/jquery-3.1.1.min.js"></script>
 <script>
 var params=deparam();
 var renderer,scene,camera,trackball;

@@ -306,6 +306,12 @@
 			left: 0px;
 		}
 	}
+	
+	/* button disabled */
+	.disabled {
+	    opacity: 0.4;
+	    pointer-events: none;
+	}
 
 	</style>
 
@@ -327,6 +333,7 @@
 			<img id="addProject" class="button" title="add project" style='width:13px' src='/img/plus.svg'/>
 			<img id="search" class="button" title="search" style='width:13px' src='/img/search.svg'/>
 			<img id="doc" class="button" title="documentation" style='width:13px' src='/img/doc.svg'/>
+			<a href="https://github.com/OpenNeuroLab/BrainBox/issues" target="_blank"><img id="bug" class="button" title="report a bug" style='width:14px' src='/img/bug.svg'/></a>
 			<div id="MyLogin">
 				<span>{{{login}}}</span>
 			</div>
@@ -417,6 +424,7 @@
 							<div style="display:block;margin:0 auto;width:200px">
                                 <h2 id="saveChanges" class="pushButton">Save Changes</h2>
                                 <h2 id="cancelChanges" class="pushButton">Cancel</h2>
+                                <p id="saveFeedback"></p>
                             </div>
 				</div>
 		</div>
@@ -476,6 +484,15 @@
 <script src="/js/brainbox.js"></script>
 
 <script>
+
+//TODO  set the public row so it can not be removed
+//TODO  check and be sure the user picks a username from the dropdown menu
+//TODO  select the full name when the nickname has been selected and reverse
+//TODO  implement the placeholder for the select tags in the anotation table
+//TODO  find a way for the user to give a set of values for the annotations and make it obvious that it works this way
+//TODO  make the saveChanges function do its stuff
+//TODO  have a feedback for the user telling him that his modifications have indeed been implemented
+
 var projectInfo='{{{projectInfo}}}';
 projectInfo=JSON.parse(projectInfo);
 
@@ -483,12 +500,12 @@ $("body").on('click',".view",function(e){onAccessClicked(e,0)});
 $("body").on('click',".edit",function(e){onAccessClicked(e,1)});
 $("body").on('click',".add",function(e){onAccessClicked(e,2)});
 $("body").on('click',".remove",function(e){onAccessClicked(e,3)});
-$("#access tbody").on('click','tr',selectRow);
+$("#access tbody").on('click','tr',function(e){selectRow(e);disableDeleteOnAnyoneUser(e);});
 $("#annotations tbody").on('click','tr',selectRow);
 $("#MRIFiles tbody").on('click','tr',selectRow);
 $("#saveChanges").click(saveChanges);
 $("#cancelChanges").click(function cancelChanges(){location.pathname='{{{projectURL}}}'});
-/**
+/**4
  * @todo add onblur event to the dropdown menu so it empties the content
  */
 
@@ -505,8 +522,7 @@ if (window.WebSocket) {
 }
 ws.onmessage = function(message) {
     message = JSON.parse(message.data);
-    if (message.type === "userNameQuery")
-    {
+    if (message.type === "userNameQuery") {
         var arr;
         if(label=="nickname")
             arr=$.map(message.metadata,function(o){return {label:o.nickname,nickname:o.nickname,name:o.name}});
@@ -528,12 +544,26 @@ function onAccessClicked( e, l ) {
     $( e.target ).closest( "div" ).attr( "data-level",l+( al != (l+1) ) );
 }
 
-function selectRow(e)
-{
-	$(e.currentTarget).closest("tbody").find("tr").each(function(index, tag){
+function selectRow(e) {
+	$(e.currentTarget).closest("tbody").find("tr").each(function(index, tag) {
 		$(tag).removeClass("selected");
 	})
 	$(e.currentTarget).addClass("selected");
+}
+function disableDeleteOnAnyoneUser(e) {
+    var curTable = $(e.currentTarget).closest("table").attr("id");
+
+    // check if the selected row belongs to the #access table
+    if(curTable === "access") {
+        // check if the selected user is 'anyone'
+        var rowIndex = $(e.currentTarget).closest("tbody").find("tr.selected").index();
+        if(projectInfo.collaborators.list[rowIndex].userID === 'anyone') {
+            // if yes, disable the 'remove' button
+            $("#removeCollaborator").addClass('disabled');
+        } else {
+            $("#removeCollaborator").removeClass('disabled');
+        }
+    }
 }
 
 var projectInfoProxy={};
@@ -578,17 +608,17 @@ var accParam = {
             path:"collaborators.list.#.name" // full name
         },
         {	typeOfBinding:2,
-            path:"collaborators.access.whitelist.#.access",
+            path:"collaborators.list.#.access.collaborators",
             format: function(e,d){$(e).find(".access").attr('data-level',["none","view","edit","add","remove"].indexOf(d))},
             parse: function(e){var level=$(e).find(".access").attr("data-level");return ["none","view","edit","add","remove"][level]}
         },
         {	typeOfBinding:2,
-            path:"annotations.access.whitelist.#.access",
+            path:"collaborators.list.#.access.annotations",
             format: function(e,d){$(e).find(".access").attr('data-level',["none","view","edit","add","remove"].indexOf(d))},
             parse: function(e){var level=$(e).find(".access").attr("data-level");return ["none","view","edit","add","remove"][level]}
         },
         {	typeOfBinding:2,
-            path:"files.access.whitelist.#.access",
+            path:"collaborators.list.#.access.files",
             format: function(e,d){$(e).find(".access").attr('data-level',["none","view","edit","add","remove"].indexOf(d))},
             parse: function(e){var level=$(e).find(".access").attr("data-level");return ["none","view","edit","add","remove"][level]}
         }
@@ -666,6 +696,8 @@ $(document).on('click', "#addCollaborator", function(){addCollaborator(accParam)
 $(document).on('click', "#removeCollaborator", function(){removeCollaborator(accParam)});
 $("table#access tr").removeClass("selected");
 $("table#access tbody tr").eq(0).addClass("selected");
+$("table#access tbody tr:eq(0) td").removeAttr("contentEditable");
+$("#removeCollaborator").addClass("disabled");
 
 $(document).on('click', "#addAnnotation", function(){addAnnotation(annParam)});
 $(document).on('click', "#removeAnnotation", function(){removeAnnotation(annParam)});
@@ -719,10 +751,19 @@ $("#importFilesDialogCancel").click(function() {
 });
 
 function addCollaborator(param) {
-    projectInfo.collaborators.list.push({});
+    projectInfo.collaborators.list.push({
+        userID: "",
+        access: {
+            collaborators:"view",
+            annotations:"view",
+            files:"view"
+        }
+    });
+    /* DELETE
     projectInfo.collaborators.access.whitelist.push({userID:"",access:"view"});
     projectInfo.annotations.access.whitelist.push({userID:"",access:"view"});
     projectInfo.files.access.whitelist.push({userID:"",access:"view"});
+    */
 
     // add and bind new table row
     var i=projectInfo.collaborators.list.length-1;
@@ -750,12 +791,15 @@ function addCollaborator(param) {
             projectInfoProxy["collaborators.list."+irow+".username"]=ui.item.nickname;
 
             // add user to access objects
+            projectInfo.collaborators.list[irow].userID=ui.item.nickname;
             /**
              * @todo Combine all access settings for a subject in a single place
              */
+            /* DELETE
             projectInfo.collaborators.access.whitelist[irow].userID=ui.item.nickname;
             projectInfo.annotations.access.whitelist[irow].userID=ui.item.nickname;
             projectInfo.files.access.whitelist[irow].userID=ui.item.nickname;
+            */
         }
     });
     $("#projDescription #numCollaborators").text(projectInfo.collaborators.list.length);
@@ -774,9 +818,12 @@ function removeCollaborator(param) {
     
     // remove row from BrainBox.info.mri.atlas
     projectInfo.collaborators.list.splice(index,1);
+    /* DELETE
+    projectInfo.collaborators.list.splice(index,1);
     projectInfo.collaborators.access.whitelist.splice(index,1);
     projectInfo.annotations.access.whitelist.splice(index,1);
     projectInfo.files.access.whitelist.splice(index,1);
+    */
 
     $("#projDescription #numCollaborators").text(projectInfo.collaborators.list.length);
 }
@@ -863,8 +910,33 @@ function importFiles() {
 function saveChanges() {
     // update projectInfo from projectInfoProxy
     JSON.stringify(projectInfoProxy);
-    
-    console.log(projectInfo);
+
+    $.post(
+        "/project/json/"+projectInfo.shortname,
+        {
+            data:JSON.stringify(projectInfo)
+        }
+    ).done(function(a, b) {
+    	console.log("a",a);
+    	console.log("b",b);
+    	if(a.success) {
+            $("#saveFeedback").text("Successfully saved");
+    	    setTimeout(function() {
+    	        $("#saveFeedback").text("");
+    	    },2000);
+    	} else {
+            $("#saveFeedback").text("Unable to save. Please try again later");
+    	    setTimeout(function() {
+    	        $("#saveFeedback").text("");
+    	    },3000);
+    	}
+    }).catch(function(err) {
+        $("#saveFeedback").text("Unable to save. Please try again later");
+        setTimeout(function() {
+            $("#saveFeedback").text("");
+        },3000);
+        console.log(err);
+    });
 }
 
 $("#addProject").click(function(){location="/project/new"});
