@@ -19,6 +19,9 @@
 	.tab.selected {
 		background:#333;
 	}
+	td {
+	    word-break: break-word;
+	}
 	#MRIFiles, #atlasFiles, #projects {
 		color:white;
 		text-align:left;
@@ -35,6 +38,132 @@
 	}
 	#MRIFiles a, #atlasFiles a, #projects a {
 		text-decoration:none;
+	}
+
+	/*************************** resizable layout **************************/
+    #centeringDiv {
+        position:relative;
+        display:block;
+        margin:0 auto;
+    }
+	#userImage {
+        position:relative;
+		display: inline-block;
+		background:#333;
+		width:200px;
+		height:200px;
+		vertical-align: top;
+	}
+	#userDescription {
+		position: relative;
+		display: inline-block;
+        vertical-align: top;
+	}
+	#userDescription p {
+	    margin: 0;
+	}
+	#userTable {		
+		position: relative;
+		display:inline-block;
+		min-height:400px;
+		max-width: 900px;
+		text-decoration:none;
+        vertical-align: top;
+        margin-top: 20px;
+	}
+	
+	/* for larger screen (computer, big iPad, small iPad landscape) */
+	@media all and (min-width: 1023px) {
+		#centeringDiv {
+			width:984px;
+			padding:20px;
+		}
+        #userImage {
+            float: left;
+        }
+		#userDescription {
+			float: left;
+			clear: both;
+			width: 200px;
+		}		
+		#userTable {
+			max-width: 900px;
+			width: calc(100% - 220px);
+			margin-left: 20px;
+			margin-top: 0px;
+		}
+	}
+
+	/* for smaller screen (small iPad portrait) */ 
+	@media not all and (min-width: 1023px) {
+		#centeringDiv {
+			width:700px;
+			padding:20px;
+		}
+		#userDescription {
+			position: relative;
+			top: 0px;
+			left: 0px;
+			padding-left:20px;
+			padding-right: 20px;
+			width:calc(100% - 300px);
+			text-align: justify;
+		}
+		#userTable {
+			position: relative;
+			max-width: 700px;
+			width:calc(100% - 40px);
+			top: 0px;
+			left: 0px;
+		}
+	}
+
+	/* for even smaller screen (phone) */ 
+	@media not all and (min-width: 739px) {
+		#centeringDiv {
+			text-align: center;
+			width:600px;
+			padding:10px;
+		}
+		#userDescription {
+			position: relative;
+			top: 0px;
+			left: 0px;
+			padding-left:10px;
+			width:calc(100% - 20px);
+			text-align: justify;
+		}
+		#userTable {
+			position: relative;
+			max-width: 600px;
+			width:calc(100% - 40px);
+			top: 0px;
+			left: 0px;
+		}
+	}
+
+	/* for even still smaller screen (phone) */ 
+	@media not all and (min-width: 639px) {
+		#centeringDiv {
+			text-align: center;
+			width:480px;
+			padding:10px;
+		}
+		#userDescription {
+			position: relative;
+			top: 0px;
+			left: 0px;
+			padding-left:10px;
+			width:calc(100% - 20px);
+			text-align: justify;
+		}
+		#userTable {
+			position: relative;
+			max-width: 420px;
+			width:calc(100% - 40px);
+			top: 0px;
+			left: 0px;
+		}
 	}
 	</style>
 
@@ -66,109 +195,115 @@
 	<!-- Content (variable height) -->
 	<div id="content" style="flex:1 0 auto;justify-content:center">
 	
-		<table style="margin:auto;width:1000px">
-			<tr>
-				<td style="width:250px;margin:1rem;vertical-align:top">
-					<div style="background:#333;width:200px;height:200px;margin-left:25px">
-						<img src='{{{avatar}}}' style="width:100%"/>
-					</div>
-					<h1>{{username}}</h1>
-					<h2>{{nickname}}</h2>
-					<p>{{joined}}</p>
-					<p>{{numMRI}} MRI Files
-					<p>{{numAtlas}} Atlas Files
-					<p>{{numProjects}} Projects
-				</td>			
-				<td style="margin:1rem;vertical-align:top">
-					<div style="width:100%">
-						
-						<!-- Tab heads -->
-						<div>
-							<a class="tab selected">MRI Files</a>
-							<a class="tab">Atlas Files</a>
-							<a class="tab">Projects</a>
-						</div>
-						
-						<div style="width:100%;min-height:400px;background:#333;padding:20px">
-						
-							<!-- Tab Content 1: MRI Files -->
-							<table id="MRIFiles" class="tabContent" style="padding:10px">
-								<thead>
-									<tr>
-										<th>Name</th>
-										<th>Volume Dimensions</th>
-										<th>Included</th>
-									<tr>
-								</thead>
-								<tbody>
-									{{#MRIFiles}}
-										<tr>
-											<td>
-												<a href="/mri?url={{url}}">
-													{{#name}}{{name}}{{/name}}{{^name}}{{url}}{{/name}}
-												</a>
-											</td>
-											<td>{{volDimensions}}</td>
-											<td>{{included}}</td>
-										</tr>
-									{{/MRIFiles}}
-								</tbody>
-							</table>
-							
-							<!-- Tab Content 2: Atlas Files -->
-							<table id="atlasFiles" class="tabContent" style="padding:10px;display:none">
-								<thead>
-									<tr>
-										<th>Parent MRI</th>
-										<th>Name</th>
-										<th>Project</th>
-										<th>Last modified</th>
-									<tr>
-								</thead>
-								<tbody>
-									{{#atlasFiles}}
-										<tr>
-											<td>
-												<a href="/mri?url={{url}}">
-													{{#parentName}}{{parentName}}{{/parentName}}{{^parentName}}{{url}}{{/parentName}}
-												</a></td>
-											<td class='noEmpty'>{{name}}</td>
-											<td><a href="{{projectURL}}" class='noEmpty'>{{project}}</a></td>
-											<td>{{modified}}</td>
-										</tr>
-									{{/atlasFiles}}
-								</tbody>
-							</table>
-							
-							<!-- Tab Content 3: Projects -->
-							<table id="projects" class="tabContent" style="padding:10px;display:none">
-								<thead>
-									<tr>
-										<th>Name</th>
-										<th>Files</th>
-										<th>Collaborators</th>
-										<th>Owner</th>
-										<th>Last modified</th>
-									<tr>
-								</thead>
-								<tbody>
-									{{#projects}}
-										<tr>
-											<td><a href="{{projectURL}}">{{#projectName}}{{projectName}}{{/projectName}}{{^projectName}}{{project}}{{/projectName}}</a></td>
-											<td>{{numFiles}}</td>
-											<td>{{numCollaborators}}</td>
-											<td><a href="/user/{{owner}}">{{owner}}</a></td>
-											<td>{{modified}}</td>
-										</tr>
-									{{/projects}}
-								</tbody>
-							</table>
-							
-						</div>
-					</div>
-				</td>
-			</tr>
-		</table>
+		<!-- to center -->
+		<!--<table style="margin:auto;width:1000px">-->
+		<div id="centeringDiv">
+		    
+		    <div id="userImage">
+                <img src='{{{avatar}}}' style="width:100%"/>
+		    </div>
+		    <!-- end of #userImage -->
+		    
+		    <div id="userDescription">
+                <h1>{{username}}</h1>
+                <h2>{{nickname}}</h2>
+                <p>{{joined}}</p>
+                <p>{{numMRI}} MRI Files
+                <p>{{numAtlas}} Atlas Files
+                <p>{{numProjects}} Projects
+		    </div>
+		    <!-- end of #userDescription -->
+		    
+		    <div id="userTable">
+                <!-- Tab heads -->
+                <div>
+                    <a class="tab selected">MRI Files</a>
+                    <a class="tab">Atlas Files</a>
+                    <a class="tab">Projects</a>
+                </div>
+        
+                <!-- Tab contents -->
+                <div style="width:calc(100% - 40px);min-height:400px;background:#333;padding:20px">
+        
+                    <!-- Tab Content 1: MRI Files -->
+                    <table id="MRIFiles" class="tabContent" style="padding:10px">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Volume Dimensions</th>
+                                <th>Included</th>
+                            <tr>
+                        </thead>
+                        <tbody>
+                            {{#MRIFiles}}
+                                <tr>
+                                    <td>
+                                        <a href="/mri?url={{url}}">
+                                            {{#name}}{{name}}{{/name}}{{^name}}{{url}}{{/name}}
+                                        </a>
+                                    </td>
+                                    <td>{{volDimensions}}</td>
+                                    <td>{{included}}</td>
+                                </tr>
+                            {{/MRIFiles}}
+                        </tbody>
+                    </table>
+            
+                    <!-- Tab Content 2: Atlas Files -->
+                    <table id="atlasFiles" class="tabContent" style="padding:10px;display:none">
+                        <thead>
+                            <tr>
+                                <th>Parent MRI</th>
+                                <th>Name</th>
+                                <th>Project</th>
+                                <th>Last modified</th>
+                            <tr>
+                        </thead>
+                        <tbody>
+                            {{#atlasFiles}}
+                                <tr>
+                                    <td>
+                                        <a href="/mri?url={{url}}">
+                                            {{#parentName}}{{parentName}}{{/parentName}}{{^parentName}}{{url}}{{/parentName}}
+                                        </a></td>
+                                    <td class='noEmpty'>{{name}}</td>
+                                    <td><a href="{{projectURL}}" class='noEmpty'>{{project}}</a></td>
+                                    <td>{{modified}}</td>
+                                </tr>
+                            {{/atlasFiles}}
+                        </tbody>
+                    </table>
+            
+                    <!-- Tab Content 3: Projects -->
+                    <table id="projects" class="tabContent" style="padding:10px;display:none">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Files</th>
+                                <th>Collaborators</th>
+                                <th>Owner</th>
+                                <th>Last modified</th>
+                            <tr>
+                        </thead>
+                        <tbody>
+                            {{#projects}}
+                                <tr>
+                                    <td><a href="{{projectURL}}">{{project}}</a></td>
+                                    <td>{{numFiles}}</td>
+                                    <td>{{numCollaborators}}</td>
+                                    <td><a href="/user/{{owner}}">{{owner}}</a></td>
+                                    <td>{{modified}}</td>
+                                </tr>
+                            {{/projects}}
+                        </tbody>
+                    </table>
+            
+                </div>
+		    </div>
+		    <!-- end of #userTable -->
+
+		</div>
+
 	</div>
 	<!-- End Content -->
 	
