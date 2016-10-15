@@ -338,17 +338,19 @@ tr {
 	vertical-align:top;
 }
 tr.selected {
-	background-color: #333;
+	background-color: #444;
 }
 table {
 	border-collapse:collapse;
 }
-th {
+#annotations th {
 	font-weight: bold;
 	border-bottom:thin solid white;
 }
 table#annotations {
 	width:100%;
+	border-bottom:thin solid white;
+	table-layout: fixed;
 }
 #annotations td {
 	font-weight: normal;
