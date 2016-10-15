@@ -154,7 +154,7 @@
 								<tbody>
 									{{#projects}}
 										<tr>
-											<td><a href="{{projectURL}}">{{project}}</a></td>
+											<td><a href="{{projectURL}}">{{#projectName}}{{projectName}}{{/projectName}}{{^projectName}}{{project}}{{/projectName}}</a></td>
 											<td>{{numFiles}}</td>
 											<td>{{numCollaborators}}</td>
 											<td><a href="/user/{{owner}}">{{owner}}</a></td>
