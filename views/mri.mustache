@@ -9,6 +9,42 @@
 	<link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
 </head>
 
+<style>
+    td {
+        word-break: break-word;
+    }
+    #content {
+        margin: 0 auto;
+    }
+    #annotationsPane {
+        background-color:#333;
+        padding: 20px;
+        margin-right: 20px;
+        margin-bottom: 20px;
+        max-width:600px;
+        flex:0 1 auto;
+        vertical-align:top
+    }
+    #annotationsPane table th {
+        text-align: right;
+        padding-right: 20px;
+    }
+    #annotationsPane table td {
+        text-align: left;
+    }
+    #annotationsPane th, #annotationsPane td {
+        overflow: hidden;
+    }
+	/******************************** resizable layout ******************************/
+	/* for larger screen (computer, big iPad, small iPad landscape) */
+	@media all and (max-width: 1023px) {
+	    #content {
+	        flex-direction: column;
+            max-width:700px;
+	    }
+	}
+</style>
+
 <body>
 
 <div style="width:100%;height:100%;display:flex;flex-direction:column">
@@ -27,7 +63,7 @@
 	</div>
 	
 	<!-- Content (variable height) -->
-	<div id="content" style="flex:1 0 auto">
+	<div style="flex:1 0 auto">
 			
 		<!-- Splash -->
 		<div id='splash'>
@@ -49,44 +85,57 @@
 			</div>
 
 			<!-- Data Flex -->
-			<div style="display:flex;justify-content:center">
+			<div id="content" style="display:flex;justify-content:center">
+					<!-- Annotations -->
+					<div id="annotationsPane">
+						<table>
+						    <tr>
+							<th><b>Name</b></th>
+							<td><span id="name" contentEditable=true class='noEmpty'></span></td>
+							</tr>
+							
+							<tr>
+							<th><b>Data source</b></th>
+							<td><span id="source" style="word-break:break-all"></span></td>
+							</tr>
+							
+							<tr>
+							<th><b>Inclusion date</b></th>
+							<td><span id="included"></span></td>
+							</tr>
+						</table>
+
+                        <br/>
+                        
+                        <b>Annotations</b><br/>
+                        <table id="annotations">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Project</th>
+                                <th>Label Set</th>
+                                <th>Owner</th>
+                                <th>Created</th>
+                                <th>Modified</th>
+                                <th>Access</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                        </table>
+                        <div style="text-align:right">
+                            <img id="addAnnotation"    class="button" src='/img/plus-circle.svg'/>
+                            <img id="removeAnnotation" class="button" src='/img/minus-circle.svg'/>
+                            <img id="saveAnnotations"   class="button" src='/img/floppy.svg'/>
+                        </div>
+					</div>
+                    <!-- en of #annotationsPane -->
+
 					<!-- AtlasMaker -->
-					<div style="flex:0 0 auto">
+					<div style="flex:0 0 auto;text-align:center">
 						<!-- AtlasMaker -->
-						<div id="stereotaxic" style="width:512px">
+						<div id="stereotaxic" style="min-width:500px;display:inline-block">
 						</div>
 						<!-- End AtlasMaker -->
-					</div>
-				
-					<!-- Annotations -->
-					<div id="annotationsPane" style="flex:0 1 600px;vertical-align:top;padding-left:0.5rem">
-						<ul>
-							<li><b>Name</b><br/> <span id="name" contentEditable=true class='noEmpty'></span></li>
-							<li><b>Data source</b></br> <span id="source" style="word-break:break-all"></span></li>
-							<li><b>Inclusion date</b><br/> <span id="included"></span></li>
-							<li>
-								<b>Annotations</b><br/>
-								<table id="annotations">
-								<thead>
-									<tr>
-										<th>Name</th>
-										<th>Project</th>
-										<th>Label Set</th>
-										<th>Owner</th>
-										<th>Created</th>
-										<th>Modified</th>
-										<th>Access</th>
-									</tr>
-								</thead>
-								<tbody></tbody>
-								</table>
-								<div style="text-align:right">
-									<img id="addAnnotation"    class="button" src='/img/plus-circle.svg'/>
-									<img id="removeAnnotation" class="button" src='/img/minus-circle.svg'/>
-									<img id="saveAnnotations"   class="button" src='/img/floppy.svg'/>
-								</div>
-							</li>
-						</ul>
 					</div>
 			</div>
 			<!-- End Data Flex -->
