@@ -35,7 +35,7 @@ var user = function(req, res) {
                     req.db.get('project').find({
                         $or: [
                             {owner: requestedUser},
-                            {"collaborators.list": requestedUser}
+                            {"collaborators.list": {$elemMatch:{userID:requestedUser}}}
                         ],
                         backup: {$exists: false}
                     })
