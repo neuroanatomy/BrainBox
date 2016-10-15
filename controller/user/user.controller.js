@@ -35,7 +35,7 @@ var user = function(req, res) {
                     req.db.get('project').find({
                         $or: [
                             {owner: requestedUser},
-                            {"collaborators.list": requestedUser}
+                            {"collaborators.list": {$elemMatch:{userID:requestedUser}}}
                         ],
                         backup: {$exists: false}
                     })
@@ -80,20 +80,20 @@ var user = function(req, res) {
                     });
                     atlas.map(function (o) {
                         var i;
-                        console.log("WARNING: THE APPROPRIATE projectURL HAS TO BE SETUP");
                         for (i in o.mri.atlas) {
                             context.atlasFiles.push({
                                 url: o.source,
                                 parentName: o.name,
                                 name: o.mri.atlas[i].name,
                                 project: o.mri.atlas[i].project,
-                                projectURL: '/project/braincatalogue',
+                                projectURL: '/project/'+o.mri.atlas[i].project,
                                 modified: dateFormat(o.mri.atlas[i].modified, "d mmm yyyy, HH:MM")
                             });
                         }
                     });
                     context.projects = projects.map(function (o) {return {
-                        project: o.name,
+                        project: o.shortname,
+                        projectName: o.name,
                         projectURL: o.brainboxURL,
                         numFiles: o.files.list.length,
                         numCollaborators: o.collaborators.length,
