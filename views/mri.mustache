@@ -21,7 +21,7 @@
         padding: 20px;
         margin-right: 20px;
         margin-bottom: 20px;
-        max-width:600px;
+        max-width:900px;
         flex:0 1 auto;
         vertical-align:top
     }
@@ -29,12 +29,15 @@
         text-align: right;
         padding-right: 20px;
     }
-    #annotationsPane table td {
+    table#annotations th {
         text-align: left;
     }
     #annotationsPane th, #annotationsPane td {
         overflow: hidden;
     }
+	.tabContent {
+	    margin-left:10px;
+	}
 	/******************************** resizable layout ******************************/
 	/* for larger screen (computer, big iPad, small iPad landscape) */
 	@media all and (max-width: 1023px) {
@@ -160,12 +163,13 @@
                             <br/>
                         
                             <b>Annotations</b><br/>
-                            <table id="annotations">
+                            <table id="annotations" class="tabContent">
                             <thead>
                                 <tr>
                                     <th>Name</th>
-                                    <th>Project</th>
+                                    <th>Type</th>
                                     <th>Value</th>
+                                    <th>Project</th>
                                     <th>Owner</th>
                                     <th>Created</th>
                                     <th>Modified</th>
@@ -304,13 +308,14 @@ if( $.isEmptyObject(mriInfo)) {
             saveWarning: $("#saveAnnotations"),
             trTemplate: $.map([
                 "<tr>",
-                " <td contentEditable=true class='noEmpty'></td>",
-                " <td contentEditable=true class='noEmpty'></td>",
-                " <td><select>",$.map(BrainBox.labelSets,function(o){return "<option>"+o.name+"</option>"}),"</select></td>",	// append label sets
-                " <td><a></a></td>",
-                " <td></td>",
-                " <td></td>",
-                " <td>",
+                " <td contentEditable=true class='noEmpty'></td>", // name
+                " <td contentEditable=true class='noEmpty'></td>", // type
+                " <td><select>",$.map(BrainBox.labelSets,function(o){return "<option>"+o.name+"</option>"}),"</select></td>",	// value
+                " <td contentEditable=true class='noEmpty'></td>", // project
+                " <td><a></a></td>", // owner
+                " <td></td>", // created
+                " <td></td>", // modified
+                " <td>", // access
                 "  <div class='access'>",
                 "   <span class='view' title='view annotations'></span>",
                 "   <span class='edit' title='edit annotations'></span>",
@@ -321,15 +326,18 @@ if( $.isEmptyObject(mriInfo)) {
                 "</tr>"],function(o){return o}).join(""),
             objTemplate: [
                 {	typeOfBinding:2,
-                    path:"mri.atlas.#.name"
+                    path:"mri.atlas.#.name" // name
                 },
                 {	typeOfBinding:2,
-                    path:"mri.atlas.#.project"
+                    path:"mri.atlas.#.type" // type
                 },
                 {	typeOfBinding:2,
-                    path:"mri.atlas.#.labels",
+                    path:"mri.atlas.#.labels", //value
                     format: function(e,d){$(e).find("select").prop('selectedIndex',$.map(BrainBox.labelSets,function(o){return o.source}).indexOf(d))},
                     parse: function(e){var name=$(e).find("select").val(),i=$.map(BrainBox.labelSets,function(o){return o.name}).indexOf(name);return BrainBox.labelSets[i].source}
+                },
+                {	typeOfBinding:2, // project
+                    path:"mri.atlas.#.project"
                 },
                 {	typeOfBinding:1,
                     path:"mri.atlas.#.owner",
