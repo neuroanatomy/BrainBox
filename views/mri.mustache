@@ -21,7 +21,7 @@
         padding: 20px;
         margin-right: 20px;
         margin-bottom: 20px;
-        max-width:600px;
+        max-width:900px;
         flex:0 1 auto;
         vertical-align:top
     }
@@ -29,12 +29,15 @@
         text-align: right;
         padding-right: 20px;
     }
-    #annotationsPane table td {
+    table#annotations th {
         text-align: left;
     }
     #annotationsPane th, #annotationsPane td {
         overflow: hidden;
     }
+	.tabContent {
+	    margin-left:10px;
+	}
 	/******************************** resizable layout ******************************/
 	/* for larger screen (computer, big iPad, small iPad landscape) */
 	@media all and (max-width: 1023px) {
@@ -42,6 +45,57 @@
 	        flex-direction: column;
             max-width:700px;
 	    }
+        #annotationsPane {
+            max-width:none;
+            margin-right: 0px;
+        }
+	}
+
+	/************************************* access widget ********************************/
+	.access {
+        padding-top:5px;
+        text-decoration:none;
+        border:none;
+    }
+	.view, .edit, .add, .remove {
+		cursor: pointer;
+		padding:1px 1px 1px 0px;
+	}
+	.view:before, .edit:before, .add:before, .remove:before {
+		background-size: 15px 15px;
+		width: 15px;
+		height: 15px;
+		content:"";
+		display:inline-block;
+		text-decoration: none;
+	}
+	/* view */
+	[data-level="0"] .view:before {
+		background-image: url("/img/eye.svg");
+	}
+	[data-level="1"] .view:before, [data-level="2"] .view:before, [data-level="3"] .view:before, [data-level="4"] .view:before {
+		background-image: url("/img/eye-circle.svg");
+	}
+	/* edit */
+	[data-level="0"] .edit:before, [data-level="1"] .edit:before {
+		background-image: url("/img/pencil.svg");
+	}
+	[data-level="2"] .edit:before, [data-level="3"] .edit:before, [data-level="4"] .edit:before {
+		background-image: url("/img/pencil-circle.svg");
+	}
+	/* add */
+	[data-level="0"] .add:before, [data-level="1"] .add:before, [data-level="2"] .add:before {
+		background-image: url("/img/plus-small.svg");
+	}
+	[data-level="3"] .add:before, [data-level="4"] .add:before {
+		background-image: url("/img/plus-small-circle.svg");
+	}
+	/* remove */
+	[data-level="0"] .remove:before, [data-level="1"] .remove:before, [data-level="2"] .remove:before, [data-level="3"] .remove:before {
+		background-image: url("/img/minus-small.svg");
+	}
+	[data-level="4"] .remove:before {
+		background-image: url("/img/minus-small-circle.svg");
 	}
 </style>
 
@@ -87,51 +141,54 @@
 			<!-- Data Flex -->
 			<div id="content" style="display:flex;justify-content:center">
 					<!-- Annotations -->
-					<div id="annotationsPane">
-						<table>
-						    <tr>
-							<th><b>Name</b></th>
-							<td><span id="name" contentEditable=true class='noEmpty'></span></td>
-							</tr>
-							
-							<tr>
-							<th><b>Data source</b></th>
-							<td><span id="source" style="word-break:break-all"></span></td>
-							</tr>
-							
-							<tr>
-							<th><b>Inclusion date</b></th>
-							<td><span id="included"></span></td>
-							</tr>
-						</table>
+					<div style="flex:0 1 auto">
+                        <div id="annotationsPane">
+                            <table>
+                                <tr>
+                                <th><b>Name</b></th>
+                                <td><span id="name" contentEditable=true class='noEmpty'></span></td>
+                                </tr>
+                            
+                                <tr>
+                                <th><b>Data&nbsp;source</b></th>
+                                <td><span id="source" style="word-break:break-all"></span></td>
+                                </tr>
+                            
+                                <tr>
+                                <th><b>Inclusion&nbsp;date</b></th>
+                                <td><span id="included"></span></td>
+                                </tr>
+                            </table>
 
-                        <br/>
+                            <br/>
                         
-                        <b>Annotations</b><br/>
-                        <table id="annotations">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Project</th>
-                                <th>Label Set</th>
-                                <th>Owner</th>
-                                <th>Created</th>
-                                <th>Modified</th>
-                                <th>Access</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                        </table>
-                        <div style="text-align:right">
-                            <img id="addAnnotation"    class="button" src='/img/plus-circle.svg'/>
-                            <img id="removeAnnotation" class="button" src='/img/minus-circle.svg'/>
-                            <img id="saveAnnotations"   class="button" src='/img/floppy.svg'/>
+                            <b>Annotations</b><br/>
+                            <table id="annotations" class="tabContent">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Value</th>
+                                    <th>Project</th>
+                                    <th>Owner</th>
+                                    <th>Created</th>
+                                    <th>Modified</th>
+                                    <th style="width:70px">Access</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                            </table>
+                            <div style="text-align:right">
+                                <img id="addAnnotation"    class="button" src='/img/plus-circle.svg'/>
+                                <img id="removeAnnotation" class="button" src='/img/minus-circle.svg'/>
+                                <img id="saveAnnotations"   class="button" src='/img/floppy.svg'/>
+                            </div>
                         </div>
-					</div>
-                    <!-- en of #annotationsPane -->
+                    </div>
+                    <!-- end of Annotations -->
 
 					<!-- AtlasMaker -->
-					<div style="flex:0 0 auto;text-align:center">
+					<div style="flex:0 0 auto">
 						<!-- AtlasMaker -->
 						<div id="stereotaxic" style="width:100%;min-width:500px;display:inline-block">
 						</div>
@@ -185,19 +242,6 @@
 	</div>
 </div>
 
-<!-- 
-A few brains:
-http://braincatalogue.org/data/Baboon/MRI.nii.gz
-https://zenodo.org/record/44855/files/MRI-n4.nii.gz
-http://files.figshare.com/2284784/MRI_n4.nii.gz
-http://braincatalogue.org/data/Human/MRI-n4.nii.gz
-https://dl.dropboxusercontent.com/u/363467/mprage003.nii.gz
--->
-
-<!--
-<div id="myStereo"></div>
--->
-
 <script src="/lib/jquery-3.1.1.min.js"></script>
 <script src="/lib/pako/pako.min.js"></script>
 <script src="/lib/purify.min.js"></script>
@@ -205,11 +249,6 @@ https://dl.dropboxusercontent.com/u/363467/mprage003.nii.gz
 <script src="/js/brainbox.js"></script>
 
 <script>
-
-/*
-// Init login widget
-MyLoginWidget.init($("#MyLogin"));
-*/
 
 var params={{{params}}};
 var mriInfo={{{mriInfo}}};
@@ -251,25 +290,36 @@ if( $.isEmptyObject(mriInfo)) {
             saveWarning: $("#saveAnnotations"),
             trTemplate: $.map([
                 "<tr>",
-                " <td contentEditable=true class='noEmpty'></td>",
-                " <td contentEditable=true class='noEmpty'></td>",
-                " <td><select>",$.map(BrainBox.labelSets,function(o){return "<option>"+o.name+"</option>"}),"</select></td>",	// append label sets
-                " <td><a></a></td>",
-                " <td></td>",
-                " <td></td>",
-                " <td><select>",BrainBox.access.map(function(o){return "<option>"+o+"</option>"}),"</select></td>",	// append label sets
-                "</tr>"],function(o){return o}).join(),
+                " <td contentEditable=true class='noEmpty'></td>", // name
+                " <td contentEditable=true class='noEmpty'></td>", // type
+                " <td><select>",$.map(BrainBox.labelSets,function(o){return "<option>"+o.name+"</option>"}),"</select></td>",	// value
+                " <td contentEditable=true class='noEmpty'></td>", // project
+                " <td><a></a></td>", // owner
+                " <td></td>", // created
+                " <td></td>", // modified
+                " <td>", // access
+                "  <div class='access'>",
+                "   <span class='view' title='view annotations'></span>",
+                "   <span class='edit' title='edit annotations'></span>",
+                "   <span class='add' title='add annotations'></span>",
+                "   <span class='remove' title='remove annotations'></span>",
+                "  </div>",
+                " </td>",
+                "</tr>"],function(o){return o}).join(""),
             objTemplate: [
                 {	typeOfBinding:2,
-                    path:"mri.atlas.#.name"
+                    path:"mri.atlas.#.name" // name
                 },
                 {	typeOfBinding:2,
-                    path:"mri.atlas.#.project"
+                    path:"mri.atlas.#.type" // type
                 },
                 {	typeOfBinding:2,
-                    path:"mri.atlas.#.labels",
+                    path:"mri.atlas.#.labels", //value
                     format: function(e,d){$(e).find("select").prop('selectedIndex',$.map(BrainBox.labelSets,function(o){return o.source}).indexOf(d))},
                     parse: function(e){var name=$(e).find("select").val(),i=$.map(BrainBox.labelSets,function(o){return o.name}).indexOf(name);return BrainBox.labelSets[i].source}
+                },
+                {	typeOfBinding:2, // project
+                    path:"mri.atlas.#.project"
                 },
                 {	typeOfBinding:1,
                     path:"mri.atlas.#.owner",
@@ -283,10 +333,10 @@ if( $.isEmptyObject(mriInfo)) {
                     path:"mri.atlas.#.modified",
                     format: date_format
                 },
-                {	typeOfBinding:2,
+                {	typeOfBinding:1,
                     path:"mri.atlas.#.access",
-                    format: function(e,d){$(e).find("select").prop('selectedIndex',BrainBox.access.indexOf(d))},
-                    parse: function(e){return $(e).find("select").val()}
+                    format: function(e,d){$(e).find(".access").attr('data-level',["none","view","edit","add","remove"].indexOf("view"/*d*/))},
+                    parse: function(e){var level=$(e).find(".access").attr("data-level");return ["none","view","edit","add","remove"][level]}
                 }
             ]
         };
