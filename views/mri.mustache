@@ -47,6 +47,53 @@
             margin-right: 0px;
         }
 	}
+
+	/************************************* access widget ********************************/
+	.access {
+        padding-top:5px;
+        text-decoration:none;
+        border:none;
+    }
+	.view, .edit, .add, .remove {
+		cursor: pointer;
+		padding:1px 1px 1px 0px;
+	}
+	.view:before, .edit:before, .add:before, .remove:before {
+		background-size: 15px 15px;
+		width: 15px;
+		height: 15px;
+		content:"";
+		display:inline-block;
+		text-decoration: none;
+	}
+	/* view */
+	[data-level="0"] .view:before {
+		background-image: url("/img/eye.svg");
+	}
+	[data-level="1"] .view:before, [data-level="2"] .view:before, [data-level="3"] .view:before, [data-level="4"] .view:before {
+		background-image: url("/img/eye-circle.svg");
+	}
+	/* edit */
+	[data-level="0"] .edit:before, [data-level="1"] .edit:before {
+		background-image: url("/img/pencil.svg");
+	}
+	[data-level="2"] .edit:before, [data-level="3"] .edit:before, [data-level="4"] .edit:before {
+		background-image: url("/img/pencil-circle.svg");
+	}
+	/* add */
+	[data-level="0"] .add:before, [data-level="1"] .add:before, [data-level="2"] .add:before {
+		background-image: url("/img/plus-small.svg");
+	}
+	[data-level="3"] .add:before, [data-level="4"] .add:before {
+		background-image: url("/img/plus-small-circle.svg");
+	}
+	/* remove */
+	[data-level="0"] .remove:before, [data-level="1"] .remove:before, [data-level="2"] .remove:before, [data-level="3"] .remove:before {
+		background-image: url("/img/minus-small.svg");
+	}
+	[data-level="4"] .remove:before {
+		background-image: url("/img/minus-small-circle.svg");
+	}
 </style>
 
 <body>
@@ -118,11 +165,11 @@
                                 <tr>
                                     <th>Name</th>
                                     <th>Project</th>
-                                    <th>Label Set</th>
+                                    <th>Value</th>
                                     <th>Owner</th>
                                     <th>Created</th>
                                     <th>Modified</th>
-                                    <th>Access</th>
+                                    <th style="width:70px">Access</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
@@ -191,19 +238,6 @@
 	</div>
 </div>
 
-<!-- 
-A few brains:
-http://braincatalogue.org/data/Baboon/MRI.nii.gz
-https://zenodo.org/record/44855/files/MRI-n4.nii.gz
-http://files.figshare.com/2284784/MRI_n4.nii.gz
-http://braincatalogue.org/data/Human/MRI-n4.nii.gz
-https://dl.dropboxusercontent.com/u/363467/mprage003.nii.gz
--->
-
-<!--
-<div id="myStereo"></div>
--->
-
 <script src="/lib/jquery-3.1.1.min.js"></script>
 <script src="/lib/pako/pako.min.js"></script>
 <script src="/lib/purify.min.js"></script>
@@ -212,16 +246,29 @@ https://dl.dropboxusercontent.com/u/363467/mprage003.nii.gz
 
 <script>
 
-/*
-// Init login widget
-MyLoginWidget.init($("#MyLogin"));
-*/
-
 var params={{{params}}};
 var mriInfo={{{mriInfo}}};
 var version=1;
 var info_proxy={};
 var hash_old;
+
+// for the access widget
+$("body").on('click',".view",function(e){onAccessClicked(e,0)});
+$("body").on('click',".edit",function(e){onAccessClicked(e,1)});
+$("body").on('click',".add",function(e){onAccessClicked(e,2)});
+$("body").on('click',".remove",function(e){onAccessClicked(e,3)});
+
+/**
+ * @function onAccessClicked
+ * @desc Handles click on one of the 5 access levels: 0=none, 1=view, 2=edit, 3=add, 4=remove
+ * @param {Event} e Event triggered by the click
+ * @param {int} l Base level of the access icon clicked
+ */
+function onAccessClicked( e, l ) {
+	// access level 
+	var al = $( e.target ).closest( "div" ).attr( "data-level" );
+    $( e.target ).closest( "div" ).attr( "data-level",l+( al != (l+1) ) );
+}
 
 if( $.isEmptyObject(mriInfo)) {
     $("#stereotaxic").prepend("<h2>ERROR: Cannot read the data.</h2><p>The file is maybe corrupt?</p>");
@@ -263,8 +310,15 @@ if( $.isEmptyObject(mriInfo)) {
                 " <td><a></a></td>",
                 " <td></td>",
                 " <td></td>",
-                " <td><select>",BrainBox.access.map(function(o){return "<option>"+o+"</option>"}),"</select></td>",	// append label sets
-                "</tr>"],function(o){return o}).join(),
+                " <td>",
+                "  <div class='access'>",
+                "   <span class='view' title='view annotations'></span>",
+                "   <span class='edit' title='edit annotations'></span>",
+                "   <span class='add' title='add annotations'></span>",
+                "   <span class='remove' title='remove annotations'></span>",
+                "  </div>",
+                " </td>",
+                "</tr>"],function(o){return o}).join(""),
             objTemplate: [
                 {	typeOfBinding:2,
                     path:"mri.atlas.#.name"
@@ -291,8 +345,8 @@ if( $.isEmptyObject(mriInfo)) {
                 },
                 {	typeOfBinding:2,
                     path:"mri.atlas.#.access",
-                    format: function(e,d){$(e).find("select").prop('selectedIndex',BrainBox.access.indexOf(d))},
-                    parse: function(e){return $(e).find("select").val()}
+                    format: function(e,d){$(e).find(".access").attr('data-level',["none","view","edit","add","remove"].indexOf("view"/*d*/))},
+                    parse: function(e){var level=$(e).find(".access").attr("data-level");return ["none","view","edit","add","remove"][level]}
                 }
             ]
         };
