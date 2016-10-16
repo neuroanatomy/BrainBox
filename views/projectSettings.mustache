@@ -86,123 +86,67 @@
 	  	padding: none;
 	}
 
-	.access {
-        padding-top:5px;
-        text-decoration:none;
-        border:none;
-    }
-
     .display {
         padding-top:5px;
         text-decoration:none;
         border:none;
     }
 
-	/**************************************** access cascade icons ********************************/ 
-	/* view */
-
+	/************************************* access widget ********************************/
+	.access {
+        padding-top:5px;
+        text-decoration:none;
+        border:none;
+    }
 	.view, .edit, .add, .remove, .check {
 		cursor: pointer;
-		padding:5px 5px 5px 0px;
+		padding:1px 1px 1px 0px;
+	}
+	.view:before, .edit:before, .add:before, .remove:before, .check:before {
+		background-size: 15px 15px;
+		width: 15px;
+		height: 15px;
+		content:"";
+		display:inline-block;
+		text-decoration: none;
 	}
 	/* view */
 	[data-level="0"] .view:before {
 		background-image: url("/img/eye.svg");
-		background-size: 15px 15px;
-		width: 15px;
-		height: 15px;
-		content:"";
-		display:inline-block;
-		text-decoration: none;
 	}
-
 	[data-level="1"] .view:before, [data-level="2"] .view:before, [data-level="3"] .view:before, [data-level="4"] .view:before {
 		background-image: url("/img/eye-circle.svg");
-		background-size: 15px 15px;
-		width: 15px;
-		height: 15px;
-		content: "";
-		display:inline-block;
-		text-decoration: none;
 	}
-
 	/* edit */
 	[data-level="0"] .edit:before, [data-level="1"] .edit:before {
 		background-image: url("/img/pencil.svg");
-		background-size: 15px 15px;
-		width: 15px;
-		height: 15px;
-		content:"";
-		display: inline-block;
-		text-decoration: none;
 	}
 	[data-level="2"] .edit:before, [data-level="3"] .edit:before, [data-level="4"] .edit:before {
 		background-image: url("/img/pencil-circle.svg");
-		background-size: 15px 15px;
-		width: 15px;
-		height: 15px;
-		content:"";
-		display: inline-block;
 	}
-
 	/* add */
 	[data-level="0"] .add:before, [data-level="1"] .add:before, [data-level="2"] .add:before {
 		background-image: url("/img/plus-small.svg");
-		background-size: 15px 15px;
-		width: 15px;
-		height: 15px;
-		content:"";
-		display: inline-block;
 	}
 	[data-level="3"] .add:before, [data-level="4"] .add:before {
 		background-image: url("/img/plus-small-circle.svg");
-		background-size: 15px 15px;
-		width: 15px;
-		height: 15px;
-		content:"";
-		display: inline-block;
 	}
-
 	/* remove */
 	[data-level="0"] .remove:before, [data-level="1"] .remove:before, [data-level="2"] .remove:before, [data-level="3"] .remove:before {
 		background-image: url("/img/minus-small.svg");
-		background-size: 15px 15px;
-		width: 15px;
-		height: 15px;
-		content:"";
-		display: inline-block;
 	}
 	[data-level="4"] .remove:before {
 		background-image: url("/img/minus-small-circle.svg");
-		background-size: 15px 15px;
-		width: 15px;
-		height: 15px;
-		content:"";
-		display: inline-block;
 	}
 
 	/************************************ checkbox for display ******************************/ 
 	[data-check="0"] .check:before {
 		background-image: url("/img/check.svg");
-		background-size: 15px 15px;
-		width: 15px;
-		height: 15px;
-		content:"";
-		display:inline-block;
-		text-decoration: none;
 	}
 
 	[data-check="1"] .check:before {
 		background-image: url("/img/checked.svg");
-		background-size: 15px 15px;
-		width: 15px;
-		height: 15px;
-		content: "";
-		display:inline-block;
-		text-decoration: none;
 	}
-
-
 
 	/******************************** resizable layout ******************************/
 	#littleDescription:focus:before {
@@ -517,13 +461,9 @@
 
 <script>
 
-//TODO  set the public row so it can not be removed
 //TODO  check and be sure the user picks a username from the dropdown menu
-//TODO  select the full name when the nickname has been selected and reverse
 //TODO  implement the placeholder for the select tags in the anotation table
 //TODO  find a way for the user to give a set of values for the annotations and make it obvious that it works this way
-//TODO  make the saveChanges function do its stuff
-//TODO  have a feedback for the user telling him that his modifications have indeed been implemented
 
 var projectInfo='{{{projectInfo}}}';
 projectInfo=JSON.parse(projectInfo);
@@ -630,17 +570,17 @@ var accParam = {
         "    <td>",
         "        <div class='access' data-level=2>",
         "            <span class='view' title='view collaborators'></span>",
-        "            <span class='edit' title='edit list of collaborators'></span>",
+        "            <span class='edit' title='edit collaborators'></span>",
         "            <span class='add' title='add collaborators'></span>",
         "            <span class='remove' title='remove collaborators'></span>",
         "        </div>",
         "    </td>",
         "    <td>",
         "        <div class='access' data-level=2>",
-        "            <span class='view' title='view atlas files'></span>",
-        "            <span class='edit' title='edit atlas files'></span>",
-        "            <span class='add' title='add atlas files'></span>",
-        "            <span class='remove' title='remove atlas files'></span>",
+        "            <span class='view' title='view annotations'></span>",
+        "            <span class='edit' title='edit annotations'></span>",
+        "            <span class='add' title='add annotations'></span>",
+        "            <span class='remove' title='remove annotations'></span>",
         "        </div>",
         "    </td>",
         "    <td>",
@@ -815,11 +755,6 @@ function addCollaborator(param) {
             files:"view"
         }
     });
-    /* DELETE
-    projectInfo.collaborators.access.whitelist.push({userID:"",access:"view"});
-    projectInfo.annotations.access.whitelist.push({userID:"",access:"view"});
-    projectInfo.files.access.whitelist.push({userID:"",access:"view"});
-    */
 
     // add and bind new table row
     var i=projectInfo.collaborators.list.length-1;
@@ -848,14 +783,6 @@ function addCollaborator(param) {
 
             // add user to access objects
             projectInfo.collaborators.list[irow].userID=ui.item.nickname;
-            /**
-             * @todo Combine all access settings for a subject in a single place
-             */
-            /* DELETE
-            projectInfo.collaborators.access.whitelist[irow].userID=ui.item.nickname;
-            projectInfo.annotations.access.whitelist[irow].userID=ui.item.nickname;
-            projectInfo.files.access.whitelist[irow].userID=ui.item.nickname;
-            */
         }
     });
     $("#projDescription #numCollaborators").text(projectInfo.collaborators.list.length);
@@ -874,12 +801,6 @@ function removeCollaborator(param) {
     
     // remove row from BrainBox.info.mri.atlas
     projectInfo.collaborators.list.splice(index,1);
-    /* DELETE
-    projectInfo.collaborators.list.splice(index,1);
-    projectInfo.collaborators.access.whitelist.splice(index,1);
-    projectInfo.annotations.access.whitelist.splice(index,1);
-    projectInfo.files.access.whitelist.splice(index,1);
-    */
 
     $("#projDescription #numCollaborators").text(projectInfo.collaborators.list.length);
 }
