@@ -188,7 +188,7 @@
                     <!-- end of Annotations -->
 
 					<!-- AtlasMaker -->
-					<div style="flex:0 0 auto;text-align:center">
+					<div style="flex:0 0 auto">
 						<!-- AtlasMaker -->
 						<div id="stereotaxic" style="width:100%;min-width:500px;display:inline-block">
 						</div>
@@ -255,24 +255,6 @@ var mriInfo={{{mriInfo}}};
 var version=1;
 var info_proxy={};
 var hash_old;
-
-// for the access widget
-$("body").on('click',".view",function(e){onAccessClicked(e,0)});
-$("body").on('click',".edit",function(e){onAccessClicked(e,1)});
-$("body").on('click',".add",function(e){onAccessClicked(e,2)});
-$("body").on('click',".remove",function(e){onAccessClicked(e,3)});
-
-/**
- * @function onAccessClicked
- * @desc Handles click on one of the 5 access levels: 0=none, 1=view, 2=edit, 3=add, 4=remove
- * @param {Event} e Event triggered by the click
- * @param {int} l Base level of the access icon clicked
- */
-function onAccessClicked( e, l ) {
-	// access level 
-	var al = $( e.target ).closest( "div" ).attr( "data-level" );
-    $( e.target ).closest( "div" ).attr( "data-level",l+( al != (l+1) ) );
-}
 
 if( $.isEmptyObject(mriInfo)) {
     $("#stereotaxic").prepend("<h2>ERROR: Cannot read the data.</h2><p>The file is maybe corrupt?</p>");
@@ -351,7 +333,7 @@ if( $.isEmptyObject(mriInfo)) {
                     path:"mri.atlas.#.modified",
                     format: date_format
                 },
-                {	typeOfBinding:2,
+                {	typeOfBinding:1,
                     path:"mri.atlas.#.access",
                     format: function(e,d){$(e).find(".access").attr('data-level',["none","view","edit","add","remove"].indexOf("view"/*d*/))},
                     parse: function(e){var level=$(e).find(".access").attr("data-level");return ["none","view","edit","add","remove"][level]}
