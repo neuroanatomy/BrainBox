@@ -38,9 +38,12 @@
 	.tabContent {
 	    margin-left:10px;
 	}
+    #stereotaxic {
+        min-width:600px;
+    }
 	/******************************** resizable layout ******************************/
 	/* for larger screen (computer, big iPad, small iPad landscape) */
-	@media all and (max-width: 1023px) {
+	@media all and (max-width: 1300px) {
 	    #content {
 	        flex-direction: column;
             max-width:700px;
@@ -48,6 +51,9 @@
         #annotationsPane {
             max-width:none;
             margin-right: 0px;
+        }
+        #stereotaxic {
+            min-width: 100%;
         }
 	}
 
@@ -190,7 +196,7 @@
 					<!-- AtlasMaker -->
 					<div style="flex:0 0 auto">
 						<!-- AtlasMaker -->
-						<div id="stereotaxic" style="width:100%;min-width:500px;display:inline-block">
+						<div id="stereotaxic" style="width:100%;display:inline-block">
 						</div>
 						<!-- End AtlasMaker -->
 					</div>
