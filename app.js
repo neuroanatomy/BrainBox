@@ -149,7 +149,7 @@ app.get('/api/getLabelsets', function (req, res) {
         var json = JSON.parse(fs.readFileSync(dirname + "/public/labels/" + arr[i]));
         info.push({
             name: json.name,
-            source: "/labels/" + arr[i]
+            source: arr[i]
         });
     }
     res.send(info);

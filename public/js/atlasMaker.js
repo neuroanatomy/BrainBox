@@ -249,11 +249,9 @@ var AtlasMakerWidget = {
 	configureAtlasMaker: function configureAtlasMaker(info,index) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(configureAtlasMaker);if(l)console.log(l);
-		
-		$("#loadingIndicator").show();
 
 		// Load segmentation labels
-		return $.getJSON(info.mri.atlas[index].labels, function from_configureAtlasMaker(d) {
+		return $.getJSON("/labels/"+info.mri.atlas[index].labels, function from_configureAtlasMaker(d) {
 		    me.configureOntology(d);
 		})
 		.then(function from_configureAtlasMaker() {

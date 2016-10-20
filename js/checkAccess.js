@@ -5,7 +5,6 @@ var toMRI = function(mri, projects, user, access) {
 
     for(p in projects) {
         if(projects[p].files.list.indexOf(mri.source)>=0) {
-            console.log(mri.source,user,access,projects[p].files.list.indexOf(mri.source));
             
             // find 'anyone' user
             var i, anyone, found = false;
@@ -38,7 +37,7 @@ var toMRI = function(mri, projects, user, access) {
                 if(collaborators[c].userId === user) {
                     var collaboratorAccessLevel = accessLevels.indexOf(collaborators[c].access.files);
                     if(requestedLevel>collaboratorAccessLevel) {
-                        console.log("Collaborator access refused from project",projects[p].shortname);
+                        console.log("WARNING: Collaborator access refused from project",projects[p].shortname);
                         return false;
                     } else {
                         accessOk = true;
@@ -52,7 +51,7 @@ var toMRI = function(mri, projects, user, access) {
 
             // check if user has public access
             if(requestedLevel>publicLevel) {
-                console.log("Public access refused from project",projects[p].shortname);
+                console.log("WARNING: Public access refused from project",projects[p].shortname);
                 return false;
             }
         }
@@ -65,8 +64,6 @@ var toProject = function(project, user, access) {
 
     // find 'anyone' user
     var i, anyone, found = false;
-    console.log("project",JSON.stringify(project));
-    console.log("list",project.collaborators.list);
     for(i=0;i<project.collaborators.list.length;i++) {
         if(project.collaborators.list[i].userID === 'anyone') {
             anyone=project.collaborators.list[i];
@@ -94,7 +91,7 @@ var toProject = function(project, user, access) {
         if(collaborators[c].userId === user) {
             var collaboratorAccessLevel = accessLevels.indexOf(collaborators[c].access.files);
             if(requestedLevel>collaboratorAccessLevel) {
-                console.log("Collaborator access refused to project",project.shortname);
+                console.log("WARNING: Collaborator access refused to project",project.shortname);
                 return false;
             } else {
                 return true;
@@ -104,7 +101,7 @@ var toProject = function(project, user, access) {
 
     // check if user has public access
     if(requestedLevel>publicLevel) {
-        console.log("Public access refused to project",project.shortname);
+        console.log("WARNING: Public access refused to project",project.shortname);
         return false;
     }
 

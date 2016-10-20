@@ -467,23 +467,6 @@
 
 var projectInfo={{{projectInfo}}};
 
-// for the access widget
-$("body").on('click',".view",function(e){onAccessClicked(e,0)});
-$("body").on('click',".edit",function(e){onAccessClicked(e,1)});
-$("body").on('click',".add",function(e){onAccessClicked(e,2)});
-$("body").on('click',".remove",function(e){onAccessClicked(e,3)});
-$("#access tbody").on('click','tr',function(e){selectRow(e);disableDeleteOnAnyoneUser(e);});
-$("#annotations tbody").on('click','tr',selectRow);
-$("#MRIFiles tbody").on('click','tr',selectRow);
-$("#saveChanges").click(saveChanges);
-$("#cancelChanges").click(function cancelChanges(){location.pathname='{{{projectURL}}}'});
-/**4
- * @todo add onblur event to the dropdown menu so it empties the content
- */
-
-// for the display option
-$("body").on('click',".check",function(e){onCheckClicked(e)});
-
 // Add avatar based on project's name
 jdenticon.update($("svg")[0],md5("{{projectShortname}}"));
 
@@ -507,57 +490,12 @@ ws.onmessage = function(message) {
     }
 }
 
-/**
- * @function onAccessClicked
- * @desc Handles click on one of the 5 access levels: 0=none, 1=view, 2=edit, 3=add, 4=remove
- * @param {Event} e Event triggered by the click
- * @param {int} l Base level of the access icon clicked
- */
-function onAccessClicked( e, l ) {
-	// access level 
-	var al = $( e.target ).closest( "div" ).attr( "data-level" );
-    $( e.target ).closest( "div" ).attr( "data-level",l+( al != (l+1) ) );
-}
-
-/** 
- * @function onCheckClicked
- * @desc Handles click on 'display' option for annotations in the project settings; 0=do not display; 1=display
- * @param {Event} e Event triggered by click
- */
-function onCheckClicked( e, l ) {
-	// checkbox toggle for 'display' option
-	var checkbox = ($( e.target ).closest("div").attr( "data-check" ) === "1");
-	if( checkbox == false ) {
-    	$( e.target ).closest("div").attr( "data-check", "1" );
-    }
-    else {
-    	$( e.target ).closest("div").attr( "data-check", "0" );
-    }
-}
-
-function selectRow(e) {
-	$(e.currentTarget).closest("tbody").find("tr").each(function(index, tag) {
-		$(tag).removeClass("selected");
-	})
-	$(e.currentTarget).addClass("selected");
-}
-function disableDeleteOnAnyoneUser(e) {
-    var curTable = $(e.currentTarget).closest("table").attr("id");
-
-    // check if the selected row belongs to the #access table
-    if(curTable === "access") {
-        // check if the selected user is 'anyone'
-        var rowIndex = $(e.currentTarget).closest("tbody").find("tr.selected").index();
-        if(projectInfo.collaborators.list[rowIndex].userID === 'anyone') {
-            // if yes, disable the 'remove' button
-            $("#removeCollaborator").addClass('disabled');
-        } else {
-            $("#removeCollaborator").removeClass('disabled');
-        }
-    }
-}
-
 var projectInfoProxy={};
+
+bind2(projectInfoProxy,projectInfo,"url","#projDescription #url");
+bind2(projectInfoProxy,projectInfo,"description","#projDescription #description");
+bind2(projectInfoProxy,projectInfo,"name","#projectName");
+
 var accParam = {
     table: $("table#access"),
     info_proxy: projectInfoProxy,
@@ -615,40 +553,64 @@ var accParam = {
         }
     ]
 };
-var annParam = {
-    table: $("table#annotations"),
-    info_proxy: projectInfoProxy,
-    info: projectInfo,
-    trTemplate: $.map([
-        "<tr>",
-        "    <td contentEditable=true class='noEmpty'></td>",
-        "    <td><select>",BrainBox.annotationType.map(function(o){return "<option>"+o+"</option>"}),"</select></td>",	// append annotation types
-        "    <td contentEditable=true class='noEmpty'></td>",
-        "	 <td>",
-        "		<div class='display' data-check=0>",
-        "    	 	<span class='check' title='display'></span>",
-        "    	</div>",
-        "	 </td>",
-        "</tr>"],function(o){return o}).join(""),
-    objTemplate: [
-        {	typeOfBinding:2,
-            path:"annotations.list.#.name"
-        },
-        {	typeOfBinding:2,
-            path:"annotations.list.#.type",
-            format: function(e,d){$(e).find("select").prop('selectedIndex',BrainBox.annotationType.indexOf(d))},
-            parse: function(e){return $(e).find("select").val()}
-        },
-        {	typeOfBinding:2,
-            path:"annotations.list.#.values"
-        },
-        {	typeOfBinding:2,
-            path:"annotations.list.#.display",
-            format: function(e,d){$(e).find(".display").attr("data-check",(d=='true')?"1":"0")},
-            parse: function(e){return ($(e).find(".display").attr("data-check")=="1"?'true':'false')}
-        }
-    ]
-};
+for(var i=0;i<projectInfo.collaborators.list.length;i++) {
+    BrainBox.appendAnnotationTableRow(i,accParam);
+}
+
+var annParam;
+BrainBox.loadLabelsets()
+.then(function () {
+    annParam = {
+        table: $("table#annotations"),
+        info_proxy: projectInfoProxy,
+        info: projectInfo,
+        trTemplate: $.map([
+            "<tr>",
+            " <td contentEditable=true class='noEmpty'></td>",
+            " <td><select>",BrainBox.annotationType.map(function(o){return "<option>"+o+"</option>"}),"</select></td>",	// append annotation types
+            " <td contentEditable=true class='noEmpty'>",
+            "  <select>",BrainBox.labelSets.map(function(o){return "<option>"+o.name+"</option>"}),"</select>",
+            " </td>",	// append label sets
+            " <td>","<div class='display' data-check=0>","<span class='check' title='display'></span>","</div>","</td>",
+            "</tr>"],function(o){return o}).join(""),
+        objTemplate: [
+            {	typeOfBinding:2,
+                path:"annotations.list.#.name"
+            },
+            {	typeOfBinding:2,
+                path:"annotations.list.#.type",
+                format: function(e,d){$(e).find("select").prop('selectedIndex',BrainBox.annotationType.indexOf(d))},
+                parse: function(e){return $(e).find("select").val()}
+            },
+            {	typeOfBinding:2,
+                path:"annotations.list.#.values",
+                format: function (e,d) {
+                    var t=$(e).closest("tr").find("td:eq(1) select").prop('selectedIndex');
+                    if(t==0)
+                        $(e).find("select").prop('selectedIndex',BrainBox.labelSets.map(function(o){return o.source}).indexOf(d));
+                    else
+                        $(e).html(d)
+                },
+                parse: function(e) {
+                    var t=$(e).closest("tr").find("td:eq(1) select").prop('selectedIndex');
+                    if(t==0)
+                        return BrainBox.labelSets[$(e).find("select").prop('selectedIndex')].source;
+                    else
+                        return $(e).text();
+                }
+            },
+            {	typeOfBinding:2,
+                path:"annotations.list.#.display",
+                format: function(e,d){$(e).find(".display").attr("data-check",(d=='true')?"1":"0")},
+                parse: function(e){return ($(e).find(".display").attr("data-check")=="1"?'true':'false')}
+            }
+        ]
+    };
+    for(var i=0;i<projectInfo.annotations.list.length;i++) {
+        BrainBox.appendAnnotationTableRow(i,annParam);
+    }
+});
+
 var filesParam = {
     table: $("table#MRIFiles"),
     info_proxy: projectInfoProxy,
@@ -667,17 +629,6 @@ var filesParam = {
         }
     ]
 };
-
-bind2(projectInfoProxy,projectInfo,"url","#projDescription #url");
-bind2(projectInfoProxy,projectInfo,"description","#projDescription #description");
-bind2(projectInfoProxy,projectInfo,"name","#projectName");
-
-for(var i=0;i<projectInfo.collaborators.list.length;i++) {
-    BrainBox.appendAnnotationTableRow(i,accParam);
-}
-for(var i=0;i<projectInfo.annotations.list.length;i++) {
-    BrainBox.appendAnnotationTableRow(i,annParam);
-}
 for(var i=0;i<projectInfo.files.list.length;i++) {
     BrainBox.appendAnnotationTableRow(i,filesParam);
 }
@@ -686,6 +637,20 @@ $("#projDescription #numFiles").text(projectInfo.files.list.length);
 $("#projDescription #numAnnotations").text(projectInfo.annotations.list.length);
 $("#projDescription #numCollaborators").text(projectInfo.collaborators.list.length);
 
+// for the access widget
+$("body").on('click',".view",function(e){onAccessClicked(e,0)});
+$("body").on('click',".edit",function(e){onAccessClicked(e,1)});
+$("body").on('click',".add",function(e){onAccessClicked(e,2)});
+$("body").on('click',".remove",function(e){onAccessClicked(e,3)});
+$("#access tbody").on('click','tr',function(e){selectRow(e);disableDeleteOnAnyoneUser(e);});
+
+$("#annotations tbody").on('click','tr',selectRow);
+$("#MRIFiles tbody").on('click','tr',selectRow);
+
+$("#saveChanges").click(saveChanges);
+$("#cancelChanges").click(function cancelChanges(){location.pathname='{{{projectURL}}}'});
+
+$("body").on('click',".check",function(e){onCheckClicked(e)}); // for the display option
 
 $(document).on('click', "#addCollaborator", function(){addCollaborator(accParam)});
 $(document).on('click', "#removeCollaborator", function(){removeCollaborator(accParam)});
@@ -705,7 +670,81 @@ $(document).on('click', "#importFiles", function(){importFiles()});
 $("table#MRIFiles tr").removeClass("selected");
 $("table#MRIFiles tbody tr").eq(0).addClass("selected");
 
-$("#importFilesDialogOk").click(function() {
+$("#importFilesDialogOk").click(importFilesDialog);
+$("#importFilesDialogCancel").click(function() {
+    $("#importFilesDialog").hide();
+});
+$("#addProject").click(function(){location="/project/new"});
+
+// listen to type of annotation changes
+$("#annotations tbody").on('change', "td:eq(1) select", function(e) {
+    var irow=$(e.target).closest("tr").index();
+    var t=$(e.target).prop('selectedIndex');
+    if(t==0) {
+        var arr= [
+            "<select>",
+            BrainBox.labelSets.map(function(o){return "<option>"+o.name+"</option>"}),
+            "</select>"
+        ];
+        var str=$.map(arr,function(o){return o}).join("");
+        $("#annotations tbody  tr:eq("+irow+") td:eq(2)").html(str);
+    } else {
+        $("#annotations tbody  tr:eq("+irow+") td:eq(2)").html("");
+    }
+});
+
+
+/**
+ * @function onAccessClicked
+ * @desc Handles click on one of the 5 access levels: 0=none, 1=view, 2=edit, 3=add, 4=remove
+ * @param {Event} e Event triggered by the click
+ * @param {int} l Base level of the access icon clicked
+ */
+function onAccessClicked( e, l ) {
+	// access level 
+	var al = $( e.target ).closest( "div" ).attr( "data-level" );
+    $( e.target ).closest( "div" ).attr( "data-level",l+( al != (l+1) ) );
+}
+
+/** 
+ * @function onCheckClicked
+ * @desc Handles click on 'display' option for annotations in the project settings; 0=do not display; 1=display
+ * @param {Event} e Event triggered by click
+ */
+function onCheckClicked( e, l ) {
+	// checkbox toggle for 'display' option
+	var checkbox = ($( e.target ).closest("div").attr( "data-check" ) === "1");
+	if( checkbox == false ) {
+    	$( e.target ).closest("div").attr( "data-check", "1" );
+    }
+    else {
+    	$( e.target ).closest("div").attr( "data-check", "0" );
+    }
+}
+
+function selectRow(e) {
+	$(e.currentTarget).closest("tbody").find("tr").each(function(index, tag) {
+		$(tag).removeClass("selected");
+	})
+	$(e.currentTarget).addClass("selected");
+}
+function disableDeleteOnAnyoneUser(e) {
+    var curTable = $(e.currentTarget).closest("table").attr("id");
+
+    // check if the selected row belongs to the #access table
+    if(curTable === "access") {
+        // check if the selected user is 'anyone'
+        var rowIndex = $(e.currentTarget).closest("tbody").find("tr.selected").index();
+        if(projectInfo.collaborators.list[rowIndex].userID === 'anyone') {
+            // if yes, disable the 'remove' button
+            $("#removeCollaborator").addClass('disabled');
+        } else {
+            $("#removeCollaborator").removeClass('disabled');
+        }
+    }
+}
+
+function importFilesDialog() {
     var sum=0;
     $("#importFilesDialog tbody tr").each(function(i,o) {
         var url=$(o).find("td:eq(0)").text();
@@ -722,6 +761,8 @@ $("#importFilesDialogOk").click(function() {
         found=false;
         for(i in projectInfo.files.list) {
             if(projectInfo.files.list[i].source==url) {
+                if(projectInfo.files.list[i].name=="")
+                    projectInfoProxy["files.list."+i+".name"]=name;
                 found=true;
                 break;
             }
@@ -740,11 +781,7 @@ $("#importFilesDialogOk").click(function() {
     });
     $("#importFilesDialog").hide();
     console.log(sum,"files added");
-});
-$("#importFilesDialogCancel").click(function() {
-    $("#importFilesDialog").hide();
-});
-
+}
 function addCollaborator(param) {
     projectInfo.collaborators.list.push({
         userID: "",
@@ -803,9 +840,12 @@ function removeCollaborator(param) {
 
     $("#projDescription #numCollaborators").text(projectInfo.collaborators.list.length);
 }
-
 function addAnnotation(param) {
-    projectInfo.annotations.list.push({});
+    projectInfo.annotations.list.push({
+        type:"volume",
+        values:BrainBox.labelSets[0].source,
+        display:"true"
+    });
 
     // add and bind new table row
     var i=projectInfo.annotations.list.length-1;
@@ -830,7 +870,6 @@ function removeAnnotation(param) {
 
     $("#projDescription #numAnnotations").text(projectInfo.annotations.list.length);
 }
-
 function addFile(param) {
     projectInfo.files.list.push({});
 
@@ -856,6 +895,9 @@ function removeFile(param) {
     projectInfo.files.list.splice(index,1);
 
     $("#projDescription #numFiles").text(projectInfo.files.list.length);
+    
+    // select the closest remaining column
+    $(param.table).find('tbody tr:eq('+(Math.min(index,projectInfo.files.list.length-1))+')').addClass('selected');
 }
 function importFiles() {
     // var input=document.getElementById("i-open-mesh");
@@ -893,8 +935,6 @@ function saveChanges() {
             data:JSON.stringify(projectInfo)
         }
     ).done(function(a, b) {
-    	console.log("a",a);
-    	console.log("b",b);
     	if(a.success) {
             $("#saveFeedback").text("Successfully saved");
     	    setTimeout(function() {
@@ -914,8 +954,6 @@ function saveChanges() {
         console.log(err);
     });
 }
-
-$("#addProject").click(function(){location="/project/new"});
 </script>
 
 </body>
