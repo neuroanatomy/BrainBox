@@ -71,12 +71,15 @@ var user = function(req, res) {
                         atlasFiles: []
                     };
                     context.MRIFiles = mri.map(function (o) {
-                        return {
+                        var obj = {
                             url: o.source,
                             name: o.name,
-                            included: dateFormat(o.included, "d mmm yyyy, HH:MM"),
-                            volDimensions: o.dim.join(" x ")
+                            included: dateFormat(o.included, "d mmm yyyy, HH:MM")
                         };
+                        if(o.dim) {
+                            obj.volDimensions = o.dim.join(" x ");
+                            return obj;
+                        }
                     });
                     atlas.map(function (o) {
                         var i;
