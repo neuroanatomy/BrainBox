@@ -920,7 +920,7 @@ function importFiles() {
             var lines=result.split("\n");
             var html=[];           
             for(i in lines) {
-                cols=lines[i].split(", ");
+                cols=lines[i].split(/[ ]*,[ ]*/);
                 html.push("<tr><td contentEditable='true'>"+cols[0]+"</td><td>"+cols[1]+"</td></tr>");
             }
             $("#importFilesDialog tbody").append(html.join("\n"));
