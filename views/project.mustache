@@ -203,9 +203,12 @@ for(k in projectInfo.annotations.list) {
 
 function loadProjectFile(url) {
 	var params={url:url,view:"cor",slice:180,fullscreen:false};
+    $("#loadingIndicator").show();
 	$.post("/mri/json",{url:url})
 	.done(function from_loadProjectFile(info) {
 	    if($.isEmptyObject(info) === false) {
+            
+            console.log("info",info);
             
             // check if the mri contains the required annotations
             var irow; // index of the table row
@@ -229,7 +232,7 @@ function loadProjectFile(url) {
                         project:projectInfo.shortname,
                         created: date.toJSON(), 
                         filename: Math.random().toString(36).slice(2)+".nii.gz",	// automatically generated filename
-                        labels: "/labels/"+annotations.volume[irow].values,
+                        labels: annotations.volume[irow].values,
                         owner: AtlasMakerWidget.User.username,
                         type: "volume"
                     };
@@ -239,7 +242,12 @@ function loadProjectFile(url) {
                 annotations.volume[irow].annotationItemIndex=iarr;
             }
             params.info=info;
-            params.annotationItemIndex = annotations.volume[0].annotationItemIndex;
+            
+            if(annotations.volume[0]) {
+                params.annotationItemIndex = annotations.volume[0].annotationItemIndex;
+            } else {
+                params.annotationItemIndex = -1;
+            }
             
             BrainBox.configureBrainBox(params)
                 .then(function from_project(){

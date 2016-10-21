@@ -602,24 +602,18 @@ var receiveSaveMetadataMessage = function receiveSaveMetadataMessage(data,user_s
 	var sourceUS=getUserFromUserId(data.uid);
 	var json=data.metadata;
 	json.modified=(new Date()).toJSON();
-	json.modifiedBy = (sourceUS.User && sourceUS.User.username) ? sourceUS.User.username : "unknown";
+	json.modifiedBy = (sourceUS.User && sourceUS.User.username) ? sourceUS.User.username : "anonymous";
 
 	// sanitise json
 	json=JSON.parse(DOMPurify.sanitize(JSON.stringify(json))); // sanitize works on strings, not objects
 
 	// mark previous one as backup
-	console.log("source:",json.source);
-	
     db.get('mri').find({source:json.source, backup:{$exists:false}})
         .then(function (ret) {
-            console.log("original ret:", JSON.stringify(ret));
-            console.log("original json:", json);
             json = merge.recursive(ret[0], json);
             delete json["_id"];
-            console.log("merged json:", json);
             db.get('mri').update({source:json.source},{$set:{backup:true}},{multi:true})
                 .then(function () {
-                    console.log("new version:",json);
                     db.get('mri').insert(json);
                 });
         });
@@ -695,11 +689,13 @@ var receiveUserDataMessage = function receiveUserDataMessage(data, user_socket) 
 	}
 	
     if(data.description === "allUserData" ) {
+        // receiving the complete User data object
 	    User=data.user;
         User.uid=data.uid;
     } else {
 	    User=sourceUS.User;
         if(data.description==="sendAtlas") {
+            // receive an atlas from the user
             // 1. Check if the atlas the user is requesting has not been loaded
             atlasLoadedFlag=false;
         
@@ -736,6 +732,7 @@ var receiveUserDataMessage = function receiveUserDataMessage(data, user_socket) 
                     });
             }
         } else {
+            // receive a specific field of the User data object from the user
             var changes = JSON.parse(data.description);
             for(i in changes)
                 User[i]=changes[i];

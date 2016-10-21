@@ -1,4 +1,6 @@
 var async = require("async");
+var url = require('url');
+var crypto = require('crypto');
 var dateFormat = require('dateformat');
 var validatorNPM = require('validator');
 var async = require('async');
@@ -64,7 +66,9 @@ var isProjectObject = function(req,res,object) {
                 /**
                  * @todo This is a momentary fix: list object contains only source (URL). It should also record the name change in the mri db
                  */
+                 /*
                  object.files.list[k]=object.files.list[k].source;
+                 */
             }
         }
         console.log("files ok");
@@ -191,14 +195,10 @@ var project = function(req, res) {
 					req.db.get('mri').find({source:item,backup:{$exists:0}},{name:1,_id:0})
 					.then(function(obj) {
 						if(obj[0]) {
-                            /*
-                                json.files.list[json.files.list.indexOf(item)]={
-                                    source: item,
-                                    name: obj[0].name
-                                }
-                            */
+						    // if an MRI is found, append a complete MRI object
 							json.files.list[json.files.list.indexOf(item)]=obj[0];
 						} else {
+						    // if an MRI is not found, create one with source URL and empty name
 							json.files.list[json.files.list.indexOf(item)]={
 								source: item,
 								name: ""
@@ -274,13 +274,6 @@ var settings = function(req, res) {
                 created: (new Date()).toJSON(),
                 owner: loggedUser,
                 collaborators: {
-                    /*
-                    access: {
-                        owner: loggedUser,
-                        public: "edit",
-                        whitelist: []
-                    },
-                    */
                     list: [
                         {
                             userID: 'anyone',
@@ -293,23 +286,9 @@ var settings = function(req, res) {
                     ]
                 },
                 files: {
-                    /*
-                    access: {
-                        owner: loggedUser,
-                        public: "edit",
-                        whitelist: []
-                    },
-                    */
                     list: []
                 },
                 annotations: {
-                    /*
-                    access: {
-                        owner: loggedUser,
-                        public: "edit",
-                        whitelist: []
-                    },
-                    */
                     list: []
                 }
             };
@@ -407,6 +386,66 @@ var newProject = function(req, res) {
     }
 };
 
+function insertMRInames(req,res,list) {
+    console.log("-- working with this list:",list,list.length);
+    // insert MRI names, but only if they don't exist
+    for(var i=0;i<list.length;i++) {
+        var name=list[i].name;
+        var source=list[i].source;
+        var filename = url.parse(source).pathname.split("/").pop();
+        
+        // it there's no name, continue to the next mri
+        if(!name)
+            continue;
+        
+        // check if the mri entry already exists
+        (function(na,so,fi) { // without a closure, only the last name in the list is used and repeated
+            req.db.get('mri').find({source:so,backup:{$exists:0}})
+            .then(function (mri) {
+                mri=mri[0];
+                var hash = crypto.createHash('md5').update(so).digest('hex');
+                
+                // if mri exists, and has no name, insert the name
+                if(!mri) {
+                    mri = {
+                        filename: fi,
+                        source: so,
+                        url: "/data/" + hash + "/",
+                        included: (new Date()).toJSON(),
+                        owner: req.user.username,
+                        mri: {
+                            brain: fi,
+                            atlas: [{
+                                owner: req.user.username,
+                                created: (new Date()).toJSON(),
+                                modified: (new Date()).toJSON(),
+                                type: 'volume',
+                                filename: 'Atlas.nii.gz',
+                                labels: 'foreground.json'
+                            }]
+                        }
+                    };
+                } else {
+                    delete mri["_id"];
+                }
+                mri.modified=(new Date()).toJSON();
+                mri.modifiedBy = req.user.username;
+                if(!mri.name) {
+                    mri.name=na;
+                }
+                // sanitise json
+                mri=JSON.parse(DOMPurify.sanitize(JSON.stringify(mri))); // sanitize works on strings, not objects
+
+                // update and insert
+                req.db.get('mri').update({source:mri.source},{$set:{backup:true}},{multi:true})
+                    .then(function () {
+                        req.db.get('mri').insert(mri);
+                    });
+            });
+        })(name,source,filename);
+    }
+}
+
 /**
  * @function post_project
  * @desc Receives data for creating a new project or updating the settings of an existing one
@@ -418,33 +457,55 @@ var post_project = function(req, res) {
     {
         console.log("not Authenticated");
         res.status(403);
-        res.json({})
+        res.json({error:"error",message:"User not authenticated"});
     }
 
     console.log(req.params);
     console.log(req.body);
     var obj = JSON.parse(DOMPurify.sanitize(req.body.data));
-    console.log("object: ",JSON.stringify(obj));
-    //TODO Data validation obj
+    var k;
 
     isProjectObject(req,res,obj)
     .then(function(obj) {
-        console.log("obj",obj);
         req.db.get('project').find({shortname:obj.shortname, backup:{$exists:false}})
             .then(function (result) {
-                console.log("result",result);
+                
+                // update/insert project
                 if(result.length) {
                     // project exists, save update
                     console.log("updating...");
                     req.db.get('project').update({shortname:obj.shortname},{$set:{backup:true}},{multi:true})
                         .then(function () {
+                            obj.modified=(new Date()).toJSON();
+                            obj.modifiedBy = req.user.username;
                             req.db.get('project').insert(obj);
+                            
+                            // insert MRI names if provided
+                            console.log("insert mri names");
+                            insertMRInames(req,res,obj.files.list);
+                            
+                            // reformat file list
+                            console.log("reformat file list");
+                            for(k=0;k<obj.files.list.length;k++)
+                                obj.files.list[k]=obj.files.list[k].source;
+                            
+                            console.log("success: true");
                             res.json({success:true,message:"Project settings updated"});
                         });
                 } else {
                     // new project, insert
                     console.log("inserting...");
                     req.db.get('project').insert(obj);
+
+                    console.log("insert mri names");
+                    insertMRInames(req,res,obj.files.list);
+
+                    // reformat file list
+                    console.log("reformat file list");
+                    for(k=0;k<obj.files.list.length;k++)
+                        obj.files.list[k]=obj.files.list[k].source;
+
+                    console.log("success: true");
                     res.json({success:true,message:"New project inserted"});
                 }
             });
