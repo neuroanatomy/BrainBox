@@ -109,8 +109,9 @@
 
 <div style="width:100%;height:100%;display:flex;flex-direction:column">
 	
-	<!-- Login (fixed height) -->
+	<!-- Header (fixed height) -->
 	<div style="flex:0 0 64px">
+	    <!-- Top-right menu bar -->
 		<div id="menu">
 			<img id="addProject" class="button" title="add project" style='width:13px' src='/img/plus.svg'/>
 			<img id="search" class="button" title="search" style='width:13px' src='/img/search.svg'/>
@@ -120,6 +121,15 @@
 				<span>{{{login}}}</span>
 			</div>
 		</div>
+
+        <!-- Small left-top logo -->
+        <div style="display:inline-block;margin:10px">
+            <a href='/' style="text-decoration:none">
+                <img style='height:56px;vertical-align:middle' src='/img/brainbox-logo-small_noFont.svg'/>
+            </a><span style="font-family: Roboto, sans-serif; font-size: 36px; font-weight:100;vertical-align:middle" id="fontLogo"> 
+                <a href='/' style="font-family: Roboto, sans-serif; font-size: 36px; font-weight:100; text-decoration:none">BrainBox</a>
+            </span>
+        </div>
 	</div>
 	
 	<!-- Content (variable height) -->
@@ -136,14 +146,6 @@
 				
 		<!-- Data -->
 		<div id="data">		
-			<!-- Small left-top logo -->
-			<a href='/'>
-				<img style='position:absolute;left:10px;top:5px;width:200px' src='/img/brainbox-logo-small_noFont.svg'/>
-			</a>
-			<div style="position:absolute;left:73px;top:21px;width:auto; font-family: Roboto, sans-serif; font-size: 36px; font-weight:100" id="fontLogo"> 
-				<a href='/' style="font-family: Roboto, sans-serif; font-size: 36px; font-weight:100; text-decoration:none">BrainBox</a>
-			</div>
-
 			<!-- Data Flex -->
 			<div id="content" style="display:flex;justify-content:center">
 					<!-- Annotations -->

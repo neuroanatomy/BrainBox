@@ -45,9 +45,9 @@
  }
 
  #menu {
-	position:absolute;
-	top:5px;
-	right: 5px;
+    float:right;
+    margin-top: 10px;
+    margin-right: 10px;
 	display: inline-block;
 	font: 16px/24px "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
  }
