@@ -7,7 +7,6 @@ var atlasMakerServer = require('../../js/atlasMakerServer');
 var tokenDuration = 24 * (1000 * 3600); // in milliseconds
 
 var validator = function (req, res, next) {
-    //CHECK URL
     req.checkBody('url', 'please enter a valid URL')
         .notEmpty()
         .isURL();
@@ -18,6 +17,8 @@ var validator = function (req, res, next) {
         .notEmpty()
         .isAlphanumeric();
     req.checkBody('atlasLabelSet', 'please enter an Atlas Project')
+        .notEmpty()
+    req.checkBody('token', 'please enter an upload token')
         .notEmpty()
     /*
         Check for all these required fields:
@@ -86,6 +87,8 @@ var upload = function(req, res) {
     var atlasLabelSet = req.body.atlasLabelSet;
     var files = req.files;
 
+    delete mri._id;
+    
     console.log("Everything is in order");
     console.log("username:",username);
     console.log("url:", url);
@@ -98,8 +101,24 @@ var upload = function(req, res) {
     // Check that there is not an atlas with this atlasName and atlasProject
     // ==> something like this should be empty: db.get("mri").find({"mri.atlas.$.name":atlasName, "mri.atlas.$.project":atlasProject})
     
-    // Check that the dimensions of the nifti atlas are the same as its parent mri
-    atlasMakerServer.readNifti(files[0].path)
+    // move atlas file to final directory
+    var ext;
+    var filename;
+    var path;
+    if(/.nii.gz$/.test(files[0].originalname))
+        ext=".nii.gz";
+    else
+    if(/.mgz$/.test(files[0].originalname))
+        ext=".mgz";
+    else {
+        return res.json({error:"Atlas encoding neither .nii.gz nor .mgz"}).status(400).end();
+    }
+    filename=Math.random().toString(36).slice(2)+ext;
+    path = req.dirname + "/public" + mri.url + filename;
+    fs.rename(req.dirname  + "/" + files[0].path, path);
+
+    // Check that the dimensions of the atlas are the same as its parent mri
+    atlasMakerServer.loadMRI(path)
         .then(function(atlas){
             console.log("atlas.dim: ",atlas.dim);
             console.log("mri.dim: ",mri.dim);
@@ -119,22 +138,21 @@ var upload = function(req, res) {
                 access: "Read/Write", 
                 created: date.toJSON(), 
                 modified: date.toJSON(), 
-                filename: Math.random().toString(36).slice(2)+".nii.gz",	// automatically generated filename
+                filename: filename,	// automatically generated filename
                 originalname: files[0].originalname,
                 labels: atlasLabelSet,
                 owner: username,
                 type: "volume"
             };
 
-            // move atlas file to final directory
-            fs.rename(req.dirname  + "/" + files[0].path, req.dirname + "/public" + mri.url + atlasMetadata.filename);
-
             // update the database
             mri.mri.atlas.push(atlasMetadata);
             // mark previous version as backup
-            db.get('mri').update({url:req.body.url,backup:{$exists:false}},{$set:{backup:true}},{multi:true});
-            // insert new version
-            db.get('mri').insert(mri);
+            req.db.get('mri').update({source:req.body.url,backup:{$exists:false}},{$set:{backup:true}},{multi:true})
+            .then(function() {
+                // insert new version
+                req.db.get('mri').insert(mri);
+            });
 
             // return the full mri object ???
             return res.json(mri).status(200).end();

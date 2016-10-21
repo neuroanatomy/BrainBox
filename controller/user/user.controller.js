@@ -99,7 +99,7 @@ var user = function(req, res) {
                         projectName: o.name,
                         projectURL: o.brainboxURL,
                         numFiles: o.files.list.length,
-                        numCollaborators: o.collaborators.length,
+                        numCollaborators: o.collaborators.list.length,
                         owner: o.owner,
                         modified: dateFormat(o.modified, "d mmm yyyy, HH:MM")
                     }; });

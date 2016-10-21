@@ -62,13 +62,6 @@ var isProjectObject = function(req,res,object) {
                     reject({success:false,error:"Invalid file name"});
                     return;
                 }
-                
-                /**
-                 * @todo This is a momentary fix: list object contains only source (URL). It should also record the name change in the mri db
-                 */
-                 /*
-                 object.files.list[k]=object.files.list[k].source;
-                 */
             }
         }
         console.log("files ok");
@@ -143,6 +136,19 @@ var isProjectObject = function(req,res,object) {
             return;
         }
         console.log("Access values ok");
+        
+        // check that the list of annotations contains at least 1 volume-type entry
+        flag = false;
+        for(i=0;i<object.annotations.list.length;i++) {
+            if(object.annotations.list[i].type == "volume") {
+                flag = true;
+                break;
+            }
+        }
+        if(flag == false) {
+            reject({success:false,error:"Annotations must contain at least 1 volume-type entry"});
+            return;
+        }
                 
         
         // 2. Asynchronous checks
@@ -151,7 +157,7 @@ var isProjectObject = function(req,res,object) {
         arr=[];
         arr.push(req.db.get('user').find({nickname:object.owner}));
         for(i in object.collaborators.list) {
-            arr.push(req.db.get('user').find({nickname:object.collaborators.list[i].username}));
+            arr.push(req.db.get('user').find({nickname:object.collaborators.list[i].userID}));
         }
         Promise.all(arr).then(function(val) {
             var i, notFound=false;
@@ -430,9 +436,17 @@ function insertMRInames(req,res,list) {
                 }
                 mri.modified=(new Date()).toJSON();
                 mri.modifiedBy = req.user.username;
+                
+                /* Use this if you want imported names to overwrite existing ones */
+                mri.name = na;
+                
+                /* Use this if you want imported names to be used only if no previous name exists */
+                /*
                 if(!mri.name) {
                     mri.name=na;
                 }
+                */
+                
                 // sanitise json
                 mri=JSON.parse(DOMPurify.sanitize(JSON.stringify(mri))); // sanitize works on strings, not objects
 
@@ -458,6 +472,7 @@ var post_project = function(req, res) {
         console.log("not Authenticated");
         res.status(403);
         res.json({error:"error",message:"User not authenticated"});
+        return;
     }
 
     console.log(req.params);

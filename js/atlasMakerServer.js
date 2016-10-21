@@ -910,7 +910,7 @@ var getBrainAtPath = function getBrainAtPath(brainPath) {
 		console.log("    Loading brain at",brainPath);
 	}
     var pr = new Promise(function promise_fromGetBrainAtPath(resolve, reject) {
-        loadBrain(this.dataDirectory+brainPath)
+        loadMRI(this.dataDirectory+brainPath)
             .then(function _fromGetBrainAtPath(mri) {
                 var brain={path:brainPath,data:mri};
                 Brains.push(brain);
@@ -974,7 +974,8 @@ var loadAtlas = function loadAtlas(User) {
         } else {
             // Load existing atlas
             console.log("    Atlas found. Loading it");
-            readNifti(path)
+            //readNifti(path)
+            loadMRI(path)
                 .then(function (loadedAtlas) {
                     loadedAtlas.name = User.atlasFilename;
                     loadedAtlas.dirname = User.dirname;
@@ -988,18 +989,20 @@ var loadAtlas = function loadAtlas(User) {
     });
     return pr;
 };
-var loadBrain = function loadBrain(path) {
-    traceLog(loadBrain);
-    
+var loadMRI = function loadMRI(path) {
+    traceLog(loadMRI);
+    console.log(path);
     /*
-        loadBrain
+        loadMRI
         input: path to an mri file, .nii.gz and .mgz formats are recognised
         output: an mri structure
     */
-	var pr = new Promise(function promise_fromloadBrain(resolve, reject) {
+	var pr = new Promise(function promise_fromLoadMRI(resolve, reject) {
         if(path.match(/.nii.gz$/)) {
+            console.log("reading nii");
             readNifti(path)
                 .then(function (mri) {
+                    console.log("got mri:",mri);
                     resolve(mri);
                 })
                 .catch(function (err) {
@@ -1008,20 +1011,24 @@ var loadBrain = function loadBrain(path) {
                 });
         } else
         if(path.match(/.mgz$/)) {
+            console.log("reading mgz");
             readMGZ(path)
                 .then(function(mri) {
+                    console.log("got mri:",mri);
                     resolve(mri);
                 })
                 .catch(function (err) {
                     console.log("ERROR reading mgz file:",err);
                 });
         } else {
+            console.log("ERROR: nothing we can read");
             reject();
         }
     });
 
 	return pr;
 }
+this.loadMRI = loadMRI;
 
 var readNifti = function readNifti(path) {
     traceLog(readNifti);

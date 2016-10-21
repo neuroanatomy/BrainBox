@@ -610,8 +610,22 @@ BrainBox.loadLabelsets()
             }
         ]
     };
-    for(var i=0;i<projectInfo.annotations.list.length;i++) {
+    var i;
+    for(i=0;i<projectInfo.annotations.list.length;i++) {
         BrainBox.appendAnnotationTableRow(i,annParam);
+    }
+    
+    // Each project requires at least 1 volume-type annotation
+    // Add a default one if there is none.
+    var volAnnFound = false;
+    for(i=0;i<projectInfo.annotations.list.length;i++) {
+        if(projectInfo.annotations.list[i].type == "volume") {
+            volAnnFound = true;
+            break;
+        }
+    }
+    if(volAnnFound == false) {
+        addAnnotation(annParam);
     }
 });
 
@@ -819,7 +833,7 @@ function addCollaborator(param) {
         select:function(e,ui) {
             var irow=$(e.target).closest('tr').index();
             projectInfoProxy["collaborators.list."+irow+".name"]=ui.item.name;
-            projectInfoProxy["collaborators.list."+irow+".username"]=ui.item.nickname;
+            projectInfoProxy["collaborators.list."+irow+".userID"]=ui.item.nickname;
 
             // add user to access objects
             projectInfo.collaborators.list[irow].userID=ui.item.nickname;

@@ -196,28 +196,21 @@ var api_mri_post = function (req, res) {
             var doDownload = false;
             
             // if client is not requesting a specific MRI variable
-console.log("a");
             if (!req.body.var) {
                 // if the json object is empty, download
                 if(!json) {
-console.log("b");
                     doDownload = true;
                 } else {
-console.log("c");
                     // if the json object exists, but there's no file, download
                     var filename = url.parse(myurl).pathname.split("/").pop();
                     var path = req.dirname + "/public/data/" + hash + "/" + filename;
-console.log("path",path);
                     if(fs.existsSync(path) == false) {
-console.log("d");
                         doDownload = true;
                     }
                 }
             }
-console.log("e");
 
             if(doDownload === true ) {
-console.log("f");
                 downloadMRI(myurl, req, res, function (obj) {
                     if(obj) {
                         req.db.get('mri').insert(obj);
@@ -228,7 +221,6 @@ console.log("f");
                     }
                 });
             } else {
-console.log("g");
                 // return a specific variable, or the complete json object
                 if (req.body.var) {
                     var i, arr = req.body.var.split("/");
