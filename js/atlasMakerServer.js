@@ -1043,6 +1043,7 @@ var readNifti = function readNifti(path) {
             zlib.gunzip(niigz, function (err, nii) {
                 var i, j, tmp, sum, mri={};
 
+console.log("1");
                 // standard nii header
                 try {
                     NiiHdr.allocate();
@@ -1072,16 +1073,21 @@ var readNifti = function readNifti(path) {
                     return;
                 }
                 
+console.log("2");
                 // compute the transformation from voxel space to screen space
                 computeS2VTransformation(mri);
 
+console.log("3");
                 // test if the transformation looks incorrect. Reset it if it does
                 testS2VTransformation(mri);
 
+console.log("4");
                 // manually parsed information
                 mri.hdr=nii.slice(0,352);
                 mri.datatype=nii.readUInt16LE(70);
 
+                console.log("reading datatype",mri.datatype);
+                console.log("dim:",mri.dim[0],mri.dim[1],mri.dim[2]);
                 switch(mri.datatype) {
                     case 2: // UCHAR
                         mri.data=nii.slice(mri.vox_offset);
@@ -1110,6 +1116,7 @@ var readNifti = function readNifti(path) {
                     }
                 }
 
+console.log("5");
                 // compute sum, min and max
                 var i,sum=0,min,max;
                 min=mri.data[0];
@@ -1124,6 +1131,7 @@ var readNifti = function readNifti(path) {
                 mri.min=min;
                 mri.max=max;
 
+                console.log("resolving");
                 resolve(mri);
             });
         } catch(e) {
