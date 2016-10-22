@@ -5,6 +5,8 @@ var url = require('url');
 var fs = require('fs');
 var request = require('request');
 var atlasMakerServer = require('../../js/atlasMakerServer');
+var checkAccess = require('../../js/checkAccess.js');
+
 //expressValidator = require('express-validator')
 
 var validator = function (req, res, next) {
@@ -113,6 +115,7 @@ var mri = function (req, res) {
     var login = (req.isAuthenticated()) ?
                 ("<a href='/user/" + req.user.username + "'>" + req.user.username + "</a> (<a href='/logout'>Log Out</a>)")
                 : ("<a href='/auth/github'>Log in with GitHub</a>");
+    var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
     var myurl = req.query.url;
     var hash = crypto.createHash('md5').update(myurl).digest('hex');
     
@@ -134,10 +137,16 @@ var mri = function (req, res) {
                 // if the json object is empty, download
                 doDownload = true;
             } else {
-                // if there's no file, download
+                // if the json object exists, but there's no file, download
                 var filename = url.parse(myurl).pathname.split("/").pop();
                 var path = req.dirname + "/public/data/" + hash + "/" + filename;
                 if(fs.existsSync(path) == false) {
+                    console.log("no mri file in server: download");
+                    doDownload = true;
+                } else
+                // if the json object exists, there's a file, but no .dim object, download
+                if(!json.dim) {
+                    console.log("no dim in db entry: download");
                     doDownload = true;
                 }
             }
@@ -167,12 +176,60 @@ var mri = function (req, res) {
                     });
                 }(myurl, req, res));
             } else {
-                // send data for MRI already downloaded
-                res.render('mri', {
-                    title: json.name || 'BrainBox',
-                    params: JSON.stringify(req.query),
-                    mriInfo: JSON.stringify(json),
-                    login: login
+                // if the json object exists, and has annotations, configure the access to them
+                console.log("check access rights");
+                if(!json.mri.atlas)
+                    json.mri.atlas = [];
+                var i, j, k, ii, arr = [];
+                for(i=0;i<json.mri.atlas.length;i++) {
+                    if(json.mri.atlas[i].project) {
+                        console.log("mri is in project",json.mri.atlas[i].project);
+                        arr.push(req.db.get('project').find({
+                            shortname:json.mri.atlas[i].project,
+                            backup: {$exists: 0}
+                        }));
+                    }
+                }
+                Promise.all(arr).then(function(projects) {
+                    for(i=0;i<json.mri.atlas.length;i++) {
+                        label:
+                        for(j=0;j<projects.length;j++) {
+                            if(json.mri.atlas[i].project == projects[j][0].shortname) {
+                                // owner?
+                                if(loggedUser == projects[j][0].owner) {
+                                    console.log("user is owner. Access: remove");
+                                    json.mri.atlas[i].access = "remove";
+                                    break label;
+                                }
+                                // collaborator?
+                                for(k=0;k<projects[j][0].collaborators.list.length;k++) {
+                                    if(projects[j][0].collaborators.list[k].userID == loggedUser) {
+                                        json.mri.atlas[i].access = projects[j][0].collaborators.list[k].access.annotations;
+                                        console.log("user is collaborator. Access:",json.mri.atlas[i].access);
+                                        break label;
+                                    }
+                                }
+                                // anyone?
+                                for(k=0;k<projects[j][0].collaborators.list.length;k++) {
+                                    if(projects[j][0].collaborators.list[k].userID == "anyone" ) {
+                                        json.mri.atlas[i].access = projects[j][0].collaborators.list[k].access.annotations;
+                                        console.log("user is anyone. Access:",json.mri.atlas[i].access);
+                                        break label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // send data
+                    res.render('mri', {
+                        title: json.name || 'BrainBox',
+                        params: JSON.stringify(req.query),
+                        mriInfo: JSON.stringify(json),
+                        login: login
+                    });
+                }).catch(function(err) {
+                    console.log("ERROR Cannot get db information:",err);
                 });
             }
         }, function (err) {

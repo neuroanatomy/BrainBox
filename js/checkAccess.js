@@ -1,5 +1,13 @@
 var accessLevels=["none","view","edit","add","remove"];
 
+/**
+ * @func toMRI
+ * @desc Check access to MRI based on all projects in which the user is involved. The MRI is accessible unless a project prevents it
+ * @param {Object} mri MRI object from the db
+ * @param {Array} projects Array of project objects relevant to the access decision
+ * @param {Object} user The user whose access is being verified
+ * @param {Object} access The access level requested
+ */
 var toMRI = function(mri, projects, user, access) {
     var p, requestedLevel = accessLevels.indexOf(access);
 

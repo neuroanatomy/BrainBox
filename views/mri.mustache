@@ -343,7 +343,7 @@ if( $.isEmptyObject(mriInfo)) {
                 },
                 {	typeOfBinding:1,
                     path:"mri.atlas.#.access",
-                    format: function(e,d){$(e).find(".access").attr('data-level',["none","view","edit","add","remove"].indexOf("view"/*d*/))},
+                    format: function(e,d){$(e).find(".access").attr('data-level',["none","view","edit","add","remove"].indexOf(d))},
                     parse: function(e){var level=$(e).find(".access").attr("data-level");return ["none","view","edit","add","remove"][level]}
                 }
             ]
@@ -373,8 +373,6 @@ if( $.isEmptyObject(mriInfo)) {
                         AtlasMakerWidget.brain_img.img=null; // to force redraw with new colors
                         AtlasMakerWidget.drawImages();
                     });
-                    break;
-                case "Access":
                     break;
             }
         });
