@@ -206,7 +206,7 @@ var api_mri_post = function (req, res) {
                     if(fs.existsSync(path) == false) {
                         console.log("no mri file in server: download");
                         doDownload = true;
-                    } else {
+                    } else
                     // if the json object exists, there's a file, but no .dim object, download
                     if(!json.dim) {
                         console.log("no dim in db entry: download");
