@@ -95,8 +95,6 @@ function downloadMRI(myurl, req, res, callback) {
                             }]
                         }
                     };
-                    console.log("downloaded MRI");
-                    console.log(JSON.stringify(json));
                     callback(json);
                 })
                 .catch(function(err) {
@@ -199,12 +197,19 @@ var api_mri_post = function (req, res) {
             if (!req.body.var) {
                 // if the json object is empty, download
                 if(!json) {
+                    console.log("no db entry for mri: download");
                     doDownload = true;
                 } else {
                     // if the json object exists, but there's no file, download
                     var filename = url.parse(myurl).pathname.split("/").pop();
                     var path = req.dirname + "/public/data/" + hash + "/" + filename;
                     if(fs.existsSync(path) == false) {
+                        console.log("no mri file in server: download");
+                        doDownload = true;
+                    } else {
+                    // if the json object exists, there's a file, but no .dim object, download
+                    if(!json.dim) {
+                        console.log("no dim in db entry: download");
                         doDownload = true;
                     }
                 }

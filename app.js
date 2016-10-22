@@ -7,7 +7,7 @@
     Launch using > node atlasMakerServer.js
 */
 
-var debug = 0;
+var debug = 1;
 
 var express = require('express');
 var path = require('path');
