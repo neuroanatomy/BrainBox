@@ -191,6 +191,10 @@ var project = function(req, res) {
 	var login=	(req.isAuthenticated())?
 				("<a href='/user/"+req.user.username+"'>"+req.user.username+"</a> (<a href='/logout'>Log Out</a>)")
 				:("<a href='/auth/github'>Log in with GitHub</a>");
+
+    // store return path in case of login
+    req.session.returnTo = req.originalUrl;
+	
 	req.db.get('project').find({shortname:req.params.projectName,backup:{$exists:0}},"-_id")
 	.then(function(json) {
 	    json=json[0];
@@ -262,6 +266,9 @@ var settings = function(req, res) {
                 ("<a href='/user/" + req.user.username + "'>" + req.user.username + "</a> (<a href='/logout'>Log Out</a>)")
                 : ("<a href='/auth/github'>Log in with GitHub</a>");
     var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
+
+    // store return path in case of login
+    req.session.returnTo = req.originalUrl;
 
 	req.db.get('project').findOne({shortname:req.params.projectName,backup:{$exists:0}},"-_id")
 	.then(function(json) {
@@ -375,6 +382,9 @@ var newProject = function(req, res) {
                 ("<a href='/user/" + req.user.username + "'>" + req.user.username + "</a> (<a href='/logout'>Log Out</a>)")
                 : ("<a href='/auth/github'>Log in with GitHub</a>");
     var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
+
+    // store return path in case of login
+    req.session.returnTo = req.originalUrl;
 
     if(loggedUser === "anonymous" ) {
         var context = {

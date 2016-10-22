@@ -116,6 +116,9 @@ var mri = function (req, res) {
     var myurl = req.query.url;
     var hash = crypto.createHash('md5').update(myurl).digest('hex');
     
+    // store return path in case of login
+    req.session.returnTo = req.originalUrl;
+    
     console.log("query",myurl,hash);
 
     req.db.get('mri').find({url: "/data/" + hash + "/", backup:{$exists:0}}, {fields: {_id: 0}, sort: {$natural: -1}, limit: 1})

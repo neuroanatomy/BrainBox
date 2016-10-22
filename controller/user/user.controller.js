@@ -25,6 +25,10 @@ var user = function(req, res) {
                 : ("<a href='/auth/github'>Log in with GitHub</a>");
     var requestedUser = req.params.userName;
     var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
+
+    // store return path in case of login
+    req.session.returnTo = req.originalUrl;
+
     req.db.get('user').findOne({nickname: requestedUser}, "-_id")
         .then(function (json) {
             if(json) {

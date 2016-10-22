@@ -86,7 +86,8 @@ function ensureAuthenticated(req, res, next) {
 app.get('/secure-route-example', ensureAuthenticated, function (req, res) {res.send("access granted"); });
 app.get('/logout', function (req, res) {
     req.logout();
-    res.redirect('/');
+    res.redirect(req.session.returnTo || '/');
+    delete req.session.returnTo;
 });
 app.get('/loggedIn', function (req, res) {
     if (req.isAuthenticated()) {
@@ -96,7 +97,7 @@ app.get('/loggedIn', function (req, res) {
     }
 });
 // start the GitHub Login process
-app.get('/auth/github', passport.authenticate('github'));
+app.get('/auth/github',passport.authenticate('github'));
 app.get('/auth/github/callback',
     passport.authenticate('github', {failureRedirect: '/'}),
     function (req, res) {
@@ -123,7 +124,8 @@ app.get('/auth/github/callback',
                     }});
                 }
             });
-        res.redirect('/');
+            res.redirect(req.session.returnTo || '/');
+            delete req.session.returnTo;
     });
 //-----}
 
