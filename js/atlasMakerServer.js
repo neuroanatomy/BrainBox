@@ -1002,7 +1002,6 @@ var loadMRI = function loadMRI(path) {
             console.log("reading nii");
             readNifti(path)
                 .then(function (mri) {
-                    console.log("got mri:",mri);
                     resolve(mri);
                 })
                 .catch(function (err) {
@@ -1014,7 +1013,6 @@ var loadMRI = function loadMRI(path) {
             console.log("reading mgz");
             readMGZ(path)
                 .then(function(mri) {
-                    console.log("got mri:",mri);
                     resolve(mri);
                 })
                 .catch(function (err) {
