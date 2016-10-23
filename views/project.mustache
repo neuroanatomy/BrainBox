@@ -205,11 +205,18 @@ for(k in projectInfo.annotations.list) {
     }
 }
 
-function loadProjectFile(url) {
+function loadProjectFile(index) {
+    var url=projectInfo.files.list[index].source;
+	
 	var params={url:url,view:"cor",slice:180,fullscreen:false};
     $("#loadingIndicator").show();
+	
+	/*
 	$.post("/mri/json",{url:url})
 	.done(function from_loadProjectFile(info) {
+	*/
+	    var info = projectInfo.files.list[index];
+	    
 	    if($.isEmptyObject(info) === false) {
             
             console.log("info",info);
@@ -227,7 +234,7 @@ function loadProjectFile(url) {
                     }
                 }
                 // if it doesn't, create them
-                if(found==false) {
+                if(found == false) {
                     // add annotation
                     var date=new Date();
                     // add data to annotations array
@@ -240,12 +247,14 @@ function loadProjectFile(url) {
                         owner: AtlasMakerWidget.User.username,
                         type: "volume"
                     };
-                    info.mri.atlas.push(atlas);
+                    
+                    // DELETE ME: info.mri.atlas.push(atlas);
+                    projectInfo.files.list[index].mri.atlas.push(atlas);
                 }
                 
                 annotations.volume[irow].annotationItemIndex=iarr;
             }
-            params.info=info;
+            params.info=projectInfo.files.list[index]; // DELETE ME: info;
             
             if(annotations.volume[0]) {
                 params.annotationItemIndex = annotations.volume[0].annotationItemIndex;
@@ -292,11 +301,13 @@ function loadProjectFile(url) {
                     AtlasMakerWidget.sendUserDataMessage(JSON.stringify({projectPage:projectInfo.shortname}))
                 });
         } else {
-            var info=AtlasMakerWidget.container.find("#text-layer");
-            info.html("<text x='5' y='15' fill='white'>ERROR: File is unreadable</text>");
+            var msg=AtlasMakerWidget.container.find("#text-layer");
+            msg.html("<text x='5' y='15' fill='white'>ERROR: File is unreadable</text>");
             console.log("ERROR: Cannot read data. The file is maybe corrupt?");
         }
+    /*
 	});
+	*/
 }
 
 $("#projectName").text(projectInfo.name);
@@ -310,10 +321,9 @@ $("#projectCollaboratorsNumber").text(projectInfo.collaborators.length+" Collabo
 // Init BrainBox
 //---------------
     // select first file by default (should come from localStorage)
-    var url=projectInfo.files.list[0].source;	
     BrainBox.initBrainBox()
     .then(function from_project(){return BrainBox.loadLabelsets()})
-    .then(function from_project(){return loadProjectFile(url)})
+    .then(function from_project(){return loadProjectFile(0)})
     .then(function from_project(){
         $("#tools-side").detach().appendTo('#tools');
         // connect colours close button
@@ -406,7 +416,7 @@ $("#projectCollaboratorsNumber").text(projectInfo.collaborators.length+" Collabo
 // Autosave text data
 //--------------------
     // send data when focus is lost (on blur)
-    $(document).on('blur', "#projectFiles table tbody td", function(e) {
+    $(document).on('blur', "#projectFiles table tbody td", function from_project(e) {
         var index = $(e.target).closest('tr').index();
         JSON.stringify(info_proxy); // update content of projectInfo object from proxy by calling all getters
         AtlasMakerWidget.sendSaveMetadataMessage(projectInfo.files.list[index]);
@@ -432,12 +442,10 @@ $(document).on('click', "#projectFiles tbody tr",function() {
 	if(index>=0 && currentIndex!=index) {
 		$(table).find("tr").removeClass("selected");
 		$(this).addClass("selected");
-		// new url
-		url=projectInfo.files.list[index].source;
-				// remove table with previous annotations
+		// remove table with previous annotations
 		$("table#info tbody").html("");
 		// load and bind new file
-		loadProjectFile(url);
+		loadProjectFile(index);
 	}
 });
 
@@ -460,14 +468,11 @@ $(document).on('keydown', function(e){
 	$(table).find("tr").removeClass("selected");
 	$(table).find("tr:eq("+index+")").addClass("selected");
 	
-	// new url
-	url=projectInfo.files.list[index].source;
-	
 	// remove table with previous annotations
 	$("table#info tbody").html("");
 
 	// load and bind new file
-	loadProjectFile(url);
+	loadProjectFile(index);
 });
 
 // listen to changes in selected annotation

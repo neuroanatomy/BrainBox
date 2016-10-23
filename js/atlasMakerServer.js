@@ -471,8 +471,8 @@ var initSocketConnection = function initSocketConnection() {
 					console.log(" WARNING>");
 				} else {
                     if(sourceUS.User.dirname) {
-                        console.log("    User was connected to MRI "+ sourceUS.User.dirname+sourceUS.User.mri);
-                        console.log("    User was connected to atlas "+ sourceUS.User.dirname+sourceUS.User.atlasFilename);
+                        console.log("    User was connected to MRI "+ sourceUS.User.dirname+sourceUS.User.mri, sourceUS.specimenName);
+                        console.log("    User was connected to atlas "+ sourceUS.User.dirname+sourceUS.User.atlasFilename, sourceUS.specimenName);
 
                         // count how many users remain connected to the MRI after user leaves
                         sum=numberOfUsersConnectedToMRI(sourceUS.User.dirname+sourceUS.User.mri);
@@ -482,7 +482,7 @@ var initSocketConnection = function initSocketConnection() {
                         } else {
                             console.log("    No user connected to MRI "
                                         + sourceUS.User.dirname
-                                        + sourceUS.User.mri+": unloading it");
+                                        + sourceUS.User.mri+": unloading it", sourceUS.specimenName);
                             unloadMRI(sourceUS.User.dirname+sourceUS.User.mri);
                         }
 
@@ -494,8 +494,8 @@ var initSocketConnection = function initSocketConnection() {
                         } else {
                             console.log("    No user connected to atlas "
                                         + sourceUS.User.dirname
-                                        + sourceUS.User.atlasFilename+": unloading it");
-                            unloadAtlas(sourceUS.User.dirname,sourceUS.User.atlasFilename);
+                                        + sourceUS.User.atlasFilename+": unloading it", sourceUS.specimenName);
+                            unloadAtlas(sourceUS.User.dirname,sourceUS.User.atlasFilename, sourceUS.specimenName);
                         }
                     } else {
                         console.log("<ERROR: dirname was not defined>");
@@ -599,6 +599,9 @@ var receiveRequestSliceMessage = function receiveRequestSliceMessage(data,user_s
 var receiveSaveMetadataMessage = function receiveSaveMetadataMessage(data,user_socket) {
     traceLog(receiveSaveMetadataMessage);
 
+	console.log("metadata type: "+data.type);
+	console.log("rnd: "+data.rnd);
+	
 	var sourceUS=getUserFromUserId(data.uid);
 	var json=data.metadata;
 	json.modified=(new Date()).toJSON();
@@ -606,15 +609,19 @@ var receiveSaveMetadataMessage = function receiveSaveMetadataMessage(data,user_s
 
 	// sanitise json
 	json=JSON.parse(DOMPurify.sanitize(JSON.stringify(json))); // sanitize works on strings, not objects
+    // DEBUG: console.log("new mri:", JSON.stringify(json));
 
 	// mark previous one as backup
-    db.get('mri').find({source:json.source, backup:{$exists:false}})
+    db.get('mri').findOne({source:json.source, backup:{$exists:false}})
         .then(function (ret) {
-            json = merge.recursive(ret[0], json);
-            delete json["_id"];
+            // DEBUG: console.log("original mri:", JSON.stringify(ret));
+            
             db.get('mri').update({source:json.source},{$set:{backup:true}},{multi:true})
                 .then(function () {
+                    json = merge.recursive(ret, json);
+                    delete json["_id"];
                     db.get('mri').insert(json);
+                    // DEBUG: console.log("inserted mri:",JSON.stringify(json));
                 });
         });
 };
@@ -873,7 +880,7 @@ var addAtlas = function addAtlas(User) {
         dirname:User.dirname,
         dim:User.dim
     };
-    console.log("    User requests atlas "+atlas.name+" from "+atlas.dirname);
+    console.log("    User requests atlas "+atlas.name+" from "+atlas.dirname, atlas.specimen);
 
     var pr = new Promise(function promise_fromAddAtlas(resolve,reject) {
         loadAtlas(User)

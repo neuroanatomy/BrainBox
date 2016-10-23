@@ -397,10 +397,15 @@ var AtlasMakerWS = {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(sendSaveMetadataMessage,1);if(l)console.log(l);
 			
-		if(me.flagConnected==0)
+		if(me.flagConnected==0) {
+		    console.log("WARNING: Not connected: will not save metadata");
 			return;
+		}
+		
 		try {
-			me.socket.send(JSON.stringify({type:"saveMetadata",metadata:info}));
+		    var rnd = Math.random().toString(36).slice(20);
+			me.socket.send(JSON.stringify({type:"saveMetadata",rnd:rnd,metadata:info}));
+			console.log(rnd);
 		} catch (ex) {
 			console.log("ERROR: Unable to sendSaveMetadataMessage",ex);
 		}
