@@ -52,10 +52,10 @@ var user = function(req, res) {
                     
                     // filter for view access
                     for(i in unfilteredMRI)
-                        if(checkAccess.toMRI(unfilteredMRI[i],unfilteredProjects,loggedUser,"view"))
+                        if(checkAccess.toFileByAllProjects(unfilteredMRI[i],unfilteredProjects,loggedUser,"view"))
                             mri.push(unfilteredMRI[i]);
                     for(i in unfilteredAtlas)
-                        if(checkAccess.toMRI(unfilteredAtlas[i],unfilteredProjects,loggedUser,"view"))
+                        if(checkAccess.toFileByAllProjects(unfilteredAtlas[i],unfilteredProjects,loggedUser,"view"))
                             atlas.push(unfilteredAtlas[i]);
                     for(i in unfilteredProjects)
                         if(checkAccess.toProject(unfilteredProjects[i],loggedUser,"view"))

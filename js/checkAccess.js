@@ -1,20 +1,28 @@
 var accessLevels=["none","view","edit","add","remove"];
 
+function traceLog(f, l) {
+    if(l==undefined || debug>l)
+        console.log("ca> "+(f.name)+" "+(f.caller?(f.caller.name||"annonymous"):"root"));
+};
+
 /**
- * @func toMRI
- * @desc Check access to MRI based on all projects in which the user is involved. The MRI is accessible unless a project prevents it
- * @param {Object} mri MRI object from the db
+ * @func toFileByAllProjects
+ * @desc Check the access a user has to an MRI file based on a list of projects. The MRI
+ *       file is only accessible if all project allow it.
+ * @param {Object} mri The file, which is an MRI object from the db
  * @param {Array} projects Array of project objects relevant to the access decision
- * @param {Object} user The user whose access is being verified
+ * @param {Object} user The user whose access is being decided
  * @param {Object} access The access level requested
  */
-var toMRI = function(mri, projects, user, access) {
+var toFileByAllProjects = function toFileByAllProjects(mri, projects, user, access) {
+    traceLog(toFileByAllProjects);
+
     var p, requestedLevel = accessLevels.indexOf(access);
 
     for(p in projects) {
         if(projects[p].files.list.indexOf(mri.source)>=0) {
             
-            // find 'anyone' user
+            // verify that the user 'anyone' exists and store their access rights
             var i, anyone, found = false;
             for(i=0;i<projects[p].collaborators.list.length;i++) {
                 if(projects[p].collaborators.list[i].userID === 'anyone') {
@@ -24,11 +32,11 @@ var toMRI = function(mri, projects, user, access) {
                 }
             }
             if(found === false) {
-                console.log("ERROR: required 'anyone' user not found [checkAcces.toMRI]");
+                console.log("ERROR: required 'anyone' user not found [checkAcces.toFileByAllProjects]");
                 console.log(projects[p].collaborators.list);
             }
             
-            // check file access level of 'anyone'
+            // get file access level of 'anyone'
             var publicLevel = accessLevels.indexOf(anyone.access.files);
             var c, collaborators;
         
@@ -67,7 +75,275 @@ var toMRI = function(mri, projects, user, access) {
 
     return true;
 };
-var toProject = function(project, user, access) {
+/**
+ * @func toFileByOneProject
+ * @desc Check the access a user has to an MRI file based on a list of projects. The MRI file
+ *       is accessible if at least project allows it.
+ * @param {Object} mri MRI object from the db
+ * @param {Array} projects Array of project objects relevant to the access decision
+ * @param {Object} user The user whose access is being decided
+ * @param {Object} access The access level requested
+ */
+var toFileByOneProject = function toFileByOneProject(mri, projects, user, access) {
+    traceLog(toFileByOneProject);
+
+    var p, requestedLevel = accessLevels.indexOf(access);
+
+    for(p in projects) {
+        if(projects[p].files.list.indexOf(mri.source)>=0) {
+            
+            // verify that the user 'anyone' exists and store their access rights
+            var i, anyone, found = false;
+            for(i=0;i<projects[p].collaborators.list.length;i++) {
+                if(projects[p].collaborators.list[i].userID === 'anyone') {
+                    anyone=projects[p].collaborators.list[i];
+                    found = true;
+                    break;
+                }
+            }
+            if(found === false) {
+                console.log("ERROR: required 'anyone' user not found [checkAcces.toFileByOneProject]");
+                console.log(projects[p].collaborators.list);
+            }
+            
+            // get file access level of 'anyone'
+            var publicLevel = accessLevels.indexOf(anyone.access.files);
+            var c, collaborators;
+        
+            // check if user has owner access
+            if(user === projects[p].owner) {
+                console.log("Owner access granted by project",projects[p].shortname);
+                return true;
+            }
+        
+            // check if user has collaborator access
+            collaborators=projects[p].collaborators.list;
+            for(c in collaborators) {
+                if(collaborators[c].userId === user) {
+                    var collaboratorAccessLevel = accessLevels.indexOf(collaborators[c].access.files);
+                    if(requestedLevel <= collaboratorAccessLevel) {
+                        console.log("Collaborator access granted by project",projects[p].shortname);
+                        return true;
+                    }
+                }
+            }
+
+            // check if user has public access
+            if(requestedLevel <= publicLevel) {
+                console.log("Public access granted by project",projects[p].shortname);
+                return true;
+            }
+        }
+    }
+
+    console.log("WARNING: No project grants access to MRI");
+    return false;
+};
+
+/**
+ * @func maxAccessToFileByProjects
+ * @desc Returns the maximum level of access rights granted to the user based on a list of
+ *       projects.
+ * @param {Object} mri MRI object from the db
+ * @param {Array} projects Array of project objects relevant to the access level computation
+ * @param {Object} user The user whose access is being decided
+ */
+var maxAccessToFileByProjects = function maxAccessToFileByProjects(mri, projects, user) {
+    traceLog(maxAccessToFileByProjects);
+
+    var p, maxLevel = 0;
+
+    for(p in projects) {
+        if(projects[p].files.list.indexOf(mri.source)>=0) {
+            
+            // check owner level
+            if(user === projects[p].owner) {
+                // owner grants the maximum access level
+                // no need to look further
+                return "remove";
+            }
+
+            // check public level
+            // verify that user 'anyone' exists and store their access rights
+            var i, anyone, found = false;
+            for(i=0;i<projects[p].collaborators.list.length;i++) {
+                if(projects[p].collaborators.list[i].userID === 'anyone') {
+                    anyone=projects[p].collaborators.list[i];
+                    found = true;
+                    break;
+                }
+            }
+            if(found === false) {
+                console.log("ERROR: required 'anyone' user not found [checkAcces.toFileByAllProjects]");
+                console.log(projects[p].collaborators.list);
+            }
+            var publicLevel = accessLevels.indexOf(anyone.access.files);
+            if(maxLevel < publicLevel ) {
+                maxLevel = publicLevel;
+            }
+        
+            // check if user has collaborator access
+            var c, collaborators;
+            collaborators=projects[p].collaborators.list;
+            for(c in collaborators) {
+                if(collaborators[c].userId === user) {
+                    var collaboratorAccessLevel = accessLevels.indexOf(collaborators[c].access.files);
+                    if(maxLevel < collaboratorAccessLevel) {
+                        maxLevel = collaboratorAccessLevel;
+                    }
+                }
+            }
+        }
+    }
+
+    return accessLevels[maxLevel];
+};
+
+/**
+ * @func mimAccessToFileByProjects
+ * @desc Returns the minimum level of access rights granted to the user based on a list of
+ *       projects.
+ * @param {Object} mri MRI object from the db
+ * @param {Array} projects Array of project objects relevant to the access level computation
+ * @param {Object} user The user whose access is being decided
+ */
+var minAccessToFileByProjects = function minAccessToFileByProjects(mri, projects, user) {
+    traceLog(minAccessToFileByProjects);
+
+    var p, minLevel = 10;
+
+    for(p in projects) {
+        if(projects[p].files.list.indexOf(mri.source)>=0) {
+            
+            // check owner level
+            if(user === projects[p].owner) {
+                if(minLevel > accessLevels.indexOf("remove"))
+                    minLevel = accessLevels.indexOf("remove");
+            }
+
+            // check public level
+            // verify that user 'anyone' exists and store their access rights
+            var i, anyone, found = false;
+            for(i=0;i<projects[p].collaborators.list.length;i++) {
+                if(projects[p].collaborators.list[i].userID === 'anyone') {
+                    anyone=projects[p].collaborators.list[i];
+                    found = true;
+                    break;
+                }
+            }
+            if(found === false) {
+                console.log("ERROR: required 'anyone' user not found [checkAcces.toFileByAllProjects]");
+                console.log(projects[p].collaborators.list);
+            }
+            var publicLevel = accessLevels.indexOf(anyone.access.files);
+            if(minLevel > publicLevel ) {
+                minLevel = publicLevel;
+            }
+        
+            // check if user has collaborator access
+            var c, collaborators;
+            collaborators=projects[p].collaborators.list;
+            for(c in collaborators) {
+                if(collaborators[c].userId === user) {
+                    var collaboratorAccessLevel = accessLevels.indexOf(collaborators[c].access.files);
+                    if(minLevel > collaboratorAccessLevel) {
+                        minLevel = collaboratorAccessLevel;
+                    }
+                }
+            }
+        }
+    }
+
+    return accessLevels[minLevel];
+};
+
+/**
+ * @func maxAccessToAnnotationByProjects
+ * @desc Returns the maximum level of access rights granted to the user based on a list of
+ *       projects.
+ * @param {Object} mri MRI object from the db
+ * @param {Array} projects Array of project objects relevant to the access level computation
+ * @param {Object} user The user whose access is being decided
+ */
+var maxAccessToFileByProjects = function maxAccessToFileByProjects(mri, projects, user) {
+    traceLog(maxAccessToFileByProjects);
+
+    var p, maxLevel = 0;
+
+    for(p in projects) {
+        if(projects[p].files.list.indexOf(mri.source)>=0) {
+            
+            // check owner level
+            if(user === projects[p].owner) {
+                // owner grants the maximum access level
+                // no need to look further
+                return "remove";
+            }
+
+            // check public level
+            // verify that user 'anyone' exists and store their access rights
+            var i, anyone, found = false;
+            for(i=0;i<projects[p].collaborators.list.length;i++) {
+                if(projects[p].collaborators.list[i].userID === 'anyone') {
+                    anyone=projects[p].collaborators.list[i];
+                    found = true;
+                    break;
+                }
+            }
+            if(found === false) {
+                console.log("ERROR: required 'anyone' user not found [checkAcces.toFileByAllProjects]");
+                console.log(projects[p].collaborators.list);
+            }
+            var publicLevel = accessLevels.indexOf(anyone.access.files);
+            if(maxLevel < publicLevel ) {
+                maxLevel = publicLevel;
+            }
+        
+            // check if user has collaborator access
+            var c, collaborators;
+            collaborators=projects[p].collaborators.list;
+            for(c in collaborators) {
+                if(collaborators[c].userId === user) {
+                    var collaboratorAccessLevel = accessLevels.indexOf(collaborators[c].access.files);
+                    if(maxLevel < collaboratorAccessLevel) {
+                        maxLevel = collaboratorAccessLevel;
+                    }
+                }
+            }
+        }
+    }
+
+    return accessLevels[maxLevel];
+};
+
+var toAnnotationByProject = function toAnnotationByProject(atlas,project,user) {
+    traceLog(toAnnotationByProject);
+
+    var k, maxAccess = 0;
+    
+    // owner?
+    if(user == project.owner) {
+        return "remove";
+    }
+    
+    for(k=0;k<project.collaborators.list.length;k++) {
+        // collaborator? anyone?
+        if( project.collaborators.list[k].userID == user ||
+            project.collaborators.list[k].userID == "anyone" ) {
+            var level = accessLevels.indexOf(project.collaborators.list[k].access.annotations);
+            if(maxAccess < level) {
+                maxAccess = level;
+            }
+        }
+    }
+    
+    return accessLevels[maxAccess];
+}
+
+
+var toProject = function toProject(project, user, access) {
+    traceLog(toProject);
+
     var p, requestedLevel = accessLevels.indexOf(access);
 
     // find 'anyone' user
@@ -117,7 +393,11 @@ var toProject = function(project, user, access) {
 };
 
 var checkAccess = function () {
-    this.toMRI = toMRI;
+    this.toFileByAllProjects = toFileByAllProjects;
+    this.toFileByOneProject = toFileByOneProject;
+    this.maxAccessToFileByProjects = maxAccessToFileByProjects;
+    this.minAccessToFileByProjects = minAccessToFileByProjects;
+    this.toAnnotationByProject = toAnnotationByProject;
     this.toProject = toProject;
 };
 

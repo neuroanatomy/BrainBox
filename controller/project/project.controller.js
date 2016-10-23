@@ -154,6 +154,10 @@ var isProjectObject = function(req,res,object) {
         // 2. Asynchronous checks
         //-----------------------
         
+        /**
+         * @todo Replace the .find calls by .findOne. The check if(val[i].length === 0)
+         *       should change to if(val[i])
+         */
         arr=[];
         arr.push(req.db.get('user').find({nickname:object.owner}));
         for(i in object.collaborators.list) {
@@ -195,18 +199,17 @@ var project = function(req, res) {
     // store return path in case of login
     req.session.returnTo = req.originalUrl;
 	
-	req.db.get('project').find({shortname:req.params.projectName,backup:{$exists:0}},"-_id")
+	req.db.get('project').findOne({shortname:req.params.projectName,backup:{$exists:0}},"-_id")
 	.then(function(json) {
-	    json=json[0];
 		if (json) {
 			async.each(
 				json.files.list,
 				function(item,cb) {
-					req.db.get('mri').find({source:item,backup:{$exists:0}},{name:1,_id:0})
+					req.db.get('mri').findOne({source:item,backup:{$exists:0}},{name:1,_id:0})
 					.then(function(obj) {
-						if(obj[0]) {
+						if(obj) {
 						    // if an MRI is found, append a complete MRI object
-							json.files.list[json.files.list.indexOf(item)]=obj[0];
+							json.files.list[json.files.list.indexOf(item)]=obj;
 						} else {
 						    // if an MRI is not found, create one with source URL and empty name
 							json.files.list[json.files.list.indexOf(item)]={
@@ -311,12 +314,12 @@ var settings = function(req, res) {
         async.each(
             json.files.list,
             function(item,cb) {
-                req.db.get('mri').find({source:item,backup:{$exists:0}},{name:1,_id:0})
+                req.db.get('mri').findOne({source:item,backup:{$exists:0}},{name:1,_id:0})
                 .then(function(obj) {
-                    if(obj[0]) {
+                    if(obj) {
                         json.files.list[json.files.list.indexOf(item)]={
                             source: item,
-                            name: obj[0].name
+                            name: obj.name
                         }
                     } else {
                         json.files.list[json.files.list.indexOf(item)]={
@@ -336,7 +339,7 @@ var settings = function(req, res) {
                     json.collaborators.list.map(function(o){return o.userID}), // convert array of objects into array of userIDs
                     function(item,cb) {
                         console.log("item",item);
-                        req.db.get('user').find({nickname:item,backup:{$exists:0}},{name:1,_id:0})
+                        req.db.get('user').findOne({nickname:item,backup:{$exists:0}},{name:1,_id:0})
                         .then(function(obj) {
                             console.log("user",obj);
                             var i, found = false;
@@ -346,9 +349,9 @@ var settings = function(req, res) {
                                     break;
                                 }
                             }
-                            if(obj[0]) {    // name found
+                            if(obj) {    // name found
                                 json.collaborators.list[i].username=item;
-                                json.collaborators.list[i].name=obj[0].name;
+                                json.collaborators.list[i].name=obj.name;
                             } else {    // name not found: set to empty
                                 json.collaborators.list[i].username=item;
                                 json.collaborators.list[i].name="";
@@ -416,9 +419,8 @@ function insertMRInames(req,res,list) {
         
         // check if the mri entry already exists
         (function(na,so,fi) { // without a closure, only the last name in the list is used and repeated
-            req.db.get('mri').find({source:so,backup:{$exists:0}})
+            req.db.get('mri').findOne({source:so,backup:{$exists:0}})
             .then(function (mri) {
-                mri=mri[0];
                 var hash = crypto.createHash('md5').update(so).digest('hex');
                 
                 // if mri exists, and has no name, insert the name
@@ -485,10 +487,13 @@ var post_project = function(req, res) {
         return;
     }
 
-    console.log(req.params);
-    console.log(req.body);
     var obj = JSON.parse(DOMPurify.sanitize(req.body.data));
     var k;
+
+    /**
+     * @todo Replace .find call by .findOne. if(result.length) should change
+     *       to if(result)
+     */
 
     isProjectObject(req,res,obj)
     .then(function(obj) {

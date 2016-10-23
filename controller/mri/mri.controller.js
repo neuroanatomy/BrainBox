@@ -124,11 +124,8 @@ var mri = function (req, res) {
     
     console.log("query",myurl,hash);
 
-    req.db.get('mri').find({url: "/data/" + hash + "/", backup:{$exists:0}}, {fields: {_id: 0}, sort: {$natural: -1}, limit: 1})
+    req.db.get('mri').findOne({url: "/data/" + hash + "/", backup:{$exists:0}}, {fields: {_id: 0}, sort: {$natural: -1}, limit: 1})
         .then(function (json) {
-            
-            // get the 1st object from the response array
-            json = json[0];
             
             // determine whether we need to download the data from the source
             var doDownload = false;
@@ -184,7 +181,7 @@ var mri = function (req, res) {
                 for(i=0;i<json.mri.atlas.length;i++) {
                     if(json.mri.atlas[i].project) {
                         console.log("mri is in project",json.mri.atlas[i].project);
-                        arr.push(req.db.get('project').find({
+                        arr.push(req.db.get('project').findOne({
                             shortname:json.mri.atlas[i].project,
                             backup: {$exists: 0}
                         }));
@@ -192,31 +189,10 @@ var mri = function (req, res) {
                 }
                 Promise.all(arr).then(function(projects) {
                     for(i=0;i<json.mri.atlas.length;i++) {
-                        label:
                         for(j=0;j<projects.length;j++) {
-                            if(json.mri.atlas[i].project == projects[j][0].shortname) {
-                                // owner?
-                                if(loggedUser == projects[j][0].owner) {
-                                    console.log("user is owner. Access: remove");
-                                    json.mri.atlas[i].access = "remove";
-                                    break label;
-                                }
-                                // collaborator?
-                                for(k=0;k<projects[j][0].collaborators.list.length;k++) {
-                                    if(projects[j][0].collaborators.list[k].userID == loggedUser) {
-                                        json.mri.atlas[i].access = projects[j][0].collaborators.list[k].access.annotations;
-                                        console.log("user is collaborator. Access:",json.mri.atlas[i].access);
-                                        break label;
-                                    }
-                                }
-                                // anyone?
-                                for(k=0;k<projects[j][0].collaborators.list.length;k++) {
-                                    if(projects[j][0].collaborators.list[k].userID == "anyone" ) {
-                                        json.mri.atlas[i].access = projects[j][0].collaborators.list[k].access.annotations;
-                                        console.log("user is anyone. Access:",json.mri.atlas[i].access);
-                                        break label;
-                                    }
-                                }
+                            if(json.mri.atlas[i].project == projects[j].shortname) {
+                                json.mri.atlas[i].access = checkAccess.toAnnotationByProject(json.mri.atlas[i],projects[j],loggedUser);
+                                break;
                             }
                         }
                     }
@@ -242,14 +218,10 @@ var api_mri_post = function (req, res) {
 
     var myurl = req.body.url;
     var hash = crypto.createHash('md5').update(myurl).digest('hex');
-    // shell equivalent: req.db.mri.find({source:"http://braincatalogue.org/data/Pineal/P001/t1wreq.db.nii.gz"}).limit(1).sort({$natural:-1})
 
-    req.db.get('mri').find({source:myurl, backup: {$exists: false}}, "-_id", {sort: {$natural: -1}, limit: 1})
+    req.db.get('mri').findOne({source:myurl, backup: {$exists: false}}, "-_id", {sort: {$natural: -1}, limit: 1})
         .then(function (json) {
         
-            // get the 1st object from the response array
-            json = json[0];
-            
             // determine whether we need to download the data from the source
             var doDownload = false;
             
@@ -305,9 +277,8 @@ var api_mri_get = function (req, res) {
     hash = crypto.createHash('md5').update(myurl).digest('hex');
     // shell equivalent: req.db.mri.find({source:"http://braincatalogue.org/data/Pineal/P001/t1wreq.db.nii.gz"}).limit(1).sort({$natural:-1})
 
-    req.db.get('mri').find({url: "/data/" + hash + "/", backup: {$exists: false}}, "-_id", {sort: {$natural: -1}, limit: 1})
+    req.db.get('mri').findOne({url: "/data/" + hash + "/", backup: {$exists: false}}, "-_id", {sort: {$natural: -1}, limit: 1})
         .then(function (json) {
-            json=json[0];
             res.status(200);
             res.json(json);
         })
