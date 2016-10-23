@@ -695,7 +695,7 @@ $("#importFilesDialogCancel").click(function() {
 $("#addProject").click(function(){location="/project/new"});
 
 // listen to type of annotation changes
-$("#annotations tbody").on('change', "td:eq(1) select", function(e) {
+$("#annotations tbody").on('change', "td:nth-child(2) select", function(e) {
     var irow=$(e.target).closest("tr").index();
     var t=$(e.target).prop('selectedIndex');
     if(t==0) {
