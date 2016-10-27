@@ -161,7 +161,7 @@
 }
 #tools-side {
 	width:100%;
-	position-relative;
+	position:relative;
 	pointer-events:none;
 }
 #tools-minimized, #tools-maximized {
