@@ -7,7 +7,7 @@ var AtlasMakerIO = {
      */
 	encodeNifti: function encodeNifti() {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(encodeNifti);if(l)console.log(l);
+		var l=me.traceLog(encodeNifti);if(l)console.log.apply(undefined,l);
 	
 		var	sizeof_hdr=348;
 		var	dimensions=4;			// number of dimension values provided
@@ -52,7 +52,7 @@ var AtlasMakerIO = {
      */
 	saveNifti: function saveNifti() {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(saveNifti);if(l)console.log(l);
+		var l=me.traceLog(saveNifti);if(l)console.log.apply(undefined,l);
 	
 		var niigz=me.encodeNifti();
 		var niigzBlob = new Blob([niigz]);
@@ -65,7 +65,7 @@ var AtlasMakerIO = {
      */
 	loadNifti: function loadNifti(nii) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(loadNifti,1);if(l)console.log(l);
+		var l=me.traceLog(loadNifti,1);if(l)console.log.apply(undefined,l);
 
 		var	dv=new DataView(nii);
 		var	vox_offset=352;
@@ -113,7 +113,7 @@ var AtlasMakerIO = {
      */
 	computeS2VTransformation: function computeS2VTransformation() {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(computeS2VTransformation);if(l)console.log(l);
+		var l=me.traceLog(computeS2VTransformation);if(l)console.log.apply(undefined,l);
 		
 		var v2w=me.User.v2w;
 		var wori=me.User.wori;
@@ -139,7 +139,7 @@ var AtlasMakerIO = {
      */
 	testS2VTransformation: function testS2VTransformation() {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(testS2VTransformation);if(l)console.log(l);
+		var l=me.traceLog(testS2VTransformation);if(l)console.log.apply(undefined,l);
 		
 		/*
 			check the S2V transformation to see if it looks correct.
@@ -195,7 +195,7 @@ var AtlasMakerIO = {
      */
 	S2I: function S2I(s,mri) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(S2I,3);if(l)console.log(l);
+		var l=me.traceLog(S2I,3);if(l)console.log.apply(undefined,l);
 		
 		var s2v=mri.s2v;
 		var i=null,w,s,v;

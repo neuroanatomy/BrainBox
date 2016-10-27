@@ -7,7 +7,7 @@ var AtlasMakerUI = {
      */
     slider: function slider(elem,callback) {
         var me=AtlasMakerWidget;
-        var l=me.traceLog(slider,2);if(l)console.log(l);
+        var l=me.traceLog(slider,2);if(l)console.log.apply(undefined,l);
     
         // Initialise a 'slider' control
 

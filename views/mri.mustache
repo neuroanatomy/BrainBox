@@ -365,8 +365,8 @@ if( $.isEmptyObject(mriInfo)) {
             var col=$("table#annotations tr:eq(0) th:eq("+$(this).closest('td')[0].cellIndex+")").text();
             var index=$(this).closest('tr')[0].rowIndex-1;
             switch(col) {
-                case "Label Set":
-                    var url=info_proxy["mri.atlas."+index+".labels"];
+                case "Value":
+                    var url="/labels/" + info_proxy["mri.atlas."+index+".labels"];
                     $.getJSON(url,function(json) {
                         AtlasMakerWidget.configureOntology(json);
                         AtlasMakerWidget.changePenColor(0);

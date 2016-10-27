@@ -83,17 +83,27 @@ var AtlasMakerWidget = {
 	/**
 	 * @function traceLog
 	 */
-	traceLog: function traceLog(f,l) {
+	traceLog: function traceLog(f,l,c) {
 		var me=AtlasMakerWidget;
-		if(me.debug && (l==undefined || me.debug>l))
-			return "am> "+(f.name)+" "+(f.caller?(f.caller.name||"annonymous"):"root");
+        if(me.debug && (l==undefined || me.debug>l)) {
+            var str,arg=[];
+            str="am> "+(f.name)+" "+(f.caller?(f.caller.name||"annonymous"):"root");
+            if(c) {
+                str="%c"+str;
+            }
+            arg.push(str);
+            if(c) {
+                arg.push("color:"+c);
+            }
+            return arg;
+        }
 	},
     /**
      * @function quit
      */
 	quit: function quit() {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(quit);if(l)console.log(l);
+		var l=me.traceLog(quit,0,"#bbd");if(l)console.log.apply(undefined,l);
 	
 		me.log("","Goodbye!");
 		me.socket.close();
@@ -108,7 +118,7 @@ var AtlasMakerWidget = {
 	logToDatabase: function logToDatabase(key,value) {
 		var def=$.Deferred();
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(logToDatabase,1);if(l)console.log(l);
+		var l=me.traceLog(logToDatabase,1,"#bbd");if(l)console.log.apply(undefined,l);
 		$.ajax({
 			url:"/api/log",
 			type:"POST",
@@ -135,7 +145,7 @@ var AtlasMakerWidget = {
      */
 	initAtlasMaker: function initAtlasMaker(elem) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(initAtlasMaker);if(l)console.log(l);
+		var l=me.traceLog(initAtlasMaker,0,"#bbd");if(l)console.log.apply(undefined,l);
 	
 		// check if user is loged in
 		$.get("/loggedIn",function(res) {
@@ -248,7 +258,7 @@ var AtlasMakerWidget = {
      */
 	configureAtlasMaker: function configureAtlasMaker(info,index) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(configureAtlasMaker);if(l)console.log(l);
+		var l=me.traceLog(configureAtlasMaker,0,"#bbd");if(l)console.log.apply(undefined,l);
 
 		// Load segmentation labels
 		return $.getJSON("/labels/"+info.mri.atlas[index].labels, function from_configureAtlasMaker(d) {
@@ -283,7 +293,7 @@ var AtlasMakerWidget = {
      */
 	configureOntology: function configureOntology(json) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(configureOntology);if(l)console.log(l);
+		var l=me.traceLog(configureOntology,0,"#bbd");if(l)console.log.apply(undefined,l);
 
 		me.ontology=json
 		me.ontology.valueToIndex=[];
@@ -296,7 +306,7 @@ var AtlasMakerWidget = {
      */
 	configureMRI: function configureMRI(info,index) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(configureMRI);if(l)console.log(l);
+		var l=me.traceLog(configureMRI,0,"#bbd");if(l)console.log.apply(undefined,l);
 
 		var def=$.Deferred();
 				

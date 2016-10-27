@@ -8,7 +8,7 @@ var AtlasMakerDraw = {
      */
 	resizeWindow: function resizeWindow() {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(resizeWindow,1);if(l)console.log(l);
+		var l=me.traceLog(resizeWindow,1);if(l)console.log.apply(undefined,l);
 
 		var wH=me.container.height();
 		var wW=me.container.width();	
@@ -41,7 +41,7 @@ var AtlasMakerDraw = {
      */
 	configureBrainImage: function configureBrainImage() {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(configureBrainImage);if(l)console.log(l);
+		var l=me.traceLog(configureBrainImage);if(l)console.log.apply(undefined,l);
 	
 		if(me.User.view==null)
 			me.User.view="sag";
@@ -75,7 +75,7 @@ var AtlasMakerDraw = {
      */
 	configureAtlasImage: function configureAtlasImage() {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(configureAtlasImage);if(l)console.log(l);
+		var l=me.traceLog(configureAtlasImage);if(l)console.log.apply(undefined,l);
 	
 		// has to be run *after* configureBrainImage
 		me.atlas_offcn.width=me.brain_W;
@@ -87,7 +87,7 @@ var AtlasMakerDraw = {
      */
 	nearestNeighbour: function nearestNeighbour(ctx) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(nearestNeighbour,1);if(l)console.log(l);
+		var l=me.traceLog(nearestNeighbour,1);if(l)console.log.apply(undefined,l);
 	
 		ctx.imageSmoothingEnabled = false;
 		ctx.mozImageSmoothingEnabled = false;
@@ -97,7 +97,7 @@ var AtlasMakerDraw = {
      */
 	computeSegmentedVolume: function computeSegmentedVolume() {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(computeSegmentedVolume,1);if(l)console.log(l);
+		var l=me.traceLog(computeSegmentedVolume,1);if(l)console.log.apply(undefined,l);
 
 		var i,sum=0;
 		var	data=me.atlas.data;
@@ -115,7 +115,7 @@ var AtlasMakerDraw = {
      */
 	displayInformation: function displayInformation() {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(displayInformation,1);if(l)console.log(l);
+		var l=me.traceLog(displayInformation,1);if(l)console.log.apply(undefined,l);
 			
 		me.info.slice=me.User.slice;
 		var i=0,str;
@@ -149,7 +149,7 @@ var AtlasMakerDraw = {
      */
 	drawImages: function drawImages() {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(drawImages,1);if(l)console.log(l);
+		var l=me.traceLog(drawImages,1);if(l)console.log.apply(undefined,l);
 	
 		if(me.brain_img.img) {
 			me.context.clearRect(0,0,me.context.canvas.width,me.canvas.height);
@@ -170,7 +170,7 @@ var AtlasMakerDraw = {
      */
 	drawAtlasImage: function drawAtlasImage(view,slice) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(drawAtlasImage,1);if(l)console.log(l);
+		var l=me.traceLog(drawAtlasImage,1);if(l)console.log.apply(undefined,l);
 	
 		if(!me.atlas)
 			return;

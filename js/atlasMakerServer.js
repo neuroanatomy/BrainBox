@@ -385,6 +385,9 @@ var initSocketConnection = function initSocketConnection() {
 					case "requestSlice":
 						receiveRequestSliceMessage(data,this);
 						break;
+					case "requestSlice2":
+						receiveRequestSlice2Message(data,this);
+						break;
 					case "saveMetadata":
 						receiveSaveMetadataMessage(data,this);
 						break;
@@ -594,8 +597,60 @@ var receiveRequestSliceMessage = function receiveRequestSliceMessage(data,user_s
 	getBrainAtPath(brainPath)
 	    .then(function promise_fromReceiveRequestSliceMessage(data) {
     		sendSliceToUser(data,view,slice,user_socket);
-	    })
+	    });
 };
+
+var receiveRequestSlice2Message = function receiveRequestSlice2Message(data,user_socket) {
+    traceLog(receiveRequestSlice2Message,1);
+
+	var view=data.view;		// user view
+	var slice=parseInt(data.slice);	// user slice
+	var sourceUS=getUserFromUserId(data.uid);
+	var brainPath=sourceUS.User.dirname+sourceUS.User.mri;
+	var atlasPath=sourceUS.User.dirname+sourceUS.User.atlasFilename;
+	var i, atlas;
+
+	sourceUS.User.view=view;
+	sourceUS.User.slice=slice;
+	if(debug>1) console.log(sourceUS.User.view,sourceUS.User.slice);
+
+
+    getBrainAtPath(brainPath)
+	    .then(function promise_fromReceiveRequestSliceMessage(brain) {
+            for(i in Atlases) {
+                if(Atlases[i].dirname+Atlases[i].name === atlasPath) {
+                    atlas = Atlases[i];
+                    break;
+                }
+            }
+    
+            /*
+            console.log("-------------");
+            console.log("brainPath:");
+            console.log(brainPath);
+            console.log("atlasPath:");
+            console.log(atlasPath);
+            console.log("sourceUS.User:");
+            console.log(sourceUS.User);
+            console.log("brain");
+            console.log(brain);
+            console.log("atlas");
+            console.log(atlas);
+            console.log("-------------");
+            */
+    
+            try {
+                var jpegImageData=drawSlice2(brain,atlas,view,slice);
+                var length=jpegImageData.data.length+jpgTag.length;
+                var bin=Buffer.concat([jpegImageData.data,jpgTag],length);
+                user_socket.send(bin, {binary: true,mask:false});
+            } catch(e) {
+                console.log("ERROR: Cannot send slice to user",e);
+            }
+        });
+
+}
+
 var receiveSaveMetadataMessage = function receiveSaveMetadataMessage(data,user_socket) {
     traceLog(receiveSaveMetadataMessage);
 
@@ -1590,10 +1645,12 @@ var line = function line(x, y, val, User, undoLayer) {
 	var	x1=User.x0; 	// screen coords
 	var y1=User.y0; 	// screen coords
 	var	z=User.slice;	// screen coords
+	var	view=User.view;	// view: sag, cor or axi
+	var sdim=User.s2v.sdim;
 	var x2=x;
 	var y2=y;
 	var	i;
-	
+		
 	if(Math.pow(x1-x2,2)+Math.pow(y1-y2,2)>20*20) {
 		console.log("WARNING: long line from",x1,y1,"to",x2,y2);
 		console.log("User.uid:",User.uid);
@@ -1607,9 +1664,17 @@ var line = function line(x, y, val, User, undoLayer) {
     var sx = (x1 < x2) ? 1 : -1;
     var sy = (y1 < y2) ? 1 : -1;
     var err = dx - dy;
+    
+	switch(view) {
+		case 'sag':	brain_W=sdim[1]; brain_H=sdim[2]; break; // sagital
+		case 'cor':	brain_W=sdim[0]; brain_H=sdim[2]; break; // coronal
+		case 'axi':	brain_W=sdim[0]; brain_H=sdim[1]; break; // axial
+	}
+	
+	console.log(brain_W,brain_H);
 
-	for(j=0;j<User.penSize;j++)
-	for(k=0;k<User.penSize;k++)
+	for(j=0;j<Math.min(User.penSize,brain_W-1-x1);j++)
+	for(k=0;k<Math.min(User.penSize,brain_H-1-y1);k++)
 	    paintVoxel(x1+j,y1+k,z,User,vol,val,undoLayer);
     
 	while (!((x1 === x2) && (y1 === y2))) {
@@ -1622,8 +1687,8 @@ var line = function line(x, y, val, User, undoLayer) {
 			err += dx;
 			y1 += sy;
 		}
-		for(j=0;j<User.penSize;j++)
-		for(k=0;k<User.penSize;k++)
+        for(j=0;j<Math.min(User.penSize,brain_W-1-x1);j++)
+        for(k=0;k<Math.min(User.penSize,brain_H-1-y1);k++)
 			paintVoxel(x1+j,y1+k,z,User,vol,val,undoLayer);
 	}
 };
@@ -1855,7 +1920,7 @@ var drawSlice = function drawSlice(brain, view, slice) {
 		case 'cor':yc=slice; break;
 		case 'axi':ya=slice; break;
 	}
-//	console.log("slice:",slice);
+
 	for(y=0;y<brain_H;y++)
 	for(x=0;x<brain_W;x++) {
 		switch(view) {
@@ -1863,18 +1928,77 @@ var drawSlice = function drawSlice(brain, view, slice) {
 			case 'cor': s=[x,yc,s2v.sdim[2]-1-y]; break;
 			case 'axi': s=[x,s2v.sdim[1]-1-y,ya]; break;
 		}
-		/*
-		if(x%(brain_W-1)==0 && y%(brain_H-1)==0) {
-    		i=S2I(s,brain);
-		    console.log(s,i);
-		} else
-		*/
         i=S2I(s,brain);
 		
 		val=255*(brain.data[i]-brain.min)/(brain.max-brain.min);
 		frameData[4*j+0] = val; // red
 		frameData[4*j+1] = val; // green
 		frameData[4*j+2] = val; // blue
+		frameData[4*j+3] = 0xFF; // alpha - ignored in JPEGs
+		j++;
+	}
+	
+	var rawImageData = {
+	  data: frameData,
+	  width: brain_W,
+	  height: brain_H
+	};
+	return jpeg.encode(rawImageData,99);
+}
+
+var colormap=[];
+for(var i=1;i<256;i++) {
+    colormap.push({
+        r:100+Math.random()*155,
+        g:100+Math.random()*155,
+        b:100+Math.random()*155
+    });
+}
+var drawSlice2 = function drawSlice2(brain, atlas, view, slice) {
+    traceLog(drawSlice2,1);
+    
+	var x,y,i,j;
+	var brain_W, brain_H, brain_D;
+	var ys,ya,yc;
+	var val, rgb;
+	var s,s2v=brain.s2v;
+	
+	switch(view) {
+		case 'sag':	brain_W=s2v.sdim[1]; brain_H=s2v.sdim[2]; brain_D=s2v.sdim[0]; break; // sagital
+		case 'cor':	brain_W=s2v.sdim[0]; brain_H=s2v.sdim[2]; brain_D=s2v.sdim[1]; break; // coronal
+		case 'axi':	brain_W=s2v.sdim[0]; brain_H=s2v.sdim[1]; brain_D=s2v.sdim[2]; break; // axial
+	}
+
+	var frameData = new Buffer(brain_W * brain_H * 4);
+
+	j=0;
+	switch(view) {
+		case 'sag':ys=slice; break;
+		case 'cor':yc=slice; break;
+		case 'axi':ya=slice; break;
+	}
+
+	for(y=0;y<brain_H;y++)
+	for(x=0;x<brain_W;x++) {
+		switch(view) {
+			case 'sag': s=[ys,x,s2v.sdim[2]-1-y]; break;
+			case 'cor': s=[x,yc,s2v.sdim[2]-1-y]; break;
+			case 'axi': s=[x,s2v.sdim[1]-1-y,ya]; break;
+		}
+        i=S2I(s,brain);
+		
+		// brain data
+		val=(brain.data[i]-brain.min)/(brain.max-brain.min);
+		
+		// atlas data
+		if(atlas.data[i] != 0) {
+		    rgb = colormap[atlas.data[i]];
+		} else {
+		    rgb={r:255, g:255, b:255};
+		}
+		frameData[4*j+0] = rgb.r*val; // red
+		frameData[4*j+1] = rgb.g*val; // green
+		frameData[4*j+2] = rgb.b*val; // blue
 		frameData[4*j+3] = 0xFF; // alpha - ignored in JPEGs
 		j++;
 	}

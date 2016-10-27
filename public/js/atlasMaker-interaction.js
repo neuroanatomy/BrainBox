@@ -10,7 +10,7 @@ var AtlasMakerInteraction = {
      */
 	changeToolbarDisplay: function changeToolbarDisplay(display) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(changeToolbarDisplay);if(l)console.log(l);
+		var l=me.traceLog(changeToolbarDisplay,0,"#f00");if(l)console.log.apply(undefined,l);
 		
 		switch(display) {
 		    case "minimize":
@@ -34,7 +34,7 @@ var AtlasMakerInteraction = {
      */
 	changeView: function changeView(theView) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(changeView);if(l)console.log(l);
+		var l=me.traceLog(changeView,0,"#f00");if(l)console.log.apply(undefined,l);
 	
 		switch(theView) {
 			case 'sag':
@@ -65,7 +65,7 @@ var AtlasMakerInteraction = {
      */
 	changeTool: function changeTool(theTool) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(changeTool);if(l)console.log(l);
+		var l=me.traceLog(changeTool,0,"#f00");if(l)console.log.apply(undefined,l);
 	
 		if(theTool.toLowerCase()==me.User.tool)
 			return;
@@ -100,7 +100,7 @@ var AtlasMakerInteraction = {
      */
 	changePenSize: function changePenSize(theSize) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(changePenSize);if(l)console.log(l);
+		var l=me.traceLog(changePenSize,0,"#f00");if(l)console.log.apply(undefined,l);
 	
 		me.User.penSize=parseInt(theSize);
 		me.sendUserDataMessage(JSON.stringify({'penSize':me.User.penSize}));
@@ -110,7 +110,7 @@ var AtlasMakerInteraction = {
      */
 	changePenColor: function changePenColor(index) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(changePenColor);if(l)console.log(l);
+		var l=me.traceLog(changePenColor,0,"#f00");if(l)console.log.apply(undefined,l);
 		
 		var c=me.ontology.labels[index].color;
 		$("#color").css({backgroundColor:'rgb('+c[0]+','+c[1]+','+c[2]+')'});
@@ -122,7 +122,7 @@ var AtlasMakerInteraction = {
      */
 	changeSlice: function changeSlice(x) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(changeSlice,1);if(l)console.log(l);
+		var l=me.traceLog(changeSlice,1,"#f00");if(l)console.log.apply(undefined,l);
 
 		var max=$("#slice").data("max");
 		$("#slice").data("val",x);
@@ -138,7 +138,7 @@ var AtlasMakerInteraction = {
      */
 	prevSlice: function prevSlice() {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(prevSlice,1);if(l)console.log(l);
+		var l=me.traceLog(prevSlice,1,"#f00");if(l)console.log.apply(undefined,l);
 
 		var x=$("#slice").data("val")-1;
 		if(x<0) x=0;
@@ -153,7 +153,7 @@ var AtlasMakerInteraction = {
      */
 	nextSlice: function nextSlice() {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(nextSlice,1);if(l)console.log(l);
+		var l=me.traceLog(nextSlice,1,"#f00");if(l)console.log.apply(undefined,l);
 
 		var max=$("#slice").data("max");
 		var x=$("#slice").data("val")+1;
@@ -169,7 +169,7 @@ var AtlasMakerInteraction = {
      */
 	toggleFill: function toggleFill(x) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(toggleFill);if(l)console.log(l);
+		var l=me.traceLog(toggleFill,0,"#f00");if(l)console.log.apply(undefined,l);
 	
 		me.User.doFill=x;
 		me.sendUserDataMessage(JSON.stringify({'doFill':me.User.doFill}));
@@ -179,7 +179,7 @@ var AtlasMakerInteraction = {
      */
 	toggleChat: function toggleChat() {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(toggleChat);if(l)console.log(l);
+		var l=me.traceLog(toggleChat,0,"#f00");if(l)console.log.apply(undefined,l);
 	
 		$("#chatBlock").toggle();
 	},
@@ -188,7 +188,7 @@ var AtlasMakerInteraction = {
      */
 	toggleFullscreen: function toggleFullscreen() {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(toggleFullscreen);if(l)console.log(l);
+		var l=me.traceLog(toggleFullscreen,0,"#f00");if(l)console.log.apply(undefined,l);
 
 		if(me.fullscreen==false) {
 			// Enter fullscreen
@@ -233,7 +233,7 @@ var AtlasMakerInteraction = {
      */
 	render3D: function render3D() {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(render3D);if(l)console.log(l);
+		var l=me.traceLog(render3D,0,"#f00");if(l)console.log.apply(undefined,l);
 		
 		// puts a fresh version of the segmentation in localStorage
 		localStorage.brainbox=URL.createObjectURL(new Blob([me.encodeNifti()]));
@@ -246,7 +246,7 @@ var AtlasMakerInteraction = {
      */
 	link: function link() {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(link);if(l)console.log(l);
+		var l=me.traceLog(link,0,"#f00");if(l)console.log.apply(undefined,l);
 		window.prompt("Copy to clipboard:", location.href+"&view="+AtlasMakerWidget.User.view+"&slice="+AtlasMakerWidget.User.slice);
 	},
     /**
@@ -254,7 +254,7 @@ var AtlasMakerInteraction = {
      */
 	upload: function upload() {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(upload);if(l)console.log(l);
+		var l=me.traceLog(upload,0,"#f00");if(l)console.log.apply(undefined,l);
 		
 		var inp=$("<input>");
 		inp.hide();
@@ -306,7 +306,7 @@ var AtlasMakerInteraction = {
      */
 	download: function download() {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(download);if(l)console.log(l);
+		var l=me.traceLog(download,0,"#f00");if(l)console.log.apply(undefined,l);
 			
 		var a = document.createElement('a');
 		var niigz=me.encodeNifti();
@@ -321,7 +321,7 @@ var AtlasMakerInteraction = {
      */
 	color: function color() {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(color);if(l)console.log(l);
+		var l=me.traceLog(color,0,"#f00");if(l)console.log.apply(undefined,l);
 		
 		$("#labelset").appendTo(me.container);
 		$("#labelset").show();
@@ -348,7 +348,7 @@ var AtlasMakerInteraction = {
      */
 	ontologyValueToColor: function ontologyValueToColor(val) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(ontologyValueToColor,3);if(l)console.log(l);
+		var l=me.traceLog(ontologyValueToColor,3,"#f00");if(l)console.log.apply(undefined,l);
 
 		var c=[0,0,0];
 		var i;
@@ -366,7 +366,7 @@ var AtlasMakerInteraction = {
      */
 	eyedrop : function eyedrop( x,y,usr) {
 		var me = AtlasMakerWidget;
-		var l = me.traceLog(eyedrop);if(l)console.log(l);
+		var l = me.traceLog(eyedrop,0,"#f00");if(l)console.log.apply(undefined,l);
 		
 		var	z = usr.slice;
 		var i = me.slice2index( x,y,z,usr.view );
@@ -377,7 +377,7 @@ var AtlasMakerInteraction = {
      */
 	togglePreciseCursor: function togglePreciseCursor() {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(togglePreciseCursor);if(l)console.log(l);
+		var l=me.traceLog(togglePreciseCursor,0,"#f00");if(l)console.log.apply(undefined,l);
 	
 		me.flagUsePreciseCursor=!me.flagUsePreciseCursor;
 		me.initCursor();
@@ -387,7 +387,7 @@ var AtlasMakerInteraction = {
      */
 	initCursor: function initCursor() {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(initCursor,1);if(l)console.log(l);
+		var l=me.traceLog(initCursor,1,"#f00");if(l)console.log.apply(undefined,l);
 
 		var W=parseFloat($('#atlasMaker canvas').css('width'));
 		var H=parseFloat($('#atlasMaker canvas').css('height'));
@@ -434,7 +434,7 @@ var AtlasMakerInteraction = {
      */
 	updateCursor: function updateCursor() {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(updateCursor,1);if(l)console.log(l);
+		var l=me.traceLog(updateCursor,1,"#f00");if(l)console.log.apply(undefined,l);
 
 		$("#finger").removeClass("move draw configure");
 		switch(me.Crsr.state) {
@@ -448,7 +448,7 @@ var AtlasMakerInteraction = {
      */
 	mousedown: function mousedown(e) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(mousedown);if(l)console.log(l);
+		var l=me.traceLog(mousedown,0,"#f00");if(l)console.log.apply(undefined,l);
 	
 		e.preventDefault();
 
@@ -469,7 +469,7 @@ var AtlasMakerInteraction = {
      */
 	mousemove: function mousemove(e) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(mousemove,2);if(l)console.log(l);
+		var l=me.traceLog(mousemove,2,"#f00");if(l)console.log.apply(undefined,l);
 	
 		e.preventDefault();
 		var W=parseFloat($('#atlasMaker canvas').css('width'));
@@ -493,7 +493,7 @@ var AtlasMakerInteraction = {
      */
 	mouseup: function mouseup(e) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(mouseup);if(l)console.log(l);
+		var l=me.traceLog(mouseup,0,"#f00");if(l)console.log.apply(undefined,l);
 	
 		me.up(e);
 	},
@@ -502,7 +502,7 @@ var AtlasMakerInteraction = {
      */
 	touchstart: function touchstart(e) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(touchstart);if(l)console.log(l);
+		var l=me.traceLog(touchstart,0,"#f00");if(l)console.log.apply(undefined,l);
 	
 		e.preventDefault();
 
@@ -552,7 +552,7 @@ var AtlasMakerInteraction = {
      */
 	touchmove: function touchmove(e) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(touchmove,2);if(l)console.log(l);
+		var l=me.traceLog(touchmove,2,"#f00");if(l)console.log.apply(undefined,l);
 		
 		if(me.Crsr.touchStarted==false && me.debug) {
 			console.log("WARNING: touch can move without having started");
@@ -605,7 +605,7 @@ var AtlasMakerInteraction = {
      */
 	touchend: function touchend(e) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(touchend);if(l)console.log(l);
+		var l=me.traceLog(touchend,0,"#f00");if(l)console.log.apply(undefined,l);
 		
 		e.preventDefault();
 	
@@ -627,7 +627,7 @@ var AtlasMakerInteraction = {
      */
 	down: function down(x,y) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(down,2);if(l)console.log(l);
+		var l=me.traceLog(down,0,"#f00");if(l)console.log.apply(undefined,l);
 	
 		var z=me.User.slice;
 
@@ -683,7 +683,7 @@ var AtlasMakerInteraction = {
      */
 	move: function move(x,y) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(move,2);if(l)console.log(l);
+		var l=me.traceLog(move,2,"#f00");if(l)console.log.apply(undefined,l);
 	
 		/*
 		if(MyLoginWidget.loggedin==0 || me.editMode==0)
@@ -717,7 +717,7 @@ var AtlasMakerInteraction = {
      */
 	up: function up(e) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(up,2);if(l)console.log(l);
+		var l=me.traceLog(up,0,"#f00");if(l)console.log.apply(undefined,l);
 
 		/*
 		if(MyLoginWidget.loggedin==0 || me.editMode==0)
@@ -739,13 +739,18 @@ var AtlasMakerInteraction = {
 		// compute total segmented volume
 		var vol=me.computeSegmentedVolume();
 		me.info.volume=parseInt(vol)+" mm3";
+		
+		/*
+		    TEST
+		*/
+		me.sendRequestSliceMessage();
 	},
     /**
      * @function keyDown
      */
 	keyDown: function keyDown(e) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(keyDown,2);if(l)console.log(l);
+		var l=me.traceLog(keyDown,2,"#f00");if(l)console.log.apply(undefined,l);
 	
 		// console.log("key:",e.which);
 		
@@ -785,7 +790,7 @@ var AtlasMakerInteraction = {
      */
 	onkey: function onkey(e) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(onkey,2);if(l)console.log(l);
+		var l=me.traceLog(onkey,2,"#f00");if(l)console.log.apply(undefined,l);
 	
 		if (e.keyCode == 13) {
 			me.sendChatMessage();

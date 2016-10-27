@@ -16,7 +16,7 @@ var AtlasMakerPaint = {
      */
 	paintxy: function paintxy(u,c,x,y,usr) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(paintxy,1);if(l)console.log(l);
+		var l=me.traceLog(paintxy,1,"#0c0");if(l)console.log.apply(undefined,l);
 	
 		// u: user number
 		// c: command
@@ -61,7 +61,7 @@ var AtlasMakerPaint = {
      */
 	paintvol: function paintvol(voxels) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(paintvol);if(l)console.log(l);
+		var l=me.traceLog(paintvol,0,"#0c0");if(l)console.log.apply(undefined,l);
 	
 		var	i,
 			ind,			// voxel index
@@ -86,7 +86,7 @@ var AtlasMakerPaint = {
      */
 	fill: function fill(x,y,z,val,myView) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(fill);if(l)console.log(l);
+		var l=me.traceLog(fill,0,"#0c0");if(l)console.log.apply(undefined,l);
 	
 		var	Q=[],n;
 		var	atlas=me.atlas;
@@ -121,7 +121,7 @@ var AtlasMakerPaint = {
      */
 	line: function line(x,y,val,usr) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(line,1);if(l)console.log(l);
+		var l=me.traceLog(line,1,"#0c0");if(l)console.log.apply(undefined,l);
 	
 		// Bresenham's line algorithm adapted from
 		// http://stackoverflow.com/questions/4672279/bresenham-algorithm-in-javascript
@@ -150,8 +150,8 @@ var AtlasMakerPaint = {
 										Math.pow(me.brain_pixdim[1]*(xyzi1[1]-xyzi2[1]),2)+
 										Math.pow(me.brain_pixdim[2]*(xyzi1[2]-xyzi2[2]),2));
 	
-		for(j=0;j<usr.penSize;j++)
-		for(k=0;k<usr.penSize;k++) {
+		for(j=0;j<Math.min(usr.penSize,me.brain_W-1-x1);j++)
+		for(k=0;k<Math.min(usr.penSize,me.brain_H-1-y1);k++) {
 			i=me.slice2index(x1+j,y1+k,z,usr.view);
 			atlas.data[i]=val;
 		}
@@ -166,8 +166,8 @@ var AtlasMakerPaint = {
 				err += dx;
 				y1 += sy;
 			}
-			for(j=0;j<usr.penSize;j++)
-			for(k=0;k<usr.penSize;k++) {
+            for(j=0;j<Math.min(usr.penSize,me.brain_W-1-x1);j++)
+            for(k=0;k<Math.min(usr.penSize,me.brain_H-1-y1);k++) {
 				i=me.slice2index(x1+j,y1+k,z,usr.view);
 				atlas.data[i]=val;
 			}
@@ -179,7 +179,7 @@ var AtlasMakerPaint = {
      */
 	slice2index: function slice2index(mx,my,mz,myView) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(slice2index,3);if(l)console.log(l);
+		var l=me.traceLog(slice2index,3,"#0c0");if(l)console.log.apply(undefined,l);
 	
 		var	dim=me.atlas.dim;
 		var	x,y,z,i;
@@ -193,9 +193,7 @@ var AtlasMakerPaint = {
 */
 		var s=[x,y,z];
 		i=me.S2I(s,me.User);
-		/*
-		i=z*dim[1]*dim[0]+y*dim[0]+x;
-		*/
+
 		return i;
 	},
     /**
@@ -205,7 +203,7 @@ var AtlasMakerPaint = {
      */
 	slice2xyzi: function slice2xyzi(mx,my,mz,myView) {
 		var me=AtlasMakerWidget;
-		var l=me.traceLog(slice2xyzi,1);if(l)console.log(l);
+		var l=me.traceLog(slice2xyzi,1,"#0c0");if(l)console.log.apply(undefined,l);
 	
 		var	dim=me.atlas.dim;
 		var	x,y,z,i;
@@ -219,9 +217,7 @@ var AtlasMakerPaint = {
 */
 		var s=[x,y,z];
 		i=me.S2I(s,me.User);
-		/*
-		i=z*dim[1]*dim[0]+y*dim[0]+x;
-		*/
+
 		return [x,y,z,i];	
 	}
 };
