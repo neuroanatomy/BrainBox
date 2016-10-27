@@ -150,8 +150,8 @@ var AtlasMakerPaint = {
 										Math.pow(me.brain_pixdim[1]*(xyzi1[1]-xyzi2[1]),2)+
 										Math.pow(me.brain_pixdim[2]*(xyzi1[2]-xyzi2[2]),2));
 	
-		for(j=0;j<Math.min(usr.penSize,me.brain_W-1-x1);j++)
-		for(k=0;k<Math.min(usr.penSize,me.brain_H-1-y1);k++) {
+		for(j=0;j<Math.min(usr.penSize,me.brain_W-x1);j++)
+		for(k=0;k<Math.min(usr.penSize,me.brain_H-y1);k++) {
 			i=me.slice2index(x1+j,y1+k,z,usr.view);
 			atlas.data[i]=val;
 		}
@@ -166,8 +166,8 @@ var AtlasMakerPaint = {
 				err += dx;
 				y1 += sy;
 			}
-            for(j=0;j<Math.min(usr.penSize,me.brain_W-1-x1);j++)
-            for(k=0;k<Math.min(usr.penSize,me.brain_H-1-y1);k++) {
+            for(j=0;j<Math.min(usr.penSize,me.brain_W-x1);j++)
+            for(k=0;k<Math.min(usr.penSize,me.brain_H-y1);k++) {
 				i=me.slice2index(x1+j,y1+k,z,usr.view);
 				atlas.data[i]=val;
 			}

@@ -1673,8 +1673,8 @@ var line = function line(x, y, val, User, undoLayer) {
 	
 	console.log(brain_W,brain_H);
 
-	for(j=0;j<Math.min(User.penSize,brain_W-1-x1);j++)
-	for(k=0;k<Math.min(User.penSize,brain_H-1-y1);k++)
+	for(j=0;j<Math.min(User.penSize,brain_W-x1);j++)
+	for(k=0;k<Math.min(User.penSize,brain_H-y1);k++)
 	    paintVoxel(x1+j,y1+k,z,User,vol,val,undoLayer);
     
 	while (!((x1 === x2) && (y1 === y2))) {
@@ -1687,8 +1687,8 @@ var line = function line(x, y, val, User, undoLayer) {
 			err += dx;
 			y1 += sy;
 		}
-        for(j=0;j<Math.min(User.penSize,brain_W-1-x1);j++)
-        for(k=0;k<Math.min(User.penSize,brain_H-1-y1);k++)
+        for(j=0;j<Math.min(User.penSize,brain_W-x1);j++)
+        for(k=0;k<Math.min(User.penSize,brain_H-y1);k++)
 			paintVoxel(x1+j,y1+k,z,User,vol,val,undoLayer);
 	}
 };
@@ -1961,7 +1961,7 @@ var drawSlice2 = function drawSlice2(brain, atlas, view, slice) {
 	var brain_W, brain_H, brain_D;
 	var ys,ya,yc;
 	var val, rgb;
-	var s,s2v=brain.s2v;
+	var s,s2v=brain.s2v,t=0.5;
 	
 	switch(view) {
 		case 'sag':	brain_W=s2v.sdim[1]; brain_H=s2v.sdim[2]; brain_D=s2v.sdim[0]; break; // sagital
@@ -1993,12 +1993,14 @@ var drawSlice2 = function drawSlice2(brain, atlas, view, slice) {
 		// atlas data
 		if(atlas.data[i] != 0) {
 		    rgb = colormap[atlas.data[i]];
+            frameData[4*j+0] = t*rgb.r+(1-t)*rgb.r*val; // red
+            frameData[4*j+1] = t*rgb.g+(1-t)*rgb.g*val; // green
+            frameData[4*j+2] = t*rgb.b+(1-t)*rgb.b*val; // blue
 		} else {
-		    rgb={r:255, g:255, b:255};
+            frameData[4*j+0] = 255*val; // red
+            frameData[4*j+1] = 255*val; // green
+            frameData[4*j+2] = 255*val; // blue
 		}
-		frameData[4*j+0] = rgb.r*val; // red
-		frameData[4*j+1] = rgb.g*val; // green
-		frameData[4*j+2] = rgb.b*val; // blue
 		frameData[4*j+3] = 0xFF; // alpha - ignored in JPEGs
 		j++;
 	}
