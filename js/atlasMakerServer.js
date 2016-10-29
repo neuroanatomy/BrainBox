@@ -1671,8 +1671,6 @@ var line = function line(x, y, val, User, undoLayer) {
 		case 'axi':	brain_W=sdim[0]; brain_H=sdim[1]; break; // axial
 	}
 	
-	console.log(brain_W,brain_H);
-
 	for(j=0;j<Math.min(User.penSize,brain_W-x1);j++)
 	for(k=0;k<Math.min(User.penSize,brain_H-y1);k++)
 	    paintVoxel(x1+j,y1+k,z,User,vol,val,undoLayer);

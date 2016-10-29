@@ -188,9 +188,10 @@ var mri = function (req, res) {
                     }
                 }
                 Promise.all(arr).then(function(projects) {
+                    console.log("projects",projects);
                     for(i=0;i<json.mri.atlas.length;i++) {
                         for(j=0;j<projects.length;j++) {
-                            if(json.mri.atlas[i].project == projects[j].shortname) {
+                            if(projects[j] && projects[j].shortname == json.mri.atlas[i].project) {
                                 json.mri.atlas[i].access = checkAccess.toAnnotationByProject(json.mri.atlas[i],projects[j],loggedUser);
                                 break;
                             }
