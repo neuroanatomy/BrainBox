@@ -84,10 +84,12 @@ var AtlasMakerWidget = {
 	 * @function traceLog
 	 */
 	traceLog: function traceLog(f,l,c) {
+	/*
 		var me=AtlasMakerWidget;
         if(me.debug && (l==undefined || me.debug>l)) {
             var str,arg=[];
-            str="am> "+(f.name)+" "+(f.caller?(f.caller.name||"annonymous"):"root");
+            // str="am> "+(f.name)+" "+(f.caller?(f.caller.name||"annonymous"):"root");
+            str="am> ";//+(f.name);
             if(c) {
                 str="%c"+str;
             }
@@ -97,6 +99,7 @@ var AtlasMakerWidget = {
             }
             return arg;
         }
+    */
 	},
     /**
      * @function quit

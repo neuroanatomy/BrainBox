@@ -13,15 +13,17 @@ var BrainBox={
 	debug: 1,
 	info:{},
 	labelSets:null,
-	access:["Read/Write","Read"],
 	annotationType:["volume","text"],
 
     /**
      * @function traceLog
      */
 	traceLog: function traceLog(f,l) {
+	/*
 		if(BrainBox.debug && (l==undefined || BrainBox.debug>l))
-			return "bb> "+(f.name)+" "+(f.caller?(f.caller.name||"annonymous"):"root");
+			// return "bb> "+(f.name)+" "+(f.caller?(f.caller.name||"annonymous"):"root");
+			return "bb> ";//+(f.name);
+	*/
 	},
 
 	/*
@@ -293,11 +295,11 @@ var BrainBox={
 		BrainBox.info.mri.atlas.push({
 			name:"",
 			project:"",
-			access: "Read/Write", 
+			access: "edit", 
 			created: date.toJSON(), 
 			modified: date.toJSON(), 
 			filename: Math.random().toString(36).slice(2)+".nii.gz",	// automatically generated filename
-			labels: "/labels/foreground.json",
+			labels: "foreground.json",
 			owner: AtlasMakerWidget.User.username,
 			type: "volume"
 		});
