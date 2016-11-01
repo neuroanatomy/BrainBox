@@ -312,46 +312,77 @@ var AtlasMakerWidget = {
 		var l=me.traceLog(configureMRI,0,"#bbd");if(l)console.log.apply(undefined,l);
 
 		var def=$.Deferred();
-				
-		// Get data from AtlasMaker object
-		me.name=info.name||"Untitled";
-		me.url=info.url;
-		me.atlasFilename=info.mri.atlas[index].filename;
-		me.atlasName=info.mri.atlas[index].name;
+		
+		(function() {
+		    var def2 = $.Deferred();
+		    
+		    if(info.dim) {
+		        // the mri object has a 'dim' property, indicating that it was already
+		        // downloaded
+		        return def.resolve(info).promise();
+		    } else {
+		        // the mri object does not have a 'dim' property, indicating that it has
+		        // not been already downloaded. The following command will trigger the
+		        // download, insert the mri entry in the database and return it here
+                $.post("/mri/json",{url:info.source}, function(info2) {
+                    // merge the fields from info2 that are initialised upon download
+                    // of the mri server-side. The mri field in the original 'info',
+                    // which contains the newly created text 'annotations', is conserved
+                    var f, fields = ["filename","success","url","included","dim","pixdim",
+                        "voxel2world","worldOrigin","owner"];
+                    info.mri.brain = info2.mri.brain;
+                    info.mri.atlas.push(info2.mri.atlas[0]);
+                    for(f=0;f<fields.length;f++) {
+                        info[fields[f]] = info2[fields[f]];
+                    }
+                    
+                    def.resolve(info);
+                });
+                return def.promise();
+            }
+		})().then(function(info2) {
+            // Get data from AtlasMaker object
+            me.name=info2.name||"Untitled";
+            me.url=info2.url;
+            me.atlasFilename=info2.mri.atlas[index].filename;
+            me.atlasName=info2.mri.atlas[index].name;
 
-		// get local file path from url
-		me.User.dirname=me.url; // TEMPORARY
-		me.User.mri=info.mri.brain;
-		me.User.specimenName=me.name;
-		me.User.atlasFilename=info.mri.atlas[index].filename;
-		me.User.isMRILoaded=false;
-		
-		// TODO: it's silly to have to put vol dim twice...
-		// (first here, once again further down)
-		me.User.dim=info.dim;
-		me.User.pixdim=info.pixdim;
+            // get local file path from url
+            me.User.dirname=me.url; // TEMPORARY
+            me.User.mri=info2.mri.brain;
+            me.User.specimenName=me.name;
+            me.User.atlasFilename=info2.mri.atlas[index].filename;
+            me.User.isMRILoaded=false;
 
-		// compute space transformations
-		me.User.v2w=info.voxel2world;
-		me.User.wori=info.worldOrigin;
-		me.computeS2VTransformation();
-		me.testS2VTransformation();
-		
-		me.flagLoadingImg={loading:false};
-		
-		me.User.penValue=me.ontology.labels[0].value;
-		
-		me.brain_img.img=null;
-		
-		// get volume dimensions
-		me.brain_dim=info.dim;
-		if(info.pixdim)
-			me.brain_pixdim=info.pixdim;
-		else
-			me.brain_pixdim=[1,1,1];
+            // TODO: it's silly to have to put vol dim twice...
+            // (first here, once again further down)
+            me.User.dim=info2.dim;
+            me.User.pixdim=info2.pixdim;
+
+            // compute space transformations
+            me.User.v2w=info2.voxel2world;
+            me.User.wori=info2.worldOrigin;
+            me.computeS2VTransformation();
+            me.testS2VTransformation();
+        
+            me.flagLoadingImg={loading:false};
+        
+            me.User.penValue=me.ontology.labels[0].value;
+        
+            me.brain_img.img=null;
+        
+            // get volume dimensions
+            me.brain_dim=info2.dim;
+            if(info2.pixdim)
+                me.brain_pixdim=info2.pixdim;
+            else
+                me.brain_pixdim=[1,1,1];
+            
+            def.resolve();
+        });
 		
 
-		return def.resolve().promise();
+		return def.promise();
 	}
 };
 /*

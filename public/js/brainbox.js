@@ -110,26 +110,28 @@ var BrainBox={
 		
 		var def=$.Deferred();
 		var date=new Date();
-		var data=param.info;
 		var index=param.annotationItemIndex||0;
 	
 		// Copy MRI from source
 		$("#msgLog").html("<p>Downloading from source to server...");
 
         // Configure MRI into atlasMaker
-        if(data.success===false) {
+        if(param.info.success===false) {
             date=new Date();
-            $("#msgLog").append("<p>ERROR: "+data.message+".");
-            console.log("<p>ERROR: "+data.message+".");
+            $("#msgLog").append("<p>ERROR: "+param.info.message+".");
+            console.log("<p>ERROR: "+param.info.message+".");
             return def.promise().reject();
         }
-        BrainBox.info=data;
+        BrainBox.info=param.info;
 
         var arr=param.url.split("/");
         var name=arr[arr.length-1];
         date=new Date();
         $("#msgLog").append("<p>Downloading from server...");
 
+        /**
+         * @todo Check it these two lines are of any use...
+         */
         param.dim=BrainBox.info.dim; // this allows to keep dim and pixdim through annotation changes
         param.pixdim=BrainBox.info.pixdim;
 

@@ -82,7 +82,7 @@
 				
 					<!-- File Annotations -->
 					<div id="annotations" class="block" style="flex:1 1 200px">
-						<table id="info" style="width:100%;text-align:left">
+						<table id="volAnnotations" style="width:100%;text-align:left">
 							<thead>
 								<tr>
 									<th>Name</th>
@@ -184,11 +184,15 @@
 	and is filled by the server, from the database.
 */
 var projectInfo={{{projectInfo}}};
+var projShortname = projectInfo.shortname;
 var annotations = {
     text: [],   // collect text annotations
     volume: []  // collect volume annotations
 };
-var k, str;
+var k, g, h, str, found, annType, annName, file;
+var info_proxy = {};
+var trTemplate;
+var objTemplate;
 
 // collect the project's text annotations
 for(k=0;k<projectInfo.annotations.list.length;k++) {
@@ -211,6 +215,21 @@ $("#projectCreated").text("Created on "+creation.toLocaleString());
 $("#projectFilesNumber").text(projectInfo.files.list.length+" Files");
 $("#projectCollaboratorsNumber").text(projectInfo.collaborators.length+" Collaborators");
 
+$("#resizeButton").data({flag:-1,x0:0,y0:0});
+$("#resizeButton").on('mousedown touchstart',function(e){$(this).data({flag:0,x0:e.pageX,y0:e.pageY})});
+$("body").on('mousemove',function(e){resizeButton({x:e.pageX,y:e.pageY})});
+$("body").on('touchmove',function(e){resizeButton({x:e.originalEvent.changedTouches[0].pageX,y:e.originalEvent.changedTouches[0].pageY})});
+$("body").on('mouseup touchend',function(e){$("#resizeButton").data({flag:-1})});
+
+$("#addProject").click(function(){location="/project/new"});
+$("#settings").click(function(){
+    var pathname=location.pathname;
+    if(pathname.slice(-1)=="/")
+        location=pathname+"settings";
+    else
+        location=pathname+"/settings";
+});
+
 
 // Init BrainBox
 //---------------
@@ -224,14 +243,59 @@ $("#projectCollaboratorsNumber").text(projectInfo.collaborators.length+" Collabo
         $(document).on('click', "#labels-close", function(){$("#labelset").hide()});
     });
 
+/**
+ * @todo Annotation entries have the following fields:
+ *       name:       Name of the entry
+ *       project:    Project to which the entry belongs
+ *       type:       Type of annotation: text
+ *       values:     Reference dictionary (an URL?)
+ *       created:    Date of creation
+ *       modified:   Date of last modification
+ *       modifiedBy: Author of the last modification
+ *       data:       The actual data stored for text fields, filename: for volume entries
+ */
+
 // Bind the project's files to the table within #projectFiles
 //------------------------------------------------------------
-    var info_proxy = {};
-    var objTemplate = [
-        {	typeOfBinding:2,
+    // make sure that all mri files have a text annotations object for the project
+    for(k in projectInfo.files.list) {
+        file = projectInfo.files.list[k];
+        if (!(file.mri)) {
+            file.mri = {};
+        }
+        if (!(file.mri.annotations)) {
+            file.mri.annotations = {};
+        }
+        if (!(file.mri.annotations[projShortname])) {
+            file.mri.annotations[projShortname] = {};
+        }
+    }
+
+    // initialise the relevant annotation entries in each mri file if required
+    for(k=0;k<projectInfo.files.list.length;k++) {
+        file = projectInfo.files.list[k];
+        for(g=0;g<annotations.text.length;g++) {
+            annName = annotations.text[g].name;
+            if(!file.mri.annotations[projShortname][annName]) {
+                file.mri.annotations[projShortname][annName] = {
+                    created: (new Date).toJSON(),
+                    type: "text"
+                };
+            }
+        }
+    }
+
+    // configure the binding template for table row and object.
+    // the 1st two columns are fixed: name and source
+    trTemplate = [
+        "<tr>",
+        "	<td contentEditable=true class='noEmpty'></td>",
+        "	<td><a></a></td>"
+    ];
+    objTemplate = [{
+        	typeOfBinding:2,
             path:"files.list.#.name"
-        },
-        {
+        }, {
             typeOfBinding:1,
             path:"files.list.#.source",
             format:function(e, d){
@@ -240,27 +304,11 @@ $("#projectCollaboratorsNumber").text(projectInfo.collaborators.length+" Collabo
             }
         }
     ];
-    var trTemplate=[
-        "<tr>",
-        "	<td contentEditable=true class='noEmpty'></td>",
-        "	<td><a></a></td>"
-    ];
-    // add the 'annotations' object to mri if not present
-    for(k in projectInfo.files.list) {
-        if (!(projectInfo.files.list[k].mri))
-            projectInfo.files.list[k].mri = {};
-        if (!(projectInfo.files.list[k].mri.annotations))
-            /**
-             * @todo Change the annotations object into an array:
-             * projectInfo.files.list[k].mri.annotations = [];
-             */
-            projectInfo.files.list[k].mri.annotations = {};
-    }
-    // determine the type of data display (either select or freeform at the moment) based on data type
-    for(var g in annotations.text) {
-    var g;
+    // the following columns are completed from the project's 'annotations' definitions:
+    // determine their type of display (either select or freeform at the moment) based data type
     for(g=0;g<annotations.text.length;g++) {
-        var annType = Object.prototype.toString.call(annotations.text[g].values); // a better object type description
+        annName = annotations.text[g].name;
+        annType = Object.prototype.toString.call(annotations.text[g].values); // a better object type description
 
         // array of values
         if(annType === "[object Array]") {
@@ -272,86 +320,51 @@ $("#projectCollaboratorsNumber").text(projectInfo.collaborators.length+" Collabo
         
             objTemplate.push({
                 typeOfBinding:2,
-                
-                /**
-                 * @todo Annotations is currently an object. It has to be an array.
-                 *       Each entry in the array has to have the following fields:
-                 *       name:       Name of the entry
-                 *       project:    Project to which the entry belongs
-                 *       type:       Type of annotation: text
-                 *       values:     Reference dictionary (an URL?)
-                 *       created:    Date of creation
-                 *       modified:   Date of last modification
-                 *       modifiedBy: Author of the last modification
-                 *       data:       The actual data stored
-                 * Code:
-                 * path: "files.list.#.mri.annotations."+g+".name"
-                 */
-                path:"files.list.#.mri.annotations." + annotations.text[g].name,
+                path: "files.list.#.mri.annotations."+projShortname+"."+annName,
                 format: function(e, d) {
-                    if (d !=0) {
+                    var obj = d;
+                    if (obj !=0) {
                         /**
                          * @todo Replace color assignment by the addition of a class
                          */
                         $(e).find("select").css("color", "#fff"); 
                     }
-
-                    /**
-                      * @todo Parse should return an object:
-                      * var obj = {
-                      *     name: ??variableName??,
-                      *     project: projectInfo.shortname,
-                      *     type: "text",
-                      *     values: "",
-                      *     modified: (new Date()).toJSON(),
-                      *     modifiedBy: ??loggedUser??,
-                      *     created: ??,
-                      *     data: $(e).find("select").d
-                      */
-                    $(e).find("select").get(0).value=d
+                    $(e).find("select").get(0).value=obj.data;
                 },
-                parse: function(e) {
+                parse: function(e, d) {
                     if ($(e).find("select").val()) {
                         $(e).find("select").css("color", "#fff");
                     }
+                    var obj = d;
+                    obj.modified = (new Date()).toJSON();
+                    obj.modifiedBy = AtlasMakerWidget.User.username;
+                    obj.data = $(e).find("select").val();
                     
-                    /**
-                      * @todo Parse should return an object:
-                      * var obj = {
-                      *     name: ??variableName??,
-                      *     project: projectInfo.shortname,
-                      *     type: "text",
-                      *     values: "",
-                      *     data: $(e).find("select").val(),
-                      *     modified: (new Date()).toJSON(),
-                      *     modifiedBy: ??loggedUser??,
-                      *     created: ??
-                      */
-                    return $(e).find("select").val()
+                    console.log("OBJ-select",obj);
+                    
+                    return obj;
                 }
             });
-        } else
         // freeform text
-        if(annType === "[object String]" || annotations.text[g].values === "freeform") {
+        } else if(annType === "[object String]" || annotations.text[g].values === "freeform") {
             trTemplate.push("<td contentEditable=true class='noEmpty'></td>");
             objTemplate.push({
                 typeOfBinding:2,
-
-                /**
-                 * @todo Annotations is currently an object. It has to be an array.
-                 *       Each entry in the array has to have the following fields:
-                 *       name:       Name of the entry
-                 *       project:    Project to which the entry belongs
-                 *       type:       Type of annotation: text
-                 *       values:     Reference dictionary (an URL?)
-                 *       data:       The actual data stored
-                 *       modified:   Date of last modification
-                 *       modifiedBy: Author of the last modification
-                 *       created:    Date of creation
-                 * Code:
-                 * path: "files.list.#.mri.annotations."+g+".name"
-                 */
-                path:"files.list.#.mri.annotations." + annotations.text[g].name
+                path: "files.list.#.mri.annotations."+projShortname+"."+annName,
+                format: function(e, d) {
+                    var obj = d;
+                    $(e).text(obj.data);
+                },
+                parse: function(e, d) {
+                    var obj = d;
+                    obj.modified = (new Date()).toJSON();
+                    obj.modifiedBy = AtlasMakerWidget.User.username;
+                    obj.data = $(e).text();
+                    
+                    console.log("OBJ-freeform",obj);
+                    
+                    return obj;
+                }
             });
         }
         /**
@@ -372,8 +385,8 @@ $("#projectCollaboratorsNumber").text(projectInfo.collaborators.length+" Collabo
     // mark first row as selected
     $("#projectFiles tbody tr:eq(0)").addClass("selected");
 
-// Save text data
-//--------------------
+// Connect save text data events
+//------------------------------
     // send data when focus is lost (on blur)
     $(document).on('blur', "#projectFiles table tbody td", function from_project(e) {
         var index = $(e.target).closest('tr').index();
@@ -392,7 +405,9 @@ $("#projectCollaboratorsNumber").text(projectInfo.collaborators.length+" Collabo
         $(e.target).blur();
     });
 
-// listen to changes in file selection by clicking on the file table
+// Listen to changes in selected table row
+//----------------------------------------
+    // listen to changes in file selection by clicking on the file table
     $(document).on('click', "#projectFiles tbody tr",function() {
         var table=$(this).closest("table");
         var currentIndex=$(table).find("tr.selected").index();
@@ -402,13 +417,13 @@ $("#projectCollaboratorsNumber").text(projectInfo.collaborators.length+" Collabo
             $(table).find("tr").removeClass("selected");
             $(this).addClass("selected");
             // remove table with previous annotations
-            $("table#info tbody").html("");
+            $("table#volAnnotations tbody").html("");
             // load and bind new file
             loadProjectFile(index);
         }
     });
 
-// listen to changes in file selection by pressing the up/down arrows
+    // listen to changes in file selection by pressing the up/down arrows
     $(document).on('keydown', function(e){
         var table=$("#projectFiles tbody");
         var index=$(table).find("tr.selected").index();
@@ -428,163 +443,166 @@ $("#projectCollaboratorsNumber").text(projectInfo.collaborators.length+" Collabo
         $(table).find("tr:eq("+index+")").addClass("selected");
     
         // remove table with previous annotations
-        $("table#info tbody").html("");
+        $("table#volAnnotations tbody").html("");
 
         // load and bind new file
         loadProjectFile(index);
     });
 
-// listen to changes in selected annotation
-    $(document).on('click', "#info tbody tr", function () {
-        var table=$(this).closest("tbody");
-        var currentIndex=$(table).find("tr.selected").index();
-        var index=$(this).index();
+    // listen to changes in selected volume annotation
+        $(document).on('click', "#volAnnotations tbody tr", function () {
+            var table=$(this).closest("tbody");
+            var currentIndex=$(table).find("tr.selected").index();
+            var index=$(this).index();
 
-        if(index>=0 && currentIndex!=index) {
-            $(table).find("tr").removeClass("selected");
-            $(this).addClass("selected");
+            if(index>=0 && currentIndex!=index) {
+                $(table).find("tr").removeClass("selected");
+                $(this).addClass("selected");
         
-            var iarr,found=false;
-            for(iarr=0;iarr<BrainBox.info.mri.atlas.length;iarr++) {
-                if(BrainBox.info.mri.atlas[iarr].name==annotations.volume[index].name
-                    && BrainBox.info.mri.atlas[iarr].project==projectInfo.shortname) {
-                    found=true;
-                    break;
-                }
-            }
-            if(found)
-                AtlasMakerWidget.configureAtlasMaker(BrainBox.info,iarr);
-            else
-                console.log("ERROR: A quite unexpected one too...");
-        }
-    });
-    
-// load a new mri from the project list
-    function loadProjectFile(index) {
-        var url=projectInfo.files.list[index].source;
-    
-        var params={url:url,view:"cor",slice:180,fullscreen:false};
-        $("#loadingIndicator").show();
-    
-        var info = projectInfo.files.list[index];
-    
-        if($.isEmptyObject(info) === false) {
-        
-            console.log("info",info);
-        
-            // check if the mri contains the required annotations
-            var irow; // index of the table row
-            var iarr; // index of the object in the data array
-            for(irow=0;irow<annotations.volume.length;irow++) {
-                found = false;
-                for(iarr=0;iarr<info.mri.atlas.length;iarr++) {
-                    if(annotations.volume[irow].name == info.mri.atlas[iarr].name
-                       && projectInfo.shortname == info.mri.atlas[iarr].project) {
+                var iarr,found=false;
+                for(iarr=0;iarr<BrainBox.info.mri.atlas.length;iarr++) {
+                    if(BrainBox.info.mri.atlas[iarr].name==annotations.volume[index].name
+                        && BrainBox.info.mri.atlas[iarr].project==projectInfo.shortname) {
                         found=true;
                         break;
                     }
                 }
-                // if it doesn't, create them
-                if(found == false) {
-                    // add annotation
-                    var date=new Date();
-                    // add data to annotations array
-                    var atlas = {
-                        name:annotations.volume[irow].name,
-                        project:projectInfo.shortname,
-                        created: date.toJSON(), 
-                        filename: Math.random().toString(36).slice(2)+".nii.gz",	// automatically generated filename
-                        labels: annotations.volume[irow].values,
-                        owner: AtlasMakerWidget.User.username,
-                        type: "volume"
-                    };
-                
-                    // DELETE ME -> info.mri.atlas.push(atlas);
-                    projectInfo.files.list[index].mri.atlas.push(atlas);
+                if(found)
+                    AtlasMakerWidget.configureAtlasMaker(BrainBox.info,iarr);
+                else
+                    console.log("ERROR: A quite unexpected one too...");
+            }
+        });
+
+// Functions
+//----------
+    
+/**
+ * @func loadProjectFile
+ * @desc load a new mri from the project list
+ */
+function loadProjectFile(index) {
+    var def = new $.Deferred();
+    
+    var url=projectInfo.files.list[index].source;
+    var params={url:url,view:"cor",slice:180,fullscreen:false};
+    $("#loadingIndicator").show();
+    
+    /**
+     * @todo The mri entry may correspond to a file that has not been downloaded yet!
+     */
+    var info = projectInfo.files.list[index];
+    
+    if($.isEmptyObject(info) === false) {
+        console.log("info",info);
+        // check if the mri contains the required annotations
+        var irow; // index of the table row
+        var iarr; // index of the object in the data array
+        for(irow=0;irow<annotations.volume.length;irow++) {
+            found = false;
+            if(!info.mri.atlas)
+                info.mri.atlas = [];
+            for(iarr=0;iarr<info.mri.atlas.length;iarr++) {
+                if(annotations.volume[irow].name == info.mri.atlas[iarr].name
+                   && projectInfo.shortname == info.mri.atlas[iarr].project) {
+                    found=true;
+                    break;
                 }
+            }
+            // if it doesn't, create them
+            if(found == false) {
+                // add annotation
+                var date=new Date();
+                // add data to annotations array
+                var atlas = {
+                    name: annotations.volume[irow].name,
+                    project: projectInfo.shortname,
+                    created: date.toJSON(), 
+                    filename: Math.random().toString(36).slice(2)+".nii.gz",	// automatically generated filename
+                    labels: annotations.volume[irow].values,
+                    owner: AtlasMakerWidget.User.username,
+                    type: "volume"
+                };
             
-                annotations.volume[irow].annotationItemIndex=iarr;
-            }
-            params.info=projectInfo.files.list[index]; // DELETE ME -> info;
-        
-            if(annotations.volume[0]) {
-                params.annotationItemIndex = annotations.volume[0].annotationItemIndex;
-            } else {
-                params.annotationItemIndex = -1;
+                projectInfo.files.list[index].mri.atlas.push(atlas);
             }
         
-            BrainBox.configureBrainBox(params)
-                .then(function from_project(){
-
-                    // bind volume annotations to table#info
-                    var annvol_proxy={};
-                    var aParam = {
-                        table: $("table#info"),
-                        info_proxy: annvol_proxy,
-                        info: BrainBox.info,
-                        trTemplate: $.map([
-                            "<tr>",
-                            " <td></td>",           // volume name
-                            " <td></td>",	        // volume label set
-                            "</tr>"],function(o){return o}).join(),
-                        objTemplate: [
-                            {	typeOfBinding:1,
-                                path:"mri.atlas.#.name"
-                            },
-                            {	typeOfBinding:1,
-                                path:"mri.atlas.#.labels"
-                            }
-                        ]
-                    };
-
-                    // add and bind new table row
-                    for(irow=0;irow<annotations.volume.length;irow++) {    
-                        BrainBox.appendAnnotationTableRow2(irow,annotations.volume[irow].annotationItemIndex,aParam);
-                    }
-                    // update in server
-                    BrainBox.saveAnnotations(aParam);
-
-                    // select the first annotation by default
-                    // (should be read from project settings)
-                    $("#annotations tbody tr:eq(0)").addClass("selected");
-
-                    AtlasMakerWidget.User.projectPage = projectInfo.shortname;
-                    AtlasMakerWidget.sendUserDataMessage(JSON.stringify({projectPage:projectInfo.shortname}))
-                });
+            annotations.volume[irow].annotationItemIndex=iarr;
+        }
+        params.info=projectInfo.files.list[index];
+    
+        if(annotations.volume[0]) {
+            params.annotationItemIndex = annotations.volume[0].annotationItemIndex;
         } else {
-            var msg=AtlasMakerWidget.container.find("#text-layer");
-            msg.html("<text x='5' y='15' fill='white'>ERROR: File is unreadable</text>");
-            console.log("ERROR: Cannot read data. The file is maybe corrupt?");
+            params.annotationItemIndex = -1;
         }
+    
+        BrainBox.configureBrainBox(params)
+            .then(function from_project(){
+
+                // bind volume annotations to table#volAnnotations
+                var annvol_proxy={};
+                var aParam = {
+                    table: $("table#volAnnotations"),
+                    info_proxy: annvol_proxy,
+                    info: BrainBox.info,
+                    trTemplate: $.map([
+                        "<tr>",
+                        " <td></td>",           // volume name
+                        " <td></td>",	        // volume label set
+                        "</tr>"],function(o){return o}).join(),
+                    objTemplate: [
+                        {	typeOfBinding:1,
+                            path:"mri.atlas.#.name"
+                        },
+                        {	typeOfBinding:1,
+                            path:"mri.atlas.#.labels"
+                        }
+                    ]
+                };
+
+                // add and bind new table row
+                for(irow=0;irow<annotations.volume.length;irow++) {    
+                    BrainBox.appendAnnotationTableRow2(irow,annotations.volume[irow].annotationItemIndex,aParam);
+                }
+                // update in server
+                BrainBox.saveAnnotations(aParam);
+
+                // select the first annotation by default
+                // (should be read from project settings)
+                $("#annotations tbody tr:eq(0)").addClass("selected");
+
+                AtlasMakerWidget.User.projectPage = projectInfo.shortname;
+                AtlasMakerWidget.sendUserDataMessage(JSON.stringify({projectPage:projectInfo.shortname}));
+                
+                def.resolve();
+            });
+    } else {
+        var msg=AtlasMakerWidget.container.find("#text-layer");
+        msg.html("<text x='5' y='15' fill='white'>ERROR: File is unreadable</text>");
+        console.log("ERROR: Cannot read data. The file is maybe corrupt?");
+        
+        def.reject();
     }
+    
+    return def;
+}
 
 
-// resize left tool bar
-    function resizeButton(p) {
-        if($("#resizeButton").data("flag")==0) {
-            $("#resizeButton").data({flag:1,x0:p.x,y0:p.y});
-        } else if($("#resizeButton").data("flag")==1) {
-            var d=$("#resizeButton").data("x0")-p.x;
-            $("#left").css({'flex-basis':$("#left").width()-d});
-            $("#resizeButton").data({x0:p.x,y0:p.y});
-            AtlasMakerWidget.resizeWindow();
-        }
+/**
+ * @func resizeButton
+ * @desc Resize left tool bar
+ */
+function resizeButton(p) {
+    if($("#resizeButton").data("flag")==0) {
+        $("#resizeButton").data({flag:1,x0:p.x,y0:p.y});
+    } else if($("#resizeButton").data("flag")==1) {
+        var d=$("#resizeButton").data("x0")-p.x;
+        $("#left").css({'flex-basis':$("#left").width()-d});
+        $("#resizeButton").data({x0:p.x,y0:p.y});
+        AtlasMakerWidget.resizeWindow();
     }
-    $("#resizeButton").data({flag:-1,x0:0,y0:0});
-    $("#resizeButton").on('mousedown touchstart',function(e){$(this).data({flag:0,x0:e.pageX,y0:e.pageY})});
-    $("body").on('mousemove',function(e){resizeButton({x:e.pageX,y:e.pageY})});
-    $("body").on('touchmove',function(e){resizeButton({x:e.originalEvent.changedTouches[0].pageX,y:e.originalEvent.changedTouches[0].pageY})});
-    $("body").on('mouseup touchend',function(e){$("#resizeButton").data({flag:-1})});
-
-$("#addProject").click(function(){location="/project/new"});
-$("#settings").click(function(){
-    var pathname=location.pathname;
-    if(pathname.slice(-1)=="/")
-        location=pathname+"settings";
-    else
-        location=pathname+"/settings";
-});
-
+}
 </script>
 
 </body>
