@@ -38,11 +38,11 @@ function bind2(proxy,original,path,el,format,parse) {
 			} else {
 				v=$(el).text();
 			}
-            o[k[i]]=JSON.parse(DOMPurify.sanitize(JSON.stringify(v)));
+            o[k[i]]=JSON.parse(DOMPurify.sanitize(JSON.stringify(v))||'""');
 			return o[k[i]];
 		},
 		set: function(v) {
-		    v=JSON.parse(DOMPurify.sanitize(JSON.stringify(v)));
+		    v=JSON.parse(DOMPurify.sanitize(JSON.stringify(v))||'""');
 			o[k[i]]=v;
 			if(format)
 				format(el,v);
