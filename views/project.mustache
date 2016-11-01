@@ -323,13 +323,15 @@ $("#settings").click(function(){
                 path: "files.list.#.mri.annotations."+projShortname+"."+annName,
                 format: function(e, d) {
                     var obj = d;
-                    if (obj !=0) {
+                    if (obj.data != undefined) {
                         /**
                          * @todo Replace color assignment by the addition of a class
                          */
                         $(e).find("select").css("color", "#fff"); 
+                        $(e).find("select").get(0).value=obj.data;
+                    } else {
+                        $(e).find("select").get(0).value="";
                     }
-                    $(e).find("select").get(0).value=obj.data;
                 },
                 parse: function(e, d) {
                     if ($(e).find("select").val()) {
