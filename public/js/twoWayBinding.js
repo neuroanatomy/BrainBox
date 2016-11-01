@@ -29,17 +29,20 @@ var date_format=function(e,d){$(e).text(new Date(d).toLocaleDateString())};
 function bind2(proxy,original,path,el,format,parse) {
 	var i,k=path.split("."),o=original;
 	for(i=0;i<k.length-1;i++)
-		o=o[k[i]];
+        o=o[k[i]];
 	Object.defineProperty(proxy,path,{
 		get: function(){
-			if(parse)
-				o[k[i]]=DOMPurify.sanitize(parse(el));
-			else
-				o[k[i]]=DOMPurify.sanitize($(el).text());
+		    var v;
+			if(parse) {
+                v=parse(el,o[k[i]]);
+			} else {
+				v=$(el).text();
+			}
+            o[k[i]]=JSON.parse(DOMPurify.sanitize(JSON.stringify(v)));
 			return o[k[i]];
 		},
 		set: function(v) {
-		    v=DOMPurify.sanitize(v);
+		    v=JSON.parse(DOMPurify.sanitize(JSON.stringify(v)));
 			o[k[i]]=v;
 			if(format)
 				format(el,v);
