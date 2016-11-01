@@ -90,7 +90,7 @@ function downloadMRI(myurl, req, res, callback) {
                                 owner: username,
                                 created: (new Date()).toJSON(),
                                 modified: (new Date()).toJSON(),
-                                access: 'Read/Write',
+                                access: 'edit',
                                 type: 'volume',
                                 filename: 'Atlas.nii.gz',
                                 labels: 'foreground.json'

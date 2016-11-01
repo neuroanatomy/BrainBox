@@ -135,7 +135,7 @@ var upload = function(req, res) {
             var atlasMetadata = {
                 name: atlasName,
                 project: atlasProject,
-                access: "Read/Write", 
+                access: "edit", 
                 created: date.toJSON(), 
                 modified: date.toJSON(), 
                 filename: filename,	// automatically generated filename
