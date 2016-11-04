@@ -25,18 +25,12 @@
         flex:0 1 auto;
         vertical-align:top
     }
-    #annotationsPane table th {
-        text-align: right;
-        padding-right: 20px;
-    }
-    table#annotations th {
-        text-align: left;
-    }
     #annotationsPane th, #annotationsPane td {
         overflow: hidden;
     }
 	.tabContent {
 	    margin-left:10px;
+        text-align: left;
 	}
     #stereotaxic {
         min-width:600px;
@@ -56,6 +50,39 @@
             min-width: 100%;
         }
 	}
+
+	/* Loading indicator */
+    @-webkit-keyframes loading {
+        0% {left: 40%;}
+        50% {left: 60%;}
+        100% {left: 40%;}
+    }
+    #loadingIndicator {
+        display:none;
+        position:absolute;
+        left:0;
+        top:0;
+        width:100%;
+        height:100%;
+        background:rgba(0,0,0,0.5);
+    }
+    #loadingIndicator .disc {
+        position:absolute;
+        left:50%;
+        transform:translate( -50% , 0 );
+        width:8px;
+        height:8px;
+        border-radius:8px;
+        background:white;
+        -webkit-animation-name: loading;
+        -webkit-animation-duration: 1s;
+        -webkit-animation-iteration-count: infinite;
+        -webkit-animation-timing-function: ease-in-out;
+        animation-name: loading;
+        animation-duration: 1s;
+        animation-iteration-count: infinite;
+        animation-timing-function: ease-in-out;
+    }
 
 	/************************************* access widget ********************************/
 	.access {
@@ -170,18 +197,15 @@
 
                             <br/>
                         
-                            <b>Annotations</b><br/>
+                            <b>Volume Annotations</b><br/>
                             <table id="annotations" class="tabContent">
                             <thead>
                                 <tr>
                                     <th>Name</th>
-                                    <th>Type</th>
                                     <th>Value</th>
                                     <th>Project</th>
-                                    <th>Owner</th>
-                                    <th>Created</th>
                                     <th>Modified</th>
-                                    <th style="width:70px">Access</th>
+                                    <th style="width:80px">Access</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
@@ -189,18 +213,43 @@
                             <div style="text-align:right">
                                 <img id="addAnnotation"    class="button" src='/img/plus-circle.svg'/>
                                 <img id="removeAnnotation" class="button" src='/img/minus-circle.svg'/>
-                                <img id="saveAnnotations"   class="button" src='/img/floppy.svg'/>
                             </div>
+
+                            <b>Text Annotations</b><br/>
+                            <table id="textAnnotations" class="tabContent">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Value</th>
+                                    <th>Project</th>
+                                    <th>Modified</th>
+                                    <th style="width:80px">Access</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                            </table>
+                            <div style="text-align:right">
+                                <img id="addTextAnnotation"    class="button" src='/img/plus-circle.svg'/>
+                                <img id="removeTextAnnotation" class="button" src='/img/minus-circle.svg'/>
+                            </div>
+
                         </div>
                     </div>
                     <!-- end of Annotations -->
 
 					<!-- AtlasMaker -->
-					<div style="flex:0 0 auto">
+					<div style="flex:0 0 auto;position:relative">
 						<!-- AtlasMaker -->
 						<div id="stereotaxic" style="width:100%;display:inline-block">
 						</div>
 						<!-- End AtlasMaker -->
+
+                        <!-- Loading indicator -->
+                        <div id="loadingIndicator">
+                            <p>Loading...</p>
+                            <div class="disc"></div>
+                        </div>
+                        <!-- End Loading indicator -->
 					</div>
 			</div>
 			<!-- End Data Flex -->
@@ -273,6 +322,12 @@ if( $.isEmptyObject(mriInfo)) {
 
 } else {
 
+    // serialise text annotations object
+    mriInfo.mri.annotations = annotationsObjectToArray(mriInfo.mri.annotations);
+    
+    console.log(mriInfo.mri.annotations);
+    console.log(annotationsArrayToObject(mriInfo.mri.annotations));
+    
     params.info=mriInfo;
 
     var fullscreen=false;
@@ -281,7 +336,9 @@ if( $.isEmptyObject(mriInfo)) {
 
     // Present a splash screen while loading
     $("#intro").hide();
-    $("#splash").show();	
+    $("#splash").show();
+
+    $("#loadingIndicator").show();
 
     // Load data
     BrainBox.initBrainBox()
@@ -291,19 +348,23 @@ if( $.isEmptyObject(mriInfo)) {
         // Remove splash
         $("#splash").hide();
 
-        var aParam = {
+        // bind general information
+        bind2(info_proxy,BrainBox.info,"name",$("#name"));
+        bind1(info_proxy,BrainBox.info,"source",$("#source"));
+        bind1(info_proxy,BrainBox.info,"included",$("#included"),date_format);
+
+        
+        // bind volume-type annotations
+        //------------------------------
+        var volAnnParam = {
             table: $("table#annotations"),
             info_proxy: info_proxy,
             info: BrainBox.info,
-            saveWarning: $("#saveAnnotations"),
             trTemplate: $.map([
                 "<tr>",
                 " <td contentEditable=true class='noEmpty'></td>", // name
-                " <td contentEditable=true class='noEmpty'></td>", // type
                 " <td><select>",$.map(BrainBox.labelSets,function(o){return "<option>"+o.name+"</option>"}),"</select></td>",	// value
                 " <td contentEditable=true class='noEmpty'></td>", // project
-                " <td><a></a></td>", // owner
-                " <td></td>", // created
                 " <td></td>", // modified
                 " <td>", // access
                 "  <div class='access'>",
@@ -319,23 +380,12 @@ if( $.isEmptyObject(mriInfo)) {
                     path:"mri.atlas.#.name" // name
                 },
                 {	typeOfBinding:2,
-                    path:"mri.atlas.#.type" // type
-                },
-                {	typeOfBinding:2,
                     path:"mri.atlas.#.labels", //value
                     format: function(e,d){$(e).find("select").prop('selectedIndex',$.map(BrainBox.labelSets,function(o){return o.source}).indexOf(d))},
                     parse: function(e){var name=$(e).find("select").val(),i=$.map(BrainBox.labelSets,function(o){return o.name}).indexOf(name);return BrainBox.labelSets[i].source}
                 },
                 {	typeOfBinding:2, // project
                     path:"mri.atlas.#.project"
-                },
-                {	typeOfBinding:1,
-                    path:"mri.atlas.#.owner",
-                    format: function(e,d){$.get("/user/json/"+d.split("/").pop()+"?var=nickname",function(r){$(e).text(r);$(e).attr('href',d)})}
-                },
-                {	typeOfBinding:1,
-                    path:"mri.atlas.#.created",
-                    format: date_format
                 },
                 {	typeOfBinding:1,
                     path:"mri.atlas.#.modified",
@@ -348,19 +398,10 @@ if( $.isEmptyObject(mriInfo)) {
                 }
             ]
         };
-
-        // bind interface
-        bind2(info_proxy,BrainBox.info,"name",$("#name"));
-        bind1(info_proxy,BrainBox.info,"source",$("#source"));
-        bind1(info_proxy,BrainBox.info,"included",$("#included"),date_format);
         for(var i=0;i<BrainBox.info.mri.atlas.length;i++) {
-            BrainBox.appendAnnotationTableRow(i,aParam);
+            BrainBox.appendAnnotationTableRow(i,volAnnParam);
         }
-
-        // connect colours close button
-        $(document).on('click', "#labels-close", function(){$("#labelset").hide()});
-
-        // annotations table: connect pop-down menus
+        // connect pop-down menus
         $(document).on('change', "table#annotations select", function(){
             var col=$("table#annotations tr:eq(0) th:eq("+$(this).closest('td')[0].cellIndex+")").text();
             var index=$(this).closest('tr')[0].rowIndex-1;
@@ -372,25 +413,105 @@ if( $.isEmptyObject(mriInfo)) {
                         AtlasMakerWidget.changePenColor(0);
                         AtlasMakerWidget.brain_img.img=null; // to force redraw with new colors
                         AtlasMakerWidget.drawImages();
+                        $("#loadingIndicator").hide();
                     });
                     break;
             }
         });
-
-        // annotation table: select row
+        // volume annotation table: select row
         $(document).on('click', "#annotations tr",BrainBox.selectAnnotationTableRow);
-    
-        // annotations table: add, remove and save annotations
+        // volume annotations table: add, remove and save annotations
         $(document).on('click', "#addAnnotation", function(){BrainBox.addAnnotation(aParam)});
         $(document).on('click', "#removeAnnotation", function(){BrainBox.removeAnnotation(aParam)});
+/*
         $(document).on('click', "#saveAnnotations", function(){BrainBox.saveAnnotations(aParam)});
-    
-        // annotations table: select the first row by default
+*/
+        // volume annotations table: select the first row by default
         $("table#annotations tr").removeClass("selected");
         $("table#annotations tr").eq(1).addClass("selected");
+        
+        // bind text annotations
+        //-----------------------
+        var textAnnParam;
+        var trTemplate;
+        var objTemplate;
+        var i, j, p, n;
+        trTemplate = [
+            "<tr>",
+            " <td></td>", // name
+            " <td></td>", // value
+            " <td></td>", // project
+            " <td></td>", // modified
+            " <td>", // access
+            "  <div class='access'>",
+            "   <span class='view' title='view annotations'></span>",
+            "   <span class='edit' title='edit annotations'></span>",
+            "   <span class='add' title='add annotations'></span>",
+            "   <span class='remove' title='remove annotations'></span>",
+            "  </div>",
+            " </td>",
+            "</tr>"
+        ].join("");
+        objTemplate = [
+            {   typeOfBinding:1,
+                path:"mri.annotations.#.name", // name
+            },
+            {   typeOfBinding:1,
+                path:"mri.annotations.#.data" // data
+            },
+            {   typeOfBinding:1,
+                path:"mri.annotations.#.project", // project
+            },
+            {   typeOfBinding:1,
+                path:"mri.annotations.#.modified", // modified
+                format: date_format
+            },
+            {	typeOfBinding:1,
+                path:"mri.annotations.#.access",
+                format: function(e,d){$(e).find(".access").attr('data-level',["none","view","edit","add","remove"].indexOf(d))},
+                parse: function(e){var level=$(e).find(".access").attr("data-level");return ["none","view","edit","add","remove"][level]}
+            }
+        ];
+        textAnnParam = {
+            table: $("table#textAnnotations"),
+            info_proxy: info_proxy,
+            info: BrainBox.info,
+            trTemplate: trTemplate,
+            objTemplate: objTemplate
+        };
+        console.log(textAnnParam);
+        for(i=0;i<BrainBox.info.mri.annotations.length;i++) {
+            BrainBox.appendAnnotationTableRow(i,textAnnParam);
+        }
+        
+        // connect close button in labels set
+        $(document).on('click', "#labels-close", function(){$("#labelset").hide()});
 
         $("#data").show();
+
+        // Listen to changes that trigger a metadata save
+        //------------------------------------------------
+            // send data when focus is lost (on blur)
+            $(document).on('blur', "[contenteditable]", function from_project(e) {
+                var index = $(e.target).closest('tr').index();
+                JSON.stringify(info_proxy); // update content of projectInfo object from proxy by calling all getters
+                BrainBox.info.mri.annotations = annotationsArrayToObject(BrainBox.info.mri.annotations);
+                AtlasMakerWidget.sendSaveMetadataMessage(BrainBox.info);
+                BrainBox.info.mri.annotations = annotationsObjectToArray(BrainBox.info.mri.annotations);
+            });
+            // blur when [enter] is clicked, to trigger data sending
+            $(document).on('keydown', "[contenteditable]", function(e) {
+                if(e.which==13 && $(e.target).attr('contenteditable')) {
+                    e.preventDefault();
+                    $(e.target).blur();
+                }
+            });
+            // blur when <select> changes value to trigger data sending
+            $("#annotations tbody, #textAnnotations tbody").on('change', "select", function(e) {
+                $(e.target).blur();
+            });
     
+        /*
         // autosave
         hash_old=BrainBox.hash(JSON.stringify(BrainBox.info));
         $("#saveAnnotations").hide();
@@ -401,6 +522,7 @@ if( $.isEmptyObject(mriInfo)) {
                 $("#saveAnnotations").show();
             }
         },1000*10); // every 10 seconds
+        */
         
     },function(){
         $("#msgLog").html("ERROR: Can't load data");
@@ -408,6 +530,32 @@ if( $.isEmptyObject(mriInfo)) {
 }
 
 $("#addProject").click(function(){location="/project/new"});
+
+function annotationsArrayToObject(arr) {
+    var i,j,project,name,obj={};
+    for(i=0;i<arr.length;i++) {
+        project = arr[i].project;
+        name = arr[i].name;
+        if(!obj[project])
+            obj[project]={};
+        obj[project][name]=JSON.parse(JSON.stringify(arr[i]));
+        delete obj[project][name].project;
+        delete obj[project][name].name;
+    }
+    return obj;
+}
+function annotationsObjectToArray(obj) {
+    var i,j,arr=[];
+    for(i in obj) {
+        for(j in obj[i]) {
+            var o=obj[i][j];
+            o.project=i;
+            o.name=j;
+            arr.push(o);
+        }
+    }
+    return arr;
+}
 </script>
 
 

@@ -316,12 +316,13 @@ var maxAccessToFileByProjects = function maxAccessToFileByProjects(mri, projects
     return accessLevels[maxLevel];
 };
 
-var toAnnotationByProject = function toAnnotationByProject(atlas,project,user) {
+var toAnnotationByProject = function toAnnotationByProject(project,user) {
     traceLog(toAnnotationByProject);
 
     var k, maxAccess = 0;
     
     // owner?
+    //console.log(user,project.owner);
     if(user == project.owner) {
         return "remove";
     }
@@ -337,6 +338,7 @@ var toAnnotationByProject = function toAnnotationByProject(atlas,project,user) {
         }
     }
     
+    // console.log(maxAccess, accessLevels[maxAccess]);
     return accessLevels[maxAccess];
 }
 

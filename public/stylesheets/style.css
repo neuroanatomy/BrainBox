@@ -6,7 +6,7 @@
 	background-color:#222;
 	height:100%;
 	margin:0px;
-	font: 16px/24px "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
+	font: 16px/20px "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
 	-webkit-font-smoothing: antialiased;
 	-moz-font-smoothing: antialiased;
  }
@@ -343,20 +343,20 @@ tr.selected {
 table {
 	border-collapse:collapse;
 }
-#annotations th {
+.tabContent th {
 	font-weight: bold;
 	border-bottom:thin solid white;
 }
-table#annotations {
+.tabContent {
 	width:100%;
 	border-bottom:thin solid white;
 	table-layout: fixed;
 }
-#annotations td {
+.tabContent td {
 	font-weight: normal;
 }
-#annotations th, #annotations td {
-	padding:4px;
+.tabContent th, .tabContent td {
+	padding:0;
 }
 ul {
 	list-style-type: none;

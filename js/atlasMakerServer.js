@@ -664,7 +664,8 @@ var receiveSaveMetadataMessage = function receiveSaveMetadataMessage(data,user_s
 
 	// sanitise json
 	json=JSON.parse(DOMPurify.sanitize(JSON.stringify(json))); // sanitize works on strings, not objects
-    // DEBUG: console.log("new mri:", JSON.stringify(json));
+    // DEBUG:
+    console.log("metadata:", JSON.stringify(json));
 
 	// mark previous one as backup
     db.get('mri').findOne({source:json.source, backup:{$exists:false}})

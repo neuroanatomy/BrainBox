@@ -417,6 +417,7 @@ var AtlasMakerWS = {
 		    var rnd = Math.random().toString(36).slice(20);
 			me.socket.send(JSON.stringify({type:"saveMetadata",rnd:rnd,metadata:info}));
 			console.log(rnd);
+			console.log(info);
 		} catch (ex) {
 			console.log("ERROR: Unable to sendSaveMetadataMessage",ex);
 		}

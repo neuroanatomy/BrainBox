@@ -23,7 +23,40 @@
 	#right {
 	    background-color: black;
 	}
-	</style>
+	
+	/* Loading indicator */
+    @-webkit-keyframes loading {
+        0% {left: 40%;}
+        50% {left: 60%;}
+        100% {left: 40%;}
+    }
+    #loadingIndicator {
+        display:none;
+        position:absolute;
+        left:0;
+        top:0;
+        width:100%;
+        height:100%;
+        background:rgba(0,0,0,0.5);
+    }
+    #loadingIndicator .disc {
+        position:absolute;
+        left:50%;
+        transform:translate( -50% , 0 );
+        width:8px;
+        height:8px;
+        border-radius:8px;
+        background:white;
+        -webkit-animation-name: loading;
+        -webkit-animation-duration: 1s;
+        -webkit-animation-iteration-count: infinite;
+        -webkit-animation-timing-function: ease-in-out;
+        animation-name: loading;
+        animation-duration: 1s;
+        animation-iteration-count: infinite;
+        animation-timing-function: ease-in-out;
+    }
+</style>
 
 </head>
 
@@ -103,40 +136,6 @@
 			<div id="right" style="flex:1 0;position:relative">
 				<div id="stereotaxic" style="width:100%;height:100%">
 				</div>
-				
-				<style>
-				    @-webkit-keyframes loading {
-                        0% {left: 40%;}
-                        50% {left: 60%;}
-                        100% {left: 40%;}
-                    }
-                    #loadingIndicator {
-                        display:none;
-                        position:absolute;
-                        left:0;
-                        top:0;
-                        width:100%;
-                        height:100%;
-                        background:rgba(0,0,0,0.5);
-                    }
-                    #loadingIndicator .disc {
-                        position:absolute;
-                        left:50%;
-                        transform:translate( -50% , 0 );
-                        width:8px;
-                        height:8px;
-                        border-radius:8px;
-                        background:white;
-                        -webkit-animation-name: loading;
-                        -webkit-animation-duration: 1s;
-                        -webkit-animation-iteration-count: infinite;
-                        -webkit-animation-timing-function: ease-in-out;
-                        animation-name: loading;
-                        animation-duration: 1s;
-                        animation-iteration-count: infinite;
-                        animation-timing-function: ease-in-out;
-                    }
-				</style>
 				
 				<div id="loadingIndicator">
 				    <p>Loading...</p>
@@ -341,9 +340,6 @@ $("#settings").click(function(){
                     obj.modified = (new Date()).toJSON();
                     obj.modifiedBy = AtlasMakerWidget.User.username;
                     obj.data = $(e).find("select").val();
-                    
-                    console.log("OBJ-select",obj);
-                    
                     return obj;
                 }
             });
@@ -362,9 +358,6 @@ $("#settings").click(function(){
                     obj.modified = (new Date()).toJSON();
                     obj.modifiedBy = AtlasMakerWidget.User.username;
                     obj.data = $(e).text();
-                    
-                    console.log("OBJ-freeform",obj);
-                    
                     return obj;
                 }
             });
@@ -387,8 +380,8 @@ $("#settings").click(function(){
     // mark first row as selected
     $("#projectFiles tbody tr:eq(0)").addClass("selected");
 
-// Connect save text data events
-//------------------------------
+// Listen to changes that trigger a metadata save
+//------------------------------------------------
     // send data when focus is lost (on blur)
     $(document).on('blur', "#projectFiles table tbody td", function from_project(e) {
         var index = $(e.target).closest('tr').index();
