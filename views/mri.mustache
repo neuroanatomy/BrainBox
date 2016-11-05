@@ -422,8 +422,8 @@ if( $.isEmptyObject(mriInfo)) {
         // volume annotation table: select row
         $(document).on('click', "#annotations tr",BrainBox.selectAnnotationTableRow);
         // volume annotations table: add, remove and save annotations
-        $(document).on('click', "#addAnnotation", function(){BrainBox.addAnnotation(aParam)});
-        $(document).on('click', "#removeAnnotation", function(){BrainBox.removeAnnotation(aParam)});
+        $(document).on('click', "#addAnnotation", function(){BrainBox.addAnnotation(volAnnParam)});
+        $(document).on('click', "#removeAnnotation", function(){BrainBox.removeAnnotation(volAnnParam)});
         // volume annotations table: select the first row by default
         $("table#annotations tr").removeClass("selected");
         $("table#annotations tr").eq(1).addClass("selected");
