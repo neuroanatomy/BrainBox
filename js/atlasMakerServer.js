@@ -31,6 +31,8 @@ const window = jsdom.jsdom('', {
 }).defaultView;
 const DOMPurify = createDOMPurify(window);
 
+var jsonpatch = require('fast-json-patch');
+
 var atlasMakerServer = function() {
 
 var	debug = 1;
@@ -656,30 +658,71 @@ var receiveSaveMetadataMessage = function receiveSaveMetadataMessage(data,user_s
 
 	console.log("metadata type: "+data.type);
 	console.log("rnd: "+data.rnd);
-	
-	var sourceUS=getUserFromUserId(data.uid);
-	var json=data.metadata;
-	json.modified=(new Date()).toJSON();
-	json.modifiedBy = (sourceUS.User && sourceUS.User.username) ? sourceUS.User.username : "anonymous";
+	console.log("method: "+data.method);
+	console.log("patch: "+JSON.stringify(data.patch));
 
-	// sanitise json
-	json=JSON.parse(DOMPurify.sanitize(JSON.stringify(json))); // sanitize works on strings, not objects
-    // DEBUG:
-    console.log("metadata:", JSON.stringify(json));
+	/**
+	 * @todo Currently metadata is a complete object, but it is also possible to
+	 *       send a patch computed using jsonpatch. In the future, only the patch
+	 *       method will be used
+	 */
 
-	// mark previous one as backup
-    db.get('mri').findOne({source:json.source, backup:{$exists:false}})
-        .then(function (ret) {
-            // DEBUG: console.log("original mri:", JSON.stringify(ret));
+    var sourceUS=getUserFromUserId(data.uid);
+    var json=data.metadata;
+    json.modified=(new Date()).toJSON();
+    json.modifiedBy = (sourceUS.User && sourceUS.User.username) ? sourceUS.User.username : "anonymous";
+
+	if(data.method == "patch") {
+	    // deal with patches
+
+        // get original object from db
+        db.get('mri').findOne({source:json.source, backup:{$exists:false}},{_id:0})
+            .then(function (ret) {
+                
+                delete ret['_id'];
+                
+                // DEBUG: console.log("original mri:", JSON.stringify(ret));
+                
+                // apply patch
+                jsonpatch.apply( ret, data.patch );
             
-            db.get('mri').update({source:json.source},{$set:{backup:true}},{multi:true})
-                .then(function () {
-                    json = merge.recursive(ret, json);
-                    delete json["_id"];
-                    db.get('mri').insert(json);
-                    // DEBUG: console.log("inserted mri:",JSON.stringify(json));
-                });
-        });
+                // DEBUG: console.log("patched mri:", JSON.stringify(ret));
+
+                // sanitise
+                ret=JSON.parse(DOMPurify.sanitize(JSON.stringify(ret))); // sanitize works on strings, not objects
+
+                db.get('mri').update({source:json.source},{$set:{backup:true}},{multi:true})
+                    .then(function () {
+                        db.get('mri').insert(ret);
+                        // DEBUG: console.log("inserted mri:",JSON.stringify(ret));
+                    });
+            });
+	} else {
+	    // deal with the complete object
+
+r        // sanitise json
+        json=JSON.parse(DOMPurify.sanitize(JSON.stringify(json))); // sanitize works on strings, not objects
+        // DEBUG:
+        console.log("metadata:", JSON.stringify(json));
+
+        // mark previous one as backup
+        db.get('mri').findOne({source:json.source, backup:{$exists:false}})
+            .then(function (ret) {
+                // DEBUG: console.log("original mri:", JSON.stringify(ret));
+            
+                db.get('mri').update({source:json.source},{$set:{backup:true}},{multi:true})
+                    .then(function () {
+                        if(data.method === "overwrite") {
+                            db.get('mri').insert(json);
+                        } else {
+                            json = merge.recursive(ret, json);
+                            delete json["_id"];
+                            db.get('mri').insert(json);
+                        }
+                        // DEBUG: console.log("inserted mri:",JSON.stringify(json));
+                    });
+            });
+	}
 };
 var receiveAtlasFromUserMessage = function receiveAtlasFromUserMessage(data,user_socket) {
     traceLog(receiveAtlasFromUserMessage);

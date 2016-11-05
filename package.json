@@ -16,6 +16,7 @@
     "express": "~4.9.0",
     "express-session": "^1.14.0",
     "express-validator": "^2.20.8",
+    "fast-json-patch": "^1.1.1",
     "file-type": "^3.8.0",
     "fs": "0.0.1-security",
     "http": "0.0.0",

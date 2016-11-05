@@ -302,6 +302,7 @@
 <script src="/lib/jquery-3.1.1.min.js"></script>
 <script src="/lib/pako/pako.min.js"></script>
 <script src="/lib/purify.min.js"></script>
+<script src="/lib/json-patch-duplex.min.js"></script>
 <script src="/js/twoWayBinding.js"></script>
 <script src="/js/brainbox.js"></script>
 
@@ -309,6 +310,8 @@
 
 var params={{{params}}};
 var mriInfo={{{mriInfo}}};
+var mriInfoOrig = JSON.parse(JSON.stringify(mriInfo));
+var textAnnotationsArray;
 var version=1;
 var info_proxy={};
 var hash_old;
@@ -322,11 +325,9 @@ if( $.isEmptyObject(mriInfo)) {
 
 } else {
 
-    // serialise text annotations object
-    mriInfo.mri.annotations = annotationsObjectToArray(mriInfo.mri.annotations);
-    
-    console.log(mriInfo.mri.annotations);
-    console.log(annotationsArrayToObject(mriInfo.mri.annotations));
+    // Serialise text annotations object (text annotations are stored as objects in the
+    // database, but used as an array here)
+    textAnnotationsArray = annotationsObjectToArray(mriInfo.mri.annotations);
     
     params.info=mriInfo;
 
@@ -423,9 +424,6 @@ if( $.isEmptyObject(mriInfo)) {
         // volume annotations table: add, remove and save annotations
         $(document).on('click', "#addAnnotation", function(){BrainBox.addAnnotation(aParam)});
         $(document).on('click', "#removeAnnotation", function(){BrainBox.removeAnnotation(aParam)});
-/*
-        $(document).on('click', "#saveAnnotations", function(){BrainBox.saveAnnotations(aParam)});
-*/
         // volume annotations table: select the first row by default
         $("table#annotations tr").removeClass("selected");
         $("table#annotations tr").eq(1).addClass("selected");
@@ -438,9 +436,9 @@ if( $.isEmptyObject(mriInfo)) {
         var i, j, p, n;
         trTemplate = [
             "<tr>",
-            " <td></td>", // name
-            " <td></td>", // value
-            " <td></td>", // project
+            " <td contentEditable=true class='noEmpty'></td>", // name
+            " <td contentEditable=true class='noEmpty'></td>", // value
+            " <td contentEditable=true class='noEmpty'></td>", // project
             " <td></td>", // modified
             " <td>", // access
             "  <div class='access'>",
@@ -453,21 +451,21 @@ if( $.isEmptyObject(mriInfo)) {
             "</tr>"
         ].join("");
         objTemplate = [
-            {   typeOfBinding:1,
-                path:"mri.annotations.#.name", // name
+            {   typeOfBinding:2,
+                path:"#.name", // name
+            },
+            {   typeOfBinding:2,
+                path:"#.data" // data
+            },
+            {   typeOfBinding:2,
+                path:"#.project", // project
             },
             {   typeOfBinding:1,
-                path:"mri.annotations.#.data" // data
-            },
-            {   typeOfBinding:1,
-                path:"mri.annotations.#.project", // project
-            },
-            {   typeOfBinding:1,
-                path:"mri.annotations.#.modified", // modified
+                path:"#.modified", // modified
                 format: date_format
             },
             {	typeOfBinding:1,
-                path:"mri.annotations.#.access",
+                path:"#.access",
                 format: function(e,d){$(e).find(".access").attr('data-level',["none","view","edit","add","remove"].indexOf(d))},
                 parse: function(e){var level=$(e).find(".access").attr("data-level");return ["none","view","edit","add","remove"][level]}
             }
@@ -475,14 +473,67 @@ if( $.isEmptyObject(mriInfo)) {
         textAnnParam = {
             table: $("table#textAnnotations"),
             info_proxy: info_proxy,
-            info: BrainBox.info,
+            info: textAnnotationsArray,
             trTemplate: trTemplate,
             objTemplate: objTemplate
         };
-        console.log(textAnnParam);
-        for(i=0;i<BrainBox.info.mri.annotations.length;i++) {
+        for(i=0;i<textAnnotationsArray.length;i++) {
             BrainBox.appendAnnotationTableRow(i,textAnnParam);
         }
+        $(document).on('click', "#textAnnotations tr",function() {
+    		var table=$(this).closest("tbody");
+            $(table).find("tr").removeClass("selected");
+            $(this).addClass("selected");
+        });
+        $(document).on('click', "#addTextAnnotation", function() {
+            var date=new Date();
+            // add data to annotations array
+            textAnnotationsArray.push({
+                name:"",
+                project:"",
+                access: "edit", 
+                created: date.toJSON(), 
+                modified: date.toJSON(), 
+                owner: AtlasMakerWidget.User.username,
+                type: "text",
+                data: ""
+            });
+            // add and bind new table row
+            var i=textAnnotationsArray.length-1;
+            BrainBox.appendAnnotationTableRow(i,textAnnParam);
+        });
+        $(document).on('click', "#removeTextAnnotation", function() {
+            var index=$(textAnnParam.table).find("tbody .selected").index();
+            $(textAnnParam.table).find('tbody tr:eq('+index+')').remove();
+            // remove binding
+            JSON.stringify(textAnnParam.info_proxy); // update textAnnotationsArray from info_proxy
+            var irow=textAnnotationsArray.length-1;
+            for(var icol=0; icol<textAnnParam.objTemplate.length; icol++) {
+                unbind2(textAnnParam.info_proxy,textAnnParam.objTemplate[icol].path.replace("#", irow));
+            }
+            // remove row from textAnnotationsArray
+            textAnnotationsArray.splice(index,1);
+
+            // save change
+            JSON.stringify(info_proxy); // update content of projectInfo object from proxy by calling all getters
+            
+            // update BrainBox.info
+            BrainBox.info.mri.annotations = annotationsArrayToObject(textAnnotationsArray);
+            var patch = jsonpatch.compare(mriInfoOrig, BrainBox.info);
+            console.log("patch:",patch);
+            if(patch.length == 0) {
+                console.log("Nothing changed");
+                return;
+            }
+            AtlasMakerWidget.sendSaveMetadataMessage(BrainBox.info,"patch", patch)
+                .then(function() {
+                    mriInfoOrig = JSON.parse(JSON.stringify(BrainBox.info));
+                });
+        });
+
+        // text annotations table: select the first row by default
+        $("table#textAnnotations tr").removeClass("selected");
+        $("table#textAnnotations tr").eq(1).addClass("selected");
         
         // connect close button in labels set
         $(document).on('click', "#labels-close", function(){$("#labelset").hide()});
@@ -494,10 +545,20 @@ if( $.isEmptyObject(mriInfo)) {
             // send data when focus is lost (on blur)
             $(document).on('blur', "[contenteditable]", function from_project(e) {
                 var index = $(e.target).closest('tr').index();
+                
+                // save change
                 JSON.stringify(info_proxy); // update content of projectInfo object from proxy by calling all getters
-                BrainBox.info.mri.annotations = annotationsArrayToObject(BrainBox.info.mri.annotations);
-                AtlasMakerWidget.sendSaveMetadataMessage(BrainBox.info);
-                BrainBox.info.mri.annotations = annotationsObjectToArray(BrainBox.info.mri.annotations);
+                BrainBox.info.mri.annotations = annotationsArrayToObject(textAnnotationsArray);
+                var patch = jsonpatch.compare(mriInfoOrig, BrainBox.info);
+                console.log("patch:",patch);
+                if(patch.length == 0) {
+                    console.log("Nothing changed");
+                    return;
+                }
+                AtlasMakerWidget.sendSaveMetadataMessage(BrainBox.info,"patch",patch)
+                    .then(function() {
+                        mriInfoOrig = JSON.parse(JSON.stringify(BrainBox.info));
+                    });
             });
             // blur when [enter] is clicked, to trigger data sending
             $(document).on('keydown', "[contenteditable]", function(e) {
@@ -510,19 +571,6 @@ if( $.isEmptyObject(mriInfo)) {
             $("#annotations tbody, #textAnnotations tbody").on('change', "select", function(e) {
                 $(e.target).blur();
             });
-    
-        /*
-        // autosave
-        hash_old=BrainBox.hash(JSON.stringify(BrainBox.info));
-        $("#saveAnnotations").hide();
-        setInterval(function() {
-            JSON.stringify(info_proxy);
-            var hash=BrainBox.hash(JSON.stringify(BrainBox.info));
-            if(hash!=hash_old) {
-                $("#saveAnnotations").show();
-            }
-        },1000*10); // every 10 seconds
-        */
         
     },function(){
         $("#msgLog").html("ERROR: Can't load data");

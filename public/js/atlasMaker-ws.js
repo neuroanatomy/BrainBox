@@ -404,23 +404,44 @@ var AtlasMakerWS = {
 	/**
      * @function sendSaveMetadataMessage
      */
-	sendSaveMetadataMessage: function sendSaveMetadataMessage(info) {
+	sendSaveMetadataMessage: function sendSaveMetadataMessage(info, method, patch) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(sendSaveMetadataMessage,1,"#aca");if(l)console.log.apply(undefined,l);
 			
+		var def = $.Deferred();
 		if(me.flagConnected==0) {
 		    console.log("WARNING: Not connected: will not save metadata");
-			return;
+			return def.reject().promise();
 		}
 		
 		try {
 		    var rnd = Math.random().toString(36).slice(20);
-			me.socket.send(JSON.stringify({type:"saveMetadata",rnd:rnd,metadata:info}));
+		    var met = method || "append";
+		    if(method == "patch") {
+                me.socket.send(JSON.stringify({
+                    type:"saveMetadata",
+                    metadata: info,
+                    method: met,
+                    patch: patch,
+                    rnd: rnd
+                }));		    
+		    } else {
+                me.socket.send(JSON.stringify({
+                    type:"saveMetadata",
+                    metadata: info,
+                    method: met,
+                    rnd: rnd
+                }));
+            }
 			console.log(rnd);
 			console.log(info);
+			def.resolve();
+			
 		} catch (ex) {
 			console.log("ERROR: Unable to sendSaveMetadataMessage",ex);
+			def.reject();
 		}
+        return def.promise();
 	},
 	/**
      * @function receiveDisconnectMessage
