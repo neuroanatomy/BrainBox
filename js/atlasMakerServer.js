@@ -700,7 +700,7 @@ var receiveSaveMetadataMessage = function receiveSaveMetadataMessage(data,user_s
 	} else {
 	    // deal with the complete object
 
-r        // sanitise json
+        // sanitise json
         json=JSON.parse(DOMPurify.sanitize(JSON.stringify(json))); // sanitize works on strings, not objects
         // DEBUG:
         console.log("metadata:", JSON.stringify(json));
