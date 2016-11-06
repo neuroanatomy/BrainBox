@@ -1995,7 +1995,7 @@ var drawSlice = function drawSlice(brain, view, slice) {
 	return jpeg.encode(rawImageData,99);
 }
 
-var colormap=[];
+var colormap=[{r:0,g:0,b:0}];
 for(var i=1;i<256;i++) {
     colormap.push({
         r:100+Math.random()*155,
