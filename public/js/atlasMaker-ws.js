@@ -224,7 +224,7 @@ var AtlasMakerWS = {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(receiveUserDataMessage,0,"#aca");if(l)console.log.apply(undefined,l);
 
-		if(me.debug) console.log("description: "+data.description,data);
+		if(me.debug>1) console.log("description: "+data.description,data);
 	
 		var u=data.uid;
 	
