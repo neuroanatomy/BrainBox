@@ -556,7 +556,7 @@ var queryProjectName = function queryProjectName(data){
 	return new Promise(function(resolve, reject){
 		if (data.metadata && data.metadata.name) {
 			db.get('project')
-                .findOne({"shortname": data.metadata.name},{fields:["name","shortname"]})
+                .findOne({shortname: data.metadata.name, backup: {$exists:0}},{fields:["name","shortname"]})
 				.then(function(obj) {
 					resolve(obj);
 				});
@@ -676,7 +676,7 @@ var receiveSaveMetadataMessage = function receiveSaveMetadataMessage(data,user_s
 	    // deal with patches
 
         // get original object from db
-        db.get('mri').findOne({source:json.source, backup:{$exists:false}},{_id:0})
+        db.get('mri').findOne({source:json.source, backup:{$exists: 0}},{_id:0})
             .then(function (ret) {
                 
                 delete ret['_id'];
@@ -706,7 +706,7 @@ var receiveSaveMetadataMessage = function receiveSaveMetadataMessage(data,user_s
         console.log("metadata:", JSON.stringify(json));
 
         // mark previous one as backup
-        db.get('mri').findOne({source:json.source, backup:{$exists:false}})
+        db.get('mri').findOne({source:json.source, backup:{$exists: 0}})
             .then(function (ret) {
                 // DEBUG: console.log("original mri:", JSON.stringify(ret));
             
