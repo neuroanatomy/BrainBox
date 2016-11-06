@@ -403,6 +403,7 @@
 							<!-- Save or Cancel -->
 							<div style="display:block;margin:0 auto;width:200px">
                                 <h2 id="saveChanges" class="pushButton">Save Changes</h2>
+                                <h2 id="deleteProject" class="pushButton">Delete Project</h2>
                                 <h2 id="cancelChanges" class="pushButton">Cancel</h2>
                                 <p id="saveFeedback"></p>
                             </div>
@@ -666,6 +667,7 @@ $("#annotations tbody").on('click','tr',selectRow);
 $("#MRIFiles tbody").on('click','tr',selectRow);
 
 $("#saveChanges").click(saveChanges);
+$("#deleteProject").click(deleteProject);
 $("#cancelChanges").click(function cancelChanges(){location.pathname='{{{projectURL}}}'});
 
 $("body").on('click',".check",function(e){onCheckClicked(e)}); // for the display option
@@ -971,6 +973,46 @@ function saveChanges() {
         },3000);
         console.log(err);
     });
+}
+function deleteProject() {
+    // update projectInfo from projectInfoProxy
+    JSON.stringify(projectInfoProxy);
+
+    var res = confirm(
+        "Are you sure you want to delete project "
+        + projectInfo.shortname+"? "
+        + "This operation cannot be undone."
+    );
+    
+    if (res !== true) {
+        return;
+    }
+    
+    $.ajax({
+        url: "/project/json/"+projectInfo.shortname,
+        method: "delete",
+        data:JSON.stringify(projectInfo)
+    }).done(function(response) {
+    	if(response.success) {
+            $("#saveFeedback").text("Successfully deleted");
+    	    setTimeout(function() {
+    	        $("#saveFeedback").text("");
+    	    },2000);
+    	} else {
+            $("#saveFeedback").text("Unable to delete");
+    	    setTimeout(function() {
+    	        $("#saveFeedback").text("");
+    	    },3000);
+    	}
+        console.log(response.message);
+    }).catch(function(err) {
+        $("#saveFeedback").text("Unable to delete. Please try again later");
+        setTimeout(function() {
+            $("#saveFeedback").text("");
+        },3000);
+        console.log(err);
+    });
+
 }
 </script>
 

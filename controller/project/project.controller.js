@@ -546,6 +546,64 @@ var post_project = function(req, res) {
         res.json({"error":error});
     });
 }
+/**
+ * @function delete_project
+ * @desc Delete a project
+ * @param {Object} req Req object from express
+ * @param {Object} res Res object from express
+ */
+var delete_project = function(req, res) {
+    var shortname;
+    var loggedUser;
+    
+    if (!req.isAuthenticated()) {
+        console.log("The user is not logged in");
+        res.json({success:false,message:"User not authenticated"});
+        return;
+    }
+    loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
+
+    shortname = req.params.projectName;
+    req.db.get('project').findOne({shortname: shortname, backup: {$exists: 0}})
+    .then(function(project) {
+        if(project) {
+            console.log(">> project does exist");
+            if(checkAccess.toProject(project, loggedUser, "remove") == true ) {
+                console.log(">> user does have remove rights");
+                
+                var query = {}, update = {};
+                query["mri.annotations."+shortname] = {$exists:1};
+                query["backup"] = {$exists:0};
+                update["$unset"] = {};
+                update["$unset"]["mri.annotations."+shortname] = "";
+                
+                Promise.all([
+                    req.db.get('project').remove({_id:project._id, backup:{$exists:false}}),
+                    req.db.get('mri').update(query, update, {multi: true}),
+                    req.db.get('mri').update({"mri.atlas":{$elemMatch:{project:shortname}}}, {$pull:{"mri.atlas":{project:shortname}}}, {multi: true})
+                ])
+                .then(function () {
+                    console.log(">> project and project-related annotations removed");
+                    res.json({success:true, message:"Project deleted"});
+                })
+                .catch(function(err) {
+                    console.log("ERROR: cannot remove project or project-related annotations");
+                    res.json({success:false ,message:"Unable to delete. Try again later"});
+                });
+            } else {
+                console.log("WARNING: user does not have remove rights");
+                res.json({success:false,message:"The user is not allowed to delete this project"});
+            }
+        } else {
+            console.log("WARNING: project does not exist");
+            res.json({success:false,message:"Unable to delete. Project does not exist in the database"});
+        }
+            
+    }).catch(function(err) {
+        console.log("ERROR: unable to query the db");
+        res.json({success:false,message:"Unable to delete. Try again later"});
+    });
+}
 
 
 var projectController = function(){
@@ -555,6 +613,7 @@ var projectController = function(){
 	this.settings = settings;
 	this.newProject = newProject;
     this.post_project = post_project;
+    this.delete_project = delete_project;
 }
 
 module.exports = new projectController();

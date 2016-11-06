@@ -9,5 +9,6 @@ router.get('/:projectName', controller.validator , controller.project);
 router.get('/:projectName/settings', controller.validator , controller.settings);
 router.get('/json/:projectName', controller.validator , controller.api_project);
 router.post('/json/:projectName', controller.validator, controller.post_project);
+router.delete('/json/:projectName', controller.validator, controller.delete_project);
 
 module.exports = router;
