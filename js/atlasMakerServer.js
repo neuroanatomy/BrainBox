@@ -330,7 +330,7 @@ var unloadAtlas = function unloadAtlas(dirname,atlasFilename) {
 	var i;
 	for(i in Atlases) {
 		if(Atlases[i].dirname===dirname && Atlases[i].name===atlasFilename) {
-			saveNifti(Atlases[i])
+			saveAtlas(Atlases[i])
                 .then(function () {
                     console.log("    Atlas saved. Unloading it");
                     clearInterval(Atlases[i].timer);
@@ -732,7 +732,7 @@ var receiveAtlasFromUserMessage = function receiveAtlasFromUserMessage(data,user
 		var sourceUS=getUserFromUserId(data.uid);
 		var iAtlas=sourceUS.User.iAtlas;
 		var atlas=Atlases[iAtlas];
-		saveNifti(atlas)
+		saveAtlas(atlas)
             .then(function () {
                 console.log("    Replace current atlas with new atlas");
                 atlas.data=atlasData;
@@ -986,7 +986,7 @@ var addAtlas = function addAtlas(User) {
             .then(function (atlas) {
                 Atlases.push(atlas);
                 User.iAtlas=Atlases.indexOf(atlas);
-                atlas.timer=setInterval(function () {saveNifti(atlas)},60*60*1000); // 60 minutes
+                atlas.timer=setInterval(function () {saveAtlas(atlas)},60*60*1000); // 60 minutes
                 
                 resolve(atlas);
             });
@@ -1032,17 +1032,17 @@ var getBrainAtPath = function getBrainAtPath(brainPath) {
 }
 this.getBrainAtPath = getBrainAtPath;
 
+/**
+ * @func loadAtlas
+ * @desc The requested atlas is sent if it was already loaded, loaded from disk
+ *       if it was already downloaded but not yet loaded, or created if it's a
+ *       new atlas.
+ * @param {Object} User A User object providing information about the requested atlas
+ * @return an atlas (mri structure) 
+ */
 var loadAtlas = function loadAtlas(User) {
     traceLog(loadAtlas);
 		
-    /*
-        loadAtlas
-        input: A User structure providing information about the requested atlas
-        process: the requested atlas is sent if it was already loaded, loaded from disk
-                if it was already downloaded but not yet loaded, or created if it's a
-                new atlas.
-        output: an atlas (mri structure) 
-    */
     var pr = new Promise(function promise_fromloadAtlas(resolve,reject) {
         var path=this.dataDirectory+User.dirname+User.atlasFilename;
     
@@ -1186,6 +1186,7 @@ var readNifti = function readNifti(path) {
 
                 // manually parsed information
                 mri.hdr=nii.slice(0,352);
+                mri.hdrSz=352;
                 mri.datatype=nii.readUInt16LE(70);
 
                 console.log("reading datatype",mri.datatype);
@@ -1291,6 +1292,10 @@ var readMGZ = function readMGZ(path) {
                
                 sz = mri.dim[0]*mri.dim[1]*mri.dim[2];
 
+                // keep the header
+                mri.hdr=mgh.slice(0,hdr_sz);
+                mri.hdrSz=hdr_sz;
+
                 switch(h.type) {
                     case 0: // MGHUCHAR
                         mri.data=mgh.slice(hdr_sz);
@@ -1339,6 +1344,61 @@ var readMGZ = function readMGZ(path) {
 	
 	return pr;
 };
+
+var saveAtlas = function saveAtlas(atlas) {
+    traceLog(saveAtlas);
+
+    /*
+        saveAtlas
+        input: an mri structure
+        process: a .nii.gz or .mgz file is saved at the position indicated in the mri structure
+        output: success message
+    */
+
+	if(atlas && atlas.dim ) {
+		if(atlas.data==undefined) {
+			console.log("ERROR: [saveAtlas] atlas in Atlas array has no data");
+			if(debug) console.log(atlas);
+			return Promise.reject("ERROR: [saveAtlas] atlas in Atlas array has no data");
+		} else {
+			var i,sum=0;
+			for(i=0;i<atlas.dim[0]*atlas.dim[1]*atlas.dim[2];i++)
+				sum+=atlas.data[i];
+			if(sum==atlas.sum) {
+				console.log("    Atlas",atlas.dirname,atlas.name,
+							"no change, no save, freemem",os.freemem());
+				return Promise.resolve("Done. No save required");
+			}
+			atlas.sum=sum;
+
+			var	voxel_offset=atlas.hdrSz;
+			var	mri=new Buffer(atlas.dim[0]*atlas.dim[1]*atlas.dim[2]+voxel_offset);
+			console.log("    Atlas",atlas.dirname,atlas.name,
+						"data length",atlas.data.length+voxel_offset,
+						"buff length",mri.length);
+			
+			atlas.hdr.copy(mri);
+			atlas.data.copy(mri,voxel_offset);
+			
+			var pr=new Promise(function (resolve, reject) {
+				zlib.gzip(mri, function (err,mrigz) {
+					var	ms=+new Date;
+					var path1=this.dataDirectory+atlas.dirname+atlas.name;
+					var	path2=this.dataDirectory+atlas.dirname+ms+"_"+atlas.name;
+					fs.rename(path1,path2, function () {
+						fs.writeFileSync(path1,mrigz);
+						resolve("Atlas saved");
+					});
+				});
+			});
+		}
+	} else {
+		return Promise.reject("ERROR: No atlas to save");
+	}
+
+
+	return pr;
+}
 
 var createNifti = function createNifti(templateMRI) {
     traceLog(createNifti);
@@ -1429,59 +1489,6 @@ var createNifti = function createNifti(templateMRI) {
 
     return Promise.resolve(mri);
 };
-var saveNifti = function saveNifti(atlas) {
-    traceLog(saveNifti);
-
-    /*
-        saveNifti
-        input: an mri structure
-        process: a .nii.gz file is saved at the position indicated in the mri structure
-        output: success message
-    */
-
-	if(atlas && atlas.dim ) {
-		if(atlas.data==undefined) {
-			console.log("ERROR: [saveNifti] atlas in Atlas array has no data");
-			if(debug) console.log(atlas);
-			return Promise.reject("ERROR: [saveNifti] atlas in Atlas array has no data");
-		} else {
-			var i,sum=0;
-			for(i=0;i<atlas.dim[0]*atlas.dim[1]*atlas.dim[2];i++)
-				sum+=atlas.data[i];
-			if(sum==atlas.sum) {
-				console.log("    Atlas",atlas.dirname,atlas.name,
-							"no change, no save, freemem",os.freemem());
-				return Promise.resolve("Done. No save required");
-			}
-			atlas.sum=sum;
-
-			var	voxel_offset=352;
-			var	nii=new Buffer(atlas.dim[0]*atlas.dim[1]*atlas.dim[2]+voxel_offset);
-			console.log("    Atlas",atlas.dirname,atlas.name,
-						"data length",atlas.data.length+voxel_offset,
-						"buff length",nii.length);
-			atlas.hdr.copy(nii);
-			atlas.data.copy(nii,voxel_offset);
-			
-			var pr=new Promise(function (resolve, reject) {
-				zlib.gzip(nii, function (err,niigz) {
-					var	ms=+new Date;
-					var path1=this.dataDirectory+atlas.dirname+atlas.name;
-					var	path2=this.dataDirectory+atlas.dirname+ms+"_"+atlas.name;
-					fs.rename(path1,path2, function () {
-						fs.writeFileSync(path1,niigz);
-						resolve("Atlas saved");
-					});
-				});
-			});
-		}
-	} else {
-		return Promise.reject("ERROR: No atlas to save");
-	}
-
-
-	return pr;
-}
 
 //========================================================================================
 // Undo
