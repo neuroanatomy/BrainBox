@@ -137,6 +137,10 @@ var upload = function(req, res) {
         console.log("atlas.dim: ",atlas.dim);
         console.log("mri.dim: ",mri.dim);
 
+        /**
+         * @todo How do we check for volume dimensions now?
+         */
+         
         /*
         // check volume dimensions
         if (atlas.dim[0] != mri.dim[0] ||
