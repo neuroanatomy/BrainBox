@@ -130,6 +130,19 @@
 	[data-level="4"] .remove:before {
 		background-image: url("/img/minus-small-circle.svg");
 	}
+
+    .a {
+        border:thin solid #777;
+        border-radius:3px;
+        margin:1px;
+        text-align:center;
+    }
+    .a:hover {
+        opacity:0.5;
+        -webkit-user-select:none;
+        -moz-user-select:none;
+        user-select:none;
+    }
 </style>
 
 <body>
@@ -211,8 +224,8 @@
                             <tbody></tbody>
                             </table>
                             <div style="text-align:right">
-                                <img id="addAnnotation"    class="button" src='/img/plus-circle.svg'/>
-                                <img id="removeAnnotation" class="button" src='/img/minus-circle.svg'/>
+                                <img id="addAnnotation"    class="button" style="width:19px; height:19px" src='/img/plus-square.svg'/>
+                                <img id="removeAnnotation" class="button" style="width:19px; height:19px" src='/img/minus-square.svg'/>
                             </div>
 
                             <b>Text Annotations</b><br/>
@@ -229,8 +242,8 @@
                             <tbody></tbody>
                             </table>
                             <div style="text-align:right">
-                                <img id="addTextAnnotation"    class="button" src='/img/plus-circle.svg'/>
-                                <img id="removeTextAnnotation" class="button" src='/img/minus-circle.svg'/>
+                                <img id="addTextAnnotation"    class="button" style="width:19px; height:19px" src='/img/plus-square.svg'/>
+                                <img id="removeTextAnnotation" class="button" style="width:19px; height:19px" src='/img/minus-square.svg'/>
                             </div>
 
                         </div>
