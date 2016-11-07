@@ -64,7 +64,7 @@ var isProjectObject = function(req,res,object) {
                 }
             }
         }
-        console.log("files ok");
+        console.log("> files ok");
 
         // description
         if (object.description && !validatorNPM.isWhitelisted(object.description, allowed)) {
@@ -72,7 +72,7 @@ var isProjectObject = function(req,res,object) {
             return;
             // delete object.description;
         }
-        console.log("description ok");
+        console.log("> description ok");
 
         // name
         if (object.name && !validatorNPM.isWhitelisted(object.name, allowed)) {
@@ -80,21 +80,21 @@ var isProjectObject = function(req,res,object) {
             return;
             //delete object.name;
         }
-        console.log("name ok");
+        console.log("> name ok");
 
         // check that owner and shortname are present
         if (!object.owner || !object.shortname) {
             reject({success:false,error:"Invalid owner or project shortname, not present"});
             return;
         }
-        console.log("owner and project shortname present")
+        console.log("> owner and project shortname present")
         
         // check that shortname is alphanumeric
         if(!validatorNPM.isAlphanumeric(object.owner) || !validatorNPM.isAlphanumeric(object.shortname)) {
             reject({success:false,error:"Invalid owner or project shortname, not alphanumeric"});
             return;
         }
-        console.log("owner and project shortname present")
+        console.log("> owner and project shortname present")
 
         // convenience array for collaborator checks
         arr=object.collaborators.list;
@@ -116,17 +116,17 @@ var isProjectObject = function(req,res,object) {
         flag=true;
         for(i=0;i<arr.length;i++) {
             if (validatorNPM.matches(arr[i].access.collaborators, "none|view|edit|add|remove") === false ) {
-                console.log("collaborators",arr[i]);
+                // console.log("collaborators",arr[i]);
                 flag = false;
                 break;
             }
             if (validatorNPM.matches(arr[i].access.annotations, "none|view|edit|add|remove") === false ) {
-                console.log("annotations",arr[i]);
+                // console.log("annotations",arr[i]);
                 flag = false;
                 break;
             }
             if (validatorNPM.matches(arr[i].access.files, "none|view|edit|add|remove") === false ) {
-                console.log("files",arr[i]);
+                // console.log("files",arr[i]);
                 flag = false;
                 break;
             }
@@ -135,7 +135,7 @@ var isProjectObject = function(req,res,object) {
             reject({success:false,error:"Access values are invalid"});
             return;
         }
-        console.log("Access values ok");
+        console.log("> Access values ok");
         
         // check that the list of annotations contains at least 1 volume-type entry
         flag = false;
@@ -177,7 +177,7 @@ var isProjectObject = function(req,res,object) {
             }
             
             // All checks are successful, resolve the promisse
-            console.log({success:true,message:"All checks ok. Project object looks valid"});
+            // console.log({success:true,message:"All checks ok. Project object looks valid"});
             resolve(object);
         });
     });
@@ -338,10 +338,10 @@ var settings = function(req, res) {
                 async.each(
                     json.collaborators.list.map(function(o){return o.userID}), // convert array of objects into array of userIDs
                     function(item,cb) {
-                        console.log("item",item);
+                        // console.log("item",item);
                         req.db.get('user').findOne({nickname:item,backup:{$exists:0}},{name:1,_id:0})
                         .then(function(obj) {
-                            console.log("user",obj);
+                            // console.log("user",obj);
                             var i, found = false;
                             for(i=0;i<json.collaborators.list.length;i++) {
                                 if(json.collaborators.list[i].userID === item) {
@@ -406,7 +406,6 @@ var newProject = function(req, res) {
 };
 
 function insertMRInames(req,res,list) {
-    console.log("-- working with this list:",list,list.length);
     // insert MRI names, but only if they don't exist
     for(var i=0;i<list.length;i++) {
         var name=list[i].name;
@@ -481,7 +480,7 @@ function insertMRInames(req,res,list) {
 var post_project = function(req, res) {
     if (!req.isAuthenticated())
     {
-        console.log("not Authenticated");
+        console.log("ERROR not Authenticated");
         res.status(403);
         res.json({error:"error",message:"User not authenticated"});
         return;
