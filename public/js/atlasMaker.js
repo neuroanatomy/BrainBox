@@ -353,6 +353,7 @@ var AtlasMakerWidget = {
             me.User.specimenName=me.name;
             me.User.atlasFilename=info2.mri.atlas[index].filename;
             me.User.isMRILoaded=false;
+            me.User.source=info2.source;
 
             // TODO: it's silly to have to put vol dim twice...
             // (first here, once again further down)

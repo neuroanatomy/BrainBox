@@ -284,10 +284,12 @@ var AtlasMakerWS = {
 		var l=me.traceLog(receiveChatMessage,0,"#aca");if(l)console.log.apply(undefined,l);
 		console.log(data);
 	
+	    var theSource=me.Collab[data.uid].source;
 		var	theView=me.Collab[data.uid].view;
 		var	theSlice=me.Collab[data.uid].slice;
+		var link = "/mri?url="+theSource+"&view="+theView+"&slice="+theSlice;
 		var theUsername=data.username;
-		var	msg="<b>"+theUsername+" ("+theView+" "+theSlice+"): </b>"+data.msg+"<br />"
+		var	msg="<a href='"+link+"'><b>"+theUsername+":</b></a> "+data.msg+"<br />"
 		$("#log").append(msg);
 		$("#log").scrollTop($("#log")[0].scrollHeight);
 	},
