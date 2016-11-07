@@ -16,6 +16,8 @@ var buffer = new Int32Array(4096);		// surfacenets
 var brain={};
 
 function init(param) {
+    self.postMessage({msg:"init"});
+
 	init_surfacenets();
 
 	var path=param.path;
@@ -32,11 +34,14 @@ function init(param) {
 	}
 }
 function computeMesh() {
+    self.postMessage({msg:"compute mesh"});
+    
 	var g=SurfaceNets(brain.data,brain.dim,brain.pixdim,brain.level);
 	self.postMessage({msg:"success",geometry:g});
 }
-function init_surfacenets()
-{
+function init_surfacenets() {
+    self.postMessage({msg:"init_surfacenets"});
+
 	var k = 0;
 	for(var i=0; i<8; ++i) {
 		for(var j=1; j<=4; j<<=1) {
@@ -57,8 +62,9 @@ function init_surfacenets()
 		edge_table[i] = em;
 	}
 }
-function SurfaceNets(data, dims, pixdims, level)
-{ 
+function SurfaceNets(data, dims, pixdims, level) {
+    self.postMessage({msg:"SurfaceNets"});
+
 	var vertices = [];
 	var faces = [];
 	var n = 0;
@@ -145,6 +151,8 @@ function SurfaceNets(data, dims, pixdims, level)
 	return { vertices: vertices, faces: faces };
 }
 function configureNifti(niigz, callback) {
+    self.postMessage({msg:"configureNifti"});
+
 	var	inflate=new pako.Inflate();
 	try {
 		inflate.push(new Uint8Array(niigz),true);
@@ -189,6 +197,8 @@ function configureNifti(niigz, callback) {
 	callback();
 }
 function loadNifti(path,callback) {
+    self.postMessage({msg:"loadNifti"});
+
 	var oReq = new XMLHttpRequest();
 	oReq.open("GET", path, true);
 	oReq.addEventListener("progress", function(e){console.log(parseInt(100*e.loaded/e.total)+"% Loaded")}, false);
