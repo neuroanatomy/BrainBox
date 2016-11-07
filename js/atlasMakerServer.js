@@ -1149,12 +1149,15 @@ var readNifti = function readNifti(path) {
 	var pr = new Promise(function (resolve, reject) {
         try {
             var niigz=fs.readFileSync(path);
+            console.log("niigz length:",niigz.length);
+            
             zlib.gunzip(niigz, function (err, nii) {
                 var i, j, tmp, sum, mri={};
 
                 // standard nii header
                 try {
                     NiiHdr.allocate();
+                    console.log("nii length:",nii.length);
                     NiiHdr._setBuff(nii);
                     var h=JSON.parse(JSON.stringify(NiiHdr.fields));
                     
@@ -1376,6 +1379,10 @@ var saveAtlas = function saveAtlas(atlas) {
 
 			var	voxel_offset=atlas.hdrSz;
 			var	mri=new Buffer(atlas.dim[0]*atlas.dim[1]*atlas.dim[2]+voxel_offset);
+
+			console.log("sum:",sum);
+			console.log("voxel_offset:",voxel_offset);
+			console.log("dim:",atlas.dim);
 			console.log("    Atlas",atlas.dirname,atlas.name,
 						"data length",atlas.data.length+voxel_offset,
 						"buff length",mri.length);
@@ -1479,6 +1486,7 @@ var createNifti = function createNifti(templateMRI) {
     mri.hdr = niihdr;
     mri.hdr.writeUInt16LE(datatype,70,2);	// set datatype to 2:unsigned char (8 bits/voxel)
     mri.hdr.writeFloatLE(vox_offset,108,4);	// set voxel_offset to 352 (minimum size of a nii header)
+    mri.hdrSz=vox_offset;
     
     // zero the data
     mri.data = new Buffer(sz);
