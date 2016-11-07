@@ -101,7 +101,7 @@ ws.onmessage = function(message) {
     console.log(message);
     if (message.type === "projectNameQuery") {
         if(message.metadata) {
-            $("#warning").text("The project <a><strong>"+message.metadata.shortname+"</strong></a> already exists");
+            $("#warning").html("The project <a><strong>"+message.metadata.shortname+"</strong></a> already exists");
             $("#warning a").attr('href','/project/'+message.metadata.shortname);
             $("#warning").show();
             $("#createProject").css({'pointer-events':'none',opacity:0.5});
