@@ -642,7 +642,7 @@ var receiveRequestSlice2Message = function receiveRequestSlice2Message(data,user
             */
     
             try {
-                var jpegImageData=drawSlice2(brain,atlas,view,slice);
+                var jpegImageData=drawSlice(brain,atlas,view,slice);
                 var length=jpegImageData.data.length+jpgTag.length;
                 var bin=Buffer.concat([jpegImageData.data,jpgTag],length);
                 user_socket.send(bin, {binary: true,mask:false});
