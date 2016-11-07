@@ -657,10 +657,12 @@ var receiveRequestSlice2Message = function receiveRequestSlice2Message(data,user
 var receiveSaveMetadataMessage = function receiveSaveMetadataMessage(data,user_socket) {
     traceLog(receiveSaveMetadataMessage);
 
-	console.log("metadata type: "+data.type);
-	console.log("rnd: "+data.rnd);
-	console.log("method: "+data.method);
-	console.log("patch: "+JSON.stringify(data.patch));
+	if(debug>1) {
+        console.log("metadata type: "+data.type);
+        console.log("rnd: "+data.rnd);
+        console.log("method: "+data.method);
+        console.log("patch: "+JSON.stringify(data.patch));
+    }
 
 	/**
 	 * @todo Currently metadata is a complete object, but it is also possible to
@@ -704,7 +706,7 @@ var receiveSaveMetadataMessage = function receiveSaveMetadataMessage(data,user_s
         // sanitise json
         json=JSON.parse(DOMPurify.sanitize(JSON.stringify(json))); // sanitize works on strings, not objects
         // DEBUG:
-        console.log("metadata:", JSON.stringify(json));
+        if(debug>1) console.log("metadata:", JSON.stringify(json));
 
         // mark previous one as backup
         db.get('mri').findOne({source:json.source, backup:{$exists: 0}})

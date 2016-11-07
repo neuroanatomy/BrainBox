@@ -433,8 +433,10 @@ var AtlasMakerWS = {
                     rnd: rnd
                 }));
             }
-			console.log(rnd);
-			console.log(info);
+			if(me.debug>1) {
+			    console.log(rnd);
+                console.log(info);
+            }
 			def.resolve();
 			
 		} catch (ex) {
