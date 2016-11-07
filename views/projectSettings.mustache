@@ -405,7 +405,7 @@
 							<div style="display:block;margin:0 auto;width:200px">
                                 <h2 id="saveChanges" class="pushButton">Save Changes</h2>
                                 <h2 id="deleteProject" class="pushButton">Delete Project</h2>
-                                <h2 id="cancelChanges" class="pushButton">Cancel</h2>
+                                <h2 id="goToProject" class="pushButton">Go to Project</h2>
                                 <p id="saveFeedback"></p>
                             </div>
 				</div>
@@ -669,7 +669,7 @@ $("#MRIFiles tbody").on('click','tr',selectRow);
 
 $("#saveChanges").click(saveChanges);
 $("#deleteProject").click(deleteProject);
-$("#cancelChanges").click(function cancelChanges(){location.pathname='{{{projectURL}}}'});
+$("#goToProject").click(function goToProject(){location.pathname='/project/{{{projectShortname}}}'});
 
 $("body").on('click',".check",function(e){onCheckClicked(e)}); // for the display option
 
