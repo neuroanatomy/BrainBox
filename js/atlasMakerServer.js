@@ -381,6 +381,9 @@ var initSocketConnection = function initSocketConnection() {
 					case "userData":
 						receiveUserDataMessage(data,this);
 						break;
+					case "show":
+					    // no action performed
+						break;
 					case "paint":
 						receivePaintMessage(data);
 						break;
@@ -564,7 +567,6 @@ var queryProjectName = function queryProjectName(data){
 			reject();
 	});
 }
-
 var receivePaintMessage = function receivePaintMessage(data) {
     traceLog(receivePaintMessage,2);
 

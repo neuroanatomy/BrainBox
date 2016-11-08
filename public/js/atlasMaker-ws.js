@@ -109,6 +109,9 @@ var AtlasMakerWS = {
 			case "chat":
 				me.receiveChatMessage(data);
 				break;
+			case "show":
+				me.receiveShowMessage(data);
+				break;
 			case "paint":
 				me.receivePaintMessage(data);
 				break;
@@ -325,6 +328,39 @@ var AtlasMakerWS = {
 		var y=parseInt(msg.y);	// y coordinate
 
 		me.paintxy(u,c,x,y,me.Collab[u]);
+	},
+	/**
+     * @function sendShowMessage
+     * @desc On user showing, this function broadcasts the showing event to all other connected users
+     * @param {Object} msg Showing event object: {"x":x,"y":y}, where x and y are the coordinates in slice space
+     */
+	sendShowMessage: function sendShowMessage(msg) {
+		var me=AtlasMakerWidget;
+		var l=me.traceLog(sendShowMessage,1,"#aca");if(l)console.log.apply(undefined,l);
+	
+		if(me.flagConnected==0)
+			return;
+		try {
+			me.socket.send(JSON.stringify({type:"show",data:msg}));
+		} catch (ex) {
+			console.log("ERROR: Unable to sendShowMessage",ex);
+		}
+	},
+	/**
+     * @function receiveShowMessage
+     * @desc Receive show events from other connected users
+     */
+	receiveShowMessage: function receiveShowMessage(data) {
+		var me=AtlasMakerWidget;
+		var l=me.traceLog(receiveShowMessage,3,"#aca");if(l)console.log.apply(undefined,l);
+	
+		var	msg=data.data;
+		var u=data.uid;	// user
+		var c=msg.c;	// command
+		var x=parseInt(msg.x);	// x coordinate
+		var y=parseInt(msg.y);	// y coordinate
+
+		me.showxy(u,c,x,y,me.Collab[u]);
 	},
 	/**
      * @function receivePaintVolumeMessage
