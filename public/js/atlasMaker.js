@@ -36,7 +36,7 @@ var AtlasMakerWidget = {
 	annotationLength:0,
 	measureLength:	null,
 	User:			{  view:null,
-					   tool:'paint',
+					   tool:'show',
 					  slice:null,
 					penSize:1,
 				   penValue:1,

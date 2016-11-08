@@ -3,8 +3,38 @@
  */
 var AtlasMakerPaint = {
 	//====================================================================================
-	// Paint functions common to all users
+	// Paint functions
 	//====================================================================================
+	showxy: function showxy(u,c,x,y,usr) {
+		var me=AtlasMakerWidget;
+		var l=me.traceLog(showxy,1,"#0c0");if(l)console.log.apply(undefined,l);
+	
+		// u: user number
+		// c: command
+		// x, y: coordinates
+		msg={"c": c, "x": x, "y": y};
+		if(u==-1 && JSON.stringify(msg)!=JSON.stringify(me.msg0)) {
+			me.sendShowMessage(msg);
+			me.msg0=msg;
+		}
+		if(u!=-1) {
+		    switch(c) {
+		        case 'u':
+		            usr.pointer.remove();
+		            delete usr.pointer;
+		            break;
+		        case 'm':
+                    if(!usr.pointer) {
+                        usr.pointer = $('<div style="display:inline-block;height:20px;margin-left:-10px;margin-top:-10px;position:absolute;color:white"><img src="/img/show.svg" height="100%"/>'+((usr.username == 'Anonymous')?u:usr.username)+'</div>');
+                        $("#resizable").append(usr.pointer);
+                    }
+                    usr.pointer.css({left:x*$("#resizable").width()/me.brain_W,top:y*$("#resizable").height()/me.brain_H});
+		            break;
+		    }
+		}
+		usr.x0=x;
+		usr.y0=y;
+	},
     /**
      * @function paintxy
      * @desc Dispatches paint/erase commands to the annotation volume and to the server for broadcast

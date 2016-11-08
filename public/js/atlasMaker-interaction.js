@@ -71,6 +71,9 @@ var AtlasMakerInteraction = {
 			return;
 		
 		switch(theTool) {
+			case 'Show':
+				me.User.tool='show';
+				break;
 			case 'Paint':
 				me.User.tool='paint';
 				break;
@@ -633,6 +636,11 @@ var AtlasMakerInteraction = {
 
 		
 		switch(me.User.tool) {
+			case 'show':
+                me.User.mouseIsDown = true;
+                me.sendUserDataMessage(JSON.stringify({'mouseIsDown':true}));
+                me.showxy(-1,'m',x,y,me.User);
+				break;
 			case 'paint':
 				if(me.User.doFill)
 					me.paintxy(-1,'f',x,y,me.User);
@@ -696,6 +704,9 @@ var AtlasMakerInteraction = {
 			return;
 		
 		switch(me.User.tool) {
+			case 'show':
+				me.showxy(-1,'m',x,y,me.User);
+				break;
 			case 'paint':
 				me.paintxy(-1,'lf',x,y,me.User);
 				break;
@@ -727,18 +738,32 @@ var AtlasMakerInteraction = {
 		// Send mouse up (touch ended) message
 		me.User.mouseIsDown = false;
 		me.User.x0=-1;
-		var msg={"c":"mu"};
-		me.sendPaintMessage(msg);
-	
-		// add annotated length to User.annotation length and post to DB
-		me.logToDatabase("annotationLength",JSON.stringify({specimen:me.name,atlas:me.atlas.name,length:me.annotationLength}))
-			.then(function(value){var length=parseInt(value);me.info.length=length+" mm";me.displayInformation()});
+		
+		var msg;
+		switch(me.User.tool) {
+		    case 'show':
+                var msg={"c":"u"};
+                me.sendShowMessage(msg);
+                break;
+            case 'paint':
+            case 'erase':
+                var msg={"c":"mu"};
+                me.sendPaintMessage(msg);
 
-		me.annotationLength=0;
+                // add annotated length to User.annotation length and post to DB
+                me.logToDatabase("annotationLength",JSON.stringify({specimen:me.name,atlas:me.atlas.name,length:me.annotationLength}))
+                    .then(function(value){var length=parseInt(value);me.info.length=length+" mm";me.displayInformation()});
 
-		// compute total segmented volume
-		var vol=me.computeSegmentedVolume();
-		me.info.volume=parseInt(vol)+" mm3";
+                me.annotationLength=0;
+
+                // compute total segmented volume
+                var vol=me.computeSegmentedVolume();
+                me.info.volume=parseInt(vol)+" mm3";
+                break;
+            default:
+                var msg={"c":"mu"};
+                me.sendPaintMessage(msg);
+        }
 		
 		/*
 		    TEST
