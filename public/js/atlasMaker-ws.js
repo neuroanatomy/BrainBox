@@ -98,7 +98,7 @@ var AtlasMakerWS = {
 	
 		switch(data.type) {
 			case "saveMetadata" :
-				me.receiveMetaData(data);
+				me.receiveMetadata(data);
 				break;
 			case "userData":
 				me.receiveUserDataMessage(data);
@@ -425,19 +425,26 @@ var AtlasMakerWS = {
 			console.log("ERROR: Unable to sendRequestSliceMessage",ex);
 		}
 	},
-	receiveMetaData: function receiveMetaData(data) {
-// 		console.log(info_proxy);
-// 		console.log(info_proxy.files);
+    /**
+     * @todo This is really not the place for some of this code. The receiveMetadata
+     *       function is ok, but the direct references to projectInfo -- a structure
+     *       exclusively used by project.mustache -- should go to that file. Now, the
+     *       mechanism for uncoupling the 2 pieces of code is not clear. It could be
+     *       a subscription, for example.
+     */
+	receiveMetadata: function receiveMetadata(data) {
+		var me=AtlasMakerWidget;
+		var l=me.traceLog(receiveMetadata,1,"#aca");if(l)console.log.apply(undefined,l);
+        var projShortname = projectInfo.shortname;
 		for (var i in projectInfo.files.list) {
 			if (projectInfo.files.list[i].source == data.metadata.source) {
-				for (var key in projectInfo.files.list[i].mri.annotations) {
-					info_proxy["files.list." + i + ".mri.annotations." + key] = data.metadata.mri.annotations[key];
+				for (var key in projectInfo.files.list[i].mri.annotations[projShortname]) {
+					info_proxy["files.list." + i + ".mri.annotations." + projShortname + "." + key] = data.metadata.mri.annotations[projShortname][key];
 				}
 				info_proxy["files.list." + i + ".name"] = data.metadata.name;
 				break;
 			}
 		}
-		console.log("JUST RECIEVED SOME MORE DATA", data.metadata);
 	},
 	/**
      * @function sendSaveMetadataMessage
