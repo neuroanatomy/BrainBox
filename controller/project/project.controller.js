@@ -186,6 +186,52 @@ var isProjectObject = function(req,res,object) {
 }
 
 /**
+ * @func getFilesSlice
+ * @desc Get a slice of the mri files in a project
+ * @param {String} projectShortname Shortname of the project containing the files
+ * @param {integer} start Start index of the file slice
+ * @param {integer} length Number of files to include in the slice
+ */
+function getFilesSlice(projShortname, start, length) {
+
+	return new Promise(function(resolve, reject){
+		req.db.get('project').findOne({shortname:projShortname,backup:{$exists:0}},"-_id")
+		.then(function(json) {
+			if (json) {
+				var list = json.files.list, arr = [];
+				var i;
+			
+				if(start >= list.length-1)
+					return;
+				if(length > list.length - start) {
+					length = list.length - start;
+				}
+				for(i=start;i<start+length;i++) {
+					var item = list[i];
+					arr.push(req.db.get('mri').findOne({source:item,backup:{$exists:0}},{name:1,_id:0}));
+				}
+				Promise.all(arr,function(values) {
+					var j;
+					for(j=0;j<values.length;j++) {
+						if(values[j]) {
+							list[j] = values[j];
+						} else {
+							list[j] = {
+								source: item,
+								name: ""
+							};
+						}
+					}
+					resolve(list);
+				});
+			}
+		}).catch(function(err) {
+			reject();
+		});
+	}
+				
+}
+/**
  * @function project
  * @desc Render the project page GUI
  * @param {Object} req Req object from express
@@ -202,33 +248,16 @@ var project = function(req, res) {
 	req.db.get('project').findOne({shortname:req.params.projectName,backup:{$exists:0}},"-_id")
 	.then(function(json) {
 		if (json) {
-			async.each(
-				json.files.list,
-				function(item,cb) {
-					req.db.get('mri').findOne({source:item,backup:{$exists:0}},{name:1,_id:0})
-					.then(function(obj) {
-						if(obj) {
-						    // if an MRI is found, append a complete MRI object
-							json.files.list[json.files.list.indexOf(item)]=obj;
-						} else {
-						    // if an MRI is not found, create one with source URL and empty name
-							json.files.list[json.files.list.indexOf(item)]={
-								source: item,
-								name: ""
-							}
-						}
-						cb();
-					});
-				},
-				function() {
-					res.render('project', {
-						title: json.name,
-						projectInfo: JSON.stringify(json),
-						projectName: json.name,
-						login: login
-					});
-				}
-			);
+			getFilesSlice(shortname,0,100)
+			.then(function(list) {
+				json.files.list = list;
+				res.render('project', {
+					title: json.name,
+					projectInfo: JSON.stringify(json),
+					projectName: json.name,
+					login: login
+				});
+			});
 		} else {
  			res.status(404).send("Project Not Found");
 		}
