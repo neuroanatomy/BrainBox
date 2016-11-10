@@ -186,6 +186,66 @@ var isProjectObject = function(req,res,object) {
 }
 
 /**
+ * @func getFilesSlice
+ * @desc Get a slice of the mri files in a project
+ * @param {String} projectShortname Shortname of the project containing the files
+ * @param {integer} start Start index of the file slice
+ * @param {integer} length Number of files to include in the slice
+ */
+function getFilesSlice(req, projShortname, start, length) {
+    console.log(projShortname,start,length);
+	return new Promise(function (resolve, reject) {
+	    start = parseInt(start);
+	    length = parseInt(length);
+		console.log("inside the promise for project, start, length",projShortname, start, length);
+		req.db.get('project').findOne({shortname:projShortname,backup:{$exists:0}},"-_id")
+		.then(function(json) {
+            console.log("got json");
+			if (json) {
+			    console.log("json is not empty");
+				var list = json.files.list, newList = [], arr = [];
+				var i;
+				
+				start = Math.min(start, list.length-1);
+				length = Math.min(length, list.length-start);
+				
+				console.log("end:",start+length);
+				for(i=start;i<start+length;i++) {
+					var item = list[i];
+					arr.push(req.db.get('mri').findOne({source:item,backup:{$exists:0}},{name:1,_id:0}));
+				}
+				console.log("an array of db requests will be processed, length:",arr.length);
+				Promise.all(arr)
+				.then(function(values) {
+					var j;
+					for(j=0;j<values.length;j++) {
+						if(values[j]) {
+							newList[j] = values[j];
+						} else {
+							newList[j] = {
+								source: list[start+j],
+								name: ""
+							};
+						}
+						console.log(newList[j]);
+					}
+					resolve(newList);
+				})
+				.catch(function(err) {
+				    console.log("ERROR:",err);
+				    reject();
+				});
+			} else {
+			    console.log("json is empty");
+			}
+		}).catch(function(err) {
+		    console.log("ERROR:",err);
+			reject();
+		});
+	});
+				
+}
+/**
  * @function project
  * @desc Render the project page GUI
  * @param {Object} req Req object from express
@@ -202,33 +262,13 @@ var project = function(req, res) {
 	req.db.get('project').findOne({shortname:req.params.projectName,backup:{$exists:0}},"-_id")
 	.then(function(json) {
 		if (json) {
-			async.each(
-				json.files.list,
-				function(item,cb) {
-					req.db.get('mri').findOne({source:item,backup:{$exists:0}},{name:1,_id:0})
-					.then(function(obj) {
-						if(obj) {
-						    // if an MRI is found, append a complete MRI object
-							json.files.list[json.files.list.indexOf(item)]=obj;
-						} else {
-						    // if an MRI is not found, create one with source URL and empty name
-							json.files.list[json.files.list.indexOf(item)]={
-								source: item,
-								name: ""
-							}
-						}
-						cb();
-					});
-				},
-				function() {
-					res.render('project', {
-						title: json.name,
-						projectInfo: JSON.stringify(json),
-						projectName: json.name,
-						login: login
-					});
-				}
-			);
+            json.files.list = [];
+            res.render('project', {
+                title: json.name,
+                projectInfo: JSON.stringify(json),
+                projectName: json.name,
+                login: login
+            });
 		} else {
  			res.status(404).send("Project Not Found");
 		}
@@ -256,6 +296,32 @@ var api_project = function(req, res) {
 			res.send();
 		}
 	})
+};
+
+/**
+ * @function api_projectFiles
+ * @desc Writes json data for a slice of project files
+ * @param {Object} req Req object from express
+ * @param {Object} res Res object from express
+ * @result A json object with project data
+ */
+/**
+ * @todo Check access rights for this route
+ */
+var api_projectFiles = function(req, res) {
+
+    var projShortname = req.params.projectName;
+    var start = req.query.start;
+    var length = req.query.length;
+    
+    console.log("projShortname:",projShortname, "start:",start, "length:",length);
+    getFilesSlice(req,projShortname, start, length)
+    .then(function(list) {
+        res.send(list);    
+    })
+    .catch(function(err) {
+        res.send();
+    });
 };
 
 /**
@@ -608,6 +674,7 @@ var delete_project = function(req, res) {
 var projectController = function(){
 	this.validator = validator;
 	this.api_project = api_project;
+	this.api_projectFiles = api_projectFiles;
 	this.project = project;
 	this.settings = settings;
 	this.newProject = newProject;

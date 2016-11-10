@@ -1,4 +1,5 @@
 var accessLevels=["none","view","edit","add","remove"];
+var debug = 1;
 
 function traceLog(f, l) {
     if(l==undefined || debug>l)
@@ -15,7 +16,7 @@ function traceLog(f, l) {
  * @param {Object} access The access level requested
  */
 var toFileByAllProjects = function toFileByAllProjects(mri, projects, user, access) {
-    traceLog(toFileByAllProjects);
+    traceLog(toFileByAllProjects,1);
 
     var p, requestedLevel = accessLevels.indexOf(access);
 

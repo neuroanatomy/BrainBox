@@ -227,25 +227,25 @@
                 <h1>{{username}}</h1>
                 <h2>{{nickname}}</h2>
                 <p>{{joined}}</p>
-                <p>{{numMRI}} MRI Files
-                <p>{{numAtlas}} Atlas Files
-                <p>{{numProjects}} Projects
+                <p><span id="numMRI"></span> MRI Files</p>
+                <p><span id="numAtlas"></span> Atlas Files</p>
+                <p><span id="numProjects"></span> Projects</p>
 		    </div>
 		    <!-- end of #userDescription -->
 		    
 		    <div id="userTable">
                 <!-- Tab heads -->
                 <div>
-                    <a class="tab selected">MRI Files</a>
-                    <a class="tab">Atlas Files</a>
-                    <a class="tab">Projects</a>
+                    <a class="tab" value='mri'>MRI Files</a>
+                    <a class="tab" value='atlas'>Atlas Files</a>
+                    <a class="tab" value='projects'>Projects</a>
                 </div>
         
                 <!-- Tab contents -->
                 <div style="width:calc(100% - 40px);min-height:400px;background:#333;padding:20px">
         
                     <!-- Tab Content 1: MRI Files -->
-                    <table id="MRIFiles" class="tabContent" style="padding:10px">
+                    <table id="MRIFiles" class="tabContent" style="padding:10px;display:none">
                         <thead>
                             <tr>
                                 <th>Name</th>
@@ -254,6 +254,7 @@
                             <tr>
                         </thead>
                         <tbody>
+                            <!--
                             {{#MRIFiles}}
                                 <tr>
                                     <td>
@@ -265,6 +266,7 @@
                                     <td>{{included}}</td>
                                 </tr>
                             {{/MRIFiles}}
+                            -->
                         </tbody>
                     </table>
             
@@ -279,6 +281,7 @@
                             <tr>
                         </thead>
                         <tbody>
+                            <!--
                             {{#atlasFiles}}
                                 <tr>
                                     <td>
@@ -290,6 +293,7 @@
                                     <td>{{modified}}</td>
                                 </tr>
                             {{/atlasFiles}}
+                            -->
                         </tbody>
                     </table>
             
@@ -305,6 +309,7 @@
                             <tr>
                         </thead>
                         <tbody>
+                            <!--
                             {{#projects}}
                                 <tr>
                                     <td><div style="position:relative"><a style="position:absolute;left:15px" class="projectName" href="{{projectURL}}">{{project}}</a><a href="{{projectURL}}/settings" class="settings" title="Settings" style='position:absolute;left:0'><img style='width:11px; margin:3px 8px 0 0' src='/img/settings.svg'/></a></div></td>
@@ -314,6 +319,7 @@
                                     <td>{{modified}}</td>
                                 </tr>
                             {{/projects}}
+                            -->
                         </tbody>
                     </table>
             
@@ -347,33 +353,134 @@
 <script>
 	var userInfo='{{{userInfo}}}';
 	userInfo=JSON.parse(userInfo);
+	userInfo.MRIFiles = [];
+	userInfo.atlasFiles = [];
+	userInfo.projects = [];
 	
 	// switch tabs
 	$("a.tab").click(function() {
 		$("a.tab").removeClass("selected");
 		$(this).addClass("selected");
 		$(".tabContent").hide();
-		switch($(this).text()) {
-			case "MRI Files":
-				$("#MRIFiles").show();
-				break;
-			case "Atlas Files":
-				$("#atlasFiles").show();
-				break;
-			case "Projects":
-				$("#projects").show();
-				break;
-		}
+		selectTab($(this).attr('value'));
 	});
+	selectTab('{{tab}}');
+	
+	queryFiles();
+	queryAtlas();
+	queryProjects();
 	
     $("#addProject").click(function(){location="/project/new"});
     $("#settings").click(function(){
-    var pathname=location.pathname;
-    if(pathname.slice(-1)=="/")
-        location=pathname+"settings";
-    else
-        location=pathname+"/settings";
-});
+        var pathname=location.pathname;
+        if(pathname.slice(-1)=="/")
+            location=pathname+"settings";
+        else
+            location=pathname+"/settings";
+    });
+    
+function selectTab(tab) {
+    $(".tab").removeClass("selected");
+    switch(tab) {
+        case "mri":
+            $(".tab:eq(0)").addClass("selected");
+            $("#MRIFiles").show();
+            break;
+        case "atlas":
+            $(".tab:eq(1)").addClass("selected");
+            $("#atlasFiles").show();
+            break;
+        case "projects":
+            $(".tab:eq(2)").addClass("selected");
+            $("#projects").show();
+            break;
+    }
+}
+function queryFiles() {
+	$.getJSON("/user/json/{{nickname}}/files", {start:userInfo.MRIFiles.length, length:100})
+	.then(function(list) {
+	    appendFiles(list);
+	    if(list.length == 100)
+	        queryFiles();
+	});
+}
+function appendFiles(list) {
+    userInfo.MRIFiles.push.apply(userInfo.MRIFiles, list);
+    for(var i=0;i<list.length;i++) {
+        $('#MRIFiles tbody').append([
+            '<tr><td><a href="/mri?url=',
+            '<tr><td><a href="',
+            list[i].url,
+            '">',
+            (list[i].name?list[i].name:list[i].url),
+            '</a></td><td>',
+            list[i].volDimensions,
+            '</td><td>',
+            list[i].included,
+            '</td></tr>'
+        ].join(""));
+    }
+}
+function queryAtlas(list) {
+	$.getJSON("/user/json/{{nickname}}/atlas", {start:userInfo.atlasFiles.length, length:100})
+	.then(function(list) {
+	    appendAtlas(list);
+	    if(list.length==100)
+	        queryAtlas();
+	});
+}
+function appendAtlas(list) {
+    userInfo.atlasFiles.push.apply(userInfo.atlasFiles, list);
+    for(var i=0;i<list.length;i++) {
+        $('#atlasFiles tbody').append([
+            '<tr><td><a href="/mri?url=',
+            list[i].url,
+            '">',
+            (list[i].parentName?list[i].parentName:list[i].url),
+            '</a></td><td class="noEmpty">',
+            list[i].name,
+            '</td><td><a href="',
+            list[i].projectURL,
+            '" class="noEmpty">',
+            list[i].project,
+            '</a></td><td>',
+            list[i].modified,
+            '</td></tr>'
+        ].join(""));
+    }
+}
+function queryProjects() {
+	$.getJSON("/user/json/{{nickname}}/projects", {start:userInfo.projects.length, length:100})
+	.then(function(list) {
+	    appendProjects(list);
+	    if(list.length==100)
+	        queryProjects();
+	});
+}
+function appendProjects(list) {
+    userInfo.projects.push.apply(userInfo.projects, list);
+    for(var i=0;i<list.length;i++) {
+        $('#projects tbody').append([
+            '<tr><td><div style="position:relative"><a style="position:absolute;left:15px" class="projectName" href="',
+            list[i].projectURL,
+            '">',
+            list[i].project,
+            '</a><a href="',
+            list[i].projectURL,
+            '/settings" class="settings" title="Settings" style="position:absolute;left:0"><img style="width:11px; margin:3px 8px 0 0" src="/img/settings.svg"/></a></div></td><td>',
+            list[i].numFiles,
+            '</td><td>',
+            list[i].numCollaborators,
+            '</td><td><a href="/user/',
+            list[i].owner,
+            '">',
+            list[i].owner,
+            '</a></td><td>',
+            list[i].modified,
+            '</td></tr>'
+        ].join(""));
+    }
+}
 </script>
 
 </body>
