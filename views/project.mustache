@@ -209,11 +209,13 @@ for(k=0;k<projectInfo.annotations.list.length;k++) {
 }
 
 $("#projectName").text(projectInfo.name);
+/* UNUSED
 $("#projectOwner").html("<a href='"+projectInfo.owner+"'>"+projectInfo.owner+"</a>");
 var creation=new Date(projectInfo.created);
 $("#projectCreated").text("Created on "+creation.toLocaleString());
 $("#projectFilesNumber").text(projectInfo.files.list.length+" Files");
 $("#projectCollaboratorsNumber").text(projectInfo.collaborators.length+" Collaborators");
+*/
 
 $("#resizeButton").data({flag:-1,x0:0,y0:0});
 $("#resizeButton").on('mousedown touchstart',function(e){$(this).data({flag:0,x0:e.pageX,y0:e.pageY})});
@@ -235,13 +237,7 @@ $("#settings").click(function(){
 //---------------
     // select first file by default (should come from localStorage)
     BrainBox.initBrainBox()
-    .then(function from_project(){return BrainBox.loadLabelsets()})
-    .then(function from_project(){return loadProjectFile(0)})
-    .then(function from_project(){
-        $("#tools-side").detach().appendTo('#tools');
-        // connect colours close button
-        $(document).on('click', "#labels-close", function(){$("#labelset").hide()});
-    });
+    .then(function from_project(){return BrainBox.loadLabelsets()});
 
 /**
  * @todo Annotation entries have the following fields:
@@ -257,34 +253,6 @@ $("#settings").click(function(){
 
 // Bind the project's files to the table within #projectFiles
 //------------------------------------------------------------
-    // make sure that all mri files have a text annotations object for the project
-    for(k in projectInfo.files.list) {
-        file = projectInfo.files.list[k];
-        if (!(file.mri)) {
-            file.mri = {};
-        }
-        if (!(file.mri.annotations)) {
-            file.mri.annotations = {};
-        }
-        if (!(file.mri.annotations[projShortname])) {
-            file.mri.annotations[projShortname] = {};
-        }
-    }
-
-    // initialise the relevant annotation entries in each mri file if required
-    for(k=0;k<projectInfo.files.list.length;k++) {
-        file = projectInfo.files.list[k];
-        for(g=0;g<annotations.text.length;g++) {
-            annName = annotations.text[g].name;
-            if(!file.mri.annotations[projShortname][annName]) {
-                file.mri.annotations[projShortname][annName] = {
-                    created: (new Date).toJSON(),
-                    type: "text"
-                };
-            }
-        }
-    }
-
     // configure the binding template for table row and object.
     // the 1st two columns are fixed: name and source
     trTemplate = [
@@ -375,9 +343,24 @@ $("#settings").click(function(){
         trTemplate: trTemplate.join("\n"),
         objTemplate: objTemplate
     };
-    for(var i=0;i<projectInfo.files.list.length;i++) {
-        BrainBox.appendAnnotationTableRow(i,aParam);
-    }
+
+    $.getJSON("/project/json/"+projectInfo.shortname+"/files", {
+        start: 0,
+        length: 100
+    })
+    .then(function(list) {
+        appendFilesToProject(list);
+    })
+    .then(function from_project(){return loadProjectFile(0)})
+    .then(function from_project(){
+        $("#tools-side").detach().appendTo('#tools');
+        // connect colours close button
+        $(document).on('click', "#labels-close", function(){$("#labelset").hide()});
+    })
+    .then(function() {
+        queryFiles();
+    });
+
     // mark first row as selected
     $("#projectFiles tbody tr:eq(0)").addClass("selected");
 
@@ -472,7 +455,57 @@ $("#settings").click(function(){
 
 // Functions
 //----------
+function queryFiles() {
+    $.getJSON("/project/json/"+projectInfo.shortname+"/files", {
+        start: projectInfo.files.list.length,
+        length: 100
+    })
+    .then(function(list) {
+        appendFilesToProject(list);
+        if(list.length == 100) {
+            queryFiles();
+        } else {
+            console.log("All files downloaded. Length:",projectInfo.files.list.length);
+        }
+    })
+}
+function appendFilesToProject(list) {
+    var i0, i, j;
     
+    i0 = projectInfo.files.list.length;
+    projectInfo.files.list.push.apply(projectInfo.files.list, list);
+    
+    // make sure that all mri files have a text annotations object for the project
+    for(i=0;i<list.length;i++) {
+        file = projectInfo.files.list[i0+i];
+        if (!(file.mri)) {
+            file.mri = {};
+        }
+        if (!(file.mri.annotations)) {
+            file.mri.annotations = {};
+        }
+        if (!(file.mri.annotations[projShortname])) {
+            file.mri.annotations[projShortname] = {};
+        }
+    }
+    // initialise the relevant annotation entries in each mri file if required
+    for(i=0;i<list.length;i++) {
+        file = projectInfo.files.list[i0+i];
+        for(j=0;j<annotations.text.length;j++) {
+            annName = annotations.text[j].name;
+            if(!file.mri.annotations[projShortname][annName]) {
+                file.mri.annotations[projShortname][annName] = {
+                    created: (new Date).toJSON(),
+                    type: "text"
+                };
+            }
+        }
+    }
+    for(var i=0;i<list.length;i++) {
+        BrainBox.appendAnnotationTableRow(i0+i,aParam);
+    }
+}
+
 /**
  * @func loadProjectFile
  * @desc load a new mri from the project list
