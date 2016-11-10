@@ -206,16 +206,9 @@ function getFilesSlice(req, projShortname, start, length) {
 				var list = json.files.list, newList = [], arr = [];
 				var i;
 				
-				console.log("list length:",list.length);
-			
-				if(start >= list.length-1) {
-				    console.log("ERROR: list start located beyond file length:", start, list.length);
-					return;
-				}
-				if(length > list.length - start) {
-					length = list.length - start;
-				    console.log("length was beyond limits, updated to:",length);
-				}
+				start = Math.min(start, list.length-1);
+				length = Math.min(length, list.length-start);
+				
 				console.log("end:",start+length);
 				for(i=start;i<start+length;i++) {
 					var item = list[i];
