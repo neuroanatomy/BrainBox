@@ -325,7 +325,7 @@
 var params={{{params}}};
 var mriInfo={{{mriInfo}}};
 var mriInfoOrig = JSON.parse(JSON.stringify(mriInfo));
-var textAnnotationsArray;
+var textAnnotationsArray = [];
 var version=1;
 var info_proxy={};
 var hash_old;
@@ -338,11 +338,6 @@ if( $.isEmptyObject(mriInfo)) {
     $("#data").show();
 
 } else {
-
-    // Serialise text annotations object (text annotations are stored as objects in the
-    // database, but used as an array here)
-    textAnnotationsArray = annotationsObjectToArray(mriInfo.mri.annotations);
-    
     params.info=mriInfo;
 
     var fullscreen=false;
@@ -362,6 +357,12 @@ if( $.isEmptyObject(mriInfo)) {
     .then(function(){
         // Remove splash
         $("#splash").hide();
+
+        // Serialise text annotations object (text annotations are stored as objects in the
+        // database, but used as an array here)
+        if(mriInfo.mri && mriInfo.mri.annotations) {
+            textAnnotationsArray = annotationsObjectToArray(mriInfo.mri.annotations);
+        }
 
         // bind general information
         bind2(info_proxy,BrainBox.info,"name",$("#name"));

@@ -395,6 +395,25 @@ var AtlasMakerWS = {
 		}
 	},
 	/**
+     * @function sendRequestMRIMessage
+     */
+	sendRequestMRIMessage: function sendRequestMRIMessage(source) {
+		var me=AtlasMakerWidget;
+		var l=me.traceLog(sendRequestMRIMessage,1,"#aca");if(l)console.log.apply(undefined,l);
+
+		if(me.flagConnected==0)
+			return;
+
+		try {
+			me.socket.send(JSON.stringify({
+				type:"requestMRI",
+				source:"sendRequestMRIMessage"
+			}));
+		} catch (ex) {
+			console.log("ERROR: Unable to sendRequestMRIMessage",ex);
+		}
+	},
+	/**
      * @function sendRequestSliceMessage
      */
 	sendRequestSliceMessage: function sendRequestSliceMessage() {

@@ -305,6 +305,34 @@ var AtlasMakerWidget = {
 		delete me.info.region;
 	},
     /**
+     * @function requestMRIInfo
+     * @desc Request to download an MRI, with polling to prevent hangouts on lengthy
+     *       downloads
+     */
+	requestMRIInfo: function requestMRIInfo(source, def) {
+		var me=AtlasMakerWidget;
+		var l=me.traceLog(requestMRIInfo,0,"#bbd");if(l)console.log.apply(undefined,l);
+
+		if(!def) {
+		    var def=$.Deferred();
+		}
+
+        $.post("/mri/json",{url:source}, function(info) {
+            if(info.success == true) {
+                console.log("requestMRIInfo returns success:",info);
+                def.resolve(info);
+            } else if(info.success == 'downloading') {
+                console.log("requestMRIInfo downloading");
+                setTimeout(function(){me.requestMRIInfo(source,def)},5000);
+            } else {
+                console.log("requestMRIInfo ERROR");
+                def.reject();
+            }
+        });
+        
+        return def.promise();
+	},
+    /**
      * @function configureMRI
      */
 	configureMRI: function configureMRI(info,index) {
@@ -312,35 +340,27 @@ var AtlasMakerWidget = {
 		var l=me.traceLog(configureMRI,0,"#bbd");if(l)console.log.apply(undefined,l);
 
 		var def=$.Deferred();
-		
-		(function() {
-		    var def2 = $.Deferred();
-		    
-		    if(info.dim) {
-		        // the mri object has a 'dim' property, indicating that it was already
-		        // downloaded
-		        return def.resolve(info).promise();
-		    } else {
-		        // the mri object does not have a 'dim' property, indicating that it has
-		        // not been already downloaded. The following command will trigger the
-		        // download, insert the mri entry in the database and return it here
-                $.post("/mri/json",{url:info.source}, function(info2) {
-                    // merge the fields from info2 that are initialised upon download
-                    // of the mri server-side. The mri field in the original 'info',
-                    // which contains the newly created text 'annotations', is conserved
-                    var f, fields = ["filename","success","url","included","dim","pixdim",
-                        "voxel2world","worldOrigin","owner"];
-                    info.mri.brain = info2.mri.brain;
-                    info.mri.atlas.push(info2.mri.atlas[0]);
-                    for(f=0;f<fields.length;f++) {
-                        info[fields[f]] = info2[fields[f]];
-                    }
-                    
-                    def.resolve(info);
-                });
-                return def.promise();
+
+        me.requestMRIInfo(info.source)
+		.then(function(info2) {
+            
+            if(!info.dim) {
+		        // the mri object used to call this function does not have a 'dim'
+		        // property, indicating that it had not been downloaded at the time of the
+		        // call.
+                // Here we merge the fields from info2 that are initialised upon download
+                // of the mri server-side. The mri field in the original 'info',
+                // which contains the newly created text 'annotations', is conserved
+                var f, fields = ["filename","success","url","included","dim","pixdim",
+                    "voxel2world","worldOrigin","owner"];
+                info.mri.brain = info2.mri.brain;
+                info.mri.atlas.push(info2.mri.atlas[0]);
+                for(f=0;f<fields.length;f++) {
+                    info[fields[f]] = info2[fields[f]];
+                }
             }
-		})().then(function(info2) {
+            info2=info;
+            
             // Get data from AtlasMaker object
             me.name=info2.name||"Untitled";
             me.url=info2.url;

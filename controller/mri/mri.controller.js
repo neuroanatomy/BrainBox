@@ -7,6 +7,8 @@ var request = require('request');
 var atlasMakerServer = require('../../js/atlasMakerServer');
 var checkAccess = require('../../js/checkAccess.js');
 
+var downloadQueue = [];
+
 //expressValidator = require('express-validator')
 
 var validator = function (req, res, next) {
@@ -140,56 +142,31 @@ var mri = function (req, res) {
     // store return path in case of login
     req.session.returnTo = req.originalUrl;
     
-    console.log("query",myurl,hash);
+    console.log("Receive GET, query:",myurl,hash);
 
-    req.db.get('mri').findOne({url: "/data/" + hash + "/", backup:{$exists:0}}, {fields: {_id: 0}, sort: {$natural: -1}, limit: 1})
+    req.db.get('mri').findOne({source: myurl, backup:{$exists:0}}, {_id: 0})
         .then(function (json) {
-            
-            // determine whether we need to download the data from the source
-            var doDownload = false;
-            
             if(!json) {
-                // if the json object is empty, download
-                doDownload = true;
-            } else {
-                // if the json object exists, but there's no file, download
-                var filename = url.parse(myurl).pathname.split("/").pop();
-                var path = req.dirname + "/public/data/" + hash + "/" + filename;
-                if(fs.existsSync(path) == false) {
-                    console.log("no mri file in server: download");
-                    doDownload = true;
-                } else
-                // if the json object exists, there's a file, but no .dim object, download
-                if(!json.dim) {
-                    console.log("no dim in db entry: download");
-                    doDownload = true;
-                }
-            }
-            
-            if(doDownload === true ) {
-                // download MRI first, send data next
-                (function (my, rq, rs) {
-                    downloadMRI(my, rq, rs, function (obj) {
-                        if(obj) {
-                            req.db.get('mri').insert(obj);
-                            rs.render('mri', {
-                                title: obj.name || 'BrainBox',
-                                params: JSON.stringify(rq.query),
-                                mriInfo: JSON.stringify(obj),
-                                login: login
-                            });
-                        } else {
-                            console.log("ERROR: Cannot read file");
-                            rs.render('mri', {
-                                title: 'ERROR: Unreadable file',
-                                params: JSON.stringify(rq.query),
-                                mriInfo: JSON.stringify({}),
-                                login: login
-                            });
-                            
-                        }
-                    });
-                }(myurl, req, res));
+                var obj = {
+                    source: myurl,
+                    mri: {
+                        atlas: [{
+                            created: (new Date()).toJSON(),
+                            modified: (new Date()).toJSON(),
+                            access: 'edit',
+                            type: 'volume',
+                            filename: 'Atlas.nii.gz',
+                            labels: 'foreground.json'
+                        }]
+                    }
+                };
+
+                res.render('mri', {
+                    title: obj.name || 'BrainBox',
+                    params: JSON.stringify(req.query),
+                    mriInfo: JSON.stringify(obj),
+                    login: login
+                });
             } else {
                 // if the json object exists, and has annotations, configure the access to them
                 console.log("check access rights");
@@ -257,14 +234,13 @@ var mri = function (req, res) {
 };
 
 var api_mri_post = function (req, res) {
-    console.log("post query, ", req.params);
+    console.log("Received POST, params:", req.params);
 
     var myurl = req.body.url;
     var hash = crypto.createHash('md5').update(myurl).digest('hex');
 
-    req.db.get('mri').findOne({source:myurl, backup: {$exists: false}}, "-_id", {sort: {$natural: -1}, limit: 1})
+    req.db.get('mri').findOne({source:myurl, backup: {$exists: 0}}, {_id: 0})
         .then(function (json) {
-        
             // determine whether we need to download the data from the source
             var doDownload = false;
             
@@ -272,36 +248,53 @@ var api_mri_post = function (req, res) {
             if (!req.body.var) {
                 // if the json object is empty, download
                 if(!json) {
-                    console.log("no db entry for mri: download");
+                    console.log("No DB entry for MRI: download");
                     doDownload = true;
                 } else {
                     // if the json object exists, but there's no file, download
                     var filename = url.parse(myurl).pathname.split("/").pop();
                     var path = req.dirname + "/public/data/" + hash + "/" + filename;
                     if(fs.existsSync(path) == false) {
-                        console.log("no mri file in server: download");
+                        console.log("No MRI file in server: download");
                         doDownload = true;
                     } else
                     // if the json object exists, there's a file, but no .dim object, download
                     if(!json.dim) {
-                        console.log("no dim in db entry: download");
+                        console.log("No dim[] field in DB entry: download");
                         doDownload = true;
                     }
                 }
             }
 
             if(doDownload === true ) {
-                downloadMRI(myurl, req, res, function (obj) {
-                    if(obj) {
-                        req.db.get('mri').insert(obj);
-                        res.json(obj);
+                if(downloadQueue[myurl]) {
+                    if(downloadQueue[myurl].success==true) {
+                        var info = JSON.parse(JSON.stringify(downloadQueue[myurl]));
+                        delete downloadQueue[myurl];
+                        res.json(info);
                     } else {
-                        console.log("ERROR: Cannot read file");
-                        res.json({});
+                        res.json(downloadQueue[myurl]);
                     }
-                });
+                        
+                } else {
+                    console.log("Start download:");
+                    downloadQueue[myurl] = {success:"downloading"};
+                    downloadMRI(myurl, req, res, function (obj) {                        
+                        console.log("Download finished");
+                        if(obj) {
+                            req.db.get('mri').insert(obj);
+                            obj.success = true;
+                            downloadQueue[myurl]=obj;
+                        } else {
+                            downloadQueue[myurl]={success:"error"};
+                        }
+                    });
+                    
+                    res.json(downloadQueue[myurl]);
+                }
             } else {
                 // return a specific variable, or the complete json object
+                console.log("Send the data to the client. End of transaction.");
                 if (req.body.var) {
                     var i, arr = req.body.var.split("/");
                     for (i in arr) {
@@ -311,7 +304,8 @@ var api_mri_post = function (req, res) {
                 res.json(json);            
             }
         }, function (err) {
-            console.error(err);
+            console.error("ERROR:",err);
+            res.json({success:false});
         });
 };
 

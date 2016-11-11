@@ -235,7 +235,6 @@ $("#settings").click(function(){
 
 // Init BrainBox
 //---------------
-    // select first file by default (should come from localStorage)
     BrainBox.initBrainBox()
     .then(function from_project(){return BrainBox.loadLabelsets()});
 
