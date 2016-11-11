@@ -429,29 +429,29 @@ $("#settings").click(function(){
     });
 
     // listen to changes in selected volume annotation
-        $(document).on('click', "#volAnnotations tbody tr", function () {
-            var table=$(this).closest("tbody");
-            var currentIndex=$(table).find("tr.selected").index();
-            var index=$(this).index();
+    $(document).on('click', "#volAnnotations tbody tr", function () {
+        var table=$(this).closest("tbody");
+        var currentIndex=$(table).find("tr.selected").index();
+        var index=$(this).index();
 
-            if(index>=0 && currentIndex!=index) {
-                $(table).find("tr").removeClass("selected");
-                $(this).addClass("selected");
-        
-                var iarr,found=false;
-                for(iarr=0;iarr<BrainBox.info.mri.atlas.length;iarr++) {
-                    if(BrainBox.info.mri.atlas[iarr].name==annotations.volume[index].name
-                        && BrainBox.info.mri.atlas[iarr].project==projectInfo.shortname) {
-                        found=true;
-                        break;
-                    }
+        if(index>=0 && currentIndex!=index) {
+            $(table).find("tr").removeClass("selected");
+            $(this).addClass("selected");
+    
+            var iarr,found=false;
+            for(iarr=0;iarr<BrainBox.info.mri.atlas.length;iarr++) {
+                if(BrainBox.info.mri.atlas[iarr].name==annotations.volume[index].name
+                    && BrainBox.info.mri.atlas[iarr].project==projectInfo.shortname) {
+                    found=true;
+                    break;
                 }
-                if(found)
-                    AtlasMakerWidget.configureAtlasMaker(BrainBox.info,iarr);
-                else
-                    console.log("ERROR: A quite unexpected one too...");
             }
-        });
+            if(found)
+                AtlasMakerWidget.configureAtlasMaker(BrainBox.info,iarr);
+            else
+                console.log("ERROR: A quite unexpected one too...");
+        }
+    });
 
 // Functions
 //----------
@@ -494,8 +494,11 @@ function appendFilesToProject(list) {
         for(j=0;j<annotations.text.length;j++) {
             annName = annotations.text[j].name;
             if(!file.mri.annotations[projShortname][annName]) {
+                var date=new Date();
                 file.mri.annotations[projShortname][annName] = {
-                    created: (new Date).toJSON(),
+                    created: date.toJSON(),
+                    modified: date.toJSON(),
+                    modifiedBy: AtlasMakerWidget.User.username,
                     type: "text"
                 };
             }
@@ -547,6 +550,8 @@ function loadProjectFile(index) {
                     name: annotations.volume[irow].name,
                     project: projectInfo.shortname,
                     created: date.toJSON(), 
+                    modified: date.toJSON(), 
+                    modifiedBy: AtlasMakerWidget.User.username, 
                     filename: Math.random().toString(36).slice(2)+".nii.gz",	// automatically generated filename
                     labels: annotations.volume[irow].values,
                     owner: AtlasMakerWidget.User.username,
