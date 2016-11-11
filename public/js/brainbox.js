@@ -319,9 +319,14 @@ var BrainBox={
 	removeAnnotation: function removeAnnotation(param) {
 		var l=BrainBox.traceLog(removeAnnotation);if(l)console.log(l);
 
-		// remove row from table
+		// find row index
 		var index=$(param.table).find("tbody .selected").index();
+		
+		// remove row from table
 		$(param.table).find('tbody tr:eq('+index+')').remove();
+		
+		// select previous row (or 1st one)
+		$(param.table).find('tbody tr:eq('+Math.max(0,index-1)+')').addClass("selected");
 
 		// remove binding
 		JSON.stringify(param.info_proxy); // update BrainBox.info from info_proxy
