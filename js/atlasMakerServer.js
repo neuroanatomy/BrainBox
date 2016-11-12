@@ -913,7 +913,9 @@ var sendAtlasToUser = function sendAtlasToUser(atlasdata, user_socket, flagCompr
     traceLog(sendAtlasToUser);
 	
 	if(flagCompress) {
+	    console.log("atlasdata",atlasdata.length);
 		zlib.gzip(atlasdata, function (err,atlasdatagz) {
+		    console.log("atlasdatagz",atlasdatagz.length);
 			try {
 				user_socket.send(Buffer.concat([atlasdatagz,niiTag]), {binary: true, mask: false});
 			} catch(e) {
@@ -1090,7 +1092,15 @@ var loadAtlas = function loadAtlas(User) {
                 .then(function (loadedAtlas) {
                     loadedAtlas.name = User.atlasFilename;
                     loadedAtlas.dirname = User.dirname;
-                    resolve(loadedAtlas);
+                    // convert atlas data to 8bits
+                    createNifti(loadedAtlas)
+                    .then(function(atlas8bit) {
+                        for(i=0;i<loadedAtlas.dim[0]*loadedAtlas.dim[1]*loadedAtlas.dim[2];i++)
+                            atlas8bit.data[i]=loadedAtlas.data[i];
+                        loadedAtlas.data=atlas8bit.data;
+                        loadedAtlas.hdr=atlas8bit.hdr;
+                        resolve(loadedAtlas);
+                    })
                 })
                 .catch(function (err) {
                     console.log("ERROR Cannot read nifti", err);

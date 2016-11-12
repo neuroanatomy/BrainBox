@@ -9,10 +9,14 @@
 	<link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
 	
 	<style>
+html, #menu, #footer {
+    background-color: #111;
+}
 .slide {
     display:inline-block;
     width:100%;
     position:relative;
+    overflow:hidden;
 }
 .content {
     display: inline-block;
@@ -27,7 +31,6 @@
     position: fixed;
     z-index: 2;
     text-align: right;
-    background-color: #222;
     top:0;
     margin-top:0;
     width: 100%;
@@ -175,7 +178,7 @@ h2 {
     </div>
 	
 	<!-- Content  -->			
-    <div class="slide" style="background:#333">
+    <div class="slide" style="background:#222">
     <!-- Slide: Landing -->
         <div class="content">
             <img id="logo" src="/img/brainbox-logo.svg" style="text-align:center"/>
@@ -186,10 +189,9 @@ h2 {
             </div>
         </div>
         <span class="btn-scroll-down scroll"></span>
-    </div><!--
-    
-    --><div class="slide" style="background:#444">
+    </div><div class="slide" style="background:#333">
     <!-- Slide: About -->
+        <!--<img style="position:absolute;top:0;left:0;width:100%" src="/img/2.jpg" />-->
         <div class="content">
             <p>
                 BrainBox is a web application developed by the Group of Applied and
@@ -202,9 +204,7 @@ h2 {
                 created by the community.
             </p>
         </div>
-    </div><!--
-    
-    --><div class="slide" style="background:#333">
+    </div><div class="slide" style="background:#222">
     <!-- Slide: Brains to try -->
         <div id="intro" class="content">
         </div>

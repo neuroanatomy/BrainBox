@@ -519,7 +519,10 @@ var AtlasMakerWS = {
 
 		var u=data.uid;	// user
 		//var	msg="<b>"+me.Collab[u].username+"</b> left atlas "+me.Collab[u].specimenName+"/"+me.Collab[u].atlasFilename+"<br />"
-		var	msg="<b>"+me.Collab[u].username+"</b> left<br />"
+		if(me.Collab[u])
+    		var	msg="<b>"+me.Collab[u].username+"</b> left<br />";
+    	else
+    		var	msg="<b>"+u+"</b> left<br />";
 		me.Collab.splice(u,1);
 		var	v,nusers=1; for(v in me.Collab) nusers++;
 		$("#chat").text("Chat ("+nusers+" connected)");
