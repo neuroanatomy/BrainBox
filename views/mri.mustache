@@ -225,6 +225,7 @@
                             <tbody></tbody>
                             </table>
                             <div style="text-align:right">
+                                <span id="annotationMessage"></span>
                                 <img id="addAnnotation"    class="button" style="width:19px; height:19px" src='/img/plus-square.svg'/>
                                 <img id="removeAnnotation" class="button" style="width:19px; height:19px" src='/img/minus-square.svg'/>
                             </div>
@@ -243,6 +244,7 @@
                             <tbody></tbody>
                             </table>
                             <div style="text-align:right">
+                                <span id="textAnnotationMessage"></span>
                                 <img id="addTextAnnotation"    class="button" style="width:19px; height:19px" src='/img/plus-square.svg'/>
                                 <img id="removeTextAnnotation" class="button" style="width:19px; height:19px" src='/img/minus-square.svg'/>
                             </div>
@@ -367,14 +369,15 @@ if( $.isEmptyObject(mriInfo)) {
             textAnnotationsArray = annotationsObjectToArray(mriInfo.mri.annotations);
         }
 
-        // bind general information
+    // Bind general information
+    //--------------------------
         bind2(info_proxy,BrainBox.info,"name",$("#name"));
         bind1(info_proxy,BrainBox.info,"source",$("#source"));
         bind1(info_proxy,BrainBox.info,"included",$("#included"),date_format);
 
         
-        // bind volume-type annotations
-        //------------------------------
+    // Bind volume-type annotations
+    //------------------------------
         var volAnnParam = {
             table: $("table#annotations"),
             info_proxy: info_proxy,
@@ -446,8 +449,8 @@ if( $.isEmptyObject(mriInfo)) {
         $("table#annotations tr").removeClass("selected");
         $("table#annotations tr").eq(1).addClass("selected");
         
-        // bind text annotations
-        //-----------------------
+    // Bind text annotations
+    //-----------------------
         var textAnnParam;
         var trTemplate;
         var objTemplate;
@@ -503,51 +506,8 @@ if( $.isEmptyObject(mriInfo)) {
             $(table).find("tr").removeClass("selected");
             $(this).addClass("selected");
         });
-        $(document).on('click touchstart', "#addTextAnnotation", function() {
-            var date=new Date();
-            // add data to annotations array
-            textAnnotationsArray.push({
-                name:"",
-                project:"",
-                access: "edit", 
-                created: date.toJSON(), 
-                modified: date.toJSON(), 
-                owner: AtlasMakerWidget.User.username,
-                type: "text",
-                data: ""
-            });
-            // add and bind new table row
-            var i=textAnnotationsArray.length-1;
-            BrainBox.appendAnnotationTableRow(i,textAnnParam);
-        });
-        $(document).on('click touchstart', "#removeTextAnnotation", function() {
-            var index=$(textAnnParam.table).find("tbody .selected").index();
-            $(textAnnParam.table).find('tbody tr:eq('+index+')').remove();
-            // remove binding
-            JSON.stringify(textAnnParam.info_proxy); // update textAnnotationsArray from info_proxy
-            var irow=textAnnotationsArray.length-1;
-            for(var icol=0; icol<textAnnParam.objTemplate.length; icol++) {
-                unbind2(textAnnParam.info_proxy,textAnnParam.objTemplate[icol].path.replace("#", irow));
-            }
-            // remove row from textAnnotationsArray
-            textAnnotationsArray.splice(index,1);
-
-            // save change
-            JSON.stringify(info_proxy); // update content of projectInfo object from proxy by calling all getters
-            
-            // update BrainBox.info
-            BrainBox.info.mri.annotations = annotationsArrayToObject(textAnnotationsArray);
-            var patch = jsonpatch.compare(mriInfoOrig, BrainBox.info);
-            console.log("patch:",patch);
-            if(patch.length == 0) {
-                console.log("Nothing changed");
-                return;
-            }
-            AtlasMakerWidget.sendSaveMetadataMessage(BrainBox.info,"patch", patch)
-                .then(function() {
-                    mriInfoOrig = JSON.parse(JSON.stringify(BrainBox.info));
-                });
-        });
+        $(document).on('click touchstart', "#addTextAnnotation", function(){addTextAnnotation(textAnnParam)});
+        $(document).on('click touchstart', "#removeTextAnnotation", function(){removeTextAnnotation(textAnnParam)});
 
         // text annotations table: select the first row by default
         $("table#textAnnotations tr").removeClass("selected");
@@ -611,9 +571,26 @@ function annotationsObjectToArray(obj) {
 }
 /**
  * @function addAnnotation
+ * @desc Add an empty volume annotation
  */
 function addAnnotation(param) {
     var date=new Date();
+    var i, found;
+    
+    // check that there is no other empty annotation already created
+    found = false;
+    for(i=0;i<BrainBox.info.mri.atlas.length;i++) {
+        if(BrainBox.info.mri.atlas[i].name === "" && BrainBox.info.mri.atlas[i].project === "") {
+            found = true;
+            break;
+        }
+    }
+    if(found) {
+        $("#annotationMessage").text("An empty annotation already exists");
+        setTimeout(function(){$("#annotationMessage").text("")},2000);
+        return;
+    }
+    
     // add data to annotations array
     BrainBox.info.mri.atlas.push({
         name:"",
@@ -664,24 +641,123 @@ function removeAnnotation(param) {
     saveAnnotationsChange(BrainBox.info);
 }
 /**
+ * @function addTextAnnotation
+ */
+function addTextAnnotation(param) {
+    var date=new Date();
+    var i;
+    
+    // check that there is no other empty annotation already created
+    if(BrainBox.info.mri.annotations[""] && BrainBox.info.mri.annotations[""][""]) {
+        $("#textAnnotationMessage").text("An empty annotation already exists");
+        setTimeout(function(){$("#textAnnotationMessage").text("")},2000);
+        return;
+    }
+
+    // add data to annotations array
+    textAnnotationsArray.push({
+        name:"",
+        project:"",
+        access: "edit", 
+        created: date.toJSON(), 
+        modified: date.toJSON(), 
+        owner: AtlasMakerWidget.User.username,
+        type: "text",
+        data: ""
+    });
+    // add and bind new table row
+    var i=textAnnotationsArray.length-1;
+    BrainBox.appendAnnotationTableRow(i,param);
+
+    //select new annotation
+    selectTextAnnotationTableRow(i,param);
+
+    // save change
+    saveAnnotationsChange(BrainBox.info);
+}
+/**
+ * @function removeTextAnnotation
+ */
+function removeTextAnnotation(param) {
+    var index=$(param.table).find("tbody .selected").index();
+    $(param.table).find('tbody tr:eq('+index+')').remove();
+    // remove binding
+    JSON.stringify(param.info_proxy); // update textAnnotationsArray from info_proxy
+    var irow=textAnnotationsArray.length-1;
+    for(var icol=0; icol<param.objTemplate.length; icol++) {
+        unbind2(param.info_proxy,param.objTemplate[icol].path.replace("#", irow));
+    }
+    // remove row from textAnnotationsArray
+    textAnnotationsArray.splice(index,1);
+
+    // select previous row (or 1st one)
+    selectTextAnnotationTableRow(Math.max(0,index-1),param);
+
+    // save change
+    saveAnnotationsChange(BrainBox.info);
+}
+function selectTextAnnotationTableRow(index,param) {
+    var table=param.table;
+    var currentIndex=$(table).find("tr.selected").index();
+
+    if(index>=0 && currentIndex!=index) {
+        $(table).find("tr").removeClass("selected");
+        $(table).find('tbody tr:eq('+index+')').addClass("selected");
+    }
+}
+/**
  * @function saveAnnotationsChange
  */
 function saveAnnotationsChange(info) {
-    JSON.stringify(info_proxy); // update content of projectInfo object from proxy by calling all getters
+    var i, j;
+    
+    // update content of projectInfo object from proxy by calling all getters
+    JSON.stringify(info_proxy);
+
+    // check the info object for duplicate volume annotations
+    for(i=0;i<info.mri.atlas.length-1;i++) {
+        for(j=i+1;j<info.mri.atlas.length;j++) {
+            if( info.mri.atlas[i].name === info.mri.atlas[j].name
+                && info.mri.atlas[i].project === info.mri.atlas[j].project) {
+                $("#annotationMessage").text("There is already an annotation with that name and project");
+                setTimeout(function(){$("#annotationMessage").text("")},2000);
+                $.extend(true, info.mri, mriInfoOrig.mri);
+                return;
+            }
+        }
+    }
+
+    // check the info object for duplicate text annotations
+    found = false;
+    for(i=0;i<textAnnotationsArray.length-1;i++) {
+        for(j=i+1;j<textAnnotationsArray.length;j++) {
+            if( textAnnotationsArray[i].name === textAnnotationsArray[j].name
+                && textAnnotationsArray[i].project === textAnnotationsArray[j].project) {
+                $("#textAnnotationMessage").text("There is already an annotation with that name and project");
+                setTimeout(function(){$("#textAnnotationMessage").text("")},2000);
+                $.extend(true, textAnnotationsArray, annotationsObjectToArray(mriInfoOrig.mri.annotations));
+                return;
+            }
+        }
+    }
+        
+    // convert the text annotations array into an object
     info.mri.annotations = annotationsArrayToObject(textAnnotationsArray);
+    
+    // compute a diff patch between the new and old versions of the info object
     var patch = jsonpatch.compare(mriInfoOrig, info);
-    console.log("patch:",patch);
     if(patch.length == 0) {
         console.log("Nothing changed");
         return;
     }
+    
+    // send the patch to the server and update the stored version
     AtlasMakerWidget.sendSaveMetadataMessage(info,"patch",patch)
-        .then(function() {
-            mriInfoOrig = JSON.parse(JSON.stringify(info));
-        });
+    .then(function() {
+        mriInfoOrig = JSON.parse(JSON.stringify(info));
+    });
 }
 </script>
-
 
 
 </body>
