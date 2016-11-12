@@ -324,7 +324,7 @@
 
 var params={{{params}}};
 var mriInfo={{{mriInfo}}};
-var mriInfoOrig = JSON.parse(JSON.stringify(mriInfo));
+var mriInfoOrig;
 var textAnnotationsArray = [];
 var version=1;
 var info_proxy={};
@@ -358,6 +358,9 @@ if( $.isEmptyObject(mriInfo)) {
         // Remove splash
         $("#splash").hide();
 
+        // backup the original MRI info
+        mriInfoOrig = JSON.parse(JSON.stringify(BrainBox.info));
+         
         // Serialise text annotations object (text annotations are stored as objects in the
         // database, but used as an array here)
         if(mriInfo.mri && mriInfo.mri.annotations) {
@@ -437,8 +440,8 @@ if( $.isEmptyObject(mriInfo)) {
         // volume annotation table: select row
         $(document).on('click', "#annotations tr",BrainBox.selectAnnotationTableRow);
         // volume annotations table: add, remove and save annotations
-        $(document).on('click', "#addAnnotation", function(){BrainBox.addAnnotation(volAnnParam)});
-        $(document).on('click', "#removeAnnotation", function(){BrainBox.removeAnnotation(volAnnParam)});
+        $(document).on('click', "#addAnnotation", function(){addAnnotation(volAnnParam)});
+        $(document).on('click', "#removeAnnotation", function(){removeAnnotation(volAnnParam)});
         // volume annotations table: select the first row by default
         $("table#annotations tr").removeClass("selected");
         $("table#annotations tr").eq(1).addClass("selected");
@@ -562,18 +565,7 @@ if( $.isEmptyObject(mriInfo)) {
                 var index = $(e.target).closest('tr').index();
                 
                 // save change
-                JSON.stringify(info_proxy); // update content of projectInfo object from proxy by calling all getters
-                BrainBox.info.mri.annotations = annotationsArrayToObject(textAnnotationsArray);
-                var patch = jsonpatch.compare(mriInfoOrig, BrainBox.info);
-                console.log("patch:",patch);
-                if(patch.length == 0) {
-                    console.log("Nothing changed");
-                    return;
-                }
-                AtlasMakerWidget.sendSaveMetadataMessage(BrainBox.info,"patch",patch)
-                    .then(function() {
-                        mriInfoOrig = JSON.parse(JSON.stringify(BrainBox.info));
-                    });
+                saveAnnotationsChange();
             });
             // blur when [enter] is clicked, to trigger data sending
             $(document).on('keydown', "[contenteditable]", function(e) {
@@ -618,6 +610,74 @@ function annotationsObjectToArray(obj) {
         }
     }
     return arr;
+}
+/**
+ * @function addAnnotation
+ */
+function addAnnotation(param) {
+    var date=new Date();
+    // add data to annotations array
+    BrainBox.info.mri.atlas.push({
+        name:"",
+        project:"",
+        access: "edit", 
+        created: date.toJSON(), 
+        modified: date.toJSON(), 
+        filename: Math.random().toString(36).slice(2)+".nii.gz",	// automatically generated filename
+        labels: "foreground.json",
+        owner: AtlasMakerWidget.User.username,
+        type: "volume"
+    });
+
+    // add and bind new table row
+    var i=BrainBox.info.mri.atlas.length-1;
+    BrainBox.appendAnnotationTableRow(i,param);
+
+    // update in server
+    saveAnnotationsChange();
+}
+/**
+ * @function removeAnnotation
+ */
+function removeAnnotation(param) {
+    // find row index
+    var index=$(param.table).find("tbody .selected").index();
+    
+    // remove row from table
+    $(param.table).find('tbody tr:eq('+index+')').remove();
+    
+    // select previous row (or 1st one)
+    $(param.table).find('tbody tr:eq('+Math.max(0,index-1)+')').addClass("selected");
+
+    // remove binding
+    JSON.stringify(param.info_proxy); // update BrainBox.info from info_proxy
+    var irow=BrainBox.info.mri.atlas.length-1;
+    for(var icol=0; icol<param.objTemplate.length; icol++) {
+        unbind2(param.info_proxy,param.objTemplate[icol].path.replace("#", irow));
+    }
+
+    // remove row from BrainBox.info.mri.atlas
+    BrainBox.info.mri.atlas.splice(index,1);
+
+    // update in server
+    saveAnnotationsChange();
+}
+/**
+ * @function saveAnnotationsChange
+ */
+function saveAnnotationsChange() {
+    JSON.stringify(info_proxy); // update content of projectInfo object from proxy by calling all getters
+    BrainBox.info.mri.annotations = annotationsArrayToObject(textAnnotationsArray);
+    var patch = jsonpatch.compare(mriInfoOrig, BrainBox.info);
+    console.log("patch:",patch);
+    if(patch.length == 0) {
+        console.log("Nothing changed");
+        return;
+    }
+    AtlasMakerWidget.sendSaveMetadataMessage(BrainBox.info,"patch",patch)
+        .then(function() {
+            mriInfoOrig = JSON.parse(JSON.stringify(BrainBox.info));
+        });
 }
 </script>
 

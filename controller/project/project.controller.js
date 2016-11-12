@@ -206,7 +206,7 @@ function getFilesSlice(req, projShortname, start, length) {
 				var list = json.files.list, newList = [], arr = [];
 				var i;
 				
-				start = Math.min(start, list.length-1);
+				start = Math.min(start, list.length);
 				length = Math.min(length, list.length-start);
 				
 				console.log("end:",start+length);

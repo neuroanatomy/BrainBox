@@ -166,8 +166,13 @@ var BrainBox={
         AtlasMakerWidget.editMode=1;
 
         AtlasMakerWidget.configureAtlasMaker(BrainBox.info,index)
-        .then(function() {
+        .then(function(info2) {
+            BrainBox.info = info2;
             def.resolve();
+        })
+        .catch(function(err) {
+            console.log("ERROR:",err);
+            def.reject();
         });
 		
 		return def.promise();
@@ -285,71 +290,6 @@ var BrainBox={
 					  break;
 			}
 		}
-	},
-	/**
-     * @function addAnnotation
-     */
-	addAnnotation: function addAnnotation(param) {
-		var l=BrainBox.traceLog(addAnnotation);if(l)console.log(l);
-		
-		var date=new Date();
-		// add data to annotations array
-		BrainBox.info.mri.atlas.push({
-			name:"",
-			project:"",
-			access: "edit", 
-			created: date.toJSON(), 
-			modified: date.toJSON(), 
-			filename: Math.random().toString(36).slice(2)+".nii.gz",	// automatically generated filename
-			labels: "foreground.json",
-			owner: AtlasMakerWidget.User.username,
-			type: "volume"
-		});
-	
-		// add and bind new table row
-		var i=BrainBox.info.mri.atlas.length-1;
-		BrainBox.appendAnnotationTableRow(i,param);
-	
-		// update in server
-		BrainBox.saveAnnotations(param);
-	},
-	/**
-     * @function removeAnnotation
-     */
-	removeAnnotation: function removeAnnotation(param) {
-		var l=BrainBox.traceLog(removeAnnotation);if(l)console.log(l);
-
-		// find row index
-		var index=$(param.table).find("tbody .selected").index();
-		
-		// remove row from table
-		$(param.table).find('tbody tr:eq('+index+')').remove();
-		
-		// select previous row (or 1st one)
-		$(param.table).find('tbody tr:eq('+Math.max(0,index-1)+')').addClass("selected");
-
-		// remove binding
-		JSON.stringify(param.info_proxy); // update BrainBox.info from info_proxy
-		var irow=BrainBox.info.mri.atlas.length-1;
-		for(var icol=0; icol<param.objTemplate.length; icol++) {
-			unbind2(param.info_proxy,param.objTemplate[icol].path.replace("#", irow));
-		}
-	
-		// remove row from BrainBox.info.mri.atlas
-		BrainBox.info.mri.atlas.splice(index,1);
-
-		// update in server
-		BrainBox.saveAnnotations(param);
-	},
-	/**
-     * @function saveAnnotations
-     */
-	saveAnnotations: function saveAnnotations(param) {
-		var l=BrainBox.traceLog(saveAnnotations);if(l)console.log(l);
-
-		JSON.stringify(param.info_proxy); // update BrainBox.info from info_proxy
-		AtlasMakerWidget.sendSaveMetadataMessage(BrainBox.info);
-		hash_old=BrainBox.hash(JSON.stringify(BrainBox.info));
 	},
 	/**
      * @function loadLabelsets

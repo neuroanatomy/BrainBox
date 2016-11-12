@@ -263,33 +263,40 @@ var AtlasMakerWidget = {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(configureAtlasMaker,0,"#bbd");if(l)console.log.apply(undefined,l);
 
-		// Load segmentation labels
-		return $.getJSON("/labels/"+info.mri.atlas[index].labels, function from_configureAtlasMaker(d) {
-		    me.configureOntology(d);
-		})
-		.then(function from_configureAtlasMaker() {
-			var def=$.Deferred();
-			me.configureMRI(info,index)
-			.then(function from_configureAtlasMaker() {
-				if(me.fullscreen==true) { // WARNING: HACK... would be better to implement enter/exit fullscreen
-					me.fullscreen=false;
-					me.toggleFullscreen();
-				}
-			
-				if(me.User.view!=null) {
-					$(".chose#plane .a").removeClass("pressed");
-					var view=me.User.view.charAt(0).toUpperCase()+me.User.view.slice(1);
-					$(".chose#plane .a:contains('"+view+"')").addClass("pressed");
-				}
+        var def=$.Deferred();
 
-				me.sendUserDataMessage("allUserData");
-				me.sendUserDataMessage("sendAtlas");
+        me.configureMRI(info,index)
+        .then(function (info2) {
+            info = info2;
+            return $.getJSON("/labels/"+info.mri.atlas[index].labels);
+        })
+        .then(function from_configureAtlasMaker(data) {
+            me.configureOntology(data);
+            me.User.penValue=me.ontology.labels[0].value;
 
-			    me.changePenColor( 0 );
-				def.resolve();
-			});
-			return def.promise();
-		});
+            if(me.fullscreen==true) { // WARNING: HACK... would be better to implement enter/exit fullscreen
+                me.fullscreen=false;
+                me.toggleFullscreen();
+            }
+        
+            if(me.User.view!=null) {
+                $(".chose#plane .a").removeClass("pressed");
+                var view=me.User.view.charAt(0).toUpperCase()+me.User.view.slice(1);
+                $(".chose#plane .a:contains('"+view+"')").addClass("pressed");
+            }
+
+            me.sendUserDataMessage("allUserData");
+            me.sendUserDataMessage("sendAtlas");
+
+            me.changePenColor( 0 );
+            def.resolve(info);
+        })
+        .catch(function(err) {
+            console.log("ERROR:",err);
+            def.reject();
+        });
+        
+        return def.promise();
 	},
     /**
      * @function configureOntology
@@ -347,17 +354,10 @@ var AtlasMakerWidget = {
             if(!info.dim) {
 		        // the mri object used to call this function does not have a 'dim'
 		        // property, indicating that it had not been downloaded at the time of the
-		        // call.
-                // Here we merge the fields from info2 that are initialised upon download
-                // of the mri server-side. The mri field in the original 'info',
+		        // call. Here we merge the fields from info2 that are initialised upon
+		        // download of the mri server-side. The mri field in the original 'info',
                 // which contains the newly created text 'annotations', is conserved
-                var f, fields = ["filename","success","url","included","dim","pixdim",
-                    "voxel2world","worldOrigin","owner"];
-                info.mri.brain = info2.mri.brain;
-                info.mri.atlas.push(info2.mri.atlas[0]);
-                for(f=0;f<fields.length;f++) {
-                    info[fields[f]] = info2[fields[f]];
-                }
+                $.extend(true, info, info2);
             }
             info2=info;
             
@@ -388,7 +388,9 @@ var AtlasMakerWidget = {
         
             me.flagLoadingImg={loading:false};
         
+/* DELETE ME: For I have been moved
             me.User.penValue=me.ontology.labels[0].value;
+*/
         
             me.brain_img.img=null;
         
@@ -399,7 +401,7 @@ var AtlasMakerWidget = {
             else
                 me.brain_pixdim=[1,1,1];
             
-            def.resolve();
+            def.resolve(info2);
         });
 		
 

@@ -107,11 +107,11 @@ function downloadMRI(myurl, req, res, callback) {
                     mri: {
                         brain: filename,
                         atlas: [{
-                            owner: username,
                             created: (new Date()).toJSON(),
                             modified: (new Date()).toJSON(),
                             access: 'edit',
                             type: 'volume',
+                            name: 'Default',
                             filename: 'Atlas.nii.gz',
                             labels: 'foreground.json'
                         }]
@@ -148,17 +148,7 @@ var mri = function (req, res) {
         .then(function (json) {
             if(!json) {
                 var obj = {
-                    source: myurl,
-                    mri: {
-                        atlas: [{
-                            created: (new Date()).toJSON(),
-                            modified: (new Date()).toJSON(),
-                            access: 'edit',
-                            type: 'volume',
-                            filename: 'Atlas.nii.gz',
-                            labels: 'foreground.json'
-                        }]
-                    }
+                    source: myurl
                 };
 
                 res.render('mri', {
