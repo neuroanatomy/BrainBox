@@ -438,7 +438,7 @@ if( $.isEmptyObject(mriInfo)) {
             }
         });
         // volume annotation table: select row
-        $(document).on('click', "#annotations tr",BrainBox.selectAnnotationTableRow);
+        $(document).on('click', "#annotations tr",function(){BrainBox.selectAnnotationTableRow($(this).index(),volAnnParam)});
         // volume annotations table: add, remove and save annotations
         $(document).on('click', "#addAnnotation", function(){addAnnotation(volAnnParam)});
         $(document).on('click', "#removeAnnotation", function(){removeAnnotation(volAnnParam)});
@@ -562,10 +562,7 @@ if( $.isEmptyObject(mriInfo)) {
         //------------------------------------------------
             // send data when focus is lost (on blur)
             $(document).on('blur', "[contenteditable]", function from_project(e) {
-                var index = $(e.target).closest('tr').index();
-                
-                // save change
-                saveAnnotationsChange();
+                saveAnnotationsChange(BrainBox.info);
             });
             // blur when [enter] is clicked, to trigger data sending
             $(document).on('keydown', "[contenteditable]", function(e) {
@@ -577,6 +574,7 @@ if( $.isEmptyObject(mriInfo)) {
             // blur when <select> changes value to trigger data sending
             $("#annotations tbody, #textAnnotations tbody").on('change', "select", function(e) {
                 $(e.target).blur();
+                saveAnnotationsChange(BrainBox.info);
             });
         
     },function(){
@@ -632,9 +630,12 @@ function addAnnotation(param) {
     // add and bind new table row
     var i=BrainBox.info.mri.atlas.length-1;
     BrainBox.appendAnnotationTableRow(i,param);
+    
+    //select new annotation
+    BrainBox.selectAnnotationTableRow(i,param);
 
     // update in server
-    saveAnnotationsChange();
+    saveAnnotationsChange(BrainBox.info);
 }
 /**
  * @function removeAnnotation
@@ -647,7 +648,7 @@ function removeAnnotation(param) {
     $(param.table).find('tbody tr:eq('+index+')').remove();
     
     // select previous row (or 1st one)
-    $(param.table).find('tbody tr:eq('+Math.max(0,index-1)+')').addClass("selected");
+    BrainBox.selectAnnotationTableRow(Math.max(0,index-1),param);
 
     // remove binding
     JSON.stringify(param.info_proxy); // update BrainBox.info from info_proxy
@@ -660,23 +661,23 @@ function removeAnnotation(param) {
     BrainBox.info.mri.atlas.splice(index,1);
 
     // update in server
-    saveAnnotationsChange();
+    saveAnnotationsChange(BrainBox.info);
 }
 /**
  * @function saveAnnotationsChange
  */
-function saveAnnotationsChange() {
+function saveAnnotationsChange(info) {
     JSON.stringify(info_proxy); // update content of projectInfo object from proxy by calling all getters
-    BrainBox.info.mri.annotations = annotationsArrayToObject(textAnnotationsArray);
-    var patch = jsonpatch.compare(mriInfoOrig, BrainBox.info);
+    info.mri.annotations = annotationsArrayToObject(textAnnotationsArray);
+    var patch = jsonpatch.compare(mriInfoOrig, info);
     console.log("patch:",patch);
     if(patch.length == 0) {
         console.log("Nothing changed");
         return;
     }
-    AtlasMakerWidget.sendSaveMetadataMessage(BrainBox.info,"patch",patch)
+    AtlasMakerWidget.sendSaveMetadataMessage(info,"patch",patch)
         .then(function() {
-            mriInfoOrig = JSON.parse(JSON.stringify(BrainBox.info));
+            mriInfoOrig = JSON.parse(JSON.stringify(info));
         });
 }
 </script>

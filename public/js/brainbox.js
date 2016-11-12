@@ -212,18 +212,16 @@ var BrainBox={
 	/**
      * @function selectAnnotationTableRow
      */
-	selectAnnotationTableRow: function selectAnnotationTableRow() {
+	selectAnnotationTableRow: function selectAnnotationTableRow(index,param) {
 		var l=BrainBox.traceLog(selectAnnotationTableRow);if(l)console.log(l);
 	
-		var table=$(this).closest("tbody");
+		var table=param.table;
 		var currentIndex=$(table).find("tr.selected").index();
-		var index=$(this).index();
-		var nodeName=$(this).prop('nodeName');
 	
 		if(index>=0 && currentIndex!=index) {
 			console.log("bb>>  change selected annotation");
 			$(table).find("tr").removeClass("selected");
-			$(this).addClass("selected");
+			$(table).find('tbody tr:eq('+index+')').addClass("selected");
 			AtlasMakerWidget.configureAtlasMaker(BrainBox.info,index);
 		}
 	},
