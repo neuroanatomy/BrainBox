@@ -46,10 +46,10 @@
 
  #menu {
     float:right;
-    margin-top: 10px;
+    /* margin-top: 10px; */
     margin-right: 10px;
-	display: inline-block;
-	font: 16px/24px "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
+    display: inline-block;
+    font: 16px/24px "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
  }
  #menu img{
  	margin-left: 15px;

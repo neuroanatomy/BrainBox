@@ -7,177 +7,247 @@
     <title>{{title}}</title>
 	<link rel="stylesheet" href="/stylesheets/style.css" />
 	<link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
+	
+	<style>
+.slide {
+    display:inline-block;
+    width:100%;
+    position:relative;
+}
+.content {
+    display: inline-block;
+    position: absolute;
+    top:50%;
+    left:50%;
+    transform: translate( -50% , -50%);
+    width:600px;
+    max-width: calc( 100% - 20px );
+}
+#menu {
+    position: fixed;
+    z-index: 2;
+    text-align: right;
+    background-color: #222;
+    top:0;
+    margin-top:0;
+    width: 100%;
+    display: inline-block;
+    font: 16px/24px "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
+    transition: top .5s, opacity .5s;
+    -moz-transition: top .5s, opacity .5s;
+    -webkit-transition: top .5s, opacity .5s;
+}
+
+h2 {
+    margin-left:5rem;
+    opacity:0;
+    transition: margin-left 2s, opacity 2s;
+}
+	    
+/* 'more info' button */
+@-moz-keyframes sc-down-a {
+  0% {
+    -webkit-transform: translateY(0px) rotate(45deg);
+    -moz-transform: translateY(0px) rotate(45deg);
+    -o-transform: translateY(0px) rotate(45deg);
+    -ms-transform: translateY(0px) rotate(45deg);
+    transform: translateY(0px) rotate(45deg);
+  }
+  100% {
+    -webkit-transform: translateY(2px) rotate(45deg);
+    -moz-transform: translateY(2px) rotate(45deg);
+    -o-transform: translateY(2px) rotate(45deg);
+    -ms-transform: translateY(2px) rotate(45deg);
+    transform: translateY(2px) rotate(45deg);
+  }
+}
+@-webkit-keyframes sc-down-a {
+  0% {
+    -webkit-transform: translateY(0px) rotate(45deg);
+    -moz-transform: translateY(0px) rotate(45deg);
+    -o-transform: translateY(0px) rotate(45deg);
+    -ms-transform: translateY(0px) rotate(45deg);
+    transform: translateY(0px) rotate(45deg);
+  }
+  100% {
+    -webkit-transform: translateY(2px) rotate(45deg);
+    -moz-transform: translateY(2px) rotate(45deg);
+    -o-transform: translateY(2px) rotate(45deg);
+    -ms-transform: translateY(2px) rotate(45deg);
+    transform: translateY(2px) rotate(45deg);
+  }
+}
+@-o-keyframes sc-down-a {
+  0% {
+    -webkit-transform: translateY(0px) rotate(45deg);
+    -moz-transform: translateY(0px) rotate(45deg);
+    -o-transform: translateY(0px) rotate(45deg);
+    -ms-transform: translateY(0px) rotate(45deg);
+    transform: translateY(0px) rotate(45deg);
+  }
+  100% {
+    -webkit-transform: translateY(2px) rotate(45deg);
+    -moz-transform: translateY(2px) rotate(45deg);
+    -o-transform: translateY(2px) rotate(45deg);
+    -ms-transform: translateY(2px) rotate(45deg);
+    transform: translateY(2px) rotate(45deg);
+  }
+}
+@keyframes sc-down-a {
+  0% {
+    -webkit-transform: translateY(0px) rotate(45deg);
+    -moz-transform: translateY(0px) rotate(45deg);
+    -o-transform: translateY(0px) rotate(45deg);
+    -ms-transform: translateY(0px) rotate(45deg);
+    transform: translateY(0px) rotate(45deg);
+  }
+  100% {
+    -webkit-transform: translateY(2px) rotate(45deg);
+    -moz-transform: translateY(2px) rotate(45deg);
+    -o-transform: translateY(2px) rotate(45deg);
+    -ms-transform: translateY(2px) rotate(45deg);
+    transform: translateY(2px) rotate(45deg);
+  }
+}
+.btn-scroll-down {
+  width: 100px;
+  height: 50px;
+  position: absolute;
+  bottom: 5px;
+  left: 0;
+  right: 0;
+  margin: auto;
+  z-index: 10;
+  -webkit-transition: display 0.5s easy-in-out;
+  -moz-transition: display 0.5s easy-in-out;
+  -o-transition: display 0.5s easy-in-out;
+  -ms-transition: display 0.5s easy-in-out;
+  transition: display 0.5s easy-in-out;
+}
+.btn-scroll-down:before,
+.btn-scroll-down:after {
+  content: '';
+  display: block;
+  border-bottom: 1px solid #fff;
+  border-right: 1px solid #fff;
+  -webkit-transform: rotate(45deg);
+  -moz-transform: rotate(45deg);
+  -o-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+  transform: rotate(45deg);
+  margin: auto;
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+.btn-scroll-down:before {
+  bottom: 20px;
+  width: 60px;
+  height: 60px;
+}
+.btn-scroll-down:after {
+  width: 30px;
+  height: 30px;
+  bottom: 35px;
+  -webkit-animation: sc-down-a 0.3s infinite alternate;
+  -moz-animation: sc-down-a 0.3s infinite alternate;
+  -o-animation: sc-down-a 0.3s infinite alternate;
+  -ms-animation: sc-down-a 0.3s infinite alternate;
+  animation: sc-down-a 0.3s infinite alternate;
+}
+	</style>
 </head>
 
 <body>
 
-<div style="width:100%;height:100%;display:flex;flex-direction:column">
-	
 	<!-- Login (fixed height) -->
-	<div style="flex:0 0 64px">
-		<div id="menu">
-			<img id="addProject" class="button" title="add project" style='width:13px' src='/img/plus.svg'/>
-			<img id="search" class="button" title="search" style='width:13px' src='/img/search.svg'/>
-			<img id="doc" class="button" title="documentation" style='width:13px' src='/img/doc.svg'/>
-			<a href="https://github.com/OpenNeuroLab/BrainBox/issues" target="_blank"><img id="bug" class="button" title="report a bug" style='width:14px' src='/img/bug.svg'/></a>
-			<a href="https://github.com/OpenNeuroLab" target="_blank"><img id="github" class="button" title="join our github project" style='width:15px' src='/img/github.svg'/></a>
-			<div id="MyLogin">
-				<span>{{{login}}}</span>
-			</div>
-		</div>
-	</div>
+    <div id="menu">
+        <div style="padding-right:10px">
+            <img id="addProject" class="button" title="add project" style='width:13px' src='/img/plus.svg'/>
+            <img id="search" class="button" title="search" style='width:13px' src='/img/search.svg'/>
+            <img id="doc" class="button" title="documentation" style='width:13px' src='/img/doc.svg'/>
+            <a href="https://github.com/OpenNeuroLab/BrainBox/issues" target="_blank"><img id="bug" class="button" title="report a bug" style='width:14px' src='/img/bug.svg'/></a>
+            <a href="https://github.com/OpenNeuroLab" target="_blank"><img id="github" class="button" title="join our github project" style='width:15px' src='/img/github.svg'/></a>
+            <div id="MyLogin">
+                <span>{{{login}}}</span>
+            </div>
+        </div>
+    </div>
 	
-	<!-- Content (variable height) -->
-	<div id="content" style="flex:1 0 auto">
-			
-		<!-- Introduction -->
-		<div id="intro">
-			<img id="logo" src="/img/brainbox-logo.svg" style="text-align:center"/><br />
-			<h2>Real-time collaboration</h2>
-			
-			<div style="display:flex">
-				<div style="flex:1 1 auto"></div>
-				<div style="flex:0 1 500px">
-					<p>
-						BrainBox is a web application by <b><a target="_blank" href="http://neuroanatomy.github.io">NAAT</a></b> to
-						visualise and segment collaboratively any brain MRI dataset available online.
-						Segmentations are automatically saved and can be downloaded as Nifti files or
-						triangular meshes. Point BrainBox to your own Nifti data, or try data catalogues
-						created by the community.
-					</p>
-					<div style="width:calc( 100% - 20px);margin-left:10px;margin-top:30px;display:flex">
-						<div style="flex:1 1 auto">
-							<input id="url" type="text" placeholder="Enter the URL of an MRI (.nii.gz)"></input>
-						</div>
-						<div style="flex:0 0 32px">
-							<div id="go" class="pushButton" onclick="goToURL()">Go</div>
-						</div>
-					</div>
-				</div>
-				<div style="flex:1 1 auto"></div>
-			</div>
-		</div>
-		<!-- End Introduction-->
-		
-		<!-- Splash -->
-		<div id='splash'>
-			<a href='/'>
-				<img id='logo' src='/img/brainbox-logo.svg'/>
-			</a>
-			<div id='msgLog'></div>
-		</div>
-		<!-- End Splash -->
-				
-		<!-- Data -->
-		<div id="data">		
-			<!-- Small left-top logo -->
-			<a href='/'>
-				<img style='position:fixed;left:10px;top:5px;width:200px' src='/img/brainbox-logo-small_noFont.svg'/>
-			</a>
-			<div style="position:fixed;left:73px;top:21px;width:auto; font-family: Roboto, sans-serif; font-size: 36px; font-weight:100" id="fontLogo"> 
-				<a href='/' style="font-family: Roboto, sans-serif; font-size: 36px; font-weight:100; text-decoration:none">BrainBox</a>
-			</div>
-
-			<!-- Data Flex -->
-			<div style="display:flex;justify-content:center">
-					<!-- AtlasMaker -->
-					<div style="flex:0 1 auto">
-						<!-- AtlasMaker -->
-						<div id="stereotaxic" style="width:512px">
-						</div>
-						<!-- End AtlasMaker -->
-					</div>
-				
-					<!-- Annotations -->
-					<div style="flex:0 1 auto;vertical-align:top;padding-left:0.5rem">
-						<ul>
-							<li><b>Name</b><br/> <span id="name" contentEditable=true class='noEmpty'></span></li>
-							<li><b>Data source</b></br> <span id="source"></span></li>
-							<li><b>Inclusion date</b><br/> <span id="included"></span></li>
-							<li>
-								<b>Annotations</b><br/>
-								<table id="info">
-								<thead>
-									<tr>
-										<th>Name</th>
-										<th>Project</th>
-										<th>Label Set</th>
-										<th>Owner</th>
-										<th>Created</th>
-										<th>Modified</th>
-										<th>Access</th>
-									</tr>
-								</thead>
-								</table>
-								<div style="text-align:right">
-									<img id="addAnnotation"    class="button" src='/img/plus-circle.svg'/>
-									<img id="removeAnnotation" class="button" src='/img/minus-circle.svg'/>
-									<img id="saveAnnotations"   class="button" src='/img/floppy.svg'/>
-								</div>
-							</li>
-						</ul>
-					</div>
-			</div>
-			<!-- End Data Flex -->
-		</div>
-		<!-- End Data -->
-
-		<!-- Labels -->
-		<div id="labelset">
-			<div style="z-index:23;text-align:right">
-				<img id="labels-close" class="button" src="/img/times-circle.svg"/>
-			</div>
-
-			<ul style="padding-left:1rem">
-				<li>
-					<b>Label Set</b><br/>
-					<span id="labels-name"></span>
-				</li>
-				<li>
-					<b>Labels</b><br/>
-					<div id="label-list">
-					</div>
-					<div id="label-template">
-						<div class="label-color"></div>
-						<span class="label-name">Label Name</name>
-					</div>
-				</li>
-			</ul>
-		</div>
-		<!-- End Labels -->
-
-	</div>
-	<!-- End Content -->
-	
-	<!-- Space (fixed height) -->
-	<div style="flex:0 0 50px">
-	</div>
+	<!-- Content  -->			
+    <div class="slide" style="background:#333">
+    <!-- Slide: Landing -->
+        <div class="content">
+            <img id="logo" src="/img/brainbox-logo.svg" style="text-align:center"/>
+            <h2 style='margin-top:0;margin-bottom:4rem'>Real-time collaboration in neuroimaging</h2>
+            <div style="position:relative">
+                <input id="url" style="display:inline-block;width:calc( 100% - 40px )" type="text" placeholder="Enter the URL of an MRI (.nii.gz)"></input>
+                <div id="go" class="pushButton" style="display:inline-block;width:32px;vertical-align:top" onclick="goToURL()">Go</div>
+            </div>
+        </div>
+        <span class="btn-scroll-down scroll"></span>
+    </div><!--
+    
+    --><div class="slide" style="background:#444">
+    <!-- Slide: About -->
+        <div class="content">
+            <p>
+                BrainBox is a web application developed by the Group of Applied and
+                Theoretical Neuroanatomy –
+                <b><a target="_blank" href="http://neuroanatomy.github.io">NAAT</a></b> –
+                for the Open Neuroimaging Laboratory Project. BrainBox allows you to
+                visualise and segment collaboratively any brain MRI dataset available online.
+                Segmentations are automatically saved and can be downloaded as Nifti files or
+                triangular meshes. Point BrainBox to your own Nifti data, or try data catalogues
+                created by the community.
+            </p>
+        </div>
+    </div><!--
+    
+    --><div class="slide" style="background:#333">
+    <!-- Slide: Brains to try -->
+        <div id="intro" class="content">
+        </div>
+    </div>
+    <!-- End Content-->
 
 	<!-- Footer (fixed height) -->
-	<div style="flex:0 0 100px;background-color:#000">
+    <div id="footer">
 		<p style="width:100%;font-size:small;text-align:center"> 
 			<a target="_blank" href="http://neuroanatomy.github.io">
 				<img src="/img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/></a>
 			<a target="_blank" href="http://neuroanatomy.github.io" class="linkNoULine">
-				group de neuroanatomie appliquée et théorique
+				group de neuro anatomie appliquée et théorique
 			</a>
 		</p>
 	</div>
-</div>
-
-<!-- 
-A few brains:
-http://braincatalogue.org/data/Baboon/MRI.nii.gz
-https://zenodo.org/record/44855/files/MRI-n4.nii.gz
-http://files.figshare.com/2284784/MRI_n4.nii.gz
-http://braincatalogue.org/data/Human/MRI-n4.nii.gz
-https://dl.dropboxusercontent.com/u/363467/mprage003.nii.gz
--->
+	<!-- End Footer -->
 
 <script src="/lib/jquery-3.1.1.min.js"></script>
 <script src="/js/brainbox.js"></script>
 
 <script>
+
+$(".slide").height(window.innerHeight);
+$(window).on('resize',function() {
+    console.log(window.innerHeight);
+    $(".slide").height(window.innerHeight);
+});
+
+var menuShowing = true;
+$(window).on('scroll',function() {
+    var y = window.pageYOffset;
+    if(y>100 && menuShowing) {
+        $("#menu").css({top:-32, opacity:0});
+        menuShowing = false;
+    }
+    if(y<100 && !menuShowing) {
+        $("#menu").css({top:0, opacity:1});
+        menuShowing = true;
+    }
+});
+
+$("h2").css({marginLeft:0,opacity:1});
 
 $("#login").click(function(){$.get("/login",function(r){console.log(r)})});
 $("#logout").click(function(){$.get("/logout",function(r){console.log(r)})});
