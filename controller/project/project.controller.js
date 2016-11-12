@@ -193,14 +193,23 @@ var isProjectObject = function(req,res,object) {
  * @param {integer} length Number of files to include in the slice
  */
 function getFilesSlice(req, projShortname, start, length) {
-    console.log(projShortname,start,length);
+    var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
+
+    console.log("loggedUser:",loggedUser, "projShortname:",projShortname,"start:",start,"length:",length);
 	return new Promise(function (resolve, reject) {
 	    start = parseInt(start);
 	    length = parseInt(length);
 		console.log("inside the promise for project, start, length",projShortname, start, length);
 		req.db.get('project').findOne({shortname:projShortname,backup:{$exists:0}},"-_id")
 		.then(function(json) {
-            console.log("got json");
+            // check access
+            if(checkAccess.toProject(json, loggedUser, "view") === false) {
+                var msg = "ERROR: User "+loggedUser+" is not allowed to view project "+projShortname;
+                console.log(msg);
+                reject(msg);
+                return;
+            }
+
 			if (json) {
 			    console.log("json is not empty");
 				var list = json.files.list, newList = [], arr = [];
@@ -255,6 +264,7 @@ var project = function(req, res) {
 	var login=	(req.isAuthenticated())?
 				("<a href='/user/"+req.user.username+"'>"+req.user.username+"</a> (<a href='/logout'>Log Out</a>)")
 				:("<a href='/auth/github'>Log in with GitHub</a>");
+    var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
 
     // store return path in case of login
     req.session.returnTo = req.originalUrl;
@@ -262,6 +272,12 @@ var project = function(req, res) {
 	req.db.get('project').findOne({shortname:req.params.projectName,backup:{$exists:0}},"-_id")
 	.then(function(json) {
 		if (json) {
+            // check that the logged user has access to view this project
+            if(checkAccess.toProject(json, loggedUser, "view") === false) {
+                res.status(401).send("Authorization required");
+                return;
+            }
+
             json.files.list = [];
             res.render('project', {
                 title: json.name,
@@ -283,9 +299,17 @@ var project = function(req, res) {
  * @result A json object with project data
  */
 var api_project = function(req, res) {
+    var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
+
 	req.db.get('project').findOne({shortname:req.params.projectName,backup:{$exists:0}},"-_id")
 	.then(function(json) {
 		if(json) {
+            // check that the logged user has access to view this project
+            if(checkAccess.toProject(json, loggedUser, "view") === false) {
+                res.status(401).send({error:"Authorization required"});
+                return;
+            }
+
 			if(req.query.var) {
 				var i,arr=req.query.var.split("/");
 				for(i in arr)
@@ -309,7 +333,6 @@ var api_project = function(req, res) {
  * @todo Check access rights for this route
  */
 var api_projectFiles = function(req, res) {
-
     var projShortname = req.params.projectName;
     var start = req.query.start;
     var length = req.query.length;
