@@ -998,6 +998,7 @@ function deleteProject() {
             $("#saveFeedback").text("Successfully deleted");
     	    setTimeout(function() {
     	        $("#saveFeedback").text("");
+    	        location="/";
     	    },2000);
     	} else {
             $("#saveFeedback").text("Unable to delete");
