@@ -151,7 +151,9 @@ var AtlasMakerDraw = {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(drawImages,1);if(l)console.log.apply(undefined,l);
 	
-		if(me.brain_img.img) {
+		if(me.brain_img.img
+		   && me.flagLoadingImg.view
+		   && me.flagLoadingImg.slice) {
 			me.context.clearRect(0,0,me.context.canvas.width,me.canvas.height);
 			me.displayInformation();
 
