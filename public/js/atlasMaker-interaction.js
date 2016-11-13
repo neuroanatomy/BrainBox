@@ -751,8 +751,16 @@ var AtlasMakerInteraction = {
                 me.sendPaintMessage(msg);
 
                 // add annotated length to User.annotation length and post to DB
-                me.logToDatabase("annotationLength",JSON.stringify({specimen:me.name,atlas:me.atlas.name,length:me.annotationLength}))
-                    .then(function(value){var length=parseInt(value);me.info.length=length+" mm";me.displayInformation()});
+                me.logToDatabase("annotationLength",{
+                    source:me.User.source,
+                    atlas:me.User.atlasFilename,
+                    length:me.annotationLength
+                })
+                .then(function(response){
+                    var length = parseInt(response.length);
+                    me.info.length = length+" mm";
+                    me.displayInformation();
+                });
 
                 me.annotationLength=0;
 

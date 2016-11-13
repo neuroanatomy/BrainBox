@@ -527,5 +527,31 @@ var AtlasMakerWS = {
 		$("#chat").text("Chat ("+nusers+" connected)");
 		$("#log").append(msg);
 		$("#log").scrollTop($("#log")[0].scrollHeight);
+	},
+	//==========
+	// Database
+	//==========
+    /**
+     * @function logToDatabase
+     */
+	logToDatabase: function logToDatabase(key,value) {
+		var def=$.Deferred();
+		var me=AtlasMakerWidget;
+		var l=me.traceLog(logToDatabase,1,"#bbd");if(l)console.log.apply(undefined,l);
+		$.ajax({
+			url:"/api/log",
+			type:"POST",
+			data: {
+				username:me.User.username,
+				key:key,
+				value:value
+		}})
+		.done(function(data) {
+			def.resolve(data);
+		})
+		.fail(function() {
+			def.reject("Error");
+		});
+		return def.promise();
 	}
 }

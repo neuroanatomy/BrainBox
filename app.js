@@ -158,17 +158,44 @@ app.get('/api/getLabelsets', function (req, res) {
 });
 app.post('/api/log', function (req, res) {
     var json = req.body;
-    db.get('log').insert({
-        key: json.key,
-        value: json.value,
-        username: json.username,
-        date: (new Date()).toJSON(),
-        ip: req.headers['x-forwarded-for'] ||
-            req.connection.remoteAddress ||
-            req.socket.remoteAddress ||
-            req.connection.socket.remoteAddress
-    });
-    res.send();
+    var obj;
+    
+    switch(json.key) {
+        case "annotationLength":
+            obj = {
+                key: "annotationLength",
+                username: json.username,
+                "value.source": json.value.source,
+                "value.atlas": json.value.atlas
+            };
+            req.db.get('log').findOne(obj)
+            .then(function(result) {
+                var length = 0;
+                if(result) {
+                    length = parseFloat(result.value.length);
+                }
+                var sum = parseFloat(json.value.length) + length;
+                req.db.get('log').update(obj,{$set:{"value.length":sum}},{upsert: true});
+                res.send({length: sum});
+            })
+            .catch(function(err) {
+                console.log("ERROR",err);
+                res.send({error:JSON.stringify(err)});
+            });
+            break;
+        default:
+            req.db.get('log').insert({
+                key: json.key,
+                value: json.value,
+                username: json.username,
+                date: (new Date()).toJSON(),
+                ip: req.headers['x-forwarded-for'] ||
+                    req.connection.remoteAddress ||
+                    req.socket.remoteAddress ||
+                    req.connection.socket.remoteAddress
+            });
+            res.send();
+    }
 });
 
 
