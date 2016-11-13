@@ -326,13 +326,11 @@ var AtlasMakerWidget = {
 
         $.post("/mri/json",{url:source}, function(info) {
             if(info.success == true) {
-                console.log("requestMRIInfo returns success:",info);
                 def.resolve(info);
             } else if(info.success == 'downloading') {
-                console.log("requestMRIInfo downloading");
                 setTimeout(function(){me.requestMRIInfo(source,def)},5000);
             } else {
-                console.log("requestMRIInfo ERROR");
+                console.log("ERROR: requestMRIInfo",info);
                 def.reject();
             }
         });

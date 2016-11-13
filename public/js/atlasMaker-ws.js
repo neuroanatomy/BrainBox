@@ -201,7 +201,6 @@ var AtlasMakerWS = {
                         me.brain_img.view=me.flagLoadingImg.view;
                         me.brain_img.slice=me.flagLoadingImg.slice;
 
-                        console.log("flagLoadingImg:",me.flagLoadingImg);
                         me.drawImages();
                                                             
                         me.flagLoadingImg.loading=false;
