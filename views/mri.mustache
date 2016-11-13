@@ -329,7 +329,7 @@ var mriInfo={{{mriInfo}}};
 var mriInfoOrig;
 var textAnnotationsArray = [];
 var version=1;
-var info_proxy={};
+var volAnnParam, textAnnParam, info_proxy={};
 var hash_old;
 
 if( $.isEmptyObject(mriInfo)) {
@@ -378,7 +378,7 @@ if( $.isEmptyObject(mriInfo)) {
         
     // Bind volume-type annotations
     //------------------------------
-        var volAnnParam = {
+        volAnnParam = {
             table: $("table#annotations"),
             info_proxy: info_proxy,
             info: BrainBox.info,
@@ -451,7 +451,6 @@ if( $.isEmptyObject(mriInfo)) {
         
     // Bind text annotations
     //-----------------------
-        var textAnnParam;
         var trTemplate;
         var objTemplate;
         var i, j, p, n;
@@ -705,6 +704,7 @@ function selectTextAnnotationTableRow(index,param) {
         $(table).find('tbody tr:eq('+index+')').addClass("selected");
     }
 }
+
 /**
  * @function saveAnnotationsChange
  */
@@ -721,7 +721,8 @@ function saveAnnotationsChange(info) {
                 && info.mri.atlas[i].project === info.mri.atlas[j].project) {
                 $("#annotationMessage").text("There is already an annotation with that name and project");
                 setTimeout(function(){$("#annotationMessage").text("")},2000);
-                $.extend(true, info.mri, mriInfoOrig.mri);
+                //$.extend(true, info.mri, mriInfoOrig.mri);
+                resetBindingProxy(volAnnParam, mriInfoOrig);
                 return;
             }
         }
@@ -735,7 +736,8 @@ function saveAnnotationsChange(info) {
                 && textAnnotationsArray[i].project === textAnnotationsArray[j].project) {
                 $("#textAnnotationMessage").text("There is already an annotation with that name and project");
                 setTimeout(function(){$("#textAnnotationMessage").text("")},2000);
-                $.extend(true, textAnnotationsArray, annotationsObjectToArray(mriInfoOrig.mri.annotations));
+                //$.extend(true, textAnnotationsArray, annotationsObjectToArray(mriInfoOrig.mri.annotations));
+                resetBindingProxy(textAnnParam, annotationsObjectToArray(mriInfoOrig.mri.annotations));
                 return;
             }
         }

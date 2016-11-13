@@ -95,3 +95,38 @@ function bind2(proxy,original,path,el,format,parse) {
  function unbind2(proxy,path) {
 	delete proxy[path];
 }
+
+/**
+ * @function resetBindingProxy
+ * @desc Reinitialise a proxy object with stored values
+ * @param {object} param Object providing the template for an array, includes an
+ *                 object template, for all the objects in each row of the array,
+ *                 and the bound object array.
+ * @param {object} stored A reference version of the object array, to which the
+ *                 current object array will be reseted.
+ */
+function resetBindingProxy(param, stored) {
+    var i, j, k = 0, flag = true;
+    var o, ot = param.objTemplate;
+    
+    while(flag) {
+        for(i=0;i<ot.length;i++) {
+            var path = ot[i].path;
+            var keys = path.split(".");
+            o = stored;
+            for(j=0;j<keys.length;j++) {
+                if(keys[j] === '#') {
+                    o=o[k];
+                    if(o === undefined) {
+                        return;
+                    }
+                } else {
+                    o=o[keys[j]];
+                }
+            }
+            param.info_proxy[path.replace('#',k)] = o;
+        }
+        k++;
+    }
+}
+
