@@ -59,19 +59,25 @@ var AtlasMakerWS = {
                 // try to reconnect
                 me.reconnectionTimeout=5;
 				$("#chat").text("Disconnected. Try to reconnect in "+(me.reconnectionTimeout--)+" s...");
+                if(me.timer) {
+                    clearInterval(me.timer);
+                }
                 me.timer = setInterval(function() {
-                    if(me.reconnectionTimeout <=0) {
-                        me.socket = "";
-                        me.initSocketConnection()
-                        .then(function() {
-                            me.sendUserDataMessage("allUserData");
-                            me.sendUserDataMessage("sendAtlas");
-                            clearInterval(me.timer);
-                        })
-                        .catch(function() {
-                            me.reconnectionTimeout=5;
-            				$("#chat").text("Disconnected. Try to reconnect in "+(me.reconnectionTimeout--)+" s...");
-                        });
+                    if(me.reconnectionTimeout <0) {
+                        $("#chat").text("Reconnecting...");
+                        setTimeout(function() {
+                            me.socket = "";
+                            me.initSocketConnection()
+                            .then(function() {
+                                me.sendUserDataMessage("allUserData");
+                                me.sendUserDataMessage("sendAtlas");
+                                clearInterval(me.timer);
+                            })
+                            .catch(function() {
+                                me.reconnectionTimeout=5;
+                                $("#chat").text("Disconnected. Try to reconnect in "+(me.reconnectionTimeout--)+" s...");
+                            });
+                        }, 1000);
                     } else {
                         $("#chat").text("Disconnected. Try to reconnect in "+(me.reconnectionTimeout--)+" s...");
                     }
