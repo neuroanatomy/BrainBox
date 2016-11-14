@@ -419,6 +419,7 @@ function appendFiles(list) {
             '</td></tr>'
         ].join(""));
     }
+    $("#numMRI").text(userInfo.MRIFiles.length);
 }
 function queryAtlas(list) {
 	$.getJSON("/user/json/{{nickname}}/atlas", {start:userInfo.atlasFiles.length, length:100})
@@ -447,6 +448,7 @@ function appendAtlas(list) {
             '</td></tr>'
         ].join(""));
     }
+    $("#numAtlas").text(userInfo.atlasFiles.length);
 }
 function queryProjects() {
 	$.getJSON("/user/json/{{nickname}}/projects", {start:userInfo.projects.length, length:100})
@@ -479,6 +481,7 @@ function appendProjects(list) {
             '</td></tr>'
         ].join(""));
     }
+    $("#numProjects").text(userInfo.projects.length);
 }
 </script>
 
