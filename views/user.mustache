@@ -254,19 +254,6 @@
                             <tr>
                         </thead>
                         <tbody>
-                            <!--
-                            {{#MRIFiles}}
-                                <tr>
-                                    <td>
-                                        <a href="/mri?url={{url}}">
-                                            {{#name}}{{name}}{{/name}}{{^name}}{{url}}{{/name}}
-                                        </a>
-                                    </td>
-                                    <td>{{volDimensions}}</td>
-                                    <td>{{included}}</td>
-                                </tr>
-                            {{/MRIFiles}}
-                            -->
                         </tbody>
                     </table>
             
@@ -281,19 +268,6 @@
                             <tr>
                         </thead>
                         <tbody>
-                            <!--
-                            {{#atlasFiles}}
-                                <tr>
-                                    <td>
-                                        <a href="/mri?url={{url}}">
-                                            {{#parentName}}{{parentName}}{{/parentName}}{{^parentName}}{{url}}{{/parentName}}
-                                        </a></td>
-                                    <td class='noEmpty'>{{name}}</td>
-                                    <td><a href="{{projectURL}}" class='noEmpty'>{{project}}</a></td>
-                                    <td>{{modified}}</td>
-                                </tr>
-                            {{/atlasFiles}}
-                            -->
                         </tbody>
                     </table>
             
@@ -309,17 +283,6 @@
                             <tr>
                         </thead>
                         <tbody>
-                            <!--
-                            {{#projects}}
-                                <tr>
-                                    <td><div style="position:relative"><a style="position:absolute;left:15px" class="projectName" href="{{projectURL}}">{{project}}</a><a href="{{projectURL}}/settings" class="settings" title="Settings" style='position:absolute;left:0'><img style='width:11px; margin:3px 8px 0 0' src='/img/settings.svg'/></a></div></td>
-                                    <td>{{numFiles}}</td>
-                                    <td>{{numCollaborators}}</td>
-                                    <td><a href="/user/{{owner}}">{{owner}}</a></td>
-                                    <td>{{modified}}</td>
-                                </tr>
-                            {{/projects}}
-                            -->
                         </tbody>
                     </table>
             
@@ -462,13 +425,13 @@ function appendProjects(list) {
     userInfo.projects.push.apply(userInfo.projects, list);
     for(var i=0;i<list.length;i++) {
         $('#projects tbody').append([
-            '<tr><td><div style="position:relative"><a style="position:absolute;left:15px" class="projectName" href="',
+            '<tr><td><div style="position:relative"><a style="margin-left:15px" class="projectName" href="',
             list[i].projectURL,
             '">',
             list[i].project,
             '</a><a href="',
             list[i].projectURL,
-            '/settings" class="settings" title="Settings" style="position:absolute;left:0"><img style="width:11px; margin:3px 8px 0 0" src="/img/settings.svg"/></a></div></td><td>',
+            '/settings" class="settings" title="Settings" style="position:absolute;top:0;left:0"><img style="width:11px; margin:3px 8px 0 0" src="/img/settings.svg"/></a></div></td><td>',
             list[i].numFiles,
             '</td><td>',
             list[i].numCollaborators,
