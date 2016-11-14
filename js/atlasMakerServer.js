@@ -1337,7 +1337,7 @@ var readMGZ = function readMGZ(path) {
                             mri.data[j]=tmp.readInt16BE(j*2);
                         break;
                     default:
-                        console.log("ERROR: Unknown dataType: "+datatype);
+                        console.log("ERROR: Unknown dataType: "+h.type);
                 }
 
                 var i,sum=0,min,max;
