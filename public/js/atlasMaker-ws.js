@@ -7,6 +7,8 @@ var AtlasMakerWS = {
 	//====================================================================================
     /**
      * @function createSocket
+     * @desc  Create a WebSocket connection using the WebSocket object or the MozWebSocket
+     *        object.
      */
 	createSocket: function createSocket(host) {
 		var me=AtlasMakerWidget;
@@ -18,6 +20,8 @@ var AtlasMakerWS = {
 			ws=new WebSocket(host);
 		} else if (window.MozWebSocket) {
 			ws=new MozWebSocket(host);
+		} else {
+		    console.log("ERROR: browser does not support WebSockets");
 		}
 
 		return ws;

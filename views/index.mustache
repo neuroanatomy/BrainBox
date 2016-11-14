@@ -12,6 +12,9 @@
 html, #menu, #footer {
     background-color: #111;
 }
+#footer {
+    display: none;
+}
 .slide {
     display:inline-block;
     width:100%;
@@ -228,6 +231,14 @@ h2 {
 
 <script>
 
+testWebSockets()
+.then(function(m) {
+    console.log("Connection to websockets is ok");
+})
+.catch(function(m) {
+    alert(m);
+});
+
 $(".slide").height(window.innerHeight);
 $(window).on('resize',function() {
     console.log(window.innerHeight);
@@ -240,6 +251,8 @@ $(window).on('scroll',function() {
     if(y>100 && menuShowing) {
         $("#menu").css({top:-32, opacity:0});
         menuShowing = false;
+        
+        $("#footer").show();
     }
     if(y<100 && !menuShowing) {
         $("#menu").css({top:0, opacity:1});
@@ -260,9 +273,7 @@ var brainsToTry=[
 	"https://fcp-indi.s3.amazonaws.com/data/Projects/ABIDE_Initiative/RawData/NYU/0050952/session_1/anat_1/mprage.nii.gz"
 ]
 
-// If brainbox's call contains an url, launch atlasMaker with it,
-// otherwise, present the history in localStorage if it exists.
-
+// Present the history in localStorage if it exists.
 	if(localStorage.AtlasMaker) {
 		var stored=JSON.parse(localStorage.AtlasMaker);
 		if(stored.version && stored.version==version) {
@@ -276,7 +287,6 @@ var brainsToTry=[
 			localStorage.clear();
 		}
 	}
-	
 	if(localStorage.AtlasMaker==undefined || stored.history.length<5) {
 		var str="<br/><p><b>Some brains to try</b><br/>";
 		for(var i=0;i<brainsToTry.length;i++) {
@@ -285,18 +295,47 @@ var brainsToTry=[
 		str+="</p>";
 		$("#intro").append(str);
 	}
+
 // Add URL loading
-$("#url").keyup(function(e) {
-	//console.log(e,e.target);
-	if (e.keyCode == 13) {
-		goToURL(e);
-	}
-});
+    $("#url").keyup(function(e) {
+        //console.log(e,e.target);
+        if (e.keyCode == 13) {
+            goToURL(e);
+        }
+    });
+
+// Connect addProject button
+    $("#addProject").click(function(){location="/project/new"});
+
 function goToURL(e) {
 	var url=$("#url").val();
 	location="/mri?url="+url;
-};
-$("#addProject").click(function(){location="/project/new"});
+}
+/**
+ * @function testWebSockets
+ */
+function testWebSockets() {
+    var def = $.Deferred();
+    var host = "ws://ws.websocketstest.com:8080/service";
+    var ws;
+
+    if (window.WebSocket) {
+        ws=new WebSocket(host);
+    } else if (window.MozWebSocket) {
+        ws=new MozWebSocket(host);
+    } else {
+        def.reject("BrainBox requires access to WebSockets, but this web browser does not support them. Try Firefox, Chrome or Safari.");
+    }
+    ws.onopen = function(e) {
+        ws.close();
+        def.resolve("Connection ok");
+    };
+    ws.onerror = function(e) {
+        def.reject("BrainBox requires access to WebSockets, but your connection does not allow it. Ask your provider to allow WebSockets on port 8080");
+    };
+    return def;
+}
+
 </script>
 
 
