@@ -1,5 +1,5 @@
 # BrainBox
-BrainBox is a javascript widget that let's you annotate and segment 3D brain imaging data collaboratively.
+BrainBox is a web application that lets you annotate and segment 3D brain imaging data in real time, collaboratively. You can try it at http://brainbox.pasteur.fr.
 
 #### Developer install instructions
 
