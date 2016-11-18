@@ -161,6 +161,7 @@ app.get('/api/getLabelsets', function (req, res) {
     res.send(info);
 });
 app.post('/api/log', function (req, res) {
+    var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
     var json = req.body;
     var obj;
     
@@ -168,7 +169,7 @@ app.post('/api/log', function (req, res) {
         case "annotationLength":
             obj = {
                 key: "annotationLength",
-                username: json.username,
+                username: loggedUser,
                 "value.source": json.value.source,
                 "value.atlas": json.value.atlas
             };
@@ -179,7 +180,10 @@ app.post('/api/log', function (req, res) {
                     length = parseFloat(result.value.length);
                 }
                 var sum = parseFloat(json.value.length) + length;
-                req.db.get('log').update(obj,{$set:{"value.length":sum}},{upsert: true});
+                req.db.get('log').update(obj,{$set:{
+                    "value.length":sum,
+                    date: (new Date()).toJSON()
+                }}, {upsert: true});
                 res.send({length: sum});
             })
             .catch(function(err) {
@@ -191,7 +195,7 @@ app.post('/api/log', function (req, res) {
             req.db.get('log').insert({
                 key: json.key,
                 value: json.value,
-                username: json.username,
+                username: loggedUser,
                 date: (new Date()).toJSON(),
                 ip: req.headers['x-forwarded-for'] ||
                     req.connection.remoteAddress ||
@@ -200,6 +204,16 @@ app.post('/api/log', function (req, res) {
             });
             res.send();
     }
+
+    req.db.get('mri').update({
+        source: json.value.source,
+        "mri.atlas":{$elemMatch:{filename:json.value.atlas}}
+    }, {
+        $set: {
+            "mri.atlas.$.modified": (new Date()).toJSON(),
+            "mri.atlas.$.modifiedBy": loggedUser
+        }
+    });
 });
 
 
