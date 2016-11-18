@@ -178,33 +178,94 @@ var BrainBox={
 		return def.promise();
 	},
 	/**
+     * @function convertImgObjectURLToDataURL
+     * @desc Encodes the ObjectURL obtained from the server jpg images as DataURL,
+     *       suitable to be stored as a string in localStorage
+     */
+	convertImgObjectURLToDataURL: function convertImgObjectURLToDataURL(objURL) {
+	    var def = $.Deferred();
+	    var x = new XMLHttpRequest(), f = new FileReader();
+        x.open('GET',objURL,true);
+        x.responseType = 'blob';
+        x.onload = function (e) {
+            f.onload = function (evt) {
+                def.resolve(evt.target.result);
+            };
+            f.readAsDataURL(x.response);
+        };
+        x.send();
+        return def;
+    },
+	/**
+     * @function addCurrentMRIToHistory
+     */
+    addCurrentMRIToHistory: function addCurrentMRIToHistory() {
+        var l=BrainBox.traceLog(addCurrentMRIToHistory);if(l)console.log(l);
+
+		BrainBox.convertImgObjectURLToDataURL(AtlasMakerWidget.brain_img.img.src)
+		.then(function(data) {
+            var i, foundStored=false;
+            var stored=localStorage.AtlasMaker;
+            if(stored) {
+                stored=JSON.parse(stored);
+                if(stored.version && stored.version==BrainBox.version) {
+                    foundStored=true;
+                    for(i=0;i<stored.history.length;i++) {
+                        if(stored.history[i].url==BrainBox.info.source) {
+                            stored.history.splice(i,1);
+                            break;
+                        }
+                    }
+                }
+            }
+            if(foundStored==false)
+                stored={version:BrainBox.version,history:[]};
+            stored.history.push({	
+                url:         BrainBox.info.source,
+                view:        AtlasMakerWidget.User.view?AtlasMakerWidget.User.view.toLowerCase():"sag",
+                slice:       AtlasMakerWidget.User.slice?AtlasMakerWidget.User.slice:0,
+                img:         data,
+                lastVisited: (new Date()).toJSON()
+            });
+            localStorage.AtlasMaker=JSON.stringify(stored);
+	    });
+    },
+	/**
      * @function unload
      */
 	unload: function unload() {
+	    /*
 		var l=BrainBox.traceLog(unload);if(l)console.log(l);
-		var foundStored=false;
+		var i, obj0, obj1, foundStored=false;
 		var stored=localStorage.AtlasMaker;
 		if(stored) {
 			stored=JSON.parse(stored);
 			if(stored.version && stored.version==BrainBox.version) {
 				foundStored=true;
-				for(var i=0;i<stored.history.length;i++) {
+				for(i=0;i<stored.history.length;i++) {
 					if(stored.history[i].url==BrainBox.info.source) {
-						stored.history.splice(i,1);
+						obj0 = stored.history.splice(i,1);
 						break;
 					}
 				}
 			}
 		}
-		if(foundStored==false)
+		if(foundStored==false) {
 			stored={version:BrainBox.version,history:[]};
-		stored.history.push({	
+			obj0 = {};
+		}
+		
+        obj1 = {	
 			url:BrainBox.info.source,
 			view:AtlasMakerWidget.User.view?AtlasMakerWidget.User.view.toLowerCase():"sag",
 			slice:AtlasMakerWidget.User.slice?AtlasMakerWidget.User.slice:0,
 			lastVisited:(new Date()).toJSON()
-		});			
-		localStorage.AtlasMaker=JSON.stringify(stored);
+		};
+        $.extend(obj0, obj1);
+		
+		stored.history.push(obj0);
+        localStorage.AtlasMaker=JSON.stringify(stored);
+        */
 	},
     /*
 		Annotation related functions

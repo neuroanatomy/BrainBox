@@ -277,11 +277,20 @@ var brainsToTry=[
 	if(localStorage.AtlasMaker) {
 		var stored=JSON.parse(localStorage.AtlasMaker);
 		if(stored.version && stored.version==version) {
-			var str="<br/><p><b>Recently visited</b><br/>";
+			var str = "<br/><p><b>Recently visited</b><br/>";
 			for(var i=stored.history.length-1;i>=Math.max(0,stored.history.length-10);i--) {
-				str+="<a href='"+location+"mri?url="+stored.history[i].url+"'>"+stored.history[i].url+"</a><br />";
+				str += "<a href='"+location+"mri?url="+stored.history[i].url+"'>"+stored.history[i].url+"</a><br />";
+				
+				/**
+				 * @todo Add image thumbnails
+				 */
+				/**/
+				if(stored.history[i].img) {
+				    $("#intro").append('<img src="'+stored.history[i].img+'"/>');
+				}
+				/**/
 			}
-			str+="</p>";
+			str += "</p>";
 			$("#intro").append(str);
 		} else {
 			localStorage.clear();

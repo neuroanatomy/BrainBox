@@ -5,6 +5,7 @@ var dateFormat = require('dateformat');
 var validatorNPM = require('validator');
 var async = require('async');
 var checkAccess = require("../../js/checkAccess.js");
+var dataSlices = require("../../js/dataSlices.js");
 
 const createDOMPurify = require('dompurify');
 const jsdom = require('jsdom');
@@ -301,6 +302,8 @@ var project = function(req, res) {
 var api_project = function(req, res) {
     var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
 
+	console.log("hello project");
+	
 	req.db.get('project').findOne({shortname:req.params.projectName,backup:{$exists:0}},"-_id")
 	.then(function(json) {
 		if(json) {
@@ -321,6 +324,65 @@ var api_project = function(req, res) {
 		}
 	})
 };
+
+/**
+ * @function api_projectAll
+ * @desc Writes json data for all project, access-filtered
+ * @param {Object} req Req object from express
+ * @param {Object} res Res object from express
+ * @result A json object with project data
+ */
+var api_projectAll = function(req, res) {
+    var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
+    var i, page, nItemsPerPage;
+
+    if(!req.query.page) {
+        res.send({error:"Specify the 'page' parameter"});
+        return;
+    }
+
+    page = Math.max(0,parseInt(req.query.page));
+    nItemsPerPage = 20;
+
+    dataSlices.getProjectsSlice(req,page*nItemsPerPage,nItemsPerPage)
+    .then(function (values) {
+        res.json(values);
+    });
+};
+
+
+/*
+    var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
+    var myurl = req.query.url;
+    var i, page, nItemsPerPage, hash;
+
+    if(!myurl) {
+        if(!req.query.page) {
+            res.send({error:"Specify the 'page' parameter"});
+            return;
+        }
+        // display list of mris
+        page = Math.max(0,parseInt(req.query.page));
+        nItemsPerPage = 20;
+        
+        
+        dataSlices.getFilesSlice(req,page*nItemsPerPage,nItemsPerPage)
+        .then(function (values) {
+            res.json(values);
+        });
+    } else {
+        // display information for one specific mri
+        req.db.get('mri').findOne({url: "/data/" + hash + "/", backup: {$exists: false}}, "-_id", {sort: {$natural: -1}, limit: 1})
+        .then(function (json) {
+            res.status(200);
+            res.json(json);
+        })
+        .catch(function(err) {
+            res.status(500);
+            res.json(err);
+        });
+    }
+*/
 
 /**
  * @function api_projectFiles
@@ -696,6 +758,7 @@ var delete_project = function(req, res) {
 
 var projectController = function(){
 	this.validator = validator;
+	this.api_projectAll = api_projectAll;
 	this.api_project = api_project;
 	this.api_projectFiles = api_projectFiles;
 	this.project = project;

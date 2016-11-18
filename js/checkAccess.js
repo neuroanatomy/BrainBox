@@ -6,6 +6,20 @@ function traceLog(f, l) {
         console.log("ca> "+(f.name)+" "+(f.caller?(f.caller.name||"annonymous"):"root"));
 };
 
+var accessStringToLevel = function accessStringToLevel(string) {
+    var level = accessLevels.indexOf(string);
+    if( level < 0 )
+        level = 0;
+    return level;
+}
+var accessLevelToString = function accessLevelToString(level) {
+    level = parseInt(level);
+    if(level<0)
+        level = 0;
+    if(level>=accessLevels.length)
+        level = accessLevels.length - 1;
+    return accessLevels[level];
+}
 /**
  * @func toFileByAllProjects
  * @desc Check the access a user has to an MRI file based on a list of projects. The MRI
@@ -396,6 +410,8 @@ var toProject = function toProject(project, user, access) {
 };
 
 var checkAccess = function () {
+    this.accessStringToLevel = accessStringToLevel;
+    this.accessLevelToString = accessLevelToString;
     this.toFileByAllProjects = toFileByAllProjects;
     this.toFileByOneProject = toFileByOneProject;
     this.maxAccessToFileByProjects = maxAccessToFileByProjects;

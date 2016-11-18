@@ -969,16 +969,15 @@ var sendDisconnectMessage = function sendDisconnectMessage(uid) {
 //========================================================================================
 // Load & Save
 //========================================================================================
+/**
+ * @func addAtlas
+ * input: A User structure providing information about the requested atlas
+ * process: an atlas is obtained, and added to the Atlases[] array if it
+ *          wasn't already loaded.
+ * output: an atlas (mri structure) 
+ */
 var addAtlas = function addAtlas(User) {
     traceLog(addAtlas);
-
-    /*
-        addAtlas
-        input: A User structure providing information about the requested atlas
-        process: an atlas is obtained, and added to the Atlases[] array if it
-                wasn't already loaded.
-        output: an atlas (mri structure) 
-    */
 
     var atlas = {
         name:User.atlasFilename,

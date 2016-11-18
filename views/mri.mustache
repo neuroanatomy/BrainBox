@@ -535,6 +535,9 @@ if( $.isEmptyObject(mriInfo)) {
                 $(e.target).blur();
                 saveAnnotationsChange(BrainBox.info);
             });
+
+        // setTimeout(function(){BrainBox.addCurrentMRIToHistory();console.log("hack!")},5000);
+
         
     },function(){
         $("#msgLog").html("ERROR: Can't load data");

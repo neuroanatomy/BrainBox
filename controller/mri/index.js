@@ -6,8 +6,8 @@ var multer = require('multer');
 var router = express.Router();
 
 router.get('', controller.validator, controller.mri);
-router.post('/json', controller.validator_post, controller.api_mri_post);
 router.get('/json', controller.validator, controller.api_mri_get);
+router.post('/json', controller.validator_post, controller.api_mri_post);
 
 router.get('/upload', upload_controller.token);
 

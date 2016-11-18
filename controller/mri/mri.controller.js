@@ -6,25 +6,33 @@ var fs = require('fs');
 var request = require('request');
 var atlasMakerServer = require('../../js/atlasMakerServer');
 var checkAccess = require('../../js/checkAccess.js');
+var dataSlices = require("../../js/dataSlices.js");
 
 var downloadQueue = [];
 
 //expressValidator = require('express-validator')
 
 var validator = function (req, res, next) {
-    console.log("post query, ", req.body);
-    req.checkQuery('url', 'please enter a valid URL')
-        .isURL();
+    console.log("Query validator");
+    console.log("body:",req.body);
+    console.log("query:",req.query);
 
-    // req.checkQuery('var', 'please enter one of the variables that are indicated')
-    // .optional()
-    // .matches("localpath|filename|source|url|dim|pixdim");    // todo: decent regexp
-    var errors = req.validationErrors();
-    console.log(errors);
-    if (errors) {
-        res.send(errors).status(403).end();
-    } else {
+    if(!req.query.url) {
         return next();
+    } else {
+        req.checkQuery('url', 'please enter a valid URL')
+            .isURL();
+
+        // req.checkQuery('var', 'please enter one of the variables that are indicated')
+        // .optional()
+        // .matches("localpath|filename|source|url|dim|pixdim");    // todo: decent regexp
+        var errors = req.validationErrors();
+        console.log(errors);
+        if (errors) {
+            res.send(errors).status(403).end();
+        } else {
+            return next();
+        }
     }
 };
 
@@ -136,92 +144,103 @@ var mri = function (req, res) {
                 ("<a href='/user/" + req.user.username + "'>" + req.user.username + "</a> (<a href='/logout'>Log Out</a>)")
                 : ("<a href='/auth/github'>Log in with GitHub</a>");
     var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
-    var myurl = req.query.url;
-    var hash = crypto.createHash('md5').update(myurl).digest('hex');
     
     // store return path in case of login
     req.session.returnTo = req.originalUrl;
     
+    var myurl = req.query.url;
+    var hash = crypto.createHash('md5').update(myurl).digest('hex');
     console.log("Receive GET, query:",myurl,hash);
 
     req.db.get('mri').findOne({source: myurl, backup:{$exists:0}}, {_id: 0})
-        .then(function (json) {
-            if(!json) {
-                var obj = {
-                    source: myurl
-                };
+    .then(function (json) {
+        if(!json) {
+            var obj = {
+                source: myurl
+            };
 
-                res.render('mri', {
-                    title: obj.name || 'BrainBox',
-                    params: JSON.stringify(req.query),
-                    mriInfo: JSON.stringify(obj),
-                    login: login
-                });
-            } else {
-                // if the json object exists, and has annotations, configure the access to them
-                console.log("check access rights");
-                if(!json.mri.atlas)
-                    json.mri.atlas = [];
-                var i, j, k, ii, prj = new Set(), arr = [];
-                // check access to volume annotations
-                for(i=0;i<json.mri.atlas.length;i++) {
-                    if(json.mri.atlas[i].project) {
-                        console.log("mri is in project",json.mri.atlas[i].project);
-                        prj.add(json.mri.atlas[i].project);
-                    }
+            res.render('mri', {
+                title: obj.name || 'BrainBox',
+                params: JSON.stringify(req.query),
+                mriInfo: JSON.stringify(obj),
+                login: login
+            });
+        } else {
+            // if the json object exists, and has annotations, configure the access to them
+            console.log("check access rights");
+            if(!json.mri.atlas)
+                json.mri.atlas = [];
+            var i, j, k, ii, prj = new Set(), arr = [];
+            // check access to volume annotations
+            for(i=0;i<json.mri.atlas.length;i++) {
+                if(json.mri.atlas[i].project) {
+                    console.log("mri is in project",json.mri.atlas[i].project);
+                    prj.add(json.mri.atlas[i].project);
                 }
-                // check access to text annotations
-                for(i in json.mri.annotations) {
-                    console.log("text annotation is in project",i);
-                    prj.add(i);
-                }
-                arr = [...prj].map(function(o){return req.db.get('project').findOne({
-                            shortname:o,
-                            backup: {$exists: 0}
-                        })});
-                console.log("projects:",prj);
-                console.log("promises:",arr);
-                Promise.all([...arr]).then(function(projects) {
-                    console.log("projects",projects);
-                    // set access to volume annotations
-                    for(i=0;i<json.mri.atlas.length;i++) {
-                        for(j=0;j<projects.length;j++) {
-                            if(projects[j] && projects[j].shortname == json.mri.atlas[i].project) {
-                                var access = checkAccess.toAnnotationByProject(projects[j],loggedUser);
-                                console.log(loggedUser,access);
+            }
+            // check access to text annotations
+            for(i in json.mri.annotations) {
+                console.log("text annotation is in project",i);
+                prj.add(i);
+            }
+            arr = [...prj].map(function(o){return req.db.get('project').findOne({
+                        shortname:o,
+                        backup: {$exists: 0}
+                    })});
+            console.log("projects:",prj);
+            console.log("promises:",arr);
+            Promise.all([...arr]).then(function(projects) {
+                console.log("projects",projects);
+                // set access to volume annotations
+                for(i=json.mri.atlas.length-1;i>=0;i--) {
+                    for(j=0;j<projects.length;j++) {
+                        if(projects[j] && projects[j].shortname == json.mri.atlas[i].project) {
+                            var access = checkAccess.toAnnotationByProject(projects[j],loggedUser);
+                            var level = checkAccess.accessStringToLevel(access);
+                            console.log(loggedUser,access,level);
+                            // check for 'view' access (level > 0)
+                            if(level > 0) {
                                 json.mri.atlas[i].access = access;
-                                break;
+                            } else {
+                                json.mri.atlas.splice(i,1);
                             }
+                            break;
                         }
                     }
-                    // set access to text annotations
-                    for(i in json.mri.annotations) {
-                        for(j=0;j<projects.length;j++) {
-                            if(projects[j] && projects[j].shortname == i) {
-                                var access = checkAccess.toAnnotationByProject(projects[j],loggedUser);
-                                console.log(loggedUser, access);
+                }
+                // set access to text annotations
+                for(i in json.mri.annotations) {
+                    for(j=0;j<projects.length;j++) {
+                        if(projects[j] && projects[j].shortname == i) {
+                            var access = checkAccess.toAnnotationByProject(projects[j],loggedUser);
+                            var level = checkAccess.accessStringToLevel(access);
+                            console.log(loggedUser, access, level);
+                            if(level > 0) {
                                 for(k in json.mri.annotations[i]) {
                                     json.mri.annotations[i][k].access = access;
                                 }
+                            } else {
+                                delete json.mri.annotations[i];
                             }
                         }
                     }
+                }
 
-                    // send data
-                    res.render('mri', {
-                        title: json.name || 'BrainBox',
-                        params: JSON.stringify(req.query),
-                        mriInfo: JSON.stringify(json),
-                        login: login
-                    });
-                }).catch(function(err) {
-                    console.log("ERROR Cannot get db information:",err);
+                // send data
+                res.render('mri', {
+                    title: json.name || 'BrainBox',
+                    params: JSON.stringify(req.query),
+                    mriInfo: JSON.stringify(json),
+                    login: login
                 });
-            }
-        }, function (err) {
-            console.error(err);
-        });
-};
+            }).catch(function(err) {
+                console.log("ERROR Cannot get db information:",err);
+            });
+        }
+    }, function (err) {
+        console.error(err);
+    });
+}
 
 var api_mri_post = function (req, res) {
     console.log("Received POST, params:", req.params);
@@ -298,22 +317,97 @@ var api_mri_post = function (req, res) {
             res.json({success:false});
         });
 };
-
 var api_mri_get = function (req, res) {
-    var myurl = req.query.url,
-    hash = crypto.createHash('md5').update(myurl).digest('hex');
-    // shell equivalent: req.db.mri.find({source:"http://braincatalogue.org/data/Pineal/P001/t1wreq.db.nii.gz"}).limit(1).sort({$natural:-1})
+    var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
+    
+    var myurl = req.query.url;
 
-    req.db.get('mri').findOne({url: "/data/" + hash + "/", backup: {$exists: false}}, "-_id", {sort: {$natural: -1}, limit: 1})
-        .then(function (json) {
-            res.status(200);
-            res.json(json);
-        })
-        .catch(function(err) {
-            res.status(500);
-            res.json(err);
+    // if query does not contain a specific mri, send paginated list of mris
+    if(!myurl) {
+        if(!req.query.page) {
+            res.send({error:"Specify the 'page' parameter"});
+            return;
+        }
+        // display access-filtered list of mris
+        page = Math.max(0,parseInt(req.query.page));
+        nItemsPerPage = 20;
+        
+        dataSlices.getFilesSlice(req,page*nItemsPerPage,nItemsPerPage)
+        .then(function (values) {
+            res.json(values);
         });
-};
+        
+        return;
+    }
+
+    req.db.get('mri').findOne({source: myurl, backup:{$exists:0}}, {_id: 0})
+    .then(function (json) {
+        if(!json) {
+            res.status(404).json({});
+        } else {
+            // if the json object exists, and has annotations, configure the access to them
+            console.log("check access rights");
+            if(!json.mri.atlas)
+                json.mri.atlas = [];
+            var i, j, k, ii, prj = new Set(), arr = [];
+            // check access to volume annotations
+            for(i=0;i<json.mri.atlas.length;i++) {
+                if(json.mri.atlas[i].project) {
+                    console.log("mri is in project",json.mri.atlas[i].project);
+                    prj.add(json.mri.atlas[i].project);
+                }
+            }
+            // check access to text annotations
+            for(i in json.mri.annotations) {
+                console.log("text annotation is in project",i);
+                prj.add(i);
+            }
+            arr = [...prj].map(function(o){return req.db.get('project').findOne({
+                        shortname:o,
+                        backup: {$exists: 0}
+                    })});
+
+            Promise.all([...arr]).then(function(projects) {
+                console.log("projects",projects);
+                // set access to volume annotations
+                for(i=json.mri.atlas.length-1;i>=0;i--) {
+                    for(j=0;j<projects.length;j++) {
+                        if(projects[j] && projects[j].shortname == json.mri.atlas[i].project) {
+                            var access = checkAccess.toAnnotationByProject(projects[j],loggedUser);
+                            var level = checkAccess.accessStringToLevel(access);
+                            console.log(loggedUser,access,level);
+                            // check for 'view' access (level > 0)
+                            if(level == 0) {
+                                json.mri.atlas.splice(i,1);
+                            }
+                            break;
+                        }
+                    }
+                }
+                // set access to text annotations
+                for(i in json.mri.annotations) {
+                    for(j=0;j<projects.length;j++) {
+                        if(projects[j] && projects[j].shortname == i) {
+                            var access = checkAccess.toAnnotationByProject(projects[j],loggedUser);
+                            var level = checkAccess.accessStringToLevel(access);
+                            console.log(loggedUser, access, level);
+                            if(level == 0) {
+                                delete json.mri.annotations[i];
+                            }
+                        }
+                    }
+                }
+
+                // send data
+                res.json(json);
+            }).catch(function(err) {
+                console.log("ERROR Cannot get db information:",err);
+            });
+        }
+    }, function (err) {
+        console.error(err);
+    });
+}
 
 var mriController = function () {
     this.validator = validator;
