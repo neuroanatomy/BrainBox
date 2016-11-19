@@ -319,18 +319,18 @@ var api_mri_post = function (req, res) {
 };
 var api_mri_get = function (req, res) {
     var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
-    
     var myurl = req.query.url;
 
     // if query does not contain a specific mri, send paginated list of mris
     if(!myurl) {
-        if(!req.query.page) {
+        if(req.query.page === undefined) {
             res.send({error:"Specify the 'page' parameter"});
             return;
         }
+        
         // display access-filtered list of mris
-        page = Math.max(0,parseInt(req.query.page));
-        nItemsPerPage = 20;
+        var page = Math.max(0,parseInt(req.query.page));
+        var nItemsPerPage = 20;
         
         dataSlices.getFilesSlice(req,page*nItemsPerPage,nItemsPerPage)
         .then(function (values) {
