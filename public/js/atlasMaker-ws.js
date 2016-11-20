@@ -540,7 +540,7 @@ var AtlasMakerWS = {
     	}
     	else
     		var	msg="<b>"+u+"</b> left<br />";
-		me.Collab.splice(u,1);
+		delete me.Collab[u];
 		var	v,nusers=1; for(v in me.Collab) nusers++;
 		$("#chat").text("Chat ("+nusers+" connected)");
 		$("#log").append(msg);
