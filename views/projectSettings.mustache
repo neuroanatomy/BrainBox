@@ -55,17 +55,14 @@
 		padding: 0px 0px 5px 0px;
 		vertical-align: bottom;
 	}
-
 	.ui-widget.ui-widget-content{
 		background: #222;
 		color: white;
 		border: none;
 	}
-
 	.ui-widget-header:active {
 		border:none;
 	}
-
 	.ui-state-active,
     .ui-widget-content .ui-state-active,
     .ui-widget-header .ui-state-active,
@@ -78,14 +75,12 @@
 		outline: none;
 		display: block;
     }
- 
 	li div {
 	  	color: white; /* text color */
 	  	border:none;
 	  	margin: none;
 	  	padding: none;
 	}
-
     .display {
         padding-top:5px;
         text-decoration:none;
@@ -302,7 +297,7 @@
 	    <!-- Top-right menu bar -->
 		<div id="menu">
 			<img id="addProject" class="button" title="add project" style='width:13px' src='/img/plus.svg'/>
-			<img id="search" class="button" title="search" style='width:13px' src='/img/search.svg'/>
+            <a href="http://openneu.ro/metasearch" target="_blank"><img id="search" class="button" title="search" style='width:13px' src='/img/search.svg'/></a>
 			<img id="doc" class="button" title="documentation" style='width:13px' src='/img/doc.svg'/>
 			<a href="https://github.com/OpenNeuroLab/BrainBox/issues" target="_blank"><img id="bug" class="button" title="report a bug" style='width:14px' src='/img/bug.svg'/></a>
 			<a href="https://github.com/OpenNeuroLab" target="_blank"><img id="github" class="button" title="join our github project" style='width:15px' src='/img/github.svg'/></a>
@@ -483,6 +478,9 @@ if (window.WebSocket) {
     ws=new WebSocket(host);
 } else if (window.MozWebSocket) {
     ws=new MozWebSocket(host);
+}
+ws.onopen = function(msg) {
+    ws.send(JSON.stringify({"type":"autocompleteClient"}));
 }
 ws.onmessage = function(message) {
     message = JSON.parse(message.data);
@@ -817,6 +815,10 @@ function addCollaborator(param) {
     var i=projectInfo.collaborators.list.length-1;
     BrainBox.appendAnnotationTableRow(i,param);
     
+    /** @todo Fix: This is adding the autocompletion listener again and again to previously
+     *        added collaborators
+     */
+    // configure autocompletion
     $(".autocomplete").autocomplete({
         minLength: 0,
         source: function(req,res) {
@@ -842,6 +844,8 @@ function addCollaborator(param) {
             projectInfo.collaborators.list[irow].userID=ui.item.nickname;
         }
     });
+
+    // update number of collaborators counter
     $("#projDescription #numCollaborators").text(projectInfo.collaborators.list.length);
 }
 function removeCollaborator(param) {

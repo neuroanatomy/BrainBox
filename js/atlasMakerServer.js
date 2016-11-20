@@ -103,8 +103,8 @@ var MghHdr = Struct()
 
 
 console.log("atlasMakerServer.js");
-console.log(new Date());
-setInterval(function(){console.log(new Date())},60*60*1000); // time mark every 60 minutes
+console.log("date:", new Date());
+setInterval(function(){console.log("date:",new Date())},60*60*1000); // time mark every 60 minutes
 console.log("free memory",os.freemem());
 
 function traceLog(f, l) {
@@ -416,7 +416,18 @@ var initSocketConnection = function initSocketConnection() {
 							data.metadata = obj;
 							sender.send(JSON.stringify(data));
                         })
-						.catch(function(){});
+						.catch(function(err){console.log("err:",err)});
+						break;
+					case "similarProjectNamesQuery":
+						var result = querySimilarProjectNames(data)
+						.then(function(obj){
+							data.metadata = obj;
+							sender.send(JSON.stringify(data));
+                        })
+						.catch(function(err){console.log("err:",err)});
+						break;
+					case "autocompleteClient":
+						declareAutocompleteClient(data,this);
 						break;
 					default :
 						break;
@@ -430,8 +441,13 @@ var initSocketConnection = function initSocketConnection() {
 					
 					// do not auto-broadcast
 					if(sourceUS.uid===targetUS.uid) {
-						sender = websocket.clients[i];
 						if(debug>1) console.log("    no broadcast to self");
+						continue;
+					}
+
+					// do not broadcast to autocomplete clients
+					if(sourceUS.autocompleteClient) {
+						if(debug>1) console.log("    no broadcast to autocomplete clients");
 						continue;
 					}
 					
@@ -537,7 +553,6 @@ var queryUserName = function queryUserName(data){
 				{"nickname": {'$regex': data.metadata.nickname}},
 				{fields:["nickname", "name"],limit:10})
 				.then(function(obj){
-					console.log(obj);
 					resolve(obj);
 				});
 		}
@@ -547,7 +562,6 @@ var queryUserName = function queryUserName(data){
 				{"name": {'$regex': data.metadata.name}},
 				{fields:["nickname", "name"],limit:10})
 				.then(function(obj){
-					console.log(obj);
 					resolve(obj);
 				});
 		}
@@ -559,7 +573,30 @@ var queryProjectName = function queryProjectName(data){
 	return new Promise(function(resolve, reject){
 		if (data.metadata && data.metadata.name) {
 			db.get('project')
-                .findOne({shortname: data.metadata.name, backup: {$exists:0}},{fields:["name","shortname"]})
+                .findOne({
+                    shortname: data.metadata.name,
+                    backup: {$exists:0}
+                },{
+                    fields:["name","shortname"]
+                })
+				.then(function(obj) {
+					resolve(obj);
+				});
+		} else
+			reject();
+	});
+}
+var querySimilarProjectNames = function querySimilarProjectNames(data){
+	return new Promise(function(resolve, reject){
+		if (data.metadata && data.metadata.projectName) {
+			db.get('project')
+                .find({
+                    shortname: {$regex:data.metadata.projectName},
+                    backup: {$exists:0}
+                },{
+                    fields:["name","shortname"],
+                    limit:10
+                })
 				.then(function(obj) {
 					resolve(obj);
 				});
@@ -595,7 +632,7 @@ var receiveRequestSliceMessage = function receiveRequestSliceMessage(data,user_s
 	// update User object
 	sourceUS.User.view=view;
 	sourceUS.User.slice=slice;
-	if(debug>1) console.log(sourceUS.User.view,sourceUS.User.slice);
+	if(debug>1) console.log("view, slice:",sourceUS.User.view,sourceUS.User.slice);
 
 	// getBrainAtPath() uses a client-side path, starting with "/data/[md5hash]"
 	getBrainAtPath(brainPath)
@@ -616,7 +653,7 @@ var receiveRequestSlice2Message = function receiveRequestSlice2Message(data,user
 
 	sourceUS.User.view=view;
 	sourceUS.User.slice=slice;
-	if(debug>1) console.log(sourceUS.User.view,sourceUS.User.slice);
+	if(debug>1) console.log("view,slice:",sourceUS.User.view,sourceUS.User.slice);
 
 
     getBrainAtPath(brainPath)
@@ -892,6 +929,22 @@ var receiveUserDataMessage = function receiveUserDataMessage(data, user_socket) 
 	}
 }
 
+var declareAutocompleteClient = function declareAutocompleteClient(data, user_socket) {
+    traceLog(declareAutocompleteClient,0);
+	
+	var sourceUS=getUserFromUserId(data.uid);
+
+    var User,
+        i,
+		atlasLoadedFlag,
+		firstConnectionFlag=false,
+		switchingAtlasFlag=false;
+	
+	sourceUS.User = {
+	    autocompleteClient: true,
+	    uid: data.uid
+	};
+}
 /*
  send new user information to old users,
  and old users information to new user.
@@ -1111,7 +1164,7 @@ var loadAtlas = function loadAtlas(User) {
 };
 var loadMRI = function loadMRI(path) {
     traceLog(loadMRI);
-    console.log(path);
+    console.log("path:",path);
     /*
         loadMRI
         input: path to an mri file, .nii.gz and .mgz formats are recognised
@@ -1375,7 +1428,7 @@ var saveAtlas = function saveAtlas(atlas) {
 	if(atlas && atlas.dim ) {
 		if(atlas.data==undefined) {
 			console.log("ERROR: [saveAtlas] atlas in Atlas array has no data");
-			if(debug) console.log(atlas);
+			if(debug) console.log("atlas:",atlas);
 			return Promise.reject("ERROR: [saveAtlas] atlas in Atlas array has no data");
 		} else {
 			var i,sum=0;

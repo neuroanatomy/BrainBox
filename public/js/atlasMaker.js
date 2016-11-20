@@ -55,6 +55,8 @@ var AtlasMakerWidget = {
 	url:			null,
 	atlasFilename:	null,
 	socket:			null,
+	receiveFunctions: [],
+	sendFunctions:   [],
 	flagConnected:	0,
 	flagLoadingImg: {loading:false},
 	flagUsePreciseCursor: false,

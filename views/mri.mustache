@@ -84,6 +84,46 @@
         animation-timing-function: ease-in-out;
     }
 
+	/************************************ dropdown menu ********************************/
+	.autocomplete {
+		border:none;
+		border-radius: 0px;
+		outline: none;
+		padding: 0px 0px 5px 0px;
+		vertical-align: bottom;
+	}
+	.ui-widget.ui-widget-content{
+		background: #222;
+		color: white;
+		border: none;
+	}
+	.ui-widget-header:active {
+		border:none;
+	}
+	.ui-state-active,
+    .ui-widget-content .ui-state-active,
+    .ui-widget-header .ui-state-active,
+    a.ui-button:active,
+    .ui-button:active,
+    .ui-button.ui-state-active:hover {
+        background: #555 !important;
+		color:white;
+		border: none;
+		outline: none;
+		display: block;
+    }
+	li div {
+	  	color: white; /* text color */
+	  	border:none;
+	  	margin: none;
+	  	padding: none;
+	}
+    .display {
+        padding-top:5px;
+        text-decoration:none;
+        border:none;
+    }
+
 	/************************************* access widget ********************************/
 	.access {
         padding-top:5px;
@@ -154,7 +194,7 @@
 	    <!-- Top-right menu bar -->
 		<div id="menu">
 			<img id="addProject" class="button" title="add project" style='width:13px' src='/img/plus.svg'/>
-			<img id="search" class="button" title="search" style='width:13px' src='/img/search.svg'/>
+            <a href="http://openneu.ro/metasearch" target="_blank"><img id="search" class="button" title="search" style='width:13px' src='/img/search.svg'/></a>
 			<img id="doc" class="button" title="documentation" style='width:13px' src='/img/doc.svg'/>
 			<a href="https://github.com/OpenNeuroLab/BrainBox/issues" target="_blank"><img id="bug" class="button" title="report a bug" style='width:14px' src='/img/bug.svg'/></a>
             <a href="https://github.com/OpenNeuroLab" target="_blank"><img id="github" class="button" title="join our github project" style='width:15px' src='/img/github.svg'/></a>
@@ -316,6 +356,7 @@
 </div>
 
 <script src="/lib/jquery-3.1.1.min.js"></script>
+<script src="/lib/jquery-ui.min.js"></script><!--https://code.jquery.com/ui/1.12.1/jquery-ui.min.js-->
 <script src="/lib/pako/pako.min.js"></script>
 <script src="/lib/purify.min.js"></script>
 <script src="/lib/json-patch-duplex.min.js"></script>
@@ -331,6 +372,25 @@ var textAnnotationsArray = [];
 var version=1;
 var volAnnParam, textAnnParam, info_proxy={};
 var hash_old;
+var cb, label;  // WS Autocompletion
+
+    /*
+    var host = "ws://" + window.location.hostname + ":8080/";
+    if (window.WebSocket) {
+        ws=new WebSocket(host);
+    } else if (window.MozWebSocket) {
+        ws=new MozWebSocket(host);
+    }
+    ws.onmessage = function(message) {
+        message = JSON.parse(message.data);
+        if (message.type === "projectNameQuery") {
+            var arr = [];
+            if(label=="projectName")
+                arr=$.map(message.metadata,function(o){return {label:o.nickname,nickname:o.nickname,name:o.name}});
+            cb(arr);
+        }
+    }
+    */
 
 if( $.isEmptyObject(mriInfo)) {
     $("#stereotaxic").prepend("<h2>ERROR: Cannot read the data.</h2><p>The file is maybe corrupt?</p>");
@@ -386,7 +446,7 @@ if( $.isEmptyObject(mriInfo)) {
                 "<tr>",
                 " <td contentEditable=true class='noEmpty'></td>", // name
                 " <td><select>",$.map(BrainBox.labelSets,function(o){return "<option>"+o.name+"</option>"}),"</select></td>",	// value
-                " <td contentEditable=true class='noEmpty'></td>", // project
+                " <td contentEditable=true class='noEmpty autocomplete' data-autocomplete='user.similarProjectNames'></td>", // project
                 " <td></td>", // modified
                 " <td>", // access
                 "  <div class='access'>",
@@ -517,24 +577,56 @@ if( $.isEmptyObject(mriInfo)) {
 
         $("#data").show();
 
-        // Listen to changes that trigger a metadata save
-        //------------------------------------------------
-            // send data when focus is lost (on blur)
-            $(document).on('blur', "[contenteditable]", function from_project(e) {
-                saveAnnotationsChange(BrainBox.info);
-            });
-            // blur when [enter] is clicked, to trigger data sending
-            $(document).on('keydown', "[contenteditable]", function(e) {
-                if(e.which==13 && $(e.target).attr('contenteditable')) {
-                    e.preventDefault();
-                    $(e.target).blur();
-                }
-            });
-            // blur when <select> changes value to trigger data sending
-            $("#annotations tbody, #textAnnotations tbody").on('change', "select", function(e) {
+    // Listen to changes that trigger a metadata save
+    //------------------------------------------------
+        // send data when focus is lost (on blur)
+        $(document).on('blur', "[contenteditable]", function from_project(e) {
+            saveAnnotationsChange(BrainBox.info);
+        });
+        // blur when [enter] is clicked, to trigger data sending
+        $(document).on('keydown', "[contenteditable]", function(e) {
+            if(e.which==13 && $(e.target).attr('contenteditable')) {
+                e.preventDefault();
                 $(e.target).blur();
-                saveAnnotationsChange(BrainBox.info);
-            });
+            }
+        });
+        // blur when <select> changes value to trigger data sending
+        $("#annotations tbody, #textAnnotations tbody").on('change', "select", function(e) {
+            $(e.target).blur();
+            saveAnnotationsChange(BrainBox.info);
+        });
+    
+    // WS Autocompletion
+    //-------------------
+        var cb, label;
+        AtlasMakerWidget.receiveFunctions["similarProjectNamesQuery"] = function(data) {
+            var arr = [];
+            if(label=="similarProjectNames")
+                arr=$.map(data.metadata,function(o){return {label:o.shortname,shortname:o.shortname,name:o.name}});
+            cb(arr);
+        };
+
+        $(".autocomplete").autocomplete({
+            minLength: 0,
+            source: function(req,res) {
+                var key = $(this.element).attr('data-autocomplete');
+                switch(key) {
+                    case "user.similarProjectNames":
+                        AtlasMakerWidget.socket.send(JSON.stringify({"type":"similarProjectNamesQuery", "metadata":{"projectName":req.term}}));
+                        label="similarProjectNames";
+                        break;
+                }
+                cb=res;
+            },
+            select:function(e,ui) {
+                var irow=$(e.target).closest('tr').index();
+                info_proxy["mri.atlas."+irow+".project"]=ui.item.name;
+
+                // add user to access objects
+                // projectInfo.collaborators.list[irow].userID=ui.item.nickname;
+            }
+        });
+
 
         // setTimeout(function(){BrainBox.addCurrentMRIToHistory();console.log("hack!")},5000);
 
@@ -616,6 +708,7 @@ function addAnnotation(param) {
     // update in server
     saveAnnotationsChange(BrainBox.info);
 }
+
 /**
  * @function removeAnnotation
  */

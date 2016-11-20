@@ -19,7 +19,7 @@
 	    <!-- Top-right menu bar -->
 		<div id="menu">
 			<img id="addProject" class="button" title="add project" style='width:13px' src='/img/plus.svg'/>
-			<img id="search" class="button" title="search" style='width:13px' src='/img/search.svg'/>
+            <a href="http://openneu.ro/metasearch" target="_blank"><img id="search" class="button" title="search" style='width:13px' src='/img/search.svg'/></a>
 			<img id="doc" class="button" title="documentation" style='width:13px' src='/img/doc.svg'/>
 			<a href="https://github.com/OpenNeuroLab/BrainBox/issues" target="_blank"><img id="bug" class="button" title="report a bug" style='width:14px' src='/img/bug.svg'/></a>
             <a href="https://github.com/OpenNeuroLab" target="_blank"><img id="github" class="button" title="join our github project" style='width:15px' src='/img/github.svg'/></a>
@@ -96,9 +96,11 @@ if (window.WebSocket) {
 } else if (window.MozWebSocket) {
     ws=new MozWebSocket(host);
 }
+ws.onopen = function(msg) {
+    ws.send(JSON.stringify({"type":"autocompleteClient"}));
+}
 ws.onmessage = function(message) {
     message = JSON.parse(message.data);
-    console.log(message);
     if (message.type === "projectNameQuery") {
         if(message.metadata) {
             $("#warning").html("The project <a><strong>"+message.metadata.shortname+"</strong></a> already exists");

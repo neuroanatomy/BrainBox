@@ -55,6 +55,17 @@ var AtlasMakerWS = {
 				def.resolve();
 			};
 			
+			me.receiveFunctions["saveMetadata"]=me.receiveMetadata;
+			me.receiveFunctions["userData"]=me.receiveUserDataMessage;
+			me.receiveFunctions["volInfo"]=function(data){console.log("volInfo",data)};
+			me.receiveFunctions["chat"]=me.receiveChatMessage;
+			me.receiveFunctions["show"]=me.receiveShowMessage;
+			me.receiveFunctions["paint"]=me.receivePaintMessage;
+			me.receiveFunctions["paintvol"]=me.receivePaintVolumeMessage;
+			me.receiveFunctions["disconnect"]=me.receiveDisconnectMessage;
+			
+			me.receiveFunctions["requestSlice2"]=function(data){console.log("requestSlice2",data)};
+			
 			me.socket.onmessage = me.receiveSocketMessage;
 			
 			me.socket.onclose = function(msg) {
@@ -87,6 +98,11 @@ var AtlasMakerWS = {
                     }
                 }, 1000);
 			};
+			
+            window.onbeforeunload = function() {
+                me.socket.onclose = function () {}; // disable onclose handler first
+                me.socket.close()
+            };
 		}
 		catch (ex) {
 			$("#chat").text("Chat (not connected - connection error)");
@@ -109,44 +125,7 @@ var AtlasMakerWS = {
 	
 		// Message: interaction message
 		var	data=JSON.parse(msg.data);
-	
-		// [deprecated]
-		// If we receive a message from an unknown user,
-		// send our own data to make us known
-		// [now, the server does the introductions]
-		/*
-		if(data.uid!=undefined && !Collab[data.uid]) {
-			console.log("Received message from unknown user");
-			sendUserDataMessage("introduce to new user");
-		}
-		*/
-	
-		switch(data.type) {
-			case "saveMetadata" :
-				me.receiveMetadata(data);
-				break;
-			case "userData":
-				me.receiveUserDataMessage(data);
-				break;
-			case "volInfo":
-				console.log("volInfo",data);
-				break;
-			case "chat":
-				me.receiveChatMessage(data);
-				break;
-			case "show":
-				me.receiveShowMessage(data);
-				break;
-			case "paint":
-				me.receivePaintMessage(data);
-				break;
-			case "paintvol":
-				me.receivePaintVolumeMessage(data);
-				break;
-			case "disconnect":
-				me.receiveDisconnectMessage(data);
-				break;
-		}
+	    me.receiveFunctions[data.type](data);
 	},
 	/**
      * @function sendUserDataMessage
@@ -260,10 +239,16 @@ var AtlasMakerWS = {
 		if(me.Collab[u]===undefined) {
 			try {
 				//var	msg="<b>"+data.user.username+"</b> entered atlas "+data.user.specimenName+"/"+data.user.atlasFilename+"<br />"
-				var	msg="<b>"+data.user.username+"</b> entered<br />"
+				var	msg;
+				if(data.user === undefined || data.user.username === "Anonymous") {
+				    msg="<b>"+data.uid+"</b> entered<br />";
+				} else {
+				    msg="<b>"+data.user.username+"</b> entered<br />";
+				}
 				$("#log").append(msg);
 				$("#log").scrollTop($("#log")[0].scrollHeight);
 			} catch (e) {
+			    console.log("data:",data);
 				console.log(e);
 			}
 		}
@@ -281,7 +266,9 @@ var AtlasMakerWS = {
             }
     	}
 
-		var	v,nusers=1; for(v in me.Collab) nusers++;
+		var	v,nusers=1;
+		for(v in me.Collab)
+		    nusers++;
 		$("#chat").text("Chat ("+nusers+" connected)");
 	},
 	/**
