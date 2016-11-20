@@ -716,6 +716,16 @@ function removeAnnotation(param) {
     // find row index
     var index=$(param.table).find("tbody .selected").index();
     
+    // prevent removal of a last projet-less annotation
+    if(BrainBox.info.mri.atlas[index].project == "") {
+        var nPublicAnnotations = BrainBox.info.mri.atlas.map(function(o){return (o.project=="")}).length;
+        if(nPublicAnnotations == 1) {
+            $("#annotationMessage").text("There has to be at least 1 public volume annotation");
+            setTimeout(function(){$("#annotationMessage").text("")},2000);
+            return;
+        }
+    }
+    
     // remove row from table
     $(param.table).find('tbody tr:eq('+index+')').remove();
     
