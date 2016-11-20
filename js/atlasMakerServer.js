@@ -131,7 +131,7 @@ var displayAtlases = function displayAtlases() {
 		console.log("Atlases["+i+"] path:"+Atlases[i].dirname+Atlases[i].name+", "+sum+" users connected");
 	}
 	for(var i in Atlases) {
-		console.log(Atlases[i]);
+		console.log("atlas",i,Atlases[i]);
 	}
 };
 var displayBrains = function displayBrains() {

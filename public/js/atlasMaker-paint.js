@@ -20,8 +20,10 @@ var AtlasMakerPaint = {
 		if(u!=-1) {
 		    switch(c) {
 		        case 'u':
-		            usr.pointer.remove();
-		            delete usr.pointer;
+		            if(usr.pointer) {
+                        usr.pointer.remove();
+                        delete usr.pointer;
+                    }
 		            break;
 		        case 'm':
                     if(!usr.pointer) {

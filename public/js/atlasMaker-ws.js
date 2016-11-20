@@ -531,9 +531,13 @@ var AtlasMakerWS = {
 		var l=me.traceLog(receiveDisconnectMessage,0,"#aca");if(l)console.log.apply(undefined,l);
 
 		var u=data.uid;	// user
-		//var	msg="<b>"+me.Collab[u].username+"</b> left atlas "+me.Collab[u].specimenName+"/"+me.Collab[u].atlasFilename+"<br />"
-		if(me.Collab[u])
-    		var	msg="<b>"+me.Collab[u].username+"</b> left<br />";
+		if(me.Collab[u]) {
+    		var	msg;
+    		if(me.Collab[u].username === undefined || me.Collab[u].username === "Anonymous")
+    		    msg = "<b>"+me.Collab[u].uid+"</b> left<br />";
+    		else
+                msg = "<b>"+me.Collab[u].username+"</b> left<br />";
+    	}
     	else
     		var	msg="<b>"+u+"</b> left<br />";
 		me.Collab.splice(u,1);
