@@ -522,7 +522,7 @@ var initSocketConnection = function initSocketConnection() {
                             unloadAtlas(sourceUS.User.dirname,sourceUS.User.atlasFilename, sourceUS.specimenName);
                         }
                     } else {
-                        console.log("<ERROR: dirname was not defined>");
+                        console.log("<ERROR: dirname was not defined>", sourceUS.User);
                     }
                 }
             

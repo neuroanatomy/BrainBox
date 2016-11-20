@@ -339,7 +339,8 @@ var AtlasMakerWS = {
 		var x=parseInt(msg.x);	// x coordinate
 		var y=parseInt(msg.y);	// y coordinate
 
-		me.paintxy(u,c,x,y,me.Collab[u]);
+		if(me.Collab[u])
+		    me.paintxy(u,c,x,y,me.Collab[u]);
 	},
 	/**
      * @function sendShowMessage
@@ -372,7 +373,8 @@ var AtlasMakerWS = {
 		var x=parseInt(msg.x);	// x coordinate
 		var y=parseInt(msg.y);	// y coordinate
 
-		me.showxy(u,c,x,y,me.Collab[u]);
+		if(me.Collab[u])
+    		me.showxy(u,c,x,y,me.Collab[u]);
 	},
 	/**
      * @function receivePaintVolumeMessage
