@@ -162,9 +162,15 @@ h2 {
   animation: sc-down-a 0.3s infinite alternate;
 }
 
+#neuronsImg {
+	filter:contrast(150%) brightness(60%);
+	-webkit-filter:contrast(150%) brightness(60%);
+	position:absolute;top:0;left:0
+}
 #neurons {
 	filter:contrast(150%) brightness(60%);
 	-webkit-filter:contrast(150%) brightness(60%);
+	position:absolute;top:0;left:0
 }
 
 	</style>
@@ -189,7 +195,8 @@ h2 {
 	<!-- Content  -->			
     <div class="slide" style="background:#222">
     <!-- Slide: Landing -->
-        <video id="neurons" width="100%" autoplay loop style="position:absolute;top:0;left:0">
+        <img id="neuronsImg" src="/img/neurons.jpg" width="100%" />
+        <video id="neurons" width="100%" autoplay loop>
             <source src="/img/neurons.mp4" type="video/mp4">
         </video>
         <div class="content">
