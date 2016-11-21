@@ -642,8 +642,13 @@ var AtlasMakerInteraction = {
                 me.showxy(-1,'m',x,y,me.User);
 				break;
 			case 'paint':
+			    // check for 'edit' access
+			    if(me.editMode == 0)
+			        return;
+				// fill
 				if(me.User.doFill)
 					me.paintxy(-1,'f',x,y,me.User);
+				//paint
 				else {
 					me.User.mouseIsDown = true;
 					me.sendUserDataMessage(JSON.stringify({'mouseIsDown':true}));
@@ -651,8 +656,13 @@ var AtlasMakerInteraction = {
 				}
 				break;
 			case 'erase':
+			    // check for 'edit' access
+			    if(me.editMode == 0)
+			        return;
+				// fill
 				if(me.User.doFill)
 					me.paintxy(-1,'e',x,y,me.User);
+                // erase
 				else {
 					me.User.mouseIsDown = true;
 					me.sendUserDataMessage(JSON.stringify({'mouseIsDown':true}));

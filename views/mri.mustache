@@ -546,8 +546,8 @@ if( $.isEmptyObject(mriInfo)) {
             },
             {	typeOfBinding:1,
                 path:"#.access",
-                format: function(e,d){$(e).find(".access").attr('data-level',["none","view","edit","add","remove"].indexOf(d))},
-                parse: function(e){var level=$(e).find(".access").attr("data-level");return ["none","view","edit","add","remove"][level]}
+                format: function(e,d){$(e).find(".access").attr('data-level',BrainBox.accessLevels.indexOf(d))},
+                parse: function(e){var level=$(e).find(".access").attr("data-level");return BrainBox.accessLevels[level]}
             }
         ];
         textAnnParam = {

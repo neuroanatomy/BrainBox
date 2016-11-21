@@ -14,6 +14,7 @@ var BrainBox={
 	info:{},
 	labelSets:null,
 	annotationType:["volume","text"],
+	accessLevels: ["none","view","edit","add","remove"],
 
     /**
      * @function traceLog
@@ -163,11 +164,20 @@ var BrainBox={
         else
             AtlasMakerWidget.fullscreen=false;
     
-        AtlasMakerWidget.editMode=1;
-
         AtlasMakerWidget.configureAtlasMaker(BrainBox.info,index)
         .then(function(info2) {
             BrainBox.info = info2;
+            
+            // check 'edit' access
+            var accessStr = BrainBox.info.mri.atlas[index].access;
+            var accessLvl = BrainBox.accessLevels.indexOf(accessStr);
+            if(accessLvl<0 || accessLvl>BrainBox.accessLevels.length-1)
+                accessLvl = 0;
+            if(accessLvl>=2)
+                AtlasMakerWidget.editMode = 1;
+            else
+                AtlasMakerWidget.editMode = 0;
+            
             def.resolve();
         })
         .catch(function(err) {

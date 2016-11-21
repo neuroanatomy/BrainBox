@@ -161,6 +161,12 @@ h2 {
   -ms-animation: sc-down-a 0.3s infinite alternate;
   animation: sc-down-a 0.3s infinite alternate;
 }
+
+#neurons {
+	filter:contrast(150%) brightness(20%);
+	-webkit-filter:contrast(150%) brightness(20%);
+}
+
 	</style>
 </head>
 
@@ -183,6 +189,9 @@ h2 {
 	<!-- Content  -->			
     <div class="slide" style="background:#222">
     <!-- Slide: Landing -->
+        <video id="neurons" width="100%" autoplay loop style="position:absolute;top:0;left:0">
+            <source src="/img/neurons.mp4" type="video/mp4">
+        </video>
         <div class="content">
             <img id="logo" src="/img/brainbox-logo.svg" style="text-align:center"/>
             <h2 style='margin-top:0;margin-bottom:4rem'>Real-time collaboration in neuroimaging</h2>
@@ -192,7 +201,7 @@ h2 {
             </div>
         </div>
         <span class="btn-scroll-down scroll"></span>
-    </div><div class="slide" style="background:#333">
+    </div><div class="slide" style="background:#222">
     <!-- Slide: About -->
         <!--<img style="position:absolute;top:0;left:0;width:100%" src="/img/2.jpg" />-->
         <div class="content">
@@ -207,7 +216,7 @@ h2 {
                 created by the community.
             </p>
         </div>
-    </div><div class="slide" style="background:#222">
+    </div><div class="slide" style="background:#111">
     <!-- Slide: Brains to try -->
         <div id="intro" class="content">
         </div>
