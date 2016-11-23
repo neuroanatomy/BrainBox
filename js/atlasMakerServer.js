@@ -1,10 +1,51 @@
+var fs = require('fs');
 var request = require('request');
+
+// get blacklist
+console.log(__dirname + "/../blacklist.json");
+var blacklist = JSON.parse(fs.readFileSync(__dirname + "/../blacklist.json"));
+console.log(blacklist);
+
 var http = require('http'),
-	server = http.createServer(),
+    //server =  http.createServer(),
+    server = http.createServer(function(req, res) {
+            var ip = req.ip
+                || req.connection.remoteAddress
+                || req.socket.remoteAddress
+                || req.connection.socket.remoteAddress;
+
+            /*
+            console.log("CREATE SERVER WITH IP",ip);
+            if (blacklist[request_ip]) {
+                console.log("------------------------------> blacklist", request_ip);
+                setTimeout(function() {
+                    console.log("blacklist: end");
+                    res.end();
+                }, 5000);
+            }
+            */
+        }),
 	url = require('url'),
 	WebSocketServer = require('ws').Server,
 	websocket,
 	port = 8080;
+
+server.on("upgrade", function(req, socket, head) {
+    var ip = req.ip
+        || req.connection.remoteAddress
+        || req.socket.remoteAddress
+        || req.connection.socket.remoteAddress;
+    ip = ip.split(":").pop();
+    console.log("UPGRADING SERVER WITH IP",ip);
+    if (blacklist[ip]) {
+        console.log("------------------------------> blacklist", ip);
+        setTimeout(function() {
+            console.log("blacklist: end");
+            socket.destroy();
+        }, 5000);
+    }
+})
+
 var os=require('os');
 var fs=require('fs');
 var zlib=require('zlib');
@@ -340,18 +381,58 @@ var unloadAtlas = function unloadAtlas(dirname,atlasFilename) {
 			break;
 		}
 	}
-};
+}
+
+/*-----------*/
+/* BLACKLIST */
+function verifyClient(info) {
+    var ip;
+
+    if(info.req.connection.remoteAddress) {
+        ip = info.req.connection.remoteAddress;
+        console.log("connection");
+    } else if(info.req.socket._peername) {
+        ip = info.req.socket._peername.address;
+        console.log("_peername");
+    } else {
+        console.log("DEJANDO PASAR UN PASTEL...");
+        return true;
+    }
+    
+    ip = ip.split(":").pop();
+
+    if(blacklist[ip]) {
+        console.log("==========> REJECT ip ",ip);
+        return false;
+    } else {
+        console.log("==========> ACCEPT ip ",ip);
+        return true;
+    }
+}
+/*-----------*/
+
 var initSocketConnection = function initSocketConnection() {
     traceLog(initSocketConnection);
     
 	// WS connection
 	try {
-		websocket = new WebSocketServer({ server: server });
-		
+		websocket = new WebSocketServer({server:server, verifyClient: verifyClient});
+
 		websocket.on("connection",function connection_fromInitSocketConnection(s) {
 		    traceLog(connection_fromInitSocketConnection);
 
-			console.log("    remote_address",s.upgradeReq.connection.remoteAddress);
+            /*-----------*/
+            /* BLACKLIST */
+            var ip = s.upgradeReq.connection.remoteAddress;
+            ip = ip.split(":").pop();
+            if(blacklist[ip]) {
+                    console.log("--------------------> REJECT ip ",ip);
+                    s.close();
+                    return;
+            }
+            /*-----------*/
+
+            console.log("    remote_address",s.upgradeReq.connection.remoteAddress);
 			var	newUS={"uid":"u"+uidcounter++,"socket":s};
 			US.push(newUS);
 			console.log("    User id "+newUS.uid+" connected, total: "+US.filter(function(o){return o!=undefined}).length+" users");
@@ -491,7 +572,7 @@ var initSocketConnection = function initSocketConnection() {
 				
 				if(sourceUS.User===undefined) {
 					console.log("<WARNING: The 'User' structure for "+sourceUS.uid+" is undefined. Maybe never assigned?");
-					console.log("    US:",US);
+					// console.log("    US:",US);
 					console.log(" WARNING>");
 				} else {
                     if(sourceUS.User.dirname) {
@@ -1032,6 +1113,8 @@ var sendDisconnectMessage = function sendDisconnectMessage(uid) {
 var addAtlas = function addAtlas(User) {
     traceLog(addAtlas);
 
+    //console.log("User:",User);
+    
     var atlas = {
         name:User.atlasFilename,
         specimen:User.specimenName,
@@ -1101,10 +1184,18 @@ this.getBrainAtPath = getBrainAtPath;
  */
 var loadAtlas = function loadAtlas(User) {
     traceLog(loadAtlas);
+
+
+    // console.log("User from loadAtlas:",User);
 		
     var pr = new Promise(function promise_fromloadAtlas(resolve,reject) {
         var path=this.dataDirectory+User.dirname+User.atlasFilename;
     
+        if(User.dirname == undefined || User.atlasFilename == undefined) {
+            console.log("ERROR: Rejecting loadAtlas from undefined User:",User);
+            reject();
+        }
+        
         if(!fs.existsSync(path)) {
             // Create new empty atlas
             console.log("    Atlas "+path+" does not exists. Create a new one");
@@ -1576,7 +1667,7 @@ var createNifti = function createNifti(templateMRI) {
 */
 
 var pushUndoLayer = function pushUndoLayer(User) {
-    traceLog(pushUndoLayer);
+    traceLog(pushUndoLayer, 1);
 
 	var undoLayer={User:User,actions:[]};
 	UndoStack.push(undoLayer);
@@ -1586,7 +1677,7 @@ var pushUndoLayer = function pushUndoLayer(User) {
 	return undoLayer;
 };
 var getCurrentUndoLayer = function getCurrentUndoLayer(User) {
-    traceLog(getCurrentUndoLayer,1);
+    traceLog(getCurrentUndoLayer, 1);
 		
 	var i,undoLayer,found=false;
 	
@@ -1817,7 +1908,7 @@ var line = function line(x, y, val, User, undoLayer) {
 	}
 };
 var fill = function fill(x, y, z, val, User, undoLayer) {
-    traceLog(fill);
+    traceLog(fill, 1);
     
 	var view=User.view;
 	var	vol=Atlases[User.iAtlas].data;
