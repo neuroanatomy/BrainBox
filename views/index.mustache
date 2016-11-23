@@ -261,6 +261,9 @@ $(window).on('resize',function() {
     $(".slide").height(window.innerHeight);
 });
 
+var vid = document.getElementById("neurons");
+vid.playbackRate = 0.5;
+
 var menuShowing = true;
 $(window).on('scroll',function() {
     var y = window.pageYOffset;
