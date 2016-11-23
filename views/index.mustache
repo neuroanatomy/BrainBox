@@ -257,9 +257,11 @@ testWebSockets()
 
 $(".slide").height(window.innerHeight);
 $(window).on('resize',function() {
-    console.log(window.innerHeight);
     $(".slide").height(window.innerHeight);
 });
+
+var vid = document.getElementById("neurons");
+vid.playbackRate = 0.5;
 
 var menuShowing = true;
 $(window).on('scroll',function() {

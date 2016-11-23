@@ -27,7 +27,7 @@ var validator = function (req, res, next) {
         // .optional()
         // .matches("localpath|filename|source|url|dim|pixdim");    // todo: decent regexp
         var errors = req.validationErrors();
-        console.log(errors);
+        console.log("errors:",errors);
         if (errors) {
             res.send(errors).status(403).end();
         } else {
@@ -44,7 +44,7 @@ var validator_post = function (req, res, next) {
     // .optional()
     // .matches("localpath|filename|source|url|dim|pixdim");    // todo: decent regexp
     var errors = req.validationErrors();
-    console.log(errors);
+    console.log("errors:",errors);
     if (errors) {
         res.send(errors).status(403).end();
     } else {
@@ -134,7 +134,7 @@ function downloadMRI(myurl, req, res, callback) {
                     
         })
         .on('error', function (err) {
-            console.error("ERROR in downloadMRI", err);
+            console.log("ERROR in downloadMRI", err);
             callback();
         });
 }
@@ -197,7 +197,7 @@ var mri = function (req, res) {
                         if(projects[j] && projects[j].shortname == json.mri.atlas[i].project) {
                             var access = checkAccess.toAnnotationByProject(projects[j],loggedUser);
                             var level = checkAccess.accessStringToLevel(access);
-                            console.log(loggedUser,access,level);
+                            console.log("loggesUser,access,level:",loggedUser,access,level);
                             // check for 'view' access (level > 0)
                             if(level > 0) {
                                 json.mri.atlas[i].access = access;
@@ -214,7 +214,7 @@ var mri = function (req, res) {
                         if(projects[j] && projects[j].shortname == i) {
                             var access = checkAccess.toAnnotationByProject(projects[j],loggedUser);
                             var level = checkAccess.accessStringToLevel(access);
-                            console.log(loggedUser, access, level);
+                            console.log("loggedUser,access,level:",loggedUser, access, level);
                             if(level > 0) {
                                 for(k in json.mri.annotations[i]) {
                                     json.mri.annotations[i][k].access = access;
@@ -238,7 +238,7 @@ var mri = function (req, res) {
             });
         }
     }, function (err) {
-        console.error(err);
+        console.log("err 241:",err);
     });
 }
 
@@ -313,7 +313,7 @@ var api_mri_post = function (req, res) {
                 res.json(json);            
             }
         }, function (err) {
-            console.error("ERROR:",err);
+            console.log("ERROR:",err);
             res.json({success:false});
         });
 };
@@ -375,7 +375,7 @@ var api_mri_get = function (req, res) {
                         if(projects[j] && projects[j].shortname == json.mri.atlas[i].project) {
                             var access = checkAccess.toAnnotationByProject(projects[j],loggedUser);
                             var level = checkAccess.accessStringToLevel(access);
-                            console.log(loggedUser,access,level);
+                            console.log("loggedUser,access,level:",loggedUser,access,level);
                             // check for 'view' access (level > 0)
                             if(level == 0) {
                                 json.mri.atlas.splice(i,1);
@@ -390,7 +390,7 @@ var api_mri_get = function (req, res) {
                         if(projects[j] && projects[j].shortname == i) {
                             var access = checkAccess.toAnnotationByProject(projects[j],loggedUser);
                             var level = checkAccess.accessStringToLevel(access);
-                            console.log(loggedUser, access, level);
+                            console.log("loggedUser,access,level:",loggedUser, access, level);
                             if(level == 0) {
                                 delete json.mri.annotations[i];
                             }
@@ -405,7 +405,7 @@ var api_mri_get = function (req, res) {
             });
         }
     }, function (err) {
-        console.error(err);
+        console.log("err:",err);
     });
 }
 

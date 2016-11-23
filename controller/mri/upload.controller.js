@@ -30,7 +30,7 @@ var validator = function (req, res, next) {
     */
     
     var errors = req.validationErrors();
-    console.log(errors);
+    console.log("errors 33:",errors);
     if (errors) {
         return res.send(errors).status(403).end();
     } else {
@@ -43,7 +43,6 @@ var other_validations = function(req, res, next) {
     var token = req.body.token;
     req.db.get("log").findOne({"token":token})
     .then(function (obj) {
-        console.log(obj);
         if(obj) {
             // Check token expiry date
             var now = new Date();
@@ -61,7 +60,7 @@ var other_validations = function(req, res, next) {
                         var err = new Array();
                         if (req.files.length == 0 || !req.files) {err.push({error:"there is no File"});}
                         if (!json) {err.push({error:"Unkown URL"});}
-                        console.log(err);
+                        console.log("err 63:",err);
                         return res.json(err).status(403).end();
                     }
                 })
@@ -166,7 +165,7 @@ var upload = function(req, res) {
         };
         
         console.log("final volume annotation entry:");
-        console.log(atlasMetadata);
+        console.log("atlasMetadata:",atlasMetadata);
 
         // remove previous atlases with the same atlasName and atlasProject
         var i;

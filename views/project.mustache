@@ -194,6 +194,7 @@ var k, g, h, str, found, annType, annName, file;
 var info_proxy = {};
 var trTemplate;
 var objTemplate;
+var aParam;
 
 // collect the project's text annotations
 for(k=0;k<projectInfo.annotations.list.length;k++) {
@@ -237,119 +238,112 @@ $("#settings").click(function(){
 // Init BrainBox
 //---------------
     BrainBox.initBrainBox()
-    .then(function from_project(){return BrainBox.loadLabelsets()});
-
-/**
- * @todo Annotation entries have the following fields:
- *       name:       Name of the entry
- *       project:    Project to which the entry belongs
- *       type:       Type of annotation: text
- *       values:     Reference dictionary (an URL?)
- *       created:    Date of creation
- *       modified:   Date of last modification
- *       modifiedBy: Author of the last modification
- *       data:       The actual data stored for text fields, filename: for volume entries
- */
-
-// Bind the project's files to the table within #projectFiles
-//------------------------------------------------------------
-    // configure the binding template for table row and object.
-    // the 1st two columns are fixed: name and source
-    trTemplate = [
-        "<tr>",
-        "	<td contentEditable=true class='noEmpty'></td>",
-        "	<td><a></a></td>"
-    ];
-    objTemplate = [{
-        	typeOfBinding:2,
-            path:"files.list.#.name"
-        }, {
-            typeOfBinding:1,
-            path:"files.list.#.source",
-            format:function(e, d){
-                $(e).find("a").prop("href", location.origin+"/mri?url=" + d);
-                $(e).find("a").html(d.split("/").pop());
+    .then(function from_project(){
+        return BrainBox.loadLabelsets();
+    })
+    .then(function () {
+        // Bind the project's files to the table within #projectFiles
+        //------------------------------------------------------------
+        // configure the binding template for table row and object.
+        // the 1st two columns are fixed: name and source
+        trTemplate = [
+            "<tr>",
+            "	<td contentEditable=true class='noEmpty'></td>",
+            "	<td><a></a></td>"
+        ];
+        objTemplate = [{
+                typeOfBinding:2,
+                path:"files.list.#.name"
+            }, {
+                typeOfBinding:1,
+                path:"files.list.#.source",
+                format:function(e, d){
+                    $(e).find("a").prop("href", location.origin+"/mri?url=" + d);
+                    $(e).find("a").html(d.split("/").pop());
+                }
             }
-        }
-    ];
-    // the following columns are completed from the project's 'annotations' definitions:
-    // determine their type of display (either select or freeform at the moment) based data type
-    for(g=0;g<annotations.text.length;g++) {
-        annName = annotations.text[g].name;
-        annType = Object.prototype.toString.call(annotations.text[g].values); // a better object type description
+        ];
+        // the following columns are completed from the project's 'annotations' definitions:
+        // determine their type of display (either select or freeform at the moment) based data type
+        for(g=0;g<annotations.text.length;g++) {
+            annName = annotations.text[g].name;
+            annType = Object.prototype.toString.call(annotations.text[g].values); // a better object type description
 
-        // array of values
-        if(annType === "[object Array]") {
-            trTemplate.push("<td><select value=0><option value='' disabled selected hidden>Empty</option>");
-            for (var o in annotations.text[g].values) {
-                trTemplate.push("<option value=\"" + annotations.text[g].values[o] + "\"" + ">" + annotations.text[g].values[o] + "</option>");
-            }
-            trTemplate.push("</select></td>");
+            // array of values
+            if(annType === "[object Array]") {
+                trTemplate.push("<td><select value=0><option value='' disabled selected hidden>Empty</option>");
+                for (var o in annotations.text[g].values) {
+                    trTemplate.push("<option value=\"" + annotations.text[g].values[o] + "\"" + ">" + annotations.text[g].values[o] + "</option>");
+                }
+                trTemplate.push("</select></td>");
         
-            objTemplate.push({
-                typeOfBinding:2,
-                path: "files.list.#.mri.annotations."+projShortname+"."+annName,
-                format: function(e, d) {
-                    var obj = d;
-                    if (obj.data != undefined) {
-                        /**
-                         * @todo Replace color assignment by the addition of a class
-                         */
-                        $(e).find("select").css("color", "#fff"); 
-                        $(e).find("select").get(0).value=obj.data;
-                    } else {
-                        $(e).find("select").get(0).value="";
+                objTemplate.push({
+                    typeOfBinding:2,
+                    path: "files.list.#.mri.annotations."+projShortname+"."+annName,
+                    format: function(e, d) {
+                        var obj = d;
+                        if (obj.data != undefined) {
+                            /**
+                             * @todo Replace color assignment by the addition of a class
+                             */
+                            $(e).find("select").css("color", "#fff"); 
+                            $(e).find("select").get(0).value=obj.data;
+                        } else {
+                            $(e).find("select").get(0).value="";
+                        }
+                    },
+                    parse: function(e, d) {
+                        if ($(e).find("select").val()) {
+                            $(e).find("select").css("color", "#fff");
+                        }
+                        var obj = d;
+                        obj.modified = (new Date()).toJSON();
+                        obj.modifiedBy = AtlasMakerWidget.User.username;
+                        obj.data = $(e).find("select").val();
+                        return obj;
                     }
-                },
-                parse: function(e, d) {
-                    if ($(e).find("select").val()) {
-                        $(e).find("select").css("color", "#fff");
+                });
+            // freeform text
+            } else if(annType === "[object String]" || annotations.text[g].values === "freeform") {
+                trTemplate.push("<td contentEditable=true class='noEmpty'></td>");
+                objTemplate.push({
+                    typeOfBinding:2,
+                    path: "files.list.#.mri.annotations."+projShortname+"."+annName,
+                    format: function(e, d) {
+                        var obj = d;
+                        $(e).text(obj.data);
+                    },
+                    parse: function(e, d) {
+                        var obj = d;
+                        obj.modified = (new Date()).toJSON();
+                        obj.modifiedBy = AtlasMakerWidget.User.username;
+                        obj.data = $(e).text();
+                        return obj;
                     }
-                    var obj = d;
-                    obj.modified = (new Date()).toJSON();
-                    obj.modifiedBy = AtlasMakerWidget.User.username;
-                    obj.data = $(e).find("select").val();
-                    return obj;
-                }
-            });
-        // freeform text
-        } else if(annType === "[object String]" || annotations.text[g].values === "freeform") {
-            trTemplate.push("<td contentEditable=true class='noEmpty'></td>");
-            objTemplate.push({
-                typeOfBinding:2,
-                path: "files.list.#.mri.annotations."+projShortname+"."+annName,
-                format: function(e, d) {
-                    var obj = d;
-                    $(e).text(obj.data);
-                },
-                parse: function(e, d) {
-                    var obj = d;
-                    obj.modified = (new Date()).toJSON();
-                    obj.modifiedBy = AtlasMakerWidget.User.username;
-                    obj.data = $(e).text();
-                    return obj;
-                }
-            });
+                });
+            }
+            /**
+             * @todo This is the place where 'position' or 'length' annotations should be added
+             */
         }
-        /**
-         * @todo This is the place where 'position' or 'length' annotations should be added
-         */
-    }
-    trTemplate.push("</tr>");
-    var aParam = {
-        table: $("#projectFiles table"),
-        info_proxy: info_proxy,
-        info: projectInfo,
-        trTemplate: trTemplate.join("\n"),
-        objTemplate: objTemplate
-    };
+        trTemplate.push("</tr>");
+        aParam = {
+            table: $("#projectFiles table"),
+            info_proxy: info_proxy,
+            info: projectInfo,
+            trTemplate: trTemplate.join("\n"),
+            objTemplate: objTemplate
+        };
+    })
+    .then(function() {
 
-    // Append the project files progressively. Start with the 1st 100 files, load and
-    // display the 1st file, configure the tools position, and keep querying for the
-    // rest of the files
-    $.getJSON("/project/json/"+projectInfo.shortname+"/files", {
-        start: 0,
-        length: 100
+        // Append the project files progressively. Start with the 1st 100 files, load and
+        // display the 1st file, configure the tools position, and keep querying for the
+        // rest of the files
+        return $.getJSON("/project/json/"+projectInfo.shortname+"/files", {
+            start: 0,
+            length: 100
+        })
     })
     .then(function(list) {
         appendFilesToProject(list);

@@ -48,7 +48,7 @@ var toFileByAllProjects = function toFileByAllProjects(mri, projects, user, acce
             }
             if(found === false) {
                 console.log("ERROR: required 'anyone' user not found [checkAcces.toFileByAllProjects]");
-                console.log(projects[p].collaborators.list);
+                console.log("collaborators 51:",projects[p].collaborators.list);
             }
             
             // get file access level of 'anyone'
@@ -118,7 +118,7 @@ var toFileByOneProject = function toFileByOneProject(mri, projects, user, access
             }
             if(found === false) {
                 console.log("ERROR: required 'anyone' user not found [checkAcces.toFileByOneProject]");
-                console.log(projects[p].collaborators.list);
+                console.log("collaborators 121:",projects[p].collaborators.list);
             }
             
             // get file access level of 'anyone'
@@ -190,7 +190,7 @@ var maxAccessToFileByProjects = function maxAccessToFileByProjects(mri, projects
             }
             if(found === false) {
                 console.log("ERROR: required 'anyone' user not found [checkAcces.toFileByAllProjects]");
-                console.log(projects[p].collaborators.list);
+                console.log("collaborators 193:",projects[p].collaborators.list);
             }
             var publicLevel = accessLevels.indexOf(anyone.access.files);
             if(maxLevel < publicLevel ) {
@@ -248,7 +248,7 @@ var minAccessToFileByProjects = function minAccessToFileByProjects(mri, projects
             }
             if(found === false) {
                 console.log("ERROR: required 'anyone' user not found [checkAcces.toFileByAllProjects]");
-                console.log(projects[p].collaborators.list);
+                console.log("collaborators 251:",projects[p].collaborators.list);
             }
             var publicLevel = accessLevels.indexOf(anyone.access.files);
             if(minLevel > publicLevel ) {
@@ -307,7 +307,7 @@ var maxAccessToFileByProjects = function maxAccessToFileByProjects(mri, projects
             }
             if(found === false) {
                 console.log("ERROR: required 'anyone' user not found [checkAcces.toFileByAllProjects]");
-                console.log(projects[p].collaborators.list);
+                console.log("collaborators 310:",projects[p].collaborators.list);
             }
             var publicLevel = accessLevels.indexOf(anyone.access.files);
             if(maxLevel < publicLevel ) {
