@@ -1,4 +1,5 @@
 github-keys.json
+blacklist.json
 public/data
 public/project/braincatalogue-dev
 node_modules
