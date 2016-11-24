@@ -52,6 +52,7 @@ var AtlasMakerWS = {
 				me.progress.html("<img src='/img/download.svg' style='vertical-align:middle'/>MRI");
 				$("#chat").text("Chat (1 connected)");
 				me.flagConnected=1;
+				me.reconnectionTimeout = 5;
 				def.resolve();
 			};
 			
@@ -71,32 +72,40 @@ var AtlasMakerWS = {
 			me.socket.onclose = function(msg) {
 				me.flagConnected=0;
                 
-                // try to reconnect
-                me.reconnectionTimeout=5;
-				$("#chat").text("Disconnected. Try to reconnect in "+(me.reconnectionTimeout--)+" s...");
-                if(me.timer) {
-                    clearInterval(me.timer);
-                }
-                me.timer = setInterval(function() {
-                    if(me.reconnectionTimeout <0) {
-                        $("#chat").text("Reconnecting...");
-                        setTimeout(function() {
-                            me.socket = "";
-                            me.initSocketConnection()
-                            .then(function() {
-                                me.sendUserDataMessage("allUserData");
-                                me.sendUserDataMessage("sendAtlas");
-                                clearInterval(me.timer);
-                            })
-                            .catch(function() {
-                                me.reconnectionTimeout=5;
-                                $("#chat").text("Disconnected. Try to reconnect in "+(me.reconnectionTimeout--)+" s...");
-                            });
-                        }, 1000);
-                    } else {
-                        $("#chat").text("Disconnected. Try to reconnect in "+(me.reconnectionTimeout--)+" s...");
+                // Try to reconnect
+                // wait a random initial time, to prevent an avalanche
+                // of reconnections in case of server crash
+                var rand = 1000+5000*Math.random();
+                console.log("Initial random time:",rand);
+                setTimeout(function() {
+                    var timeout = me.reconnectionTimeout;
+                    $("#chat").text("Disconnected. Try to reconnect in "+(timeout--)+" s...");
+                    if(me.timer) {
+                        clearInterval(me.timer);
                     }
-                }, 1000);
+                    me.timer = setInterval(function() {
+                        if(timeout < 0) {
+                            $("#chat").text("Reconnecting...");
+                            me.socket = null;
+                            clearInterval(me.timer);
+                            setTimeout(function() {
+                                me.reconnectionTimeout *= 2;
+                                me.initSocketConnection()
+                                .then(function() {
+                                    me.sendUserDataMessage("allUserData");
+                                    me.sendUserDataMessage("sendAtlas");
+                                    clearInterval(me.timer);
+                                })
+                                .catch(function() {
+                                    timeout=me.reconnectionTimeout;
+                                    $("#chat").text("Disconnected. Try to reconnect in "+(timeout--)+" s...");
+                                });
+                            }, 1000);
+                        } else {
+                            $("#chat").text("Disconnected. Try to reconnect in "+(timeout--)+" s...");
+                        }
+                    }, 1000);
+                }, rand);
 			};
 			
             window.onbeforeunload = function() {
