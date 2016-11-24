@@ -172,7 +172,6 @@ h2 {
 	-webkit-filter:contrast(150%) brightness(60%);
 	position:absolute;top:0;left:0
 }
-
 	</style>
 </head>
 
@@ -201,10 +200,23 @@ h2 {
         </video>
         <div class="content">
             <img id="logo" src="/img/brainbox-logo.svg" style="text-align:center"/>
-            <h2 style='margin-top:0;margin-bottom:4rem'>Real-time collaboration in neuroimaging</h2>
-            <div style="position:relative">
-                <input id="url" style="display:inline-block;width:calc( 100% - 40px )" type="text" placeholder="Enter the URL of an MRI (.nii.gz)"></input>
-                <div id="go" class="pushButton" style="display:inline-block;width:32px;vertical-align:top" onclick="goToURL()">Go</div>
+            <h2 style='margin-top:0'>Real-time collaboration in neuroimaging</h2>
+            <p style='margin-bottom:2rem'>
+                BrainBox allows you to visualise, segment and annotate collaboratively
+                any brain MRI dataset available online. Segmentations and annotations are
+                automatically saved. Point BrainBox to your own nii.gz or mgz data online,
+                or participate in the projects created by the community.
+            </p>
+            <div style="position:relative;text-align:center">
+                <input id="url" style="display:block;width:100%;margin-bottom:1rem" type="text" placeholder="Enter the URL of an MRI (.nii.gz or .mgz) and click Go"></input>
+                <select id="list" style='width:200px;height:32px;text-align-last:center' class='pushButton'>
+                    <option value='' disabled selected hidden>&#9662; A list of brains to try</option>
+                    <option value='https://zenodo.org/record/44855/files/MRI-n4.nii.gz'>A Lion from Zenodo</option>
+                    <option value='http://files.figshare.com/2284784/MRI_n4.nii.gz'>A Human from FigShare</option>
+                    <option value='https://dl.dropbox.com/s/cny5b3so267bv94/p32-f18-uchar.nii.gz'>A 32 days old Ferret from DropBox</option>
+                    <option value='https://fcp-indi.s3.amazonaws.com/data/Projects/ABIDE_Initiative/RawData/NYU/0050952/session_1/anat_1/mprage.nii.gz'>A Subject from the ABIDE Initiative, from Amazon</option>
+                </select>
+                <div id="go" class="pushButton" style="display:inline-block;width:32px;line-height:30px" onclick="goToURL()">Go</div>
             </div>
         </div>
         <span class="btn-scroll-down scroll"></span>
@@ -217,7 +229,7 @@ h2 {
                 Theoretical Neuroanatomy –
                 <b><a target="_blank" href="http://neuroanatomy.github.io">NAAT</a></b> –
                 for the Open Neuroimaging Laboratory Project. BrainBox allows you to
-                visualise and segment collaboratively any brain MRI dataset available online.
+                collaboratively visualise and segment brain MRI data available online.
                 Segmentations are automatically saved and can be downloaded as Nifti files or
                 triangular meshes. Point BrainBox to your own Nifti data, or try data catalogues
                 created by the community.
@@ -243,10 +255,14 @@ h2 {
 	<!-- End Footer -->
 
 <script src="/lib/jquery-3.1.1.min.js"></script>
+<link rel="stylesheet" type="text/css" href="/lib/introjs/introjs.css" />
+<script src="/lib/introjs/intro.js"></script>
 <script src="/js/brainbox.js"></script>
+<script src="/js/brainbox-intro.js"></script>
 
 <script>
 
+/*
 testWebSockets()
 .then(function(m) {
     console.log("Connection to websockets is ok");
@@ -254,14 +270,26 @@ testWebSockets()
 .catch(function(m) {
     alert(m);
 });
+*/
+//startIntro();
 
 $(".slide").height(window.innerHeight);
 $(window).on('resize',function() {
     $(".slide").height(window.innerHeight);
+    $("#neurons").css({width:window.innerWidth});
 });
 
+// video settings
 var vid = document.getElementById("neurons");
 vid.playbackRate = 0.5;
+vid.onloadedmetadata = function() {
+    $("#neurons").css({width:window.innerWidth});
+};
+
+// List of brains
+$("#list").change(function(e) {
+    $("#url").val($("#list").val());
+});
 
 var menuShowing = true;
 $(window).on('scroll',function() {
