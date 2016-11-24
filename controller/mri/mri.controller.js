@@ -70,10 +70,13 @@ function downloadMRI(myurl, req, res, callback) {
     if (!fs.existsSync(req.dirname + "/public/data/" + hash)) {
         fs.mkdirSync(req.dirname + "/public/data/" + hash, '0777');
     }
-    
-    var newFilename, newDest;
+    var newFilename, newDest, len, cur = 0;
 
-    var r = request({uri: myurl, followAllRedirects: true})
+    request({uri: myurl, followAllRedirects: true})
+    .on('error', function (err) {
+        console.log("ERROR in downloadMRI", err);
+        callback({error:err});
+    })
     .on('response', function(res) {
         var href = res.request.uri.href;
         newFilename = href.split("/").pop();
@@ -83,6 +86,14 @@ function downloadMRI(myurl, req, res, callback) {
         arr.push(newFilename);
         newDest = arr.join("/");
         console.log("new dest:",newDest);
+        len = parseInt(res.headers['content-length'], 10);
+        console.log("file length:",len);
+    })
+    .on('data', function(chunk) {    
+//      body += chunk;
+        cur += chunk.length;
+        //console.log("downloaded:",cur,"/",len);
+//      obj.innerHTML = "Downloading " + (100.0 * cur / len).toFixed(2) + "% " + (cur / 1048576).toFixed(2) + " mb\r" + ".<br/> Total size: " + total.toFixed(2) + " mb";
     })
     .pipe(fs.createWriteStream(dest))
     .on('close', function request_fromDownloadMRI(res) {
@@ -94,51 +105,45 @@ function downloadMRI(myurl, req, res, callback) {
         
         // NOTE: getBrainAtPath has to be called with a client-side path like "/data/[md5hash]/..."
         atlasMakerServer.getBrainAtPath("/data/" + hash  + "/" + filename)
-            .then(function getBrainAtPath_fromDownloadMRI(mri) {
-                // create json file for new dataset
-                var ip = req.headers['x-forwarded-for'] ||
-                    req.connection.remoteAddress ||
-                    req.socket.remoteAddress ||
-                    req.connection.socket.remoteAddress;
-                var username = (req.isAuthenticated()) ? req.user.username : ip;
-                var json = {
-                    filename: filename,
-                    success: true,
-                    source: myurl,
-                    url: "/data/" + hash + "/",
-                    included: (new Date()).toJSON(),
-                    dim: mri.dim,
-                    pixdim: mri.pixdim,
-                    voxel2world: mri.v2w,
-                    worldOrigin: mri.wori,
-                    owner: username,
-                    mri: {
-                        brain: filename,
-                        atlas: [{
-                            created: (new Date()).toJSON(),
-                            modified: (new Date()).toJSON(),
-                            access: 'edit',
-                            type: 'volume',
-                            name: 'Default',
-                            filename: 'Atlas.nii.gz',
-                            labels: 'foreground.json'
-                        }]
-                    }
-                };
-                callback(json);
-            })
-            .catch(function(err) {
-                console.log("ERROR Cannot get brain at path /data/" + hash  + "/" + filename + ": ", err);
-                callback();
-            });
-                    
+        .then(function getBrainAtPath_fromDownloadMRI(mri) {
+            // create json file for new dataset
+            var ip = req.headers['x-forwarded-for'] ||
+                req.connection.remoteAddress ||
+                req.socket.remoteAddress ||
+                req.connection.socket.remoteAddress;
+            var username = (req.isAuthenticated()) ? req.user.username : ip;
+            var json = {
+                filename: filename,
+                success: true,
+                source: myurl,
+                url: "/data/" + hash + "/",
+                included: (new Date()).toJSON(),
+                dim: mri.dim,
+                pixdim: mri.pixdim,
+                voxel2world: mri.v2w,
+                worldOrigin: mri.wori,
+                owner: username,
+                mri: {
+                    brain: filename,
+                    atlas: [{
+                        created: (new Date()).toJSON(),
+                        modified: (new Date()).toJSON(),
+                        access: 'edit',
+                        type: 'volume',
+                        name: 'Default',
+                        filename: 'Atlas.nii.gz',
+                        labels: 'foreground.json'
+                    }]
+                }
+            };
+            callback(json);
         })
-        .on('error', function (err) {
-            console.log("ERROR in downloadMRI", err);
-            callback();
+        .catch(function(err) {
+            console.log("ERROR Cannot get brain at path /data/" + hash  + "/" + filename + ": ", err);
+            callback({error:"Can't get brain"});
         });
+    });
 }
-
 var mri = function (req, res) {
     var login = (req.isAuthenticated()) ?
                 ("<a href='/user/" + req.user.username + "'>" + req.user.username + "</a> (<a href='/logout'>Log Out</a>)")
@@ -289,12 +294,13 @@ var api_mri_post = function (req, res) {
                     console.log("Start download:");
                     downloadQueue[myurl] = {success:"downloading"};
                     downloadMRI(myurl, req, res, function (obj) {                        
-                        console.log("Download finished");
-                        if(obj) {
+                        if(obj.error == undefined) {
+                            console.log("Download succeeded");
                             req.db.get('mri').insert(obj);
                             obj.success = true;
                             downloadQueue[myurl]=obj;
                         } else {
+                            console.log("Download failed:", obj);
                             downloadQueue[myurl]={success:"error"};
                         }
                     });

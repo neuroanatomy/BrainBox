@@ -362,10 +362,6 @@ var AtlasMakerWidget = {
         
             me.flagLoadingImg={loading:false};
         
-/* DELETE ME: For I have been moved
-            me.User.penValue=me.ontology.labels[0].value;
-*/
-        
             me.brain_img.img=null;
         
             // get volume dimensions
@@ -376,6 +372,10 @@ var AtlasMakerWidget = {
                 me.brain_pixdim=[1,1,1];
             
             def.resolve(info2);
+        })
+        .catch(function(err) {
+            console.log("ERROR: DOWNLOAD FAILED", err);
+            def.reject(err);
         });
 		
 
