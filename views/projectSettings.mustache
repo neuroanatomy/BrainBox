@@ -35,6 +35,7 @@
 		text-align:left;
 		width:100%;
 		border-collapse:collapse;
+		height: 50vh;
 	}
 	#MRIFiles tr, #annotations tr, #access tr {
 		margin:0px 4px;
@@ -334,6 +335,14 @@
 					<p><span id="numCollaborators"></span> Collaborators</p>
 					<p><span id="numAnnotations"></span> Annotations</p>
 					<p><span id="numFiles"></span> MRI Files</p>
+					<hr />
+							<!-- Save or Cancel -->
+							<div style="display:block;margin:0 auto;width:200px">
+                                <h2 id="saveChanges" class="pushButton">Save Changes</h2>
+                                <h2 id="deleteProject" class="pushButton">Delete Project</h2>
+                                <h2 id="goToProject" class="pushButton">Go to Project</h2>
+                                <p id="saveFeedback"></p>
+                            </div>
 				</div>
 				
 				<div id="projTable">
@@ -395,14 +404,6 @@
 								<img id="addFile" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/plus-square.svg' />
 								<img id="removeFile" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/minus-square.svg' />
 							</div>
-							
-							<!-- Save or Cancel -->
-							<div style="display:block;margin:0 auto;width:200px">
-                                <h2 id="saveChanges" class="pushButton">Save Changes</h2>
-                                <h2 id="deleteProject" class="pushButton">Delete Project</h2>
-                                <h2 id="goToProject" class="pushButton">Go to Project</h2>
-                                <p id="saveFeedback"></p>
-                            </div>
 				</div>
 		</div>
 		<!-- end of centering div -->
