@@ -262,7 +262,9 @@ process.stdin.on('keypress', function (ch, key) {
         }
     }
 });
-process.stdin.setRawMode(true);
+if (process.stdin.isTTY){
+        process.stdin.setRawMode(true);
+}
 process.stdin.resume();
 
 //========================================================================================
