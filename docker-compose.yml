@@ -1,0 +1,20 @@
+db:
+  image: mongo
+  ports:
+    - "27017:27017"
+  command: "--smallfiles --logpath=/dev/null"
+web:
+  build: .
+  volumes:
+    - .:/brainbox
+    # - /brainbox/node_modules
+    # - ./public/data:/brainbox/public/data
+  ports:
+    - "3000:3000"
+    - "8080:8080"
+    #- "35729:35729"
+  links:
+    - db
+  environment:
+    PORT: 3000
+    DEVELOP: 0 # for livereload set to 1 and uncomment port 35729
