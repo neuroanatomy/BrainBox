@@ -228,7 +228,9 @@ var AtlasMakerIO = {
             else      return (mri.dim[i]-s[m.i]-1);
         };
         v=[f(mi,0),f(mj,1),f(mk,2)];
-        index = v[0] + v[1]*mri.dim[0] + v[2]*mri.dim[0]*mri.dim[1];
+        var index = v[0] + v[1]*mri.dim[0] + v[2]*mri.dim[0]*mri.dim[1];
+        
+        return index;
 		
 	},
     /**
