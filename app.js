@@ -22,7 +22,18 @@ var url = require("url");
 var async = require("async");
 var mongo = require('mongodb');
 var monk = require('monk');
-var db = monk('localhost:27017/brainbox');
+
+var MONGO_DB;
+var DOCKER_DB = process.env.DB_PORT;
+var DOCKER_DEVELOP = process.env.DEVELOP;
+
+if ( DOCKER_DB ) {
+  MONGO_DB = DOCKER_DB.replace( 'tcp', 'mongodb' ) + '/brainbox';
+} else {
+  MONGO_DB = 'localhost:27017/brainbox'; //process.env.MONGODB;
+}
+
+var db = monk(MONGO_DB);
 var fs = require('fs');
 var expressValidator = require('express-validator');
 
@@ -36,6 +47,21 @@ var atlasMakerServer = require('./js/atlasMakerServer.js');
 var dirname = __dirname; // local directory
 /*jslint nomen: false*/
 
+if ( DOCKER_DEVELOP == '1' ) {
+    var livereload = require('livereload');
+    // Create a livereload server
+    const hotServer = livereload.createServer({
+      // Reload on changes to these file extensions.
+      exts: [ 'json', 'mustache' ],
+      // Print debug info
+      debug: true
+    });
+
+    // Specify the folder to watch for file-changes.
+    hotServer.watch(__dirname);
+    console.log('Watching: ' + __dirname)
+}
+
 var app = express();
 app.engine('mustache', mustacheExpress());
 app.set('views', path.join(dirname, 'views'));
@@ -48,6 +74,10 @@ app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 app.use(expressValidator());
 app.use(cookieParser());
 app.use(express.static(path.join(dirname, 'public')));
+
+if ( DOCKER_DEVELOP == '1') {
+    app.use(require('connect-livereload')());
+}
 
 app.use(function (req, res, next) {
     req.dirname = dirname;
@@ -228,7 +258,7 @@ db.get('user').findOne({nickname:'anyone'})
             var anyone = {
                 name:'Any BrainBox User',
                 nickname:'anyone',
-                brainboxURL:'http://brainbox.dev/user/anyone',
+                brainboxURL:'/user/anyone',
                 joined:(new Date()).toJSON()
             };
             console.log("WARNING: 'anyone' user absent: inserting it");

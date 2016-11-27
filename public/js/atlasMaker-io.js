@@ -115,17 +115,18 @@ var AtlasMakerIO = {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(computeS2VTransformation);if(l)console.log.apply(undefined,l);
 		
-		var v2w=me.User.v2w;
-		var wori=me.User.wori;
+		var mri = me.User;
+		var v2w=mri.v2w;
+		var wori=mri.wori;
 		var wpixdim=me.subVecVec(me.mulMatVec(v2w,[1,1,1]),me.mulMatVec(v2w,[0,0,0]));
-		var wvmax=me.addVecVec(me.mulMatVec(v2w,[me.User.dim[0]-1,me.User.dim[1]-1,me.User.dim[2]-1]),wori);
+		var wvmax=me.addVecVec(me.mulMatVec(v2w,[mri.dim[0]-1,mri.dim[1]-1,mri.dim[2]-1]),wori);
 		var wvmin=me.addVecVec(me.mulMatVec(v2w,[0,0,0]),wori);
 		var wmin=[Math.min(wvmin[0],wvmax[0]),Math.min(wvmin[1],wvmax[1]),Math.min(wvmin[2],wvmax[2])];
 		var wmax=[Math.max(wvmin[0],wvmax[0]),Math.max(wvmin[1],wvmax[1]),Math.max(wvmin[2],wvmax[2])];
 		var w2s=[[1/Math.abs(wpixdim[0]),0,0],[0,1/Math.abs(wpixdim[1]),0],[0,0,1/Math.abs(wpixdim[2])]];
 		var s2w=me.invMat(w2s);
 
-		me.User.s2v = {
+		mri.s2v = {
 			sdim: [(wmax[0]-wmin[0])/Math.abs(wpixdim[0])+1,(wmax[1]-wmin[1])/Math.abs(wpixdim[1])+1,(wmax[2]-wmin[2])/Math.abs(wpixdim[2])+1],
 			s2w: s2w,
 			sori: [-wmin[0]/Math.abs(wpixdim[0]),-wmin[1]/Math.abs(wpixdim[1]),-wmin[2]/Math.abs(wpixdim[2])],
@@ -133,6 +134,25 @@ var AtlasMakerIO = {
 			w2v: me.invMat(v2w),
 			wori: wori
 		};
+		
+		/**
+		 * @todo Most of the code upstairs can be removed
+		 */
+
+        var i=v2w[0];
+        var j=v2w[1];
+        var k=v2w[2];
+        var mi={i:0,v:0};i.map(function(o,n){if(Math.abs(o)>Math.abs(mi.v)) mi={i:n,v:o}});
+        var mj={i:0,v:0};j.map(function(o,n){if(Math.abs(o)>Math.abs(mj.v)) mj={i:n,v:o}});
+        var mk={i:0,v:0};k.map(function(o,n){if(Math.abs(o)>Math.abs(mk.v)) mk={i:n,v:o}});
+
+        mri.s2v.sdim[mi.i] = mri.dim[0];
+        mri.s2v.sdim[mj.i] = mri.dim[1];
+        mri.s2v.sdim[mk.i] = mri.dim[2];
+        mri.s2v.wpixdim[mi.i] = mri.pixdim[0];
+        mri.s2v.wpixdim[mj.i] = mri.pixdim[1];
+        mri.s2v.wpixdim[mk.i] = mri.pixdim[2];
+        
 	},
     /**
      * @function testS2VTransformation
@@ -155,12 +175,10 @@ var AtlasMakerIO = {
 		var vs=mri.s2v.sdim[0]*mri.s2v.sdim[1]*mri.s2v.sdim[2];
 		var diff=(vs-vv)/vv;
 		if(Math.abs(diff)>0.001) {
-			/*
 			console.log("    ERROR: Difference is too large");
 			console.log("    original volume:",vv);
 			console.log("    rotated volume:",vs);
 			console.log("    % difference:",diff*100);
-			*/
 			doReset=true;
 		} else {
 			// console.log("    ok.");
@@ -197,14 +215,21 @@ var AtlasMakerIO = {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(S2I,3);if(l)console.log.apply(undefined,l);
 		
-		var s2v=mri.s2v;
-		var i=null,w,s,v;
-		w=me.mulMatVec(s2v.s2w,me.subVecVec(s,s2v.sori)); // screen to world: w=s2w*(s-sori)
-		v=me.mulMatVec(s2v.w2v,me.subVecVec(w,mri.wori)); // world to voxel
-		v=[Math.round(v[0]),Math.round(v[1]),Math.round(v[2])]; // round to integer
-		if(v[0]>=0&&v[0]<mri.dim[0]&&v[0]>=0&&v[0]<mri.dim[0]&&v[0]>=0&&v[0]<mri.dim[0])
-			i= v[2]*mri.dim[1]*mri.dim[0]+ v[1]*mri.dim[0] +v[0];
-		return i;
+        var i=mri.v2w[0];
+        var j=mri.v2w[1];
+        var k=mri.v2w[2];
+        var mi={i:0,v:0};i.map(function(o,n){if(Math.abs(o)>Math.abs(mi.v)) mi={i:n,v:o}});
+        var mj={i:0,v:0};j.map(function(o,n){if(Math.abs(o)>Math.abs(mj.v)) mj={i:n,v:o}});
+        var mk={i:0,v:0};k.map(function(o,n){if(Math.abs(o)>Math.abs(mk.v)) mk={i:n,v:o}});
+        
+        var v=[];
+        var f = function(m,i) {
+            if(m.v>0) return s[m.i];
+            else      return (mri.dim[i]-s[m.i]-1);
+        };
+        v=[f(mi,0),f(mj,1),f(mk,2)];
+        index = v[0] + v[1]*mri.dim[0] + v[2]*mri.dim[0]*mri.dim[1];
+		
 	},
     /**
      * @function mulMatVec
