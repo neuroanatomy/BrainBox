@@ -196,11 +196,9 @@ var isProjectObject = function(req,res,object) {
 function getFilesSlice(req, projShortname, start, length) {
     var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
 
-    console.log("loggedUser:",loggedUser, "projShortname:",projShortname,"start:",start,"length:",length);
 	return new Promise(function (resolve, reject) {
 	    start = parseInt(start);
 	    length = parseInt(length);
-		console.log("inside the promise for project, start, length",projShortname, start, length);
 		req.db.get('project').findOne({shortname:projShortname,backup:{$exists:0}},"-_id")
 		.then(function(project) {
             // check access
@@ -212,17 +210,13 @@ function getFilesSlice(req, projShortname, start, length) {
             }
 
 			if (project) {
-			    console.log("project is not empty");
 				var list = project.files.list, newList = [], arr = [];
 				var i;
 				
 				start = Math.min(start, list.length);
 				length = Math.min(length, list.length-start);
-				
-				console.log("end:",start+length);
 				for(i=start;i<start+length;i++) {
-					var item = list[i];
-					arr.push(req.db.get('mri').findOne({source:item,backup:{$exists:0}},{name:1,_id:0}));
+					arr.push(req.db.get('mri').findOne({source:list[i],backup:{$exists:0}},{name:1,_id:0}));
 				}
 				Promise.all(arr)
 				.then(function(mris) {
@@ -463,67 +457,54 @@ var settings = function(req, res) {
         }
 
         // find source URL and name for each of the files in the project
-        async.each(
-            json.files.list,
-            function(item,cb) {
-                req.db.get('mri').findOne({source:item,backup:{$exists:0}},{name:1,_id:0})
-                .then(function(obj) {
-                    if(obj) {
-                        json.files.list[json.files.list.indexOf(item)]={
-                            source: item,
-                            name: obj.name
-                        }
-                    } else {
-                        json.files.list[json.files.list.indexOf(item)]={
-                            source: item,
-                            name: ""
-                        }
+        var i, arr = [];
+        for(i=0;i<json.files.list.length;i++) {
+            arr.push(req.db.get('mri').findOne({source:json.files.list[i],backup:{$exists:0}},{name:1,_id:0}));
+        }
+        Promise.all(arr)
+        .then(function(mris) {
+            console.log("back with all mris:",mris.length);
+            for(i=0;i<mris.length;i++) {
+                if(mris[i]) {
+                    json.files.list[i]={
+                        source: json.files.list[i],
+                        name: mris[i].name
                     }
-                    cb();
-                });
-            },
-            /**
-             * @todo replace the nested async calls
-             */
-            function() {
-                // find username and name for each of the collaborators in the project
-                async.each(
-                    json.collaborators.list.map(function(o){return o.userID}), // convert array of objects into array of userIDs
-                    function(item,cb) {
-                        // console.log("item",item);
-                        req.db.get('user').findOne({nickname:item,backup:{$exists:0}},{name:1,_id:0})
-                        .then(function(obj) {
-                            // console.log("user",obj);
-                            var i, found = false;
-                            for(i=0;i<json.collaborators.list.length;i++) {
-                                if(json.collaborators.list[i].userID === item) {
-                                    found = true;
-                                    break;
-                                }
-                            }
-                            if(obj) {    // name found
-                                json.collaborators.list[i].username=item;
-                                json.collaborators.list[i].name=obj.name;
-                            } else {    // name not found: set to empty
-                                json.collaborators.list[i].username=item;
-                                json.collaborators.list[i].name="";
-                            }
-                            cb();
-                        });
-                    },
-                    function() {
-                        var context = {
-                            projectShortname: json.shortname,
-                            owner: json.owner,
-                            projectInfo: JSON.stringify(json),
-                            login: login
-                        };
-                        res.render('projectSettings',context);
+                } else {
+                    json.files.list[i]={
+                        source: json.files.list[i],
+                        name: ""
                     }
-                );
+                }
             }
-	    );
-	});
+
+            // find username and name for each of the collaborators in the project
+            var j, arr1 = [];
+            for(j=0;j<json.collaborators.list.length;j++) {
+                arr1.push(req.db.get('user').findOne({nickname:json.collaborators.list[j].userID,backup:{$exists:0}},{name:1,_id:0}));
+            }
+            Promise.all(arr1)
+            .then(function(obj) {
+                console.log("back with all collaborators:",obj.length);
+                var j;
+                for(j=0;j<obj.length;j++) {
+                    json.collaborators.list[j].username=json.collaborators.list[j].userID;
+                    if(obj[j]) {    // name found
+                        json.collaborators.list[j].name=obj[j].name;
+                    } else {    // name not found: set to empty
+                        json.collaborators.list[i].name="";
+                    }
+                }
+                var context = {
+                    projectShortname: json.shortname,
+                    owner: json.owner,
+                    projectInfo: JSON.stringify(json),
+                    login: login
+                };
+                res.render('projectSettings',context);
+            });
+        });
+    });
 };
 
 /**
