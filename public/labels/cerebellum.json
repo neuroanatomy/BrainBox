@@ -1,0 +1,286 @@
+{
+  "name": "Cerebellum: 28 segments",
+  "labels": [
+    {
+      "url": "http://brainbox.pasteur.fr/labels/Cerebellum/Left_X",
+      "color": [
+        35,
+        215,
+        103
+      ],
+      "value": 26,
+      "name": "Left_X"
+    },
+    {
+      "url": "http://brainbox.pasteur.fr/labels/Cerebellum/Right_CrusI",
+      "color": [
+        220,
+        52,
+        120
+      ],
+      "value": 10,
+      "name": "Right_CrusI"
+    },
+    {
+      "url": "http://brainbox.pasteur.fr/labels/Cerebellum/Vermis_CrusII",
+      "color": [
+        59,
+        173,
+        128
+      ],
+      "value": 12,
+      "name": "Vermis_CrusII"
+    },
+    {
+      "url": "http://brainbox.pasteur.fr/labels/Cerebellum/Left_VIIIb",
+      "color": [
+        65,
+        243,
+        208
+      ],
+      "value": 20,
+      "name": "Left_VIIIb"
+    },
+    {
+      "url": "http://brainbox.pasteur.fr/labels/Cerebellum/Vermis_VIIIb",
+      "color": [
+        34,
+        44,
+        255
+      ],
+      "value": 21,
+      "name": "Vermis_VIIIb"
+    },
+    {
+      "url": "http://brainbox.pasteur.fr/labels/Cerebellum/Right_X",
+      "color": [
+        32,
+        187,
+        98
+      ],
+      "value": 28,
+      "name": "Right_X"
+    },
+    {
+      "url": "http://brainbox.pasteur.fr/labels/Cerebellum/Vermis_VI",
+      "color": [
+        176,
+        120,
+        106
+      ],
+      "value": 6,
+      "name": "Vermis_VI"
+    },
+    {
+      "url": "http://brainbox.pasteur.fr/labels/Cerebellum/Vermis_CrusI",
+      "color": [
+        88,
+        162,
+        230
+      ],
+      "value": 9,
+      "name": "Vermis_CrusI"
+    },
+    {
+      "url": "http://brainbox.pasteur.fr/labels/Cerebellum/Vermis_VIIb",
+      "color": [
+        118,
+        168,
+        68
+      ],
+      "value": 15,
+      "name": "Vermis_VIIb"
+    },
+    {
+      "url": "http://brainbox.pasteur.fr/labels/Cerebellum/Left_V",
+      "color": [
+        147,
+        215,
+        108
+      ],
+      "value": 3,
+      "name": "Left_V"
+    },
+    {
+      "url": "http://brainbox.pasteur.fr/labels/Cerebellum/Left_VIIIa",
+      "color": [
+        140,
+        84,
+        227
+      ],
+      "value": 17,
+      "name": "Left_VIIIa"
+    },
+    {
+      "url": "http://brainbox.pasteur.fr/labels/Cerebellum/Right_IX",
+      "color": [
+        231,
+        94,
+        150
+      ],
+      "value": 25,
+      "name": "Right_IX"
+    },
+    {
+      "url": "http://brainbox.pasteur.fr/labels/Cerebellum/Right_CrusII",
+      "color": [
+        5,
+        234,
+        228
+      ],
+      "value": 13,
+      "name": "Right_CrusII"
+    },
+    {
+      "url": "http://brainbox.pasteur.fr/labels/Cerebellum/Left_I-IV",
+      "color": [
+        176,
+        219,
+        1
+      ],
+      "value": 1,
+      "name": "Left_I-IV"
+    },
+    {
+      "url": "http://brainbox.pasteur.fr/labels/Cerebellum/Vermis_VIIIa",
+      "color": [
+        44,
+        203,
+        120
+      ],
+      "value": 18,
+      "name": "Vermis_VIIIa"
+    },
+    {
+      "url": "http://brainbox.pasteur.fr/labels/Cerebellum/Left_VIIb",
+      "color": [
+        248,
+        158,
+        248
+      ],
+      "value": 14,
+      "name": "Left_VIIb"
+    },
+    {
+      "url": "http://brainbox.pasteur.fr/labels/Cerebellum/Vermis_X",
+      "color": [
+        44,
+        146,
+        0
+      ],
+      "value": 27,
+      "name": "Vermis_X"
+    },
+    {
+      "url": "http://brainbox.pasteur.fr/labels/Cerebellum/Right_VIIIa",
+      "color": [
+        23,
+        233,
+        205
+      ],
+      "value": 19,
+      "name": "Right_VIIIa"
+    },
+    {
+      "url": "http://brainbox.pasteur.fr/labels/Cerebellum/Right_I-IV",
+      "color": [
+        237,
+        88,
+        152
+      ],
+      "value": 2,
+      "name": "Right_I-IV"
+    },
+    {
+      "url": "http://brainbox.pasteur.fr/labels/Cerebellum/Right_VIIIb",
+      "color": [
+        95,
+        133,
+        211
+      ],
+      "value": 22,
+      "name": "Right_VIIIb"
+    },
+    {
+      "url": "http://brainbox.pasteur.fr/labels/Cerebellum/Left_VI",
+      "color": [
+        55,
+        227,
+        149
+      ],
+      "value": 5,
+      "name": "Left_VI"
+    },
+    {
+      "url": "http://brainbox.pasteur.fr/labels/Cerebellum/Left_CrusII",
+      "color": [
+        4,
+        95,
+        215
+      ],
+      "value": 11,
+      "name": "Left_CrusII"
+    },
+    {
+      "url": "http://brainbox.pasteur.fr/labels/Cerebellum/Left_CrusI",
+      "color": [
+        222,
+        127,
+        246
+      ],
+      "value": 8,
+      "name": "Left_CrusI"
+    },
+    {
+      "url": "http://brainbox.pasteur.fr/labels/Cerebellum/Left_IX",
+      "color": [
+        142,
+        164,
+        153
+      ],
+      "value": 23,
+      "name": "Left_IX"
+    },
+    {
+      "url": "http://brainbox.pasteur.fr/labels/Cerebellum/Right_VI",
+      "color": [
+        192,
+        117,
+        91
+      ],
+      "value": 7,
+      "name": "Right_VI"
+    },
+    {
+      "url": "http://brainbox.pasteur.fr/labels/Cerebellum/Right_VIIb",
+      "color": [
+        47,
+        41,
+        95
+      ],
+      "value": 16,
+      "name": "Right_VIIb"
+    },
+    {
+      "url": "http://brainbox.pasteur.fr/labels/Cerebellum/Vermis_IX",
+      "color": [
+        241,
+        155,
+        68
+      ],
+      "value": 24,
+      "name": "Vermis_IX"
+    },
+    {
+      "url": "http://brainbox.pasteur.fr/labels/Cerebellum/Right_V",
+      "color": [
+        15,
+        185,
+        220
+      ],
+      "value": 4,
+      "name": "Right_V"
+    }
+  ],
+  "source": "http://brainbox.pasteur.fr/labels/cerebellum.json"
+}

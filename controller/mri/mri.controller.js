@@ -172,54 +172,32 @@ var mri = function (req, res) {
             });
         } else {
             // if the json object exists, and has annotations, configure the access to them
-            console.log("check access rights");
             if(!json.mri.atlas)
                 json.mri.atlas = [];
             var i, j, k, ii, prj = new Set(), arr = [];
             // check access to volume annotations
             for(i=0;i<json.mri.atlas.length;i++) {
                 if(json.mri.atlas[i].project) {
-                    console.log("mri is in project",json.mri.atlas[i].project);
                     prj.add(json.mri.atlas[i].project);
                 }
             }
             // check access to text annotations
             for(i in json.mri.annotations) {
-                console.log("text annotation is in project",i);
                 prj.add(i);
             }
             arr = [...prj].map(function(o){return req.db.get('project').findOne({
-                        shortname:o,
-                        backup: {$exists: 0}
-                    })});
-            console.log("projects:",prj);
-            console.log("promises:",arr);
+                shortname:o,
+                backup: {$exists: 0}
+            })});
             Promise.all([...arr]).then(function(projects) {
-                console.log("projects",projects);
-                // set access to volume annotations
-                for(i=json.mri.atlas.length-1;i>=0;i--) {
-                    for(j=0;j<projects.length;j++) {
-                        if(projects[j] && projects[j].shortname == json.mri.atlas[i].project) {
-                            var access = checkAccess.toAnnotationByProject(projects[j],loggedUser);
-                            var level = checkAccess.accessStringToLevel(access);
-                            console.log("loggesUser,access,level:",loggedUser,access,level);
-                            // check for 'view' access (level > 0)
-                            if(level > 0) {
-                                json.mri.atlas[i].access = access;
-                            } else {
-                                json.mri.atlas.splice(i,1);
-                            }
-                            break;
-                        }
-                    }
-                }
+                checkAccess.filterAnnotationsByProjects(json.mri,projects,loggedUser);
+
                 // set access to text annotations
                 for(i in json.mri.annotations) {
                     for(j=0;j<projects.length;j++) {
                         if(projects[j] && projects[j].shortname == i) {
                             var access = checkAccess.toAnnotationByProject(projects[j],loggedUser);
                             var level = checkAccess.accessStringToLevel(access);
-                            console.log("loggedUser,access,level:",loggedUser, access, level);
                             if(level > 0) {
                                 for(k in json.mri.annotations[i]) {
                                     json.mri.annotations[i][k].access = access;

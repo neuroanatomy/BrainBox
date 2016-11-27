@@ -43,11 +43,11 @@
 	/************************* link to project settings  ********************/
 	/* when hovering over project name */
 	.settings {
-		opacity: 0;
+		opacity: 0.5;
 		transition: opacity 500ms;
 	}
 	.projectName:hover + .settings {
-		opacity: 0.5;
+		opacity: 0.7;
 	}
 	.settings:hover {
 		opacity: 1.0;
@@ -315,6 +315,10 @@
 <script src="/lib/jquery-3.1.1.min.js"></script>
 <script>
 	var userInfo='{{{userInfo}}}';
+	var cursorFiles = 0;
+	var cursorAtlas = 0;
+	var cursorProjects = 0;
+	
 	userInfo=JSON.parse(userInfo);
 	userInfo.MRIFiles = [];
 	userInfo.atlasFiles = [];
@@ -360,11 +364,13 @@ function selectTab(tab) {
     }
 }
 function queryFiles() {
-	$.getJSON("/user/json/{{nickname}}/files", {start:userInfo.MRIFiles.length, length:100})
-	.then(function(list) {
-	    appendFiles(list);
-	    if(list.length == 100)
-	        queryFiles();
+	$.getJSON("/user/json/{{nickname}}/files", {start:cursorFiles, length:100})
+	.then(function(res) {
+	    if(res.success) {
+            appendFiles(res.list);
+            cursorFiles += 100;
+            queryFiles();
+        }
 	});
 }
 function appendFiles(list) {
@@ -386,10 +392,12 @@ function appendFiles(list) {
 }
 function queryAtlas(list) {
 	$.getJSON("/user/json/{{nickname}}/atlas", {start:userInfo.atlasFiles.length, length:100})
-	.then(function(list) {
-	    appendAtlas(list);
-	    if(list.length==100)
-	        queryAtlas();
+	.then(function(res) {
+	    if(res.success) {	        
+            appendAtlas(res.list);
+            cursorAtlas += 100;
+            queryAtlas();
+        }
 	});
 }
 function appendAtlas(list) {
@@ -415,10 +423,12 @@ function appendAtlas(list) {
 }
 function queryProjects() {
 	$.getJSON("/user/json/{{nickname}}/projects", {start:userInfo.projects.length, length:100})
-	.then(function(list) {
-	    appendProjects(list);
-	    if(list.length==100)
-	        queryProjects();
+	.then(function(res) {
+	    if(res.success) {
+            appendProjects(res.list);
+            cursorProject += 100;
+            queryProjects();
+        }
 	});
 }
 function appendProjects(list) {
@@ -431,7 +441,7 @@ function appendProjects(list) {
             list[i].project,
             '</a><a href="',
             list[i].projectURL,
-            '/settings" class="settings" title="Settings" style="position:absolute;top:0;left:0"><img style="width:11px; margin:3px 8px 0 0" src="/img/settings.svg"/></a></div></td><td>',
+            '/settings" class="settings" title="Settings" style="position:absolute;top:0;left:0;right:5px"><img style="width:11px; margin:3px 8px 0 0" src="/img/settings.svg"/></a></div></td><td>',
             list[i].numFiles,
             '</td><td>',
             list[i].numCollaborators,

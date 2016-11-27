@@ -311,7 +311,7 @@
             <a href='/' style="text-decoration:none">
                 <img style='height:56px;vertical-align:middle' src='/img/brainbox-logo-small_noFont.svg'/>
             </a>
-            <span style="font-family: Roboto, sans-serif; font-size: 36px; font-weight:100;vertical-align:middle" id="projectName" contentEditable=true class="noEmptyWithPlaceholder" placeholder="Enter a project name"> 
+            <span style="font-family: Roboto, sans-serif; font-size: 36px; font-weight:100;vertical-align:middle" id="projectName" contentEditable=true class="noEmptyWithPlaceholder" placeholder="Enter a project name">
             </span>
         </div>
 	</div>
@@ -334,10 +334,18 @@
 					<p><span id="numCollaborators"></span> Collaborators</p>
 					<p><span id="numAnnotations"></span> Annotations</p>
 					<p><span id="numFiles"></span> MRI Files</p>
+
+                    <!-- Save or Cancel -->
+                    <div style="display:block;margin:0 auto;width:200px">
+                        <h2 id="saveChanges" class="pushButton">Save Changes</h2>
+                        <h2 id="deleteProject" class="pushButton">Delete Project</h2>
+                        <h2 id="goToProject" class="pushButton">Go to Project</h2>
+                        <p id="saveFeedback"></p>
+                    </div>
 				</div>
 				
 				<div id="projTable">
-						
+
 							<!-- Tab Content 1: Access -->
 							<h2 class="selection-header">Access</h2>
 							<table id="access" class="tabContent" style="padding:10px;display:table">
@@ -395,7 +403,7 @@
 								<img id="addFile" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/plus-square.svg' />
 								<img id="removeFile" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/minus-square.svg' />
 							</div>
-							
+
 							<!-- Save or Cancel -->
 							<div style="display:block;margin:0 auto;width:200px">
                                 <h2 id="saveChanges" class="pushButton">Save Changes</h2>

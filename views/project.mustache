@@ -186,6 +186,7 @@
 */
 var projectInfo={{{projectInfo}}};
 var projShortname = projectInfo.shortname;
+var numFilesQuery = 20;
 var annotations = {
     text: [],   // collect text annotations
     volume: []  // collect volume annotations
@@ -337,12 +338,12 @@ $("#settings").click(function(){
     })
     .then(function() {
 
-        // Append the project files progressively. Start with the 1st 100 files, load and
+        // Append the project files progressively. Start with the 1st #numFilesQuery files, load and
         // display the 1st file, configure the tools position, and keep querying for the
         // rest of the files
         return $.getJSON("/project/json/"+projectInfo.shortname+"/files", {
             start: 0,
-            length: 100
+            length: numFilesQuery
         })
     })
     .then(function(list) {
@@ -455,11 +456,11 @@ $("#settings").click(function(){
 function queryFiles() {
     $.getJSON("/project/json/"+projectInfo.shortname+"/files", {
         start: projectInfo.files.list.length,
-        length: 100
+        length: numFilesQuery
     })
     .then(function(list) {
-        appendFilesToProject(list);
-        if(list.length == 100) {
+        if(list.length) {
+            appendFilesToProject(list);
             queryFiles();
         } else {
             console.log("All files downloaded. Length:",projectInfo.files.list.length);
