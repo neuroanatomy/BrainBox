@@ -22,24 +22,25 @@ If you want to work on BrainBox's code, you'll need a local installation:
 
 ## Using Docker to install and run BrainBox
 
-1. git clone this repository or download it
-2. cd to brainbox
-3. get developer keys for your local brainbox url (http://localhost:3000 
-by default)
+1. `git clone` this repository or download it
+2. `cd` to brainbox
+3. get Github developer keys for your local brainbox url 
+(http://localhost:3000 by default)
 4. paste the keys into the github-keys.json.example file, and drop the .example
-5. also drop the .example from blacklist.json.example
-6. mkdir 
-6. make sure docker is installed
-7. docker-compose up
+5. drop the `.example` from `blacklist.json.example`
+6. make sure Docker is installed
+7. `docker-compose up`
 8. Then open `http://localhost:3000` in your browser.
 
 ## Non docker developer install instructions
 
-1. install mongo db; type `mongo` to get into the db; type `use brainbox` to create the `brainbox` database
-2. clone the repo
-3. create a directory `data` inside of `public`
-4. get developer keys for your local brainbox url (http://localhost:3000 by default, but we made a virtual host to http://brainbox.dev)
+1. install and start `mongo` database
+2. clone the repo and `cd` to the brainbox directory
+3. `mkdir public/data`
+4. get Github developer keys for your local brainbox url 
+(http://localhost:3000 by default)
 5. paste the keys into the github-keys.json.example file, and drop the .example
-6. `npm install`, then `npm start`
+6. `npm install`
+7. `npm start`
 
 
