@@ -101,11 +101,12 @@ var api_userFiles = function(req, res) {
     
     console.log("userName:",userName, "start:",start, "length:",length);
     dataSlices.getUserFilesSlice(req,userName, start, length)
-    .then(function(list) {
-        res.send(list);    
+    .then(function(result) {
+        res.send(result);    
     })
     .catch(function(err) {
-        res.send([]);
+        console.log("ERROR:",err);
+        res.send({success:false,list:[]});
     });
 };
 /**
@@ -121,11 +122,12 @@ var api_userAtlas = function(req, res) {
     
     console.log("userName:",userName, "start:",start, "length:",length);
     dataSlices.getUserAtlasSlice(req,userName, start, length)
-    .then(function(list) {
-        res.send(list);    
+    .then(function(result) {
+        res.send(result);    
     })
     .catch(function(err) {
-        res.send([]);
+        console.log("ERROR:",err);
+        res.send({success:false,list:[]});
     });
 }
 /**
@@ -141,11 +143,12 @@ var api_userProjects = function(req, res) {
     
     console.log("userName:",userName, "start:",start, "length:",length);
     dataSlices.getUserProjectsSlice(req,userName, start, length)
-    .then(function(list) {
-        res.send(list);    
+    .then(function(result) {
+        res.send(result);    
     })
     .catch(function(err) {
-        res.send();
+        console.log("ERROR:",err);
+        res.send({success:false, list:[]});
     });
 }
 

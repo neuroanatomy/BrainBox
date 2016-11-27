@@ -409,6 +409,34 @@ var toProject = function toProject(project, user, access) {
     return true;
 };
 
+/**
+ * @func filterAnnotationsByProjects
+ * @desc Set access to volume annotations
+ */
+var filterAnnotationsByProjects = function filterAnnotationsByProjects(mri, projects, user) {
+    var i, j;
+    if(!mri.mri || !mri.mri.atlas)
+        return;
+    if(!projects)
+        return;
+    for(i=mri.mri.atlas.length-1;i>=0;i--) {
+        for(j=0;j<projects.length;j++) {
+            if(projects[j] && projects[j].shortname == mri.mri.atlas[i].project) {
+                var access = toAnnotationByProject(projects[j],user);
+                var level = accessStringToLevel(access);
+                // check for 'view' access (level > 0)
+                if(level > 0) {
+                    mri.mri.atlas[i].access = access;
+                } else {
+                    mri.mri.atlas.splice(i,1);
+                }
+                break;
+            }
+        }
+    }
+};
+
+
 var checkAccess = function () {
     this.accessStringToLevel = accessStringToLevel;
     this.accessLevelToString = accessLevelToString;
@@ -418,6 +446,7 @@ var checkAccess = function () {
     this.minAccessToFileByProjects = minAccessToFileByProjects;
     this.toAnnotationByProject = toAnnotationByProject;
     this.toProject = toProject;
+    this.filterAnnotationsByProjects = filterAnnotationsByProjects;
 };
 
 module.exports = new checkAccess();

@@ -202,18 +202,18 @@ function getFilesSlice(req, projShortname, start, length) {
 	    length = parseInt(length);
 		console.log("inside the promise for project, start, length",projShortname, start, length);
 		req.db.get('project').findOne({shortname:projShortname,backup:{$exists:0}},"-_id")
-		.then(function(json) {
+		.then(function(project) {
             // check access
-            if(checkAccess.toProject(json, loggedUser, "view") === false) {
-                var msg = "ERROR: User "+loggedUser+" is not allowed to view project "+projShortname;
-                console.log(msg);
+            if(checkAccess.toProject(project, loggedUser, "view") === false) {
+                var msg = "User "+loggedUser+" is not allowed to view project "+projShortname;
+                console.log("ERROR:",msg);
                 reject(msg);
                 return;
             }
 
-			if (json) {
-			    console.log("json is not empty");
-				var list = json.files.list, newList = [], arr = [];
+			if (project) {
+			    console.log("project is not empty");
+				var list = project.files.list, newList = [], arr = [];
 				var i;
 				
 				start = Math.min(start, list.length);
@@ -224,20 +224,22 @@ function getFilesSlice(req, projShortname, start, length) {
 					var item = list[i];
 					arr.push(req.db.get('mri').findOne({source:item,backup:{$exists:0}},{name:1,_id:0}));
 				}
-				console.log("an array of db requests will be processed, length:",arr.length);
 				Promise.all(arr)
-				.then(function(values) {
+				.then(function(mris) {
 					var j;
-					for(j=0;j<values.length;j++) {
-						if(values[j]) {
-							newList[j] = values[j];
+					for(j=0;j<mris.length;j++) {
+						if(mris[j]) {
+						    // check j-th mri annotation access
+						    checkAccess.filterAnnotationsByProjects(mris[j],[project],loggedUser);
+						    
+						    // append to list
+							newList[j] = mris[j];
 						} else {
 							newList[j] = {
 								source: list[start+j],
 								name: ""
 							};
 						}
-						console.log(newList[j]);
 					}
 					resolve(newList);
 				})
@@ -246,7 +248,7 @@ function getFilesSlice(req, projShortname, start, length) {
 				    reject();
 				});
 			} else {
-			    console.log("json is empty");
+			    console.log("project is empty");
 			}
 		}).catch(function(err) {
 		    console.log("ERROR:",err);
@@ -302,8 +304,6 @@ var project = function(req, res) {
 var api_project = function(req, res) {
     var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
 
-	console.log("hello project");
-	
 	req.db.get('project').findOne({shortname:req.params.projectName,backup:{$exists:0}},"-_id")
 	.then(function(json) {
 		if(json) {
@@ -405,6 +405,7 @@ var api_projectFiles = function(req, res) {
         res.send(list);    
     })
     .catch(function(err) {
+        console.log("ERROR:",err);
         res.send();
     });
 };
@@ -691,7 +692,7 @@ var post_project = function(req, res) {
             });
     })
     .catch(function(error) {
-        console.log(error);
+        console.log("ERROR",error);
         res.status(300);
         res.json({"error":error});
     });

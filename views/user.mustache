@@ -27,7 +27,7 @@
 		text-align:left;
 		width:100%;
 		border-collapse:collapse;
-		height: 70vh;
+		/* height: 70vh; */
 	}
 	#MRIFiles td, #atlasFiles td, #projects td,
 	#MRIFiles th, #atlasFiles th, #projects th {
@@ -316,6 +316,10 @@
 <script src="/lib/jquery-3.1.1.min.js"></script>
 <script>
 	var userInfo='{{{userInfo}}}';
+	var cursorFiles = 0;
+	var cursorAtlas = 0;
+	var cursorProjects = 0;
+	
 	userInfo=JSON.parse(userInfo);
 	userInfo.MRIFiles = [];
 	userInfo.atlasFiles = [];
@@ -361,11 +365,13 @@ function selectTab(tab) {
     }
 }
 function queryFiles() {
-	$.getJSON("/user/json/{{nickname}}/files", {start:userInfo.MRIFiles.length, length:100})
-	.then(function(list) {
-	    appendFiles(list);
-	    if(list.length == 100)
-	        queryFiles();
+	$.getJSON("/user/json/{{nickname}}/files", {start:cursorFiles, length:100})
+	.then(function(res) {
+	    if(res.success) {
+            appendFiles(res.list);
+            cursorFiles += 100;
+            queryFiles();
+        }
 	});
 }
 function appendFiles(list) {
@@ -387,10 +393,12 @@ function appendFiles(list) {
 }
 function queryAtlas(list) {
 	$.getJSON("/user/json/{{nickname}}/atlas", {start:userInfo.atlasFiles.length, length:100})
-	.then(function(list) {
-	    appendAtlas(list);
-	    if(list.length==100)
-	        queryAtlas();
+	.then(function(res) {
+	    if(res.success) {	        
+            appendAtlas(res.list);
+            cursorAtlas += 100;
+            queryAtlas();
+        }
 	});
 }
 function appendAtlas(list) {
@@ -416,10 +424,12 @@ function appendAtlas(list) {
 }
 function queryProjects() {
 	$.getJSON("/user/json/{{nickname}}/projects", {start:userInfo.projects.length, length:100})
-	.then(function(list) {
-	    appendProjects(list);
-	    if(list.length==100)
-	        queryProjects();
+	.then(function(res) {
+	    if(res.success) {
+            appendProjects(res.list);
+            cursorProject += 100;
+            queryProjects();
+        }
 	});
 }
 function appendProjects(list) {
