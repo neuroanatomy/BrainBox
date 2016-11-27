@@ -228,7 +228,7 @@ db.get('user').findOne({nickname:'anyone'})
             var anyone = {
                 name:'Any BrainBox User',
                 nickname:'anyone',
-                brainboxURL:'http://brainbox.dev/user/anyone',
+                brainboxURL:'/user/anyone',
                 joined:(new Date()).toJSON()
             };
             console.log("WARNING: 'anyone' user absent: inserting it");
