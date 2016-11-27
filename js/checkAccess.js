@@ -406,6 +406,7 @@ var toProject = function toProject(project, user, access) {
         return false;
     }
 
+    console.log("[ca.toProject, done]");
     return true;
 };
 

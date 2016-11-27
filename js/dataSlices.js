@@ -128,7 +128,7 @@ var getUserAtlasSlice = function getUserAtlasSlice(req,requestedUser,start,lengt
  * @param {integer} length Number of files to include in the slice
  */
 var getUserProjectsSlice = function getUserProjectsSlice(req,requestedUser,start,length) {
-    console.log("getUserProjectsSlice",getUserProjectsSlice,start,length);
+    console.log("getUserProjectsSlice",start,length);
 
     var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
 	return new Promise(function (resolve, reject) {

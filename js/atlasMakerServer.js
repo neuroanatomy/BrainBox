@@ -1,9 +1,14 @@
 var fs = require('fs');
 var request = require('request');
 
-// get blacklist
-console.log(__dirname + "/../blacklist.json");
+// get whitelist and blacklist
+var useWhitelist = false;
+var useBlacklist = true;
+var whitelist = JSON.parse(fs.readFileSync(__dirname + "/../whitelist.json"));
 var blacklist = JSON.parse(fs.readFileSync(__dirname + "/../blacklist.json"));
+console.log("Use whitelist:",useWhitelist);
+console.log(whitelist);
+console.log("Use blacklist:",useBlacklist);
 console.log(blacklist);
 
 var http = require('http'),
@@ -37,7 +42,16 @@ server.on("upgrade", function(req, socket, head) {
         || req.connection.socket.remoteAddress;
     ip = ip.split(":").pop();
     console.log("UPGRADING SERVER WITH IP",ip);
-    if (blacklist[ip]) {
+    
+    if(useWhitelist && !whitelist[ip]) {
+        console.log("------------------------------> not in whitelist", ip);
+        setTimeout(function() {
+            console.log("not in whitelist: end");
+            socket.destroy();
+        }, 5000);
+    }
+    
+    if (useBlacklist && blacklist[ip]) {
         console.log("------------------------------> blacklist", ip);
         setTimeout(function() {
             console.log("blacklist: end");
@@ -401,8 +415,13 @@ function verifyClient(info) {
     
     ip = ip.split(":").pop();
 
-    if(blacklist[ip]) {
-        console.log("==========> REJECT ip ",ip);
+    if(useWhitelist && !whitelist[ip]) {
+        console.log("==========> REJECT ip not in whitelist ",ip);
+        return false;
+    }
+    
+    if(useBlacklist && blacklist[ip]) {
+        console.log("==========> REJECT ip in blacklist",ip);
         return false;
     } else {
         console.log("==========> ACCEPT ip ",ip);
@@ -425,8 +444,13 @@ var initSocketConnection = function initSocketConnection() {
             /* BLACKLIST */
             var ip = s.upgradeReq.connection.remoteAddress;
             ip = ip.split(":").pop();
-            if(blacklist[ip]) {
-                    console.log("--------------------> REJECT ip ",ip);
+            if(useWhitelist && !whitelist[ip]) {
+                    console.log("--------------------> REJECT ip not in whitelist",ip);
+                    s.close();
+                    return;
+            }
+            if(useBlacklist && blacklist[ip]) {
+                    console.log("--------------------> REJECT ip in blacklist",ip);
                     s.close();
                     return;
             }
@@ -1191,9 +1215,15 @@ var loadAtlas = function loadAtlas(User) {
     var pr = new Promise(function promise_fromloadAtlas(resolve,reject) {
         var path=this.dataDirectory+User.dirname+User.atlasFilename;
     
-        if(User.dirname == undefined || User.atlasFilename == undefined) {
-            console.log("ERROR: Rejecting loadAtlas from undefined User:",User);
+        if(User.dirname == undefined) {
+            console.log("ERROR: Rejecting loadAtlas from undefined User.dirname:",User);
             reject();
+            return;
+        }
+        if(User.atlasFilename == undefined) {
+            console.log("ERROR: Rejecting loadAtlas from undefined User.atlasFilename:",User);
+            reject();
+            return;
         }
         
         if(!fs.existsSync(path)) {
@@ -1226,6 +1256,7 @@ var loadAtlas = function loadAtlas(User) {
                 .catch(function (err) {
                     console.log("ERROR Cannot get template brain for new atlas", err);
                     reject(err);
+                    return;
                 });
         } else {
             // Load existing atlas
@@ -1248,6 +1279,7 @@ var loadAtlas = function loadAtlas(User) {
                 .catch(function (err) {
                     console.log("ERROR Cannot read nifti", err);
                     reject(err);
+                    return;
                 });
         }
     });
@@ -1271,6 +1303,7 @@ var loadMRI = function loadMRI(path) {
                 .catch(function (err) {
                     console.log("ERROR reading nii.gz file:",err);
                     reject();
+                    return;
                 });
         } else
         if(path.match(/.mgz$/)) {
@@ -1285,6 +1318,7 @@ var loadMRI = function loadMRI(path) {
         } else {
             console.log("ERROR: nothing we can read");
             reject();
+            return;
         }
     });
 
@@ -2050,7 +2084,7 @@ var testS2VTransformation = function testS2VTransformation(mri) {
 	var diff=(vs-vv)/vv;
 	if(Math.abs(diff)>0.001) {
 		doReset=true;
-		if(debug) console.log("    fail");
+		if(debug) console.log("    fail. Voxel volume:",vv,"Screen volume:",vs,"Difference (%):",diff);
 	} else {
 		if(debug) console.log("    ok");
 	}
