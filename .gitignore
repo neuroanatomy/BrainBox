@@ -1,6 +1,10 @@
 github-keys.json
 blacklist.json
 whitelist.json
+log.txt
+npm-debug.log
+abide1
+bulk-upload.sh
 public/data
 public/project/braincatalogue-dev
 node_modules
