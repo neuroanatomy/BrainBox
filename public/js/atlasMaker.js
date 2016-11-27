@@ -325,7 +325,7 @@ var AtlasMakerWidget = {
         me.requestMRIInfo(info.source)
 		.then(function(info2) {
             
-            if(true) { //!info.dim) {
+            if(!info.dim) {
 		        // the mri object used to call this function does not have a 'dim'
 		        // property, indicating that it had not been downloaded at the time of the
 		        // call. Here we merge the fields from info2 that are initialised upon
