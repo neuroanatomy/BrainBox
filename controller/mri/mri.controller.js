@@ -393,12 +393,43 @@ var api_mri_get = function (req, res) {
     });
 }
 
+var reset = function reset(req, res) {
+    var myurl = req.query.url;
+    
+    console.log("body:",req.body);
+    console.log("query:",req.query);
+    console.log("params:",req.params);
+    console.log(myurl,req.query.url);
+    
+    var hash = crypto.createHash('md5').update(myurl).digest('hex'),
+        filename = url.parse(myurl).pathname.split("/").pop();
+    
+    atlasMakerServer.getBrainAtPath("/data/" + hash  + "/" + filename)
+    .then(function getBrainAtPath_fromReset(mri) {
+        req.db.get('mri').update({source:myurl,backup:{$exists:0}},{$set:{
+            dim: mri.dim,
+            pixdim: mri.pixdim,
+            voxel2world: mri.v2w,
+            worldOrigin: mri.wori
+        }})
+        .then(function () {
+            res.send({
+                dim: mri.dim,
+                pixdim: mri.pixdim,
+                voxel2world: mri.v2w,
+                worldOrigin: mri.wori
+            });
+        });
+    });
+};
+
 var mriController = function () {
     this.validator = validator;
     this.validator_post = validator_post;
     this.api_mri_get = api_mri_get;
     this.api_mri_post = api_mri_post;
     this.mri = mri;
+    this.reset = reset;
 };
 
 module.exports = new mriController();
