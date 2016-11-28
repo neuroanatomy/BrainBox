@@ -79,7 +79,7 @@ function downloadMRI(myurl, req, res, callback) {
     })
     .on('response', function(res) {
         var href = res.request.uri.href;
-        newFilename = href.split("/").pop();
+        newFilename = href.split(/[\/=&?]/).pop();
         console.log("filename:",newFilename);
         var arr = dest.split("/");
         arr.pop();
