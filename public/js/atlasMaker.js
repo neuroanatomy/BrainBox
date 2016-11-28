@@ -358,7 +358,8 @@ var AtlasMakerWidget = {
             me.User.v2w=info2.voxel2world;
             me.User.wori=info2.worldOrigin;
             me.computeS2VTransformation();
-            me.testS2VTransformation();
+            
+            //me.testS2VTransformation();
         
             me.flagLoadingImg={loading:false};
         

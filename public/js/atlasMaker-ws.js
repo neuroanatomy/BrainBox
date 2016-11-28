@@ -450,11 +450,11 @@ var AtlasMakerWS = {
 		try {
 			me.socket.send(JSON.stringify({
 				
-				// type:"requestSlice",
+				type:"requestSlice",
 				/*
 				    TEST
 				*/
-				type:"requestSlice2",
+				//type:"requestSlice2",
 				
 				view:me.User.view,
 				slice:me.User.slice

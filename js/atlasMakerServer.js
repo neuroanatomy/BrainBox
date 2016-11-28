@@ -772,24 +772,8 @@ var receiveRequestSlice2Message = function receiveRequestSlice2Message(data,user
                 }
             }
     
-            /*
-            console.log("-------------");
-            console.log("brainPath:");
-            console.log(brainPath);
-            console.log("atlasPath:");
-            console.log(atlasPath);
-            console.log("sourceUS.User:");
-            console.log(sourceUS.User);
-            console.log("brain");
-            console.log(brain);
-            console.log("atlas");
-            console.log(atlas);
-            console.log("-------------");
-            */
-    
             try {
-                // var jpegImageData=drawSlice2(brain,atlas,view,slice); // TEST: to draw the server version of the atlas together with the anatomy
-                var jpegImageData=drawSlice(brain,view,slice);
+                var jpegImageData=drawSlice2(brain,atlas,view,slice); // TEST: to draw the server version of the atlas together with the anatomy
                 var length=jpegImageData.data.length+jpgTag.length;
                 var bin=Buffer.concat([jpegImageData.data,jpgTag],length);
                 user_socket.send(bin, {binary: true,mask:false});
@@ -2271,11 +2255,17 @@ var drawSlice2 = function drawSlice2(brain, atlas, view, slice) {
 		val=(brain.data[i]-brain.min)/(brain.max-brain.min);
 		
 		// atlas data
-		if(atlas.data[i] != 0) {
+		if(atlas.data[i]) {
 		    rgb = colormap[atlas.data[i]];
-            frameData[4*j+0] = t*rgb.r+(1-t)*rgb.r*val; // red
-            frameData[4*j+1] = t*rgb.g+(1-t)*rgb.g*val; // green
-            frameData[4*j+2] = t*rgb.b+(1-t)*rgb.b*val; // blue
+		    if(!rgb || !rgb.r) {
+		        frameData[4*j+0] = 0;
+		        frameData[4*j+0] = 255;
+		        frameData[4*j+0] = 0;
+		    } else {
+                frameData[4*j+0] = t*rgb.r+(1-t)*rgb.r*val; // red
+                frameData[4*j+1] = t*rgb.g+(1-t)*rgb.g*val; // green
+                frameData[4*j+2] = t*rgb.b+(1-t)*rgb.b*val; // blue
+            }
 		} else {
             frameData[4*j+0] = 255*val; // red
             frameData[4*j+1] = 255*val; // green
