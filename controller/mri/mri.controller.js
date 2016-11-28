@@ -59,89 +59,101 @@ var validator_post = function (req, res, next) {
  */
 function downloadMRI(myurl, req, res, callback) {
     console.log("downloadMRI");
-    var hash = crypto.createHash('md5').update(myurl).digest('hex'),
-        filename = url.parse(myurl).pathname.split("/").pop(),
-        dest = req.dirname + "/public/data/" + hash + "/" + filename;
-    console.log("   source:", myurl);
-    console.log("     hash:", hash);
-    console.log(" filename:", filename);
-    console.log("     dest:", dest);
+    var hash = crypto.createHash('md5').update(myurl).digest('hex');
+    
+    req.db.get('mri').findOne({source: myurl, backup:{$exists:0}})
+    .then(function(mridb) {
+        console.log("mridb:",mridb);
+        var filename;
+        if(!mridb || !mridb.filename) {
+            filename = url.parse(myurl).pathname.split("/").pop()
+        } else {
+            filename = mridb.filename;
+        }
+        var dest = req.dirname + "/public/data/" + hash + "/" + filename;
+        console.log("   source:", myurl);
+        console.log("     hash:", hash);
+        console.log(" filename:", filename);
+        console.log("     dest:", dest);
 
-    if (!fs.existsSync(req.dirname + "/public/data/" + hash)) {
-        fs.mkdirSync(req.dirname + "/public/data/" + hash, '0777');
-    }
-    var newFilename, newDest, len, cur = 0;
+        if (!fs.existsSync(req.dirname + "/public/data/" + hash)) {
+            fs.mkdirSync(req.dirname + "/public/data/" + hash, '0777');
+        }
+        var newFilename, newDest, len, cur = 0;
 
-    request({uri: myurl, followAllRedirects: true})
-    .on('error', function (err) {
-        console.log("ERROR in downloadMRI", err);
-        callback({error:err});
-    })
-    .on('response', function(res) {
-        var href = res.request.uri.href;
-        newFilename = href.split(/[\/=&?]/).pop();
-        console.log("filename:",newFilename);
-        var arr = dest.split("/");
-        arr.pop();
-        arr.push(newFilename);
-        newDest = arr.join("/");
-        console.log("new dest:",newDest);
-        len = parseInt(res.headers['content-length'], 10);
-        console.log("file length:",len);
-    })
-    .on('data', function(chunk) {    
-//      body += chunk;
-        cur += chunk.length;
-        //console.log("downloaded:",cur,"/",len);
-//      obj.innerHTML = "Downloading " + (100.0 * cur / len).toFixed(2) + "% " + (cur / 1048576).toFixed(2) + " mb\r" + ".<br/> Total size: " + total.toFixed(2) + " mb";
-    })
-    .pipe(fs.createWriteStream(dest))
-    .on('close', function request_fromDownloadMRI(res) {
-        console.log("new:",newFilename, newDest);
-        
-        fs.renameSync(dest, newDest);
-        filename=newFilename;
-        dest=newDest;
-        
-        // NOTE: getBrainAtPath has to be called with a client-side path like "/data/[md5hash]/..."
-        atlasMakerServer.getBrainAtPath("/data/" + hash  + "/" + filename)
-        .then(function getBrainAtPath_fromDownloadMRI(mri) {
-            // create json file for new dataset
-            var ip = req.headers['x-forwarded-for'] ||
-                req.connection.remoteAddress ||
-                req.socket.remoteAddress ||
-                req.connection.socket.remoteAddress;
-            var username = (req.isAuthenticated()) ? req.user.username : ip;
-            var json = {
-                filename: filename,
-                success: true,
-                source: myurl,
-                url: "/data/" + hash + "/",
-                included: (new Date()).toJSON(),
-                dim: mri.dim,
-                pixdim: mri.pixdim,
-                voxel2world: mri.v2w,
-                worldOrigin: mri.wori,
-                owner: username,
-                mri: {
-                    brain: filename,
-                    atlas: [{
-                        created: (new Date()).toJSON(),
-                        modified: (new Date()).toJSON(),
-                        access: 'edit',
-                        type: 'volume',
-                        name: 'Default',
-                        filename: 'Atlas.nii.gz',
-                        labels: 'foreground.json'
-                    }]
-                }
-            };
-            callback(json);
+        request({uri: myurl, followAllRedirects: true})
+        .on('error', function (err) {
+            console.log("ERROR in downloadMRI", err);
+            callback({error:err});
         })
-        .catch(function(err) {
-            console.log("ERROR Cannot get brain at path /data/" + hash  + "/" + filename + ": ", err);
-            callback({error:"Can't get brain"});
+        .on('response', function(res) {
+            var href = res.request.uri.href;
+            newFilename = href.split(/[\/=&?]/).pop();
+            console.log("filename:",newFilename);
+            var arr = dest.split("/");
+            arr.pop();
+            arr.push(newFilename);
+            newDest = arr.join("/");
+            console.log("new dest:",newDest);
+            len = parseInt(res.headers['content-length'], 10);
+            console.log("file length:",len);
+        })
+        .on('data', function(chunk) {    
+    //      body += chunk;
+            cur += chunk.length;
+            //console.log("downloaded:",cur,"/",len);
+    //      obj.innerHTML = "Downloading " + (100.0 * cur / len).toFixed(2) + "% " + (cur / 1048576).toFixed(2) + " mb\r" + ".<br/> Total size: " + total.toFixed(2) + " mb";
+        })
+        .pipe(fs.createWriteStream(dest))
+        .on('close', function request_fromDownloadMRI(res) {
+            console.log("new:",newFilename, newDest);
+        
+            fs.renameSync(dest, newDest);
+            filename=newFilename;
+            dest=newDest;
+        
+            // NOTE: getBrainAtPath has to be called with a client-side path like "/data/[md5hash]/..."
+            atlasMakerServer.getBrainAtPath("/data/" + hash  + "/" + filename)
+            .then(function getBrainAtPath_fromDownloadMRI(mri) {
+                // create json file for new dataset
+                var ip = req.headers['x-forwarded-for'] ||
+                    req.connection.remoteAddress ||
+                    req.socket.remoteAddress ||
+                    req.connection.socket.remoteAddress;
+                var username = (req.isAuthenticated()) ? req.user.username : ip;
+                var json = {
+                    filename: filename,
+                    success: true,
+                    source: myurl,
+                    url: "/data/" + hash + "/",
+                    included: (new Date()).toJSON(),
+                    dim: mri.dim,
+                    pixdim: mri.pixdim,
+                    voxel2world: mri.v2w,
+                    worldOrigin: mri.wori,
+                    owner: username,
+                    mri: {
+                        brain: filename,
+                        atlas: [{
+                            created: (new Date()).toJSON(),
+                            modified: (new Date()).toJSON(),
+                            access: 'edit',
+                            type: 'volume',
+                            name: 'Default',
+                            filename: 'Atlas.nii.gz',
+                            labels: 'foreground.json'
+                        }]
+                    }
+                };
+                callback(json);
+            })
+            .catch(function(err) {
+                console.log("ERROR Cannot get brain at path /data/" + hash  + "/" + filename + ": ", err);
+                callback({error:"Can't get brain"});
+            });
         });
+
+
     });
 }
 var mri = function (req, res) {
@@ -244,7 +256,7 @@ var api_mri_post = function (req, res) {
                     doDownload = true;
                 } else {
                     // if the json object exists, but there's no file, download
-                    var filename = url.parse(myurl).pathname.split("/").pop();
+                    var filename = json.filename || url.parse(myurl).pathname.split("/").pop();
                     var path = req.dirname + "/public/data/" + hash + "/" + filename;
                     if(fs.existsSync(path) == false) {
                         console.log("No MRI file in server: download");
@@ -395,26 +407,40 @@ var api_mri_get = function (req, res) {
 
 var reset = function reset(req, res) {
     var myurl = req.query.url;
+    var hash = crypto.createHash('md5').update(myurl).digest('hex');
     
-    var hash = crypto.createHash('md5').update(myurl).digest('hex'),
-        filename = url.parse(myurl).pathname.split("/").pop();
-    
-    atlasMakerServer.getBrainAtPath("/data/" + hash  + "/" + filename)
-    .then(function getBrainAtPath_fromReset(mri) {
-        req.db.get('mri').update({source:myurl,backup:{$exists:0}},{$set:{
-            dim: mri.dim,
-            pixdim: mri.pixdim,
-            voxel2world: mri.v2w,
-            worldOrigin: mri.wori
-        }})
-        .then(function () {
-            res.send({
+    req.db.get('mri').findOne({source:myurl,backup:{$exists:0}})
+    .then(function(mridb) {
+        var filename = mridb.filename;
+        atlasMakerServer.getBrainAtPath("/data/" + hash  + "/" + filename)
+        .then(function getBrainAtPath_fromReset(mri) {
+            req.db.get('mri').update({source:myurl,backup:{$exists:0}},{$set:{
                 dim: mri.dim,
                 pixdim: mri.pixdim,
                 voxel2world: mri.v2w,
                 worldOrigin: mri.wori
+            }})
+            .then(function () {
+                res.send({
+                    dim: mri.dim,
+                    pixdim: mri.pixdim,
+                    voxel2world: mri.v2w,
+                    worldOrigin: mri.wori
+                });
+            })
+            .catch(function(err) {
+                console.log("ERROR:",err);
+                res.send(err).status(403).end();
             });
+        })
+        .catch(function(err) {
+            console.log("ERROR:",err);
+            res.send(err).status(403).end();
         });
+    })
+    .catch(function(err) {
+        console.log("ERROR:",err);
+        res.send(err).status(403).end();
     });
 };
 
