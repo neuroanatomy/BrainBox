@@ -17,6 +17,6 @@ router.post('/upload',
 	upload_controller.other_validations,
 	upload_controller.upload);
 
-router.post('/reset', controller.reset);
+router.get('/reset', controller.reset);
 
 module.exports = router;

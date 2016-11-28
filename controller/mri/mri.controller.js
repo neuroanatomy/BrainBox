@@ -396,11 +396,6 @@ var api_mri_get = function (req, res) {
 var reset = function reset(req, res) {
     var myurl = req.query.url;
     
-    console.log("body:",req.body);
-    console.log("query:",req.query);
-    console.log("params:",req.params);
-    console.log(myurl,req.query.url);
-    
     var hash = crypto.createHash('md5').update(myurl).digest('hex'),
         filename = url.parse(myurl).pathname.split("/").pop();
     
