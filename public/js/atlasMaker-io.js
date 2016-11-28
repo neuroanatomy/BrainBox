@@ -225,23 +225,10 @@ var AtlasMakerIO = {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(S2I,3);if(l)console.log.apply(undefined,l);
 		
-        var i=mri.v2w[0];
-        var j=mri.v2w[1];
-        var k=mri.v2w[2];
-        var mi={i:0,v:0};i.map(function(o,n){if(Math.abs(o)>Math.abs(mi.v)) mi={i:n,v:o}});
-        var mj={i:0,v:0};j.map(function(o,n){if(Math.abs(o)>Math.abs(mj.v)) mj={i:n,v:o}});
-        var mk={i:0,v:0};k.map(function(o,n){if(Math.abs(o)>Math.abs(mk.v)) mk={i:n,v:o}});
-        
-        var v=[];
-        var f = function(m,i) {
-            if(m.v>0) return s[m.i];
-            else      return (mri.dim[i]-s[m.i]-1);
-        };
-        v=[f(mi,0),f(mj,1),f(mk,2)];
-        var index = v[0] + v[1]*mri.dim[0] + v[2]*mri.dim[0]*mri.dim[1];
-        
+        var s2v = mri.s2v;
+        var v = [s2v.X+s2v.dx*s[s2v.x],s2v.Y+s2v.dy*s[s2v.y],s2v.Z+s2v.dz*s[s2v.z]];
+        index = v[0] + v[1]*mri.dim[0] + v[2]*mri.dim[0]*mri.dim[1];
         return index;
-		
 	},
     /**
      * @function mulMatVec

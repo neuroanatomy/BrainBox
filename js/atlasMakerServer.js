@@ -18,17 +18,6 @@ var http = require('http'),
                 || req.connection.remoteAddress
                 || req.socket.remoteAddress
                 || req.connection.socket.remoteAddress;
-
-            /*
-            console.log("CREATE SERVER WITH IP",ip);
-            if (blacklist[request_ip]) {
-                console.log("------------------------------> blacklist", request_ip);
-                setTimeout(function() {
-                    console.log("blacklist: end");
-                    res.end();
-                }, 5000);
-            }
-            */
         }),
 	url = require('url'),
 	WebSocketServer = require('ws').Server,
@@ -540,8 +529,17 @@ var initSocketConnection = function initSocketConnection() {
 						break;
 				}
 
-				// broadcast
+				// Broadcast
+				//----------
 				var n=0;
+				
+                // do not broadcast requestSlice messages
+                if(data.type === "requestSlice"
+                    || data.type === "requestSlice2") {
+                    return;
+                }
+				
+				// scan through connected users
 				for(var i in websocket.clients) {
 					// i-th user
 					var targetUS=getUserFromSocket(websocket.clients[i]);

@@ -12,7 +12,7 @@ var AtlasMakerPaint = {
 		// u: user number
 		// c: command
 		// x, y: coordinates
-		msg={"c": c, "x": x, "y": y};
+		msg={c: c, x: x, y: y};
 		if(u==-1 && JSON.stringify(msg)!=JSON.stringify(me.msg0)) {
 			me.sendShowMessage(msg);
 			me.msg0=msg;
@@ -53,35 +53,49 @@ var AtlasMakerPaint = {
 		// u: user number
 		// c: command
 		// x, y: coordinates
-		msg={"c":c,"x":x,"y":y};
+		msg={c:c,x:x,y:y};
 		if(u==-1 && JSON.stringify(msg)!=JSON.stringify(me.msg0)) {
 			me.sendPaintMessage(msg);
 			me.msg0=msg;
 		}
-	
+		
 		var	dim=me.atlas.dim;
 	
-		var	coord={"x":x,"y":y,"z":usr.slice};
+		var	coord={x:x,y:y,z:usr.slice};
 		if(usr.x0<0) {
 			usr.x0=coord.x;
 			usr.y0=coord.y;
 		}
-	
-		var val=usr.penValue;
-		switch(c) {
-			case 'le':
-				me.line(coord.x,coord.y,0,usr);
-				break;
-			case 'lf':
-				me.line(coord.x,coord.y,val,usr);
-				break;
-			case 'e':
-				me.fill(coord.x,coord.y,coord.z,0,usr.view);
-				break;
-			case 'f':
-				me.fill(coord.x,coord.y,coord.z,val,usr.view);
-				break;
-		}
+
+        if(u!=-1) {
+            if(c === 'mu') {
+                if(usr.pointer) {
+                    usr.pointer.remove();
+                    delete usr.pointer;
+                }
+            } else {
+                if(!usr.pointer) {
+                    usr.pointer = $('<div style="display:inline-block;height:20px;margin-left:-10px;margin-top:-10px;position:absolute;color:white"><img src="/img/show.svg" height="100%"/>'+((usr.username == 'Anonymous')?u:usr.username)+'</div>');
+                    $("#resizable").append(usr.pointer);
+                }
+                usr.pointer.css({left:x*$("#resizable").width()/me.brain_W,top:y*$("#resizable").height()/me.brain_H});
+            }
+        }
+        var val=usr.penValue;
+        switch(c) {
+            case 'le':
+                me.line(coord.x,coord.y,0,usr);
+                break;
+            case 'lf':
+                me.line(coord.x,coord.y,val,usr);
+                break;
+            case 'e':
+                me.fill(coord.x,coord.y,coord.z,0,usr.view);
+                break;
+            case 'f':
+                me.fill(coord.x,coord.y,coord.z,val,usr.view);
+                break;
+        }
 
 		usr.x0=coord.x;
 		usr.y0=coord.y;

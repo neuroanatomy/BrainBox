@@ -65,6 +65,7 @@ var AtlasMakerWS = {
 			me.receiveFunctions["paintvol"]=me.receivePaintVolumeMessage;
 			me.receiveFunctions["disconnect"]=me.receiveDisconnectMessage;
 			
+			me.receiveFunctions["requestSlice"]=function(data){console.log("requestSlice",data)};
 			me.receiveFunctions["requestSlice2"]=function(data){console.log("requestSlice2",data)};
 			
 			me.socket.onmessage = me.receiveSocketMessage;

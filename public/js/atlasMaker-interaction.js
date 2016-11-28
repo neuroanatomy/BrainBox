@@ -633,7 +633,6 @@ var AtlasMakerInteraction = {
 		var l=me.traceLog(down,0,"#f00");if(l)console.log.apply(undefined,l);
 	
 		var z=me.User.slice;
-
 		
 		switch(me.User.tool) {
 			case 'show':
@@ -748,6 +747,8 @@ var AtlasMakerInteraction = {
 		// Send mouse up (touch ended) message
 		me.User.mouseIsDown = false;
 		me.User.x0=-1;
+
+        me.sendUserDataMessage(JSON.stringify({'mouseIsDown':false}));
 		
 		var msg;
 		switch(me.User.tool) {
@@ -757,7 +758,7 @@ var AtlasMakerInteraction = {
                 break;
             case 'paint':
             case 'erase':
-                var msg={"c":"mu"};
+                var msg={c:"mu"};
                 me.sendPaintMessage(msg);
 
                 // add annotated length to User.annotation length and post to DB
@@ -786,7 +787,7 @@ var AtlasMakerInteraction = {
 		/*
 		    TEST
 		*/
-		me.sendRequestSliceMessage();
+		//me.sendRequestSliceMessage();
 	},
     /**
      * @function keyDown
