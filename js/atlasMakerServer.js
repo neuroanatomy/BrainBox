@@ -2033,7 +2033,7 @@ var computeS2VTransformation = function computeS2VTransformation(mri) {
 	// space directions are transposed!
 	var v2w=[[],[],[]];
 	//for(j in mri.dir) for(i in mri.dir[j]) v2w[i][j]=mri.dir[j][i];	// transpose
-	for(j in mri.dir) for(i in mri.dir[j]) v2w[i][j]=mri.dir[i][j];	// do not transpose, just for the lols
+	for(j in mri.dir) for(i in mri.dir[j]) v2w[i][j]=mri.dir[i][j];	// do not transpose
 	var wpixdim=subVecVec(mulMatVec(v2w,[1,1,1]),mulMatVec(v2w,[0,0,0]));
 	// min and max world coordinates
 	var wvmax=addVecVec(mulMatVec(v2w,[mri.dim[0]-1,mri.dim[1]-1,mri.dim[2]-1]),wori);
@@ -2042,25 +2042,36 @@ var computeS2VTransformation = function computeS2VTransformation(mri) {
 	var wmax=[Math.max(wvmin[0],wvmax[0]),Math.max(wvmin[1],wvmax[1]),Math.max(wvmin[2],wvmax[2])];
 	var w2s=[[1/Math.abs(wpixdim[0]),0,0],[0,1/Math.abs(wpixdim[1]),0],[0,0,1/Math.abs(wpixdim[2])]];
 
-	console.log(["v2w",v2w, "wori",wori, "wpixdim",wpixdim, "wvmax",wvmax, "wvmin",wvmin, "wmin",wmin, "wmax",wmax, "w2s",w2s]);
+	// console.log(["v2w",v2w, "wori",wori, "wpixdim",wpixdim, "wvmax",wvmax, "wvmin",wvmin, "wmin",wmin, "wmax",wmax, "w2s",w2s]);
 
-	mri.s2v = {
-		sdim: [(wmax[0]-wmin[0])/Math.abs(wpixdim[0])+1,(wmax[1]-wmin[1])/Math.abs(wpixdim[1])+1,(wmax[2]-wmin[2])/Math.abs(wpixdim[2])+1],
-		s2w: invMat(w2s),
-		sori: [-wmin[0]/Math.abs(wpixdim[0]),-wmin[1]/Math.abs(wpixdim[1]),-wmin[2]/Math.abs(wpixdim[2])],
-		w2v: invMat(v2w),
-		wori: wori
-	};
-	mri.v2w=v2w;
-	mri.wori=wori;
-	
-	var i=mri.v2w[0];
-	var j=mri.v2w[1];
-	var k=mri.v2w[2];
+	var i=v2w[0];
+	var j=v2w[1];
+	var k=v2w[2];
 	var mi={i:0,v:0};i.map(function(o,n){if(Math.abs(o)>Math.abs(mi.v)) mi={i:n,v:o}});
 	var mj={i:0,v:0};j.map(function(o,n){if(Math.abs(o)>Math.abs(mj.v)) mj={i:n,v:o}});
 	var mk={i:0,v:0};k.map(function(o,n){if(Math.abs(o)>Math.abs(mk.v)) mk={i:n,v:o}});
 
+	mri.s2v = {
+		// old s2v fields
+		s2w: invMat(w2s),
+		sdim: [],
+		sori: [-wmin[0]/Math.abs(wpixdim[0]),-wmin[1]/Math.abs(wpixdim[1]),-wmin[2]/Math.abs(wpixdim[2])],
+		w2v: invMat(v2w),
+		wori: wori,
+
+	    // new s2v transformation
+	    x: mi.i, // correspondence between space coordinate x and voxel coordinate i
+	    y: mj.i, // same for y
+	    z: mk.i, // same for z
+	    dx: (mi.v>0)?1:(-1), // direction of displacement in space coordinate x with displacement in voxel coordinate i
+	    dy: (mj.v>0)?1:(-1), // same for y
+	    dz: (mk.v>0)?1:(-1), // same for z
+	    X: (mi.v>0)?0:(mri.dim[0]-1), // starting value for space coordinate x when voxel coordinate i starts
+	    Y: (mj.v>0)?0:(mri.dim[1]-1), // same for y
+	    Z: (mk.v>0)?0:(mri.dim[2]-1) // same for z
+	};
+	mri.v2w=v2w;
+	mri.wori=wori;
 	mri.s2v.sdim[mi.i] = mri.dim[0];
 	mri.s2v.sdim[mj.i] = mri.dim[1];
 	mri.s2v.sdim[mk.i] = mri.dim[2];
@@ -2117,53 +2128,14 @@ var testS2VTransformation = function testS2VTransformation(mri) {
 var S2I = function S2I(s, mri) {
     traceLog(S2I,3);
     
-	/*
-	var s2v=mri.s2v;
-	var i=null,w,s,v;
-	w=mulMatVec(s2v.s2w,subVecVec(s,s2v.sori)); // screen to world: w=s2w*(s-sori)
-	v=mulMatVec(s2v.w2v,subVecVec(w,s2v.wori)); // world to voxel
-
-	v=[Math.round(v[0]),Math.round(v[1]),Math.round(v[2])]; // round to integer
-	if(v[0]>=0&&v[0]<mri.dim[0]&&v[0]>=0&&v[0]<mri.dim[0]&&v[0]>=0&&v[0]<mri.dim[0])
-		i= v[2]*mri.dim[1]*mri.dim[0]+ v[1]*mri.dim[0] +v[0];
-	return i;
-	*/
-	
-	var i=mri.v2w[0];
-	var j=mri.v2w[1];
-	var k=mri.v2w[2];
-	var mi={i:0,v:0};i.map(function(o,n){if(Math.abs(o)>Math.abs(mi.v)) mi={i:n,v:o}});
-	var mj={i:0,v:0};j.map(function(o,n){if(Math.abs(o)>Math.abs(mj.v)) mj={i:n,v:o}});
-	var mk={i:0,v:0};k.map(function(o,n){if(Math.abs(o)>Math.abs(mk.v)) mk={i:n,v:o}});
-		
-	var v=[];
-	var f = function(m,i) {
-        if(m.v>0) return s[m.i];
-        else      return (mri.dim[i]-s[m.i]-1);
-	};
-	v=[f(mi,0),f(mj,1),f(mk,2)];
+    var s2v = mri.s2v;
+    var v = [s2v.X+s2v.dx*s[s2v.x],s2v.Y+s2v.dy*s[s2v.y],s2v.Z+s2v.dz*s[s2v.z]];
 	index = v[0] + v[1]*mri.dim[0] + v[2]*mri.dim[0]*mri.dim[1];
-
-	/*
-	console.log("i,j,k:",i,j,k);
-	console.log("v2w:",mri.v2w);
-	console.log("dim:",mri.dim);
-	console.log("mi,mj,mk:",mi,mj,mk);
-	console.log("v:",v);
-	console.log("index:",index);
-	*/
-	
 	return index;
 };
 var drawSlice = function drawSlice(brain, view, slice) {
     traceLog(drawSlice,1);
     
-	/*
-	console.log("s2i origin",S2I([0,0,0],brain));
-	console.log("s2i origin",S2I([150,255,255],brain));
-	return;
-	*/
-	
 	var x,y,i,j;
 	var brain_W, brain_H, brain_D;
 	var ys,ya,yc;
