@@ -421,6 +421,7 @@ var settings = function(req, res) {
 
 	req.db.get('project').findOne({shortname:req.params.projectName,backup:{$exists:0}},"-_id")
 	.then(function(json) {
+console.log(".......... a", new Date());
 		if(json) {
             // check that the logged user has access to view this project
             if(checkAccess.toProject(json, loggedUser, "view") === false) {
@@ -455,6 +456,7 @@ var settings = function(req, res) {
                 }
             };
         }
+console.log(".......... b", new Date());
 
         // find source URL and name for each of the files in the project
         var i, arr = [];
@@ -463,7 +465,7 @@ var settings = function(req, res) {
         }
         Promise.all(arr)
         .then(function(mris) {
-            console.log("back with all mris:",mris.length);
+console.log(".......... back with all mris:",mris.length, new Date());
             for(i=0;i<mris.length;i++) {
                 if(mris[i]) {
                     json.files.list[i]={
@@ -485,7 +487,7 @@ var settings = function(req, res) {
             }
             Promise.all(arr1)
             .then(function(obj) {
-                console.log("back with all collaborators:",obj.length);
+console.log(".......... back with all collaborators:",obj.length, new Date());
                 var j;
                 for(j=0;j<obj.length;j++) {
                     json.collaborators.list[j].username=json.collaborators.list[j].userID;
@@ -501,6 +503,7 @@ var settings = function(req, res) {
                     projectInfo: JSON.stringify(json),
                     login: login
                 };
+console.log(".......... return", new Date());
                 res.render('projectSettings',context);
             });
         });
