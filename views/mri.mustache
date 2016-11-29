@@ -374,24 +374,6 @@ var volAnnParam, textAnnParam, info_proxy={};
 var hash_old;
 var cb, label;  // WS Autocompletion
 
-    /*
-    var host = "ws://" + window.location.hostname + ":8080/";
-    if (window.WebSocket) {
-        ws=new WebSocket(host);
-    } else if (window.MozWebSocket) {
-        ws=new MozWebSocket(host);
-    }
-    ws.onmessage = function(message) {
-        message = JSON.parse(message.data);
-        if (message.type === "projectNameQuery") {
-            var arr = [];
-            if(label=="projectName")
-                arr=$.map(message.metadata,function(o){return {label:o.nickname,nickname:o.nickname,name:o.name}});
-            cb(arr);
-        }
-    }
-    */
-
 if( $.isEmptyObject(mriInfo)) {
     $("#stereotaxic").prepend("<h2>ERROR: Cannot read the data.</h2><p>The file is maybe corrupt?</p>");
     console.log("ERROR: Cannot read data. The file is maybe corrupt?");
@@ -446,7 +428,7 @@ if( $.isEmptyObject(mriInfo)) {
                 "<tr>",
                 " <td contentEditable=true class='noEmpty'></td>", // name
                 " <td><select>",$.map(BrainBox.labelSets,function(o){return "<option>"+o.name+"</option>"}),"</select></td>",	// value
-                " <td contentEditable=true class='noEmpty autocomplete' data-autocomplete='user.similarProjectNames'></td>", // project
+                " <td class='noEmpty'></td>", // project
                 " <td></td>", // modified
                 " <td>", // access
                 "  <div class='access'>",
@@ -466,8 +448,9 @@ if( $.isEmptyObject(mriInfo)) {
                     format: function(e,d){$(e).find("select").prop('selectedIndex',$.map(BrainBox.labelSets,function(o){return o.source}).indexOf(d))},
                     parse: function(e){var name=$(e).find("select").val(),i=$.map(BrainBox.labelSets,function(o){return o.name}).indexOf(name);return BrainBox.labelSets[i].source}
                 },
-                {	typeOfBinding:2, // project
-                    path:"mri.atlas.#.project"
+                {	typeOfBinding:1, // project
+                    path:"mri.atlas.#.project",
+                    format: function(e,d){$(e).html('<a href="/project/'+d+'">'+d+'</a>')}
                 },
                 {	typeOfBinding:1,
                     path:"mri.atlas.#.modified",
@@ -518,7 +501,7 @@ if( $.isEmptyObject(mriInfo)) {
             "<tr>",
             " <td contentEditable=true class='noEmpty'></td>", // name
             " <td contentEditable=true class='noEmpty'></td>", // value
-            " <td contentEditable=true class='noEmpty'></td>", // project
+            " <td class='noEmpty'></td>", // project
             " <td></td>", // modified
             " <td>", // access
             "  <div class='access'>",
@@ -537,8 +520,9 @@ if( $.isEmptyObject(mriInfo)) {
             {   typeOfBinding:2,
                 path:"#.data" // data
             },
-            {   typeOfBinding:2,
+            {   typeOfBinding:1,
                 path:"#.project", // project
+                format: function(e,d){$(e).html('<a href="/project/'+d+'">'+d+'</a>')}
             },
             {   typeOfBinding:1,
                 path:"#.modified", // modified

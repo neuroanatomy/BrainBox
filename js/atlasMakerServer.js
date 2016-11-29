@@ -535,7 +535,7 @@ var initSocketConnection = function initSocketConnection() {
 				
                 // do not broadcast the following messages
                 if(data.type === "requestSlice"
-                    || data.type === "requestSlice2")
+                    || data.type === "requestSlice2"
                     || (data.type === "userData" && data.description === "sendAtlas")) {
                     return;
                 }
