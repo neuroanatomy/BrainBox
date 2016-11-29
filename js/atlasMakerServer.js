@@ -573,7 +573,11 @@ var initSocketConnection = function initSocketConnection() {
 						} else {
 						    // sanitise data
 						    const cleanData=DOMPurify.sanitize(JSON.stringify(data));
-							websocket.clients[i].send(cleanData);
+							try {
+    							websocket.clients[i].send(cleanData);
+    						} catch (err) {
+    						    console.log("ERROR:", err);
+    						}
 						}
 					} else {
 						if(debug>1) console.log("    no broadcast to user "+targetUS.User.username+" [uid: "+targetUS.uid+"] of atlas "+targetUS.User.specimenName+"/"+targetUS.User.atlasFilename);
