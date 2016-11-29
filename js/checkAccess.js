@@ -65,7 +65,7 @@ var toFileByAllProjects = function toFileByAllProjects(mri, projects, user, acce
             // collaborators=projects[p].files.access.whitelist;
             collaborators=projects[p].collaborators.list;
             for(c in collaborators) {
-                if(collaborators[c].userId === user) {
+                if(collaborators[c].userID === user) {
                     var collaboratorAccessLevel = accessLevels.indexOf(collaborators[c].access.files);
                     if(requestedLevel>collaboratorAccessLevel) {
                         if(debug>1) console.log("WARNING: Collaborator access refused from project",projects[p].shortname);
@@ -134,7 +134,7 @@ var toFileByOneProject = function toFileByOneProject(mri, projects, user, access
             // check if user has collaborator access
             collaborators=projects[p].collaborators.list;
             for(c in collaborators) {
-                if(collaborators[c].userId === user) {
+                if(collaborators[c].userID === user) {
                     var collaboratorAccessLevel = accessLevels.indexOf(collaborators[c].access.files);
                     if(requestedLevel <= collaboratorAccessLevel) {
                         console.log("Collaborator access granted by project",projects[p].shortname);
@@ -201,7 +201,7 @@ var maxAccessToFileByProjects = function maxAccessToFileByProjects(mri, projects
             var c, collaborators;
             collaborators=projects[p].collaborators.list;
             for(c in collaborators) {
-                if(collaborators[c].userId === user) {
+                if(collaborators[c].userID === user) {
                     var collaboratorAccessLevel = accessLevels.indexOf(collaborators[c].access.files);
                     if(maxLevel < collaboratorAccessLevel) {
                         maxLevel = collaboratorAccessLevel;
@@ -259,7 +259,7 @@ var minAccessToFileByProjects = function minAccessToFileByProjects(mri, projects
             var c, collaborators;
             collaborators=projects[p].collaborators.list;
             for(c in collaborators) {
-                if(collaborators[c].userId === user) {
+                if(collaborators[c].userID === user) {
                     var collaboratorAccessLevel = accessLevels.indexOf(collaborators[c].access.files);
                     if(minLevel > collaboratorAccessLevel) {
                         minLevel = collaboratorAccessLevel;
@@ -318,7 +318,7 @@ var maxAccessToFileByProjects = function maxAccessToFileByProjects(mri, projects
             var c, collaborators;
             collaborators=projects[p].collaborators.list;
             for(c in collaborators) {
-                if(collaborators[c].userId === user) {
+                if(collaborators[c].userID === user) {
                     var collaboratorAccessLevel = accessLevels.indexOf(collaborators[c].access.files);
                     if(maxLevel < collaboratorAccessLevel) {
                         maxLevel = collaboratorAccessLevel;
@@ -391,7 +391,7 @@ var toProject = function toProject(project, user, access) {
     //collaborators=project.files.access.whitelist;
     collaborators=project.collaborators.list;
     for(c in collaborators) {
-        if(collaborators[c].userId === user) {
+        if(collaborators[c].userID === user) {
             var collaboratorAccessLevel = accessLevels.indexOf(collaborators[c].access.files);
             if(requestedLevel>collaboratorAccessLevel) {
                 if(debug>1) console.log("WARNING: Collaborator access refused to project",project.shortname);
