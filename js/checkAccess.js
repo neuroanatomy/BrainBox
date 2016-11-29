@@ -361,6 +361,7 @@ var toAnnotationByProject = function toAnnotationByProject(project,user) {
 var toProject = function toProject(project, user, access) {
     traceLog(toProject);
 
+    console.log("project:",project.shortname);
     var p, requestedLevel = accessLevels.indexOf(access);
 
     // find 'anyone' user
@@ -382,6 +383,7 @@ var toProject = function toProject(project, user, access) {
 
     // check if user has owner access
     if(user === project.owner) {
+        console.log("access granted: owner");
         return true;
     }
 
@@ -395,6 +397,7 @@ var toProject = function toProject(project, user, access) {
                 if(debug>1) console.log("WARNING: Collaborator access refused to project",project.shortname);
                 return false;
             } else {
+                console.log("access granted: collaborator");
                 return true;
             }
         }
@@ -405,6 +408,7 @@ var toProject = function toProject(project, user, access) {
         if(debug>1) console.log("WARNING: Public access refused to project",project.shortname);
         return false;
     }
+    console.log("access granted: anyone");
 
     return true;
 };
