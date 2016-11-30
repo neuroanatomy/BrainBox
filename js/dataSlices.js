@@ -168,6 +168,79 @@ var getUserProjectsSlice = function getUserProjectsSlice(req,requestedUser,start
 };
 
 /**
+ * @func getProjectFilesSlice
+ * @desc Get a slice of the mri files in a project
+ * @param {String} projectShortname Shortname of the project containing the files
+ * @param {integer} start Start index of the file slice
+ * @param {integer} length Number of files to include in the slice
+ * @param {boolean} namesFlag Whether to append only the name of each MRI or the complete structure
+ */
+var getProjectFilesSlice = function getProjectFilesSlice(req, projShortname, start, length, namesFlag) {
+    var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
+
+    console.log("start, length, namesFlag:",start, length, namesFlag);
+    
+	return new Promise(function (resolve, reject) {
+	    start = parseInt(start);
+	    length = parseInt(length);
+		req.db.get('project')
+		.findOne({shortname:projShortname,backup:{$exists:0}},"-_id")
+		.then(function(project) {
+            // check access
+            if(checkAccess.toProject(project, loggedUser, "view") === false) {
+                var msg = "User "+loggedUser+" is not allowed to view project "+projShortname;
+                console.log("ERROR:",msg);
+                reject(msg);
+                return;
+            }
+
+			if (project) {
+				var list = project.files.list, newList = [], arr = [];
+				var i;
+				start = Math.min(start, list.length);
+				length = Math.min(length, list.length-start);
+				for(i=start;i<start+length;i++) {
+					arr.push(req.db.get('mri').findOne({source:list[i],backup:{$exists:0}},{_id:0}));
+				}
+				Promise.all(arr)
+				.then(function(mris) {
+					var j;
+					for(j=0;j<mris.length;j++) {
+						if(mris[j]) {
+						    // check j-th mri annotation access
+						    checkAccess.filterAnnotationsByProjects(mris[j],[project],loggedUser);
+						    
+						    // append to list
+						    if(namesFlag) {
+    							newList[j] = {source: mris[j].source, name: mris[j].name}
+    						} else {
+    							newList[j] = mris[j];
+    						}
+						} else {
+							newList[j] = {
+								source: list[start+j],
+								name: ""
+							};
+						}
+					}
+					resolve(newList);
+				})
+				.catch(function(err) {
+				    console.log("ERROR:",err);
+				    reject();
+				});
+			} else {
+			    console.log("project is empty");
+			}
+		})
+		.catch(function(err) {
+		    console.log("ERROR:",err);
+			reject();
+		});
+	});
+};
+
+/**
  * @func getFilesSlice
  * @desc Get an access-filtered slice of all mri files
  * @param {integer} start Start index of the file slice
@@ -255,11 +328,12 @@ var getProjectsSlice = function getProjectsSlice(req,start,length) {
 };
 
 var dataSlices = function () {
-    this.getFilesSlice = getFilesSlice;
-    this.getProjectsSlice = getProjectsSlice;
     this.getUserFilesSlice = getUserFilesSlice;
     this.getUserAtlasSlice = getUserAtlasSlice;
     this.getUserProjectsSlice = getUserProjectsSlice;
+    this.getProjectFilesSlice = getProjectFilesSlice;
+    this.getFilesSlice = getFilesSlice;
+    this.getProjectsSlice = getProjectsSlice;
 };
 
 module.exports = new dataSlices();

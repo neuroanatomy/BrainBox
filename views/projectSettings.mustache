@@ -647,9 +647,28 @@ var filesParam = {
         }
     ]
 };
-for(var i=0;i<projectInfo.files.list.length;i++) {
-    BrainBox.appendAnnotationTableRow(i,filesParam);
+
+var cursorFiles = 0;
+queryFiles();
+
+function queryFiles() {
+    $.get("/project/json/"+projectInfo.shortname+"/files", {start:cursorFiles,length:100,name:true})
+    .then(function(list) {
+        if(list.length) {
+            appendFiles(list);
+            cursorFiles += 100;
+            queryFiles();
+        }
+    });
 }
+function appendFiles(list) {
+    projectInfo.files.list.push.apply(projectInfo.files.list, list);
+    for(var i=0;i<list.length;i++) {
+        BrainBox.appendAnnotationTableRow(cursorFiles + i, filesParam);
+    }
+    $("#numFiles").text(projectInfo.files.list.length);
+}
+
 
 $("#projDescription #numFiles").text(projectInfo.files.list.length);
 $("#projDescription #numAnnotations").text(projectInfo.annotations.list.length);
@@ -711,7 +730,6 @@ $("#annotations tbody").on('change', "td:nth-child(2) select", function(e) {
         $("#annotations tbody  tr:eq("+irow+") td:eq(2)").html("");
     }
 });
-
 
 /**
  * @function onAccessClicked

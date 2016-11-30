@@ -185,72 +185,6 @@ var isProjectObject = function(req,res,object) {
 
     return pr;
 }
-
-/**
- * @func getFilesSlice
- * @desc Get a slice of the mri files in a project
- * @param {String} projectShortname Shortname of the project containing the files
- * @param {integer} start Start index of the file slice
- * @param {integer} length Number of files to include in the slice
- */
-function getFilesSlice(req, projShortname, start, length) {
-    var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
-
-	return new Promise(function (resolve, reject) {
-	    start = parseInt(start);
-	    length = parseInt(length);
-		req.db.get('project').findOne({shortname:projShortname,backup:{$exists:0}},"-_id")
-		.then(function(project) {
-            // check access
-            if(checkAccess.toProject(project, loggedUser, "view") === false) {
-                var msg = "User "+loggedUser+" is not allowed to view project "+projShortname;
-                console.log("ERROR:",msg);
-                reject(msg);
-                return;
-            }
-
-			if (project) {
-				var list = project.files.list, newList = [], arr = [];
-				var i;
-				
-				start = Math.min(start, list.length);
-				length = Math.min(length, list.length-start);
-				for(i=start;i<start+length;i++) {
-					arr.push(req.db.get('mri').findOne({source:list[i],backup:{$exists:0}},{name:1,_id:0}));
-				}
-				Promise.all(arr)
-				.then(function(mris) {
-					var j;
-					for(j=0;j<mris.length;j++) {
-						if(mris[j]) {
-						    // check j-th mri annotation access
-						    checkAccess.filterAnnotationsByProjects(mris[j],[project],loggedUser);
-						    
-						    // append to list
-							newList[j] = mris[j];
-						} else {
-							newList[j] = {
-								source: list[start+j],
-								name: ""
-							};
-						}
-					}
-					resolve(newList);
-				})
-				.catch(function(err) {
-				    console.log("ERROR:",err);
-				    reject();
-				});
-			} else {
-			    console.log("project is empty");
-			}
-		}).catch(function(err) {
-		    console.log("ERROR:",err);
-			reject();
-		});
-	});
-				
-}
 /**
  * @function project
  * @desc Render the project page GUI
@@ -344,40 +278,6 @@ var api_projectAll = function(req, res) {
     });
 };
 
-
-/*
-    var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
-    var myurl = req.query.url;
-    var i, page, nItemsPerPage, hash;
-
-    if(!myurl) {
-        if(!req.query.page) {
-            res.send({error:"Specify the 'page' parameter"});
-            return;
-        }
-        // display list of mris
-        page = Math.max(0,parseInt(req.query.page));
-        nItemsPerPage = 20;
-        
-        
-        dataSlices.getFilesSlice(req,page*nItemsPerPage,nItemsPerPage)
-        .then(function (values) {
-            res.json(values);
-        });
-    } else {
-        // display information for one specific mri
-        req.db.get('mri').findOne({url: "/data/" + hash + "/", backup: {$exists: false}}, "-_id", {sort: {$natural: -1}, limit: 1})
-        .then(function (json) {
-            res.status(200);
-            res.json(json);
-        })
-        .catch(function(err) {
-            res.status(500);
-            res.json(err);
-        });
-    }
-*/
-
 /**
  * @function api_projectFiles
  * @desc Writes json data for a slice of project files
@@ -385,16 +285,14 @@ var api_projectAll = function(req, res) {
  * @param {Object} res Res object from express
  * @result A json object with project data
  */
-/**
- * @todo Check access rights for this route
- */
 var api_projectFiles = function(req, res) {
     var projShortname = req.params.projectName;
     var start = req.query.start;
     var length = req.query.length;
+    var namesFlag = req.query.names;
     
-    console.log("projShortname:",projShortname, "start:",start, "length:",length);
-    getFilesSlice(req,projShortname, start, length)
+    console.log("projShortname:",projShortname, "start:",start, "length:",length, "namesFlag:",namesFlag);
+    dataSlices.getProjectFilesSlice(req,projShortname, start, length, namesFlag)
     .then(function(list) {
         res.send(list);    
     })
@@ -458,54 +356,34 @@ console.log(".......... a", new Date());
         }
 console.log(".......... b", new Date());
 
-        // find source URL and name for each of the files in the project
-        var i, arr = [];
-        for(i=0;i<json.files.list.length;i++) {
-            arr.push(req.db.get('mri').findOne({source:json.files.list[i],backup:{$exists:0}},{name:1,_id:0}));
-        }
-        Promise.all(arr)
-        .then(function(mris) {
-console.log(".......... back with all mris:",mris.length, new Date());
-            for(i=0;i<mris.length;i++) {
-                if(mris[i]) {
-                    json.files.list[i]={
-                        source: json.files.list[i],
-                        name: mris[i].name
-                    }
-                } else {
-                    json.files.list[i]={
-                        source: json.files.list[i],
-                        name: ""
-                    }
-                }
-            }
+        // empty the files.list: it will be filled progressively from the client
+        json.files.list = [];
 
-            // find username and name for each of the collaborators in the project
-            var j, arr1 = [];
-            for(j=0;j<json.collaborators.list.length;j++) {
-                arr1.push(req.db.get('user').findOne({nickname:json.collaborators.list[j].userID,backup:{$exists:0}},{name:1,_id:0}));
-            }
-            Promise.all(arr1)
-            .then(function(obj) {
+        // find username and name for each of the collaborators in the project
+        var j, arr1 = [];
+        for(j=0;j<json.collaborators.list.length;j++) {
+            arr1.push(req.db.get('user').findOne({nickname:json.collaborators.list[j].userID,backup:{$exists:0}},{name:1,_id:0}));
+        }
+        Promise.all(arr1)
+        .then(function(obj) {
 console.log(".......... back with all collaborators:",obj.length, new Date());
-                var j;
-                for(j=0;j<obj.length;j++) {
-                    json.collaborators.list[j].username=json.collaborators.list[j].userID;
-                    if(obj[j]) {    // name found
-                        json.collaborators.list[j].name=obj[j].name;
-                    } else {    // name not found: set to empty
-                        json.collaborators.list[i].name="";
-                    }
+            var j;
+            for(j=0;j<obj.length;j++) {
+                json.collaborators.list[j].username=json.collaborators.list[j].userID;
+                if(obj[j]) {    // name found
+                    json.collaborators.list[j].name=obj[j].name;
+                } else {    // name not found: set to empty
+                    json.collaborators.list[i].name="";
                 }
-                var context = {
-                    projectShortname: json.shortname,
-                    owner: json.owner,
-                    projectInfo: JSON.stringify(json),
-                    login: login
-                };
+            }
+            var context = {
+                projectShortname: json.shortname,
+                owner: json.owner,
+                projectInfo: JSON.stringify(json),
+                login: login
+            };
 console.log(".......... return", new Date());
-                res.render('projectSettings',context);
-            });
+            res.render('projectSettings',context);
         });
     });
 };
