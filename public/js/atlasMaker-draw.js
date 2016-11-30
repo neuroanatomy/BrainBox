@@ -15,13 +15,16 @@ var AtlasMakerDraw = {
 		var	wAspect=wW/wH;
 		var	bAspect=me.brain_W*me.brain_Wdim/(me.brain_H*me.brain_Hdim);
 		
+		/*
 		if(me.editMode==1) {
+	    */
 			// In edit mode width or height can be fixed to 100%
 			// depending on the slice and container aspect ratio
 			if(wAspect>bAspect)
 				$('#resizable').css({width:(100*bAspect/wAspect)+'%',height:'100%'});
 			else
 				$('#resizable').css({width:'100%',height:(100*wAspect/bAspect)+'%'});
+		/*
 		} else {
 			// In display mode slice width is always fixed to 100%
 			$('#resizable').css({width:'100%',height:(100*wAspect/bAspect)+'%'});
@@ -33,8 +36,8 @@ var AtlasMakerDraw = {
 				var f=windowH/sliceH;
 				$('#resizable').css({width:(f*100)+'%',height:f*(100*wAspect/bAspect)+'%'});
 			}
-			
 		}
+		*/
 	},
     /**
      * @function configureBrainImage
