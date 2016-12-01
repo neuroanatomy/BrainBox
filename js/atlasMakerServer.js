@@ -1256,6 +1256,11 @@ var loadAtlas = function loadAtlas(User) {
                     loadedAtlas.name = User.atlasFilename;
                     loadedAtlas.dirname = User.dirname;
                     // convert atlas data to 8bits
+                    
+                    /*
+                    
+                        // TEST
+                    
                     createNifti(loadedAtlas)
                     .then(function(atlas8bit) {
                         for(i=0;i<loadedAtlas.dim[0]*loadedAtlas.dim[1]*loadedAtlas.dim[2];i++)
@@ -1264,6 +1269,10 @@ var loadAtlas = function loadAtlas(User) {
                         loadedAtlas.hdr=atlas8bit.hdr;
                         resolve(loadedAtlas);
                     })
+                    
+                    */
+                    resolve(loadedAtlas);
+                    
                 })
                 .catch(function (err) {
                     console.log("ERROR Cannot read nifti", err);
@@ -1571,7 +1580,7 @@ var saveAtlas = function saveAtlas(atlas) {
 			
 			var pr=new Promise(function (resolve, reject) {
 				zlib.gzip(mri, function (err,mrigz) {
-					var	ms=+new Date;
+					var	ms=+new Date();
 					var path1=this.dataDirectory+atlas.dirname+atlas.name;
 					var	path2=this.dataDirectory+atlas.dirname+ms+"_"+atlas.name;
 					fs.rename(path1,path2, function () {
