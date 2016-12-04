@@ -144,7 +144,8 @@ var MghHdr = Struct()
     .array('delta',3,'floatbe')
     .array('Mdc',9,'floatbe')
     .array('Pxyz_c',3,'floatbe');
-
+var MghFtr = Struct()
+    .array('mrparms',4,'floatbe');
 
 console.log("atlasMakerServer.js");
 console.log("date:", new Date());
@@ -1250,29 +1251,32 @@ var loadAtlas = function loadAtlas(User) {
         } else {
             // Load existing atlas
             console.log("    Atlas found. Loading it");
-            //readNifti(path)
             loadMRI(path)
                 .then(function (loadedAtlas) {
                     loadedAtlas.name = User.atlasFilename;
                     loadedAtlas.dirname = User.dirname;
-                    // convert atlas data to 8bits
                     
-                    /*
-                    
-                        // TEST
-                    
-                    createNifti(loadedAtlas)
-                    .then(function(atlas8bit) {
-                        for(i=0;i<loadedAtlas.dim[0]*loadedAtlas.dim[1]*loadedAtlas.dim[2];i++)
-                            atlas8bit.data[i]=loadedAtlas.data[i];
-                        loadedAtlas.data=atlas8bit.data;
-                        loadedAtlas.hdr=atlas8bit.hdr;
-                        resolve(loadedAtlas);
-                    })
-                    
-                    */
-                    resolve(loadedAtlas);
-                    
+                    // cast atlas data to 8bits
+                    switch(filetypeFromFilename(User.atlasFilename)) {
+                        case "nii.gz":
+                            createNifti(loadedAtlas)
+                            .then(function(atlas8bit) {
+                                for(i=0;i<loadedAtlas.dim[0]*loadedAtlas.dim[1]*loadedAtlas.dim[2];i++)
+                                    atlas8bit.data[i]=loadedAtlas.data[i];
+                                loadedAtlas.data=atlas8bit.data;
+                                loadedAtlas.hdr=atlas8bit.hdr;
+                                resolve(loadedAtlas);
+                            })
+                            break;
+                        case "mgz":
+                            resolve(loadedAtlas);
+/*
+                            createMGH(loadedAtlas)
+                            .then(function(atlas8bit) {
+                            });
+*/
+                            break;
+                    }
                 })
                 .catch(function (err) {
                     console.log("ERROR Cannot read nifti", err);
@@ -1283,6 +1287,16 @@ var loadAtlas = function loadAtlas(User) {
     });
     return pr;
 };
+function filetypeFromFilename(path) {
+    if(path.match(/.nii.gz$/)) {
+        return "nii.gz";
+    } else
+    if(path.match(/.mgz$/)) {
+        return "mgz";
+    } else {
+        return;
+    }
+}
 var loadMRI = function loadMRI(path) {
     traceLog(loadMRI);
     console.log("path:",path);
@@ -1292,9 +1306,10 @@ var loadMRI = function loadMRI(path) {
         output: an mri structure
     */
 	var pr = new Promise(function promise_fromLoadMRI(resolve, reject) {
-        if(path.match(/.nii.gz$/)) {
-            console.log("reading nii");
-            readNifti(path)
+        switch(filetypeFromFilename(path)) {
+            case "nii.gz":
+                console.log("reading nii");
+                readNifti(path)
                 .then(function (mri) {
                     resolve(mri);
                 })
@@ -1303,20 +1318,23 @@ var loadMRI = function loadMRI(path) {
                     reject();
                     return;
                 });
-        } else
-        if(path.match(/.mgz$/)) {
-            console.log("reading mgz");
-            readMGZ(path)
+                break;
+            case "mgz":
+                console.log("reading mgz");
+                readMGZ(path)
                 .then(function(mri) {
                     resolve(mri);
                 })
                 .catch(function (err) {
                     console.log("ERROR reading mgz file:",err);
+                    reject();
+                    return;
                 });
-        } else {
-            console.log("ERROR: nothing we can read");
-            reject();
-            return;
+                break;
+            default:
+                console.log("ERROR: nothing we can read");
+                reject();
+                return;
         }
     });
 
@@ -1451,8 +1469,8 @@ var readMGZ = function readMGZ(path) {
             child_process.execFile("gunzip", ["-c",path], {encoding: 'binary', maxBuffer: 200*1024*1024}, function(err, stdout) {
                 var mgh = new Buffer(stdout, 'binary');
                 var i, j, tmp, sum, mri = {};
-                var sz;
-                var hdr_sz=284;
+                var sz, bpv;
+                var hdr_sz=284, ftrSz;
                 MghHdr.allocate();
                 MghHdr._setBuff(mgh);
                 var h=JSON.parse(JSON.stringify(MghHdr.fields));
@@ -1485,29 +1503,43 @@ var readMGZ = function readMGZ(path) {
                 //testS2VTransformation(mri);
                
                 sz = mri.dim[0]*mri.dim[1]*mri.dim[2];
+                bpv = [1, 4, 0, 4, 2][h.type]; // bytes per voxel
+                console.log("sz:",sz);
+                console.log("bpv:",bpv,"type:",h.type);
 
                 // keep the header
                 mri.hdr=mgh.slice(0,hdr_sz);
                 mri.hdrSz=hdr_sz;
 
+                // keep the footer
+                ftrSz = mgh.length-hdr_sz-sz*bpv;
+                mri.ftr=mgh.slice(hdr_sz+sz*bpv);
+
+                // print info
+                console.log("    mgh.length:", mgh.length);
+                console.log("        hdr_sz:", hdr_sz);
+                console.log("        sz*bpv:", sz*bpv);
+                console.log("         ftrSz:", ftrSz);
+                console.log("mri.ftr.length:", mri.ftr.length);
+
                 switch(h.type) {
                     case 0: // MGHUCHAR
-                        mri.data=mgh.slice(hdr_sz);
+                        mri.data=mgh.slice(hdr_sz,-ftrSz);
                         break;
                     case 1: // MGHINT
-                        tmp=mgh.slice(hdr_sz);
+                        tmp=mgh.slice(hdr_sz,-ftrSz);
                         mri.data=new Uint32Array(sz);
                         for(j=0;j<sz;j++)
                             mri.data[j]=tmp.readUInt32BE(j*4);
                         break;
                     case 3: // MGHFLOAT
-                        tmp=mgh.slice(hdr_sz);
+                        tmp=mgh.slice(hdr_sz,-ftrSz);
                         mri.data=new Float32Array(sz);
                         for(j=0;j<sz;j++)
                             mri.data[j]=tmp.readFloatBE(j*4);
                         break;
                     case 4: // MGHSHORT
-                        tmp=mgh.slice(hdr_sz);
+                        tmp=mgh.slice(hdr_sz,-ftrSz);
                         mri.data=new Int16Array(sz);
                         for(j=0;j<sz;j++)
                             mri.data[j]=tmp.readInt16BE(j*2);
@@ -1565,18 +1597,33 @@ var saveAtlas = function saveAtlas(atlas) {
 			}
 			atlas.sum=sum;
 
-			var	voxel_offset=atlas.hdrSz;
-			var	mri=new Buffer(atlas.dim[0]*atlas.dim[1]*atlas.dim[2]+voxel_offset);
+			var	hdrSz=atlas.hdrSz;
+			var dataSz = atlas.data.length;
+			var ftrSz;
+			var	mri;
+			
+			if(atlas.ftr) {
+			    ftrSz = atlas.ftr.length;
+			} else {
+			    ftrSz = 0;
+			}
+			
+			mri = new Buffer(atlas.dim[0]*atlas.dim[1]*atlas.dim[2] + hdrSz + ftrSz);
 
-			console.log("sum:",sum);
-			console.log("voxel_offset:",voxel_offset);
-			console.log("dim:",atlas.dim);
-			console.log("    Atlas",atlas.dirname,atlas.name,
-						"data length",atlas.data.length+voxel_offset,
+			console.log("        sum:",sum);
+			console.log("header size:",hdrSz);
+			console.log("  data size:",atlas.dim[0]*atlas.dim[1]*atlas.dim[2]);
+			console.log("footer size:",ftrSz);
+			console.log("        dim:",atlas.dim);
+			console.log(" Atlas",atlas.dirname,atlas.name,
+						"hdr+data+ftr length",atlas.data.length+hdrSz+ftrSz,
 						"buff length",mri.length);
 			
 			atlas.hdr.copy(mri);
-			atlas.data.copy(mri,voxel_offset);
+			atlas.data.copy(mri,hdrSz);
+			if(ftrSz) {
+                atlas.ftr.copy(mri,hdrSz+dataSz);
+			}
 			
 			var pr=new Promise(function (resolve, reject) {
 				zlib.gzip(mri, function (err,mrigz) {
