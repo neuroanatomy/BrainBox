@@ -1474,6 +1474,13 @@ var readMGZ = function readMGZ(path) {
                 MghHdr.allocate();
                 MghHdr._setBuff(mgh);
                 var h=JSON.parse(JSON.stringify(MghHdr.fields));
+                
+                // Test Header
+                if(h.v<1 || h.v>100) {
+                    console.log("ERROR: Wrong MGH Header",h);
+                    reject("ERROR: Wrong MGH Header",h);
+                    return;
+                }
     
                 // Equations from freesurfer/matlab/load_mgh.m
                 var Pcrs_c = [h.ndim1/2,h.ndim2/2,h.ndim3/2];
