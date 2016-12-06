@@ -304,7 +304,8 @@ var AtlasMakerWidget = {
             if(info.success == true) {
                 def.resolve(info);
             } else if(info.success == 'downloading') {
-                setTimeout(function(){me.requestMRIInfo(source,def)},5000);
+                setTimeout(function(){me.requestMRIInfo(source,def)},2000);
+                $("#loadingIndicator p").text("Loading... "+parseInt(info.cur/info.len*100,10)+"%");
             } else {
                 console.log("ERROR: requestMRIInfo",info);
                 def.reject();

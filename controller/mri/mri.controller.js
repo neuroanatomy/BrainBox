@@ -101,7 +101,9 @@ function downloadMRI(myurl, req, res, callback) {
         .on('data', function(chunk) {    
     //      body += chunk;
             cur += chunk.length;
-            //console.log("downloaded:",cur,"/",len);
+            //console.log("downloaded:",cur,"/",len,newFilename);
+            downloadQueue[myurl].cur = cur;
+            downloadQueue[myurl].len = len;
     //      obj.innerHTML = "Downloading " + (100.0 * cur / len).toFixed(2) + "% " + (cur / 1048576).toFixed(2) + " mb\r" + ".<br/> Total size: " + total.toFixed(2) + " mb";
         })
         .pipe(fs.createWriteStream(dest))
@@ -277,12 +279,13 @@ var api_mri_post = function (req, res) {
                         delete downloadQueue[myurl];
                         res.json(info);
                     } else {
+                        console.log(downloadQueue[myurl]);
                         res.json(downloadQueue[myurl]);
                     }
                         
                 } else {
                     console.log("Start download:");
-                    downloadQueue[myurl] = {success:"downloading"};
+                    downloadQueue[myurl] = {success:"downloading",cur:0,len:1};
                     downloadMRI(myurl, req, res, function (obj) {                        
                         if(obj.error == undefined) {
                             console.log("Download succeeded");
