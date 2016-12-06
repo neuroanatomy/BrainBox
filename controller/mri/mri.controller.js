@@ -242,6 +242,13 @@ var mri = function (req, res) {
 var api_mri_post = function (req, res) {
     var myurl = req.body.url;
     var hash = crypto.createHash('md5').update(myurl).digest('hex');
+    var loggedUser = "anonymous";
+    if(req.isAuthenticated()) {
+        loggedUser = req.user.username;
+    } else
+    if(req.isTokenAuthenticated) {
+        loggedUser = req.tokenUsername;
+    }
 
     req.db.get('mri').findOne({source:myurl, backup: {$exists: 0}}, {_id: 0})
         .then(function (json) {
@@ -314,9 +321,22 @@ var api_mri_post = function (req, res) {
             res.json({success:false});
         });
 };
+
+/*
+
+token=054x9gjgfdukozkv25cfgh9f6rzpuc9h1fbwb2o83vondpwrk9
+
+*/
+
 var api_mri_get = function (req, res) {
-    var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
     var myurl = req.query.url;
+    var loggedUser = "anonymous";
+    if(req.isAuthenticated()) {
+        loggedUser = req.user.username;
+    } else
+    if(req.isTokenAuthenticated) {
+        loggedUser = req.tokenUsername;
+    }
 
     // if query does not contain a specific mri, send paginated list of mris
     if(!myurl) {

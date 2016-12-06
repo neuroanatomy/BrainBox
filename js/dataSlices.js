@@ -11,7 +11,13 @@ var checkAccess = require(__dirname+"/checkAccess.js");
  */
 var getUserFilesSlice = function getUserFilesSlice(req,requestedUser,start,length) {
     console.log('getUserFilesSlice. Start, end:',start,length);
-    var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
+    var loggedUser = "anonymous";
+    if(req.isAuthenticated()) {
+        loggedUser = req.user.username;
+    } else
+    if(req.isTokenAuthenticated) {
+        loggedUser = req.tokenUsername;
+    }
 
 	return new Promise(function (resolve, reject) {
         Promise.all([
@@ -67,9 +73,13 @@ var getUserFilesSlice = function getUserFilesSlice(req,requestedUser,start,lengt
  * @param {integer} length Number of files to include in the slice
  */
 var getUserAtlasSlice = function getUserAtlasSlice(req,requestedUser,start,length) {
-    console.log("getUserAtlasSlice",requestedUser,start,length);
-
-    var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
+    var loggedUser = "anonymous";
+    if(req.isAuthenticated()) {
+        loggedUser = req.user.username;
+    } else
+    if(req.isTokenAuthenticated) {
+        loggedUser = req.tokenUsername;
+    }
 	return new Promise(function (resolve, reject) {
         Promise.all([
             req.db.get('mri')
@@ -126,9 +136,13 @@ var getUserAtlasSlice = function getUserAtlasSlice(req,requestedUser,start,lengt
  * @param {integer} length Number of files to include in the slice
  */
 var getUserProjectsSlice = function getUserProjectsSlice(req,requestedUser,start,length) {
-    console.log("getUserProjectsSlice",start,length);
-
-    var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
+    var loggedUser = "anonymous";
+    if(req.isAuthenticated()) {
+        loggedUser = req.user.username;
+    } else
+    if(req.isTokenAuthenticated) {
+        loggedUser = req.tokenUsername;
+    }
 	return new Promise(function (resolve, reject) {
         req.db.get('project').find({
             $or: [
@@ -176,9 +190,13 @@ var getUserProjectsSlice = function getUserProjectsSlice(req,requestedUser,start
  * @param {boolean} namesFlag Whether to append only the name of each MRI or the complete structure
  */
 var getProjectFilesSlice = function getProjectFilesSlice(req, projShortname, start, length, namesFlag) {
-    var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
-
-    console.log("start, length, namesFlag:",start, length, namesFlag);
+    var loggedUser = "anonymous";
+    if(req.isAuthenticated()) {
+        loggedUser = req.user.username;
+    } else
+    if(req.isTokenAuthenticated) {
+        loggedUser = req.tokenUsername;
+    }
     
 	return new Promise(function (resolve, reject) {
 	    start = parseInt(start);
@@ -247,7 +265,13 @@ var getProjectFilesSlice = function getProjectFilesSlice(req, projShortname, sta
  * @param {integer} length Number of files to include in the slice
  */
 var getFilesSlice = function getFilesSlice(req,start,length) {
-    var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
+    var loggedUser = "anonymous";
+    if(req.isAuthenticated()) {
+        loggedUser = req.user.username;
+    } else
+    if(req.isTokenAuthenticated) {
+        loggedUser = req.tokenUsername;
+    }
 
 	return new Promise(function (resolve, reject) {
         Promise.all([
@@ -290,9 +314,14 @@ var getFilesSlice = function getFilesSlice(req,start,length) {
  * @param {integer} length Number of files to include in the slice
  */
 var getProjectsSlice = function getProjectsSlice(req,start,length) {
-    console.log("getProjectsSlice",start,length);
+    var loggedUser = "anonymous";
+    if(req.isAuthenticated()) {
+        loggedUser = req.user.username;
+    } else
+    if(req.isTokenAuthenticated) {
+        loggedUser = req.tokenUsername;
+    }
 
-    var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
 	return new Promise(function (resolve, reject) {
         req.db.get('project')
         .find({backup: {$exists: false}},{skip:start,limit:length})

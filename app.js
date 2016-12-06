@@ -161,6 +161,41 @@ app.get('/auth/github/callback',
     });
 //-----}
 
+global.tokenAuthentication = function (req, res, next) {
+    console.log(">> Check token");
+    var token;
+    if(req.params.token)
+        token = req.params.token;
+    if(req.query.token)
+        token = req.query.token;
+
+    if(!token) {
+        console.log(">> No token");
+        next();
+        return;
+    }
+    req.db.get("log").findOne({"token":token})
+    .then(function (obj) {
+        if(obj) {
+            // Check token expiry date
+            var now = new Date();
+            if(obj.expiryDate.getTime()-now.getTime() < req.tokenDuration) {
+                console.log(">> Authenticated by token");
+                req.isTokenAuthenticated = true;
+                req.tokenUsername = obj.username;
+            } else {
+                console.log(">> Token expired");
+            }
+        }
+        next();
+    })
+    .catch(function(err) {
+        console.log("ERROR:",err);
+        next();
+    });
+}
+
+
 // GUI routes
 app.get('/', function (req, res) { // /auth/github
     var login = (req.isAuthenticated()) ?

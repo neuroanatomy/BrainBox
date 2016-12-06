@@ -34,43 +34,6 @@ var validator = function(req, res, next) {
 	}
 }
 
-var tokenAuthentication = function tokenAuthentication(req, res, next) {
-    
-    console.log(">> Check token");
-    var token;
-    
-    if(req.params.token)
-        token = req.params.token;
-    if(req.query.token)
-        token = req.query.token;
-
-    if(!token) {
-        console.log(">> No token");
-        next();
-        return;
-    }
-    
-    req.db.get("log").findOne({"token":token})
-    .then(function (obj) {
-        if(obj) {
-            // Check token expiry date
-            var now = new Date();
-            if(obj.expiryDate.getTime()-now.getTime() < req.tokenDuration) {
-                console.log(">> Authenticated by token");
-                req.isTokenAuthenticated = true;
-                req.tokenUsername = obj.username;
-            } else {
-                console.log(">> Token expired");
-            }
-        }
-        next();
-    })
-    .catch(function(err) {
-        console.log("ERROR:",err);
-        next();
-    });
-}
-
 /**
  * @func isProjectObject
  * @param {Object} req Express req object
@@ -697,7 +660,6 @@ var delete_project = function(req, res) {
 
 var projectController = function(){
 	this.validator = validator;
-	this.tokenAuthentication = tokenAuthentication;
 	this.api_projectAll = api_projectAll;
 	this.api_project = api_project;
 	this.api_projectFiles = api_projectFiles;
