@@ -4,8 +4,6 @@ var fs = require('fs');
 var atlasMakerServer = require('../../js/atlasMakerServer');
 //expressValidator = require('express-validator')
 
-var tokenDuration = 24 * (1000 * 3600); // in milliseconds
-
 var validator = function (req, res, next) {
     req.checkBody('url', 'please enter a valid URL')
         .notEmpty()
@@ -46,7 +44,7 @@ var other_validations = function(req, res, next) {
         if(obj) {
             // Check token expiry date
             var now = new Date();
-            if(obj.expiryDate.getTime()-now.getTime() < tokenDuration) {
+            if(obj.expiryDate.getTime()-now.getTime() < req.tokenDuration) {
                 req.db.get('mri').findOne({source:req.body.url, backup: {$exists: false}})
                 .then(function (json) {
                     if (json && req.files.length > 0) {
@@ -204,7 +202,7 @@ var token = function token(req, res) {
         obj.token = a + b;
         // expiration date: now plus tokenDuration milliseconds
         now = new Date();
-        obj.expiryDate = new Date(now.getTime() + tokenDuration);
+        obj.expiryDate = new Date(now.getTime() + req.tokenDuration);
         // record the username
         obj.username = req.user.username;
         // store it in the database for the user
@@ -214,7 +212,7 @@ var token = function token(req, res) {
             // schedule its removal or log them forever?
             setTimer(function () {
                 req.db.get("log").remove(obj);
-            }, tokenDuration);
+            }, req.tokenDuration);
         */
         
         res.json(obj);

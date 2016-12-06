@@ -82,6 +82,8 @@ if ( DOCKER_DEVELOP == '1') {
 app.use(function (req, res, next) {
     req.dirname = dirname;
     req.db = db;
+    req.tokenDuration = 24 * (1000 * 3600); // token duration in milliseconds
+
     next();
 });
 

@@ -34,6 +34,43 @@ var validator = function(req, res, next) {
 	}
 }
 
+var tokenAuthentication = function tokenAuthentication(req, res, next) {
+    
+    console.log(">> Check token");
+    var token;
+    
+    if(req.params.token)
+        token = req.params.token;
+    if(req.query.token)
+        token = req.query.token;
+
+    if(!token) {
+        console.log(">> No token");
+        next();
+        return;
+    }
+    
+    req.db.get("log").findOne({"token":token})
+    .then(function (obj) {
+        if(obj) {
+            // Check token expiry date
+            var now = new Date();
+            if(obj.expiryDate.getTime()-now.getTime() < req.tokenDuration) {
+                console.log(">> Authenticated by token");
+                req.isTokenAuthenticated = true;
+                req.tokenUsername = obj.username;
+            } else {
+                console.log(">> Token expired");
+            }
+        }
+        next();
+    })
+    .catch(function(err) {
+        console.log("ERROR:",err);
+        next();
+    });
+}
+
 /**
  * @func isProjectObject
  * @param {Object} req Express req object
@@ -195,7 +232,13 @@ var project = function(req, res) {
 	var login=	(req.isAuthenticated())?
 				("<a href='/user/"+req.user.username+"'>"+req.user.username+"</a> (<a href='/logout'>Log Out</a>)")
 				:("<a href='/auth/github'>Log in with GitHub</a>");
-    var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
+    var loggedUser = "anonymous";
+    if(req.isAuthenticated()) {
+        loggedUser = req.user.username;
+    } else
+    if(req.isTokenAuthenticated) {
+        loggedUser = req.tokenUsername;
+    }
 
     // store return path in case of login
     req.session.returnTo = req.originalUrl;
@@ -230,7 +273,13 @@ var project = function(req, res) {
  * @result A json object with project data
  */
 var api_project = function(req, res) {
-    var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
+    var loggedUser = "anonymous";
+    if(req.isAuthenticated()) {
+        loggedUser = req.user.username;
+    } else
+    if(req.isTokenAuthenticated) {
+        loggedUser = req.tokenUsername;
+    }
 
 	req.db.get('project').findOne({shortname:req.params.projectName,backup:{$exists:0}},"-_id")
 	.then(function(json) {
@@ -261,8 +310,14 @@ var api_project = function(req, res) {
  * @result A json object with project data
  */
 var api_projectAll = function(req, res) {
-    var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
     var i, page, nItemsPerPage;
+    var loggedUser = "anonymous";
+    if(req.isAuthenticated()) {
+        loggedUser = req.user.username;
+    } else
+    if(req.isTokenAuthenticated) {
+        loggedUser = req.tokenUsername;
+    }
 
     if(!req.query.page) {
         res.send({error:"Specify the 'page' parameter"});
@@ -312,14 +367,19 @@ var settings = function(req, res) {
     var login = (req.isAuthenticated()) ?
                 ("<a href='/user/" + req.user.username + "'>" + req.user.username + "</a> (<a href='/logout'>Log Out</a>)")
                 : ("<a href='/auth/github'>Log in with GitHub</a>");
-    var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
+    var loggedUser = "anonymous";
+    if(req.isAuthenticated()) {
+        loggedUser = req.user.username;
+    } else
+    if(req.isTokenAuthenticated) {
+        loggedUser = req.tokenUsername;
+    }
 
     // store return path in case of login
     req.session.returnTo = req.originalUrl;
 
 	req.db.get('project').findOne({shortname:req.params.projectName,backup:{$exists:0}},"-_id")
 	.then(function(json) {
-console.log(".......... a", new Date());
 		if(json) {
             // check that the logged user has access to view this project
             if(checkAccess.toProject(json, loggedUser, "view") === false) {
@@ -354,7 +414,6 @@ console.log(".......... a", new Date());
                 }
             };
         }
-console.log(".......... b", new Date());
 
         // empty the files.list: it will be filled progressively from the client
         json.files.list = [];
@@ -366,7 +425,6 @@ console.log(".......... b", new Date());
         }
         Promise.all(arr1)
         .then(function(obj) {
-console.log(".......... back with all collaborators:",obj.length, new Date());
             var j;
             for(j=0;j<obj.length;j++) {
                 json.collaborators.list[j].username=json.collaborators.list[j].userID;
@@ -382,7 +440,6 @@ console.log(".......... back with all collaborators:",obj.length, new Date());
                 projectInfo: JSON.stringify(json),
                 login: login
             };
-console.log(".......... return", new Date());
             res.render('projectSettings',context);
         });
     });
@@ -398,7 +455,13 @@ var newProject = function(req, res) {
     var login = (req.isAuthenticated()) ?
                 ("<a href='/user/" + req.user.username + "'>" + req.user.username + "</a> (<a href='/logout'>Log Out</a>)")
                 : ("<a href='/auth/github'>Log in with GitHub</a>");
-    var loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
+    var loggedUser = "anonymous";
+    if(req.isAuthenticated()) {
+        loggedUser = req.user.username;
+    } else
+    if(req.isTokenAuthenticated) {
+        loggedUser = req.tokenUsername;
+    }
 
     // store return path in case of login
     req.session.returnTo = req.originalUrl;
@@ -492,7 +555,15 @@ function insertMRInames(req,res,list) {
  * @param {Object} res Res object from express
  */
 var post_project = function(req, res) {
-    if (!req.isAuthenticated())
+    var loggedUser = "anonymous";
+    if(req.isAuthenticated()) {
+        loggedUser = req.user.username;
+    } else
+    if(req.isTokenAuthenticated) {
+        loggedUser = req.tokenUsername;
+    }
+
+    if (loggedUser == "anonymous")
     {
         console.log("ERROR not Authenticated");
         res.status(403);
@@ -567,14 +638,19 @@ var post_project = function(req, res) {
  */
 var delete_project = function(req, res) {
     var shortname;
-    var loggedUser;
+    var loggedUser = "anonymous";
+    if(req.isAuthenticated()) {
+        loggedUser = req.user.username;
+    } else
+    if(req.isTokenAuthenticated) {
+        loggedUser = req.tokenUsername;
+    }
     
-    if (!req.isAuthenticated()) {
+    if (loggedUser == "anonymous") {
         console.log("The user is not logged in");
         res.json({success:false,message:"User not authenticated"});
         return;
     }
-    loggedUser = req.isAuthenticated()?req.user.username:"anonymous";
 
     shortname = req.params.projectName;
     req.db.get('project').findOne({shortname: shortname, backup: {$exists: 0}})
@@ -621,6 +697,7 @@ var delete_project = function(req, res) {
 
 var projectController = function(){
 	this.validator = validator;
+	this.tokenAuthentication = tokenAuthentication;
 	this.api_projectAll = api_projectAll;
 	this.api_project = api_project;
 	this.api_projectFiles = api_projectFiles;

@@ -101,7 +101,7 @@ function downloadMRI(myurl, req, res, callback) {
         .on('data', function(chunk) {    
     //      body += chunk;
             cur += chunk.length;
-            //console.log("downloaded:",cur,"/",len,newFilename);
+            console.log("downloaded:",cur,"/",len,newFilename);
             downloadQueue[myurl].cur = cur;
             downloadQueue[myurl].len = len;
     //      obj.innerHTML = "Downloading " + (100.0 * cur / len).toFixed(2) + "% " + (cur / 1048576).toFixed(2) + " mb\r" + ".<br/> Total size: " + total.toFixed(2) + " mb";
@@ -240,8 +240,6 @@ var mri = function (req, res) {
 }
 
 var api_mri_post = function (req, res) {
-    console.log("Received POST, params:", req.params);
-
     var myurl = req.body.url;
     var hash = crypto.createHash('md5').update(myurl).digest('hex');
 
@@ -266,7 +264,7 @@ var api_mri_post = function (req, res) {
                     } else
                     // if the json object exists, there's a file, but no .dim object, download
                     if(!json.dim) {
-                        console.log("No dim[] field in DB entry: download");
+                        //if(debug>1) console.log("No dim[] field in DB entry: download");
                         doDownload = true;
                     }
                 }
@@ -279,7 +277,7 @@ var api_mri_post = function (req, res) {
                         delete downloadQueue[myurl];
                         res.json(info);
                     } else {
-                        console.log(downloadQueue[myurl]);
+                        console.log(">>",downloadQueue[myurl],myurl);
                         res.json(downloadQueue[myurl]);
                     }
                         

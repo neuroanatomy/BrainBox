@@ -304,6 +304,8 @@ var AtlasMakerWidget = {
             if(info.success == true) {
                 def.resolve(info);
             } else if(info.success == 'downloading') {
+                if(me.User.source != source)
+                    return;
                 setTimeout(function(){me.requestMRIInfo(source,def)},2000);
                 $("#loadingIndicator p").text("Loading... "+parseInt(info.cur/info.len*100,10)+"%");
             } else {
@@ -323,6 +325,7 @@ var AtlasMakerWidget = {
 
 		var def=$.Deferred();
 
+        me.User.source=info.source;
         me.requestMRIInfo(info.source)
 		.then(function(info2) {
             
@@ -348,7 +351,6 @@ var AtlasMakerWidget = {
             me.User.specimenName=me.name;
             me.User.atlasFilename=info2.mri.atlas[index].filename;
             me.User.isMRILoaded=false;
-            me.User.source=info2.source;
 
             // TODO: it's silly to have to put vol dim twice...
             // (first here, once again further down)
