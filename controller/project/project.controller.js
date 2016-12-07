@@ -47,7 +47,7 @@ var isProjectObject = function(req,res,object) {
 
     var pr = new Promise(function(resolve, reject) {
         var i, k, flag, arr;
-        var allowed="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890.,_- ".split("");
+        var allowed="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890.,_- '–:;".split("");
         
         // 1. Synchronous checks
         //----------------------
