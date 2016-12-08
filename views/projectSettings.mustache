@@ -987,7 +987,7 @@ function saveChanges() {
     	    },3000);
     	}
     }).catch(function(err) {
-        $("#saveFeedback").text("Unable to save. Please try again later ("+err+")");
+        $("#saveFeedback").text("Unable to save. Please try again later ("+JSON.stringify(err)+")");
         setTimeout(function() {
             $("#saveFeedback").text("");
         },3000);
@@ -1027,7 +1027,7 @@ function deleteProject() {
     	}
         console.log(response.message);
     }).catch(function(err) {
-        $("#saveFeedback").text("Unable to delete. Please try again later ("+err+")");
+        $("#saveFeedback").text("Unable to delete. Please try again later ("+JSON.stringify(err)+")");
         setTimeout(function() {
             $("#saveFeedback").text("");
         },3000);
