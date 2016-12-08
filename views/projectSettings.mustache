@@ -972,12 +972,9 @@ function saveChanges() {
     // update projectInfo from projectInfoProxy
     JSON.stringify(projectInfoProxy);
 
-    $.post(
-        "/project/json/"+projectInfo.shortname,
-        {
+    $.post("/project/json/"+projectInfo.shortname, {
             data:JSON.stringify(projectInfo)
-        }
-    ).done(function(a, b) {
+    }).done(function(a, b) {
     	if(a.success) {
             $("#saveFeedback").text("Successfully saved");
     	    setTimeout(function() {
@@ -990,7 +987,7 @@ function saveChanges() {
     	    },3000);
     	}
     }).catch(function(err) {
-        $("#saveFeedback").text("Unable to save. Please try again later");
+        $("#saveFeedback").text("Unable to save. Please try again later ("+err+")");
         setTimeout(function() {
             $("#saveFeedback").text("");
         },3000);
@@ -1030,7 +1027,7 @@ function deleteProject() {
     	}
         console.log(response.message);
     }).catch(function(err) {
-        $("#saveFeedback").text("Unable to delete. Please try again later");
+        $("#saveFeedback").text("Unable to delete. Please try again later ("+err+")");
         setTimeout(function() {
             $("#saveFeedback").text("");
         },3000);

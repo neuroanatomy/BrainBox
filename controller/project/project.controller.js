@@ -589,8 +589,7 @@ var post_project = function(req, res) {
     })
     .catch(function(error) {
         console.log("ERROR",error);
-        res.status(300);
-        res.json({"error":error});
+        res.status(300).json({"error":error});
     });
 }
 /**
