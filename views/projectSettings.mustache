@@ -1020,7 +1020,7 @@ function deleteProject() {
     	        location="/";
     	    },2000);
     	} else {
-            $("#saveFeedback").text("Unable to delete");
+            $("#saveFeedback").text("Unable to delete ("+response.message+")");
     	    setTimeout(function() {
     	        $("#saveFeedback").text("");
     	    },3000);
