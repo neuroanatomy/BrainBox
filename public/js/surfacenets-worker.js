@@ -122,7 +122,7 @@ function SurfaceNets(data, dims, pixdims, level) {
 			}
 			var s = 1.0 / e_count;
 			for(var i=0; i<3; ++i)
-				v[i] = x[i] + s * v[i];
+				v[i] = (x[i] + s * v[i])*pixdims[i];
 			buffer[m] = vertices.length;
 			vertices.push(v);
 			for(var i=0; i<3; ++i)
