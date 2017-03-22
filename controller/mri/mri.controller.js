@@ -4,6 +4,7 @@ var crypto = require('crypto');
 var url = require('url');
 var fs = require('fs');
 var request = require('request');
+var path = require('path');
 var atlasMakerServer = require('../../js/atlasMakerServer');
 var checkAccess = require('../../js/checkAccess.js');
 var dataSlices = require("../../js/dataSlices.js");
@@ -87,8 +88,12 @@ function downloadMRI(myurl, req, res, callback) {
             callback({error:err});
         })
         .on('response', function(res) {
-            var href = res.request.uri.href;
-            newFilename = href.split(/[\/=&?]/).pop();
+            var contentDisp = res.headers['content-disposition'];
+            if (contentDisp && /^attachment/.test(contentDisp)) {
+                newFilename = contentDisp.split('filename=')[1].split(';')[0].replace(/"/g, '');
+            } else {
+                newFilename = path.basename(url.parse(fileUrl).path);
+            }
             console.log("filename:",newFilename);
             var arr = dest.split("/");
             arr.pop();
