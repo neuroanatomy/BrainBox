@@ -54,6 +54,7 @@ var AtlasMakerPaint = {
 		// c: command
 		// x, y: coordinates
 		msg={c:c,x:x,y:y};
+		
 		if(u==-1 && JSON.stringify(msg)!=JSON.stringify(me.msg0)) {
 			me.sendPaintMessage(msg);
 			me.msg0=msg;
