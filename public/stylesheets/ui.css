@@ -1,0 +1,63 @@
+/* User interface widgets: buttons, sliders
+-----------------------------------------------------------------------------*/
+
+.a {
+    border:thin solid #777;
+    border-radius:3px;
+    margin:1px;
+    text-align:center;
+    height: 22px;
+}
+.a:hover {
+    opacity:0.5;
+    -webkit-user-select:none;
+    -moz-user-select:none;
+    user-select:none;
+}
+.pressed {
+    background-color:#555 !important;
+}
+.icon {
+    width:16px;
+    vertical-align:middle;
+}
+
+/* svg buttons
+----------------------- */
+.pushButton {
+    border:1px solid #ddd;
+    border-radius:6px;
+    color:#ddd;
+    text-align:center;
+    -webkit-appearance:none;
+    cursor: pointer;
+}
+img.button {
+	width:1rem;
+	height:1rem;
+	margin:8px 2px;
+	vertical-align:middle;
+	cursor:pointer;
+}
+img.button:hover {
+	opacity:0.5;
+}
+img.icon {
+	width:1rem;
+	height:1rem;
+	margin:4px 2px;
+	vertical-align:middle;
+	cursor:pointer;
+}
+
+
+select {
+	border:none;
+	background:none; /* no color, no decoration */
+	color:white;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
+    width: 100px;
+    text-overflow: ellipsis;
+}

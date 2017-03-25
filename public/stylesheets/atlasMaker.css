@@ -1,0 +1,229 @@
+/* atlasMaker
+-----------------------------------------------------------------------------*/
+#atlasMaker {
+	position: relative;
+	background-color:#222;
+	color:white;
+	height:100%;
+	margin:0px;
+	font: 14px "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
+	-webkit-font-smoothing: antialiased;
+	-moz-font-smoothing: antialiased;
+}
+#resizable {
+	position: relative;
+}
+#text-layer {
+	position: absolute;
+	bottom:0px;
+	right:0px;
+	width:100%;
+	height:100%;
+	z-index:11;
+	box-sizing: border-box;
+	padding: 5px;
+	pointer-events: none;
+}
+#vector-layer {
+	position: absolute;
+	bottom:0px;
+	right:0px;
+	width:100%;
+	height:100%;
+	z-index:11;
+	pointer-events: none;
+}
+#canvas {
+	width:100%;
+	height:100%;
+	background-color:black;
+	cursor:none;
+
+	image-rendering:optimizeSpeed;             /* Legal fallback */
+	image-rendering:-moz-crisp-edges;          /* Firefox        */
+	image-rendering:-o-crisp-edges;            /* Opera          */
+	image-rendering:-webkit-optimize-contrast; /* Safari         */
+	image-rendering:optimize-contrast;         /* CSS3 Proposed  */
+	image-rendering:crisp-edges;               /* CSS4 Proposed  */
+	image-rendering:pixelated;                 /* CSS4 Proposed  */
+	-ms-interpolation-mode:nearest-neighbor;   /* IE8+           */
+}
+#tools-side {
+	width:100%;
+	position:relative;
+	pointer-events:none;
+}
+#tools-side #tools-minimized,
+#tools-side #tools-maximized {
+    pointer-events: all;
+}
+.atlasMaker-fullscreen #atlasMaker {
+	position:fixed;
+	top:0px;
+	left:0px;
+	/*width: calc( 100% - 240px );*/	/* width of tools */
+	width: 100%;
+	height:100%;
+	z-index:10;
+}
+.atlasMaker-fullscreen #tools-side {
+	position:fixed;
+	top:0px;
+	width:240px;
+	height:100%;
+	z-index:11;
+}
+.atlasMaker-fullscreen[data-toolbarDisplay=left] #tools-side {
+    left: 0;
+}
+.atlasMaker-fullscreen[data-toolbarDisplay=right] #tools-side {
+    right: 0;
+}
+.atlasMaker-fullscreen[data-toolbarDisplay=left] #text-layer {
+    text-align: right;
+}
+.atlasMaker-fullscreen[data-toolbarDisplay=right] #text-layer {
+    text-align: left;
+}
+
+#tools-side #tools-minimized div {
+    display:inline-block;
+    width:48px;
+    height:48px;
+    border: thin solid #777;
+    border-radius:48px;
+    background-color:#333;
+    position:fixed;
+    margin: 10px;
+    cursor: pointer;
+}
+.atlasMaker-fullscreen[data-toolbarDisplay=left] #tools-minimized div {
+    top: 0;
+    left: 0;
+}
+.atlasMaker-fullscreen[data-toolbarDisplay=right] #tools-minimized div {
+    top: 0;
+    right: 0;
+}
+
+#toolbar-header {
+    display: none;
+}
+.atlasMaker-fullscreen #toolbar-header {
+    display: block;
+}
+
+#log {
+    -webkit-user-select:all;
+    -moz-user-select:all;
+    user-select:all;
+}
+#toolbar-header {
+    margin-bottom:5px;
+}
+#toolbar-header .a {
+    border:none;
+}
+
+/* cursor
+------------------------------- */
+#atlasMaker .drawingcursor {
+	border: 1px solid #F00;
+	position: absolute;
+	pointer-events:none;
+}
+#atlasMaker .hidepaintcursor {
+	display: none;
+}
+
+#cursor {
+	pointer-events: none;
+	position:absolute;
+	top:200px;
+	left:200px;
+	border:thin solid white;
+	color:red;
+	z-index:20;
+}
+#finger {
+	display:none;
+}
+.display-mode #finger {
+	display:none;
+}
+.edit-mode #finger.touchDevice {
+	position:absolute;
+	top:200px;
+	left:250px;
+	width:40px;
+	height:40px;
+	border-style:solid;
+	border-width:4px;
+	border-radius:50%;
+	display:inline;
+}
+#finger.move {
+	border-color:yellow;
+}
+#finger.draw {
+	border-color:green;
+}
+#finger.configure {
+	border-color:orange;
+}
+
+/* chat log
+----------------------- */
+
+.atlasMaker-fullscreen #chatBlockContent {
+    height:100%
+}
+#log {
+	width: auto;
+	line-height:1;
+	border: 1px solid #777;
+	overflow: auto;
+	background-color: #333;
+}
+#msg {
+	color: black;
+	box-sizing: border-box;
+}
+
+#atlasMaker .middle {
+	position:absolute;
+	top:50%;
+	left:50%;
+	transform: translate(-50%,-50%);
+}
+
+/* Label set
+------------------------ */
+#labelset {
+	display:none;
+	overflow:scroll;
+	position:fixed;
+	top:0px;
+	left:0px;
+	width:100%;
+	height:100%;
+	text-align:left;
+	background-color:#333;
+	z-index:21;
+}
+.label-color {
+	vertical-align:middle;
+	margin:6px;
+	display:inline-block;
+	width:40px;
+	height:30px;
+	background-color:rgb(0,0,0);
+}
+#label-template {
+	display:none;
+}
+#label-list {
+	display:flex;
+	flex-wrap:wrap;
+ 	text-align:left;
+ }

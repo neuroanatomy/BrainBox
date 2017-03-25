@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> 
+    <title>A page with a BrainBox widget</title>
+
+	<link rel="stylesheet" href="/stylesheets/atlasMaker.css" />
+	<link rel="stylesheet" href="/stylesheets/ui.css" />
+	<link rel="stylesheet" href="/stylesheets/loading-style.css" />
+	<style>
+	 #stereotaxic {
+        width:400px;
+	 	margin-left:50%;
+	 	transform:translate(-50%,0);
+	 }
+	 </style>
+</head>
+
+<body>
+
+    <h1>Lorem ipsum dolor</h1>
+    
+    <p>
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin aliquet augue at lacus 
+    euismod venenatis. Aenean tristique elementum orci, id semper nulla finibus eu. Proin 
+    et ultricies libero. Cras pellentesque sapien ac enim consectetur, sit amet placerat 
+    ex porta. Phasellus hendrerit malesuada lorem, eget scelerisque leo efficitur id. 
+    Aenean imperdiet accumsan urna aliquet tincidunt. Interdum et malesuada fames ac ante 
+    ipsum primis in faucibus. In blandit dictum nulla vitae ultrices. Sed tempus nisl sit 
+    amet nisi lacinia, eu laoreet lacus aliquet. Nam ut venenatis neque, a volutpat ex. 
+    Nullam ut nibh quam.
+    </p>
+	 
+    <!-- AtlasMaker -->
+    <div id="stereotaxic" style="display:inline-block"></div>
+    <!-- End AtlasMaker -->
+
+    <p>
+    Aenean non magna at lectus euismod efficitur eget id ligula. Quisque porta, velit quis 
+    cursus congue, augue justo gravida lacus, ut vestibulum nibh justo et justo. Mauris 
+    vehicula lorem a urna commodo, in tincidunt leo vulputate. Mauris a placerat sem. Sed 
+    eu massa diam. Curabitur eget iaculis tellus, ut venenatis quam. Donec eu odio 
+    pellentesque, tincidunt eros sed, sagittis ipsum. Fusce eget ornare libero, in 
+    hendrerit enim. Aliquam ullamcorper eleifend porttitor. Curabitur blandit luctus sem a 
+    consequat. In semper at ipsum in mattis. In finibus felis vel metus feugiat dapibus 
+    vel ac justo. Praesent bibendum eros vel nibh mattis consequat. Phasellus a consequat 
+    felis.
+    </p>
+
+</div>
+
+<script src='/lib/jquery-3.1.1.min.js'></script>
+<script src="/js/brainbox.js"></script>
+
+<script>
+BrainBox.widget({
+    url:"http://braincatalogue.org/data/Lion/MRI-n4.nii.gz",
+    view:"cor",
+    slice:180,
+    fullscreen:false
+});
+</script>
+
+</body>
+</html>
+
+
+</body>
+</html>
+

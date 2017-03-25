@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+    <meta name=viewport content="width=device-width, initial-scale=1">
+    <title>Sloth_bear</title>
+	<link href='https://fonts.googleapis.com/css?family=Droid+Serif' rel='stylesheet' type='text/css'/>
+	<link href='https://fonts.googleapis.com/css?family=Quicksand' rel='stylesheet' type='text/css'>
+	<link rel="stylesheet" href="/stylesheets/atlasMaker.css" />
+	<link rel="stylesheet" href="/stylesheets/ui.css" />
+	<link rel="stylesheet" href="/stylesheets/loading-style.css" />
+	<style>
+body {
+    color: #333;
+    font-family: 'Droid Serif', serif;
+    font-weight: 400;
+    line-height: 150%;
+}
+a:link {
+    color: #333;
+}
+a:visited {
+    color: inherit;
+}
+#content {
+    margin: 0 50px;
+    padding: 0 0 0 230px;
+}
+#content {
+    font-size: 1rem;
+    line-height: 150%;
+}
+#sideLeft {
+    float: left;
+    margin-left: -230px;
+}
+#name h1 {
+    font-family: 'Droid Serif', serif;
+    font-weight: 400;
+    color: #555;
+    font-size: 1.5rem;
+}
+#description {
+    margin: 0 0 18px;
+    font-family: 'Droid Serif', serif;
+    font-weight: 400;
+    line-height: 150%;
+}
+.menu {
+    text-decoration: none;
+    font-family: 'Quicksand', sans-serif;
+    margin: 0 0.3rem;
+    outline: none;
+}
+img.picture {
+    width: 100%;
+    filter: grayscale(80%) contrast(120%);
+    -webkit-filter: grayscale(80%) contrast(120%);
+    line-height: 1em;
+    box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.5);
+}
+#stereotaxic {
+    width:512px;
+}
+	 </style>
+</head>
+
+<body>
+
+<div id="wrapper">
+
+	<!-- Header -->
+	<header id="header">
+		<div class="myinner">
+			<div id="title" class="cell">
+				<h1 style="display:inline-block">
+					<a class="menu nodecoration" href="/" target="_top">
+						Brain Catalogue
+					</a>
+				</h1>
+			</div>
+		</div><!-- .myinner -->
+	</header><!-- #header -->
+
+	<section id="middle">
+		<div id="container">
+			<div id="content">
+			
+				<!-- 3.1.1 Picture -->
+				<aside id="sideLeft">
+					<div id="picture">
+                        <img class="picture" src="http://braincatalogue.org/data/Sloth_bear/picture.jpg">
+					</div>
+				</aside><!-- #sideLeft -->
+
+				<!-- 3.1.2 Name -->
+				<div id="name">
+                    <h1>Sloth Bear (Melursus ursinus)</h1>
+				</div>
+				
+				<!-- 3.1.3 Description -->
+				<div id="description">
+<p>Initially thought to be related to the South American sloths, Shaw and Nodder in 1791 called the species Bradypus ursinus, noting that it was bear-like, but giving weight to the long claws and the absence of upper middle incisors. Meyer (1793) identified it as a bear and called it Melursus lybius, and in 1817, de Blainville called it Ursus labiatus because of the long lips. Iliger called it Prochilus hirsutus, the Greek genus name indicating long lips, while the specific name noted its long and coarse hair. Fischer called it Chondrorhynchus hirsutus, while Tiedemann called it Ursus longirostris.</p>
+
+<p>Sloth bears may have reached their current form in the early Pleistocene, the time when the bear family specialized and dispersed. A fragment of fossilized humerus from the Pleistocene, found in Andhra Pradesh's Kurnool Basin is identical to the modern sloth bears. The fossilized skulls of a bear once named Melursus theobaldi found in the Shivaliks from the early Pleistocene or early Pliocene are thought by certain authors to represent an intermediate stage between sloth bears and ancestral brown bears. M. theobaldi itself had teeth intermediate in size between sloth bears and other bear species, though its palate was the same size as the former species, leading to the theory that it is the sloth bear's direct ancestor. Sloth bears probably arose during the mid-Pliocene and evolved in the Indian Subcontinent. The sloth bear bears evidence of having undergone a convergent evolution similar to that of other ant-eating mammals</p>
+				</div>
+
+				<!-- 3.1.4 Data -->
+				<!--DATAVIEW-->
+                <!-- AtlasMaker -->
+                <div id="stereotaxic" style="display:inline-block"></div>
+                <!-- End AtlasMaker -->
+				
+				<!-- 3.1.5 Acknowledgments -->
+				<p><div id="acknowledgements"></div>
+			</div><!-- #content-->
+		</div><!-- #container-->
+
+	</section><!-- #middle-->
+
+</div><!-- #wrapper -->
+
+<div style="margin-bottom:100px;"></div>
+
+<footer id="footer">
+	<div>
+		<table>
+		<tr>
+		<td>
+		<a rel="license" href="https://creativecommons.org/licenses/by-sa/3.0/deed.en_US">
+		<img align="left" alt="Creative Commons License" src="http://braincatalogue.org/img/88x31.png" />
+		</a>
+		</td>
+		<td>
+		<span xmlns:dct="http://purl.org/dc/terms/" property="dct:title">Brain Catalogue</span> by
+		<a xmlns:cc="https://creativecommons.org/ns#" href="siphonophore.org/braincatalogue" property="cc:attributionName" rel="cc:attributionURL">Roberto Toro</a>
+		is licensed under a <a rel="license" href="https://creativecommons.org/licenses/by-sa/3.0/deed.en_US">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>.
+		</td>
+		</tr>
+		</table>
+	</div>
+</footer> <!-- footer -->
+
+<script src='/lib/jquery-3.1.1.min.js'></script>
+<script src="/js/brainbox.js"></script>
+
+<script>
+BrainBox.widget({
+    url:"http://braincatalogue.org/data/Sloth_bear/MRI-n4.nii.gz",
+    view:"cor",
+    slice:180,
+    fullscreen:false
+});
+</script>
+
+</body>
+</html>
+
+
+</body>
+</html>
+

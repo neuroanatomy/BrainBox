@@ -1,0 +1,29 @@
+#projectFiles table tbody tr td select {
+    color:rgba(255,255,255,0.4);
+}
+
+#projectFiles {
+    overflow:scroll;
+}
+.block {
+    border:thin solid #555;
+    padding: 5px;
+}
+#right {
+    background-color: black;
+}
+
+/* Project Page, Left Bar, Resize Button
+-----------------------------------------*/
+#resizeButton {
+	display:inline-block;
+	position:absolute;
+	width:10px;
+	height:20px;
+	top:50%;
+	left:100%;
+	background-color:#333;
+	transform:translate(-50%, -50%);
+	border-radius:5px;
+	z-index:5;
+}

@@ -6,184 +6,15 @@
 	<link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
     <title>{{title}}</title>
 	<link rel="stylesheet" href="/stylesheets/style.css" />
+	<link rel="stylesheet" href="/stylesheets/atlasMaker.css" />
+	<link rel="stylesheet" href="/stylesheets/textAnnotations.css" />
+	<link rel="stylesheet" href="/stylesheets/ui.css" />
 	<link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="/stylesheets/mri-style.css" />
+    <link rel="stylesheet" href="/stylesheets/access-style.css" />
+    <link rel="stylesheet" href="/stylesheets/loading-style.css" />
+    <link rel="stylesheet" href="/stylesheets/dropdown-style.css" />
 </head>
-
-<style>
-    td {
-        word-break: break-word;
-    }
-    #content {
-        margin: 0 auto;
-    }
-    #annotationsPane {
-        background-color:#333;
-        padding: 20px;
-        margin-right: 20px;
-        margin-bottom: 20px;
-        max-width:900px;
-        flex:0 1 auto;
-        vertical-align:top
-    }
-    #annotationsPane th, #annotationsPane td {
-        overflow: hidden;
-    }
-	.tabContent {
-	    margin-left:10px;
-        text-align: left;
-	}
-    #stereotaxic {
-        width:600px;
-    }
-	/******************************** resizable layout ******************************/
-	/* for larger screen (computer, big iPad, small iPad landscape) */
-	@media all and (max-width: 1300px) {
-	    #content {
-	        flex-direction: column;
-            max-width:700px;
-	    }
-        #annotationsPane {
-            max-width:none;
-            margin-right: 0px;
-        }
-        #stereotaxic {
-            min-width: 100%;
-        }
-	}
-
-	/* Loading indicator */
-    @-webkit-keyframes loading {
-        0% {left: 40%;}
-        50% {left: 60%;}
-        100% {left: 40%;}
-    }
-    #loadingIndicator {
-        display:none;
-        position:absolute;
-        left:0;
-        top:0;
-        width:100%;
-        height:100%;
-        background:rgba(0,0,0,0.5);
-    }
-    #loadingIndicator .disc {
-        position:absolute;
-        left:50%;
-        transform:translate( -50% , 0 );
-        width:8px;
-        height:8px;
-        border-radius:8px;
-        background:white;
-        -webkit-animation-name: loading;
-        -webkit-animation-duration: 1s;
-        -webkit-animation-iteration-count: infinite;
-        -webkit-animation-timing-function: ease-in-out;
-        animation-name: loading;
-        animation-duration: 1s;
-        animation-iteration-count: infinite;
-        animation-timing-function: ease-in-out;
-    }
-
-	/************************************ dropdown menu ********************************/
-	.autocomplete {
-		border:none;
-		border-radius: 0px;
-		outline: none;
-		padding: 0px 0px 5px 0px;
-		vertical-align: bottom;
-	}
-	.ui-widget.ui-widget-content{
-		background: #222;
-		color: white;
-		border: none;
-	}
-	.ui-widget-header:active {
-		border:none;
-	}
-	.ui-state-active,
-    .ui-widget-content .ui-state-active,
-    .ui-widget-header .ui-state-active,
-    a.ui-button:active,
-    .ui-button:active,
-    .ui-button.ui-state-active:hover {
-        background: #555 !important;
-		color:white;
-		border: none;
-		outline: none;
-		display: block;
-    }
-	li div {
-	  	color: white; /* text color */
-	  	border:none;
-	  	margin: none;
-	  	padding: none;
-	}
-    .display {
-        padding-top:5px;
-        text-decoration:none;
-        border:none;
-    }
-
-	/************************************* access widget ********************************/
-	.access {
-        padding-top:5px;
-        text-decoration:none;
-        border:none;
-    }
-	.view, .edit, .add, .remove {
-		/* cursor: pointer; */
-		padding:1px 1px 1px 0px;
-	}
-	.view:before, .edit:before, .add:before, .remove:before {
-		background-size: 15px 15px;
-		width: 15px;
-		height: 15px;
-		content:"";
-		display:inline-block;
-		text-decoration: none;
-	}
-	/* view */
-	[data-level="0"] .view:before {
-		background-image: url("/img/eye.svg");
-	}
-	[data-level="1"] .view:before, [data-level="2"] .view:before, [data-level="3"] .view:before, [data-level="4"] .view:before {
-		background-image: url("/img/eye-circle.svg");
-	}
-	/* edit */
-	[data-level="0"] .edit:before, [data-level="1"] .edit:before {
-		background-image: url("/img/pencil.svg");
-	}
-	[data-level="2"] .edit:before, [data-level="3"] .edit:before, [data-level="4"] .edit:before {
-		background-image: url("/img/pencil-circle.svg");
-	}
-	/* add */
-	[data-level="0"] .add:before, [data-level="1"] .add:before, [data-level="2"] .add:before {
-		background-image: url("/img/plus-small.svg");
-	}
-	[data-level="3"] .add:before, [data-level="4"] .add:before {
-		background-image: url("/img/plus-small-circle.svg");
-	}
-	/* remove */
-	[data-level="0"] .remove:before, [data-level="1"] .remove:before, [data-level="2"] .remove:before, [data-level="3"] .remove:before {
-		background-image: url("/img/minus-small.svg");
-	}
-	[data-level="4"] .remove:before {
-		background-image: url("/img/minus-small-circle.svg");
-	}
-
-    .a {
-        border:thin solid #777;
-        border-radius:3px;
-        margin:1px;
-        text-align:center;
-    }
-    .a:hover {
-        opacity:0.5;
-        -webkit-user-select:none;
-        -moz-user-select:none;
-        user-select:none;
-    }
-</style>
 
 <body>
 
@@ -216,15 +47,6 @@
 	<!-- Content (variable height) -->
 	<div style="flex:1 0 auto">
 			
-		<!-- Splash -->
-		<div id='splash'>
-			<a href='/'>
-				<img id='logo' src='/img/brainbox-logo.svg'/>
-			</a>
-			<div id='msgLog'></div>
-		</div>
-		<!-- End Splash -->
-				
 		<!-- Data -->
 		<div id="data">		
 			<!-- Data Flex -->
@@ -299,42 +121,11 @@
 						<div id="stereotaxic" style="display:inline-block">
 						</div>
 						<!-- End AtlasMaker -->
-
-                        <!-- Loading indicator -->
-                        <div id="loadingIndicator">
-                            <p>Loading...</p>
-                            <div class="disc"></div>
-                        </div>
-                        <!-- End Loading indicator -->
 					</div>
 			</div>
 			<!-- End Data Flex -->
 		</div>
 		<!-- End Data -->
-
-		<!-- Labels -->
-		<div id="labelset">
-			<div style="z-index:23;text-align:right">
-				<img id="labels-close" class="button" src="/img/times-circle.svg"/>
-			</div>
-
-			<ul style="padding-left:1rem">
-				<li>
-					<b>Label Set</b><br/>
-					<span id="labels-name"></span>
-				</li>
-				<li>
-					<b>Labels</b><br/>
-					<div id="label-list">
-					</div>
-					<div id="label-template">
-						<div class="label-color"></div>
-						<span class="label-name">Label Name</name>
-					</div>
-				</li>
-			</ul>
-		</div>
-		<!-- End Labels -->
 
 	</div>
 	<!-- End Content -->
@@ -356,13 +147,7 @@
 </div>
 
 <script src="/lib/jquery-3.1.1.min.js"></script>
-<script src="/lib/jquery-ui.min.js"></script><!--https://code.jquery.com/ui/1.12.1/jquery-ui.min.js-->
-<script src="/lib/pako/pako.min.js"></script>
-<script src="/lib/purify.min.js"></script>
-<script src="/lib/json-patch-duplex.min.js"></script>
-<script src="/js/twoWayBinding.js"></script>
 <script src="/js/brainbox.js"></script>
-
 <script>
 
 var params={{{params}}};
@@ -373,6 +158,19 @@ var version=1;
 var volAnnParam, textAnnParam, info_proxy={};
 var hash_old;
 var cb, label;  // WS Autocompletion
+
+// Prevent zoom on double tap
+$('body').on('touchstart', function preventZoom(e) {
+    var t2 = e.timeStamp
+      , t1 = $(this).data('lastTouch') || t2
+      , dt = t2 - t1
+      , fingers = e.originalEvent.touches.length;
+    $(this).data('lastTouch', t2);
+    if (!dt || dt > 500 || fingers > 1) return; // not double-tap
+    e.preventDefault(); // double tap - prevent the zoom
+    // also synthesize click events we just swallowed up
+    $(this).trigger('click').trigger('click');
+});
 
 if( $.isEmptyObject(mriInfo)) {
     $("#stereotaxic").prepend("<h2>ERROR: Cannot read the data.</h2><p>The file is maybe corrupt?</p>");
@@ -388,10 +186,6 @@ if( $.isEmptyObject(mriInfo)) {
     if(params.fullscreen)
         params.fullscreen=(params.fullscreen=="true");
 
-    // Present a splash screen while loading
-    $("#intro").hide();
-    $("#splash").show();
-
     $("#loadingIndicator").show();
 
     // Load data
@@ -399,9 +193,6 @@ if( $.isEmptyObject(mriInfo)) {
     .then(function(){return BrainBox.loadLabelsets()})
     .then(function(){return BrainBox.configureBrainBox(params)})
     .then(function(){
-        // Remove splash
-        $("#splash").hide();
-
         // backup the original MRI info
         mriInfoOrig = JSON.parse(JSON.stringify(BrainBox.info));
          

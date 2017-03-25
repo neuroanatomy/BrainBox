@@ -1,42 +1,4 @@
 <div id="tools-side" style="display:block">
-
-	<style>
-	html {
-		background-color:#222;
-		color:white;
-	}
-	.a {
-		border:thin solid #777;
-		border-radius:3px;
-		margin:1px;
-		text-align:center;
-	}
-	.a:hover {
-		opacity:0.5;
-		-webkit-user-select:none;
-		-moz-user-select:none;
-		user-select:none;
-	}
-	.pressed {
-		background-color:#555 !important;
-	}
-	.icon {
-		width:16px;
-		vertical-align:middle;
-	}
-	#log {
-		-webkit-user-select:all;
-		-moz-user-select:all;
-		user-select:all;
-	}
-	#toolbar-header {
-	    margin-bottom:5px;
-	}
-	#toolbar-header .a {
-	    border:none;
-	}
-	</style>
-
 	<div id="tools-minimized">
 	    <div>
 	        <img style="width:28px;position:absolute;top:10px;left:10px" src="/img/bars.svg" />
@@ -107,7 +69,7 @@
 					</div>
 					<!-- fill/undo -->
 					<div style="display:flex">
-						<div style="height:28px;flex:1"><div id="color" title="Color" style="height:24px;background-color:#f00" class="a push"></div></div>
+						<div style="height:28px;flex:1"><div id="color" title="Color" style="height:22px;background-color:#f00" class="a push"></div></div>
 						<div style="height:28px;flex:1"><div id="fill" class="a toggle"><img class="icon" src="/img/fill.svg" /></div></div>
 						<div style="height:28px;flex:1"><div id="undo" title="Undo" class="a push"><img class="icon" src="/img/undo.svg" /></div></div>
 					</div>
@@ -133,7 +95,7 @@
 				</div>
 				<div class="a" id="log" style="flex:1 0 56px;text-align:left;background-color:#333;padding:5px;vertical-align:top">
 				</div>
-				<div style="flex:0 0 28px">
+				<div style="flex:1 1 5px">
 					<input id="msg" type="text" style="width:100%;box-sizing:border-box">
 				</div>
 			</div>
@@ -141,3 +103,34 @@
 	</div>
 
 </div>
+
+<!-- Loading indicator -->
+<div id="loadingIndicator">
+    <p>Loading...</p>
+    <div class="disc"></div>
+</div>
+<!-- End Loading indicator -->
+
+<!-- Labels -->
+<div id="labelset">
+    <div style="z-index:23;text-align:right">
+        <img id="labels-close" class="button" src="/img/times-circle.svg"/>
+    </div>
+
+    <ul style="padding-left:1rem">
+        <li>
+            <b>Label Set</b><br/>
+            <span id="labels-name"></span>
+        </li>
+        <li>
+            <b>Labels</b><br/>
+            <div id="label-list">
+            </div>
+            <div id="label-template">
+                <div class="label-color"></div>
+                <span class="label-name">Label Name</name>
+            </div>
+        </li>
+    </ul>
+</div>
+<!-- End Labels -->

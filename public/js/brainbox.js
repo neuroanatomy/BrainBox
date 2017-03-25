@@ -54,12 +54,23 @@ var BrainBox={
 	},
 	/**
      * @function loadScript
+     * @desc Loads script from path if test is not fulfilled
+     * @param String path Path to script, either a local path or
+     *        a url
+     * @param function testScriptPresent Function to test if the script is already present.
+     *        If undefined, the script will be loaded.
      */
-	loadScript: function loadScript(path) {
+	loadScript: function loadScript(path, testScriptPresent) {
 	    var def = new $.Deferred();
+        
+        if(testScriptPresent && testScriptPresent()) {
+            console.log("[loadScript] Script",path,"already present, not loading it again");
+            return def.resolve().promise();
+        }
         var s = document.createElement("script");
         s.src = path;
         s.onload=function () {
+            console.log("Loaded",path);
             def.resolve();
         };
         document.body.appendChild(s);
@@ -77,25 +88,32 @@ var BrainBox={
 		$("#stereotaxic").html('<div id="atlasMaker"></div>');
 		$("#atlasMaker").addClass('edit-mode');
 		
-        $.when(
-            BrainBox.loadScript('/js/atlasMaker-draw.js'),
-            BrainBox.loadScript('/js/atlasMaker-interaction.js'),
-            BrainBox.loadScript('/js/atlasMaker-io.js'),
-            BrainBox.loadScript('/js/atlasMaker-paint.js'),
-            BrainBox.loadScript('/js/atlasMaker-ui.js'),
-            BrainBox.loadScript('/js/atlasMaker-ws.js'),
-            BrainBox.loadScript('/js/atlasMaker.js')
-        ).then(function () {
-            $.extend(AtlasMakerWidget,AtlasMakerDraw);
-            $.extend(AtlasMakerWidget,AtlasMakerInteraction);
-            $.extend(AtlasMakerWidget,AtlasMakerIO);
-            $.extend(AtlasMakerWidget,AtlasMakerPaint);
-            $.extend(AtlasMakerWidget,AtlasMakerUI);
-            $.extend(AtlasMakerWidget,AtlasMakerWS);
-            AtlasMakerWidget.initAtlasMaker($("#atlasMaker"))
+        BrainBox.loadScript('/lib/jquery-ui.min.js', function(){return window.jQuery.ui != undefined})
+        .then(function(){return BrainBox.loadScript('/lib/pako/pako.min.js', function(){return window.pako != undefined})})
+        .then(function(){return BrainBox.loadScript('/lib/purify.min.js', function(){return window.DOMPurify != undefined})})
+        .then(function(){return BrainBox.loadScript('/lib/json-patch-duplex.min.js', function(){return window.jsonpatch != undefined})})
+        .then(function(){return BrainBox.loadScript('/js/twoWayBinding.js')})
+        .then(function(){
+            $.when(
+                BrainBox.loadScript('/js/atlasMaker-draw.js'),
+                BrainBox.loadScript('/js/atlasMaker-interaction.js'),
+                BrainBox.loadScript('/js/atlasMaker-io.js'),
+                BrainBox.loadScript('/js/atlasMaker-paint.js'),
+                BrainBox.loadScript('/js/atlasMaker-ui.js'),
+                BrainBox.loadScript('/js/atlasMaker-ws.js'),
+                BrainBox.loadScript('/js/atlasMaker.js')
+            ).then(function () {
+                $.extend(AtlasMakerWidget,AtlasMakerDraw);
+                $.extend(AtlasMakerWidget,AtlasMakerInteraction);
+                $.extend(AtlasMakerWidget,AtlasMakerIO);
+                $.extend(AtlasMakerWidget,AtlasMakerPaint);
+                $.extend(AtlasMakerWidget,AtlasMakerUI);
+                $.extend(AtlasMakerWidget,AtlasMakerWS);
+                AtlasMakerWidget.initAtlasMaker($("#atlasMaker"))
                 .then(function() {
                     def.resolve();
                 });
+            })
         });
 		
 		// store state on exit
@@ -373,5 +391,16 @@ var BrainBox={
 				BrainBox.labelSets=$.map(data,function(o){return new URL(o.source).pathname});
 			*/
 		});
-	}
+	},
+	widget: function widget(param) {
+        BrainBox.initBrainBox()
+        .then(function() {return BrainBox.loadLabelsets()})
+        .then(function() {return $.get("http://brainbox.dev/mri/json?url="+param.url)})
+        .then(function(mri) {
+            param.info = mri;
+            return BrainBox.configureBrainBox(param)
+        });
+        
+        $('#atlasMaker').append('<div style="position:absolute;top:5px;right:5px;width:42px;height:42px;background-color:#222;border-radius:32px;border:2px solid black;z-index:10"><img style="width:32px" src="http://brainbox.dev/img/brainbox-logo-small_noFont.svg"/></div>');
+    }
 }

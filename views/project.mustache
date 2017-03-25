@@ -6,58 +6,12 @@
 	<link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
     <title>{{title}}</title>
 	<link rel="stylesheet" href="/stylesheets/style.css" />
+	<link rel="stylesheet" href="/stylesheets/atlasMaker.css" />
+	<link rel="stylesheet" href="/stylesheets/textAnnotations.css" />
+	<link rel="stylesheet" href="/stylesheets/ui.css" />
 	<link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
-
-	<style>
-	#projectFiles table tbody tr td select {
-		color:rgba(255,255,255,0.4);
-	}
-
-	#projectFiles {
-		overflow:scroll;
-	}
-	.block {
-		border:thin solid #555;
-		padding: 5px;
-	}
-	#right {
-	    background-color: black;
-	}
-	
-	/* Loading indicator */
-    @-webkit-keyframes loading {
-        0% {left: 40%;}
-        50% {left: 60%;}
-        100% {left: 40%;}
-    }
-    #loadingIndicator {
-        display:none;
-        position:absolute;
-        left:0;
-        top:0;
-        width:100%;
-        height:100%;
-        background:rgba(0,0,0,0.5);
-    }
-    #loadingIndicator .disc {
-        position:absolute;
-        left:50%;
-        transform:translate( -50% , 0 );
-        width:8px;
-        height:8px;
-        border-radius:8px;
-        background:white;
-        -webkit-animation-name: loading;
-        -webkit-animation-duration: 1s;
-        -webkit-animation-iteration-count: infinite;
-        -webkit-animation-timing-function: ease-in-out;
-        animation-name: loading;
-        animation-duration: 1s;
-        animation-iteration-count: infinite;
-        animation-timing-function: ease-in-out;
-    }
-</style>
-
+	<link rel="stylesheet" href="/stylesheets/project-style.css" />
+    <link rel="stylesheet" href="/stylesheets/loading-style.css" />
 </head>
 
 <body>
@@ -135,48 +89,17 @@
 			</div>
 			
 			<div id="right" style="flex:1 0;position:relative">
+				<!-- AtlasMaker -->
 				<div id="stereotaxic" style="width:100%;height:100%">
+				<!-- End of AtlasMaker -->
 				</div>
-				
-				<div id="loadingIndicator">
-				    <p>Loading...</p>
-				    <div class="disc"></div>
-				</div
 			</div>
 
 		</div>
 	</div>
 </div>
 
-<!-- Labels -->
-<div id="labelset">
-	<div style="z-index:23;text-align:right">
-		<img id="labels-close" class="button" src="/img/times-circle.svg"/>
-	</div>
-
-	<ul style="padding-left:1rem">
-		<li>
-			<b>Label Set</b><br/>
-			<span id="labels-name"></span>
-		</li>
-		<li>
-			<b>Labels</b><br/>
-			<div id="label-list">
-			</div>
-			<div id="label-template">
-				<div class="label-color"></div>
-				<span class="label-name">Label Name</name>
-			</div>
-		</li>
-	</ul>
-</div>
-<!-- End Labels -->
-
 <script src="/lib/jquery-3.1.1.min.js"></script>
-<script src="/lib/pako/pako.min.js"></script>
-<script src="/lib/purify.min.js"></script>
-<script src="/lib/json-patch-duplex.min.js"></script>
-<script src="/js/twoWayBinding.js"></script>
 <script src="/js/brainbox.js"></script>
 <script>
 
@@ -197,6 +120,19 @@ var trTemplate;
 var objTemplate;
 var aParam;
 
+// Prevent zoom on double tap
+$('body').on('touchstart', function preventZoom(e) {
+    var t2 = e.timeStamp
+      , t1 = $(this).data('lastTouch') || t2
+      , dt = t2 - t1
+      , fingers = e.originalEvent.touches.length;
+    $(this).data('lastTouch', t2);
+    if (!dt || dt > 500 || fingers > 1) return; // not double-tap
+    e.preventDefault(); // double tap - prevent the zoom
+    // also synthesize click events we just swallowed up
+    $(this).trigger('click').trigger('click');
+});
+
 // collect the project's text annotations
 for(k=0;k<projectInfo.annotations.list.length;k++) {
     if (projectInfo.annotations.list[k].type === "text") {
@@ -212,13 +148,6 @@ for(k=0;k<projectInfo.annotations.list.length;k++) {
 }
 
 $("#projectName").text(projectInfo.name);
-/* UNUSED
-$("#projectOwner").html("<a href='"+projectInfo.owner+"'>"+projectInfo.owner+"</a>");
-var creation=new Date(projectInfo.created);
-$("#projectCreated").text("Created on "+creation.toLocaleString());
-$("#projectFilesNumber").text(projectInfo.files.list.length+" Files");
-$("#projectCollaboratorsNumber").text(projectInfo.collaborators.length+" Collaborators");
-*/
 
 $("#resizeButton").data({flag:-1,x0:0,y0:0});
 $("#resizeButton").on('mousedown touchstart',function(e){$(this).data({flag:0,x0:e.pageX,y0:e.pageY})});

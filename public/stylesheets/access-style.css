@@ -1,0 +1,46 @@
+/************************************* access widget ********************************/
+.access {
+    padding-top:5px;
+    text-decoration:none;
+    border:none;
+}
+.view, .edit, .add, .remove {
+    /* cursor: pointer; */
+    padding:1px 1px 1px 0px;
+}
+.view:before, .edit:before, .add:before, .remove:before {
+    background-size: 15px 15px;
+    width: 15px;
+    height: 15px;
+    content:"";
+    display:inline-block;
+    text-decoration: none;
+}
+/* view */
+[data-level="0"] .view:before {
+    background-image: url("/img/eye.svg");
+}
+[data-level="1"] .view:before, [data-level="2"] .view:before, [data-level="3"] .view:before, [data-level="4"] .view:before {
+    background-image: url("/img/eye-circle.svg");
+}
+/* edit */
+[data-level="0"] .edit:before, [data-level="1"] .edit:before {
+    background-image: url("/img/pencil.svg");
+}
+[data-level="2"] .edit:before, [data-level="3"] .edit:before, [data-level="4"] .edit:before {
+    background-image: url("/img/pencil-circle.svg");
+}
+/* add */
+[data-level="0"] .add:before, [data-level="1"] .add:before, [data-level="2"] .add:before {
+    background-image: url("/img/plus-small.svg");
+}
+[data-level="3"] .add:before, [data-level="4"] .add:before {
+    background-image: url("/img/plus-small-circle.svg");
+}
+/* remove */
+[data-level="0"] .remove:before, [data-level="1"] .remove:before, [data-level="2"] .remove:before, [data-level="3"] .remove:before {
+    background-image: url("/img/minus-small.svg");
+}
+[data-level="4"] .remove:before {
+    background-image: url("/img/minus-small-circle.svg");
+}
