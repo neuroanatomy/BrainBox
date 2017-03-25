@@ -1890,6 +1890,8 @@ var paintxy = function paintxy(u, c, x, y, User, undoLayer) {
 	switch(c) {
 		case 'me':
 		case 'mf':
+			User.x0=coord.x;
+			User.y0=coord.y;
 			break;
 		case 'le': // Line, erasing
 			line(coord.x,coord.y,0,User,undoLayer);
