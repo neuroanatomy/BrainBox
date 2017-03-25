@@ -1,0 +1,39 @@
+/************************************ dropdown menu ********************************/
+.autocomplete {
+    border:none;
+    border-radius: 0px;
+    outline: none;
+    padding: 0px 0px 5px 0px;
+    vertical-align: bottom;
+}
+.ui-widget.ui-widget-content{
+    background: #222;
+    color: white;
+    border: none;
+}
+.ui-widget-header:active {
+    border:none;
+}
+.ui-state-active,
+.ui-widget-content .ui-state-active,
+.ui-widget-header .ui-state-active,
+a.ui-button:active,
+.ui-button:active,
+.ui-button.ui-state-active:hover {
+    background: #555 !important;
+    color:white;
+    border: none;
+    outline: none;
+    display: block;
+}
+li div {
+    color: white; /* text color */
+    border:none;
+    margin: none;
+    padding: none;
+}
+.display {
+    padding-top:5px;
+    text-decoration:none;
+    border:none;
+}

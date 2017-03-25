@@ -1,0 +1,70 @@
+html, #menu, #footer {
+    background-color: #111;
+}
+#footer {
+    display: block;
+}
+.slide {
+    display:inline-block;
+    width:100%;
+    position:relative;
+    overflow:hidden;
+}
+.content {
+    display: inline-block;
+    position: absolute;
+    top:50%;
+    left:50%;
+    transform: translate( -50% , -50%);
+    width:600px;
+    max-width: calc( 100% - 20px );
+}
+#menu {
+    position: fixed;
+    z-index: 2;
+    text-align: right;
+    top:0;
+    margin-top:0;
+    width: 100%;
+    display: inline-block;
+    font: 16px/24px "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
+    transition: top .5s, opacity .5s;
+    -moz-transition: top .5s, opacity .5s;
+    -webkit-transition: top .5s, opacity .5s;
+}
+
+input#url, input#projectName {
+    width:calc(100% - 8px);
+    height:32px;
+    border:0px;
+    padding:0px;
+    color: black;
+}
+#go {
+    height:30px;
+    width:30px;
+}
+h2 {
+    margin-left:5rem;
+    opacity:0;
+    transition: margin-left 2s, opacity 2s;
+}
+
+ img#logo {
+	margin-top:20px;
+	margin-bottom:20px;
+	margin-left:50%;
+	transform:translate(-50%,0);
+	width:250px;
+ }
+
+#neuronsImg {
+	filter:contrast(150%) brightness(60%);
+	-webkit-filter:contrast(150%) brightness(60%);
+	position:absolute;top:0;left:0
+}
+#neurons {
+	filter:contrast(150%) brightness(60%);
+	-webkit-filter:contrast(150%) brightness(60%);
+	position:absolute;top:0;left:0
+}

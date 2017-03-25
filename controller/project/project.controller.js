@@ -529,14 +529,13 @@ var post_project = function(req, res) {
     if (loggedUser == "anonymous")
     {
         console.log("ERROR not Authenticated");
-        res.status(403);
-        res.json({error:"error",message:"User not authenticated"});
+        res.status(403).json({error:"error",message:"User not authenticated"});
         return;
     }
 
     var obj = JSON.parse(DOMPurify.sanitize(req.body.data));
     var k;
-
+    
     /**
      * @todo Replace .find call by .findOne. if(result.length) should change
      *       to if(result)
@@ -544,12 +543,16 @@ var post_project = function(req, res) {
 
     isProjectObject(req,res,obj)
     .then(function(obj) {
-        req.db.get('project').find({shortname:obj.shortname, backup:{$exists:false}})
-            .then(function (result) {
-                
+        req.db.get('project').findOne({shortname:obj.shortname, backup:{$exists:false}})
+            .then(function (project) {
                 // update/insert project
-                if(result.length) {
+                if(project) {
                     // project exists, save update
+                    if(checkAccess.toProject(project, loggedUser, "edit") == false ) {
+                        console.log("User does not have edit rights");
+                        res.status(403).json({error:"error",message:"User does not have edit rights"});
+                        return;
+                    }
                     console.log("updating...");
                     req.db.get('project').update({shortname:obj.shortname},{$set:{backup:true}},{multi:true})
                         .then(function () {

@@ -204,7 +204,7 @@ var AtlasMakerInteraction = {
 	
 			// configure display mode
 			//    $("#atlasMaker").removeClass('display-mode');
-			$("body").addClass('fullscreen-mode');
+			$("body").addClass('atlasMaker-fullscreen');
 			$("#atlasMaker").detach().appendTo('body');
 			
 			//    me.editMode=1;
@@ -222,7 +222,7 @@ var AtlasMakerInteraction = {
 			$("#blackOverlay").remove();
 	
 			// go back to display mode
-			$("body").removeClass('fullscreen-mode');
+			$("body").removeClass('atlasMaker-fullscreen');
 			//    $("#atlasMaker").addClass('display-mode');
 			$("#atlasMaker").detach().appendTo('#stereotaxic');
 			//    me.editMode=0;

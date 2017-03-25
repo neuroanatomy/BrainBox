@@ -1,0 +1,40 @@
+td {
+    word-break: break-word;
+}
+#content {
+    margin: 0 auto;
+}
+#annotationsPane {
+    background-color:#333;
+    padding: 20px;
+    margin-right: 20px;
+    margin-bottom: 20px;
+    max-width:900px;
+    flex:0 1 auto;
+    vertical-align:top
+}
+#annotationsPane th, #annotationsPane td {
+    overflow: hidden;
+}
+.tabContent {
+    margin-left:10px;
+    text-align: left;
+}
+#stereotaxic {
+    width:600px;
+}
+/******************************** resizable layout ******************************/
+/* for larger screen (computer, big iPad, small iPad landscape) */
+@media all and (max-width: 1300px) {
+    #content {
+        flex-direction: column;
+        max-width:700px;
+    }
+    #annotationsPane {
+        max-width:none;
+        margin-right: 0px;
+    }
+    #stereotaxic {
+        min-width: 100%;
+    }
+}

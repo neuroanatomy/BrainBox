@@ -165,7 +165,7 @@ var AtlasMakerWidget = {
 		// Add cursor (a small div)
 		me.container.find("#resizable").append("<div id='cursor'></div>");
 		
-		$("body").attr('data-toolbarDisplay','right');
+		$('body').attr('data-toolbarDisplay','right');
 		
 		// Add precise cursor
 		var isTouchArr=[];//["iPad","iPod"];

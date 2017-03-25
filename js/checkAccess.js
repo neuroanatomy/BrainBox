@@ -357,7 +357,14 @@ var toAnnotationByProject = function toAnnotationByProject(project,user) {
     return accessLevels[maxAccess];
 }
 
-
+/**
+ * @func toProject
+ * @desc Check user acces to files in project
+ */
+/**
+ * @todo Instead of toProject this function should be called toProjectFiles, and there
+ *       should be toProjectCollaborators and toProjectAnnotations
+ */
 var toProject = function toProject(project, user, access) {
     traceLog(toProject);
 

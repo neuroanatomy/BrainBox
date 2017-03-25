@@ -7,173 +7,9 @@
 	<link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
     <title>{{title}}</title>
 	<link rel="stylesheet" href="/stylesheets/style.css" />
+	<link rel="stylesheet" href="/stylesheets/index-style.css" />
+	<link rel="stylesheet" href="/stylesheets/ui.css" />
 	<link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
-	
-	<style>
-html, #menu, #footer {
-    background-color: #111;
-}
-#footer {
-    display: block;
-}
-.slide {
-    display:inline-block;
-    width:100%;
-    position:relative;
-    overflow:hidden;
-}
-.content {
-    display: inline-block;
-    position: absolute;
-    top:50%;
-    left:50%;
-    transform: translate( -50% , -50%);
-    width:600px;
-    max-width: calc( 100% - 20px );
-}
-#menu {
-    position: fixed;
-    z-index: 2;
-    text-align: right;
-    top:0;
-    margin-top:0;
-    width: 100%;
-    display: inline-block;
-    font: 16px/24px "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
-    transition: top .5s, opacity .5s;
-    -moz-transition: top .5s, opacity .5s;
-    -webkit-transition: top .5s, opacity .5s;
-}
-
-h2 {
-    margin-left:5rem;
-    opacity:0;
-    transition: margin-left 2s, opacity 2s;
-}
-	    
-/* 'more info' button */
-@-moz-keyframes sc-down-a {
-  0% {
-    -webkit-transform: translateY(0px) rotate(45deg);
-    -moz-transform: translateY(0px) rotate(45deg);
-    -o-transform: translateY(0px) rotate(45deg);
-    -ms-transform: translateY(0px) rotate(45deg);
-    transform: translateY(0px) rotate(45deg);
-  }
-  100% {
-    -webkit-transform: translateY(2px) rotate(45deg);
-    -moz-transform: translateY(2px) rotate(45deg);
-    -o-transform: translateY(2px) rotate(45deg);
-    -ms-transform: translateY(2px) rotate(45deg);
-    transform: translateY(2px) rotate(45deg);
-  }
-}
-@-webkit-keyframes sc-down-a {
-  0% {
-    -webkit-transform: translateY(0px) rotate(45deg);
-    -moz-transform: translateY(0px) rotate(45deg);
-    -o-transform: translateY(0px) rotate(45deg);
-    -ms-transform: translateY(0px) rotate(45deg);
-    transform: translateY(0px) rotate(45deg);
-  }
-  100% {
-    -webkit-transform: translateY(2px) rotate(45deg);
-    -moz-transform: translateY(2px) rotate(45deg);
-    -o-transform: translateY(2px) rotate(45deg);
-    -ms-transform: translateY(2px) rotate(45deg);
-    transform: translateY(2px) rotate(45deg);
-  }
-}
-@-o-keyframes sc-down-a {
-  0% {
-    -webkit-transform: translateY(0px) rotate(45deg);
-    -moz-transform: translateY(0px) rotate(45deg);
-    -o-transform: translateY(0px) rotate(45deg);
-    -ms-transform: translateY(0px) rotate(45deg);
-    transform: translateY(0px) rotate(45deg);
-  }
-  100% {
-    -webkit-transform: translateY(2px) rotate(45deg);
-    -moz-transform: translateY(2px) rotate(45deg);
-    -o-transform: translateY(2px) rotate(45deg);
-    -ms-transform: translateY(2px) rotate(45deg);
-    transform: translateY(2px) rotate(45deg);
-  }
-}
-@keyframes sc-down-a {
-  0% {
-    -webkit-transform: translateY(0px) rotate(45deg);
-    -moz-transform: translateY(0px) rotate(45deg);
-    -o-transform: translateY(0px) rotate(45deg);
-    -ms-transform: translateY(0px) rotate(45deg);
-    transform: translateY(0px) rotate(45deg);
-  }
-  100% {
-    -webkit-transform: translateY(2px) rotate(45deg);
-    -moz-transform: translateY(2px) rotate(45deg);
-    -o-transform: translateY(2px) rotate(45deg);
-    -ms-transform: translateY(2px) rotate(45deg);
-    transform: translateY(2px) rotate(45deg);
-  }
-}
-.btn-scroll-down {
-  width: 100px;
-  height: 50px;
-  position: absolute;
-  bottom: 5px;
-  left: 0;
-  right: 0;
-  margin: auto;
-  z-index: 10;
-  -webkit-transition: display 0.5s easy-in-out;
-  -moz-transition: display 0.5s easy-in-out;
-  -o-transition: display 0.5s easy-in-out;
-  -ms-transition: display 0.5s easy-in-out;
-  transition: display 0.5s easy-in-out;
-}
-.btn-scroll-down:before,
-.btn-scroll-down:after {
-  content: '';
-  display: block;
-  border-bottom: 1px solid #fff;
-  border-right: 1px solid #fff;
-  -webkit-transform: rotate(45deg);
-  -moz-transform: rotate(45deg);
-  -o-transform: rotate(45deg);
-  -ms-transform: rotate(45deg);
-  transform: rotate(45deg);
-  margin: auto;
-  position: absolute;
-  left: 0;
-  right: 0;
-}
-.btn-scroll-down:before {
-  bottom: 20px;
-  width: 60px;
-  height: 60px;
-}
-.btn-scroll-down:after {
-  width: 30px;
-  height: 30px;
-  bottom: 35px;
-  -webkit-animation: sc-down-a 0.3s infinite alternate;
-  -moz-animation: sc-down-a 0.3s infinite alternate;
-  -o-animation: sc-down-a 0.3s infinite alternate;
-  -ms-animation: sc-down-a 0.3s infinite alternate;
-  animation: sc-down-a 0.3s infinite alternate;
-}
-
-#neuronsImg {
-	filter:contrast(150%) brightness(60%);
-	-webkit-filter:contrast(150%) brightness(60%);
-	position:absolute;top:0;left:0
-}
-#neurons {
-	filter:contrast(150%) brightness(60%);
-	-webkit-filter:contrast(150%) brightness(60%);
-	position:absolute;top:0;left:0
-}
-	</style>
 </head>
 
 <body>
@@ -263,7 +99,9 @@ h2 {
 	<!-- End Footer -->
 
 <script src="/lib/jquery-3.1.1.min.js"></script>
+<!--
 <link rel="stylesheet" type="text/css" href="/lib/introjs/introjs.css" />
+-->
 <script src="/lib/introjs/intro.js"></script>
 <script src="/js/brainbox.js"></script>
 <script src="/js/brainbox-intro.js"></script>

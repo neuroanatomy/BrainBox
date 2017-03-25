@@ -1,0 +1,50 @@
+/* text annotations
+------------------------ */
+tr {
+	vertical-align:top;
+}
+tr.selected {
+	background-color: #444;
+}
+table {
+	border-collapse:collapse;
+}
+.tabContent th {
+	font-weight: bold;
+	border-bottom:thin solid white;
+}
+.tabContent {
+	width:100%;
+	border-bottom:thin solid white;
+	table-layout: fixed;
+}
+.tabContent td {
+	font-weight: normal;
+}
+.tabContent th, .tabContent td {
+	padding:0;
+}
+ul {
+	list-style-type: none;
+	padding:0px;
+	margin:0px;
+}
+li {
+	margin-bottom:1rem;
+}
+
+/* Content: Data
+---------------------- */
+#data {
+	display:none;
+}
+
+.noEmpty:empty:before {
+	content:'Empty';
+	color:rgba(255,255,255,0.4);
+}
+
+.noEmptyWithPlaceholder:empty:before {
+	content:attr(placeholder);
+	color:rgba(255,255,255,0.4);
+}
