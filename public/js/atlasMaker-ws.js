@@ -556,6 +556,19 @@ var AtlasMakerWS = {
 		$("#log").append(msg);
 		$("#log").scrollTop($("#log")[0].scrollHeight);
 	},
+	/**
+	 * @function replayWSTraffic
+	 * @desc Replays websocket traffic recorded at the served. Used for debugging
+	 * @param Array recorded An array of websocket messages recorded in the server
+	 */
+	replayWSTraffic: function replayWSTraffic(recorded) {
+		var me=AtlasMakerWidget;
+		var l=me.traceLog(replayWSTraffic,0,"#aca");if(l)console.log.apply(undefined,l);
+	    var i;
+	    for(i=0;i<recorded.length;i++) {
+            me.socket.send(JSON.stringify(recorded[i]));
+	    }
+	},
 	//==========
 	// Database
 	//==========

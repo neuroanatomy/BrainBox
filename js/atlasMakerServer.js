@@ -87,6 +87,8 @@ var	US = [];
 var	uidcounter = 1;
 var enterCommands = false;
 var UndoStack = [];
+var recordWS = false;
+var recordedWSTraffic = [];
 
 var NiiHdr = new Struct()
     .word32Sle('sizeof_hdr')        // Size of the header. Must be 348 (bytes)
@@ -211,6 +213,16 @@ var displayUsers = function displayUsers() {
 		console.log("US["+i+"]=",US[i].User);
 	}
 }
+var toggleWebsocketRecording = function toggleWebsocketRecording() {
+    recordWS = !recordWS;
+    if(recordWS) {
+        console.log("recording WebSocket traffic");
+    } else {
+        console.log(JSON.stringify(recordedWSTraffic));
+        console.log("finished recording WebSocket traffic");
+        recordedWSTraffic=[];
+    }
+};
 keypress(process.stdin);
 process.stdin.on('keypress', function (ch, key) {
 	if(key) {
@@ -243,6 +255,9 @@ process.stdin.on('keypress', function (ch, key) {
                     break;
                 case 'u':
                     displayUsers();
+                    break;
+                case 'r':
+                    toggleWebsocketRecording();
                     break;
                 case '0':
                     debug=0;
@@ -468,6 +483,15 @@ var initSocketConnection = function initSocketConnection() {
 				} else
 					data=JSON.parse(msg);
 				data.uid=sourceUS.uid;
+				
+				// websocket traffic recording
+				if(recordWS) {
+				    if(data.type == "atlas") {
+				        recordedWSTraffic.push({type: 'atlas'});
+				    } else {
+				        recordedWSTraffic.push(data);
+				    }
+				}
 				
 				if(debug>1) {
 				    console.log();
