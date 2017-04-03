@@ -88,11 +88,12 @@ function downloadMRI(myurl, req, res, callback) {
             callback({error:err});
         })
         .on('response', function(res) {
+            var href = res.request.uri.href;
             var contentDisp = res.headers['content-disposition'];
             if (contentDisp && /^attachment/.test(contentDisp)) {
                 newFilename = contentDisp.split('filename=')[1].split(';')[0].replace(/"/g, '');
             } else {
-                newFilename = path.basename(url.parse(fileUrl).path);
+                newFilename = path.basename(url.parse(href).path);
             }
             console.log("filename:",newFilename);
             var arr = dest.split("/");
