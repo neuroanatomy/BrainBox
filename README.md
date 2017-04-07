@@ -27,7 +27,7 @@ If you want to work on BrainBox's code, you'll need a local installation:
 3. `cd` to brainbox
 4. get Github developer keys for your local brainbox url 
 (http://localhost:3000 by default)
-5. paste the keys into the github-keys.json.example file, and drop the .example
+5. paste the keys into the github-keys.json.example file, change the `callbackURL` to `"http://localhost:3000/auth/github/callback"` and drop the .example
 6. drop the `.example` from `blacklist.json.example`
 7. drop the `.example` from `whitelist.json.example`
 7. make sure Docker is installed
