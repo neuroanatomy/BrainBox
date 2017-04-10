@@ -36,7 +36,7 @@ var AtlasMakerIO = {
 		var	data=me.atlas.data;
 		var	i;
 
-		var nii = new Uint8Array(voxel_offset+data.length);
+		var nii = new Int32Array(voxel_offset+data.length);
 		for(i=0;i<sizeof_hdr;i++)
 			nii[i]=dv.getUint8(i);
 		for(i=0;i<data.length;i++)
