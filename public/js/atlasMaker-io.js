@@ -2,50 +2,120 @@
  * @page AtlasMaker: Input/Output
  */
 var AtlasMakerIO = {
+    NiiHdr: Struct()
+        .word32Sle('sizeof_hdr')        // Size of the header. Must be 348 (bytes)
+        .chars('data_type',10)          // Not used; compatibility with analyze.
+        .chars('db_name',18)            // Not used; compatibility with analyze.
+        .word32Sle('extents')           // Not used; compatibility with analyze.
+        .word16Sle('session_error')     // Not used; compatibility with analyze.
+        .word8('regular')               // Not used; compatibility with analyze.
+        .word8('dim_info')              // Encoding directions (phase, frequency, slice).
+        .array('dim',8,'word16Sle')     // Data array dimensions.
+        .floatle('intent_p1')           // 1st intent parameter.
+        .floatle('intent_p2')           // 2nd intent parameter.
+        .floatle('intent_p3')           // 3rd intent parameter.
+        .word16Sle('intent_code')       // nifti intent.
+        .word16Sle('datatype')	        // Data type.
+        .word16Sle('bitpix')	        // Number of bits per voxel.
+        .word16Sle('slice_start')	    // First slice index.
+        .array('pixdim',8,'floatle')    // Grid spacings (unit per dimension).
+        .floatle('vox_offset')	        // Offset into a .nii file.
+        .floatle('scl_slope')	        // Data scaling, slope.
+        .floatle('scl_inter')	        // Data scaling, offset.
+        .word16Sle('slice_end')	        // Last slice index.
+        .word8('slice_code')	        // Slice timing order.
+        .word8('xyzt_units')	        // Units of pixdim[1..4].
+        .floatle('cal_max')	            // Maximum display intensity.
+        .floatle('cal_min')	            // Minimum display intensity.
+        .floatle('slice_duration')	    // Time for one slice.
+        .floatle('toffset')	            // Time axis shift.
+        .word32Sle('glmax')	            // Not used; compatibility with analyze.
+        .word32Sle('glmin')	            // Not used; compatibility with analyze.
+        .chars('descrip',80)	        // Any text.
+        .chars('aux_file',24)	        // Auxiliary filename.
+        .word16Sle('qform_code')	    // Use the quaternion fields.
+        .word16Sle('sform_code')	    // Use of the affine fields.
+        .floatle('quatern_b')	        // Quaternion b parameter.
+        .floatle('quatern_c')	        // Quaternion c parameter.
+        .floatle('quatern_d')	        // Quaternion d parameter.
+        .floatle('qoffset_x')	        // Quaternion x shift.
+        .floatle('qoffset_y')	        // Quaternion y shift.
+        .floatle('qoffset_z')	        // Quaternion z shift.
+        .array('srow_x',4,'floatle')    // 1st row affine transform
+        .array('srow_y',4,'floatle')    // 2nd row affine transform.
+        .array('srow_z',4,'floatle')    // 3rd row affine transform.
+        .chars('intent_name',16)	    // Name or meaning of the data.
+        .chars('magic',4),	            // Magic string.
+    MghHdr: Struct()
+        .word32Sbe('v')
+        .word32Sbe('ndim1')
+        .word32Sbe('ndim2')
+        .word32Sbe('ndim3')
+        .word32Sbe('nframes')
+        .word32Sbe('type')
+        .word32Sbe('dof')
+        .word16Sbe('ras_good_flag')
+        .array('delta',3,'floatbe')
+        .array('Mdc',9,'floatbe')
+        .array('Pxyz_c',3,'floatbe'),
+    MghFtr: Struct()
+        .array('mrparms',4,'floatbe'),
     /**
      * @function encodeNifti
      */
 	encodeNifti: function encodeNifti() {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(encodeNifti);if(l)console.log.apply(undefined,l);
-	
+
 		var	sizeof_hdr=348;
 		var	dimensions=4;			// number of dimension values provided
 		var	spacetimeunits=2+8;		// 2=nifti code for millimetres | 8=nifti code for seconds
 		var	datatype=2;				// datatype for 8 bits (DT_UCHAR8 in nifti or UCHAR in analyze)
-		var	voxel_offset=352;
-		var	hdr=new ArrayBuffer(sizeof_hdr);
-		var	dv=new DataView(hdr);
-		dv.setInt32(0,sizeof_hdr,true);
-		dv.setInt16(40,dimensions,true);
-		dv.setInt16(42,me.brain_dim[0],true);
-		dv.setInt16(44,me.brain_dim[1],true);
-		dv.setInt16(46,me.brain_dim[2],true);
-		dv.setInt16(48,1,true);
-		dv.setInt16(70,datatype,true);
-		dv.setInt16(72,8,true);			// bits per voxel
-//		dv.setInt16(72,datatype,true);
-//		dv.setInt16(74,8,true);			// bits per voxel
-		dv.setFloat32(76,1,true);		// first pixdim value
-		dv.setFloat32(80,me.brain_pixdim[0],true);
-		dv.setFloat32(84,me.brain_pixdim[1],true);
-		dv.setFloat32(88,me.brain_pixdim[2],true);
-		dv.setFloat32(108,voxel_offset,true);
-		dv.setInt8(123,spacetimeunits);
+		var	vox_offset=352;
+		var bitsPerVoxel=8;
+	
+        var newHdr = {
+            sizeof_hdr: sizeof_hdr,
+                data_type: '', db_name: '', extents: 0, session_error: 0, regular: 0, dim_info: 0,
+            dim: [3, me.User.dim[0], me.User.dim[1], me.User.dim[2], 1, 1, 1, 1],
+                intent_p1: 0, intent_p2: 0, intent_p3: 0, intent_code: 0,
+            datatype: datatype,    // uchar
+            bitpix: bitsPerVoxel,
+                slice_start: 0,
+            pixdim: [-1, me.User.pixdim[0], me.User.pixdim[1], me.User.pixdim[2], 0, 1, 1, 1],
+            vox_offset: vox_offset,
+                scl_slope: 0, scl_inter: 0, slice_end: 0, slice_code: 0,
+                xyzt_units: 10,
+                cal_max: 0, cal_min: 0, slice_duration: 0, toffset: 0,
+                glmax: 0, glmin: 0,
+                descrip: 'BrainBox, 20 August 2016',
+                aux_file: '',
+                qform_code: 0,
+                sform_code: 1,
+                quatern_b: 0, quatern_c: 0, quatern_d: 0,
+                qoffset_x: 0, qoffset_y: 0, qoffset_z: 0,
+            srow_x: [me.User.v2w[0][0], me.User.v2w[1][0], me.User.v2w[2][0], me.User.wori[0]],
+            srow_y: [me.User.v2w[0][1], me.User.v2w[1][1], me.User.v2w[2][1], me.User.wori[1]],
+            srow_z: [me.User.v2w[0][2], me.User.v2w[1][2], me.User.v2w[2][2], me.User.wori[2]],
+                intent_name: '',
+                magic: 'n+1'
+        };
+        me.NiiHdr.allocate();
+        niihdr = me.NiiHdr.buffer();
+        for(i in newHdr)
+            me.NiiHdr.fields[i] = newHdr[i];
+        hdr = toArrayBuffer(niihdr);
+        var	data=me.atlas.data;
+        var nii = new Uint8Array(vox_offset+data.length);
+        for(i=0;i<sizeof_hdr;i++)
+            nii[i]=hdr[i];
+        for(i=0;i<data.length;i++)
+            nii[i+vox_offset]=data[i];
 
-		var	data=me.atlas.data;
-		var	i;
-
-		var nii = new Uint8Array(voxel_offset+data.length);
-		for(i=0;i<sizeof_hdr;i++)
-			nii[i]=dv.getUint8(i);
-		for(i=0;i<data.length;i++)
-			nii[i+voxel_offset]=data[i];
-		
-		var	niigz=new pako.Deflate({gzip:true});
-		niigz.push(nii,true);
-				
-		return niigz.result;
+        var	niigz=new pako.Deflate({gzip:true});
+        niigz.push(nii,true);
+            
+        return niigz.result;
 	},
     /**
      * @function saveNifti
@@ -67,22 +137,17 @@ var AtlasMakerIO = {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(loadNifti,1);if(l)console.log.apply(undefined,l);
 
-		var	dv=new DataView(nii);
-		var	vox_offset=352;
-		var	sizeof_hdr=dv.getInt32(0,true);
-		var	dimensions=dv.getInt16(40,true);
+        me.NiiHdr._setBuff(toBuffer(nii));
+        var h=JSON.parse(JSON.stringify(me.NiiHdr.fields));
+
+		var	vox_offset=h.vox_offset;
+        var	sizeof_hdr=h.sizeof_hdr;
 	
 		var mri={};
 		mri.hdr=nii.slice(0,vox_offset);
-		mri.dim=[];
-		mri.dim[0]=dv.getInt16(42,true);
-		mri.dim[1]=dv.getInt16(44,true);
-		mri.dim[2]=dv.getInt16(46,true);
-		mri.datatype=dv.getInt16(70,true);
-		mri.pixdim=[];
-		mri.pixdim[0]=dv.getFloat32(80,true);
-		mri.pixdim[1]=dv.getFloat32(84,true);
-		mri.pixdim[2]=dv.getFloat32(88,true);
+		mri.datatype=h.datatype;
+		mri.dim=[h.dim[1],h.dim[2],h.dim[3]];
+		mri.pixdim=[h.pixdim[1],h.pixdim[2],h.pixdim[3]];
 		vox_offset=dv.getFloat32(108,true);	
 		
 		switch(mri.datatype)
