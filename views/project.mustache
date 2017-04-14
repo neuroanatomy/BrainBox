@@ -115,7 +115,7 @@ var annotations = {
     text: [],   // collect text annotations
     volume: []  // collect volume annotations
 };
-var k, g, h, str, found, annType, annName, file;
+var k, g, h, str, found, annDisplay, annType, annName, file;
 var info_proxy = {};
 var trTemplate;
 var objTemplate;
@@ -197,6 +197,7 @@ $("#settings").click(function(){
         // the following columns are completed from the project's 'annotations' definitions:
         // determine their type of display (either select or freeform at the moment) based data type
         for(g=0;g<annotations.text.length;g++) {
+            annDisplay = annotations.text[g].display;
             annName = annotations.text[g].name;
             annType = Object.prototype.toString.call(annotations.text[g].values); // a better object type description
 
@@ -236,13 +237,16 @@ $("#settings").click(function(){
                 });
             // freeform text
             } else if(annType === "[object String]" || annotations.text[g].values === "freeform") {
-                trTemplate.push("<td contentEditable=true class='noEmpty'></td>");
+                if(annDisplay=="false")
+                    trTemplate.push("<td contentEditable=true class='hidden'></td>");
+                else
+                    trTemplate.push("<td contentEditable=true class='noEmpty'></td>");
                 objTemplate.push({
                     typeOfBinding:2,
                     path: "files.list.#.mri.annotations."+projShortname+"."+annName,
                     format: function(e, d) {
                         var obj = d;
-                        $(e).text(obj.data);
+                        $(e).html('<span>'+obj.data+'</span>');
                     },
                     parse: function(e, d) {
                         var obj = d;

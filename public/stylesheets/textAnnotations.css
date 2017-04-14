@@ -39,6 +39,12 @@ li {
 	display:none;
 }
 
+.hidden span {
+    display:none;
+}
+.hidden:after {
+    content:'••••';
+}
 .noEmpty:empty:before {
 	content:'Empty';
 	color:rgba(255,255,255,0.4);
