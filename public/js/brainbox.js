@@ -92,6 +92,7 @@ var BrainBox={
         .then(function(){return BrainBox.loadScript('/lib/pako/pako.min.js', function(){return window.pako != undefined})})
         .then(function(){return BrainBox.loadScript('/lib/purify.min.js', function(){return window.DOMPurify != undefined})})
         .then(function(){return BrainBox.loadScript('/lib/json-patch-duplex.min.js', function(){return window.jsonpatch != undefined})})
+        .then(function(){return BrainBox.loadScript('/lib/npm-bundle.js')})
         .then(function(){return BrainBox.loadScript('/js/twoWayBinding.js')})
         .then(function(){
             $.when(

@@ -23,14 +23,16 @@ If you want to work on BrainBox's code, you'll need a local installation:
 ## Using Docker to install and run BrainBox
 
 1. `git clone` this repository or download it
-2. `cd` to brainbox
-3. get Github developer keys for your local brainbox url 
+2. `mv BrainBox brainbox` to rename the directory 
+3. `cd` to brainbox
+4. get Github developer keys for your local brainbox url 
 (http://localhost:3000 by default)
-4. paste the keys into the github-keys.json.example file, and drop the .example
-5. drop the `.example` from `blacklist.json.example`
-6. make sure Docker is installed
-7. `docker-compose up`
-8. Then open `http://localhost:3000` in your browser.
+5. paste the keys into the github-keys.json.example file, change the `callbackURL` to `"http://localhost:3000/auth/github/callback"` and drop the .example
+6. drop the `.example` from `blacklist.json.example`
+7. drop the `.example` from `whitelist.json.example`
+7. make sure Docker is installed
+8. `docker-compose up`
+9. Then open `http://localhost:3000` in your browser.
 
 ## Non docker developer install instructions
 
