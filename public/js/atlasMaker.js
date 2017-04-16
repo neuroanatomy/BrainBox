@@ -215,6 +215,7 @@ var AtlasMakerWidget = {
 			me.push($(".push#download"),me.download);
 			me.push($(".push#color"),me.color);
 			me.push($(".push#undo"),me.sendUndoMessage);
+			me.push($(".push#save"),me.sendSaveMessage);
 			me.push($(".push#prev"),me.prevSlice);
 			me.push($(".push#next"),me.nextSlice);
 			

@@ -514,6 +514,9 @@ var initSocketConnection = function initSocketConnection() {
 					case "requestSlice2":
 						receiveRequestSlice2Message(data,this);
 						break;
+					case "save":
+						receiveSaveMessage(data,this);
+						break;
 					case "saveMetadata":
 						receiveSaveMetadataMessage(data,this);
 						break;
@@ -812,6 +815,37 @@ var receiveRequestSlice2Message = function receiveRequestSlice2Message(data,user
 
 }
 
+var receiveSaveMessage = function receiveSaveMessage(data,user_socket) {
+    traceLog(receiveSaveMessage);
+
+    var sourceUS=getUserFromUserId(data.uid);
+	var brainPath=sourceUS.User.dirname+sourceUS.User.mri;
+	var atlasPath=sourceUS.User.dirname+sourceUS.User.atlasFilename;
+	var i, atlas;
+
+    var time=new Date();
+    var modified=time.toJSON();
+    var modifiedBy = (sourceUS.User && sourceUS.User.username) ? sourceUS.User.username : "anonymous";
+
+    for(i in Atlases) {
+        if(Atlases[i].dirname+Atlases[i].name === atlasPath) {
+            saveAtlas(Atlases[i])
+                .then(function () {
+                    console.log("    Atlas saved");
+                    clearInterval(Atlases[i].timer);
+                    broadcastMessage({
+                        type:'serverMessage',
+                        msg:"Atlas saved "+time
+                    });
+                });
+            break;
+        }
+    }
+
+    /**
+     * @todo Log the save
+     */
+}
 var receiveSaveMetadataMessage = function receiveSaveMetadataMessage(data,user_socket) {
     traceLog(receiveSaveMetadataMessage);
 
@@ -1123,19 +1157,27 @@ var broadcastPaintVolumeMessage = function broadcastPaintVolumeMessage(msg, User
 var sendDisconnectMessage = function sendDisconnectMessage(uid) {
     traceLog(sendDisconnectMessage);
 	
-	try {
-		var n=0,i,msg=JSON.stringify({type:"disconnect",uid:uid});
+	broadcastMessage({
+	    type:"disconnect",
+	    uid:uid
+	});
+}
+var broadcastMessage = function broadcastMessage(msg, uid) {
+    traceLog(broadcastMessage);
+    
+    try {
+		var n=0,i;
 		for(i in US) {
 		    if(US[i].uid != uid ) {
-                US[i].socket.send(msg);
+                US[i].socket.send(JSON.stringify(msg));
                 n++;
             }
 		}
-		if(debug) console.log("    user disconnect message sent to "+n+" users");
-		
+		if(debug) console.log("    message broadcasted to "+n+" users", msg);
 	} catch (ex) {
-		console.log("ERROR: Unable to sendDisconnectMessage",ex);
+	    console.log("ERROR: Unable to broadcast message",ex,msg);
 	}
+        
 }
 
 //========================================================================================
