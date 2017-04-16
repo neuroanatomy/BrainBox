@@ -64,6 +64,7 @@ var AtlasMakerWS = {
 			me.receiveFunctions["paint"]=me.receivePaintMessage;
 			me.receiveFunctions["paintvol"]=me.receivePaintVolumeMessage;
 			me.receiveFunctions["disconnect"]=me.receiveDisconnectMessage;
+			me.receiveFunctions["serverMessage"]=me.receiveServerMessage;
 			
 			me.receiveFunctions["requestSlice"]=function(data){console.log("requestSlice",data)};
 			me.receiveFunctions["requestSlice2"]=function(data){console.log("requestSlice2",data)};
@@ -418,6 +419,21 @@ var AtlasMakerWS = {
 			console.log("ERROR: Unable to sendUndoMessage",ex);
 		}
 	},
+	 /**
+     * @function sendSaveMessage
+     */
+	sendSaveMessage: function sendSaveMessage() {
+		var me=AtlasMakerWidget;
+		var l=me.traceLog(sendSaveMessage,0,"#aca");if(l)console.log.apply(undefined,l);
+	
+		if(me.flagConnected==0)
+			return;
+		try {
+			me.socket.send(JSON.stringify({type:"save"}));
+		} catch (ex) {
+			console.log("ERROR: Unable to sendSaveMessage",ex);
+		}
+	},
 	/**
      * @function sendRequestMRIMessage
      */
@@ -555,6 +571,18 @@ var AtlasMakerWS = {
 		$("#chat").text("Chat ("+nusers+" connected)");
 		$("#log").append(msg);
 		$("#log").scrollTop($("#log")[0].scrollHeight);
+	},
+	/**
+     * @function receiveServerMessage
+     */
+	receiveServerMessage: function receiveServerMessage(data) {
+		var me=AtlasMakerWidget;
+		var l=me.traceLog(receiveServerMessage,0,"#aca");if(l)console.log.apply(undefined,l);
+
+		var msg=data.msg;
+		var prevMsg=$("#chat").text();
+		$("#chat").text(msg);
+		setTimeout(function(){$("#chat").text(prevMsg)},5000);
 	},
 	/**
 	 * @function replayWSTraffic
