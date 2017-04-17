@@ -135,33 +135,45 @@ var AtlasMakerPaint = {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(fill,0,"#0c0");if(l)console.log.apply(undefined,l);
 	
-		var	Q=[],n;
 		var	atlas=me.atlas;
 		var	dim=atlas.dim;
-		var	i;
+
+		var	Q=[],
+		    left,
+		    right,
+		    n;
+		var	i,max=0;
 		var bval=atlas.data[me.slice2index(x,y,z,myView)]; // background-value: value of the voxel where the click occurred
 		
 		if(bval==val)	// nothing to do
 			return;
 		
-		Q.push({"x":x,"y":y});
+		Q.push({x:x,y:y});
 		while(Q.length>0) {
-			n=Q.pop();
-			x=n.x;
+		    if(Q.length>max)
+		        max=Q.length;
+			n=Q.shift();
+			if(atlas.data[me.slice2index(n.x,n.y,z,myView)]!=bval)
+			    continue;
+			left=n.x;
+			right=n.x;
 			y=n.y;
-			if(atlas.data[me.slice2index(x,y,z,myView)]==bval) {
-				atlas.data[me.slice2index(x,y,z,myView)]=val;
-				if(x-1>=0         && atlas.data[me.slice2index(x-1,y,z,myView)]==bval)
-					Q.push({"x":x-1,"y":y});
-				if(x+1<me.brain_W && atlas.data[me.slice2index(x+1,y,z,myView)]==bval)
-					Q.push({"x":x+1,"y":y});
+			while (left-1>=0 && atlas.data[me.slice2index(left-1,y,z,myView)]==bval) {
+                left--;
+            }
+			while (right+1<me.brain_W && atlas.data[me.slice2index(right+1,y,z,myView)]==bval) {
+                right++;
+            }
+            for(x=left;x<=right;x++) {
+                atlas.data[me.slice2index(x,y,z,myView)]=val;
 				if(y-1>=0         && atlas.data[me.slice2index(x,y-1,z,myView)]==bval)
-					Q.push({"x":x,"y":y-1});
+					Q.push({x:x,y:y-1});
 				if(y+1<me.brain_H && atlas.data[me.slice2index(x,y+1,z,myView)]==bval)
-					Q.push({"x":x,"y":y+1});
-			}
+					Q.push({x:x,y:y+1});
+            }
 		}
 		me.drawImages();
+		console.log("max array size for fill:",max);
 	},
     /**
      * @function line
