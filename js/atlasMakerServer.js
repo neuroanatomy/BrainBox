@@ -1160,7 +1160,7 @@ var sendDisconnectMessage = function sendDisconnectMessage(uid) {
 	broadcastMessage({
 	    type:"disconnect",
 	    uid:uid
-	});
+	},uid);
 }
 var broadcastMessage = function broadcastMessage(msg, uid) {
     traceLog(broadcastMessage);
@@ -2022,6 +2022,7 @@ var line = function line(x, y, val, User, undoLayer) {
 	var x2=x;
 	var y2=y;
 	var	i;
+	var brain_W, brain_H;
 		
 	if(Math.pow(x1-x2,2)+Math.pow(y1-y2,2)>20*20) {
 		console.log("WARNING: long line from",x1,y1,"to",x2,y2);
@@ -2068,40 +2069,49 @@ var fill = function fill(x, y, z, val, User, undoLayer) {
 	var view=User.view;
 	var	vol=Atlases[User.iAtlas].data;
 	var dim=Atlases[User.iAtlas].dim;
-	var	Q=[],n;
-	var	i;
+	var brain_W, brain_H;
+	var sdim=User.s2v.sdim;
+	switch(view) {
+		case 'sag':	brain_W=sdim[1]; brain_H=sdim[2]; break; // sagital
+		case 'cor':	brain_W=sdim[0]; brain_H=sdim[2]; break; // coronal
+		case 'axi':	brain_W=sdim[0]; brain_H=sdim[1]; break; // axial
+	}
+
+	var	Q=[],
+	    left,
+	    right,
+	    n;
+	var	i,max=0;
 	var bval=vol[sliceXYZ2index(x,y,z,User)]; // background-value: value of the voxel where the click occurred
 
-	if(bval===val) {	// nothing to do
-	    console.log("fill: nothing to do. Asked to fill with value",val,"and the existing value was",bval,"sampled at coordinates",x,y,z);
+	if(bval===val)	// nothing to do
 		return;
-	}
 	
-	Q.push({"x":x,"y":y});
+	Q.push({x:x,y:y});
 	while(Q.length>0) {
-		n=Q.pop();
-		x=n.x;
+	    if(Q.length>max)
+	        max=Q.length;
+		n=Q.shift();
+		if(vol[sliceXYZ2index(n.x,n.y,z,User)]!=bval)
+		    continue;
+		left=n.x;
+		right=n.x;
 		y=n.y;
-		if(vol[sliceXYZ2index(x,y,z,User)]===bval) {
-			paintVoxel(x,y,z,User,vol,val,undoLayer);
-			
-			i=sliceXYZ2index(x-1,y,z,User);
-			if(i>=0 && vol[i]===bval)
-				Q.push({"x":x-1,"y":y});
-			
-			i=sliceXYZ2index(x+1,y,z,User);
-			if(i>=0 && vol[i]===bval)
-				Q.push({"x":x+1,"y":y});
-			
-			i=sliceXYZ2index(x,y-1,z,User);
-			if(i>=0 && vol[i]===bval)
-				Q.push({"x":x,"y":y-1});
-			
-			i=sliceXYZ2index(x,y+1,z,User);
-			if(i>=0 && vol[i]===bval)
-				Q.push({"x":x,"y":y+1});
-		}
+        while (left-1>=0 && vol[sliceXYZ2index(left-1,y,z,User)]==bval) {
+            left--;
+        }
+        while (right+1<brain_W &&  vol[sliceXYZ2index(right+1,y,z,User)]==bval) {
+            right++;
+        }
+        for(x=left;x<=right;x++) {
+            paintVoxel(x,y,z,User,vol,val,undoLayer);
+            if(y-1>=0 && vol[sliceXYZ2index(x,y-1,z,User)]==bval)
+                Q.push({x:x,y:y-1});
+            if(y+1<brain_H && vol[sliceXYZ2index(x,y+1,z,User)]==bval)
+                Q.push({x:x,y:y+1});
+        }
 	}
+	console.log("Max array size for fill:",max);
 }
 /*
 	Serve brain slices
