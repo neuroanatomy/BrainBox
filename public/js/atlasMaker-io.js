@@ -2,7 +2,7 @@
  * @page AtlasMaker: Input/Output
  */
 var AtlasMakerIO = {
-    NiiHdr: Struct()
+    NiiHdrLE: Struct()
         .word32Sle('sizeof_hdr')        // Size of the header. Must be 348 (bytes)
         .chars('data_type',10)          // Not used; compatibility with analyze.
         .chars('db_name',18)            // Not used; compatibility with analyze.
@@ -44,6 +44,50 @@ var AtlasMakerIO = {
         .array('srow_x',4,'floatle')    // 1st row affine transform
         .array('srow_y',4,'floatle')    // 2nd row affine transform.
         .array('srow_z',4,'floatle')    // 3rd row affine transform.
+        .chars('intent_name',16)	    // Name or meaning of the data.
+        .chars('magic',4),	            // Magic string.
+    NiiHdrBE: Struct()
+        .word32Sbe('sizeof_hdr')        // Size of the header. Must be 348 (bytes)
+        .chars('data_type',10)          // Not used; compatibility with analyze.
+        .chars('db_name',18)            // Not used; compatibility with analyze.
+        .word32Sbe('extents')           // Not used; compatibility with analyze.
+        .word16Sbe('session_error')     // Not used; compatibility with analyze.
+        .word8('regular')               // Not used; compatibility with analyze.
+        .word8('dim_info')              // Encoding directions (phase, frequency, slice).
+        .array('dim',8,'word16Sbe')     // Data array dimensions.
+        .floatbe('intent_p1')           // 1st intent parameter.
+        .floatbe('intent_p2')           // 2nd intent parameter.
+        .floatbe('intent_p3')           // 3rd intent parameter.
+        .word16Sbe('intent_code')       // nifti intent.
+        .word16Sbe('datatype')	        // Data type.
+        .word16Sbe('bitpix')	        // Number of bits per voxel.
+        .word16Sbe('slice_start')	    // First slice index.
+        .array('pixdim',8,'floatbe')    // Grid spacings (unit per dimension).
+        .floatbe('vox_offset')	        // Offset into a .nii file.
+        .floatbe('scl_slope')	        // Data scaling, slope.
+        .floatbe('scl_inter')	        // Data scaling, offset.
+        .word16Sbe('slice_end')	        // Last slice index.
+        .word8('slice_code')	        // Slice timing order.
+        .word8('xyzt_units')	        // Units of pixdim[1..4].
+        .floatbe('cal_max')	            // Maximum display intensity.
+        .floatbe('cal_min')	            // Minimum display intensity.
+        .floatbe('slice_duration')	    // Time for one slice.
+        .floatbe('toffset')	            // Time axis shift.
+        .word32Sbe('glmax')	            // Not used; compatibility with analyze.
+        .word32Sbe('glmin')	            // Not used; compatibility with analyze.
+        .chars('descrip',80)	        // Any text.
+        .chars('aux_file',24)	        // Auxiliary filename.
+        .word16Sbe('qform_code')	    // Use the quaternion fields.
+        .word16Sbe('sform_code')	    // Use of the affine fields.
+        .floatbe('quatern_b')	        // Quaternion b parameter.
+        .floatbe('quatern_c')	        // Quaternion c parameter.
+        .floatbe('quatern_d')	        // Quaternion d parameter.
+        .floatbe('qoffset_x')	        // Quaternion x shift.
+        .floatbe('qoffset_y')	        // Quaternion y shift.
+        .floatbe('qoffset_z')	        // Quaternion z shift.
+        .array('srow_x',4,'floatbe')    // 1st row affine transform
+        .array('srow_y',4,'floatbe')    // 2nd row affine transform.
+        .array('srow_z',4,'floatbe')    // 3rd row affine transform.
         .chars('intent_name',16)	    // Name or meaning of the data.
         .chars('magic',4),	            // Magic string.
     MghHdr: Struct()
@@ -100,10 +144,10 @@ var AtlasMakerIO = {
                 intent_name: '',
                 magic: 'n+1'
         };
-        me.NiiHdr.allocate();
-        niihdr = me.NiiHdr.buffer();
+        me.NiiHdrLE.allocate();
+        niihdr = me.NiiHdrLE.buffer();
         for(i in newHdr)
-            me.NiiHdr.fields[i] = newHdr[i];
+            me.NiiHdrLE.fields[i] = newHdr[i];
         hdr = toArrayBuffer(niihdr);
         var	data=me.atlas.data;
         var nii = new Uint8Array(vox_offset+data.length);
@@ -130,15 +174,42 @@ var AtlasMakerIO = {
 		$("a#download_atlas").attr("href",window.URL.createObjectURL(niigzBlob));
 		$("a#download_atlas").attr("download",me.User.atlasFilename);
 	},
+	swapInt16: function swapInt16(arr) {
+	    var i,dv = new DataView(arr.buffer);
+	    for(i=0;i<arr.length;i++) {
+	        arr[i]= dv.getInt16(2*i,false);
+	    }
+	    return arr;
+	},
+	swapInt32: function swapInt32(arr) {
+	    var i,dv = new DataView(arr.buffer);
+	    for(i=0;i<arr.length;i++) {
+	        arr[i]= dv.getInt32(4*i,false);
+	    }
+	    return arr;
+	},
+	swapFloat32: function swapFloat32(arr) {
+	    var i,dv = new DataView(arr.buffer);
+	    for(i=0;i<arr.length;i++) {
+	        arr[i]= dv.getFloat32(4*i,false);
+	    }
+	    return arr;
+	},
     /**
      * @function loadNifti
      */
 	loadNifti: function loadNifti(nii) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(loadNifti,1);if(l)console.log.apply(undefined,l);
+		var endianness='le';
 
-        me.NiiHdr._setBuff(toBuffer(nii));
+        me.NiiHdrLE._setBuff(toBuffer(nii));
         var h=JSON.parse(JSON.stringify(me.NiiHdr.fields));
+        if(h.sizeof_hdr!=348) {
+            me.NiiHdrBE._setBuff(toBuffer(nii));
+            h=JSON.parse(JSON.stringify(me.NiiHdrBE.fields));   
+            endianness='be';     
+        }
 
 		var	vox_offset=h.vox_offset;
         var	sizeof_hdr=h.sizeof_hdr;
@@ -155,13 +226,22 @@ var AtlasMakerIO = {
 				mri.data=new Uint8Array(nii,vox_offset);
 				break;
 			case 4: // SHORT
-				mri.data=new Int16Array(nii,vox_offset);
+			    if(endianness=='le')
+                    mri.data=new Int16Array(nii,vox_offset);
+                else
+                    mri.data=me.swapInt16(new Int16Array(nii,vox_offset));
 				break;
 			case 8:  // INT
-				mri.data=new Int32Array(nii,vox_offset);
+				if(endianness=='le'
+                    mri.data=new Int32Array(nii,vox_offset);
+                else
+                    mri.data=me.swapInt32(new Int32Array(nii,vox_offset));
 				break;
 			case 16: // FLOAT
-				mri.data=new Float32Array(nii,vox_offset);
+			    if(endianness=='le')
+    				mri.data=new Float32Array(nii,vox_offset);
+    			else
+    				mri.data=me.swapFloat32(new Float32Array(nii,vox_offset));
 				break;
 			default:
 				console.log("ERROR: Unknown dataType: "+mri.datatype);
