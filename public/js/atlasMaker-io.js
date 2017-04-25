@@ -232,7 +232,7 @@ var AtlasMakerIO = {
                     mri.data=me.swapInt16(new Int16Array(nii,vox_offset));
 				break;
 			case 8:  // INT
-				if(endianness=='le'
+				if(endianness=='le')
                     mri.data=new Int32Array(nii,vox_offset);
                 else
                     mri.data=me.swapInt32(new Int32Array(nii,vox_offset));
