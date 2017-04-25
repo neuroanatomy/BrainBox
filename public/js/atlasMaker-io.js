@@ -204,7 +204,7 @@ var AtlasMakerIO = {
 		var endianness='le';
 
         me.NiiHdrLE._setBuff(toBuffer(nii));
-        var h=JSON.parse(JSON.stringify(me.NiiHdr.fields));
+        var h=JSON.parse(JSON.stringify(me.NiiHdrLE.fields));
         if(h.sizeof_hdr!=348) {
             me.NiiHdrBE._setBuff(toBuffer(nii));
             h=JSON.parse(JSON.stringify(me.NiiHdrBE.fields));   
