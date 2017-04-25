@@ -148,7 +148,6 @@ var AtlasMakerIO = {
 		mri.datatype=h.datatype;
 		mri.dim=[h.dim[1],h.dim[2],h.dim[3]];
 		mri.pixdim=[h.pixdim[1],h.pixdim[2],h.pixdim[3]];
-		vox_offset=dv.getFloat32(108,true);	
 		
 		switch(mri.datatype)
 		{
