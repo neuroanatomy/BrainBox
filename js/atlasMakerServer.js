@@ -1491,6 +1491,12 @@ var readNifti = function readNifti(path) {
                         for(j=0;j<mri.dim[0]*mri.dim[1]*mri.dim[2];j++)
                             mri.data[j]=tmp.readFloatLE(j*4);
                         break;
+                    case 512: // UINT16
+                        tmp=nii.slice(mri.vox_offset);
+                        mri.data=new Uint16Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);
+                        for(j=0;j<mri.dim[0]*mri.dim[1]*mri.dim[2];j++)
+                            mri.data[j]=tmp.readUInt16LE(j*2);
+                        break;
                     default: {
                         reject("ERROR: Unknown dataType: "+mri.datatype);
                         return;
