@@ -181,6 +181,13 @@ var AtlasMakerIO = {
 	    }
 	    return arr;
 	},
+	swapUint16: function swapUint16(arr) {
+	    var i,dv = new DataView(arr.buffer);
+	    for(i=0;i<arr.length;i++) {
+	        arr[i]= dv.getUint16(2*i,false);
+	    }
+	    return arr;
+	},
 	swapInt32: function swapInt32(arr) {
 	    var i,dv = new DataView(arr.buffer);
 	    for(i=0;i<arr.length;i++) {
@@ -242,6 +249,12 @@ var AtlasMakerIO = {
     				mri.data=new Float32Array(nii,vox_offset);
     			else
     				mri.data=me.swapFloat32(new Float32Array(nii,vox_offset));
+				break;
+			case 512: // UINT16
+			    if(endianness=='le')
+    				mri.data=new Uint16Array(nii,vox_offset);
+    			else
+    				mri.data=me.swapUint16(new Uint16Array(nii,vox_offset));
 				break;
 			default:
 				console.log("ERROR: Unknown dataType: "+mri.datatype);
