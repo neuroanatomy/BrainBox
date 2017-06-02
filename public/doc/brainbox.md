@@ -292,6 +292,8 @@ You can add, duplicate or remove a label set by using the **[+]**, **[Copy]**, a
 
 ##3. Tutorials
 
+We are currently building tutorials at #mozsprint! <3 Thanks for your contributions 
+
 (?? include ?) Data platforms:  BrainBox already includes links to data from zenodo, figshare, and a few from dropbox
 
 BrainBox functionalities/ tools / Workflow
