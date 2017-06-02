@@ -1,26 +1,28 @@
-#BrainBox
+#BrainBox Doc
 
+<div id='wrapperToc' data-markdown="1">
+<div id='toc' data-markdown="1">
 ##Table of Contents
 
-1. Introduction
-    * Visualisation
+1. [Introduction](#intro)
+    * [Visualisation](#visu)
         * Stereotaxic viewer
-            * Supported data formats 
+            * Supported data formats
         * 3D render
-    * Segmentation and annotations
+    * [Segmentation and annotations](#annot)
         * Volume segmentation
             * Adding a new label set
         * Text annotations and tags
         * Length measurements
         * Auto-save
-    * Collaboration
+    * [Collaboration](#collab)
         * Projects
-2. Interface
-    * Home page
-    * MRI page
-    * Project page
-    * User page
-    * BrainBox API
+2. [Interface](#interf)
+    * [Home page](#homep)
+    * [MRI page](#mrip)
+    * [Project page](#projp)
+    * [User page](#userp)
+    * [BrainBox API](#api)
         * GET mri
         * GET mri/json
         * GET mri/upload
@@ -29,9 +31,9 @@
         * GET user/json
         * GET project
         * GET project/json
-3. Tutorials
-    * Examples of uses of BrainBox
-    * Visualise an MRI
+3. [Tutorials](#tuto)
+    * [Examples of uses of BrainBox](#examples)
+    * [Visualise an MRI](#visMRI)
         * Log in
         * Enter the URL of an MRI
         * Upload a brain to internet
@@ -40,19 +42,19 @@
             * FigShare
             * Zenodo
             * GitHub
-    * Collaboratively segment an MRI
+    * [Collaboratively segment an MRI](#collabSeg)
         * Follow the steps to Visualise an MRI
         * Share the link with collaborators
         * Use the chat
         * Create, Duplicate and Delete atlases
-    * Create a project
+    * [Create a project](#createProj)
         * Upload data to internet
         * Create a project
             * Add files
             * Add collaborators
             * Configure permissions
             * Configure text annotations
-    * A quality assessment project
+    * [A quality assessment project](#QCproj)
         * Upload data to internet
         * Create a project
             * Add files
@@ -61,7 +63,7 @@
             * Configure text annotations
         * Upload precomputed atlases to BrainBox
         * Export the results
-    * A collaborative segmentation project
+    * [A collaborative segmentation project](#collabSegProj)
         * Upload data to internet
         * Create a project
             * Add files
@@ -72,51 +74,78 @@
                 * Atlas label set
         * Upload precomputed atlases to BrainBox
         * Download the results for offline analysis
-4. BrainBox code development
-    * Local setup
-    * Technologies
-    * Code organisation
-5. Frequently asked questions
-    * Auto-save
+4. [BrainBox code development](#codeDev)
+    * [Local setup](#local)
+    * [Technologies](#technol)
+    * [Code organisation](#codeOrga)
+5. [Frequently asked questions](#FAQ)
+    * [Auto-save](#autoSave)
+</div>
+</div>
 
+<a class="link" name="intro"></a>
+<p>
+<br>
+<br>
+</p>
 ##1. Introduction
 
 BrainBox is a web platform to share, visualise and annotate MRI brain data collaboratively. BrainBox will provide the means to create a layer of collaborative annotation over all the available MRI data without having to rely on a centralised data repository or the necessity of having to install software.
 
-http://brainbox.pasteur.fr
-login with a github account
-click on your username you will see your user information 
+Go to [http://brainbox.pasteur.fr](http://brainbox.pasteur.fr),
+login with a github account,
+click on your username and you will see your user information. 
 
-on the main page you can
-enter a URL to a new MRI file
-or
+On the main page you can enter a URL to a new MRI file or   
 click one of the examples or recently visited links
-(you can try http://files.figshare.com/2284784/MRI_n4.nii.gz)
+(you can try [http://files.figshare.com/2284784/MRI_n4.nii.gz](http://files.figshare.com/2284784/MRI_n4.nii.gz))
 
+
+<a class="link" name="visu"></a>  
+<p>
+<br>
+<br>
+<br>
+</p>
 
 ###Visualisation
-BrainBox is an online, real-time, 3D stereotaxic viewer to visualize MRI data & multiple annotations. You can navigate in real time between slices within one brain or between individual brains inside a project with your arrow keys.
-You can change the orientation of your slices, adjust brightness & contrast of your data, view different annotations overlaid with your MRI data and adjust their opacity to your needs.
-view and annotate your data in fullscreen mode and view a 3D rendering of your data.
+BrainBox is an online, real-time, 3D stereotaxic viewer to visualise MRI data & multiple annotations. You can navigate in real time between slices within one brain or between individual brains inside a project with your arrow keys.   
+You can change the orientation of your slices, adjust brightness & contrast of your data, view different annotations overlaid with your MRI data and adjust their opacity to your needs.   
+View and annotate your data in fullscreen mode and view a 3D rendering of your data in a separate tab.
 
-###Annotation
-With BrainBox you can easily modify pre-computed segmentations or create new annotations. You can
-edit available annotations by paint & fill, (try "precise cursor" on iPad!), or erase & fill.
-You will love the undo button :D! You can also 
-upload annotation files & view them overlaid with your MRI data and adjust their opacity for optimally working, or create a new annotation layer or delete one, respectively.
-While the MRIs stay stored on the web, your changes & annotations will be saved to the BrainBox database. To save changes you made in the annotation table, just click 
-save, while changes in the atlas-files will be automatically saved every ten minutes and current changes will be stored in the RAM in the meantime. To get back to your annotation once you left the page, you will either find a link on the home page – if you were the person who added the MRI – or you will find it among the atlases on your user page.You can also download your annotations.
+<a class="link" name="annot"></a>
+<p>
+<br>
+<br>
+<br>
+</p>
+###Segmentation & annotations
+With BrainBox you can easily modify pre-computed segmentations or create new annotations. You can edit available annotations by paint & fill, (try 'precise cursor' on iPad!), or erase & fill.   
+You will love the undo button :D! You can also upload annotation files & view them overlaid with your MRI data and adjust their opacity for optimally working, or create a new annotation layer or delete one, respectively.   
+While the MRIs stay stored on the web, your changes & annotations will be saved to the BrainBox database. To save changes you made in the annotation table, just click the 
+tab key. Changes in the atlas-files will be automatically saved every ten minutes or when you leave the page and current changes will be stored in the RAM in the meantime. We encourage you, however, to click the save button to feel sure your segmentation has been saved to our server. To get back to your annotation once you left the page, there are two options: you will either find a link on the home page – if you were the person who added the MRI – or you will find it among the atlases on your user page.  
+You can also download your annotations. A click on the download button will download the annotation file you are currently viewing and for downloading all annotation files from one project, you can use [curl](#DLcurl).
 
+<a class="link" name="collab"></a>
+<p>
+<br>
+<br>
+<br>
+</p>
 ###Collaboration
-BrainBox provides a toggleable chat window where you can talk to your collaborators or send them a 
-direct link to your current working slice in your selected view. As an owner of a project, you can also 
-add or collaborators and distribute rights to view or edit MRIs & to add or remove collaborators 
+BrainBox provides a toggleable chat window where you can talk to your collaborators or send them a direct link to your current working slice in your selected view. As an owner of a project, you can also add or remove collaborators and distribute rights to view or edit MRIs & to add or remove collaborators.
 
+<a class="link" name="proj"></a>
+<p>
+<br>
+<br>
+<br>
+</p>
 ###Projects
-BrainBox is a web application for real-time collaborative curation, quality control & annotation of huge MRI data sets. Once you enter a link to an online available MRI file, BrainBox will index it and keep the link. This way, a catalogue of online MRI data will be generated and make dormant data visible and accessible to a broader public. The MRI file will be visible --here -- ??(global unsorted catalogue?), as well as on the user page of the user who first loaded the MRI in. Further, you can create projects in BrainBox and link MRIs & annotations inside of a project. You can build & share your own project collections either with a restricted set of collaborators or with the world. While some sensitive MRI data may not be openly shared, all annotations shall eventually be freely available.
+BrainBox is a web application for real-time collaborative curation, quality control & annotation of huge MRI data sets. Once you enter a link to an online available MRI file, BrainBox will index it and keep the link. This way, a catalogue of online MRI data will be generated and make dormant data visible and accessible to a broader public. The MRI file will be visible in the MRI list on the user page of the user who first loaded the MRI in. Further, you can create projects in BrainBox and link MRIs & annotations inside of a project. You can build & share your own project collections either with a restricted set of collaborators or with the world. While some sensitive MRI data may not be openly shared, all annotations shall eventually be freely available.
 
 
-*** short illustration and user guide below *** & also check out our video on YouTube! ***
+*** short illustration and user guide will soon follow below *** & also check out our [video on YouTube](! ***
 
 ###Measurement
 BrainBox allows you to take length measurements, so you can get information about the extension of your region of interest or distances between regions with two clicks. For the time being the values are printed into the chat from where you can copy them.
@@ -124,11 +153,11 @@ BrainBox allows you to take length measurements, so you can get information abou
 ###Supported data formats
 Supported data formats: For the moment, BrainBox supports nifti file format. Freesurfer segmentations can be loaded and annotated when having been converted to nifti.
 
-(?? include ?) Data platforms:  BrainBox already includes links to data from zenodo, figshare, and a few from dropbox
+(?? include ?) Data platforms:  BrainBox already includes links to data from zenodo, figshare, and a few from dropbox, Google Drive, Github, Amazon
 
 
 
-##2. Interface
+##2. Interface<a class="link" name="interf"></a>
 
 ###Home Page
  * Login
@@ -167,6 +196,7 @@ You can always come back to the home page by clicking on the BrainBox logo.
         * Upload
         * Download
         * Chat
+        * Save
 * Annotations
     * MRI information
         * Name
