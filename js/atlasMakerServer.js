@@ -1491,6 +1491,9 @@ var readNifti = function readNifti(path) {
                         for(j=0;j<mri.dim[0]*mri.dim[1]*mri.dim[2];j++)
                             mri.data[j]=tmp.readFloatLE(j*4);
                         break;
+                    case 256: // INT8
+                        mri.data=nii.slice(mri.vox_offset);
+                        break;
                     case 512: // UINT16
                         tmp=nii.slice(mri.vox_offset);
                         mri.data=new Uint16Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);

@@ -232,6 +232,9 @@ var AtlasMakerIO = {
 			case 2: // UCHAR
 				mri.data=new Uint8Array(nii,vox_offset);
 				break;
+			case 256: // INT8
+				mri.data=new Uint8Array(nii,vox_offset);
+				break;
 			case 4: // SHORT
 			    if(endianness=='le')
                     mri.data=new Int16Array(nii,vox_offset);
@@ -249,6 +252,9 @@ var AtlasMakerIO = {
     				mri.data=new Float32Array(nii,vox_offset);
     			else
     				mri.data=me.swapFloat32(new Float32Array(nii,vox_offset));
+				break;
+			case 256: // INT8
+				mri.data=new Int8Array(nii,vox_offset);
 				break;
 			case 512: // UINT16
 			    if(endianness=='le')
