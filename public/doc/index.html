@@ -1,15 +1,40 @@
-<html>
+<!DOCTYPE html>
 
 <head>
     <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500" media="all">
     <style>
     body {
         margin: 0 auto;
+        margin-left: 310px;
         max-width: 50em;
         font-family: "Roboto", "Helvetica", "Arial", sans-serif;
         line-height: 1.5;
         color: #555;
         padding: 4em 1em;
+    }
+    #wrapperToc {
+    	position: fixed;
+    	height: 100%;
+    	top: 0px;
+    	left: 3px;
+    	width: 305px;
+    	overflow-y: auto;
+    }
+    
+    #toc {
+    	height: 100%;
+    	padding-top: 40px;
+    	overflow-y: scroll;
+    }
+    
+    .a {
+    	color: #000000;
+    	text-decoration: none;
+    }
+    
+    .link {
+    	color: #000000;
+    	text-decoration: none;
     }
 
     h1,h2,strong {

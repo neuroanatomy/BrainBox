@@ -9,6 +9,7 @@
 	<link rel="stylesheet" type="text/css" href="/stylesheets/style.css" />
 	<link rel="stylesheet" type="text/css" href="/stylesheets/index-style.css" />
 	<link rel="stylesheet" type="text/css" href="/stylesheets/ui.css" />
+	<link rel="stylesheet" type="text/css" href="/stylesheets/introjs.css" />
 	<link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
 </head>
 
@@ -19,7 +20,7 @@
         <div style="padding-right:10px">
             <img id="addProject" class="button" title="add project" style='width:13px' src='/img/plus.svg'/>
             <a href="http://openneu.ro/metasearch" target="_blank"><img id="search" class="button" title="search" style='width:13px' src='/img/search.svg'/></a>
-            <img id="doc" class="button" title="documentation" style='width:13px' src='/img/doc.svg'/>
+            <a href="/doc/index.html" target="_blank"><img id="doc" class="button" title="documentation" style='width:13px' src='/img/doc.svg'/></a>
             <a href="https://github.com/OpenNeuroLab/BrainBox/issues" target="_blank"><img id="bug" class="button" title="report a bug" style='width:14px' src='/img/bug.svg'/></a>
             <a href="https://github.com/OpenNeuroLab" target="_blank"><img id="github" class="button" title="join our github project" style='width:15px' src='/img/github.svg'/></a>
             <div id="MyLogin">
@@ -99,9 +100,8 @@
 	<!-- End Footer -->
 
 <script src="/lib/jquery-3.1.1.min.js"></script>
-<!--
-<link rel="stylesheet" type="text/css" href="/lib/introjs/introjs.css" />
--->
+<!--<link rel="stylesheet" type="text/css" href="/lib/introjs/introjs.css" />-->
+<!--<link rel="stylesheet" type="text/css" href="/stylesheets/introjs.css" />-->
 <script src="/lib/introjs/intro.js"></script>
 <script src="/js/brainbox.js"></script>
 <script src="/js/brainbox-intro.js"></script>
@@ -117,7 +117,7 @@ testWebSockets()
 });
 
 // intro.js test
-// startIntro();
+//startIntro();
 
 $(".slide").height(window.innerHeight);
 $(window).on('resize',function() {
