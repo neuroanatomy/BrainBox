@@ -780,6 +780,12 @@ var AtlasMakerInteraction = {
 				var vol=me.computeSegmentedVolume();
 				me.info.volume=parseInt(vol)+" mm3";
 				break;
+			case 'eyedrop':
+				me.displayInformation();
+				
+				var msg={"c":"mu"};
+				me.sendPaintMessage(msg);
+				break;
 			default:
 				var msg={"c":"mu"};
 				me.sendPaintMessage(msg);
