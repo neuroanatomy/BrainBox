@@ -1,11 +1,12 @@
 var fs = require('fs');
+var path = require('path');
 var request = require('request');
 
 // get whitelist and blacklist
 var useWhitelist = false;
 var useBlacklist = true;
-var whitelist = JSON.parse(fs.readFileSync(__dirname + "/../whitelist.json"));
-var blacklist = JSON.parse(fs.readFileSync(__dirname + "/../blacklist.json"));
+var whitelist = JSON.parse(fs.readFileSync(path.resolve(__dirname + "/../whitelist.json")));
+var blacklist = JSON.parse(fs.readFileSync(path.resolve(__dirname + "/../blacklist.json")));
 console.log("Use whitelist:",useWhitelist);
 console.log(whitelist);
 console.log("Use blacklist:",useBlacklist);
