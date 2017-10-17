@@ -41,9 +41,6 @@
   },
   "devDependencies": {
     "connect-livereload": "^0.5.3",
-    "grunt": ">=0.4.0",
-    "grunt-contrib-watch": "^1.0.0",
-    "grunt-eslint": "^20.1.0",
     "livereload": "^0.4.0"
   }
 }
