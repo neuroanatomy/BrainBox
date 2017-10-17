@@ -25,8 +25,7 @@ If you want to work on BrainBox's code, you'll need a local installation:
 1. `git clone` this repository or download it
 2. `mv BrainBox brainbox` to rename the directory 
 3. `cd` to brainbox
-4. get Github developer keys for your local brainbox url 
-(http://localhost:3000 by default)
+4. [create a new OAuth application](https://github.com/settings/applications/new) for your local brainbox url (http://localhost:3000 by default)
 5. paste the keys into the github-keys.json.example file, change the `callbackURL` to `"http://localhost:3000/auth/github/callback"` and drop the .example
 6. drop the `.example` from `blacklist.json.example`
 7. drop the `.example` from `whitelist.json.example`
@@ -39,10 +38,11 @@ If you want to work on BrainBox's code, you'll need a local installation:
 1. install and start `mongo` database
 2. clone the repo and `cd` to the brainbox directory
 3. `mkdir public/data`
-4. get Github developer keys for your local brainbox url 
-(http://localhost:3000 by default)
+4. [create a new OAuth application](https://github.com/settings/applications/new) for your local brainbox url (http://localhost:3000 by default)
 5. paste the keys into the github-keys.json.example file, and drop the .example
-6. `npm install`
-7. `npm start`
+6. drop the `.example` from `blacklist.json.example`
+7. drop the `.example` from `whitelist.json.example`
+8. `npm install`
+9. `npm start`
 
 
