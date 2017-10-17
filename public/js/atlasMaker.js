@@ -189,49 +189,48 @@ var AtlasMakerWidget = {
 		me.progress=$("a.download_MRI");
 
 		// Init the toolbar: load template, wire actions
-		var def=$.Deferred();
-		$.get("/templates/tools.html",function from_initAtlasMaker(html) {
-			me.container.append(html);
+		return new Promise(function(resolve, reject) {
+			$.get("/templates/tools.html",function from_initAtlasMaker(html) {
+				me.container.append(html);
 
-			// intercept keyboard events
-			$(document).keydown(function(e){me.keyDown(e)});
+				// intercept keyboard events
+				$(document).keydown(function(e){me.keyDown(e)});
 
-			// configure annotation tools
-			$("#tools-minimized").click(function(){me.changeToolbarDisplay("maximize")});
-			me.push($(".push#display-minimize"),function(){me.changeToolbarDisplay("minimize")});
-			me.push($(".push#display-left"),function(){me.changeToolbarDisplay("left")});
-			me.push($(".push#display-right"),function(){me.changeToolbarDisplay("right")});
-			me.slider($(".slider#slice"),function(x){me.changeSlice(Math.round(x))});
-			me.chose($(".chose#plane"),me.changeView);
-			me.chose($(".chose#paintTool"),me.changeTool);
-			me.chose($(".chose#penSize"),me.changePenSize);
-			me.toggle($(".toggle#precise"),me.togglePreciseCursor);
-			me.toggle($(".toggle#fill"),me.toggleFill);
-			me.toggle($(".toggle#fullscreen"),me.toggleFullscreen);
-			me.toggle($(".toggle#bubble"),me.toggleChat);
-			me.push($(".push#3drender"),me.render3D);
-			me.push($(".push#link"),me.link);
-			me.push($(".push#upload"),me.upload);
-			me.push($(".push#download"),me.download);
-			me.push($(".push#color"),me.color);
-			me.push($(".push#undo"),me.sendUndoMessage);
-			me.push($(".push#save"),me.sendSaveMessage);
-			me.push($(".push#prev"),me.prevSlice);
-			me.push($(".push#next"),me.nextSlice);
-			
-			// connect chat message input
-			$("#msg").keypress(function keypress_fromInitAtlasMaker(e) {me.onkey(e)});
-			
-            $("#tools-minimized").hide();
-		})
-		.then(function from_initAtlasMaker() {
-			// Init web socket connection
-			return me.initSocketConnection();
-		}).then(function() {
-			def.resolve()
+				// configure annotation tools
+				$("#tools-minimized").click(function(){me.changeToolbarDisplay("maximize")});
+				me.push($(".push#display-minimize"),function(){me.changeToolbarDisplay("minimize")});
+				me.push($(".push#display-left"),function(){me.changeToolbarDisplay("left")});
+				me.push($(".push#display-right"),function(){me.changeToolbarDisplay("right")});
+				me.slider($(".slider#slice"),function(x){me.changeSlice(Math.round(x))});
+				me.chose($(".chose#plane"),me.changeView);
+				me.chose($(".chose#paintTool"),me.changeTool);
+				me.chose($(".chose#penSize"),me.changePenSize);
+				me.toggle($(".toggle#precise"),me.togglePreciseCursor);
+				me.toggle($(".toggle#fill"),me.toggleFill);
+				me.toggle($(".toggle#fullscreen"),me.toggleFullscreen);
+				me.toggle($(".toggle#bubble"),me.toggleChat);
+				me.push($(".push#3drender"),me.render3D);
+				me.push($(".push#link"),me.link);
+				me.push($(".push#upload"),me.upload);
+				me.push($(".push#download"),me.download);
+				me.push($(".push#color"),me.color);
+				me.push($(".push#undo"),me.sendUndoMessage);
+				me.push($(".push#save"),me.sendSaveMessage);
+				me.push($(".push#prev"),me.prevSlice);
+				me.push($(".push#next"),me.nextSlice);
+
+				// connect chat message input
+				$("#msg").keypress(function keypress_fromInitAtlasMaker(e) {me.onkey(e)});
+
+  	          $("#tools-minimized").hide();
+			})
+			.then(function from_initAtlasMaker() {
+				// Init web socket connection
+				return me.initSocketConnection();
+			}).then(function() {
+				resolve()
+			});
 		});
-						
-		return def.promise();
 	},
     /**
      * @function configureAtlasMaker
@@ -297,25 +296,23 @@ var AtlasMakerWidget = {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(requestMRIInfo,0,"#bbd");if(l)console.log.apply(undefined,l);
 
-		if(!def) {
-		    var def=$.Deferred();
-		}
-
         $.post("/mri/json",{url:source}, function(info) {
             if(info.success == true) {
-                def.resolve(info);
+				return Promise.resolve(info);
             } else if(info.success == 'downloading') {
                 if(me.User.source != source)
-                    return;
-                setTimeout(function(){me.requestMRIInfo(source,def)},2000);
+					return;
                 $("#loadingIndicator p").text("Loading... "+parseInt(info.cur/info.len*100,10)+"%");
+				return new Promise(function(resolve, reject) {
+    	            setTimeout(function(){
+						resolve(me.requestMRIInfo(source))
+					}, 2000);
+				})
             } else {
-                console.log("ERROR: requestMRIInfo",info);
-                def.reject();
+				console.log("ERROR: requestMRIInfo",info);
+				return Promise.reject();
             }
         });
-        
-        return def.promise();
 	},
     /**
      * @function configureMRI
@@ -324,67 +321,64 @@ var AtlasMakerWidget = {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(configureMRI,0,"#bbd");if(l)console.log.apply(undefined,l);
 
-		var def=$.Deferred();
+		return new Promise(function(resolve, reject) {
+        	me.User.source=info.source;
+        	me.requestMRIInfo(info.source)
+			.then(	function(info2) {
 
-        me.User.source=info.source;
-        me.requestMRIInfo(info.source)
-		.then(function(info2) {
-            
-            if(!info.dim) {
-		        // the mri object used to call this function does not have a 'dim'
-		        // property, indicating that it had not been downloaded at the time of the
-		        // call. Here we merge the fields from info2 that are initialised upon
-		        // download of the mri server-side. The mri field in the original 'info',
-                // which contains the newly created text 'annotations', is conserved
-                $.extend(true, info, info2);
-            }
-            info2=info;
-            
-            // Get data from AtlasMaker object
-            me.name=info2.name||"Untitled";
-            me.url=info2.url;
-            me.atlasFilename=info2.mri.atlas[index].filename;
-            me.atlasName=info2.mri.atlas[index].name;
+        	    if(!info.dim) {
+		      	  // the mri object used to call this function does not have a 'dim'
+		      	  // property, indicating that it had not been downloaded at the time of the
+		      	  // call. Here we merge the fields from info2 that are initialised upon
+		      	  // download of the mri server-side. The mri field in the original 'info',
+        	        // which contains the newly created text 'annotations', is conserved
+        	        $.extend(true, info, info2);
+        	    }
+        	    info2=info;
 
-            // get local file path from url
-            me.User.dirname=me.url; // TEMPORARY
-            me.User.mri=info2.mri.brain;
-            me.User.specimenName=me.name;
-            me.User.atlasFilename=info2.mri.atlas[index].filename;
-            me.User.isMRILoaded=false;
+        	    // Get data from AtlasMaker object
+        	    me.name=info2.name||"Untitled";
+        	    me.url=info2.url;
+        	    me.atlasFilename=info2.mri.atlas[index].filename;
+        	    me.atlasName=info2.mri.atlas[index].name;
 
-            // TODO: it's silly to have to put vol dim twice...
-            // (first here, once again further down)
-            me.User.dim=info2.dim;
-            me.User.pixdim=info2.pixdim;
+        	    // get local file path from url
+        	    me.User.dirname=me.url; // TEMPORARY
+        	    me.User.mri=info2.mri.brain;
+        	    me.User.specimenName=me.name;
+        	    me.User.atlasFilename=info2.mri.atlas[index].filename;
+        	    me.User.isMRILoaded=false;
 
-            // compute space transformations
-            me.User.v2w=info2.voxel2world;
-            me.User.wori=info2.worldOrigin;
-            me.computeS2VTransformation();
-            
-            //me.testS2VTransformation();
-        
-            me.flagLoadingImg={loading:false};
-        
-            me.brain_img.img=null;
-        
-            // get volume dimensions
-            me.brain_dim=info2.dim;
-            if(info2.pixdim)
-                me.brain_pixdim=info2.pixdim;
-            else
-                me.brain_pixdim=[1,1,1];
-            
-            def.resolve(info2);
-        })
-        .catch(function(err) {
-            console.log("ERROR: DOWNLOAD FAILED", err);
-            def.reject(err);
-        });
-		
+        	    // TODO: it's silly to have to put vol dim twice...
+        	    // (first here, once again further down)
+        	    me.User.dim=info2.dim;
+        	    me.User.pixdim=info2.pixdim;
 
-		return def.promise();
+        	    // compute space transformations
+        	    me.User.v2w=info2.voxel2world;
+        	    me.User.wori=info2.worldOrigin;
+        	    me.computeS2VTransformation();
+
+        	    //me.testS2VTransformation();
+
+        	    me.flagLoadingImg={loading:false};
+
+        	    me.brain_img.img=null;
+
+        	    // get volume dimensions
+        	    me.brain_dim=info2.dim;
+        	    if(info2.pixdim)
+        	        me.brain_pixdim=info2.pixdim;
+        	    else
+        	        me.brain_pixdim=[1,1,1];
+
+        	    resolve(info2);
+        	})
+        	.catch(function(err) {
+        	    console.log("ERROR: DOWNLOAD FAILED", err);
+        	    reject(err);
+        	});
+		});
 	}
 };
 /*
