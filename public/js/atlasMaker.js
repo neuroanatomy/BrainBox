@@ -123,6 +123,7 @@ var AtlasMakerWidget = {
      * @function initAtlasMaker
      */
 	initAtlasMaker: function initAtlasMaker(elem) {
+		return new Promise(function(resolve,reject){
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(initAtlasMaker,0,"#bbd");if(l)console.log.apply(undefined,l);
 	
@@ -189,7 +190,6 @@ var AtlasMakerWidget = {
 		me.progress=$("a.download_MRI");
 
 		// Init the toolbar: load template, wire actions
-		var def=$.Deferred();
 		$.get("/templates/tools.html",function from_initAtlasMaker(html) {
 			me.container.append(html);
 
@@ -228,19 +228,19 @@ var AtlasMakerWidget = {
 			// Init web socket connection
 			return me.initSocketConnection();
 		}).then(function() {
-			def.resolve()
+			resolve()
 		});
 						
-		return def.promise();
+	   });
 	},
     /**
      * @function configureAtlasMaker
      */
 	configureAtlasMaker: function configureAtlasMaker(info,index) {
+		return new Promise(funcion(resolve,reject){
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(configureAtlasMaker,0,"#bbd");if(l)console.log.apply(undefined,l);
 
-        var def=$.Deferred();
 
         me.configureMRI(info,index)
         .then(function (info2) {
@@ -266,14 +266,14 @@ var AtlasMakerWidget = {
             me.sendUserDataMessage("sendAtlas");
 
             me.changePenColor( 0 );
-            def.resolve(info);
+            resolve(info);
         })
         .catch(function(err) {
             console.log("ERROR:",err);
-            def.reject();
+            reject();
         });
         
-        return def.promise();
+	});
 	},
     /**
      * @function configureOntology
@@ -321,10 +321,10 @@ var AtlasMakerWidget = {
      * @function configureMRI
      */
 	configureMRI: function configureMRI(info,index) {
+		return new Promise(function(resolve,reject){
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(configureMRI,0,"#bbd");if(l)console.log.apply(undefined,l);
 
-		var def=$.Deferred();
 
         me.User.source=info.source;
         me.requestMRIInfo(info.source)
@@ -376,15 +376,15 @@ var AtlasMakerWidget = {
             else
                 me.brain_pixdim=[1,1,1];
             
-            def.resolve(info2);
+            resolve(info2);
         })
         .catch(function(err) {
             console.log("ERROR: DOWNLOAD FAILED", err);
-            def.reject(err);
+            reject(err);
         });
 		
 
-		return def.promise();
+	});
 	}
 };
 /*
