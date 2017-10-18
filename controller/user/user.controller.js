@@ -4,18 +4,18 @@ const checkAccess = require('../../js/checkAccess.js');
 const dataSlices = require('../../js/dataSlices.js');
 
 const validator = function (req, res, next) {
-	// UserName can be an ip address (for anonymous users)
+    // UserName can be an ip address (for anonymous users)
 
-	/*
-	req.checkParams('userName', 'incorrect user name').isAlphanumeric();
-	var errors = req.validationErrors();
-	console.log(errors);
-	if (errors) {
-		res.send(errors).status(403).end();
-	} else {
-		return next();
-	}
-	*/
+    /*
+    req.checkParams('userName', 'incorrect user name').isAlphanumeric();
+    var errors = req.validationErrors();
+    console.log(errors);
+    if (errors) {
+        res.send(errors).status(403).end();
+    } else {
+        return next();
+    }
+    */
     next();
 };
 
