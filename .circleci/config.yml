@@ -15,6 +15,12 @@ jobs:
            name: Instantiate github-keys.json
            command: 'echo "{ \"clientID\": \"$GITHUB_CLIENT_ID\", \"clientSecret\": \"$GITHUB_CLIENT_SECRET\", \"callbackURL\": \"$GITHUB_CALLBACK_URL\"}">github-keys.json'
        - run:
+           name: Instantiate blacklist
+           command: 'mv blacklist.json.example blacklist.json'
+       - run:
+           name: Instantiate whitelist
+           command: 'echo "{}" > whitelist.json'
+       - run:
            name: Run server in background
            command: 'npm start'
            background: true
