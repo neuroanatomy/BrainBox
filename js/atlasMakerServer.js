@@ -1,4 +1,4 @@
-var fs = require('fs');
+const fs = require('fs');
 const path = require('path');
 const request = require('request');
 
@@ -51,7 +51,6 @@ server.on('upgrade', (req, socket, head) => {
 });
 
 const os = require('os');
-var fs = require('fs');
 const zlib = require('zlib');
 const fileType = require('file-type');
 const jpeg = require('jpeg-js'); // Jpeg-js library: https://github.com/eugeneware/jpeg-js
@@ -83,9 +82,9 @@ const jsonpatch = require('fast-json-patch');
 const atlasMakerServer = function () {
     let	debug = 1;
     this.dataDirectory = '';
-    const	Atlases = [];
+    const Atlases = [];
     this.Brains = [];
-    const	US = [];
+    const US = [];
     let	uidcounter = 1;
     let enterCommands = false;
     const UndoStack = [];
@@ -93,63 +92,65 @@ const atlasMakerServer = function () {
     let recordedWSTraffic = [];
 
     const NiiHdr = new Struct()
-    .word32Sle('sizeof_hdr')        // Size of the header. Must be 348 (bytes)
-    .chars('data_type', 10)          // Not used; compatibility with analyze.
-    .chars('db_name', 18)            // Not used; compatibility with analyze.
-    .word32Sle('extents')           // Not used; compatibility with analyze.
-    .word16Sle('session_error')     // Not used; compatibility with analyze.
-    .word8('regular')               // Not used; compatibility with analyze.
-    .word8('dim_info')              // Encoding directions (phase, frequency, slice).
-    .array('dim', 8, 'word16Sle')     // Data array dimensions.
-    .floatle('intent_p1')           // 1st intent parameter.
-    .floatle('intent_p2')           // 2nd intent parameter.
-    .floatle('intent_p3')           // 3rd intent parameter.
-    .word16Sle('intent_code')       // Nifti intent.
-    .word16Sle('datatype')	        // Data type.
-    .word16Sle('bitpix')	        // Number of bits per voxel.
-    .word16Sle('slice_start')	    // First slice index.
-    .array('pixdim', 8, 'floatle')    // Grid spacings (unit per dimension).
-    .floatle('vox_offset')	        // Offset into a .nii file.
-    .floatle('scl_slope')	        // Data scaling, slope.
-    .floatle('scl_inter')	        // Data scaling, offset.
-    .word16Sle('slice_end')	        // Last slice index.
-    .word8('slice_code')	        // Slice timing order.
-    .word8('xyzt_units')	        // Units of pixdim[1..4].
-    .floatle('cal_max')	            // Maximum display intensity.
-    .floatle('cal_min')	            // Minimum display intensity.
-    .floatle('slice_duration')	    // Time for one slice.
-    .floatle('toffset')	            // Time axis shift.
-    .word32Sle('glmax')	            // Not used; compatibility with analyze.
-    .word32Sle('glmin')	            // Not used; compatibility with analyze.
-    .chars('descrip', 80)	        // Any text.
-    .chars('aux_file', 24)	        // Auxiliary filename.
-    .word16Sle('qform_code')	    // Use the quaternion fields.
-    .word16Sle('sform_code')	    // Use of the affine fields.
-    .floatle('quatern_b')	        // Quaternion b parameter.
-    .floatle('quatern_c')	        // Quaternion c parameter.
-    .floatle('quatern_d')	        // Quaternion d parameter.
-    .floatle('qoffset_x')	        // Quaternion x shift.
-    .floatle('qoffset_y')	        // Quaternion y shift.
-    .floatle('qoffset_z')	        // Quaternion z shift.
-    .array('srow_x', 4, 'floatle')    // 1st row affine transform
-    .array('srow_y', 4, 'floatle')    // 2nd row affine transform.
-    .array('srow_z', 4, 'floatle')    // 3rd row affine transform.
-    .chars('intent_name', 16)	    // Name or meaning of the data.
-    .chars('magic', 4);	            // Magic string.
+        .word32Sle('sizeof_hdr')        // Size of the header. Must be 348 (bytes)
+        .chars('data_type', 10)         // Not used; compatibility with analyze.
+        .chars('db_name', 18)           // Not used; compatibility with analyze.
+        .word32Sle('extents')           // Not used; compatibility with analyze.
+        .word16Sle('session_error')     // Not used; compatibility with analyze.
+        .word8('regular')               // Not used; compatibility with analyze.
+        .word8('dim_info')              // Encoding directions (phase, frequency, slice).
+        .array('dim', 8, 'word16Sle')   // Data array dimensions.
+        .floatle('intent_p1')           // 1st intent parameter.
+        .floatle('intent_p2')           // 2nd intent parameter.
+        .floatle('intent_p3')           // 3rd intent parameter.
+        .word16Sle('intent_code')       // Nifti intent.
+        .word16Sle('datatype')	        // Data type.
+        .word16Sle('bitpix')	        // Number of bits per voxel.
+        .word16Sle('slice_start')	    // First slice index.
+        .array('pixdim', 8, 'floatle')  // Grid spacings (unit per dimension).
+        .floatle('vox_offset')	        // Offset into a .nii file.
+        .floatle('scl_slope')	        // Data scaling, slope.
+        .floatle('scl_inter')	        // Data scaling, offset.
+        .word16Sle('slice_end')	        // Last slice index.
+        .word8('slice_code')	        // Slice timing order.
+        .word8('xyzt_units')	        // Units of pixdim[1..4].
+        .floatle('cal_max')	            // Maximum display intensity.
+        .floatle('cal_min')	            // Minimum display intensity.
+        .floatle('slice_duration')	    // Time for one slice.
+        .floatle('toffset')	            // Time axis shift.
+        .word32Sle('glmax')	            // Not used; compatibility with analyze.
+        .word32Sle('glmin')	            // Not used; compatibility with analyze.
+        .chars('descrip', 80)	        // Any text.
+        .chars('aux_file', 24)	        // Auxiliary filename.
+        .word16Sle('qform_code')	    // Use the quaternion fields.
+        .word16Sle('sform_code')	    // Use of the affine fields.
+        .floatle('quatern_b')	        // Quaternion b parameter.
+        .floatle('quatern_c')	        // Quaternion c parameter.
+        .floatle('quatern_d')	        // Quaternion d parameter.
+        .floatle('qoffset_x')	        // Quaternion x shift.
+        .floatle('qoffset_y')	        // Quaternion y shift.
+        .floatle('qoffset_z')	        // Quaternion z shift.
+        .array('srow_x', 4, 'floatle')  // 1st row affine transform
+        .array('srow_y', 4, 'floatle')  // 2nd row affine transform.
+        .array('srow_z', 4, 'floatle')  // 3rd row affine transform.
+        .chars('intent_name', 16)	    // Name or meaning of the data.
+        .chars('magic', 4);	            // Magic string.
+
     const MghHdr = Struct()
-    .word32Sbe('v')
-    .word32Sbe('ndim1')
-    .word32Sbe('ndim2')
-    .word32Sbe('ndim3')
-    .word32Sbe('nframes')
-    .word32Sbe('type')
-    .word32Sbe('dof')
-    .word16Sbe('ras_good_flag')
-    .array('delta', 3, 'floatbe')
-    .array('Mdc', 9, 'floatbe')
-    .array('Pxyz_c', 3, 'floatbe');
+        .word32Sbe('v')
+        .word32Sbe('ndim1')
+        .word32Sbe('ndim2')
+        .word32Sbe('ndim3')
+        .word32Sbe('nframes')
+        .word32Sbe('type')
+        .word32Sbe('dof')
+        .word16Sbe('ras_good_flag')
+        .array('delta', 3, 'floatbe')
+        .array('Mdc', 9, 'floatbe')
+        .array('Pxyz_c', 3, 'floatbe');
+
     const MghFtr = Struct()
-    .array('mrparms', 4, 'floatbe');
+        .array('mrparms', 4, 'floatbe');
 
     console.log('atlasMakerServer.js');
     console.log('date:', new Date());
