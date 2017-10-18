@@ -1840,7 +1840,7 @@ const atlasMakerServer = function () {
             slice_start: 0,
             pixdim: [-1, templateMRI.pixdim[0], templateMRI.pixdim[1], templateMRI.pixdim[2], 0, 1, 1, 1],
             vox_offset: 352,
-            scl_slope: 0,
+            scl_slope: 1,
             scl_inter: 0,
             slice_end: 0,
             slice_code: 0,
