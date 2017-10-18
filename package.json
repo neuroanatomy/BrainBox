@@ -46,6 +46,9 @@
     "xo": "^0.18.2"
   },
   "xo": {
-    "space": 4
+    "space": 4,
+    "rules": {
+      "no-buffer-constructor": "off"
+    }
   }
 }
