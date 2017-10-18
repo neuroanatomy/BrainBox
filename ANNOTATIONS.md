@@ -13,7 +13,7 @@ The best devices for drawing over the brain are tablets with pens. With a comput
 
 Just say hi in the BrainBox chat and we will guide you to the view where we are currently working.
 
-We will work in a axial slice (113++) and erase all the parts of the mask that cover the sulci of the brain. You see the impressively folded structure of the dolphin brain. The sulci, which are the valleys of the folds, appear darker. We erase them from the mask to being able to reconstruct the 3D surface preserving the folding. 
+We will work in an axial slice (113++) and erase all the parts of the mask that cover the sulci of the brain. You see the impressively folded structure of the dolphin brain. The sulci, which are the valleys of the folds, appear darker. We erase them from the mask to being able to reconstruct the 3D surface preserving the folding. 
 **It's fun! Join us! :)**   Careful! It's addictive! <3 😄 
 
 ![gyrus_sulcus](https://cloud.githubusercontent.com/assets/6297454/26672808/de7c347c-46ba-11e7-9f19-01fef1da9295.png)
