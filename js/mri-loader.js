@@ -5,7 +5,7 @@
 const MRILoader = function () {
 
 /*
-var loadNifti = function(nii) {
+Var loadNifti = function(nii) {
 	var	vox_offset=352;
 	var	sizeof_hdr=nii.readUInt32LE(0);
 	var	dimensions=nii.readUInt16LE(40);
