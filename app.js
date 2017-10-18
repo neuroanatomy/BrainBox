@@ -9,6 +9,7 @@
 
 const debug = 1;
 
+const fs = require('fs');
 const express = require('express');
 const path = require('path');
 const favicon = require('serve-favicon');
@@ -34,7 +35,6 @@ if (DOCKER_DB) {
 }
 
 const db = monk(MONGO_DB);
-const fs = require('fs');
 const expressValidator = require('express-validator');
 
 const atlasMakerServer = require('./js/atlasMakerServer.js');
