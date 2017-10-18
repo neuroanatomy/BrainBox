@@ -90,20 +90,20 @@ loadScript("/lib/three.min.js")
 	} else {
 		console.log("with segmentation from server");
 		worker.postMessage({cmd:"start",path:path,level:level});
-	}		
+	}
 });
 
 // "wait" animation
 var dot=0;setInterval(function(){if($("#dot"))$("#dot").css({marginLeft:50*(1+Math.sin(dot))+"%"});dot+=0.1},33);
 
 function loadScript(script) {
-	var def=new $.Deferred();
-	var s = document.createElement("script");
-	s.src = script;
-	s.onload=function(){console.log("loaded",script,new Date());def.resolve();}
-	s.onerror=function(e){console.log("unable to load",script);def.reject();}
-	document.body.appendChild(s);
-	return def.promise();
+	return new Promise(function(resolve, reject) {
+		var s = document.createElement("script");
+		s.src = script;
+		s.onload=function(){console.log("loaded",script,new Date());resolve();}
+		s.onerror=function(e){console.log("unable to load",script);reject();}
+		document.body.appendChild(s);
+	});
 }
 
 function deparam() {
