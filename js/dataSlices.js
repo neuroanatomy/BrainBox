@@ -213,11 +213,11 @@ const getProjectFilesSlice = function getProjectFilesSlice(req, projShortname, s
     }
 
     return new Promise((resolve, reject) => {
-	    start = parseInt(start);
-	    length = parseInt(length);
+        start = parseInt(start);
+        length = parseInt(length);
         req.db.get('project')
-		.findOne({shortname: projShortname, backup: {$exists: 0}}, '-_id')
-		.then(project => {
+        .findOne({shortname: projShortname, backup: {$exists: 0}}, '-_id')
+        .then(project => {
             // Check access
     if (checkAccess.toProject(project, loggedUser, 'view') === false) {
         const msg = 'User ' + loggedUser + ' is not allowed to view project ' + projShortname;
@@ -237,19 +237,19 @@ const getProjectFilesSlice = function getProjectFilesSlice(req, projShortname, s
             arr.push(req.db.get('mri').findOne({source: list[i], backup: {$exists: 0}}, {_id: 0}));
         }
         Promise.all(arr)
-				.then(mris => {
+                .then(mris => {
     let j;
     for (j = 0; j < mris.length; j++) {
         if (mris[j]) {
-						    // Check j-th mri annotation access
-						    checkAccess.filterAnnotationsByProjects(mris[j], [project], loggedUser);
+                            // Check j-th mri annotation access
+                            checkAccess.filterAnnotationsByProjects(mris[j], [project], loggedUser);
 
-						    // Append to list
-						    if (namesFlag) {
-    							newList[j] = {source: mris[j].source, name: mris[j].name};
-    						} else {
-    							newList[j] = mris[j];
-    						}
+                            // Append to list
+                            if (namesFlag) {
+                                newList[j] = {source: mris[j].source, name: mris[j].name};
+                            } else {
+                                newList[j] = mris[j];
+                            }
         } else {
             newList[j] = {
                 source: list[start + j],
@@ -259,16 +259,16 @@ const getProjectFilesSlice = function getProjectFilesSlice(req, projShortname, s
     }
     resolve(newList);
 })
-				.catch(err => {
-				    console.log('ERROR:', err);
-				    reject();
+                .catch(err => {
+                    console.log('ERROR:', err);
+                    reject();
 });
     } else {
-			    console.log('project is empty');
+                console.log('project is empty');
     }
 })
-		.catch(err => {
-		    console.log('ERROR:', err);
+        .catch(err => {
+            console.log('ERROR:', err);
     reject();
 });
     });
