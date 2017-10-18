@@ -11,10 +11,10 @@ router.post('/json', controller.validator_post, tokenAuthentication, controller.
 
 router.get('/upload', uploadController.token);
 router.post('/upload',
-	multer({dest: './tmp/'}).array('atlas'),
-	uploadController.validator,
-	uploadController.other_validations,
-	uploadController.upload);
+    multer({dest: './tmp/'}).array('atlas'),
+    uploadController.validator,
+    uploadController.other_validations,
+    uploadController.upload);
 
 router.get('/reset', controller.reset);
 
