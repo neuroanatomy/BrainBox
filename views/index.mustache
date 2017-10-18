@@ -221,25 +221,25 @@ function goToURL(e) {
  * @function testWebSockets
  */
 function testWebSockets() {
-    var def = $.Deferred();
-    var host = "ws://ws.websocketstest.com:8080/service";
-    var ws;
+    return new Promise(function(resolve, reject) {
+        var host = "ws://ws.websocketstest.com:8080/service";
+        var ws;
 
-    if (window.WebSocket) {
-        ws=new WebSocket(host);
-    } else if (window.MozWebSocket) {
-        ws=new MozWebSocket(host);
-    } else {
-        def.reject("BrainBox requires access to WebSockets, but this web browser does not support them. Try Firefox, Chrome or Safari.");
-    }
-    ws.onopen = function(e) {
-        ws.close();
-        def.resolve("Connection ok");
-    };
-    ws.onerror = function(e) {
-        def.reject("BrainBox requires access to WebSockets, but your connection does not allow it. Ask your provider to allow WebSockets on port 8080");
-    };
-    return def;
+        if (window.WebSocket) {
+            ws=new WebSocket(host);
+        } else if (window.MozWebSocket) {
+            ws=new MozWebSocket(host);
+        } else {
+            reject("BrainBox requires access to WebSockets, but this web browser does not support them. Try Firefox, Chrome or Safari.");
+        }
+        ws.onopen = function(e) {
+            ws.close();
+            resolve("Connection ok");
+        };
+        ws.onerror = function(e) {
+            reject("BrainBox requires access to WebSockets, but your connection does not allow it. Ask your provider to allow WebSockets on port 8080");
+        };
+    });
 }
 
 </script>

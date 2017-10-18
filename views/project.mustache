@@ -446,112 +446,110 @@ function appendFilesToProject(list) {
  * @desc load a new mri from the project list
  */
 function loadProjectFile(index) {
-    var def = new $.Deferred();
-    
-    var url=projectInfo.files.list[index].source;
-    var params={url:url,view:"cor",slice:180,fullscreen:false};
-    $("#loadingIndicator p").text("Loading...");
-    $("#loadingIndicator").show();
-    
-    /**
-     * @todo The mri entry may correspond to a file that has not been downloaded yet!
-     */
-    var info = projectInfo.files.list[index];
-    
-    if($.isEmptyObject(info) === false) {
-        // check if the mri contains the required annotations
-        var irow; // index of the table row
-        var iarr; // index of the object in the data array
-        for(irow=0;irow<annotations.volume.length;irow++) {
-            found = false;
-            if(!info.mri.atlas)
-                info.mri.atlas = [];
-            for(iarr=0;iarr<info.mri.atlas.length;iarr++) {
-                if(annotations.volume[irow].name == info.mri.atlas[iarr].name
-                   && projectInfo.shortname == info.mri.atlas[iarr].project) {
-                    found=true;
-                    break;
-                }
-            }
-            // if it doesn't, create them
-            if(found == false) {
-                // add annotation
-                var date=new Date();
-                // add data to annotations array
-                var atlas = {
-                    name: annotations.volume[irow].name,
-                    project: projectInfo.shortname,
-                    created: date.toJSON(), 
-                    modified: date.toJSON(), 
-                    modifiedBy: AtlasMakerWidget.User.username, 
-                    filename: Math.random().toString(36).slice(2)+".nii.gz",	// automatically generated filename
-                    labels: annotations.volume[irow].values,
-                    owner: AtlasMakerWidget.User.username,
-                    type: "volume"
-                };
-            
-                projectInfo.files.list[index].mri.atlas.push(atlas);
-            }
-        
-            annotations.volume[irow].annotationItemIndex=iarr;
-        }
-        params.info=projectInfo.files.list[index];
-    
-        if(annotations.volume[0]) {
-            params.annotationItemIndex = annotations.volume[0].annotationItemIndex;
-        } else {
-            params.annotationItemIndex = -1;
-        }
-    
-        BrainBox.configureBrainBox(params)
-        .then(function from_project(){
+    return new Promise(function(resolve, reject) {
+        var url=projectInfo.files.list[index].source;
+        var params={url:url,view:"cor",slice:180,fullscreen:false};
+        $("#loadingIndicator p").text("Loading...");
+        $("#loadingIndicator").show();
 
-            // bind volume annotations to table#volAnnotations
-            var annvol_proxy={};
-            var aParam = {
-                table: $("table#volAnnotations"),
-                info_proxy: annvol_proxy,
-                info: BrainBox.info,
-                trTemplate: $.map([
-                    "<tr>",
-                    " <td></td>",           // volume name
-                    " <td></td>",	        // volume label set
-                    "</tr>"],function(o){return o}).join(),
-                objTemplate: [
-                    {	typeOfBinding:1,
-                        path:"mri.atlas.#.name"
-                    },
-                    {	typeOfBinding:1,
-                        path:"mri.atlas.#.labels"
+        /**
+         * @todo The mri entry may correspond to a file that has not been downloaded yet!
+         */
+        var info = projectInfo.files.list[index];
+
+        if($.isEmptyObject(info) === false) {
+            // check if the mri contains the required annotations
+            var irow; // index of the table row
+            var iarr; // index of the object in the data array
+            for(irow=0;irow<annotations.volume.length;irow++) {
+                found = false;
+                if(!info.mri.atlas)
+                    info.mri.atlas = [];
+                for(iarr=0;iarr<info.mri.atlas.length;iarr++) {
+                    if(annotations.volume[irow].name == info.mri.atlas[iarr].name
+                       && projectInfo.shortname == info.mri.atlas[iarr].project) {
+                        found=true;
+                        break;
                     }
-                ]
-            };
+                }
+                // if it doesn't, create them
+                if(found == false) {
+                    // add annotation
+                    var date=new Date();
+                    // add data to annotations array
+                    var atlas = {
+                        name: annotations.volume[irow].name,
+                        project: projectInfo.shortname,
+                        created: date.toJSON(),
+                        modified: date.toJSON(),
+                        modifiedBy: AtlasMakerWidget.User.username,
+                        filename: Math.random().toString(36).slice(2)+".nii.gz",	// automatically generated filename
+                        labels: annotations.volume[irow].values,
+                        owner: AtlasMakerWidget.User.username,
+                        type: "volume"
+                    };
 
-            // add and bind new table row
-            for(irow=0;irow<annotations.volume.length;irow++) {    
-                BrainBox.appendAnnotationTableRow2(irow,annotations.volume[irow].annotationItemIndex,aParam);
+                    projectInfo.files.list[index].mri.atlas.push(atlas);
+                }
+
+                annotations.volume[irow].annotationItemIndex=iarr;
             }
-            // update in server
-            saveAnnotations(aParam);
+            params.info=projectInfo.files.list[index];
 
-            // select the first annotation by default
-            // (should be read from project settings)
-            $("#annotations tbody tr:eq(0)").addClass("selected");
+            if(annotations.volume[0]) {
+                params.annotationItemIndex = annotations.volume[0].annotationItemIndex;
+            } else {
+                params.annotationItemIndex = -1;
+            }
 
-            AtlasMakerWidget.User.projectPage = projectInfo.shortname;
-            AtlasMakerWidget.sendUserDataMessage(JSON.stringify({projectPage:projectInfo.shortname}));
-            
-            def.resolve();
-        });
-    } else {
-        var msg=AtlasMakerWidget.container.find("#text-layer");
-        msg.html("<text x='5' y='15' fill='white'>ERROR: File is unreadable</text>");
-        console.log("ERROR: Cannot read data. The file is maybe corrupt?");
-        
-        def.reject();
-    }
-    
-    return def;
+            BrainBox.configureBrainBox(params)
+            .then(function from_project(){
+
+                // bind volume annotations to table#volAnnotations
+                var annvol_proxy={};
+                var aParam = {
+                    table: $("table#volAnnotations"),
+                    info_proxy: annvol_proxy,
+                    info: BrainBox.info,
+                    trTemplate: $.map([
+                        "<tr>",
+                        " <td></td>",           // volume name
+                        " <td></td>",	        // volume label set
+                        "</tr>"],function(o){return o}).join(),
+                    objTemplate: [
+                        {	typeOfBinding:1,
+                            path:"mri.atlas.#.name"
+                        },
+                        {	typeOfBinding:1,
+                            path:"mri.atlas.#.labels"
+                        }
+                    ]
+                };
+
+                // add and bind new table row
+                for(irow=0;irow<annotations.volume.length;irow++) {
+                    BrainBox.appendAnnotationTableRow2(irow,annotations.volume[irow].annotationItemIndex,aParam);
+                }
+                // update in server
+                saveAnnotations(aParam);
+
+                // select the first annotation by default
+                // (should be read from project settings)
+                $("#annotations tbody tr:eq(0)").addClass("selected");
+
+                AtlasMakerWidget.User.projectPage = projectInfo.shortname;
+                AtlasMakerWidget.sendUserDataMessage(JSON.stringify({projectPage:projectInfo.shortname}));
+
+                resolve();
+            });
+        } else {
+            var msg=AtlasMakerWidget.container.find("#text-layer");
+            msg.html("<text x='5' y='15' fill='white'>ERROR: File is unreadable</text>");
+            console.log("ERROR: Cannot read data. The file is maybe corrupt?");
+
+            reject();
+        }
+    });
 }
 function saveAnnotations(param) {
     JSON.stringify(param.info_proxy); // update BrainBox.info from info_proxy
