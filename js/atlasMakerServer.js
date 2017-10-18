@@ -12,7 +12,7 @@ console.log(whitelist);
 console.log('Use blacklist:', useBlacklist);
 console.log(blacklist);
 
-let http = require('http'),
+var http = require('http'),
     // Server =  http.createServer(),
     server = http.createServer((req, res) => {
         var ip = req.ip ||
@@ -26,7 +26,7 @@ let http = require('http'),
     port = 8080;
 
 server.on('upgrade', (req, socket, head) => {
-    let ip = req.ip ||
+    var ip = req.ip ||
         req.connection.remoteAddress ||
         req.socket.remoteAddress ||
         req.connection.socket.remoteAddress;
@@ -80,16 +80,16 @@ var DOMPurify = createDOMPurify(window);
 var jsonpatch = require('fast-json-patch');
 
 var atlasMakerServer = function () {
-    let    debug = 1;
+    var    debug = 1;
     this.dataDirectory = '';
     var Atlases = [];
     this.Brains = [];
     var US = [];
-    let    uidcounter = 1;
-    let enterCommands = false;
+    var    uidcounter = 1;
+    var enterCommands = false;
     var UndoStack = [];
-    let recordWS = false;
-    let recordedWSTraffic = [];
+    var recordWS = false;
+    var recordedWSTraffic = [];
 
     var NiiHdr = new Struct()
         .word32Sle('sizeof_hdr')        // Size of the header. Must be 348 (bytes)
@@ -194,7 +194,7 @@ var atlasMakerServer = function () {
         console.log('\n' + Brains.filter(o => {
             return o !== undefined;
         }).length + ' Brains:');
-        let i;
+        var i;
         for (i in Brains) {
             var sum = numberOfUsersConnectedToMRI(Brains[i].path);
             console.log('Brains[' + i + '].path=' + Brains[i].path + ', ' + sum + ' users connected');
@@ -340,7 +340,7 @@ var atlasMakerServer = function () {
     };
     var numberOfUsersConnectedToMRI = function numberOfUsersConnectedToMRI(path) {
         traceLog(numberOfUsersConnectedToMRI);
-        let sum = 0;
+        var sum = 0;
 
         if (path == undefined) {
             return sum;
@@ -369,7 +369,7 @@ var atlasMakerServer = function () {
     var unloadMRI = function unloadMRI(path) {
         traceLog(unloadMRI);
 
-        let i;
+        var i;
         for (i in Brains) {
             if (Brains[i].path === path) {
                 delete Brains[i];
@@ -381,7 +381,7 @@ var atlasMakerServer = function () {
 
     var numberOfUsersConnectedToAtlas = function numberOfUsersConnectedToAtlas(dirname, atlasFilename) {
         traceLog(numberOfUsersConnectedToAtlas);
-        let sum = 0;
+        var sum = 0;
 
         if (dirname === undefined || atlasFilename === undefined) {
             return sum;
@@ -409,7 +409,7 @@ var atlasMakerServer = function () {
     var unloadAtlas = function unloadAtlas(dirname, atlasFilename) {
         traceLog(unloadAtlas);
 
-        let i;
+        var i;
         for (i in Atlases) {
             if (Atlases[i].dirname === dirname && Atlases[i].name === atlasFilename) {
                 saveAtlas(Atlases[i])
@@ -427,7 +427,7 @@ var atlasMakerServer = function () {
 /* ----------- */
 /* BLACKLIST */
     function verifyClient(info) {
-        let ip;
+        var ip;
 
         if (info.req.connection.remoteAddress) {
             ip = info.req.connection.remoteAddress;
@@ -468,7 +468,7 @@ var atlasMakerServer = function () {
 
             /* ----------- */
             /* BLACKLIST */
-                let ip = s.upgradeReq.connection.remoteAddress;
+                var ip = s.upgradeReq.connection.remoteAddress;
                 ip = ip.split(':').pop();
                 if (useWhitelist && !whitelist[ip]) {
                     console.log('--------------------> REJECT ip not in whitelist', ip);
@@ -496,7 +496,7 @@ var atlasMakerServer = function () {
                 traceLog(message_fromInitSocketConnection, 1);
                 var sender = this;
                     var sourceUS = getUserFromSocket(this);
-                    let data = {};
+                    var data = {};
 
                     if (msg instanceof Buffer) { // Handle binary data: a user uploaded an atlas file
                         data.data = msg;
@@ -585,7 +585,7 @@ var atlasMakerServer = function () {
 
                 // Broadcast
                 //----------
-                    let n = 0;
+                    var n = 0;
 
                 // Do not broadcast the following messages
                     if (data.type === 'requestSlice' ||
@@ -655,7 +655,7 @@ var atlasMakerServer = function () {
                 s.on('close', function close_fromInitSocketConnection(msg) {
                 traceLog(close_fromInitSocketConnection);
 
-                    let i, sum, nusers, sourceUS;
+                    var i, sum, nusers, sourceUS;
 
                     console.log('A user is disconnecting');
                     console.log('There are ' + US.filter(o => {
@@ -829,7 +829,7 @@ var atlasMakerServer = function () {
         var sourceUS = getUserFromUserId(data.uid);
         var brainPath = sourceUS.User.dirname + sourceUS.User.mri;
         var atlasPath = sourceUS.User.dirname + sourceUS.User.atlasFilename;
-        let i, atlas;
+        var i, atlas;
 
         sourceUS.User.view = view;
         sourceUS.User.slice = slice;
@@ -863,7 +863,7 @@ var atlasMakerServer = function () {
         var sourceUS = getUserFromUserId(data.uid);
         var brainPath = sourceUS.User.dirname + sourceUS.User.mri;
         var atlasPath = sourceUS.User.dirname + sourceUS.User.atlasFilename;
-        let i, atlas;
+        var i, atlas;
 
         var time = new Date();
         var modified = time.toJSON();
@@ -905,7 +905,7 @@ var atlasMakerServer = function () {
      */
 
         var sourceUS = getUserFromUserId(data.uid);
-        let json = data.metadata;
+        var json = data.metadata;
         json.modified = (new Date()).toJSON();
         json.modifiedBy = (sourceUS.User && sourceUS.User.username) ? sourceUS.User.username : 'anonymous';
 
@@ -980,7 +980,7 @@ var atlasMakerServer = function () {
 
     var unloadUnusedBrains = function unloadUnusedBrains() {
         traceLog(unloadUnusedBrains);
-        let i;
+        var i;
         for (i in Brains) {
             var sum = numberOfUsersConnectedToMRI(Brains[i].path);
 
@@ -992,7 +992,7 @@ var atlasMakerServer = function () {
     };
     var unloadUnusedAtlases = function unloadUnusedAtlases() {
         traceLog(unloadUnusedAtlases);
-        let i;
+        var i;
         for (i in Atlases) {
             var sum = numberOfUsersConnectedToAtlas(Atlases[i].dirname, Atlases[i].name);
             if (sum === 0) {
@@ -1022,7 +1022,7 @@ var atlasMakerServer = function () {
 
         var sourceUS = getUserFromUserId(data.uid);
 
-        let User,
+        var User,
             i,
             atlasLoadedFlag,
             firstConnectionFlag = false,
@@ -1036,10 +1036,10 @@ var atlasMakerServer = function () {
 
         if (data.description === 'allUserData') {
         // Receiving the complete User data object
-        User = data.user;
+            User = data.user;
             User.uid = data.uid;
         } else {
-        User = sourceUS.User;
+            User = sourceUS.User;
             if (data.description === 'sendAtlas') {
             // Receive an atlas from the user
             // 1. Check if the atlas the user is requesting has not been loaded
@@ -1133,7 +1133,7 @@ var atlasMakerServer = function () {
 
         var sourceUS = getUserFromUserId(data.uid);
 
-        let User,
+        var User,
             i,
             atlasLoadedFlag,
             firstConnectionFlag = false,
@@ -1151,7 +1151,7 @@ var atlasMakerServer = function () {
     var sendPreviousUserDataMessage = function sendPreviousUserDataMessage(newUS) {
         traceLog(sendPreviousUserDataMessage);
 
-        let i,
+        var i,
             n = 0;
         for (i in US) {
             if (US[i].socket == newUS.socket) {
@@ -1220,7 +1220,7 @@ var atlasMakerServer = function () {
         traceLog(broadcastMessage);
 
         try {
-            let n = 0,
+            var n = 0,
                 i;
             for (i in US) {
             if (US[i].uid != uid) {
@@ -1284,7 +1284,7 @@ var atlasMakerServer = function () {
                 wasn't already loaded.
         output: a brain (mri structure)
     */
-        let i;
+        var i;
         for (i in Brains) {
             if (Brains[i].path === brainPath) {
                 if (debug > 1) {
@@ -1613,8 +1613,8 @@ var atlasMakerServer = function () {
                     var mgh = new Buffer(stdout, 'binary');
                     var i, j, tmp, sum,
                         mri = {};
-                    let sz, bpv;
-                    let hdr_sz = 284,
+                    var sz, bpv;
+                    var hdr_sz = 284,
                         ftrSz;
                     MghHdr.allocate();
                     MghHdr._setBuff(mgh);
@@ -1750,7 +1750,7 @@ var atlasMakerServer = function () {
                 }
                 return Promise.reject('ERROR: [saveAtlas] atlas in Atlas array has no data');
             }
-            let i,
+            var i,
                 sum = 0;
             for (i = 0; i < atlas.dim[0] * atlas.dim[1] * atlas.dim[2]; i++) {
                 sum += atlas.data[i];
@@ -1764,8 +1764,8 @@ var atlasMakerServer = function () {
 
             var    hdrSz = atlas.hdrSz;
             var dataSz = atlas.data.length;
-            let ftrSz;
-            let    mri;
+            var ftrSz;
+            var    mri;
 
             if (atlas.ftr) {
                 ftrSz = atlas.ftr.length;
@@ -1817,7 +1817,7 @@ var atlasMakerServer = function () {
         output: a new empty mri structure, datatype=2 (1 byte per voxel), same dimensions as template
     */
 
-        let mri = {},
+        var mri = {},
             props = ['dim', 'pixdim', 'hdr'],
             datatype = 2,
             vox_offset = 352,
@@ -1927,7 +1927,7 @@ var atlasMakerServer = function () {
     var getCurrentUndoLayer = function getCurrentUndoLayer(User) {
         traceLog(getCurrentUndoLayer, 1);
 
-        let i, undoLayer,
+        var i, undoLayer,
             found = false;
 
         for (i = UndoStack.length - 1; i >= 0; i--) {
@@ -1953,7 +1953,7 @@ var atlasMakerServer = function () {
     var undo = function undo(User) {
         traceLog(undo);
 
-        let undoLayer;
+        var undoLayer;
         var    i, action,
             found = false;
 
@@ -1990,10 +1990,10 @@ var atlasMakerServer = function () {
         Each element of arr is an array of 2 elements, index and value.
     */
         var arr = [];
-        let msg;
+        var msg;
         var atlas = Atlases[User.iAtlas];
         var    vol = atlas.data;
-        let val;
+        var val;
 
         for (var j in undoLayer.actions) {
             var i = parseInt(j);
@@ -2074,7 +2074,7 @@ var atlasMakerServer = function () {
         traceLog(paintVoxel, 3);
         var    view = User.view;
         var atlas = Atlases[User.iAtlas];
-        let    x, y, z;
+        var    x, y, z;
         var sdim = User.s2v.sdim;
 
         switch (view) {
@@ -2083,7 +2083,7 @@ var atlasMakerServer = function () {
             case 'axi':    x = mx; y = sdim[1] - 1 - my; z = mz; break; // Axial
         }
 
-        let s, v;
+        var s, v;
         s = [x, y, z];
         i = S2I(s, User);
         if (vol[i] != val) {
@@ -2097,8 +2097,8 @@ var atlasMakerServer = function () {
         var    view = User.view;
         var atlas = Atlases[User.iAtlas];
         var    dim = atlas.dim;
-        let    x, y, z;
-        let    i = -1;
+        var    x, y, z;
+        var    i = -1;
         var sdim = User.s2v.sdim;
 
         switch (view) {
@@ -2106,7 +2106,7 @@ var atlasMakerServer = function () {
             case 'cor':    x = mx; y = mz; z = sdim[2] - 1 - my; break; // Coronal
             case 'axi':    x = mx; y = sdim[1] - 1 - my; z = mz; break; // Axial
         }
-        let s;
+        var s;
         s = [x, y, z];
         i = S2I(s, User);
 
@@ -2121,15 +2121,15 @@ var atlasMakerServer = function () {
         var atlas = Atlases[User.iAtlas];
         var    vol = atlas.data;
         var    dim = atlas.dim;
-        let    x1 = User.x0;     // Screen coords
-        let y1 = User.y0;     // Screen coords
+        var    x1 = User.x0;     // Screen coords
+        var y1 = User.y0;     // Screen coords
         var    z = User.slice;    // Screen coords
         var    view = User.view;    // View: sag, cor or axi
         var sdim = User.s2v.sdim;
         var x2 = x;
         var y2 = y;
-        let    i;
-        let brain_W, brain_H;
+        var    i;
+        var brain_W, brain_H;
 
         if (Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2) > 20 * 20) {
             console.log('WARNING: long line from', x1, y1, 'to', x2, y2);
@@ -2143,7 +2143,7 @@ var atlasMakerServer = function () {
         var dy = Math.abs(y2 - y1);
         var sx = (x1 < x2) ? 1 : -1;
         var sy = (y1 < y2) ? 1 : -1;
-        let err = dx - dy;
+        var err = dx - dy;
 
         switch (view) {
             case 'sag':    brain_W = sdim[1]; brain_H = sdim[2]; break; // Sagital
@@ -2180,7 +2180,7 @@ paintVoxel(x1 + j, y1 + k, z, User, vol, val, undoLayer);
         var view = User.view;
         var    vol = Atlases[User.iAtlas].data;
         var dim = Atlases[User.iAtlas].dim;
-        let brain_W, brain_H;
+        var brain_W, brain_H;
         var sdim = User.s2v.sdim;
         switch (view) {
             case 'sag':    brain_W = sdim[1]; brain_H = sdim[2]; break; // Sagital
@@ -2188,11 +2188,11 @@ paintVoxel(x1 + j, y1 + k, z, User, vol, val, undoLayer);
             case 'axi':    brain_W = sdim[0]; brain_H = sdim[1]; break; // Axial
         }
 
-        let    Q = [],
+        var    Q = [],
         left,
         right,
         n;
-        let    i,
+        var    i,
             max = 0;
         var bval = vol[sliceXYZ2index(x, y, z, User)]; // Background-value: value of the voxel where the click occurred
 
@@ -2245,7 +2245,7 @@ paintVoxel(x1 + j, y1 + k, z, User, vol, val, undoLayer);
     var invMat = function invMat(m) {
         traceLog(invMat, 3);
 
-        let det;
+        var det;
         var w = [[], [], []];
 
         det = m[0][1] * m[1][2] * m[2][0] + m[0][2] * m[1][0] * m[2][1] + m[0][0] * m[1][1] * m[2][2] - m[0][2] * m[1][1] * m[2][0] - m[0][0] * m[1][2] * m[2][1] - m[0][1] * m[1][0] * m[2][2];
@@ -2313,17 +2313,17 @@ paintVoxel(x1 + j, y1 + k, z, User, vol, val, undoLayer);
         var i = v2w[0];
         var j = v2w[1];
         var k = v2w[2];
-        let mi = {i: 0, v: 0}; i.map((o, n) => {
+        var mi = {i: 0, v: 0}; i.map((o, n) => {
             if (Math.abs(o) > Math.abs(mi.v)) {
                 mi = {i: n, v: o};
             }
         });
-        let mj = {i: 0, v: 0}; j.map((o, n) => {
+        var mj = {i: 0, v: 0}; j.map((o, n) => {
             if (Math.abs(o) > Math.abs(mj.v)) {
                 mj = {i: n, v: o};
             }
         });
-        let mk = {i: 0, v: 0}; k.map((o, n) => {
+        var mk = {i: 0, v: 0}; k.map((o, n) => {
             if (Math.abs(o) > Math.abs(mk.v)) {
                 mk = {i: n, v: o};
             }
@@ -2361,7 +2361,7 @@ paintVoxel(x1 + j, y1 + k, z, User, vol, val, undoLayer);
         Check the S2V transformation to see if it looks correct.
         If it does not, reset it
     */
-        let doReset = false;
+        var doReset = false;
 
         console.log('    Transformation TEST:');
 
@@ -2422,11 +2422,11 @@ paintVoxel(x1 + j, y1 + k, z, User, vol, val, undoLayer);
     var drawSlice = function drawSlice(brain, view, slice) {
         traceLog(drawSlice, 1);
 
-        let x, y, i, j;
-        let brain_W, brain_H, brain_D;
-        let ys, ya, yc;
-        let val;
-        let s,
+        var x, y, i, j;
+        var brain_W, brain_H, brain_D;
+        var ys, ya, yc;
+        var val;
+        var s,
             s2v = brain.s2v;
 
         switch (view) {
@@ -2481,11 +2481,11 @@ paintVoxel(x1 + j, y1 + k, z, User, vol, val, undoLayer);
     var drawSlice2 = function drawSlice2(brain, atlas, view, slice) {
         traceLog(drawSlice2, 1);
 
-        let x, y, i, j;
-        let brain_W, brain_H, brain_D;
-        let ys, ya, yc;
-        let val, rgb;
-        let s,
+        var x, y, i, j;
+        var brain_W, brain_H, brain_D;
+        var ys, ya, yc;
+        var val, rgb;
+        var s,
             s2v = brain.s2v,
             t = 0.5;
 
