@@ -97,13 +97,23 @@ loadScript("/lib/three.min.js")
 var dot=0;setInterval(function(){if($("#dot"))$("#dot").css({marginLeft:50*(1+Math.sin(dot))+"%"});dot+=0.1},33);
 
 function loadScript(script) {
-	var def=new $.Deferred();
-	var s = document.createElement("script");
-	s.src = script;
-	s.onload=function(){console.log("loaded",script,new Date());def.resolve();}
-	s.onerror=function(e){console.log("unable to load",script);def.reject();}
+	return new Promise(function(resolve,reject){
+	const s=document.createElement("script");
+	s.src=script;
+	let r = false;
+	s.onload = s.onreadystatechange = function() {
+	if (!r && (!this.readyState || this.readyState == 'complete')) {
+	r = true;
+	console.log("loaded",script,new Date());	
+	resolve();
+	}
+       }
+	s.onerror = function(err) {
+	console.log("unable to load",script);	
+	reject(err, s);
+	}
 	document.body.appendChild(s);
-	return def.promise();
+	});
 }
 
 function deparam() {
