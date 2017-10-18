@@ -1,7 +1,7 @@
 const express = require('express');
 const controller = require('./user.controller');
 
-const router = express.Router();
+const router = new express.Router();
 
 router.get('/json', controller.api_userAll);
 router.get('/json/:userName', controller.validator, controller.api_user);
