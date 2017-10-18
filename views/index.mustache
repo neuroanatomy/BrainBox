@@ -15,24 +15,19 @@
 
 <body>
 
-
-	
-
 	<!-- Login (fixed height) -->
     <div id="menu">
-        <div>
-            <img id="addProject" class="button" title="add project" style="padding-right:0.5px" src='/img/plus.svg'/>
-            <a href="http://openneu.ro/metasearch" target="_blank"><img id="search" class="button" title="search" style="padding-right:0.5px" src='/img/search.svg'/></a>
-            <a href="/doc/index.html" target="_blank"><img id="doc" class="button" title="documentation" style="padding-right:0.5px" src='/img/doc.svg'/></a>
-            <a href="https://github.com/OpenNeuroLab/BrainBox/issues" target="_blank"><img id="bug" class="button" title="report a bug" style="padding-right:0.5px" src='/img/bug.svg'/></a>
-            <a href="https://github.com/OpenNeuroLab" target="_blank"><img id="github" class="button" title="join our github project" style='width:15px;height:15px;padding-right:1px' src='/img/github.svg'/></a>
-            <div id="MyLogin" style="padding-right:10px">
+        <div style="padding-right:10px">
+            <img id="addProject" class="button" title="add project" style='width:13px' src='/img/plus.svg'/>
+            <a href="http://openneu.ro/metasearch" target="_blank"><img id="search" class="button" title="search" style='width:13px' src='/img/search.svg'/></a>
+            <a href="/doc/index.html" target="_blank"><img id="doc" class="button" title="documentation" style='width:13px' src='/img/doc.svg'/></a>
+            <a href="https://github.com/OpenNeuroLab/BrainBox/issues" target="_blank"><img id="bug" class="button" title="report a bug" style='width:14px' src='/img/bug.svg'/></a>
+            <a href="https://github.com/OpenNeuroLab" target="_blank"><img id="github" class="button" title="join our github project" style='width:15px' src='/img/github.svg'/></a>
+            <div id="MyLogin">
                 <span>{{{login}}}</span>
             </div>
         </div>
     </div>
-    </div>
-
 	
 	<!-- Content  -->			
     <div class="slide" style="background:#222">
@@ -102,7 +97,7 @@
 			</a>
 		</p>
 	</div>
-	<!-- End Footer -->	
+	<!-- End Footer -->
 
 <script src="/lib/jquery-3.1.1.min.js"></script>
 <!--<link rel="stylesheet" type="text/css" href="/lib/introjs/introjs.css" />-->
@@ -221,25 +216,25 @@ function goToURL(e) {
  * @function testWebSockets
  */
 function testWebSockets() {
-    return new Promise(function(resolve, reject) {
-        var host = "ws://ws.websocketstest.com:8080/service";
-        var ws;
+    var def = $.Deferred();
+    var host = "ws://ws.websocketstest.com:8080/service";
+    var ws;
 
-        if (window.WebSocket) {
-            ws=new WebSocket(host);
-        } else if (window.MozWebSocket) {
-            ws=new MozWebSocket(host);
-        } else {
-            reject("BrainBox requires access to WebSockets, but this web browser does not support them. Try Firefox, Chrome or Safari.");
-        }
-        ws.onopen = function(e) {
-            ws.close();
-            resolve("Connection ok");
-        };
-        ws.onerror = function(e) {
-            reject("BrainBox requires access to WebSockets, but your connection does not allow it. Ask your provider to allow WebSockets on port 8080");
-        };
-    });
+    if (window.WebSocket) {
+        ws=new WebSocket(host);
+    } else if (window.MozWebSocket) {
+        ws=new MozWebSocket(host);
+    } else {
+        def.reject("BrainBox requires access to WebSockets, but this web browser does not support them. Try Firefox, Chrome or Safari.");
+    }
+    ws.onopen = function(e) {
+        ws.close();
+        def.resolve("Connection ok");
+    };
+    ws.onerror = function(e) {
+        def.reject("BrainBox requires access to WebSockets, but your connection does not allow it. Ask your provider to allow WebSockets on port 8080");
+    };
+    return def;
 }
 
 </script>
