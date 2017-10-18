@@ -1,4 +1,4 @@
-Come to our **dolphin brain** at http://brainbox.pasteur.fr/mri?url=http://braincatalogue.org/data/Bottlenose_dolphin/MRI-n4.nii.gz , (log in with your GitHub account) and select the Cerebrum from the Braincatalogue project and **join our segmentation sprint!**  
+Come to our [**dolphin brain**](http://brainbox.pasteur.fr/mri?url=http://braincatalogue.org/data/Bottlenose_dolphin/MRI-n4.nii.gz) , (log in with your GitHub account) and select the Cerebrum from the Braincatalogue project and **join our segmentation sprint!**  
 
 <img width="769" alt="screen shot 2017-06-01 at 11 08 34" src="https://cloud.githubusercontent.com/assets/6297454/26672835/f7892d80-46ba-11e7-8be8-51adbee9288d.png">
 
