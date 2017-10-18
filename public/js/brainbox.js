@@ -9,50 +9,50 @@
  */
 
 var BrainBox={
-	version: 1,
-	debug: 1,
-	info:{},
-	labelSets:null,
-	annotationType:["volume","text"],
-	accessLevels: ["none","view","edit","add","remove"],
+    version: 1,
+    debug: 1,
+    info:{},
+    labelSets:null,
+    annotationType:["volume","text"],
+    accessLevels: ["none","view","edit","add","remove"],
 
     /**
      * @function traceLog
      */
-	traceLog: function traceLog(f,l) {
-	/*
-		if(BrainBox.debug && (l==undefined || BrainBox.debug>l))
-			// return "bb> "+(f.name)+" "+(f.caller?(f.caller.name||"annonymous"):"root");
-			return "bb> ";//+(f.name);
-	*/
-	},
+    traceLog: function traceLog(f,l) {
+    /*
+        if(BrainBox.debug && (l==undefined || BrainBox.debug>l))
+            // return "bb> "+(f.name)+" "+(f.caller?(f.caller.name||"annonymous"):"root");
+            return "bb> ";//+(f.name);
+    */
+    },
 
-	/*
-		JavaScript implementation of Java's hashCode method from
-		http://werxltd.com/wp/2010/05/13/javascript-implementation-of-javas-string-hashcode-method/
-	*/
-	/**
+    /*
+        JavaScript implementation of Java's hashCode method from
+        http://werxltd.com/wp/2010/05/13/javascript-implementation-of-javas-string-hashcode-method/
+    */
+    /**
      * @function hash
      */
-	hash: function hash(str) {
-		var l=BrainBox.traceLog(hash);if(l)console.log(l);
-		
-		var v0=0,v1,abc="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-		for(i=0;i<str.length;i++) {
-			ch=str.charCodeAt(i);
-			v0=((v0<<5)-v0)+ch;
-			v0=v0&v0;
-		}
-		var sz=abc.length,v,res="";
-		for(i=0;i<8;i++) {
-			v1=parseInt(v0/sz);
-			v=Math.abs(v0-v1*sz);
-			res+=abc[v];
-			v0=v1;
-		}
-		return res;
-	},
-	/**
+    hash: function hash(str) {
+        var l=BrainBox.traceLog(hash);if(l)console.log(l);
+        
+        var v0=0,v1,abc="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        for(i=0;i<str.length;i++) {
+            ch=str.charCodeAt(i);
+            v0=((v0<<5)-v0)+ch;
+            v0=v0&v0;
+        }
+        var sz=abc.length,v,res="";
+        for(i=0;i<8;i++) {
+            v1=parseInt(v0/sz);
+            v=Math.abs(v0-v1*sz);
+            res+=abc[v];
+            v0=v1;
+        }
+        return res;
+    },
+    /**
      * @function loadScript
      * @desc Loads script from path if test is not fulfilled
      * @param String path Path to script, either a local path or
@@ -60,7 +60,7 @@ var BrainBox={
      * @param function testScriptPresent Function to test if the script is already present.
      *        If undefined, the script will be loaded.
      */
-	loadScript: function loadScript(path, testScriptPresent) {
+    loadScript: function loadScript(path, testScriptPresent) {
         return new Promise(function(resolve, reject) {
             if(testScriptPresent && testScriptPresent()) {
                 console.log("[loadScript] Script",path,"already present, not loading it again");
@@ -74,17 +74,17 @@ var BrainBox={
             };
             document.body.appendChild(s);
         });
-	},
-	/**
+    },
+    /**
      * @function initBrainBox
      */
-	initBrainBox: function initBrainBox() {
-		var l=BrainBox.traceLog(initBrainBox);if(l)console.log(l);
+    initBrainBox: function initBrainBox() {
+        var l=BrainBox.traceLog(initBrainBox);if(l)console.log(l);
 
         return new Promise(function(resolve, reject) {
-		    // Add AtlasMaker and friends
-		    $("#stereotaxic").html('<div id="atlasMaker"></div>');
-		    $("#atlasMaker").addClass('edit-mode');
+            // Add AtlasMaker and friends
+            $("#stereotaxic").html('<div id="atlasMaker"></div>');
+            $("#atlasMaker").addClass('edit-mode');
 
           BrainBox.loadScript('/lib/jquery-ui.min.js', function(){return window.jQuery.ui != undefined})
           .then(function(){return BrainBox.loadScript('/lib/pako/pako.min.js', function(){return window.pako != undefined})})
@@ -115,22 +115,22 @@ var BrainBox={
               })
           });
 
-		    // store state on exit
-		    $(window).on('unload',BrainBox.unload);
+            // store state on exit
+            $(window).on('unload',BrainBox.unload);
         });
-	},
-	/**
+    },
+    /**
      * @function configureBrainBox
      */
-	configureBrainBox: function configureBrainBox(param) {
-		var l=BrainBox.traceLog(configureBrainBox);if(l)console.log(l);
+    configureBrainBox: function configureBrainBox(param) {
+        var l=BrainBox.traceLog(configureBrainBox);if(l)console.log(l);
 
         var def=new Promise(function(resolve, reject) {
-		    var date=new Date();
-		    var index=param.annotationItemIndex||0;
+            var date=new Date();
+            var index=param.annotationItemIndex||0;
 
-		    // Copy MRI from source
-		    $("#msgLog").html("<p>Downloading from source to server...");
+            // Copy MRI from source
+            $("#msgLog").html("<p>Downloading from source to server...");
 
           // Configure MRI into atlasMaker
           if(param.info.success===false) {
@@ -201,15 +201,15 @@ var BrainBox={
               reject();
           });
         });
-	},
-	/**
+    },
+    /**
      * @function convertImgObjectURLToDataURL
      * @desc Encodes the ObjectURL obtained from the server jpg images as DataURL,
      *       suitable to be stored as a string in localStorage
      */
-	convertImgObjectURLToDataURL: function convertImgObjectURLToDataURL(objURL) {
+    convertImgObjectURLToDataURL: function convertImgObjectURLToDataURL(objURL) {
         return new Promise(function(resolve, reject) {
-	        var  x = new XMLHttpRequest(), f = new FileReader();
+            var  x = new XMLHttpRequest(), f = new FileReader();
             x.open('GET',objURL,true);
             x.responseType = 'blob';
             x.onload = function (e) {
@@ -221,14 +221,14 @@ var BrainBox={
             x.send();
         })
     },
-	/**
+    /**
      * @function addCurrentMRIToHistory
      */
     addCurrentMRIToHistory: function addCurrentMRIToHistory() {
         var l=BrainBox.traceLog(addCurrentMRIToHistory);if(l)console.log(l);
 
-		BrainBox.convertImgObjectURLToDataURL(AtlasMakerWidget.brain_img.img.src)
-		.then(function(data) {
+        BrainBox.convertImgObjectURLToDataURL(AtlasMakerWidget.brain_img.img.src)
+        .then(function(data) {
             var i, foundStored=false;
             var stored=localStorage.AtlasMaker;
             if(stored) {
@@ -245,7 +245,7 @@ var BrainBox={
             }
             if(foundStored==false)
                 stored={version:BrainBox.version,history:[]};
-            stored.history.push({	
+            stored.history.push({    
                 url:         BrainBox.info.source,
                 view:        AtlasMakerWidget.User.view?AtlasMakerWidget.User.view.toLowerCase():"sag",
                 slice:       AtlasMakerWidget.User.slice?AtlasMakerWidget.User.slice:0,
@@ -253,143 +253,143 @@ var BrainBox={
                 lastVisited: (new Date()).toJSON()
             });
             localStorage.AtlasMaker=JSON.stringify(stored);
-	    });
+        });
     },
-	/**
+    /**
      * @function unload
      */
-	unload: function unload() {
-	    /*
-		var l=BrainBox.traceLog(unload);if(l)console.log(l);
-		var i, obj0, obj1, foundStored=false;
-		var stored=localStorage.AtlasMaker;
-		if(stored) {
-			stored=JSON.parse(stored);
-			if(stored.version && stored.version==BrainBox.version) {
-				foundStored=true;
-				for(i=0;i<stored.history.length;i++) {
-					if(stored.history[i].url==BrainBox.info.source) {
-						obj0 = stored.history.splice(i,1);
-						break;
-					}
-				}
-			}
-		}
-		if(foundStored==false) {
-			stored={version:BrainBox.version,history:[]};
-			obj0 = {};
-		}
-		
-        obj1 = {	
-			url:BrainBox.info.source,
-			view:AtlasMakerWidget.User.view?AtlasMakerWidget.User.view.toLowerCase():"sag",
-			slice:AtlasMakerWidget.User.slice?AtlasMakerWidget.User.slice:0,
-			lastVisited:(new Date()).toJSON()
-		};
+    unload: function unload() {
+        /*
+        var l=BrainBox.traceLog(unload);if(l)console.log(l);
+        var i, obj0, obj1, foundStored=false;
+        var stored=localStorage.AtlasMaker;
+        if(stored) {
+            stored=JSON.parse(stored);
+            if(stored.version && stored.version==BrainBox.version) {
+                foundStored=true;
+                for(i=0;i<stored.history.length;i++) {
+                    if(stored.history[i].url==BrainBox.info.source) {
+                        obj0 = stored.history.splice(i,1);
+                        break;
+                    }
+                }
+            }
+        }
+        if(foundStored==false) {
+            stored={version:BrainBox.version,history:[]};
+            obj0 = {};
+        }
+        
+        obj1 = {    
+            url:BrainBox.info.source,
+            view:AtlasMakerWidget.User.view?AtlasMakerWidget.User.view.toLowerCase():"sag",
+            slice:AtlasMakerWidget.User.slice?AtlasMakerWidget.User.slice:0,
+            lastVisited:(new Date()).toJSON()
+        };
         $.extend(obj0, obj1);
-		
-		stored.history.push(obj0);
+        
+        stored.history.push(obj0);
         localStorage.AtlasMaker=JSON.stringify(stored);
         */
-	},
+    },
     /*
-		Annotation related functions
-	*/
-	/**
+        Annotation related functions
+    */
+    /**
      * @function selectAnnotationTableRow
      */
-	selectAnnotationTableRow: function selectAnnotationTableRow(index,param) {
-		var l=BrainBox.traceLog(selectAnnotationTableRow);if(l)console.log(l);
-	
-		var table=param.table;
-		var currentIndex=$(table).find("tr.selected").index();
-	
-		if(index>=0 && currentIndex!=index) {
-			console.log("bb>>  change selected annotation");
-			$(table).find("tr").removeClass("selected");
-			$(table).find('tbody tr:eq('+index+')').addClass("selected");
-			AtlasMakerWidget.configureAtlasMaker(BrainBox.info,index);
-		}
-	},
-	/**
+    selectAnnotationTableRow: function selectAnnotationTableRow(index,param) {
+        var l=BrainBox.traceLog(selectAnnotationTableRow);if(l)console.log(l);
+    
+        var table=param.table;
+        var currentIndex=$(table).find("tr.selected").index();
+    
+        if(index>=0 && currentIndex!=index) {
+            console.log("bb>>  change selected annotation");
+            $(table).find("tr").removeClass("selected");
+            $(table).find('tbody tr:eq('+index+')').addClass("selected");
+            AtlasMakerWidget.configureAtlasMaker(BrainBox.info,index);
+        }
+    },
+    /**
      * @function appendAnnotationTableRow
      */
-	appendAnnotationTableRow: function appendAnnotationTableRow(irow,param) {
-		var l=BrainBox.traceLog(appendAnnotationTableRow);if(l)console.log(l);
-		
-		$(param.table).append(param.trTemplate);
+    appendAnnotationTableRow: function appendAnnotationTableRow(irow,param) {
+        var l=BrainBox.traceLog(appendAnnotationTableRow);if(l)console.log(l);
+        
+        $(param.table).append(param.trTemplate);
 
-		for(var icol=0;icol<param.objTemplate.length;icol++) {
-			switch(param.objTemplate[icol].typeOfBinding) {
-				case 1:
-					bind1(
-						param.info_proxy,
-						param.info,
-						param.objTemplate[icol].path.replace("#",irow),
-						$(param.table).find("tr:eq("+(irow+1)+") td:eq("+icol+")"),
-						param.objTemplate[icol].format
-					);
-					break;
-				case 2:
-					bind2(
-						param.info_proxy,
-						param.info,
-						param.objTemplate[icol].path.replace("#",irow),
-						$(param.table).find("tr:eq("+(irow+1)+") td:eq("+icol+")"),
-						param.objTemplate[icol].format,
-						param.objTemplate[icol].parse
-					);
-					  break;
-			}
-		}
-	},
-	/**
+        for(var icol=0;icol<param.objTemplate.length;icol++) {
+            switch(param.objTemplate[icol].typeOfBinding) {
+                case 1:
+                    bind1(
+                        param.info_proxy,
+                        param.info,
+                        param.objTemplate[icol].path.replace("#",irow),
+                        $(param.table).find("tr:eq("+(irow+1)+") td:eq("+icol+")"),
+                        param.objTemplate[icol].format
+                    );
+                    break;
+                case 2:
+                    bind2(
+                        param.info_proxy,
+                        param.info,
+                        param.objTemplate[icol].path.replace("#",irow),
+                        $(param.table).find("tr:eq("+(irow+1)+") td:eq("+icol+")"),
+                        param.objTemplate[icol].format,
+                        param.objTemplate[icol].parse
+                    );
+                      break;
+            }
+        }
+    },
+    /**
      * @function appendAnnotationTableRow
      */
-	appendAnnotationTableRow2: function appendAnnotationTableRow(irow,iarr,param) {
-		var l=BrainBox.traceLog(appendAnnotationTableRow);if(l)console.log(l);
-		
-		$(param.table).append(param.trTemplate);
+    appendAnnotationTableRow2: function appendAnnotationTableRow(irow,iarr,param) {
+        var l=BrainBox.traceLog(appendAnnotationTableRow);if(l)console.log(l);
+        
+        $(param.table).append(param.trTemplate);
 
-		for(var icol=0;icol<param.objTemplate.length;icol++) {
-			switch(param.objTemplate[icol].typeOfBinding) {
-				case 1:
-					bind1(
-						param.info_proxy,
-						param.info,
-						param.objTemplate[icol].path.replace("#",iarr),
-						$(param.table).find("tr:eq("+(irow+1)+") td:eq("+icol+")"),
-						param.objTemplate[icol].format
-					);
-					break;
-				case 2:
-					bind2(
-						param.info_proxy,
-						param.info,
-						param.objTemplate[icol].path.replace("#",iarr),
-						$(param.table).find("tr:eq("+(irow+1)+") td:eq("+icol+")"),
-						param.objTemplate[icol].format,
-						param.objTemplate[icol].parse
-					);
-					  break;
-			}
-		}
-	},
-	/**
+        for(var icol=0;icol<param.objTemplate.length;icol++) {
+            switch(param.objTemplate[icol].typeOfBinding) {
+                case 1:
+                    bind1(
+                        param.info_proxy,
+                        param.info,
+                        param.objTemplate[icol].path.replace("#",iarr),
+                        $(param.table).find("tr:eq("+(irow+1)+") td:eq("+icol+")"),
+                        param.objTemplate[icol].format
+                    );
+                    break;
+                case 2:
+                    bind2(
+                        param.info_proxy,
+                        param.info,
+                        param.objTemplate[icol].path.replace("#",iarr),
+                        $(param.table).find("tr:eq("+(irow+1)+") td:eq("+icol+")"),
+                        param.objTemplate[icol].format,
+                        param.objTemplate[icol].parse
+                    );
+                      break;
+            }
+        }
+    },
+    /**
      * @function loadLabelsets
      */
-	loadLabelsets: function loadLabelsets() {
-		var l=BrainBox.traceLog(loadLabelsets);if(l)console.log(l);
-		
-		return $.getJSON("/api/getLabelsets",function(data) {
-			BrainBox.labelSets=data;
-			/*
-				If we wanted to filter out the location, we would use:
-				BrainBox.labelSets=$.map(data,function(o){return new URL(o.source).pathname});
-			*/
-		});
-	},
-	widget: function widget(param) {
+    loadLabelsets: function loadLabelsets() {
+        var l=BrainBox.traceLog(loadLabelsets);if(l)console.log(l);
+        
+        return $.getJSON("/api/getLabelsets",function(data) {
+            BrainBox.labelSets=data;
+            /*
+                If we wanted to filter out the location, we would use:
+                BrainBox.labelSets=$.map(data,function(o){return new URL(o.source).pathname});
+            */
+        });
+    },
+    widget: function widget(param) {
         BrainBox.initBrainBox()
         .then(function() {return BrainBox.loadLabelsets()})
         .then(function() {return $.get("http://brainbox.dev/mri/json?url="+param.url)})

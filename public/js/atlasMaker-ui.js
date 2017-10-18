@@ -30,7 +30,7 @@ var AtlasMakerUI = {
             }
         };
         $(document).on("mousemove",function from_slider(ev){movex(elem,ev.clientX);});
-        $(document).on("touchmove",function from_slider(ev){movex(elem,ev.originalEvent.changedTouches[0].pageX);});		
+        $(document).on("touchmove",function from_slider(ev){movex(elem,ev.originalEvent.changedTouches[0].pageX);});        
         $(document).on("mouseup touchend",function from_slider(){$(elem).data({drag:false})});
         $(elem).on('mousedown touchstart',function from_slider(){$(elem).data({drag:true})});
     },
