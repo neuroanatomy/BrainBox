@@ -45,5 +45,11 @@
     "connect-livereload": "^0.5.3",
     "livereload": "^0.4.0",
     "xo": "^0.18.2"
+  },
+  "xo": {
+    "space": 4,
+    "rules": {
+      "no-buffer-constructor": "off"
+    }
   }
 }

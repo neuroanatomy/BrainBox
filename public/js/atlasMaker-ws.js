@@ -11,311 +11,309 @@ var AtlasMakerWS = {
      *        object.
      */
 	createSocket: function createSocket(host) {
-		var me=AtlasMakerWidget;
-		var l=me.traceLog(createSocket,0,"#aca");if(l)console.log.apply(undefined,l);
-	
+		var me = AtlasMakerWidget;
+		var l = me.traceLog(createSocket, 0, "#aca"); if (l) console.log.apply(undefined, l);
+
 		var ws;
 
 		if (window.WebSocket) {
-			ws=new WebSocket(host);
+			ws = new WebSocket(host);
 		} else if (window.MozWebSocket) {
-			ws=new MozWebSocket(host);
+			ws = new MozWebSocket(host);
 		} else {
-		    console.log("ERROR: browser does not support WebSockets");
+			console.log("ERROR: browser does not support WebSockets");
 		}
 
 		return ws;
 	},
-	 /**
-     * @function initSocketConnection
-     */
+	/**
+	* @function initSocketConnection
+	*/
 	initSocketConnection: function initSocketConnection() {
-		var me=AtlasMakerWidget;
-		var l=me.traceLog(initSocketConnection,0,"#aca");if(l)console.log.apply(undefined,l);
-			
-		var def=$.Deferred();
-	
-		// WS connection
-		var host = "ws://" + window.location.hostname + ":8080/";
-		
-		if(me.debug)
-			console.log("[initSocketConnection] host:",host);
-		if (me.progress)
-			me.progress.html("Connecting...");
-		
-		try {
-			me.socket = me.createSocket(host);
-			
-			me.socket.onopen = function(msg) {
-				if(me.debug)
-					console.log("[initSocketConnection] connection open",msg);
-				me.progress.html("<img src='/img/download.svg' style='vertical-align:middle'/>MRI");
-				$("#chat").text("Chat (1 connected)");
-				me.flagConnected=1;
-				me.reconnectionTimeout = 5;
-				def.resolve();
-			};
-			
-			me.receiveFunctions["saveMetadata"]=me.receiveMetadata;
-			me.receiveFunctions["userData"]=me.receiveUserDataMessage;
-			me.receiveFunctions["volInfo"]=function(data){console.log("volInfo",data)};
-			me.receiveFunctions["chat"]=me.receiveChatMessage;
-			me.receiveFunctions["show"]=me.receiveShowMessage;
-			me.receiveFunctions["paint"]=me.receivePaintMessage;
-			me.receiveFunctions["paintvol"]=me.receivePaintVolumeMessage;
-			me.receiveFunctions["disconnect"]=me.receiveDisconnectMessage;
-			me.receiveFunctions["serverMessage"]=me.receiveServerMessage;
-			
-			me.receiveFunctions["requestSlice"]=function(data){console.log("requestSlice",data)};
-			me.receiveFunctions["requestSlice2"]=function(data){console.log("requestSlice2",data)};
-			
-			me.socket.onmessage = me.receiveSocketMessage;
-			
-			me.socket.onclose = function(msg) {
-				me.flagConnected=0;
-                
-                // Try to reconnect
-                // wait a random initial time, to prevent an avalanche
-                // of reconnections in case of server crash
-                var rand = 1000+5000*Math.random();
-                console.log("Initial random time:",rand);
-                setTimeout(function() {
-                    var timeout = me.reconnectionTimeout;
-                    $("#chat").text("Disconnected. Try to reconnect in "+(timeout--)+" s...");
-                    if(me.timer) {
-                        clearInterval(me.timer);
-                    }
-                    me.timer = setInterval(function() {
-                        if(timeout < 0) {
-                            $("#chat").text("Reconnecting...");
-                            me.socket = null;
-                            clearInterval(me.timer);
-                            setTimeout(function() {
-                                me.reconnectionTimeout *= 2;
-                                me.initSocketConnection()
-                                .then(function() {
-                                    me.sendUserDataMessage("allUserData");
-                                    me.sendUserDataMessage("sendAtlas");
-                                    clearInterval(me.timer);
-                                })
-                                .catch(function() {
-                                    timeout=me.reconnectionTimeout;
-                                    $("#chat").text("Disconnected. Try to reconnect in "+(timeout--)+" s...");
-                                });
-                            }, 1000);
-                        } else {
-                            $("#chat").text("Disconnected. Try to reconnect in "+(timeout--)+" s...");
-                        }
-                    }, 1000);
-                }, rand);
-			};
-			
-            window.onbeforeunload = function() {
-                me.socket.onclose = function () {}; // disable onclose handler first
-                me.socket.close()
-            };
-		}
-		catch (ex) {
-			$("#chat").text("Chat (not connected - connection error)");
-		}
-		
-		return def.promise();
+		var me = AtlasMakerWidget;
+		var l = me.traceLog(initSocketConnection, 0, "#aca"); if (l) console.log.apply(undefined, l);
+
+		return new Promise(function (resolve, reject) {
+			// WS connection
+			var host = "ws://" + window.location.hostname + ":8080/";
+
+			if (me.debug)
+				console.log("[initSocketConnection] host:", host);
+			if (me.progress)
+				me.progress.html("Connecting...");
+
+			try {
+				me.socket = me.createSocket(host);
+
+				me.socket.onopen = function (msg) {
+					if (me.debug)
+						console.log("[initSocketConnection] connection open", msg);
+					me.progress.html("<img src='/img/download.svg' style='vertical-align:middle'/>MRI");
+					$("#chat").text("Chat (1 connected)");
+					me.flagConnected = 1;
+					me.reconnectionTimeout = 5;
+					resolve();
+				};
+
+				me.receiveFunctions["saveMetadata"] = me.receiveMetadata;
+				me.receiveFunctions["userData"] = me.receiveUserDataMessage;
+				me.receiveFunctions["volInfo"] = function (data) { console.log("volInfo", data) };
+				me.receiveFunctions["chat"] = me.receiveChatMessage;
+				me.receiveFunctions["show"] = me.receiveShowMessage;
+				me.receiveFunctions["paint"] = me.receivePaintMessage;
+				me.receiveFunctions["paintvol"] = me.receivePaintVolumeMessage;
+				me.receiveFunctions["disconnect"] = me.receiveDisconnectMessage;
+				me.receiveFunctions["serverMessage"] = me.receiveServerMessage;
+
+				me.receiveFunctions["requestSlice"] = function (data) { console.log("requestSlice", data) };
+				me.receiveFunctions["requestSlice2"] = function (data) { console.log("requestSlice2", data) };
+
+				me.socket.onmessage = me.receiveSocketMessage;
+
+				me.socket.onclose = function (msg) {
+					me.flagConnected = 0;
+
+					// Try to reconnect
+					// wait a random initial time, to prevent an avalanche
+					// of reconnections in case of server crash
+					var rand = 1000 + 5000 * Math.random();
+					console.log("Initial random time:", rand);
+					setTimeout(function () {
+						var timeout = me.reconnectionTimeout;
+						$("#chat").text("Disconnected. Try to reconnect in " + (timeout--) + " s...");
+						if (me.timer) {
+							clearInterval(me.timer);
+						}
+						me.timer = setInterval(function () {
+							if (timeout < 0) {
+								$("#chat").text("Reconnecting...");
+								me.socket = null;
+								clearInterval(me.timer);
+								setTimeout(function () {
+									me.reconnectionTimeout *= 2;
+									me.initSocketConnection()
+										.then(function () {
+											me.sendUserDataMessage("allUserData");
+											me.sendUserDataMessage("sendAtlas");
+											clearInterval(me.timer);
+										})
+										.catch(function () {
+											timeout = me.reconnectionTimeout;
+											$("#chat").text("Disconnected. Try to reconnect in " + (timeout--) + " s...");
+										});
+								}, 1000);
+							} else {
+								$("#chat").text("Disconnected. Try to reconnect in " + (timeout--) + " s...");
+							}
+						}, 1000);
+					}, rand);
+				};
+
+				window.onbeforeunload = function () {
+					me.socket.onclose = function () { }; // disable onclose handler first
+					me.socket.close()
+				};
+			}
+			catch (ex) {
+				$("#chat").text("Chat (not connected - connection error)");
+			}
+		})
 	},
 	/**
      * @function receiveSocketMessage
      */
 	receiveSocketMessage: function receiveSocketMessage(msg) {
-		var me=AtlasMakerWidget;
-		var l=me.traceLog(receiveSocketMessage,1,"#aca");if(l)console.log.apply(undefined,l);
+		var me = AtlasMakerWidget;
+		var l = me.traceLog(receiveSocketMessage, 1, "#aca"); if (l) console.log.apply(undefined, l);
 
 		// Message: atlas data initialisation
-		if(msg.data instanceof Blob) {
-		    me.receiveBinaryMessage(msg.data);
+		if (msg.data instanceof Blob) {
+			me.receiveBinaryMessage(msg.data);
 			return;
 		}
-	
+
 		// Message: interaction message
-		var	data=JSON.parse(msg.data);
-	    me.receiveFunctions[data.type](data);
+		var data = JSON.parse(msg.data);
+		me.receiveFunctions[data.type](data);
 	},
 	/**
      * @function sendUserDataMessage
      */
 	sendUserDataMessage: function sendUserDataMessage(description) {
-		var me=AtlasMakerWidget;
-		var l=me.traceLog(sendUserDataMessage,1,"#aca");if(l)console.log.apply(undefined,l);
+		var me = AtlasMakerWidget;
+		var l = me.traceLog(sendUserDataMessage, 1, "#aca"); if (l) console.log.apply(undefined, l);
 
-		if(me.flagConnected==0)
+		if (me.flagConnected == 0)
 			return;
 
-		if(me.debug>1) console.log("message: "+description);
-		
-		if(description === "allUserData")
-    		var msg={"type":"userData","user":me.User,"description":description};
-    	else
-    		var msg={"type":"userData","description":description};
+		if (me.debug > 1) console.log("message: " + description);
+
+		if (description === "allUserData")
+			var msg = { "type": "userData", "user": me.User, "description": description };
+		else
+			var msg = { "type": "userData", "description": description };
 		try {
 			me.socket.send(JSON.stringify(msg));
 		} catch (ex) {
-			console.log("ERROR: Unable to sendUserDataMessage",ex);
+			console.log("ERROR: Unable to sendUserDataMessage", ex);
 		}
 	},
 	/**
      * @function receiveBinaryMessage
      */
 	receiveBinaryMessage: function receiveBinaryMessage(msgData) {
-		var me=AtlasMakerWidget;
-		var l=me.traceLog(receiveBinaryMessage,1,"#aca");if(l)console.log.apply(undefined,l);
-		
-        var fileReader = new FileReader();
-        fileReader.onload = function from_receiveSocketMessage() {
-            var data=new Uint8Array(this.result);
-            var sz=data.length;
-            var ext=String.fromCharCode(data[sz-8],data[sz-7],data[sz-6]);
+		var me = AtlasMakerWidget;
+		var l = me.traceLog(receiveBinaryMessage, 1, "#aca"); if (l) console.log.apply(undefined, l);
 
-            if(me.debug>1) console.log("type: "+ext);
-            
-            switch(ext) {
-                case 'nii': {
-                    var	inflate=new pako.Inflate();
-                    inflate.push(data,true);
-                    var atlas=new Object();
-                    atlas.data=inflate.result;
-                    atlas.name=me.atlasFilename;
-                    atlas.dim=me.brain_dim;
-            
-                    me.atlas=atlas;
+		var fileReader = new FileReader();
+		fileReader.onload = function from_receiveSocketMessage() {
+			var data = new Uint8Array(this.result);
+			var sz = data.length;
+			var ext = String.fromCharCode(data[sz - 8], data[sz - 7], data[sz - 6]);
 
-                    me.configureBrainImage();
-                    me.configureAtlasImage();
-                    me.resizeWindow();
+			if (me.debug > 1) console.log("type: " + ext);
 
-                    me.brain_img.img=null;
-                    me.drawImages();
-                    
-                    // compute total segmented volume
-                    var vol=me.computeSegmentedVolume();
-                    me.info.volume=parseInt(vol)+" mm3";
+			switch (ext) {
+				case 'nii': {
+					var inflate = new pako.Inflate();
+					inflate.push(data, true);
+					var atlas = new Object();
+					atlas.data = inflate.result;
+					atlas.name = me.atlasFilename;
+					atlas.dim = me.brain_dim;
 
-                    // setup download link
-                    var	link=me.container.find("span#download_atlas");
-                    link.html("<a class='download' href='"+me.User.dirname+me.User.atlasFilename+"'><img src='/img/download.svg' style='vertical-align:middle'/></a>"+atlas.name);
+					me.atlas = atlas;
 
-                    break;
-                }
-                case 'jpg': {
-                    var urlCreator = window.URL || window.webkitURL;
-                    var imageUrl = urlCreator.createObjectURL(msgData);
-                    var img = new Image();
-                    
-                    me.isMRILoaded=true; // receiving a jpg is proof of a loaded MRI
-                    
-                    img.onload=function from_initSocketConnection(){
-                        var flagFirstImage=(me.brain_img.img==null);
-                        me.brain_img.img=img;
-                        me.brain_img.view=me.flagLoadingImg.view;
-                        me.brain_img.slice=me.flagLoadingImg.slice;
+					me.configureBrainImage();
+					me.configureAtlasImage();
+					me.resizeWindow();
 
-                        me.drawImages();
-                                                            
-                        me.flagLoadingImg.loading=false;
+					me.brain_img.img = null;
+					me.drawImages();
 
-                        if(flagFirstImage || me.flagLoadingImg.view!=me.User.view ||me.flagLoadingImg.slice!=me.User.slice) {
-                            me.sendRequestSliceMessage();
-                        }
-                        
-                        // remove loading indicator
-                        $("#loadingIndicator").hide();
-                    }
-                    img.src=imageUrl;
+					// compute total segmented volume
+					var vol = me.computeSegmentedVolume();
+					me.info.volume = parseInt(vol) + " mm3";
 
-                    break;
-                }
-            }
-        };
-        fileReader.readAsArrayBuffer(msgData);
+					// setup download link
+					var link = me.container.find("span#download_atlas");
+					link.html("<a class='download' href='" + me.User.dirname + me.User.atlasFilename + "'><img src='/img/download.svg' style='vertical-align:middle'/></a>" + atlas.name);
+
+					break;
+				}
+				case 'jpg': {
+					var urlCreator = window.URL || window.webkitURL;
+					var imageUrl = urlCreator.createObjectURL(msgData);
+					var img = new Image();
+
+					me.isMRILoaded = true; // receiving a jpg is proof of a loaded MRI
+
+					img.onload = function from_initSocketConnection() {
+						var flagFirstImage = (me.brain_img.img == null);
+						me.brain_img.img = img;
+						me.brain_img.view = me.flagLoadingImg.view;
+						me.brain_img.slice = me.flagLoadingImg.slice;
+
+						me.drawImages();
+
+						me.flagLoadingImg.loading = false;
+
+						if (flagFirstImage || me.flagLoadingImg.view != me.User.view || me.flagLoadingImg.slice != me.User.slice) {
+							me.sendRequestSliceMessage();
+						}
+
+						// remove loading indicator
+						$("#loadingIndicator").hide();
+					}
+					img.src = imageUrl;
+
+					break;
+				}
+			}
+		};
+		fileReader.readAsArrayBuffer(msgData);
 	},
 	/**
      * @function receiveUserDataMessage
      */
 	receiveUserDataMessage: function receiveUserDataMessage(data) {
-		var me=AtlasMakerWidget;
-		var l=me.traceLog(receiveUserDataMessage,0,"#aca");if(l)console.log.apply(undefined,l);
+		var me = AtlasMakerWidget;
+		var l = me.traceLog(receiveUserDataMessage, 0, "#aca"); if (l) console.log.apply(undefined, l);
 
-		if(me.debug>1) console.log("description: "+data.description,data);
-	
-		var u=data.uid;
-	
+		if (me.debug > 1) console.log("description: " + data.description, data);
+
+		var u = data.uid;
+
 		// First time the user is observed
-		if(me.Collab[u]===undefined) {
+		if (me.Collab[u] === undefined) {
 			try {
 				//var	msg="<b>"+data.user.username+"</b> entered atlas "+data.user.specimenName+"/"+data.user.atlasFilename+"<br />"
-				var	msg;
-				if(data.user === undefined || data.user.username === "Anonymous") {
-				    msg="<b>"+data.uid+"</b> entered<br />";
+				var msg;
+				if (data.user === undefined || data.user.username === "Anonymous") {
+					msg = "<b>" + data.uid + "</b> entered<br />";
 				} else {
-				    msg="<b>"+data.user.username+"</b> entered<br />";
+					msg = "<b>" + data.user.username + "</b> entered<br />";
 				}
 				$("#log").append(msg);
 				$("#log").scrollTop($("#log")[0].scrollHeight);
 			} catch (e) {
-			    console.log("data:",data);
+				console.log("data:", data);
 				console.log(e);
 			}
 		}
-		
-		if(data.description === "allUserData")
-    		me.Collab[u]=data.user;
-    	else {
-    	    try {
-                var changes = JSON.parse(data.description);
-                var i;
-                for(i in changes)
-                    me.Collab[u][i] = changes[i];
-            } catch (e) {
-                console.log(e);
-            }
-    	}
 
-		var	v,nusers=1;
-		for(v in me.Collab)
-		    nusers++;
-		$("#chat").text("Chat ("+nusers+" connected)");
+		if (data.description === "allUserData")
+			me.Collab[u] = data.user;
+		else {
+			try {
+				var changes = JSON.parse(data.description);
+				var i;
+				for (i in changes)
+					me.Collab[u][i] = changes[i];
+			} catch (e) {
+				console.log(e);
+			}
+		}
+
+		var v, nusers = 1;
+		for (v in me.Collab)
+			nusers++;
+		$("#chat").text("Chat (" + nusers + " connected)");
 	},
 	/**
      * @function sendChatMessage
      */
 	sendChatMessage: function sendChatMessage() {
-		var me=AtlasMakerWidget;
-		var l=me.traceLog(sendChatMessage,0,"#aca");if(l)console.log.apply(undefined,l);
-	
-		if(me.flagConnected==0)
+		var me = AtlasMakerWidget;
+		var l = me.traceLog(sendChatMessage, 0, "#aca"); if (l) console.log.apply(undefined, l);
+
+		if (me.flagConnected == 0)
 			return;
 		var msg = DOMPurify.sanitize($('input#msg')[0].value);
 		try {
-			me.socket.send(JSON.stringify({"type":"chat","msg":msg,"username":me.User.username}));
-			var	msg="<b>me: </b>"+msg+"<br />";
+			me.socket.send(JSON.stringify({ "type": "chat", "msg": msg, "username": me.User.username }));
+			var msg = "<b>me: </b>" + msg + "<br />";
 			$("#log").append(msg);
 			$("#log").scrollTop($("#log")[0].scrollHeight);
 			$('input#msg').val("");
 		} catch (ex) {
-			console.log("ERROR: Unable to sendChatMessage",ex);
+			console.log("ERROR: Unable to sendChatMessage", ex);
 		}
 	},
 	/**
      * @function receiveChatMessage
      */
 	receiveChatMessage: function receiveChatMessage(data) {
-		var me=AtlasMakerWidget;
-		var l=me.traceLog(receiveChatMessage,0,"#aca");if(l)console.log.apply(undefined,l);
+		var me = AtlasMakerWidget;
+		var l = me.traceLog(receiveChatMessage, 0, "#aca"); if (l) console.log.apply(undefined, l);
 		console.log(data);
-	
-	    var theSource=me.Collab[data.uid].source;
-		var	theView=me.Collab[data.uid].view;
-		var	theSlice=me.Collab[data.uid].slice;
-		var link = "/mri?url="+theSource+"&view="+theView+"&slice="+theSlice;
-		var theUsername=data.username;
-		var	msg="<a href='"+link+"'><b>"+theUsername+":</b></a> "+data.msg+"<br />"
+
+		var theSource = me.Collab[data.uid].source;
+		var theView = me.Collab[data.uid].view;
+		var theSlice = me.Collab[data.uid].slice;
+		var link = "/mri?url=" + theSource + "&view=" + theView + "&slice=" + theSlice;
+		var theUsername = data.username;
+		var msg = "<a href='" +link+"'><b>"+theUsername+":</b></a> "+data.msg+"<br />"
 		$("#log").append(msg);
 		$("#log").scrollTop($("#log")[0].scrollHeight);
 	},
@@ -327,7 +325,7 @@ var AtlasMakerWS = {
 	sendPaintMessage: function sendPaintMessage(msg) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(sendPaintMessage,1,"#aca");if(l)console.log.apply(undefined,l);
-	
+
 		if(me.flagConnected==0)
 			return;
 		try {
@@ -343,7 +341,7 @@ var AtlasMakerWS = {
 	receivePaintMessage: function receivePaintMessage(data) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(receivePaintMessage,3,"#aca");if(l)console.log.apply(undefined,l);
-	
+
 		var	msg=data.data;
 		var u=data.uid;	// user
 		var c=msg.c;	// command
@@ -361,7 +359,7 @@ var AtlasMakerWS = {
 	sendShowMessage: function sendShowMessage(msg) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(sendShowMessage,1,"#aca");if(l)console.log.apply(undefined,l);
-	
+
 		if(me.flagConnected==0)
 			return;
 		try {
@@ -377,7 +375,7 @@ var AtlasMakerWS = {
 	receiveShowMessage: function receiveShowMessage(data) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(receiveShowMessage,3,"#aca");if(l)console.log.apply(undefined,l);
-	
+
 		var	msg=data.data;
 		var u=data.uid;	// user
 		var c=msg.c;	// command
@@ -393,12 +391,12 @@ var AtlasMakerWS = {
 	receivePaintVolumeMessage: function receivePaintVolumeMessage(data) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(receivePaintVolumeMessage,0,"#aca");if(l)console.log.apply(undefined,l);
-	
+
 		var	i,ind,val,voxels;
-	
+
 		voxels=data.data;
 		me.paintvol(voxels.data);
-		
+
 		/*
 		    TEST
 		*/
@@ -410,7 +408,7 @@ var AtlasMakerWS = {
 	sendUndoMessage: function sendUndoMessage() {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(sendUndoMessage,0,"#aca");if(l)console.log.apply(undefined,l);
-	
+
 		if(me.flagConnected==0)
 			return;
 		try {
@@ -425,7 +423,7 @@ var AtlasMakerWS = {
 	sendSaveMessage: function sendSaveMessage() {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(sendSaveMessage,0,"#aca");if(l)console.log.apply(undefined,l);
-	
+
 		if(me.flagConnected==0)
 			return;
 		try {
@@ -466,13 +464,13 @@ var AtlasMakerWS = {
 			return;
 		try {
 			me.socket.send(JSON.stringify({
-				
+
 				type:"requestSlice",
 				/*
 				    TEST
 				*/
 				//type:"requestSlice2",
-				
+
 				view:me.User.view,
 				slice:me.User.slice
 			}));
@@ -511,43 +509,43 @@ var AtlasMakerWS = {
 	sendSaveMetadataMessage: function sendSaveMetadataMessage(info, method, patch) {
 		var me=AtlasMakerWidget;
 		var l=me.traceLog(sendSaveMetadataMessage,1,"#aca");if(l)console.log.apply(undefined,l);
-			
-		var def = $.Deferred();
-		if(me.flagConnected==0) {
-		    console.log("WARNING: Not connected: will not save metadata");
-			return def.reject().promise();
-		}
-		
-		try {
-		    var rnd = Math.random().toString(36).slice(20);
-		    var met = method || "append";
-		    if(method == "patch") {
-                me.socket.send(JSON.stringify({
-                    type:"saveMetadata",
-                    metadata: info,
-                    method: met,
-                    patch: patch,
-                    rnd: rnd
-                }));		    
-		    } else {
-                me.socket.send(JSON.stringify({
-                    type:"saveMetadata",
-                    metadata: info,
-                    method: met,
-                    rnd: rnd
-                }));
-            }
-			if(me.debug>1) {
-			    console.log(rnd);
-                console.log(info);
-            }
-			def.resolve();
-			
-		} catch (ex) {
-			console.log("ERROR: Unable to sendSaveMetadataMessage",ex);
-			def.reject();
-		}
-        return def.promise();
+
+		return new Promise(function(resolve, reject) {
+			if(me.flagConnected==0) {
+				console.log("WARNING: Not connected: will not save metadata");
+				return reject();
+			}
+
+			try {
+			    var rnd = Math.random().toString(36).slice(20);
+			    var met = method || "append";
+			    if(method == "patch") {
+  	              me.socket.send(JSON.stringify({
+  	                  type:"saveMetadata",
+  	                  metadata: info,
+  	                  method: met,
+  	                  patch: patch,
+  	                  rnd: rnd
+  	              }));
+			    } else {
+  	              me.socket.send(JSON.stringify({
+  	                  type:"saveMetadata",
+  	                  metadata: info,
+  	                  method: met,
+  	                  rnd: rnd
+  	              }));
+  	          }
+				if(me.debug>1) {
+				    console.log(rnd);
+  	              console.log(info);
+  	          }
+				resolve();
+
+			} catch (ex) {
+				console.log("ERROR: Unable to sendSaveMetadataMessage",ex);
+				reject();
+			}
+		});
 	},
 	/**
      * @function receiveDisconnectMessage
@@ -604,23 +602,23 @@ var AtlasMakerWS = {
      * @function logToDatabase
      */
 	logToDatabase: function logToDatabase(key,value) {
-		var def=$.Deferred();
-		var me=AtlasMakerWidget;
-		var l=me.traceLog(logToDatabase,1,"#bbd");if(l)console.log.apply(undefined,l);
-		$.ajax({
-			url:"/api/log",
-			type:"POST",
-			data: {
-				username:me.User.username,
-				key:key,
-				value:value
-		}})
-		.done(function(data) {
-			def.resolve(data);
-		})
-		.fail(function() {
-			def.reject("Error");
+		return new Promise(function(resolve, reject) {
+			var me=AtlasMakerWidget;
+			var l=me.traceLog(logToDatabase,1,"#bbd");if(l)console.log.apply(undefined,l);
+			$.ajax({
+				url:"/api/log",
+				type:"POST",
+				data: {
+					username:me.User.username,
+					key:key,
+					value:value
+			}})
+			.done(function(data) {
+				resolve(data);
+			})
+			.fail(function() {
+				reject("Error");
+			});
 		});
-		return def.promise();
 	}
 }

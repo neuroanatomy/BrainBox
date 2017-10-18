@@ -1,6 +1,5 @@
 const express = require('express');
 const multer = require('multer');
-
 const router = express.Router();
 
 const controller = require('./mri.controller');
@@ -11,7 +10,6 @@ router.get('/json', controller.validator, tokenAuthentication, controller.api_mr
 router.post('/json', controller.validator_post, tokenAuthentication, controller.api_mri_post);
 
 router.get('/upload', uploadController.token);
-
 router.post('/upload',
 	multer({dest: './tmp/'}).array('atlas'),
 	uploadController.validator,
