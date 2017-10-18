@@ -1,15 +1,15 @@
-var fs = require('fs');
-var zlib = require('zlib');
-var fileType=require("file-type");
+const fs = require('fs');
+const zlib = require('zlib');
+const fileType = require('file-type');
 
-var MRILoader = function() {
+const MRILoader = function () {
 
 /*
-var loadNifti = function(nii) {
+Var loadNifti = function(nii) {
 	var	vox_offset=352;
 	var	sizeof_hdr=nii.readUInt32LE(0);
 	var	dimensions=nii.readUInt16LE(40);
-	
+
 	var mri={};
 	mri.hdr=nii.slice(0,vox_offset);
 	mri.dim=[];
@@ -49,20 +49,20 @@ var loadNifti = function(nii) {
 		default:
 			console.log("ERROR: Unknown dataType: "+mri.datatype);
 	}
-	
+
 	return mri;
 }
 
 var loadBrainNifti = function(nii,callback) {
 
 	var brain=loadNifti(nii);
-	
+
 	var i,sum=0,min,max;
 	min=brain.data[0];
 	max=min;
 	for(i=0;i<brain.dim[0]*brain.dim[1]*brain.dim[2];i++) {
 		sum+=brain.data[i];
-		
+
 		if(brain.data[i]<min) min=brain.data[i];
 		if(brain.data[i]>max) max=brain.data[i];
 	}
@@ -77,7 +77,7 @@ var loadBrainMGZ = function(data,callback) {
 	var hdr_sz=284;
 	var brain={};
 	var datatype;
-	
+
 	brain.dim=[];
 	brain.dim[0]=data.readInt32BE(4);
 	brain.dim[1]=data.readInt32BE(8);
@@ -87,7 +87,7 @@ var loadBrainMGZ = function(data,callback) {
 	brain.pixdim[0]=data.readFloatBE(30);
 	brain.pixdim[1]=data.readFloatBE(34);
 	brain.pixdim[2]=data.readFloatBE(38);
-	
+
 	var tmp
 	switch(datatype) {
 		case 0: // MGHUCHAR
@@ -119,7 +119,7 @@ var loadBrainMGZ = function(data,callback) {
 	max=min;
 	for(i=0;i<brain.dim[0]*brain.dim[1]*brain.dim[2];i++) {
 		sum+=brain.data[i];
-		
+
 		if(brain.data[i]<min) min=brain.data[i];
 		if(brain.data[i]>max) max=brain.data[i];
 	}
@@ -139,7 +139,7 @@ this.loadBrain = function(path,callback) {
 			datagz=fs.readFileSync(path);
 			var ft=fileType(datagz);
 			var ext=path.split('.').pop();
-			
+
 			switch(ft.ext) {
 				case 'gz': {
 					switch(ext) {
