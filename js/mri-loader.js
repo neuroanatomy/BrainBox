@@ -1,6 +1,6 @@
-const fs = require('fs');
-const zlib = require('zlib');
-const fileType = require('file-type');
+// const fs = require('fs');
+// const zlib = require('zlib');
+// const fileType = require('file-type');
 
 const MRILoader = function () {
 
