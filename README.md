@@ -39,12 +39,10 @@ If you want to work on BrainBox's code, you'll need a local installation:
 
 1. install and start `mongo` database
 2. clone the repo and `cd` to the brainbox directory
-3. `mkdir public/data`
 4. [create a new OAuth application](https://github.com/settings/applications/new) for your local brainbox url (http://localhost:3000 by default)
 5. paste the keys into the github-keys.json.example file, and drop the .example
 6. drop the `.example` from `blacklist.json.example`
 7. drop the `.example` from `whitelist.json.example`
 8. `npm install`
 9. `npm start`
-10. To lint your files use `npm test`, you can use `xo --fix` to fix common mistakes, before committing,
-to do that install `xo` globally using `npm i -g xo`
+10. To lint your files use `npm test`, and you can use `node_modules/.bin/xo --fix <your_file.js>` to fix common mistakes before committing
