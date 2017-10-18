@@ -61,28 +61,32 @@ var BrainBox={
      *        If undefined, the script will be loaded.
      */
 	loadScript: function loadScript(path, testScriptPresent) {
-	    var def = new $.Deferred();
-        
-        if(testScriptPresent && testScriptPresent()) {
-            console.log("[loadScript] Script",path,"already present, not loading it again");
-            return def.resolve().promise();
-        }
-        var s = document.createElement("script");
-        s.src = path;
-        s.onload=function () {
-            console.log("Loaded",path);
-            def.resolve();
-        };
-        document.body.appendChild(s);
-    	return def.promise();
+		return new Promise(function(resolve,reject){
+			if(testScriptPresent && testScriptPresent()){
+			  console.log("[loadScript] Script",path,"already present, not loading it again");
+			  return resolve();
+			}
+			var s = document.createElement("script");
+                        s.src = path;
+			s.async = true;
+			let r = false;
+			s.onload = s.onreadystatechange = function() {
+			   console.log("Loaded",path);
+			   if (!r && (!this.readyState || this.readyState == 'complete')) {
+				r = true;
+				console.log("Loaded",path);   
+				resolve();
+                           }
+		       }
+		      document.body.appendChild(s);
+		});
 	},
 	/**
      * @function initBrainBox
      */
 	initBrainBox: function initBrainBox() {
+		return new Promise(function(resolve,reject){
 		var l=BrainBox.traceLog(initBrainBox);if(l)console.log(l);
-		
-		var def=$.Deferred();
 
 		// Add AtlasMaker and friends
 		$("#stereotaxic").html('<div id="atlasMaker"></div>');
@@ -95,14 +99,14 @@ var BrainBox={
         .then(function(){return BrainBox.loadScript('/lib/npm-bundle.js')})
         .then(function(){return BrainBox.loadScript('/js/twoWayBinding.js')})
         .then(function(){
-            $.when(
+            Promise.all([
                 BrainBox.loadScript('/js/atlasMaker-draw.js'),
                 BrainBox.loadScript('/js/atlasMaker-interaction.js'),
                 BrainBox.loadScript('/js/atlasMaker-io.js'),
                 BrainBox.loadScript('/js/atlasMaker-paint.js'),
                 BrainBox.loadScript('/js/atlasMaker-ui.js'),
                 BrainBox.loadScript('/js/atlasMaker-ws.js'),
-                BrainBox.loadScript('/js/atlasMaker.js')
+                BrainBox.loadScript('/js/atlasMaker.js')]
             ).then(function () {
                 $.extend(AtlasMakerWidget,AtlasMakerDraw);
                 $.extend(AtlasMakerWidget,AtlasMakerInteraction);
@@ -112,23 +116,23 @@ var BrainBox={
                 $.extend(AtlasMakerWidget,AtlasMakerWS);
                 AtlasMakerWidget.initAtlasMaker($("#atlasMaker"))
                 .then(function() {
-                    def.resolve();
+                    resolve();
                 });
+	      });    
             })
         });
 		
 		// store state on exit
 		$(window).on('unload',BrainBox.unload);
 		
-		return def.promise();
 	},
 	/**
      * @function configureBrainBox
      */
 	configureBrainBox: function configureBrainBox(param) {
+		return new Promise(function(resolve,reject){
 		var l=BrainBox.traceLog(configureBrainBox);if(l)console.log(l);
 		
-		var def=$.Deferred();
 		var date=new Date();
 		var index=param.annotationItemIndex||0;
 	
@@ -140,7 +144,7 @@ var BrainBox={
             date=new Date();
             $("#msgLog").append("<p>ERROR: "+param.info.message+".");
             console.log("<p>ERROR: "+param.info.message+".");
-            return def.promise().reject();
+            return reject();
         }
         BrainBox.info=param.info;
 
@@ -197,14 +201,14 @@ var BrainBox={
             else
                 AtlasMakerWidget.editMode = 0;
             
-            def.resolve();
+            resolve();
         })
         .catch(function(err) {
             console.log("ERROR:",err);
-            def.reject();
+            reject();
         });
 		
-		return def.promise();
+	  });		
 	},
 	/**
      * @function convertImgObjectURLToDataURL
@@ -212,18 +216,18 @@ var BrainBox={
      *       suitable to be stored as a string in localStorage
      */
 	convertImgObjectURLToDataURL: function convertImgObjectURLToDataURL(objURL) {
-	    var def = $.Deferred();
+	    return new Promise(function(resolve,reject){
 	    var x = new XMLHttpRequest(), f = new FileReader();
         x.open('GET',objURL,true);
         x.responseType = 'blob';
         x.onload = function (e) {
             f.onload = function (evt) {
-                def.resolve(evt.target.result);
+                resolve(evt.target.result);
             };
             f.readAsDataURL(x.response);
         };
         x.send();
-        return def;
+        });
     },
 	/**
      * @function addCurrentMRIToHistory
