@@ -156,7 +156,7 @@ const upload = function (req, res) {
             access: 'edit',
             created: date.toJSON(),
             modified: date.toJSON(),
-            filename,	// Automatically generated filename
+            filename,    // Automatically generated filename
             originalname: files[0].originalname,
             labels: atlasLabelSet,
             owner: username,
