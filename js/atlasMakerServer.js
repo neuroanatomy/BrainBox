@@ -168,7 +168,7 @@ const atlasMakerServer = function () {
     const bufferTag = function bufferTag(str, sz) {
         traceLog(bufferTag);
 
-        const buf = Buffer.from(sz).fill(32);
+        const buf = new Buffer(sz).fill(32);
         buf.write(str);
         return buf;
     };
@@ -1610,7 +1610,7 @@ const atlasMakerServer = function () {
         const pr = new Promise((resolve, reject) => {
             try {
                 child_process.execFile('gunzip', ['-c', path], {encoding: 'binary', maxBuffer: 200 * 1024 * 1024}, (err, stdout) => {
-                    const mgh = Buffer.from(stdout, 'binary');
+                    const mgh = new Buffer(stdout, 'binary');
                     var i, j, tmp, sum,
                         mri = {};
                     let sz, bpv;
@@ -1773,7 +1773,7 @@ const atlasMakerServer = function () {
 			    ftrSz = 0;
             }
 
-            mri = Buffer.from(atlas.dim[0] * atlas.dim[1] * atlas.dim[2] + hdrSz + ftrSz);
+            mri = new Buffer(atlas.dim[0] * atlas.dim[1] * atlas.dim[2] + hdrSz + ftrSz);
 
             console.log('        sum:', sum);
             console.log('header size:', hdrSz);
@@ -1889,7 +1889,7 @@ const atlasMakerServer = function () {
         mri.hdrSz = vox_offset;
 
     // Zero the data
-        mri.data = Buffer.from(sz);
+        mri.data = new Buffer(sz);
         for (i = 0; i < sz; i++) {
             mri.data[i] = 0;
         }
@@ -2435,7 +2435,7 @@ paintVoxel(x1 + j, y1 + k, z, User, vol, val, undoLayer);
             case 'axi':	brain_W = s2v.sdim[0]; brain_H = s2v.sdim[1]; brain_D = s2v.sdim[2]; break; // Axial
         }
 
-        const frameData = Buffer.from(brain_W * brain_H * 4);
+        const frameData = new Buffer(brain_W * brain_H * 4);
 
         j = 0;
         switch (view) {
@@ -2495,7 +2495,7 @@ paintVoxel(x1 + j, y1 + k, z, User, vol, val, undoLayer);
             case 'axi':	brain_W = s2v.sdim[0]; brain_H = s2v.sdim[1]; brain_D = s2v.sdim[2]; break; // Axial
         }
 
-        const frameData = Buffer.from(brain_W * brain_H * 4);
+        const frameData = new Buffer(brain_W * brain_H * 4);
 
         j = 0;
         switch (view) {
