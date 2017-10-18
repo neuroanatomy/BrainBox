@@ -4,7 +4,7 @@ Come to our [**dolphin brain**](http://brainbox.pasteur.fr/mri?url=http://brainc
 
 When you have done 1 slice, 
 * add your name or github handle to our BRAINMAPPERS.md file
-* add the slice number where you have been working (currently, 111 & 112 are done, you can start with 113++)
+* add the slice number where you have been working (currently, 111 & 112 are done, you could continue with 113++)
 * add "length:..." and 
 * "volume:..." from the upper left corner of the BrainBox viewer into the file (just for the fun!! :D)
 * and make a pull request!
