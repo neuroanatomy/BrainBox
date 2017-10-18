@@ -3,8 +3,8 @@ Come to our **dolphin brain** at http://brainbox.pasteur.fr/mri?url=http://brain
 <img width="769" alt="screen shot 2017-06-01 at 11 08 34" src="https://cloud.githubusercontent.com/assets/6297454/26672835/f7892d80-46ba-11e7-8be8-51adbee9288d.png">
 
 When you have done 2 slices, 
-* add your name or github handle to our ANNOTATIONS.md file
-* copy "length:..." and 
+* add your name or github handle to our BRAINMAPPERS.md file
+* add "length:..." and 
 * "volume:..." from the upper left corner of the BrainBox viewer into the file (just for the fun!! :D)
 * and make a pull request!
 
