@@ -128,7 +128,7 @@ var AtlasMakerIO = {
                 slice_start: 0,
             pixdim: [-1, me.User.pixdim[0], me.User.pixdim[1], me.User.pixdim[2], 0, 1, 1, 1],
             vox_offset: vox_offset,
-                scl_slope: 0, scl_inter: 0, slice_end: 0, slice_code: 0,
+                scl_slope: 1, scl_inter: 0, slice_end: 0, slice_code: 0,
                 xyzt_units: 10,
                 cal_max: 0, cal_min: 0, slice_duration: 0, toffset: 0,
                 glmax: 0, glmin: 0,
