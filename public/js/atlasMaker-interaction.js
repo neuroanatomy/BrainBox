@@ -681,6 +681,7 @@ var AtlasMakerInteraction = {
                 break;
             case 'eyedrop':
                 var value = me.eyedrop( x,y,me.User );
+                if(!value) break;
                 var index = me.ontology.valueToIndex[ value ];
                 var selRegionName = me.ontology.labels[ index ].name;
                 me.info.region = selRegionName;
