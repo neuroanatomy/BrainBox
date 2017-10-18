@@ -27,32 +27,32 @@ var date_format=function(e,d){$(e).text(new Date(d).toLocaleDateString())};
  * @param {parseFunction} Transformation between the DOM element's value and what will be stored in the object's property
  */
 function bind2(proxy,original,path,el,format,parse) {
-	var i,k=path.split("."),o=original;
-	for(i=0;i<k.length-1;i++)
+    var i,k=path.split("."),o=original;
+    for(i=0;i<k.length-1;i++)
         o=o[k[i]];
-	Object.defineProperty(proxy,path,{
-		get: function(){
-		    var v;
-			if(parse) {
+    Object.defineProperty(proxy,path,{
+        get: function(){
+            var v;
+            if(parse) {
                 v=parse(el,o[k[i]]);
-			} else {
-				v=$(el).text();
-			}
+            } else {
+                v=$(el).text();
+            }
             o[k[i]]=JSON.parse(DOMPurify.sanitize(JSON.stringify(v))||'""');
-			return o[k[i]];
-		},
-		set: function(v) {
-		    v=JSON.parse(DOMPurify.sanitize(JSON.stringify(v))||'""');
-			o[k[i]]=v;
-			if(format)
-				format(el,v);
-			else
-				$(el).text(v);
-		},
-		configurable: true,
-		enumerable: true
-	});
-	proxy[path]=o[k[i]];
+            return o[k[i]];
+        },
+        set: function(v) {
+            v=JSON.parse(DOMPurify.sanitize(JSON.stringify(v))||'""');
+            o[k[i]]=v;
+            if(format)
+                format(el,v);
+            else
+                $(el).text(v);
+        },
+        configurable: true,
+        enumerable: true
+    });
+    proxy[path]=o[k[i]];
 }
 
 /**
@@ -65,25 +65,25 @@ function bind2(proxy,original,path,el,format,parse) {
  * @param {formatFunction} Transformation between the object property's value and the result displayed in the DOM element
  */
  function bind1(proxy,original,path,el,format) {
-	var i,k=path.split("."),o=original;
-	for(i=0;i<k.length-1;i++)
-		o=o[k[i]];
-	Object.defineProperty(proxy,path,{
-		get: function(){
-			return DOMPurify.sanitize(o[k[i]]);
-		},
-		set: function(v) {
-		    v=DOMPurify.sanitize(v);
-			o[k[i]]=v;
-			if(format)
-				format(el,v);
-			else
-				$(el).text(v);
-		},
-		configurable: true,
-		enumerable: true
-	});
-	proxy[path]=o[k[i]];
+    var i,k=path.split("."),o=original;
+    for(i=0;i<k.length-1;i++)
+        o=o[k[i]];
+    Object.defineProperty(proxy,path,{
+        get: function(){
+            return DOMPurify.sanitize(o[k[i]]);
+        },
+        set: function(v) {
+            v=DOMPurify.sanitize(v);
+            o[k[i]]=v;
+            if(format)
+                format(el,v);
+            else
+                $(el).text(v);
+        },
+        configurable: true,
+        enumerable: true
+    });
+    proxy[path]=o[k[i]];
 }
 
 /**
@@ -93,7 +93,7 @@ function bind2(proxy,original,path,el,format,parse) {
  * @param {string} path Path to the property in the original object to bind
  */
  function unbind2(proxy,path) {
-	delete proxy[path];
+    delete proxy[path];
 }
 
 /**
