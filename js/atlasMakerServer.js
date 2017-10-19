@@ -1,6 +1,16 @@
 const fs = require('fs');
+const os = require('os');
+const zlib = require('zlib');
+const fileType = require('file-type');
+const jpeg = require('jpeg-js'); // Jpeg-js library: https://github.com/eugeneware/jpeg-js
+const keypress = require('keypress');
+const dateFormat = require('dateformat');
+const Struct = require('struct');
+const child_process = require('child_process');
+const merge = require('merge');
 const path = require('path');
-const request = require('request');
+const monk = require('monk');
+const db = monk('localhost:27017/brainbox');
 
 // Get whitelist and blacklist
 const useWhitelist = false;
@@ -50,25 +60,8 @@ server.on('upgrade', (req, socket, head) => {
     }
 });
 
-const os = require('os');
-const zlib = require('zlib');
-const fileType = require('file-type');
-const jpeg = require('jpeg-js'); // Jpeg-js library: https://github.com/eugeneware/jpeg-js
-const keypress = require('keypress');
-const dateFormat = require('dateformat');
-const async = require('async');
-const Struct = require('struct');
-const child_process = require('child_process');
-const merge = require('merge');
-
-const mongo = require('mongodb');
-const monk = require('monk');
-
-const db = monk('localhost:27017/brainbox');
-
 const createDOMPurify = require('dompurify');
 const jsdom = require('jsdom');
-
 const window = jsdom.jsdom('', {
     features: {
         FetchExternalResources: false, // Disables resource loading over HTTP / filesystem
