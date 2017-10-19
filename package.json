@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
-    "test": "xo"
+    "lint": "xo",
+    "test": "mocha"
   },
   "dependencies": {
     "async": "^2.0.1",
@@ -44,6 +45,7 @@
   "devDependencies": {
     "connect-livereload": "^0.5.3",
     "livereload": "^0.4.0",
+    "mocha": "^4.0.1",
     "xo": "^0.18.2"
   },
   "xo": {
