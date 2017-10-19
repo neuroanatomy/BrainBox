@@ -20,12 +20,12 @@ const DOMPurify = createDOMPurify(window);
 
 const validator = function (req, res, next) {
     req.checkParams('projectName', 'incorrect project name').isAlphanumeric();
-	// Req.checkQuery('url', 'please enter a valid URL')
-	// .isURL();
+    // Req.checkQuery('url', 'please enter a valid URL')
+    // .isURL();
 
-	// req.checkQuery('var', 'please enter one of the variables that are indicated')
-	// .optional()
-	// .matches("localpath|filename|source|url|dim|pixdim"); //todo: decent regexp
+    // req.checkQuery('var', 'please enter one of the variables that are indicated')
+    // .optional()
+    // .matches("localpath|filename|source|url|dim|pixdim"); //todo: decent regexp
     const errors = req.validationErrors();
     if (errors) {
         res.send(errors).status(403).end();
@@ -192,9 +192,9 @@ const isProjectObject = function (req, res, object) {
  * @param {Object} res Res object from express
  */
 const project = function (req, res) {
-    const login =	(req.isAuthenticated()) ?
-				('<a href=\'/user/' + req.user.username + '\'>' + req.user.username + '</a> (<a href=\'/logout\'>Log Out</a>)') :
-				('<a href=\'/auth/github\'>Log in with GitHub</a>');
+    const login =    (req.isAuthenticated()) ?
+                ('<a href=\'/user/' + req.user.username + '\'>' + req.user.username + '</a> (<a href=\'/logout\'>Log Out</a>)') :
+                ('<a href=\'/auth/github\'>Log in with GitHub</a>');
     let loggedUser = 'anonymous';
     if (req.isAuthenticated()) {
         loggedUser = req.user.username;
@@ -207,7 +207,7 @@ const project = function (req, res) {
     req.session.returnTo = req.originalUrl;
 
     req.db.get('project').findOne({shortname: req.params.projectName, backup: {$exists: 0}}, '-_id')
-	.then(json => {
+    .then(json => {
     if (json) {
             // Check that the logged user has access to view this project
         if (checkAccess.toProject(json, loggedUser, 'view') === false) {
@@ -223,7 +223,7 @@ const project = function (req, res) {
             login
         });
     } else {
- 			res.status(404).send('Project Not Found');
+             res.status(404).send('Project Not Found');
     }
 });
 };
@@ -245,7 +245,7 @@ const api_project = function (req, res) {
     }
 
     req.db.get('project').findOne({shortname: req.params.projectName, backup: {$exists: 0}}, '-_id')
-	.then(json => {
+    .then(json => {
     if (json) {
             // Check that the logged user has access to view this project
         if (checkAccess.toProject(json, loggedUser, 'view') === false) {
@@ -344,7 +344,7 @@ const settings = function (req, res) {
     req.session.returnTo = req.originalUrl;
 
     req.db.get('project').findOne({shortname: req.params.projectName, backup: {$exists: 0}}, '-_id')
-	.then(json => {
+    .then(json => {
     if (json) {
             // Check that the logged user has access to view this project
         if (checkAccess.toProject(json, loggedUser, 'view') === false) {
@@ -352,7 +352,7 @@ const settings = function (req, res) {
             return;
         }
     } else {
-		    json = {
+            json = {
         name: '',
         shortname: req.params.projectName,
         url: '',
