@@ -296,23 +296,27 @@ var AtlasMakerWidget = {
         var me=AtlasMakerWidget;
         var l=me.traceLog(requestMRIInfo,0,"#bbd");if(l)console.log.apply(undefined,l);
 
-        $.post("/mri/json",{url:source}, function(info) {
-            if(info.success == true) {
-                return Promise.resolve(info);
-            } else if(info.success == 'downloading') {
-                if(me.User.source != source)
-                    return;
-                $("#loadingIndicator p").text("Loading... "+parseInt(info.cur/info.len*100,10)+"%");
-                return new Promise(function(resolve, reject) {
-                    setTimeout(function(){
-                        resolve(me.requestMRIInfo(source))
-                    }, 2000);
-                })
-            } else {
-                console.log("ERROR: requestMRIInfo",info);
-                return Promise.reject();
-            }
+        var pr = new Promise(function(resolve, reject) {
+            $.post("/mri/json",{url:source}, function(info) {
+                if(info.success == true) {
+                    return resolve(info);
+                } else if(info.success == 'downloading') {
+                    if(me.User.source != source)
+                        return;
+                    $("#loadingIndicator p").text("Loading... "+parseInt(info.cur/info.len*100,10)+"%");
+                    return new Promise(function(resolve, reject) {
+                        setTimeout(function(){
+                            resolve(me.requestMRIInfo(source))
+                        }, 2000);
+                    })
+                } else {
+                    console.log("ERROR: requestMRIInfo",info);
+                    reject("ERROR: requestMRIInfo" + info);
+                }
+            });
         });
+
+        return pr;
     },
     /**
      * @function configureMRI
