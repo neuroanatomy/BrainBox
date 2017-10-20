@@ -8,7 +8,7 @@ describe('index page', () => {
         await page.goto(`${options.appUrl}`);
         await page.waitFor('h2');
 
-        const headerText = await page.evaluate((selection) => {
+        const headerText = await page.evaluate(() => {
             return document.querySelector('h2').innerText;
         }, 'h2');
 
