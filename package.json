@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node ./bin/www",
     "lint": "xo",
-    "test": "mocha"
+    "test": "mocha --timeout 10000 ./test/runner.js test/unit/*.js test/integration/*.js"
   },
   "dependencies": {
     "async": "^2.0.1",
@@ -46,6 +46,7 @@
     "connect-livereload": "^0.5.3",
     "livereload": "^0.4.0",
     "mocha": "^4.0.1",
+    "puppeteer": "^0.12.0",
     "xo": "^0.18.2"
   },
   "xo": {
