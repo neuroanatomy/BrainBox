@@ -1,22 +1,37 @@
 const puppeteer = require('puppeteer');
+
+// Options for headless browser
 const browserOpts = {
   appUrl: 'http://localhost:3000',
   args: ['--no-sandbox']
 };
 
 /**
- * Browser singleton (ref: https://medium.com/@ivanmontiel/using-that-headless-chrome-youve-been-hearing-about-543a8cc07af5)
+ * Headless browser singleton 
+ * (ref: https://medium.com/@ivanmontiel/using-that-headless-chrome-youve-been-hearing-about-543a8cc07af5)
  * 
  * @class Browser
  */
 class Browser {
-  setUp(done) {
+  /**
+   * Initialise the browser class
+   * 
+   * @param {any} done Callback function from mocha
+   * @memberof Browser
+   */
+  init(done) {
     puppeteer.launch(browserOpts).then(async (browser) => {
       this.setBrowser(browser);
       done();
     });
   }
 
+  /**
+   * Set up the browser instance
+   * 
+   * @param {any} browser Browser instance
+   * @memberof Browser
+   */
   setBrowser(browser) {
     this.browser = browser;
     const oldNewPage = this.browser.newPage.bind(this.browser);
@@ -29,6 +44,13 @@ class Browser {
     };
   }
 
+  /**
+   * Wrapper for writing tests in the browser context
+   * 
+   * @param {Promise} promise Promise that resolves to browser actions
+   * @returns 
+   * @memberof Browser
+   */
   test(promise) {
     return (done) => {
       promise(this.browser, browserOpts)

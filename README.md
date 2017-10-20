@@ -46,5 +46,11 @@ If you want to work on BrainBox's code, you'll need a local installation:
 7. drop the `.example` from `whitelist.json.example`
 8. `npm install`
 9. `npm start`
-10. To lint your files use `npm test`, you can use `xo --fix` to fix common mistakes, before committing,
+10. To lint your files use `npm run lint`, you can use `xo --fix` to fix common mistakes, before committing,
 to do that install `xo` globally using `npm i -g xo`
+
+## Tests
+
+For Docker users first start the containers with `docker-compose up -d`, then run `npm test`.
+
+For non-Docker users you will need to ensure puppeteer can run correctly on your local system (please refer to the [documentation](https://github.com/GoogleChrome/puppeteer) for information). Then run the command `npm mocha-test`.
