@@ -1,15 +1,15 @@
 FROM node
 
 # Fixes Issu 9863
-RUN cd $(npm root -g)/npm \
-  && npm install fs-extra \
-  && sed -i -e s/graceful-fs/fs-extra/ -e s/fs\.rename/fs.move/ ./lib/utils/rename.js
+# RUN cd $(npm root -g)/npm \
+#   && npm install fs-extra \
+#   && sed -i -e s/graceful-fs/fs-extra/ -e s/fs\.rename/fs.move/ ./lib/utils/rename.js
 
-# install dependencies for headless chromium
+# install many dependencies for headless chromium
 RUN apt-get update \
-  && apt-get install libasound2 libatk1.0-0 libcups2 libgconf-2-4 libgtk-3-0 \
-  && libnss3 libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxi6 \
-  && libxrandr2 libxss1 libxtst6
+  && apt-get install -y libasound2 libatk1.0-0 libcups2 libgconf-2-4 \
+  libgtk-3-0 libnss3 libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 \
+  libxi6 libxrandr2 libxss1 libxtst6
 
 VOLUME ["/brainbox"]
 ADD start.sh /start.sh
