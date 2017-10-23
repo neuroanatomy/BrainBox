@@ -146,7 +146,7 @@ var BrainBox={
           var arr=param.url.split("/");
           var name=arr[arr.length-1];
           date=new Date();
-          $("#msgLog").append("<p>Downloading from server...");
+          $("#msgLog").append("<p>Downloading from server...</p>");
 
           /**
            * @todo Check it these two lines are of any use...
