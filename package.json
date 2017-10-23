@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node ./bin/www",
     "mocha-test": "mocha --timeout 10000 ./test/runner.js test/unit/*.js test/integration/*.js",
-    "lint": "xo",
+    "lint": "eslint .",
     "test": "docker exec brainbox_web_1 /bin/bash -c 'cd /brainbox && npm run mocha-test'"
   },
   "dependencies": {
@@ -45,15 +45,9 @@
   },
   "devDependencies": {
     "connect-livereload": "^0.5.3",
+    "eslint": "^4.9.0",
     "livereload": "^0.4.0",
     "mocha": "^4.0.1",
-    "puppeteer": "^0.12.0",
-    "xo": "^0.18.2"
-  },
-  "xo": {
-    "space": 4,
-    "rules": {
-      "no-buffer-constructor": "off"
-    }
+    "puppeteer": "^0.12.0"
   }
 }
