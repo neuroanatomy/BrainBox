@@ -190,9 +190,10 @@ if( $.isEmptyObject(mriInfo)) {
 
     // Load data
     BrainBox.initBrainBox()
-    .then(function(){return BrainBox.loadLabelsets()})
-    .then(function(){return BrainBox.configureBrainBox(params)})
-    .then(function(){
+    .then(function () { console.log("BrainBox initialised"); return BrainBox.loadLabelsets(); })
+    .then(function () { console.log("Label sets loaded"); return BrainBox.configureBrainBox(params); })
+    .then(function () {
+        console.log("BrainBox configured");
         // backup the original MRI info
         mriInfoOrig = JSON.parse(JSON.stringify(BrainBox.info));
          
@@ -406,8 +407,9 @@ if( $.isEmptyObject(mriInfo)) {
         // setTimeout(function(){BrainBox.addCurrentMRIToHistory();console.log("hack!")},5000);
 
         
-    },function(){
-        $("#msgLog").html("ERROR: Can't load data");
+    })
+    .catch(err => {
+        $("#msgLog").html("ERROR: Can't load data. " + err);
     });
 }
 
