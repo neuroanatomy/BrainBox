@@ -125,105 +125,115 @@ var BrainBox={
 	/**
      * @function configureBrainBox
      */
-	configureBrainBox: function configureBrainBox(param) {
-		var l=BrainBox.traceLog(configureBrainBox);if(l)console.log(l);
-		
-		var def=$.Deferred();
-		var date=new Date();
-		var index=param.annotationItemIndex||0;
-	
-		// Copy MRI from source
-		$("#msgLog").html("<p>Downloading from source to server...");
+    configureBrainBox: function configureBrainBox(param) {
+        var l=BrainBox.traceLog(configureBrainBox);if(l)console.log(l);
 
-        // Configure MRI into atlasMaker
-        if(param.info.success===false) {
-            date=new Date();
-            $("#msgLog").append("<p>ERROR: "+param.info.message+".");
-            console.log("<p>ERROR: "+param.info.message+".");
-            return def.promise().reject();
-        }
-        BrainBox.info=param.info;
+        var pr=new Promise(function(resolve, reject) {
+            var date=new Date();
+            var index=param.annotationItemIndex||0;
 
-        var arr=param.url.split("/");
-        var name=arr[arr.length-1];
-        date=new Date();
-        $("#msgLog").append("<p>Downloading from server...");
+            // Copy MRI from source
+            $("#msgLog").html("<p>Downloading from source to server...");
 
-        /**
-         * @todo Check it these two lines are of any use...
-         */
-        param.dim=BrainBox.info.dim; // this allows to keep dim and pixdim through annotation changes
-        param.pixdim=BrainBox.info.pixdim;
+          // Configure MRI into atlasMaker
+          if(param.info.success===false) {
+              date=new Date();
+              $("#msgLog").append("<p>ERROR: "+param.info.message+".");
+              console.log("<p>ERROR: "+param.info.message+".");
+              reject("ERROR: "+param.info.message);
 
-        // re-instance stored configuration
-        var stored=localStorage.AtlasMaker;
-        if(stored) {
-            var stored=JSON.parse(stored);
-            if(stored.version && stored.version==BrainBox.version) {
-                for(var i=0;i<stored.history.length;i++) {
-                    if(stored.history[i].url==param.url) {
-                        AtlasMakerWidget.User.view=stored.history[i].view;
-                        AtlasMakerWidget.User.slice=stored.history[i].slice;
-                        break;
-                    }
-                }	
-            }
-        }
+              return;
+          }
+          BrainBox.info=param.info;
 
-        // enact configuration in param, eventually overriding the stored one
-        if(param.view) {
-            AtlasMakerWidget.User.view=param.view;
-            AtlasMakerWidget.User.slice=null; // this will set the slider to the middle slice in case no slice were specified
-        }
-        if(param.slice)
-            AtlasMakerWidget.User.slice=param.slice;
+          var arr=param.url.split("/");
+          var name=arr[arr.length-1];
+          date=new Date();
+          $("#msgLog").append("<p>Downloading from server...");
 
-        if(param.fullscreen)
-            AtlasMakerWidget.fullscreen=param.fullscreen;
-        else
-            AtlasMakerWidget.fullscreen=false;
-    
-        AtlasMakerWidget.configureAtlasMaker(BrainBox.info,index)
-        .then(function(info2) {
-            BrainBox.info = info2;
-            
-            // check 'edit' access
-            var accessStr = BrainBox.info.mri.atlas[index].access;
-            var accessLvl = BrainBox.accessLevels.indexOf(accessStr);
-            if(accessLvl<0 || accessLvl>BrainBox.accessLevels.length-1)
-                accessLvl = 0;
-            if(accessLvl>=2)
-                AtlasMakerWidget.editMode = 1;
-            else
-                AtlasMakerWidget.editMode = 0;
-            
-            def.resolve();
-        })
-        .catch(function(err) {
-            console.log("ERROR:",err);
-            def.reject();
+          /**
+           * @todo Check it these two lines are of any use...
+           */
+          param.dim=BrainBox.info.dim; // this allows to keep dim and pixdim through annotation changes
+          param.pixdim=BrainBox.info.pixdim;
+
+          // re-instance stored configuration
+          var stored=localStorage.AtlasMaker;
+          if(stored) {
+              var stored=JSON.parse(stored);
+              if(stored.version && stored.version==BrainBox.version) {
+                  for(var i=0;i<stored.history.length;i++) {
+                      if(stored.history[i].url==param.url) {
+                          AtlasMakerWidget.User.view=stored.history[i].view;
+                          AtlasMakerWidget.User.slice=stored.history[i].slice;
+                          break;
+                      }
+                  }
+              }
+          }
+
+          // enact configuration in param, eventually overriding the stored one
+          if(param.view) {
+              AtlasMakerWidget.User.view=param.view;
+              AtlasMakerWidget.User.slice=null; // this will set the slider to the middle slice in case no slice were specified
+          }
+          if(param.slice)
+              AtlasMakerWidget.User.slice=param.slice;
+
+          if(param.fullscreen) {
+              AtlasMakerWidget.fullscreen=param.fullscreen;
+          } else {
+              AtlasMakerWidget.fullscreen=false;
+          }
+
+          AtlasMakerWidget.configureAtlasMaker(BrainBox.info,index)
+          .then(function(info2) {
+              BrainBox.info = info2;
+
+              // check 'edit' access
+              var accessStr = BrainBox.info.mri.atlas[index].access;
+              var accessLvl = BrainBox.accessLevels.indexOf(accessStr);
+              if(accessLvl<0 || accessLvl>BrainBox.accessLevels.length-1)
+                  accessLvl = 0;
+              if(accessLvl>=2)
+                  AtlasMakerWidget.editMode = 1;
+              else
+                  AtlasMakerWidget.editMode = 0;
+
+              resolve({success: true});
+
+              return;
+          })
+          .catch(function(err) {
+              console.log("ERROR:",err);
+              reject("ERROR: "+err);
+
+              return;
+          });
         });
-		
-		return def.promise();
-	},
-	/**
+
+        return pr;
+    },
+    /**
      * @function convertImgObjectURLToDataURL
      * @desc Encodes the ObjectURL obtained from the server jpg images as DataURL,
      *       suitable to be stored as a string in localStorage
      */
-	convertImgObjectURLToDataURL: function convertImgObjectURLToDataURL(objURL) {
-	    var def = $.Deferred();
-	    var x = new XMLHttpRequest(), f = new FileReader();
-        x.open('GET',objURL,true);
-        x.responseType = 'blob';
-        x.onload = function (e) {
-            f.onload = function (evt) {
-                def.resolve(evt.target.result);
+    convertImgObjectURLToDataURL: function convertImgObjectURLToDataURL(objURL) {
+        var pr = new Promise(function(resolve, reject) {
+            var  x = new XMLHttpRequest(), f = new FileReader();
+            x.open('GET',objURL,true);
+            x.responseType = 'blob';
+            x.onload = function (e) {
+                f.onload = function (evt) {
+                    resolve(evt.target.result);
+                };
+                f.readAsDataURL(x.response);
             };
-            f.readAsDataURL(x.response);
-        };
-        x.send();
-        return def;
+            x.send();
+        });
+
+        return pr;
     },
 	/**
      * @function addCurrentMRIToHistory

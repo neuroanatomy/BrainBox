@@ -283,14 +283,16 @@ var api_mri_post = function (req, res) {
                 }
             }
 
-            if(doDownload === true ) {
-                if(downloadQueue[myurl]) {
-                    if(downloadQueue[myurl].success==true) {
-                        var info = JSON.parse(JSON.stringify(downloadQueue[myurl]));
+            if (doDownload === true) {
+                if (downloadQueue[myurl]) {
+                    console.log('>> poll for download finished', downloadQueue[myurl], myurl);
+                    if (downloadQueue[myurl].success == true) {
+                        console.log('>> finished. Send info to user');
+                        const info = JSON.parse(JSON.stringify(downloadQueue[myurl]));
                         delete downloadQueue[myurl];
                         res.json(info);
                     } else {
-                        console.log(">>",downloadQueue[myurl],myurl);
+                        console.log('>> still downloading');
                         res.json(downloadQueue[myurl]);
                     }
                         
@@ -327,12 +329,6 @@ var api_mri_post = function (req, res) {
             res.json({success:false});
         });
 };
-
-/*
-
-token=054x9gjgfdukozkv25cfgh9f6rzpuc9h1fbwb2o83vondpwrk9
-
-*/
 
 var api_mri_get = function (req, res) {
     var myurl = req.query.url;
