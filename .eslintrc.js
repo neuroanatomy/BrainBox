@@ -2,11 +2,13 @@ module.exports = {
     "env": {
         "browser": true,
         "es6": true,
+        "mocha": true,
         "node": true
     },
     "extends": "eslint:recommended",
     "parserOptions": {
-        "sourceType": "module"
+        "sourceType": "module",
+        "ecmaVersion": 8
     },
     "rules": {
         "accessor-pairs": "error",
