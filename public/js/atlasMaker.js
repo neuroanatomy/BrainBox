@@ -2,9 +2,9 @@
  * @page AtlasMaker
  */
 var AtlasMakerWidget = {
-	//========================================================================================
-	// Globals
-	//========================================================================================
+	/*
+	 Globals
+	*/
 	debug:			1,
 	container:		null,	// Element where atlasMaker lives
 	brain_offcn:	null,
@@ -116,9 +116,9 @@ var AtlasMakerWidget = {
 		me.socket = null;
 	},
 
-	//====================================================================================
-	// Configuration
-	//====================================================================================
+	/*
+	 Configuration
+	*/
     /**
      * @function initAtlasMaker
      */
@@ -293,30 +293,39 @@ var AtlasMakerWidget = {
      * @desc Request to download an MRI, with polling to prevent hangouts on lengthy
      *       downloads
      */
-	requestMRIInfo: function requestMRIInfo(source, def) {
-		var me=AtlasMakerWidget;
-		var l=me.traceLog(requestMRIInfo,0,"#bbd");if(l)console.log.apply(undefined,l);
+    requestMRIInfo: function requestMRIInfo(source) {
+        var me=AtlasMakerWidget;
+        var l=me.traceLog(requestMRIInfo,0,"#bbd");if(l)console.log.apply(undefined,l);
 
-		if(!def) {
-		    var def=$.Deferred();
-		}
+        var pr = new Promise(function(resolve, reject) {
+            var timer = setInterval( function () {
+                console.log("polling for data...");
+                $.post("/mri/json",{url:source}, function(info) {
+                    if(info.success == true) {
+                        console.log('requestMRIInfo promise resolved');
+                        clearInterval(timer);
+                        resolve(info);
+                    
+                        return;
+                    } else if(info.success == 'downloading') {
+                        if(me.User.source != source) {
+                            clearInterval(timer);
+                            reject("ERROR: source changed. Probably no longer requested?");
 
-        $.post("/mri/json",{url:source}, function(info) {
-            if(info.success == true) {
-                def.resolve(info);
-            } else if(info.success == 'downloading') {
-                if(me.User.source != source)
-                    return;
-                setTimeout(function(){me.requestMRIInfo(source,def)},2000);
-                $("#loadingIndicator p").text("Loading... "+parseInt(info.cur/info.len*100,10)+"%");
-            } else {
-                console.log("ERROR: requestMRIInfo",info);
-                def.reject();
-            }
+                            return;
+                        }
+                        $("#loadingIndicator p").text("Loading... "+parseInt(info.cur/info.len*100,10)+"%");
+                    } else {
+                        console.log("ERROR: requestMRIInfo",info);
+                        clearInterval(timer);
+                        reject("ERROR: requestMRIInfo" + info);
+                    }
+                });
+            }, 2000);
         });
-        
-        return def.promise();
-	},
+
+        return pr;
+    },
     /**
      * @function configureMRI
      */
