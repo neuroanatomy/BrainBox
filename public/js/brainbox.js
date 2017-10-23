@@ -125,7 +125,7 @@ var BrainBox={
     configureBrainBox: function configureBrainBox(param) {
         var l=BrainBox.traceLog(configureBrainBox);if(l)console.log(l);
 
-        var def=new Promise(function(resolve, reject) {
+        var pr=new Promise(function(resolve, reject) {
             var date=new Date();
             var index=param.annotationItemIndex||0;
 
@@ -137,14 +137,16 @@ var BrainBox={
               date=new Date();
               $("#msgLog").append("<p>ERROR: "+param.info.message+".");
               console.log("<p>ERROR: "+param.info.message+".");
-              return reject();
+              reject("ERROR: "+param.info.message);
+
+              return;
           }
           BrainBox.info=param.info;
 
           var arr=param.url.split("/");
           var name=arr[arr.length-1];
           date=new Date();
-          $("#msgLog").append("<p>Downloading from server...");
+          $("#msgLog").append("<p>Downloading from server...</p>");
 
           /**
            * @todo Check it these two lines are of any use...
@@ -175,10 +177,11 @@ var BrainBox={
           if(param.slice)
               AtlasMakerWidget.User.slice=param.slice;
 
-          if(param.fullscreen)
+          if(param.fullscreen) {
               AtlasMakerWidget.fullscreen=param.fullscreen;
-          else
+          } else {
               AtlasMakerWidget.fullscreen=false;
+          }
 
           AtlasMakerWidget.configureAtlasMaker(BrainBox.info,index)
           .then(function(info2) {
@@ -194,13 +197,19 @@ var BrainBox={
               else
                   AtlasMakerWidget.editMode = 0;
 
-              resolve();
+              resolve({success: true});
+
+              return;
           })
           .catch(function(err) {
               console.log("ERROR:",err);
-              reject();
+              reject("ERROR: "+err);
+
+              return;
           });
         });
+
+        return pr;
     },
     /**
      * @function convertImgObjectURLToDataURL
@@ -208,7 +217,7 @@ var BrainBox={
      *       suitable to be stored as a string in localStorage
      */
     convertImgObjectURLToDataURL: function convertImgObjectURLToDataURL(objURL) {
-        return new Promise(function(resolve, reject) {
+        var pr = new Promise(function(resolve, reject) {
             var  x = new XMLHttpRequest(), f = new FileReader();
             x.open('GET',objURL,true);
             x.responseType = 'blob';
@@ -219,7 +228,8 @@ var BrainBox={
                 f.readAsDataURL(x.response);
             };
             x.send();
-        })
+        });
+        return pr;
     },
     /**
      * @function addCurrentMRIToHistory

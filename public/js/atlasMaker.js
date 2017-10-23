@@ -292,28 +292,35 @@ var AtlasMakerWidget = {
      * @desc Request to download an MRI, with polling to prevent hangouts on lengthy
      *       downloads
      */
-    requestMRIInfo: function requestMRIInfo(source, def) {
+    requestMRIInfo: function requestMRIInfo(source) {
         var me=AtlasMakerWidget;
         var l=me.traceLog(requestMRIInfo,0,"#bbd");if(l)console.log.apply(undefined,l);
 
         var pr = new Promise(function(resolve, reject) {
-            $.post("/mri/json",{url:source}, function(info) {
-                if(info.success == true) {
-                    return resolve(info);
-                } else if(info.success == 'downloading') {
-                    if(me.User.source != source)
+            var timer = setInterval( function () {
+                console.log("polling for data...");
+                $.post("/mri/json",{url:source}, function(info) {
+                    if(info.success == true) {
+                        console.log('requestMRIInfo promise resolved');
+                        clearInterval(timer);
+                        resolve(info);
+                    
                         return;
-                    $("#loadingIndicator p").text("Loading... "+parseInt(info.cur/info.len*100,10)+"%");
-                    return new Promise(function(resolve, reject) {
-                        setTimeout(function(){
-                            resolve(me.requestMRIInfo(source))
-                        }, 2000);
-                    })
-                } else {
-                    console.log("ERROR: requestMRIInfo",info);
-                    reject("ERROR: requestMRIInfo" + info);
-                }
-            });
+                    } else if(info.success == 'downloading') {
+                        if(me.User.source != source) {
+                            clearInterval(timer);
+                            reject("ERROR: source changed. Probably no longer requested?");
+
+                            return;
+                        }
+                        $("#loadingIndicator p").text("Loading... "+parseInt(info.cur/info.len*100,10)+"%");
+                    } else {
+                        console.log("ERROR: requestMRIInfo",info);
+                        clearInterval(timer);
+                        reject("ERROR: requestMRIInfo" + info);
+                    }
+                });
+            }, 2000);
         });
 
         return pr;
