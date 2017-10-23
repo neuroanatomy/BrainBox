@@ -45,7 +45,7 @@ If you want to work on BrainBox's code, you'll need a local installation:
 7. drop the `.example` from `whitelist.json.example`
 8. `npm install`
 9. `npm start`
-10. To lint your files use `npm run lint`, you can use `xo --fix` to fix common mistakes, before committing, to do that install `xo` globally using `npm i -g xo`
+10. To check that your code style is like the one we use,  enter `npm run lint`, or you can type `eslint` before committing, to do that install `eslint` globally using `npm i -g eslint` (our code style rules are in the file `.eslintrc`).
 
 ## Tests
 
