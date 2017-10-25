@@ -39,12 +39,17 @@ If you want to work on BrainBox's code, you'll need a local installation:
 
 1. install and start `mongo` database
 2. clone the repo and `cd` to the brainbox directory
-3. `mkdir public/data`
 4. [create a new OAuth application](https://github.com/settings/applications/new) for your local brainbox url (http://localhost:3000 by default)
 5. paste the keys into the github-keys.json.example file, and drop the .example
 6. drop the `.example` from `blacklist.json.example`
 7. drop the `.example` from `whitelist.json.example`
 8. `npm install`
 9. `npm start`
-10. To lint your files use `npm test`, you can use `xo --fix` to fix common mistakes, before committing,
-to do that install `xo` globally using `npm i -g xo`
+10. To check that your code style is like the one we use,  enter `npm run lint`, or you can type `eslint` before committing, to do that install `eslint` globally using `npm i -g eslint` (our code style rules are in the file `.eslintrc`).
+
+## Tests
+
+For Docker users first start the containers with `docker-compose up -d`, then run `npm test`.
+
+For non-Docker users you will need to ensure puppeteer can run correctly on your local system (please refer to the [documentation](https://github.com/GoogleChrome/puppeteer) for information). Then run the command `npm mocha-test`.
+
