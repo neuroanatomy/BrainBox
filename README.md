@@ -22,7 +22,7 @@ and edit. You can also click one of the examples.
 
 #### Motivation  
 
-We want to make it easy for anyone to participate in open science by launching or participating in collaborative projects using BrainBox. Automatic image-analysis algorithms still very often fail in tasks which are simple for h    mans. But the explosion in the number of data sets available prevents individual labs from engaging into time-consuming manual editing. This results in a large proportion of shared data not being analysed, wasting time and funding.
+We want to make it easy for anyone to participate in open science by launching or participating in collaborative projects using BrainBox. Automatic image-analysis algorithms still very often fail in tasks which are simple for humans. But the explosion in the number of data sets available prevents individual labs from engaging into time-consuming manual editing. This results in a large proportion of shared data not being analysed, wasting time and funding.
 BrainBox makes it possible to work collaboratively, using real-time interaction on the Web. Like Wikipedia or Google docs, it allows creating distributed research teams to collaborate real-time in the segmentation and annotation of neuroimaging data. No data needs to be downloaded, no software to be installed. All you need is a Web browser.
 
 Our aim is to make BrainBox into a reliable tool for open, reproducible, collaborative science.
@@ -30,11 +30,11 @@ Our aim is to make BrainBox into a reliable tool for open, reproducible, collabo
 
 #### Collaboration  
 
-We will be super happy to work with anyone who would love to join our effort.
-While you can see in real-time what your collaborators are writing or drawing on a given data set, you can also chat with them, and ask for help or approval of your work. We want to open this scientific process to everyone with any background including citizen scientists and researchers. Join us! :)
-**Join our segmentation sprint!! \\ö//** In our [GitHub issue #42](https://github.com/OpenNeuroLab/BrainBox/issues/177) you find detailed information on how to participate and get credit for your work :D \ö/ Currently, we are trying to complete the dolphin brain!! <3 Join our team of [BrainMappers](https://github.com/OpenNeuroLab/BrainBox/blob/master/BRAINMAPPERS.md)
+We will be happy to work with anyone who would love to join our effort.
+While you can see in real-time what your collaborators are writing or drawing on a given data set, you can also chat with them, and ask for help or approval of your work. We want to open this scientific process to everyone with any background including citizen scientists and researchers. Join us!
+**Join our segmentation sprint!!** In our [GitHub issue #42](https://github.com/OpenNeuroLab/BrainBox/issues/177) you find detailed information on how to participate and get credit for your work. Currently, we are trying to complete the dolphin brain!! Join our team of [BrainMappers](https://github.com/OpenNeuroLab/BrainBox/blob/master/BRAINMAPPERS.md)
 
-And please also feel free to join our efforts on GitHub! <3 Everybody very welcome!!!
+And please also feel free to join our efforts on GitHub! Everybody very welcome!
 
 
 #### Curious?  
@@ -47,12 +47,12 @@ And in several smaller specific videos:
 
 #### Join us!  
 
-Join our project on github any time :)
+Join our project on github any time
 You can also e-mail us to get in touch at openneurobrainbox at gmail dot com!
 Or launch your own collaborative project on [BrainBox](http://brainbox.pasteur.fr/project/new)
 
 
-**We are looking forward to meeting you! :)**
+**We are looking forward to meeting you!**
 
 
 # Developer instructions
