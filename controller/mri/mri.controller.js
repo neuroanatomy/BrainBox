@@ -302,7 +302,7 @@ const api_mri_post = function (req, res) {
                     console.log('Start download:');
                     downloadQueue[myurl] = {success: 'downloading', cur: 0, len: 1};
                     downloadMRI(myurl, req, res, obj => {
-                        if (obj.error == undefined) {
+                        if (typeof obj.error === "undefined") {
                             console.log('Download succeeded');
                             req.db.get('mri').insert(obj);
                             obj.success = true;
@@ -317,7 +317,7 @@ const api_mri_post = function (req, res) {
                 }
             } else {
                 // Return a specific variable, or the complete json object
-                console.log('Send the data to the client. End of transaction.');
+                console.log('Send requested variable to the client.');
                 if (req.body.var) {
                     let i,
                         arr = req.body.var.split('/');
