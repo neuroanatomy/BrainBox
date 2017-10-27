@@ -551,19 +551,19 @@ const atlasMakerServer = (function() {
             var found = false;
 
             // find latest undo layer for user
-            for(i = me.UndoStack.length-1; i>=0; i =- 1) {
+            for(i = me.UndoStack.length-1; i>=0; i -= 1) {
                 undoLayer = me.UndoStack[i];
                 if(typeof undoLayer === 'undefined') {
                     break;
                 }
-                if( undoLayer.User.username === User.username &&
-                    undoLayer.User.atlasFilename === User.atlasFilename &&
-                    undoLayer.User.specimenName === User.specimenName &&
-                    undoLayer.actions.length>0) {
+                if( undoLayer.User.username === User.username
+                    && undoLayer.User.atlasFilename === User.atlasFilename
+                    && undoLayer.User.specimenName === User.specimenName
+                    && Object.keys(undoLayer.actions).length>0) {
                     found = true;
                     me.UndoStack.splice(i, 1); // remove layer from me.UndoStack
                     if(me.debug) {
-                        console.log("    Found undo layer for " + User.username + ", " + User.specimenName + ", " + User.atlasFilename + ", with " + undoLayer.actions.length + " actions");
+                        console.log("    Found undo layer for " + User.username + ", " + User.specimenName + ", " + User.atlasFilename + ", with " + Object.keys(undoLayer.actions).length + " actions");
                     }
                     break;
                 }
@@ -626,7 +626,6 @@ const atlasMakerServer = (function() {
          paintVoxel: function paintVoxel(mx, my, mz, User, vol, val, undoLayer) {
             me.traceLog(me.paintVoxel, 3);
             var {view} = User;
-    //        var atlas = me.Atlases[User.iAtlas];
             var i, s, x, y, z;
             var {sdim} = User.s2v;
 
@@ -816,19 +815,19 @@ const atlasMakerServer = (function() {
                     break;
                 case 'e': // Fill, erasing
                     me.fill(coord.x, coord.y, coord.z, 0, User, undoLayer);
-                    User.x0=-1;
+                    User.x0-=1;
                     break;
                 case 'f': // Fill, painting
                     me.fill(coord.x, coord.y, coord.z, User.penValue, User, undoLayer);
-                    User.x0=-1;
+                    User.x0-=1;
                     break;
                 case 'mu': // Mouse up (touch ended)
                     me.pushUndoLayer(User);
-                    User.x0=-1;
+                    User.x0-=1;
                     break;
                 case 'u':
                     me.undo(User);
-                    User.x0=-1;
+                    User.x0-=1;
                     break;
             }
         },
