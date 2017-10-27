@@ -239,40 +239,51 @@ var AtlasMakerWidget = {
         var me=AtlasMakerWidget;
         var l=me.traceLog(configureAtlasMaker,0,"#bbd");if(l)console.log.apply(undefined,l);
 
-        var def=$.Deferred();
+        var pr = new Promise(function(resolve, reject) {
+            me.configureMRI(info,index)
+            .then(info2 => {
+                var pr2 = new Promise(function(resolve2, reject2) {
+                    info = info2;
+                    $.getJSON("/labels/"+info.mri.atlas[index].labels)
+                    .then(function(data) {
+                        resolve2(data);
+                    })
+                    .catch(err2 => {
+                        console.log("ERROR:",err2);
+                        reject2(err2);
+                    });
+                });
+                
+                return pr2;
+            })
+            .then(function from_configureAtlasMaker(data) {
+                me.configureOntology(data);
+                me.User.penValue=me.ontology.labels[0].value;
 
-        me.configureMRI(info,index)
-        .then(function (info2) {
-            info = info2;
-            return $.getJSON("/labels/"+info.mri.atlas[index].labels);
-        })
-        .then(function from_configureAtlasMaker(data) {
-            me.configureOntology(data);
-            me.User.penValue=me.ontology.labels[0].value;
-
-            if(me.fullscreen==true) { // WARNING: HACK... would be better to implement enter/exit fullscreen
-                me.fullscreen=false;
-                me.toggleFullscreen();
-            }
+                if(me.fullscreen==true) { // WARNING: HACK... would be better to implement enter/exit fullscreen
+                    me.fullscreen=false;
+                    me.toggleFullscreen();
+                }
         
-            if(me.User.view!=null) {
-                $(".chose#plane .a").removeClass("pressed");
-                var view=me.User.view.charAt(0).toUpperCase()+me.User.view.slice(1);
-                $(".chose#plane .a:contains('"+view+"')").addClass("pressed");
-            }
+                if(me.User.view!=null) {
+                    $(".chose#plane .a").removeClass("pressed");
+                    var view=me.User.view.charAt(0).toUpperCase()+me.User.view.slice(1);
+                    $(".chose#plane .a:contains('"+view+"')").addClass("pressed");
+                }
 
-            me.sendUserDataMessage("allUserData");
-            me.sendUserDataMessage("sendAtlas");
+                me.sendUserDataMessage("allUserData");
+                me.sendUserDataMessage("sendAtlas");
 
-            me.changePenColor( 0 );
-            def.resolve(info);
-        })
-        .catch(function(err) {
-            console.log("ERROR:",err);
-            def.reject();
+                me.changePenColor( 0 );
+                resolve(info);
+            })
+            .catch( (err) => {
+                console.log("ERROR:",err);
+                reject(err);
+            });
         });
-        
-        return def.promise();
+
+        return pr;
     },
     /**
      * @function configureOntology
