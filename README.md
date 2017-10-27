@@ -45,6 +45,12 @@ And in several smaller specific videos:
 [“Collaborative editing of brain masks in BrainBox”](https://m.youtube.com/watch?v=bFHXS-lya5M)
 [“Collaborative creation of brain masks in BrainBox”](https://m.youtube.com/watch?v=mN0vGpy5kFg)
 
+<!--
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=kwsLoVKnw24
+" target="_blank"><img src="http://img.youtube.com/vi/kwsLoVKnw24/0.jpg" 
+alt="IMAGE ALT TEXT HERE" width="640" height="480" border="10" /></a>
+-->
+
 #### Join us!  
 
 Join our project on github any time
