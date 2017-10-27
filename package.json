@@ -4,7 +4,13 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
+<<<<<<< HEAD
     "test": "eslint"
+=======
+    "mocha-test": "mocha --timeout 10000 ./test/runner.js test/unit/*.js test/integration/*.js",
+    "lint": "eslint .",
+    "test": "docker exec brainbox_web_1 /bin/bash -c 'cd /brainbox && npm run mocha-test'"
+>>>>>>> OpenNeuroLab/master
   },
   "dependencies": {
     "async": "^2.0.1",
@@ -42,6 +48,13 @@
   },
   "devDependencies": {
     "connect-livereload": "^0.5.3",
+<<<<<<< HEAD
     "livereload": "^0.4.0"
+=======
+    "eslint": "^4.9.0",
+    "livereload": "^0.4.0",
+    "mocha": "^4.0.1",
+    "puppeteer": "^0.12.0"
+>>>>>>> OpenNeuroLab/master
   }
 }
