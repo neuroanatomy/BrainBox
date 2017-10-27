@@ -17,6 +17,8 @@ You can try BrainBox at http://brainbox.pasteur.fr. Log in with your github
 account and enter the URL to an MRI file you want to visualise, annotate
 and edit. You can also click one of the examples.
 
+![](https://user-images.githubusercontent.com/6297454/32104270-96db0afa-bb1b-11e7-8911-786d420c308a.png)
+
 
 #### Motivation  
 
