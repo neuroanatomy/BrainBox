@@ -3,19 +3,63 @@
 
 # BrainBox - An application from the [Open Neuroimaging Laboratory](http://openneu.ro/)
 
-BrainBox is a web application that lets you annotate and segment 3D brain
-imaging data in real time, collaboratively. You can try it
-at http://brainbox.pasteur.fr.
-
-BrainBox is a web application to share, visualise and annotate MRI brain
- data collaboratively. BrainBox will provide the means to create a
+BrainBox is a web application for the collaborative curation of neuroimaging data
+ available online. You can share, visualise and annotate MRI brain
+ data in real-time, collaboratively. BrainBox will provide the means to create a
  layer of collaborative annotation over all the available MRI data without
  having to rely on a centralised data repository or the necessity of
- having to install software.
+ having to install software. This manual annotation step is time-consuming but very
+ important: on its correctness depends that the results of any analysis downstream will
+ be sound and accurate.
+ **Join us! Your contribution is invaluable!**
 
-You can try it at http://brainbox.pasteur.fr. Log in with your github
+You can try BrainBox at http://brainbox.pasteur.fr. Log in with your github
 account and enter the URL to an MRI file you want to visualise, annotate
 and edit. You can also click one of the examples.
+
+![](https://user-images.githubusercontent.com/6297454/32104270-96db0afa-bb1b-11e7-8911-786d420c308a.png)
+
+
+#### Motivation  
+
+We want to make it easy for anyone to participate in open science by launching or participating in collaborative projects using BrainBox. Automatic image-analysis algorithms still very often fail in tasks which are simple for humans. But the explosion in the number of data sets available prevents individual labs from engaging into time-consuming manual editing. This results in a large proportion of shared data not being analysed, wasting time and funding.
+BrainBox makes it possible to work collaboratively, using real-time interaction on the Web. Like Wikipedia or Google docs, it allows creating distributed research teams to collaborate real-time in the segmentation and annotation of neuroimaging data. No data needs to be downloaded, no software to be installed. All you need is a Web browser.
+
+Our aim is to make BrainBox into a reliable tool for open, reproducible, collaborative science.
+
+
+#### Collaboration  
+
+We will be happy to work with anyone who would love to join our effort.
+While you can see in real-time what your collaborators are writing or drawing on a given data set, you can also chat with them, and ask for help or approval of your work. We want to open this scientific process to everyone with any background including citizen scientists and researchers. Join us!
+**Join our segmentation sprint!** In our [GitHub issue #42](https://github.com/OpenNeuroLab/BrainBox/issues/177) you find detailed information on how to participate and get credit for your work. Currently, we are trying to complete the dolphin brain! Join our team of [BrainMappers](https://github.com/OpenNeuroLab/BrainBox/blob/master/BRAINMAPPERS.md)
+
+And please also feel free to join our efforts on GitHub! Everybody very welcome!
+
+
+#### Curious?  
+
+More information about BrainBox can be found in our 3 min video on the OpenNeuroLab’s YouTube channel:
+[“Open Neuroimaging Laboratory”](https://m.youtube.com/watch?v=kwsLoVKnw24)
+And in several smaller specific videos:
+[“Collaborative editing of brain masks in BrainBox”](https://m.youtube.com/watch?v=bFHXS-lya5M)
+[“Collaborative creation of brain masks in BrainBox”](https://m.youtube.com/watch?v=mN0vGpy5kFg)
+
+<!--
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=kwsLoVKnw24
+" target="_blank"><img src="http://img.youtube.com/vi/kwsLoVKnw24/0.jpg" 
+alt="IMAGE ALT TEXT HERE" width="640" height="480" border="10" /></a>
+-->
+
+#### Join us!  
+
+Join our project on github any time
+You can also e-mail us to get in touch at openneurobrainbox at gmail dot com!
+Or launch your own collaborative project on [BrainBox](http://brainbox.pasteur.fr/project/new)
+
+
+**We are looking forward to meeting you!**
+
 
 
 # Developer instructions
