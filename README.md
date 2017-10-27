@@ -32,7 +32,7 @@ Our aim is to make BrainBox into a reliable tool for open, reproducible, collabo
 
 We will be happy to work with anyone who would love to join our effort.
 While you can see in real-time what your collaborators are writing or drawing on a given data set, you can also chat with them, and ask for help or approval of your work. We want to open this scientific process to everyone with any background including citizen scientists and researchers. Join us!
-**Join our segmentation sprint!!** In our [GitHub issue #42](https://github.com/OpenNeuroLab/BrainBox/issues/177) you find detailed information on how to participate and get credit for your work. Currently, we are trying to complete the dolphin brain!! Join our team of [BrainMappers](https://github.com/OpenNeuroLab/BrainBox/blob/master/BRAINMAPPERS.md)
+**Join our segmentation sprint!** In our [GitHub issue #42](https://github.com/OpenNeuroLab/BrainBox/issues/177) you find detailed information on how to participate and get credit for your work. Currently, we are trying to complete the dolphin brain! Join our team of [BrainMappers](https://github.com/OpenNeuroLab/BrainBox/blob/master/BRAINMAPPERS.md)
 
 And please also feel free to join our efforts on GitHub! Everybody very welcome!
 
@@ -59,6 +59,7 @@ Or launch your own collaborative project on [BrainBox](http://brainbox.pasteur.f
 
 
 **We are looking forward to meeting you!**
+
 
 
 # Developer instructions
