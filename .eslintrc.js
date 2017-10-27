@@ -2,20 +2,18 @@ module.exports = {
     "env": {
         "browser": true,
         "es6": true,
-        "mocha": true,
         "node": true
     },
     "extends": "eslint:recommended",
     "parserOptions": {
-        "sourceType": "module",
-        "ecmaVersion": 8
+        "sourceType": "module"
     },
     "rules": {
         "accessor-pairs": "error",
         "array-bracket-newline": "error",
         "array-bracket-spacing": "error",
         "array-callback-return": "error",
-        "array-element-newline": "error",
+        "array-element-newline": "off",
         "arrow-body-style": "error",
         "arrow-parens": "error",
         "arrow-spacing": "error",
@@ -139,7 +137,7 @@ module.exports = {
         "no-lonely-if": "error",
         "no-loop-func": "error",
         "no-magic-numbers": "off",
-        "no-mixed-operators": "error",
+        "no-mixed-operators": "off",
         "no-mixed-requires": "error",
         "no-multi-assign": "error",
         "no-multi-spaces": "error",
