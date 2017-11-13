@@ -5,9 +5,9 @@ const url = require('url');
 const fs = require('fs');
 const request = require('request');
 const path = require('path');
-const atlasMakerServer = require('../../js/atlasMakerServer');
-const checkAccess = require('../../js/checkAccess.js');
-const dataSlices = require('../../js/dataSlices.js');
+const atlasMakerServer = require('../atlasMakerServer/atlasMakerServer');
+const checkAccess = require('../checkAccess/checkAccess.js');
+const dataSlices = require('../dataSlices/dataSlices.js');
 
 const downloadQueue = [];
 
@@ -36,7 +36,7 @@ const validator = function (req, res, next) {
     }
 };
 
-const validator_post = function (req, res, next) {
+const validatorPost = function (req, res, next) {
     req.checkBody('url', 'please enter a valid URL')
         .isURL();
 
@@ -167,13 +167,11 @@ const mri = function (req, res) {
                 ('<a href=\'/user/' + req.user.username + '\'>' + req.user.username + '</a> (<a href=\'/logout\'>Log Out</a>)') :
                 ('<a href=\'/auth/github\'>Log in with GitHub</a>');
     const loggedUser = req.isAuthenticated() ? req.user.username : 'anonymous';
-
-    // Store return path in case of login
-    req.session.returnTo = req.originalUrl;
+    req.session.returnTo = req.originalUrl; // Store return path in case of login
 
     const myurl = req.query.url;
-    const hash = crypto.createHash('md5').update(myurl).digest('hex');
-    console.log('Receive GET, query:', myurl, hash);
+    // const hash = crypto.createHash('md5').update(myurl).digest('hex');
+    // console.log('Receive GET, query:', myurl, hash);
 
     req.db.get('mri').findOne({source: myurl, backup: {$exists: 0}}, {_id: 0})
     .then(json => {
@@ -181,7 +179,6 @@ const mri = function (req, res) {
             const obj = {
                 source: myurl
             };
-
             res.render('mri', {
                 title: obj.name || 'BrainBox',
                 params: JSON.stringify(req.query),
@@ -248,7 +245,7 @@ const mri = function (req, res) {
     });
 };
 
-const api_mri_post = function (req, res) {
+const apiMriPost = function (req, res) {
     const myurl = req.body.url;
     const hash = crypto.createHash('md5').update(myurl).digest('hex');
     let loggedUser = 'anonymous';
@@ -333,14 +330,14 @@ const api_mri_post = function (req, res) {
         });
 };
 
-/*
+const apiMriGet = function (req, res) {
+    let { url: myurl,
+          download: download,
+          page: page
+    } = req.query;
+    download = (download === 'true');
 
-Token=054x9gjgfdukozkv25cfgh9f6rzpuc9h1fbwb2o83vondpwrk9
-
-*/
-
-const api_mri_get = function (req, res) {
-    const myurl = req.query.url;
+    // check for token authentication
     let loggedUser = 'anonymous';
     if (req.isAuthenticated()) {
         loggedUser = req.user.username;
@@ -349,15 +346,15 @@ const api_mri_get = function (req, res) {
         loggedUser = req.tokenUsername;
     }
 
-    // If query does not contain a specific mri, send paginated list of mris
+    // if the query does not contain a specific mri, send a paginated list of mris
     if (!myurl) {
-        if (req.query.page === undefined) {
+        if (page === undefined) {
             res.send({error: 'Specify the \'page\' parameter'});
             return;
         }
 
         // Display access-filtered list of mris
-        const page = Math.max(0, parseInt(req.query.page));
+        page = Math.max(0, parseInt(page));
         const nItemsPerPage = 20;
 
         dataSlices.getFilesSlice(req, page * nItemsPerPage, nItemsPerPage)
@@ -371,7 +368,14 @@ const api_mri_get = function (req, res) {
     req.db.get('mri').findOne({source: myurl, backup: {$exists: 0}}, {_id: 0})
     .then(json => {
         if (!json) {
-            res.status(404).json({});
+            console.log("MRI not present in DB");
+            if( download === true ) {
+                console.log("trigger download");
+                res.json({source: myurl});
+            } else {
+                console.log("send 404 error");
+                res.status(404).json({});
+            }
         } else {
             // If the json object exists, and has annotations, configure the access to them
             console.log('check access rights');
@@ -483,9 +487,9 @@ const reset = function reset(req, res) {
 
 const mriController = function () {
     this.validator = validator;
-    this.validator_post = validator_post;
-    this.api_mri_get = api_mri_get;
-    this.api_mri_post = api_mri_post;
+    this.validatorPost = validatorPost;
+    this.apiMriGet = apiMriGet;
+    this.apiMriPost = apiMriPost;
     this.mri = mri;
     this.reset = reset;
 };

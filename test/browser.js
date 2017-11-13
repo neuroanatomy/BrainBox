@@ -3,6 +3,7 @@ const puppeteer = require('puppeteer');
 // Options for headless browser
 const browserOpts = {
   appUrl: 'http://localhost:3000',
+  lionUrl: 'http://localhost:3000/mri?url=https://zenodo.org/record/44855/files/MRI-n4.nii.gz',
   args: ['--no-sandbox']
 };
 

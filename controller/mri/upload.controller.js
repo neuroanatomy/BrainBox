@@ -1,7 +1,7 @@
 'use strict';
 
 const fs = require('fs');
-const atlasMakerServer = require('../../js/atlasMakerServer');
+const atlasMakerServer = require('../atlasMakerServer/atlasMakerServer');
 // ExpressValidator = require('express-validator')
 
 const validator = function (req, res, next) {
