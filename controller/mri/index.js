@@ -6,8 +6,8 @@ const controller = require('./mri.controller');
 const uploadController = require('./upload.controller');
 
 router.get('', controller.validator, controller.mri);
-router.get('/json', controller.validator, tokenAuthentication, controller.api_mri_get);
-router.post('/json', controller.validator_post, tokenAuthentication, controller.api_mri_post);
+router.get('/json', controller.validator, tokenAuthentication, controller.apiMriGet);
+router.post('/json', controller.validatorPost, tokenAuthentication, controller.apiMriPost);
 
 router.get('/upload', uploadController.token);
 router.post('/upload',

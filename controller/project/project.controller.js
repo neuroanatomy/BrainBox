@@ -4,8 +4,8 @@ const crypto = require('crypto');
 const dateFormat = require('dateformat');
 const validatorNPM = require('validator');
 var async = require('async');
-const checkAccess = require('../../js/checkAccess.js');
-const dataSlices = require('../../js/dataSlices.js');
+const checkAccess = require('../checkAccess/checkAccess.js');
+const dataSlices = require('../dataSlices/dataSlices.js');
 
 const createDOMPurify = require('dompurify');
 const jsdom = require('jsdom');

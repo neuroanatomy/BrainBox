@@ -14,6 +14,7 @@ const express = require('express');
 const path = require('path');
 const favicon = require('serve-favicon');
 const logger = require('morgan');
+const tracer = require('tracer').console({format: '[{{file}}:{{line}}]  {{message}}'});
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const mustacheExpress = require('mustache-express');
@@ -37,11 +38,7 @@ if (DOCKER_DB) {
 const db = monk(MONGO_DB);
 const expressValidator = require('express-validator');
 
-const atlasMakerServer = require('./js/atlasMakerServer.js');
-
-// Init web server
-// var routes = require('./routes/index');
-// var users = require('./routes/users');
+const atlasMakerServer = require('./controller/atlasMakerServer/atlasMakerServer.js');
 
 /* jslint nomen: true */
 const dirname = __dirname; // Local directory
@@ -59,12 +56,20 @@ if (DOCKER_DEVELOP == '1') {
 
     // Specify the folder to watch for file-changes.
     hotServer.watch(__dirname);
-    console.log('Watching: ' + __dirname);
+    tracer.log('Watching: ' + __dirname);
 }
 
 const app = express();
+
+// allow CORS
+app.use(function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+});
+
 app.engine('mustache', mustacheExpress());
-app.set('views', path.join(dirname, 'views'));
+app.set('views', path.join(dirname, 'templates'));
 app.set('view engine', 'mustache');
 app.use(favicon(dirname + '/public/favicon.png'));
 app.set('trust proxy', 'loopback');
@@ -79,6 +84,7 @@ if (DOCKER_DEVELOP == '1') {
     app.use(require('connect-livereload')());
 }
 
+// App variables
 app.use((req, res, next) => {
     req.dirname = dirname;
     req.db = db;
@@ -86,9 +92,6 @@ app.use((req, res, next) => {
 
     next();
 });
-
-// App.use('/', routes);
-// app.use('/users', users);
 
 // {-----passport
 const session = require('express-session');
@@ -157,7 +160,7 @@ app.get('/auth/github/callback',
                     };
                     db.get('user').insert(json);
                 } else {
-                    console.log('Update user data from GitHub');
+                    tracer.log('Update user data from GitHub');
                     db.get('user').update({nickname: req.user.username}, {$set: {
                         name: req.user.displayName,
                         url: req.user._json.blog,
@@ -171,7 +174,7 @@ app.get('/auth/github/callback',
 // -----}
 
 global.tokenAuthentication = function (req, res, next) {
-    console.log('>> Check token');
+    tracer.log('>> Check token');
     let token;
     if (req.params.token) {
         token = req.params.token;
@@ -181,7 +184,7 @@ global.tokenAuthentication = function (req, res, next) {
     }
 
     if (!token) {
-        console.log('>> No token');
+        tracer.log('>> No token');
         next();
         return;
     }
@@ -191,17 +194,17 @@ global.tokenAuthentication = function (req, res, next) {
             // Check token expiry date
             const now = new Date();
             if (obj.expiryDate.getTime() - now.getTime() < req.tokenDuration) {
-                console.log('>> Authenticated by token');
+                tracer.log('>> Authenticated by token');
                 req.isTokenAuthenticated = true;
                 req.tokenUsername = obj.username;
             } else {
-                console.log('>> Token expired');
+                tracer.log('>> Token expired');
             }
         }
         next();
     })
     .catch(err => {
-        console.log('ERROR:', err);
+        tracer.log('ERROR:', err);
         next();
     });
 };
@@ -220,7 +223,6 @@ app.get('/', (req, res) => { // /auth/github
         login
     });
 });
-
 app.use('/mri', require('./controller/mri/'));
 app.use('/project', require('./controller/project/'));
 app.use('/user', require('./controller/user/'));
@@ -265,7 +267,7 @@ app.post('/api/log', (req, res) => {
                 res.send({length: sum});
             })
             .catch(err => {
-                console.log('ERROR', err);
+                tracer.log('ERROR', err);
                 res.send({error: JSON.stringify(err)});
             });
             break;
@@ -308,10 +310,10 @@ db.get('user').findOne({nickname: 'anyone'})
                 brainboxURL: '/user/anyone',
                 joined: (new Date()).toJSON()
             };
-            console.log('WARNING: \'anyone\' user absent: inserting it');
+            tracer.log('WARNING: \'anyone\' user absent: inserting it');
             db.get('user').insert(anyone);
         } else {
-            console.log('\'anyone\' user correctly configured.');
+            tracer.log('\'anyone\' user correctly configured.');
         }
     });
 

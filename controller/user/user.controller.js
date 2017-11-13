@@ -1,7 +1,7 @@
 const async = require('async');
 const dateFormat = require('dateformat');
-const checkAccess = require('../../js/checkAccess.js');
-const dataSlices = require('../../js/dataSlices.js');
+const checkAccess = require('../checkAccess/checkAccess.js');
+const dataSlices = require('../dataSlices/dataSlices.js');
 
 const validator = function (req, res, next) {
     // UserName can be an ip address (for anonymous users)
