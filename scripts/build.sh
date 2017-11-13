@@ -1,3 +1,5 @@
+cd scripts
+
 if [ $1 ]; then
     MINIFY=true
     echo "Minifying"
@@ -131,3 +133,5 @@ done
 # Copy brainbox.min.js to /public/lib
 #------------------------------------
 cp ../view/dist/brainbox${min}.js ../public/lib/
+
+cd ..
