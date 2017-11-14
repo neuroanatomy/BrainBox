@@ -1,13 +1,47 @@
 'use strict';
-const puppeteer = require('puppeteer');
 
+const fs = require('fs');
+const puppeteer = require('puppeteer');
+const {PNG} = require('pngjs');
+const pixelmatch = require('pixelmatch');
 
 function delay(timeout) {
-    console.log('delay', timeout, 'milliseconds');
+    console.log('  delay', timeout, 'milliseconds');
 
     return new Promise((resolve) => {
         setTimeout(resolve, timeout);
     });
+}
+
+function compareImages(pathImg1, pathImg2) {
+    const data1 = fs.readFileSync(pathImg1);
+    const data2 = fs.readFileSync(pathImg2);
+    const img1 = PNG.sync.read(data1);
+    const img2 = PNG.sync.read(data2);
+    const pixdiff = pixelmatch(img1.data, img2.data);
+
+    return pixdiff;
+}
+
+function comparePageScreenshots(page, url, filename) {
+    const newPath = 'screenshots/' + filename;
+    const refPath = 'data/reference-screenshots/' + filename;
+    const pr = new Promise((resolve, reject) => {
+        console.log("go to page:", url);
+        page.goto(url);
+        delay(5000)
+        .then(() => { return page.screenshot({path:'screenshots/' + filename})})
+        .then(() => {
+            console.log("  pixdiff:", compareImages(newPath, refPath));
+            resolve();
+        })
+        .catch( (err) => {
+            console.error("ERROR:", err);
+            reject(err);
+        });
+    });
+
+    return pr;
 }
 
 puppeteer.launch({headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] })
@@ -21,44 +55,39 @@ puppeteer.launch({headless: true, args: ['--no-sandbox', '--disable-setuid-sandb
         page.setViewport({width: 1600, height: 1200})
 
         // OPEN HOMEPAGE
-        .then(() => {
-          console.log('go to home page');
-          page.goto('http://localhost:3000');
-        })
-        .then(() => delay(5000))
-        .then(() => page.screenshot({path:'screenshots/01.home.png'}))
+        .then(() => {return comparePageScreenshots(
+            page,
+            'http://localhost:3000',
+            '01.home.png'
+        )})
 
         // OPEN MRI PAGE
-        .then(() => {
-          console.log('go to MRI');
-          page.goto('http://localhost:3000/mri?url=https://zenodo.org/record/44855/files/MRI-n4.nii.gz');
-        })
-        .then(() => delay(5000))
-        .then(() => page.screenshot({path:'screenshots/02.mri.png'}))
+        .then(() => {return comparePageScreenshots(
+            page,
+            'http://localhost:3000/mri?url=https://zenodo.org/record/44855/files/MRI-n4.nii.gz',
+            '02.mri.png'
+        )})
 
         // OPEN PROJECT PAGE
-        .then(() => {
-          console.log('go to Project');
-          page.goto('http://localhost:3000/project/braincatalogue');
-        })
-        .then(() => delay(5000))
-        .then(() => page.screenshot({path:'screenshots/03.project.png'}))
+        .then(() => {return comparePageScreenshots(
+            page,
+            'http://localhost:3000/project/braincatalogue',
+            '03.project.png'
+        )})
 
         // OPEN PROJECT SETTINGS PAGE
-        .then(() => {
-          console.log('go to Project Settings');
-          page.goto('http://localhost:3000/project/braincatalogue/settings');
-        })
-        .then(() => delay(5000))
-        .then(() => page.screenshot({path:'screenshots/04.project-settings.png'}))
+        .then(() => {return comparePageScreenshots(
+            page,
+            'http://localhost:3000/project/braincatalogue/settings',
+            '04.project-settings.png'
+        )})
 
         // OPEN USER PAGE
-        .then(() => {
-          console.log('go to User');
-          page.goto('http://localhost:3000/user/r03ert0');
-        })
-        .then(() => delay(5000))
-        .then(() => page.screenshot({path:'screenshots/05.user.png'}))
+        .then(() => {return comparePageScreenshots(
+            page,
+            'http://localhost:3000/user/r03ert0',
+            '05.user.png'
+        )})
 
         // CLOSE
         .then(() => browser.close())
