@@ -16,10 +16,10 @@ jobs:
            command: 'echo "{ \"clientID\": \"$GITHUB_CLIENT_ID\", \"clientSecret\": \"$GITHUB_CLIENT_SECRET\", \"callbackURL\": \"$GITHUB_CALLBACK_URL\"}">github-keys.json'
        - run:
            name: Instantiate blacklist
-           command: 'mv blacklist.json.example blacklist.json'
+           command: 'echo {} > controller/atlasMakerServer/blacklist.json'
        - run:
            name: Instantiate whitelist
-           command: 'echo "{}" > whitelist.json'
+           command: 'echo "{}" > controller/atlasMakerServer/whitelist.json'
        - run:
            name: Run server in background
            command: 'npm start'
