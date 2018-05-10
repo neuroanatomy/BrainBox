@@ -1,5 +1,5 @@
 
-[![CircleCI](https://circleci.com/gh/OpenNeuroLab/BrainBox/tree/master.svg?style=shield)](https://circleci.com/gh/OpenNeuroLab/BrainBox/tree/master) [![Join the chat at https://gitter.im/OpenNeuroLab-Brainbox/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/OpenNeuroLab/BrainBox?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![CircleCI](https://circleci.com/gh/OpenNeuroLab/BrainBox/tree/master.svg?style=shield)](https://circleci.com/gh/OpenNeuroLab/BrainBox/tree/master) [![Join the chat at https://gitter.im/OpenNeuroLab-Brainbox/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/OpenNeuroLab-Brainbox/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 # BrainBox - An application from the [Open Neuroimaging Laboratory](http://openneu.ro/)
 
