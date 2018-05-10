@@ -23,3 +23,9 @@ Slice numbers:      axial (cor) 112
 Length:             mm  
 Volume:             509368 mm3  
 
+Name:               **stef**  
+GitHub:             @stemarcotti
+Species:            Bottlenose dolphin  
+Slice numbers:      axial (cor) 114-124  
+Length:             mm  
+Volume:             mm3 
