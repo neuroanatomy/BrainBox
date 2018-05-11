@@ -2714,9 +2714,7 @@ var AtlasMakerInteraction = {
             case 'Adjust':
                 me.User.tool='adjust';
                 if($("#adjust").length==0) {
-                    $.get(me.hostname + "/templates/adjust.html",function(html) {
-                        me.container.find("#resizable").append(html);
-                    });
+                    me.container.find("#resizable").append(me.html.adjust);
                 }
                 break;
             case 'Eyedrop':
@@ -2754,10 +2752,6 @@ var AtlasMakerInteraction = {
     changeSlice: function changeSlice(x) {
         var me=AtlasMakerWidget;
         var l=me.traceLog(changeSlice,1,"#f00");if(l)console.log.apply(undefined,l);
-
-        var max=$("#slice").data("max");
-        $("#slice").data("val",x);
-        $("#slice .thumb")[0].style.left=(x*100/max)+"%";
     
         me.User.slice=x;
         me.sendUserDataMessage(JSON.stringify({'slice':me.User.slice}));
@@ -2870,7 +2864,7 @@ var AtlasMakerInteraction = {
         localStorage.brainbox=URL.createObjectURL(new Blob([me.encodeNifti()]));
         
         // opens 3d render window
-        window.open(me.hostname + "/templates/surface.html?path="+me.User.dirname+me.User.atlasFilename,"_blank");
+        window.open(me.hostname + "/surface.html?path="+me.User.dirname+me.User.atlasFilename,"_blank");
     },
     /**
      * @function link
@@ -3593,11 +3587,11 @@ var AtlasMakerIO = {
         var me=AtlasMakerWidget;
         var l=me.traceLog(encodeNifti);if(l)console.log.apply(undefined,l);
 
-        var    sizeof_hdr=348;
-        var    dimensions=4;            // number of dimension values provided
-        var    spacetimeunits=2+8;        // 2=nifti code for millimetres | 8=nifti code for seconds
-        var    datatype=2;                // datatype for 8 bits (DT_UCHAR8 in nifti or UCHAR in analyze)
-        var    vox_offset=352;
+        var sizeof_hdr=348;
+        var dimensions=4;            // number of dimension values provided
+        var spacetimeunits=2+8;        // 2=nifti code for millimetres | 8=nifti code for seconds
+        var datatype=2;                // datatype for 8 bits (DT_UCHAR8 in nifti or UCHAR in analyze)
+        var vox_offset=352;
         var bitsPerVoxel=8;
     
         var newHdr = {
@@ -3631,14 +3625,14 @@ var AtlasMakerIO = {
         for(i in newHdr)
             me.NiiHdrLE.fields[i] = newHdr[i];
         hdr = toArrayBuffer(niihdr);
-        var    data=me.atlas.data;
+        var data=me.atlas.data;
         var nii = new Uint8Array(vox_offset+data.length);
         for(i=0;i<sizeof_hdr;i++)
             nii[i]=hdr[i];
         for(i=0;i<data.length;i++)
             nii[i+vox_offset]=data[i];
 
-        var    niigz=new pako.Deflate({gzip:true});
+        var niigz=new pako.Deflate({gzip:true});
         niigz.push(nii,true);
             
         return niigz.result;
@@ -4229,9 +4223,6 @@ var AtlasMakerUI = {
      * @function slider
      */
     slider: function slider(elem,callback) {
-        var me=AtlasMakerWidget;
-        var l=me.traceLog(slider,2);if(l)console.log.apply(undefined,l);
-    
         // Initialise a 'slider' control
 
         $(elem).data({
@@ -4248,6 +4239,9 @@ var AtlasMakerUI = {
                 if(x>1) x=1;
                 x=x*$(el).data("max");
                 if(x!=$(el).data("val")) {
+                    var max=$(el).data("max");
+                    $(el).data("val",x);
+                    $(el).find(".thumb")[0].style.left=(x*100/max)+"%";
                     callback(x);
                 }
             }
@@ -4932,12 +4926,13 @@ var AtlasMakerWS = {
 var AtlasMakerResources = {
   "html": {
     "adjust": "<div id='adjust' style='width:calc(100% - 20px );position:absolute;bottom:0;left:0;padding:10px;'>\n    \n    <!-- Transparency -->\n    <div>\n        <img src='/img/alpha.svg' style='width:20px;vertical-align:middle'/>\n        <div id='alphaLevel' class='slider' data-max=100 data-val=0 style='display:inline-block;position:relative;margin-left:10px;width:calc(100% - 30px - 20px);height:100%;vertical-align:middle'>\n            <div class='track'\n                 style='position:absolute;left:0;top:50%;width:100%;border-top:1px solid #fff;display:inline-block'></div>\n            <div class='thumb'\n                 style='transform:translate(-10px,-10px);border-radius:10px;position:absolute;left:0;top:50%;width:20px;height:20px;background-color:#fff;display:inline-block'></div>\n        </div>\n    </div>\n\n    <!-- Brightness -->\n    <div>\n        <img src='/img/sun-o.svg' style='width:20px;vertical-align:middle'/>\n        <div id='minLevel' class='slider' data-max=100 data-val=0 style='display:inline-block;position:relative;margin-left:10px;width:calc(100% - 30px - 20px);height:100%;vertical-align:middle'>\n            <div class='track'\n                 style='position:absolute;left:0;top:50%;width:100%;border-top:1px solid #fff;display:inline-block'></div>\n            <div class='thumb'\n                 style='transform:translate(-10px,-10px);border-radius:10px;position:absolute;left:0;top:50%;width:20px;height:20px;background-color:#fff;display:inline-block'></div>\n        </div>\n    </div>\n    \n    <!-- Contrast -->\n    <div>\n        <img src='/img/adjust.svg' style='width:20px;vertical-align:middle'/>\n        <div id='maxLevel' class='slider' data-max=100 data-val=0 style='display:inline-block;position:relative;margin-left:10px;width:calc(100% - 30px - 20px);height:100%;vertical-align:middle'>\n            <div class='track'\n                 style='position:absolute;left:0;top:50%;width:100%;border-top:1px solid #fff;display:inline-block'></div>\n            <div class='thumb'\n                 style='transform:translate(-10px,-10px);border-radius:10px;position:absolute;left:0;top:50%;width:20px;height:20px;background-color:#fff;display:inline-block'></div>\n        </div>\n    </div>\n\n    <script>\n        // Transparency\n        AtlasMakerWidget.slider($('.slider#alphaLevel'),function(x) {\n            $('#alphaLevel').data('val',x);\n            $('#alphaLevel .thumb')[0].style.left=x+'%';\n            AtlasMakerWidget.alphaLevel=x/100;\n            AtlasMakerWidget.drawImages();\n        });\n        $('.slider#alphaLevel').data({max:100,val:50});\n        $('#alphaLevel .thumb')[0].style.left=(AtlasMakerWidget.alphaLevel*100)+'%';\n\n        // Brightness\n        AtlasMakerWidget.slider($('.slider#minLevel'),function(x) {\n            $('#minLevel').data('val',x);\n            $('#minLevel .thumb')[0].style.left=x+'%';\n        \n            var b=(2*x/100);\n            var c=(2*$('#maxLevel').data('val')/100);\n            $('#canvas').css({\n                'webkit-filter':'brightness('+b+') contrast('+c+')',\n                'filter':'brightness('+b+') contrast('+c+')'\n            });\n        });\n        $('.slider#minLevel').data({max:100,val:50});\n        $('#minLevel .thumb')[0].style.left='50%';\n\n        // Contrast\n        AtlasMakerWidget.slider($('.slider#maxLevel'),function(x) {\n            $('#maxLevel').data('val',x);\n            $('#maxLevel .thumb')[0].style.left=x+'%';\n            \n            var b=(2*$('#minLevel').data('val')/100);\n            var c=(2*x/100);\n            $('#canvas').css({\n                'webkit-filter':'brightness('+b+') contrast('+c+')',\n                'filter':'brightness('+b+') contrast('+c+')'\n            });\n        });\n        $('.slider#maxLevel').data({max:100,val:50});\n        $('#maxLevel .thumb')[0].style.left='50%';\n\n        var observer = new MutationObserver(function(mutations) {\n            mutations.forEach(function(mutation) {\n                if (mutation.attributeName === 'class') {\n                    console.log('mutation',mutation);\n                    var attributeValue = $(mutation.target).prop(mutation.attributeName);\n                    if(attributeValue=='a')\n                        $('#adjust').remove();\n                        observer.disconnect();\n                        delete observer;\n                }\n            });\n        });\n        observer.observe($('#paintTool [title=\"Adjust\"]')[0], {\n            attributes: true\n        });\n    </script>\n</div>\n",
-    "tools": "<div id='tools-side' style='display:block'>\n    <div id='tools-minimized'>\n        <div>\n            <img style='width:28px;position:absolute;top:10px;left:10px' src='/img/bars.svg' />\n        </div>\n    </div>\n    \n    <div id='tools-maximized' style='display:flex;flex-direction:column;width:100%;'><!--height:100%'-->\n        <!-- tools hide/show, display left/right -->\n        <div id='toolbar-header' style='flex:0 0 28px'>\n            <div style='display:flex;background:#333'>\n                <div style='width:28px;height:28px;flex:0 0 28px'><div id='display-minimize' title='Minimize toolbar' class='a push'><img class='icon' src='/img/times-circle.svg' /></div></div>\n                <div style='height:28px;flex:1 1 auto'></div>\n                <div style='width:28px;height:28px;flex:0 0 28px'><div id='display-left' title='Display to the left' class='a push'><img class='icon' src='/img/caret-square-o-left.svg' /></div></div>\n                <div style='width:28px;height:28px;flex:0 0 28px'><div id='display-right' title='Display to the right' class='a push'><img class='icon' src='/img/caret-square-o-right.svg' /></div></div>\n            </div>\n        </div>\n        <!-- slider -->\n        <div style='flex:0 0 28px'>\n            <div style='display:flex'>\n                <div style='height:28px;flex:0 0 28px'>\n                    <div id='prev' class='a push'>-</div>\n                </div>\n                <div style='height:28px;flex:1 0 28px;position:relative;'>\n                    <div style='display:inline-block;width:100%;position:relative;height:100%'> <!--height:100%;-->\n                        <div id='slice' class='slider' data-max=100 data-val=0 style='position:relative;margin-left:10px;width:calc(100% - 20px);height:100%'><!--;height:100%'-->\n                            <div class='track'\n                                 style='position:absolute;left:0;top:50%;width:100%;border-top:1px solid #fff;display:inline-block'></div>\n                            <div class='thumb'\n                                 style='transform:translate(-10px,-10px);border-radius:10px;position:absolute;left:0;top:50%;width:20px;height:20px;background-color:#fff;display:inline-block'></div>\n                        </div>\n                    </div>\n                </div>\n                <div style='height:28px;flex:0 0 28px'>\n                    <div id='next' class='a push'>+</div>\n                </div>\n            </div>\n        </div>\n        <!-- buttons -->\n        <div style='flex:0 0 auto'>\n            <div style='display:flex;flex-wrap:wrap'>\n                <div style='width:50px;height:56px;flex:1 0 170px;'>\n                    <!-- plane -->\n                    <div style='display:flex' id='plane' class='chose'>\n                        <div style='height:28px;flex:1'><div title='sag' class='a pressed'>Sag</div></div>\n                        <div style='height:28px;flex:1'><div title='cor' class='a'>Cor</div></div>\n                        <div style='height:28px;flex:1'><div title='axi' class='a'>Axi</div></div>\n                    </div>\n                    <!-- fullscreen/precise-cursor -->\n                    <div style='display:flex'>\n                        <div style='height:28px;flex:1'><div id='fullscreen' title='Full screen' class='a toggle'><img class='icon' src='/img/fullscreen.svg' /></div></div>\n                        <div style='height:28px;flex:1'><div id='3drender' title='3D render' class='a push'><img class='icon' src='/img/3drender.svg' /></div></div>\n                        <div style='height:28px;flex:1'><div id='link' title='Link' class='a push'><img class='icon' src='/img/link.svg' /></div></div>\n                        <div style='height:28px;flex:1'><div id='bubble' title='Chat' class='a toggle pressed'><img class='icon' src='/img/chat.svg' /></div></div>\n                        <div style='height:28px;flex:1'><div id='upload' title='Upload' class='a push'><img class='icon' src='/img/upload.svg' /></div></div>\n                        <div style='height:28px;flex:1'><div id='download' title='Download' class='a push'><img class='icon' src='/img/download.svg' /></div></div>\n                        <div style='height:28px;flex:1'><div id='precise' title='Precise cursor' class='a toggle'><img class='icon' src='/img/preciseCursor.svg' /></div></div>\n                    </div>\n                </div>\n                <div style='width:50px;height:56px;flex:1 0 170px;'>\n                    <!-- paint/erase -->\n                    <div style='display:flex' class='chose' id='paintTool'>\n                        <div style='height:28px;flex:1'><div title='Show' class='a pressed'><img class='icon' src='/img/show.svg' /></div></div>\n                        <div style='height:28px;flex:1'><div title='Paint' class='a'><img class='icon' src='/img/paint.svg' /></div></div>\n                        <div style='height:28px;flex:1'><div title='Erase' class='a'><img class='icon' src='/img/erase.svg' /></div></div>\n                        <div style='height:28px;flex:1'><div title='Measure' class='a'><img class='icon' src='/img/ruler.svg' /></div></div>\n                        <div style='height:28px;flex:1'><div title='Adjust' class='a'><img class='icon' src='/img/adjust.svg' /></div></div>\n                        <div style='height:28px;flex:1'><div title='Eyedrop' class='a'><img class='icon' src='/img/eyedropper.svg' /></div></div>\n                    </div>\n                    <!-- fill/undo -->\n                    <div style='display:flex'>\n                        <div style='height:28px;flex:1'><div id='color' title='Color' style='height:22px;background-color:#f00' class='a push'></div></div>\n                        <div style='height:28px;flex:1'><div id='fill' class='a toggle'><img class='icon' src='/img/fill.svg' /></div></div>\n                        <div style='height:28px;flex:1'><div id='undo' title='Undo' class='a push'><img class='icon' src='/img/undo.svg' /></div></div>\n                        <div style='height:28px;flex:1'><div id='save' title='Save' class='a push'><img class='icon' src='/img/floppy.svg' /></div></div>\n                    </div>\n                </div>\n            </div>\n        </div>\n        <!-- pen size -->\n        <div style='flex:0 0 28px'>\n            <div style='display:flex' class='chose' id='penSize'>\n                <div style='height:28px;flex:1'><div title='1' class='a pressed'>1</div></div>\n                <div style='height:28px;flex:1'><div title='2' class='a'>2</div></div>\n                <div style='height:28px;flex:1'><div title='3' class='a'>3</div></div>\n                <div style='height:28px;flex:1'><div title='5' class='a'>5</div></div>\n                <div style='height:28px;flex:1'><div title='10' class='a'>10</div></div>\n                <div style='height:28px;flex:1'><div title='15' class='a'>15</div></div>\n            </div>\n        </div>\n        <!-- chat -->\n        <div id='chatBlock' style='flex:1 1 110px'>\n            <div id='chatBlockContent' style='display:flex;flex-direction:column'>\n                <div style='flex:0 0 28px'>\n                    <div id='chat'>Chat (disconnected)</div>\n                </div>\n                <div class='a' id='log' style='flex:1 0 56px;text-align:left;background-color:#333;padding:5px;vertical-align:top'>\n                </div>\n                <div style='flex:1 1 5px'>\n                    <input id='msg' type='text' style='width:100%;box-sizing:border-box'>\n                </div>\n            </div>\n        </div>\n    </div>\n\n</div>\n\n<!-- Loading indicator -->\n<div id='loadingIndicator'>\n    <p>Loading...</p>\n    <div class='disc'></div>\n</div>\n<!-- End Loading indicator -->\n\n<!-- Labels -->\n<div id='labelset'>\n    <div style='z-index:23;text-align:right'>\n        <img id='labels-close' class='button' src='/img/times-circle.svg'/>\n    </div>\n\n    <ul style='padding-left:1rem'>\n        <li>\n            <b>Label Set</b><br/>\n            <span id='labels-name'></span>\n        </li>\n        <li>\n            <b>Labels</b><br/>\n            <div id='label-list'>\n            </div>\n            <div id='label-template'>\n                <div class='label-color'></div>\n                <span class='label-name'>Label Name</name>\n            </div>\n        </li>\n    </ul>\n</div>\n<!-- End Labels -->\n"
+    "toolsFull": "<div id='tools-side' style='display:block'>\n    <div id='tools-minimized'>\n        <div>\n            <img style='width:28px;position:absolute;top:10px;left:10px' src='/img/bars.svg' />\n        </div>\n    </div>\n\n    <div id='tools-maximized' style='display:flex;flex-direction:column;height:100%'>\n\n        <!-- tools hide/show, display left/right -->\n        <div id='headerBlock' style='flex:0 1 28px;background:#333'>\n            <div style='display:flex'>\n                <div style='flex:0 0 28px'><div id='display-minimize' title='Minimize toolbar' class='a push noBorder'><img class='icon' src='/img/times-circle.svg' /></div></div>\n                <div style='flex:1 1 auto'></div>\n                <div style='flex:0 0 28px'><div id='display-left' title='Display to the left' class='a push noBorder'><img class='icon' src='/img/caret-square-o-left.svg' /></div></div>\n                <div style='flex:0 0 28px'><div id='display-right' title='Display to the right' class='a push noBorder'><img class='icon' src='/img/caret-square-o-right.svg' /></div></div>\n            </div>\n        </div>\n\n        <!-- slider -->\n        <div id='sliderBlock' style='flex:0 0 28px'>\n            <div style='display:flex'>\n                <div style='flex:0 0 28px'>\n                    <div id='prev' class='a push'>-</div>\n                </div>\n                <div style='flex:1 0 28px;display:flex'>\n                    <div style='flex:1;position:relative'>\n                        <div id='slice' class='slider' data-max=100 data-val=0 style='position:absolute;height:100%;margin-left:10px;width:calc(100% - 20px)'>\n                            <div class='track' style='position:absolute;left:0;top:50%;width:100%;border-top:1px solid #fff;padding:0;display:inline-block'></div>\n                            <div class='thumb' style='position:absolute;left:0;top:50%;transform:translate(-10px,-10px);border-radius:10px;padding:0;width:20px;height:20px;background:#fff;display:inline-block'></div>\n                        </div>\n                    </div>\n                </div>\n                <div style='flex:0 0 28px'>\n                    <div id='next' class='a push'>+</div>\n                </div>\n            </div>\n        </div>\n\n        <!-- buttons -->\n        <div id='buttonsBlock' style='flex:0 0 auto'>\n            <div style='display:flex;flex-wrap:wrap'>\n\n                <div style='flex:1 0 250px;width:50px'>\n                    <div id='plane' style='display:flex' class='chose'>\n                        <div style='flex:1'><div title='sag' class='a pressed'>Sag</div></div>\n                        <div style='flex:1'><div title='cor' class='a'>Cor</div></div>\n                        <div style='flex:1'><div title='axi' class='a'>Axi</div></div>\n                    </div>\n                    <div style='display:flex'>\n                        <div style='flex:1'><div id='fullscreen' title='Full screen' class='a toggle'><img class='icon' src='/img/fullscreen.svg' /></div></div>\n                        <div style='flex:1'><div id='3drender' title='3D render' class='a push'><img class='icon' src='/img/3drender.svg' /></div></div>\n                        <div style='flex:1'><div id='link' title='Link' class='a push'><img class='icon' src='/img/link.svg' /></div></div>\n                        <div style='flex:1'><div id='bubble' title='Chat' class='a toggle pressed'><img class='icon' src='/img/chat.svg' /></div></div>\n                        <div style='flex:1'><div id='upload' title='Upload' class='a push'><img class='icon' src='/img/upload.svg' /></div></div>\n                        <div style='flex:1'><div id='download' title='Download' class='a push'><img class='icon' src='/img/download.svg' /></div></div>\n                        <div style='flex:1'><div id='precise' title='Precise cursor' class='a toggle'><img class='icon' src='/img/preciseCursor.svg' /></div></div>\n                    </div>\n                </div>\n\n                <div style='flex:1 0 250px;width:50px'>\n                    <div id='paintTool' style='display:flex' class='chose'>\n                        <div style='flex:1'><div title='Show' class='a pressed'><img class='icon' src='/img/show.svg' /></div></div>\n                        <div style='flex:1'><div title='Paint' class='a'><img class='icon' src='/img/paint.svg' /></div></div>\n                        <div style='flex:1'><div title='Erase' class='a'><img class='icon' src='/img/erase.svg' /></div></div>\n                        <div style='flex:1'><div title='Measure' class='a'><img class='icon' src='/img/ruler.svg' /></div></div>\n                        <div style='flex:1'><div title='Adjust' class='a'><img class='icon' src='/img/adjust.svg' /></div></div>\n                        <div style='flex:1'><div title='Eyedrop' class='a'><img class='icon' src='/img/eyedropper.svg' /></div></div>\n                    </div>\n                    <div style='display:flex'>\n                        <div style='flex:1'><div id='color'><div id='color' title='Color' style='height:24px;background:#f00' class='a push'></div></div></div>\n                        <div style='flex:1'><div id='fill' class='a toggle'><img class='icon' src='/img/fill.svg' /></div></div>\n                        <div style='flex:1'><div id='undo' title='Undo' class='a push'><img class='icon' src='/img/undo.svg' /></div></div>\n                        <div style='flex:1'><div id='save' title='Save' class='a push'><img class='icon' src='/img/floppy.svg' /></div></div>\n                    </div>\n                </div>\n\n            </div>\n        </div>\n\n        <!-- pen size -->\n        <div id='penSizeBlock' style='flex:0 0 28px'>\n            <div style='display:flex' class='chose' id='penSize'>\n                <div style='flex:1'><div title='1' class='a pressed'>1</div></div>\n                <div style='flex:1'><div title='2' class='a'>2</div></div>\n                <div style='flex:1'><div title='3' class='a'>3</div></div>\n                <div style='flex:1'><div title='5' class='a'>5</div></div>\n                <div style='flex:1'><div title='10' class='a'>10</div></div>\n                <div style='flex:1'><div title='15' class='a'>15</div></div>\n            </div>\n        </div>\n\n        <!-- chat -->\n        <div id='chatBlock' style='flex:1 1 auto;position:relative;display:flex'>\n            <div id='chatBlockContent' style='flex:1;display:flex;flex-direction:column'>\n                <div style='flex:0 0 28px'><div id='chat' class='label'>Chat (disconnected)</div></div>\n                <div style='flex:1 1 58px;display:flex'><div id='log' class='a' style='flex:1;height:auto'></div></div>\n                <div style='flex:0 0 28px'><input id='msg' type='text' style='width:100%'></div>\n            </div>\n        </div>\n    </div>\n\n</div>\n\n<!-- Loading indicator -->\n<div id='loadingIndicator'>\n    <p>Loading...</p>\n    <div class='disc'></div>\n</div>\n<!-- End Loading indicator -->\n\n<!-- Labels -->\n<div id='labelset'>\n    <div style='z-index:23;text-align:right'>\n        <img id='labels-close' class='button' src='/img/times-circle.svg'/>\n    </div>\n\n    <ul style='padding-left:1rem'>\n        <li>\n            <b>Label Set</b><br/>\n            <span id='labels-name'></span>\n        </li>\n        <li>\n            <b>Labels</b><br/>\n            <div id='label-list'>\n            </div>\n            <div id='label-template'>\n                <div class='label-color'></div>\n                <span class='label-name'>Label Name</name>\n            </div>\n        </li>\n    </ul>\n</div>\n<!-- End Labels -->\n",
+    "toolsLight": "<div id='tools-side' style='display:block'>\n    <div id='tools-minimized'>\n        <div>\n            <img style='width:28px;position:absolute;top:10px;left:10px' src='/img/bars.svg' />\n        </div>\n    </div>\n    \n    <div id='tools-maximized' style='display:flex;flex-direction:column;height:100%'>\n        <!-- tools hide/show, display left/right -->\n        <div id='headerBlock' style='flex:0 1 28px;background:#333'>\n\n            <div style='display:flex'>\n                <div style='flex:0 0 28px'><div id='display-minimize' title='Minimize toolbar' class='a push noBorder'><img class='icon' src='/img/times-circle.svg' /></div></div>\n                <div style='flex:1 1 auto'></div>\n                <div style='flex:0 0 28px'><div id='display-left' title='Display to the left' class='a push noBorder'><img class='icon' src='/img/caret-square-o-left.svg' /></div></div>\n                <div style='flex:0 0 28px'><div id='display-right' title='Display to the right' class='a push noBorder'><img class='icon' src='/img/caret-square-o-right.svg' /></div></div>\n            </div>\n\n        </div>\n\n        <!-- slider -->\n        <div id='sliderBlock' style='flex:0 0 28px'>\n            <div style='display:flex'>\n                <div style='flex:0 0 28px'>\n                    <div id='prev' class='a push'>-</div>\n                </div>\n                <div style='flex:1 0 28px;display:flex'>\n                    <div style='flex:1;position:relative'>\n                        <div id='slice' class='slider' data-max=100 data-val=0 style='position:absolute;height:100%;margin-left:10px;width:calc(100% - 20px)'>\n                            <div class='track' style='position:absolute;left:0;top:50%;width:100%;border-top:1px solid #fff;padding:0;display:inline-block'></div>\n                            <div class='thumb' style='position:absolute;left:0;top:50%;transform:translate(-10px,-10px);border-radius:10px;padding:0;width:20px;height:20px;background:#fff;display:inline-block'></div>\n                        </div>\n                    </div>\n                </div>\n                <div style='flex:0 0 28px'>\n                    <div id='next' class='a push'>+</div>\n                </div>\n            </div>\n        </div>\n\n        <!-- buttons -->\n        <div id='buttonsBlock' style='flex:0 0 auto'>\n            <div style='display:flex;flex-wrap:wrap'>\n\n                <div style='flex:1 0 150px;width:50px'>\n                    <div id='plane' style='display:flex' class='chose'>\n                        <div style='flex:1'><div title='sag' class='a pressed'>Sag</div></div>\n                        <div style='flex:1'><div title='cor' class='a'>Cor</div></div>\n                        <div style='flex:1'><div title='axi' class='a'>Axi</div></div>\n                    </div>\n                </div>\n\n                <div style='flex:1 0 150px;width:50px'>\n                    <div style='display:flex'>\n                        <div style='flex:1'><div id='fullscreen' title='Full screen' class='a toggle'><img class='icon' src='/img/fullscreen.svg' /></div></div>\n                        <div style='flex:1'><div id='3drender' title='3D render' class='a push'><img class='icon' src='/img/3drender.svg' /></div></div>\n                        <div style='flex:1'><div id='link' title='Link' class='a push'><img class='icon' src='/img/link.svg' /></div></div>\n                    </div>\n                </div>\n\n                <div style='flex:1 0 150px;width:50px'>\n                    <div id='paintTool' style='display:flex' class='chose'>\n                        <div style='flex:1'><div title='Show' class='a pressed'><img class='icon' src='/img/show.svg' /></div></div>\n                        <div style='flex:1'><div title='Adjust' class='a'><img class='icon' src='/img/adjust.svg' /></div></div>\n                        <div style='flex:1'><div title='Eyedrop' class='a'><img class='icon' src='/img/eyedropper.svg' /></div></div>\n                    </div>\n                </div>\n\n            </div>\n        </div>\n    </div>\n\n</div>\n\n<!-- Loading indicator -->\n<div id='loadingIndicator'>\n    <p>Loading...</p>\n    <div class='disc'></div>\n</div>\n<!-- End Loading indicator -->\n"
   },
   "css": {
-    "atlasMaker": "/* atlasMaker\n-----------------------------------------------------------------------------*/\n#atlasMaker {\n    position: relative;\n    background-color:#222;\n    color:white;\n    height:100%;\n    margin:0px;\n    font: 14px \"Lucida Grande\", \"Lucida Sans Unicode\", Helvetica, Arial, Verdana, sans-serif;\n    -webkit-font-smoothing: antialiased;\n    -moz-font-smoothing: antialiased;\n}\n#resizable {\n    position: relative;\n}\n#text-layer {\n    position: absolute;\n    bottom:0px;\n    right:0px;\n    width:100%;\n    height:100%;\n    z-index:11;\n    box-sizing: border-box;\n    padding: 5px;\n    pointer-events: none;\n}\n#vector-layer {\n    position: absolute;\n    bottom:0px;\n    right:0px;\n    width:100%;\n    height:100%;\n    z-index:11;\n    pointer-events: none;\n}\n#canvas {\n    width:100%;\n    height:100%;\n    background-color:black;\n    cursor:none;\n\n    image-rendering:optimizeSpeed;             /* Legal fallback */\n    image-rendering:-moz-crisp-edges;          /* Firefox        */\n    image-rendering:-o-crisp-edges;            /* Opera          */\n    image-rendering:-webkit-optimize-contrast; /* Safari         */\n    image-rendering:optimize-contrast;         /* CSS3 Proposed  */\n    image-rendering:crisp-edges;               /* CSS4 Proposed  */\n    image-rendering:pixelated;                 /* CSS4 Proposed  */\n    -ms-interpolation-mode:nearest-neighbor;   /* IE8+           */\n}\n#tools-side {\n    width:100%;\n    position:relative;\n    pointer-events:none;\n}\n#tools-side #tools-minimized,\n#tools-side #tools-maximized {\n    pointer-events: all;\n}\n.atlasMaker-fullscreen #atlasMaker {\n    position:fixed;\n    top:0px;\n    left:0px;\n    /*width: calc( 100% - 240px );*/\t/* width of tools */\n    width: 100%;\n    height:100%;\n    z-index:10;\n}\n.atlasMaker-fullscreen #tools-side {\n    position:fixed;\n    top:0px;\n    width:240px;\n    height:100%;\n    z-index:11;\n}\n.atlasMaker-fullscreen[data-toolbarDisplay=left] #tools-side {\n    left: 0;\n}\n.atlasMaker-fullscreen[data-toolbarDisplay=right] #tools-side {\n    right: 0;\n}\n.atlasMaker-fullscreen[data-toolbarDisplay=left] #text-layer {\n    text-align: right;\n}\n.atlasMaker-fullscreen[data-toolbarDisplay=right] #text-layer {\n    text-align: left;\n}\n\n#tools-side #tools-minimized div {\n    display:inline-block;\n    width:48px;\n    height:48px;\n    border: thin solid #777;\n    border-radius:48px;\n    background-color:#333;\n    position:fixed;\n    margin: 10px;\n    cursor: pointer;\n}\n.atlasMaker-fullscreen[data-toolbarDisplay=left] #tools-minimized div {\n    top: 0;\n    left: 0;\n}\n.atlasMaker-fullscreen[data-toolbarDisplay=right] #tools-minimized div {\n    top: 0;\n    right: 0;\n}\n\n#toolbar-header {\n    display: none;\n}\n.atlasMaker-fullscreen #toolbar-header {\n    display: block;\n}\n\n#log {\n    -webkit-user-select:all;\n    -moz-user-select:all;\n    user-select:all;\n}\n#toolbar-header {\n    margin-bottom:5px;\n}\n#toolbar-header .a {\n    border:none;\n}\n\n/* cursor\n------------------------------- */\n#atlasMaker .drawingcursor {\n    border: 1px solid #F00;\n    position: absolute;\n    pointer-events:none;\n}\n#atlasMaker .hidepaintcursor {\n    display: none;\n}\n\n#cursor {\n    pointer-events: none;\n    position:absolute;\n    top:200px;\n    left:200px;\n    border:thin solid white;\n    color:red;\n    z-index:20;\n}\n#finger {\n    display:none;\n}\n.display-mode #finger {\n    display:none;\n}\n.edit-mode #finger.touchDevice {\n    position:absolute;\n    top:200px;\n    left:250px;\n    width:40px;\n    height:40px;\n    border-style:solid;\n    border-width:4px;\n    border-radius:50%;\n    display:inline;\n}\n#finger.move {\n    border-color:yellow;\n}\n#finger.draw {\n    border-color:green;\n}\n#finger.configure {\n    border-color:orange;\n}\n\n/* chat log\n----------------------- */\n\n.atlasMaker-fullscreen #chatBlockContent {\n    height:100%\n}\n#log {\n    width: auto;\n    line-height:1;\n    border: 1px solid #777;\n    overflow: auto;\n    background-color: #333;\n}\n#msg {\n    color: black;\n    box-sizing: border-box;\n}\n\n#atlasMaker .middle {\n    position:absolute;\n    top:50%;\n    left:50%;\n    transform: translate(-50%,-50%);\n}\n\n/* Label set\n------------------------ */\n#labelset {\n    display:none;\n    overflow:scroll;\n    position:fixed;\n    top:0px;\n    left:0px;\n    width:100%;\n    height:100%;\n    text-align:left;\n    background-color:#333;\n    z-index:21;\n}\n.label-color {\n    vertical-align:middle;\n    margin:6px;\n    display:inline-block;\n    width:40px;\n    height:30px;\n    background-color:rgb(0,0,0);\n}\n#label-template {\n    display:none;\n}\n#label-list {\n    display:flex;\n    flex-wrap:wrap;\n     text-align:left;\n }",
+    "atlasMaker": "/* atlasMaker\n-----------------------------------------------------------------------------*/\n#atlasMaker {\n    position: relative;\n    background-color:#222;\n    color:white;\n    height:100%;\n    margin:0px;\n    font: 14px \"Lucida Grande\", \"Lucida Sans Unicode\", Helvetica, Arial, Verdana, sans-serif;\n    -webkit-font-smoothing: antialiased;\n    -moz-font-smoothing: antialiased;\n}\n#resizable {\n    position: relative;\n}\n#text-layer {\n    position: absolute;\n    bottom:0px;\n    right:0px;\n    width:100%;\n    height:100%;\n    z-index:11;\n    box-sizing: border-box;\n    padding: 5px;\n    pointer-events: none;\n}\n#vector-layer {\n    position: absolute;\n    bottom:0px;\n    right:0px;\n    width:100%;\n    height:100%;\n    z-index:11;\n    pointer-events: none;\n}\n#canvas {\n    width:100%;\n    height:100%;\n    background-color:black;\n    cursor:none;\n\n    image-rendering:optimizeSpeed;             /* Legal fallback */\n    image-rendering:-moz-crisp-edges;          /* Firefox        */\n    image-rendering:-o-crisp-edges;            /* Opera          */\n    image-rendering:-webkit-optimize-contrast; /* Safari         */\n    image-rendering:optimize-contrast;         /* CSS3 Proposed  */\n    image-rendering:crisp-edges;               /* CSS4 Proposed  */\n    image-rendering:pixelated;                 /* CSS4 Proposed  */\n    -ms-interpolation-mode:nearest-neighbor;   /* IE8+           */\n}\n#tools-side {\n    width:100%;\n    position:relative;\n    pointer-events:none;\n}\n#tools-side #tools-minimized,\n#tools-side #tools-maximized {\n    pointer-events: all;\n}\n.atlasMaker-fullscreen #atlasMaker {\n    position:fixed;\n    top:0px;\n    left:0px;\n    /*width: calc( 100% - 240px );*/\t/* width of tools */\n    width: 100%;\n    height:100%;\n    z-index:10;\n}\n.atlasMaker-fullscreen #tools-side {\n    position:fixed;\n    top:0px;\n    width:250px;\n    height:100%;\n    z-index:11;\n}\n.atlasMaker-fullscreen[data-toolbarDisplay=left] #tools-side {\n    left: 0;\n}\n.atlasMaker-fullscreen[data-toolbarDisplay=right] #tools-side {\n    right: 0;\n}\n.atlasMaker-fullscreen[data-toolbarDisplay=left] #text-layer {\n    text-align: right;\n}\n.atlasMaker-fullscreen[data-toolbarDisplay=right] #text-layer {\n    text-align: left;\n}\n\n#tools-side #tools-minimized div {\n    display:inline-block;\n    width:48px;\n    height:48px;\n    border: thin solid #777;\n    border-radius:48px;\n    background-color:#333;\n    position:fixed;\n    margin: 10px;\n    cursor: pointer;\n}\n.atlasMaker-fullscreen[data-toolbarDisplay=left] #tools-minimized div {\n    top: 0;\n    left: 0;\n}\n.atlasMaker-fullscreen[data-toolbarDisplay=right] #tools-minimized div {\n    top: 0;\n    right: 0;\n}\n\n#headerBlock {\n    display: none;\n}\n.atlasMaker-fullscreen #headerBlock {\n    display: block;\n}\n\n#log {\n    -webkit-user-select:all;\n    -moz-user-select:all;\n    user-select:all;\n}\n#headerBlock {\n    margin-bottom:5px;\n}\n#headerBlock .a {\n    border:none;\n}\n\n/* cursor\n------------------------------- */\n#atlasMaker .drawingcursor {\n    border: 1px solid #F00;\n    position: absolute;\n    pointer-events:none;\n}\n#atlasMaker .hidepaintcursor {\n    display: none;\n}\n\n#cursor {\n    pointer-events: none;\n    position:absolute;\n    top:200px;\n    left:200px;\n    border:thin solid white;\n    color:red;\n    z-index:20;\n}\n#finger {\n    display:none;\n}\n.display-mode #finger {\n    display:none;\n}\n.edit-mode #finger.touchDevice {\n    position:absolute;\n    top:200px;\n    left:250px;\n    width:40px;\n    height:40px;\n    border-style:solid;\n    border-width:4px;\n    border-radius:50%;\n    display:inline;\n}\n#finger.move {\n    border-color:yellow;\n}\n#finger.draw {\n    border-color:green;\n}\n#finger.configure {\n    border-color:orange;\n}\n\n/* chat log\n----------------------- */\n#log {\n    text-align:left;\n    overflow: auto;\n    background:#333;\n}\n#msg {\n    color: black;\n}\n\n/* Label set\n------------------------ */\n#labelset {\n    display:none;\n    overflow:scroll;\n    position:fixed;\n    top:0px;\n    left:0px;\n    width:100%;\n    height:100%;\n    text-align:left;\n    background-color:#333;\n    z-index:21;\n}\n.label-color {\n    vertical-align:middle;\n    margin:6px;\n    display:inline-block;\n    width:40px;\n    height:30px;\n    background-color:rgb(0,0,0);\n}\n#label-template {\n    display:none;\n}\n#label-list {\n    display:flex;\n    flex-wrap:wrap;\n     text-align:left;\n }",
     "loading-style": "/* Loading indicator */\n@-webkit-keyframes loading {\n    0% {left: 40%;}\n    50% {left: 60%;}\n    100% {left: 40%;}\n}\n#loadingIndicator {\n    display:none;\n    position:absolute;\n    left:0;\n    top:0;\n    width:100%;\n    height:100%;\n    background:rgba(0,0,0,0.5);\n}\n#loadingIndicator .disc {\n    position:absolute;\n    left:50%;\n    transform:translate( -50% , 0 );\n    width:8px;\n    height:8px;\n    border-radius:8px;\n    background:white;\n    -webkit-animation-name: loading;\n    -webkit-animation-duration: 1s;\n    -webkit-animation-iteration-count: infinite;\n    -webkit-animation-timing-function: ease-in-out;\n    animation-name: loading;\n    animation-duration: 1s;\n    animation-iteration-count: infinite;\n    animation-timing-function: ease-in-out;\n}\n",
-    "ui": "/* User interface widgets: buttons, sliders\n-----------------------------------------------------------------------------*/\n\n.a {\n    border:thin solid #777;\n    border-radius:3px;\n    margin:1px;\n    text-align:center;\n    height: 22px;\n}\n.a:hover {\n    opacity:0.5;\n    -webkit-user-select:none;\n    -moz-user-select:none;\n    user-select:none;\n}\n.pressed {\n    background-color:#555 !important;\n}\n.icon {\n    width:16px;\n    vertical-align:middle;\n}\n\n/* svg buttons\n----------------------- */\n.pushButton {\n    border:1px solid #ddd;\n    border-radius:6px;\n    color:#ddd;\n    text-align:center;\n    -webkit-appearance:none;\n    cursor: pointer;\n}\nimg.button {\n    width:0.9rem;\n    height:0.9rem;\n    margin:8px 2px;\n    vertical-align:middle;\n    cursor:pointer;\n}\nimg.button:hover {\n    opacity:0.5;\n}\nimg.icon {\n    width:1rem;\n    height:1rem;\n    margin:4px 2px;\n    vertical-align:middle;\n    cursor:pointer;\n}\n\n\nselect {\n    border:none;\n    background:none; /* no color, no decoration */\n    color:white;\n    -webkit-appearance: none;\n    -moz-appearance: none;\n    appearance: none;\n    width: 100px;\n    text-overflow: ellipsis;\n}\n"
+    "ui": "/* User interface widgets: buttons, sliders\n-----------------------------------------------------------------------------*/\n\n* {\n    box-sizing: border-box;\n}\n.a {\n    border:thin solid #777;\n    border-radius:3px;\n    margin:1px;\n    text-align:center;\n    height: 24px;\n    position: relative;\n    color: white;\n    user-select: none;\n}\n.a:hover {\n    opacity:0.5;\n    -webkit-user-select:none;\n    -moz-user-select:none;\n    user-select:none;\n}\n.label {\n    color: white;\n    user-select: none;\n}\n.pressed {\n    background-color:#555 !important;\n}\n.icon {\n    width:16px;\n    vertical-align:middle;\n    user-select: none;\n}\n\n/* svg buttons\n----------------------- */\n.pushButton {\n    border:1px solid #ddd;\n    border-radius:6px;\n    color:#ddd;\n    text-align:center;\n    -webkit-appearance:none;\n    cursor: pointer;\n}\n.chose {\n    border-radius:3px;\n    background:#777;\n    margin:2px;\n}\n.chose .a {\n    border: none;\n    border-radius:0px;\n    height:22px;\n    background: #222;\n}\nimg.button {\n    width:0.9rem;\n    height:0.9rem;\n    margin:8px 2px;\n    vertical-align:middle;\n    cursor:pointer;\n}\nimg.button:hover {\n    opacity:0.5;\n}\nimg.icon {\n    width:1rem;\n    height:1rem;\n    position: absolute;\n    top:50%;\n    left:50%;\n    transform:translate(-50%, -50%);\n    cursor:pointer;\n}\n\n.noBorder {\n    border: none;\n}\n\n.mui-select {\n    border:none;\n    background:none; /* no color, no decoration */\n    color:white;\n    -webkit-appearance: none;\n    -moz-appearance: none;\n    appearance: none;\n    outline: none;\n    cursor: pointer;\n}\n"
   },
   "svg": {
     "3drender": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n<svg\n   xmlns:dc=\"http://purl.org/dc/elements/1.1/\"\n   xmlns:cc=\"http://creativecommons.org/ns%23\"\n   xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns%23\"\n   xmlns:svg=\"http://www.w3.org/2000/svg\"\n   xmlns=\"http://www.w3.org/2000/svg\"\n   xmlns:sodipodi=\"http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd\"\n   xmlns:inkscape=\"http://www.inkscape.org/namespaces/inkscape\"\n   id=\"svg2\"\n   version=\"1.1\"\n   inkscape:version=\"0.91 r13725\"\n   sodipodi:docname=\"3drender.svg\"\n   width=\"1536\"\n   height=\"1536\">\n  <metadata\n     id=\"metadata10\">\n    <rdf:RDF>\n      <cc:Work\n         rdf:about=\"\">\n        <dc:format>image/svg+xml</dc:format>\n        <dc:type\n           rdf:resource=\"http://purl.org/dc/dcmitype/StillImage\" />\n        <dc:title />\n      </cc:Work>\n    </rdf:RDF>\n  </metadata>\n  <defs\n     id=\"defs8\" />\n  <sodipodi:namedview\n     pagecolor=\"%23ffffff\"\n     bordercolor=\"%23666666\"\n     borderopacity=\"1\"\n     objecttolerance=\"10\"\n     gridtolerance=\"10\"\n     guidetolerance=\"10\"\n     inkscape:pageopacity=\"0\"\n     inkscape:pageshadow=\"2\"\n     inkscape:window-width=\"1672\"\n     inkscape:window-height=\"1132\"\n     id=\"namedview6\"\n     showgrid=\"false\"\n     fit-margin-top=\"0\"\n     fit-margin-left=\"0\"\n     fit-margin-right=\"0\"\n     fit-margin-bottom=\"0\"\n     inkscape:zoom=\"0.33312556\"\n     inkscape:cx=\"674.23382\"\n     inkscape:cy=\"852.37234\"\n     inkscape:window-x=\"0\"\n     inkscape:window-y=\"0\"\n     inkscape:window-maximized=\"0\"\n     inkscape:current-layer=\"svg2\" />\n  <path\n     inkscape:connector-curvature=\"0\"\n     id=\"path4165\"\n     style=\"fill:%23ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none\"\n     d=\"M 1415.7505,1148.2572 768.01905,1528.505 120.2443,1148.2572 l 0,-760.48132 647.77475,-380.290436 647.73145,380.290436 0,760.48132 z\" />\n  <path\n     inkscape:connector-curvature=\"0\"\n     id=\"path4169\"\n     style=\"fill:%23000000;fill-opacity:0.69803898;fill-rule:nonzero;stroke:none\"\n     d=\"m 1415.7505,1148.2572 0,-760.48132 -647.73145,380.24776 0,760.48136 647.73145,-380.2478 z\" />\n  <path\n     inkscape:connector-curvature=\"0\"\n     id=\"path4171\"\n     style=\"fill:%23000000;fill-opacity:0.39607801;fill-rule:nonzero;stroke:none\"\n     d=\"m 120.2443,1148.2572 0,-760.48132 647.77475,380.24776 0,760.48136 -647.77475,-380.2478 z\" />\n  <g\n     transform=\"matrix(14.227102,0,0,14.227102,-1349.2584,-231.09805)\"\n     id=\"g4177\">\n    <path\n       inkscape:connector-curvature=\"0\"\n       id=\"path4179\"\n       style=\"fill:none;stroke:%23ffffff;stroke-width:1.60000002;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1\"\n       d=\"M 194.348,43.5 148.82,70.227 103.289,43.5\" />\n  </g>\n</svg>\n",
@@ -5177,7 +5172,17 @@ var AtlasMakerWidget = {
 
         // Init the toolbar
         // configure and append tools
-        let svg, tools = me.html.tools;
+        let svg, tools;
+
+        if(typeof me.useFullTools === 'undefined') {
+            me.useFullTools = true;
+        }
+        if(me.useFullTools) {
+            tools = me.html.toolsFull;
+        } else {
+            tools = me.html.toolsLight;
+        }
+
         for(svg in me.svg) {
             tools = tools.replace(
                 new RegExp('/img/' + svg + '.svg', 'g'),
@@ -5654,81 +5659,80 @@ var BrainBox={
             // Copy MRI from source
             $("#msgLog").html("<p>Downloading from source to server...");
 
-          // Configure MRI into atlasMaker
-          if(param.info.success===false) {
-              date=new Date();
-              $("#msgLog").append("<p>ERROR: "+param.info.message+".");
-              console.log("<p>ERROR: "+param.info.message+".");
-              reject("ERROR: "+param.info.message);
+            // Configure MRI into atlasMaker
+            if(param.info.success===false) {
+                date=new Date();
+                $("#msgLog").append("<p>ERROR: "+param.info.message+".");
+                console.log("<p>ERROR: "+param.info.message+".");
+                reject("ERROR: "+param.info.message);
 
-              return;
-          }
-          BrainBox.info=param.info;
+                return;
+            }
+            BrainBox.info=param.info;
 
-          var arr=param.url.split("/");
-          var name=arr[arr.length-1];
-          date=new Date();
-          $("#msgLog").append("<p>Downloading from server...</p>");
+            var arr=param.url.split("/");
+            var name=arr[arr.length-1];
+            date=new Date();
+            $("#msgLog").append("<p>Downloading from server...</p>");
 
-          /**
-           * @todo Check it these two lines are of any use...
-           */
-          param.dim=BrainBox.info.dim; // this allows to keep dim and pixdim through annotation changes
-          param.pixdim=BrainBox.info.pixdim;
+            /**
+            * @todo Check it these two lines are of any use...
+            */
+            param.dim=BrainBox.info.dim; // this allows to keep dim and pixdim through annotation changes
+            param.pixdim=BrainBox.info.pixdim;
 
-          // re-instance stored configuration
-          var stored=localStorage.AtlasMaker;
-          if(stored) {
-              var stored=JSON.parse(stored);
-              if(stored.version && stored.version==BrainBox.version) {
-                  for(var i=0;i<stored.history.length;i++) {
-                      if(stored.history[i].url==param.url) {
-                          AtlasMakerWidget.User.view=stored.history[i].view;
-                          AtlasMakerWidget.User.slice=stored.history[i].slice;
-                          break;
-                      }
-                  }
-              }
-          }
+            // re-instance stored configuration
+            var stored=localStorage.AtlasMaker;
+            if(stored) {
+                var stored=JSON.parse(stored);
+                if(stored.version && stored.version==BrainBox.version) {
+                    for(var i=0;i<stored.history.length;i++) {
+                        if(stored.history[i].url==param.url) {
+                            AtlasMakerWidget.User.view=stored.history[i].view;
+                            AtlasMakerWidget.User.slice=stored.history[i].slice;
+                            break;
+                        }
+                    }
+                }
+            }
 
-          // enact configuration in param, eventually overriding the stored one
-          if(param.view) {
-              AtlasMakerWidget.User.view=param.view;
-              AtlasMakerWidget.User.slice=null; // this will set the slider to the middle slice in case no slice were specified
-          }
-          if(param.slice)
-              AtlasMakerWidget.User.slice=param.slice;
+            // enact configuration in param, eventually overriding the stored one
+            if(param.view) {
+                AtlasMakerWidget.User.view=param.view;
+                AtlasMakerWidget.User.slice=null; // this will set the slider to the middle slice in case no slice were specified
+            }
+            if(param.slice)
+                AtlasMakerWidget.User.slice=param.slice;
 
-          if(param.fullscreen) {
-              AtlasMakerWidget.fullscreen=param.fullscreen;
-          } else {
-              AtlasMakerWidget.fullscreen=false;
-          }
+            if(param.fullscreen) {
+                AtlasMakerWidget.fullscreen=param.fullscreen;
+            } else {
+                AtlasMakerWidget.fullscreen=false;
+            }
 
-          AtlasMakerWidget.configureAtlasMaker(BrainBox.info,index)
-          .then(function(info2) {
-              BrainBox.info = info2;
+            AtlasMakerWidget.configureAtlasMaker(BrainBox.info,index)
+            .then(function(info2) {
+                BrainBox.info = info2;
 
-              // check 'edit' access
-              var accessStr = BrainBox.info.mri.atlas[index].access;
-              var accessLvl = BrainBox.accessLevels.indexOf(accessStr);
-              if(accessLvl<0 || accessLvl>BrainBox.accessLevels.length-1)
-                  accessLvl = 0;
-              if(accessLvl>=2)
-                  AtlasMakerWidget.editMode = 1;
-              else
-                  AtlasMakerWidget.editMode = 0;
+                // check 'edit' access
+                var accessStr = BrainBox.info.mri.atlas[index].access;
+                var accessLvl = BrainBox.accessLevels.indexOf(accessStr);
+                if(accessLvl<0 || accessLvl>BrainBox.accessLevels.length-1)
+                    accessLvl = 0;
+                if(accessLvl>=2)
+                    AtlasMakerWidget.editMode = 1;
+                else
+                    AtlasMakerWidget.editMode = 0;
+                resolve({success: true});
 
-              resolve({success: true});
+                return;
+            })
+            .catch( (err) => {
+                console.log("ERROR:",err);
+                reject("ERROR: "+err);
 
-              return;
-          })
-          .catch( (err) => {
-              console.log("ERROR:",err);
-              reject("ERROR: "+err);
-
-              return;
-          });
+                return;
+            });
         });
 
         return pr;
@@ -5853,6 +5857,21 @@ var BrainBox={
         return arr;
     },
     /**
+     * @function selectAnnotation
+     */
+    selectAnnotation: function selectAnnotation(annName, annProject) {
+        var l=BrainBox.traceLog(selectAnnotation);if(l)console.log(l);
+        let i;
+        const atlas=BrainBox.info.mri.atlas;
+
+        for(i=0;i<atlas.length;i++) {
+            if(atlas[i].name === annName && atlas[i].project === annProject) {
+                AtlasMakerWidget.configureAtlasMaker(BrainBox.info,i);
+                return;
+            }
+        }
+    },
+    /**
      * @function selectAnnotationTableRow
      */
     selectAnnotationTableRow: function selectAnnotationTableRow(index, param) {
@@ -5947,20 +5966,28 @@ var BrainBox={
         });
     },
     widget: function widget(param) {
-        BrainBox.initBrainBox()
+        AtlasMakerWidget.useFullTools=false;
+
+        let pr = BrainBox.initBrainBox()
         .then(function() {return BrainBox.loadLabelsets()})
         .then(function() {return $.get({
             url: BrainBox.hostname + '/mri/json',
             data: {
                 url: param.url,
-                download: 'true'
+                download: true
             }
         })})
         .then(function(mriInfo) {
             param.info = mriInfo;
             let mri = mriInfo.mri;
-            // if preferred project and annotation were indicated, find them
-            if(mri.atlas) {
+            
+            // if the brain has not been downloaded, mriInfo only contains a url
+            // (this url is later used to trigger the file download)
+            // if the brain has been downloaded, all the other fields are available,
+            // in particular, the `mri` field. In this case, and if the widget aims
+            // at loading a specific atlas, this choice can be enforced.
+
+            if(mri && mri.atlas) {
                 for(i=0;i<mri.atlas.length;i++) {
                     if(param.project
                        && param.annotation
@@ -5971,21 +5998,30 @@ var BrainBox={
                     }
                 }
             }
+
+            $('#atlasMaker').append([
+            `<a href="${BrainBox.hostname}/mri?url=${param.url}">`,
+            '<div style="',
+                'position:absolute;',
+                'top:5px;',
+                'right:5px;',
+                'width:48px;',
+                'height:48px;',
+                'background-color:#222;',
+                'border:thin solid #555;',
+                'border-radius:32px;',
+                'box-shadow: 0px 0px 10px 1px #000;',
+                'z-index:10">',
+            `<img style="width:32px;position: absolute;left:50%;top:50%;transform:translate(-50%, -50%)" src="${BrainBox.hostname}/img/brainbox-logo-small_noFont.svg"/>`,
+            '</div>',
+            '</a>'].join(''));
+
             return BrainBox.configureBrainBox(param)
+        })
+        .catch((err) => {
+            console.log("ERROR",err);
         });
-        
-        $('#atlasMaker').append([
-        '<div style="',
-            'position:absolute;',
-            'top:5px;',
-            'right:5px;',
-            'width:42px;',
-            'height:42px;',
-            'background-color:#222;',
-            'border-radius:32px;',
-            'border:2px solid black;',
-            'z-index:10">',
-        '<img style="width:32px" src="'+ BrainBox.hostname + '/img/brainbox-logo-small_noFont.svg"/>',
-        '</div>'].join(''));
+
+        return pr;
     }
 }

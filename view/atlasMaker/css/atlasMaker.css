@@ -69,7 +69,7 @@
 .atlasMaker-fullscreen #tools-side {
     position:fixed;
     top:0px;
-    width:240px;
+    width:250px;
     height:100%;
     z-index:11;
 }
@@ -106,10 +106,10 @@
     right: 0;
 }
 
-#toolbar-header {
+#headerBlock {
     display: none;
 }
-.atlasMaker-fullscreen #toolbar-header {
+.atlasMaker-fullscreen #headerBlock {
     display: block;
 }
 
@@ -118,10 +118,10 @@
     -moz-user-select:all;
     user-select:all;
 }
-#toolbar-header {
+#headerBlock {
     margin-bottom:5px;
 }
-#toolbar-header .a {
+#headerBlock .a {
     border:none;
 }
 
@@ -174,27 +174,13 @@
 
 /* chat log
 ----------------------- */
-
-.atlasMaker-fullscreen #chatBlockContent {
-    height:100%
-}
 #log {
-    width: auto;
-    line-height:1;
-    border: 1px solid #777;
+    text-align:left;
     overflow: auto;
-    background-color: #333;
+    background:#333;
 }
 #msg {
     color: black;
-    box-sizing: border-box;
-}
-
-#atlasMaker .middle {
-    position:absolute;
-    top:50%;
-    left:50%;
-    transform: translate(-50%,-50%);
 }
 
 /* Label set

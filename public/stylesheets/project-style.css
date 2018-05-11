@@ -13,6 +13,17 @@
     background-color: black;
 }
 
+select {
+    border:none;
+    background:none; /* no color, no decoration */
+    color:white;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 100px;
+    text-overflow: ellipsis;
+}
+
 /* Project Page, Left Bar, Resize Button
 -----------------------------------------*/
 #resizeButton {

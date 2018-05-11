@@ -9,31 +9,24 @@
     <link rel="stylesheet" type="text/css" href="/stylesheets/style.css" />
     <link rel="stylesheet" type="text/css" href="/stylesheets/index-style.css" />
     <link rel="stylesheet" type="text/css" href="/stylesheets/ui.css" />
-    <link rel="stylesheet" type="text/css" href="/stylesheets/introjs.css" />
     <link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
 </head>
 
 <body>
-
-
-    
-
     <!-- Login (fixed height) -->
     <div id="menu">
         <div>
-            <img id="addProject" class="icon" title="add project" style="padding-right:0.5px" src='/img/plus.svg'/>
-            <a href="http://openneu.ro/metasearch" target="_blank"><img id="search" class="icon" title="search" style="padding-right:0.5px" src='/img/search.svg'/></a>
-            <a href="/doc/index.html" target="_blank"><img id="doc" class="icon" title="documentation" style="padding-right:0.5px" src='/img/doc.svg'/></a>
-            <a href="https://github.com/OpenNeuroLab/BrainBox/issues" target="_blank"><img id="bug" class="icon" title="report a bug" style="padding-right:0.5px" src='/img/bug.svg'/></a>
-            <a href="https://github.com/OpenNeuroLab" target="_blank"><img id="github" class="icon" title="join our github project" style='width:15px;height:15px;padding-right:1px' src='/img/github.svg'/></a>
+            <img id="addProject" class="button" title="add project" style="padding-right:0.5px" src='/img/plus.svg'/>
+            <a href="http://openneu.ro/metasearch" target="_blank"><img id="search" class="button" title="search" style="padding-right:0.5px" src='/img/search.svg'/></a>
+            <a href="/doc/index.html" target="_blank"><img id="doc" class="button" title="documentation" style="padding-right:0.5px" src='/img/doc.svg'/></a>
+            <a href="https://github.com/OpenNeuroLab/BrainBox/issues" target="_blank"><img id="bug" class="button" title="report a bug" style="padding-right:0.5px" src='/img/bug.svg'/></a>
+            <a href="https://github.com/OpenNeuroLab" target="_blank"><img id="github" class="button" title="join our github project" style='width:15px;height:15px;padding-right:1px' src='/img/github.svg'/></a>
             <div id="MyLogin" style="padding-right:10px">
                 <span>{{{login}}}</span>
             </div>
         </div>
     </div>
-    </div>
 
-    
     <!-- Content  -->            
     <div class="slide" style="background:#222">
     <!-- Slide: Landing -->
@@ -50,6 +43,7 @@
                 automatically saved. Point BrainBox to your own nii.gz or mgz data online,
                 or participate in the projects created by the community.
             </p>
+
             <div style="position:relative;text-align:center">
                 <input id="url" style="display:block;width:100%;margin-bottom:1rem" type="text" placeholder="Enter the URL of an MRI (.nii.gz or .mgz) and click Go"></input>
                 <select id="list" style='width:200px;height:32px;text-align-last:center' class='pushButton'>
@@ -66,30 +60,8 @@
         <!--
         <span class="btn-scroll-down scroll"></span>
         -->
-        
+
     </div>
-    <!-- Slide: About
-    <div class="slide" style="background:#222">
-        <div class="content">
-            <p>
-                BrainBox is a web application developed by the Group of Applied and
-                Theoretical Neuroanatomy –
-                <b><a target="_blank" href="http://neuroanatomy.github.io">NAAT</a></b> –
-                for the Open Neuroimaging Laboratory Project. BrainBox allows you to
-                collaboratively visualise and segment brain MRI data available online.
-                Segmentations are automatically saved and can be downloaded as Nifti files or
-                triangular meshes. Point BrainBox to your own Nifti data, or try data catalogues
-                created by the community.
-            </p>
-        </div>
-    </div>
-    -->
-    <!-- Slide: Brains to try
-    <div class="slide" style="background:#111">
-        <div id="intro" class="content">
-        </div>
-    </div>
-    -->
     <!-- End Content-->
 
     <!-- Footer (fixed height) -->
@@ -98,21 +70,15 @@
             <a target="_blank" href="http://neuroanatomy.github.io">
                 <img src="/img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/></a>
             <a target="_blank" href="http://neuroanatomy.github.io" class="linkNoULine">
-                group de neuro anatomie appliquée et théorique
+                groupe de neuroanatomie appliquée et théorique
             </a>
         </p>
     </div>
     <!-- End Footer -->    
 
 <!--
-<script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/2.7.0/intro.min.js"></script>
 <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/intro.js/2.7.0/introjs.min.css" />
--->
-<!--
-<script src="/lib/introjs/intro.js"></script>
-<link rel="stylesheet" type="text/css" href="/lib/introjs/introjs.css" />
--->
-<!--
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/2.7.0/intro.min.js"></script>
 <script src="/js/brainbox-intro.js"></script>
 -->
 
@@ -165,9 +131,6 @@ $(window).on('scroll',function() {
 });
 
 $("h2").css({marginLeft:0,opacity:1});
-
-$("#login").click(function(){$.get("/login",function(r){console.log(r)})});
-$("#logout").click(function(){$.get("/logout",function(r){console.log(r)})});
 
 var version=1;
 var brainsToTry=[
