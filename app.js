@@ -38,8 +38,6 @@ if (DOCKER_DB) {
 const db = monk(MONGO_DB);
 const expressValidator = require('express-validator');
 
-const atlasMakerServer = require('./controller/atlasMakerServer/atlasMakerServer.js');
-
 /* jslint nomen: true */
 const dirname = __dirname; // Local directory
 /* jslint nomen: false */
@@ -79,12 +77,11 @@ app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 app.use(expressValidator());
 app.use(cookieParser());
 app.use(express.static(path.join(dirname, 'public')));
-
 if (DOCKER_DEVELOP == '1') {
     app.use(require('connect-livereload')());
 }
 
-// App variables
+// { App-wide variables
 app.use((req, res, next) => {
     req.dirname = dirname;
     req.db = db;
@@ -92,8 +89,33 @@ app.use((req, res, next) => {
 
     next();
 });
+// }
 
-// {-----passport
+// { Init web socket server
+const atlasMakerServer = require('./controller/atlasMakerServer/atlasMakerServer.js');
+atlasMakerServer.initSocketConnection();
+atlasMakerServer.dataDirectory = dirname + '/public';
+// }
+
+// { Check that the 'anyone' user exists. Insert it otherwise
+db.get('user').findOne({nickname: 'anyone'})
+    .then(obj => {
+        if (!obj) {
+            const anyone = {
+                name: 'Any BrainBox User',
+                nickname: 'anyone',
+                brainboxURL: '/user/anyone',
+                joined: (new Date()).toJSON()
+            };
+            tracer.log('WARNING: \'anyone\' user absent: inserting it');
+            db.get('user').insert(anyone);
+        } else {
+            tracer.log('\'anyone\' user correctly configured.');
+        }
+    });
+// }
+
+// { Passport: OAuth2 authentication
 const session = require('express-session');
 const passport = require('passport');
 const GithubStrategy = require('passport-github').Strategy;
@@ -111,14 +133,14 @@ app.use(session({
 }));
 app.use(passport.initialize());
 app.use(passport.session());
-// Add custom serialization/deserialization here (get user from mongo?) null is for errors
+// add custom serialization/deserialization here (get user from mongo?) null is for errors
 passport.serializeUser((user, done) => {
     done(null, user);
 });
 passport.deserializeUser((user, done) => {
     done(null, user);
 });
-// Simple authentication middleware. Add to routes that need to be protected.
+// simple authentication middleware. Add to routes that need to be protected.
 function ensureAuthenticated(req, res, next) {
     if (req.isAuthenticated()) {
         return next();
@@ -140,7 +162,7 @@ app.get('/loggedIn', (req, res) => {
         res.send({loggedIn: false});
     }
 });
-// Start the GitHub Login process
+// start the GitHub Login process
 app.get('/auth/github', passport.authenticate('github'));
 app.get('/auth/github/callback',
     passport.authenticate('github', {failureRedirect: '/'}),
@@ -171,8 +193,9 @@ app.get('/auth/github/callback',
         res.redirect(req.session.returnTo || '/');
         delete req.session.returnTo;
     });
-// -----}
+// }
 
+// { Token authentication
 global.tokenAuthentication = function (req, res, next) {
     tracer.log('>> Check token');
     let token;
@@ -208,8 +231,9 @@ global.tokenAuthentication = function (req, res, next) {
         next();
     });
 };
+// }
 
-// GUI routes
+// { GUI routes
 app.get('/', (req, res) => { // /auth/github
     const login = (req.isAuthenticated()) ?
                 ('<a href=\'/user/' + req.user.username + '\'>' + req.user.username + '</a> (<a href=\'/logout\'>Log Out</a>)') :
@@ -226,7 +250,9 @@ app.get('/', (req, res) => { // /auth/github
 app.use('/mri', require('./controller/mri/'));
 app.use('/project', require('./controller/project/'));
 app.use('/user', require('./controller/user/'));
+// }
 
+// { API routes
 app.get('/api/getLabelsets', (req, res) => {
     let i,
         arr = fs.readdirSync(dirname + '/public/labels/'),
@@ -295,27 +321,7 @@ app.post('/api/log', (req, res) => {
         }
     });
 });
-
-// Init web socket server
-atlasMakerServer.initSocketConnection();
-atlasMakerServer.dataDirectory = dirname + '/public';
-
-// Check that the 'anyone' user exists. Insert it otherwise
-db.get('user').findOne({nickname: 'anyone'})
-    .then(obj => {
-        if (!obj) {
-            const anyone = {
-                name: 'Any BrainBox User',
-                nickname: 'anyone',
-                brainboxURL: '/user/anyone',
-                joined: (new Date()).toJSON()
-            };
-            tracer.log('WARNING: \'anyone\' user absent: inserting it');
-            db.get('user').insert(anyone);
-        } else {
-            tracer.log('\'anyone\' user correctly configured.');
-        }
-    });
+// }
 
 // Catch 404 and forward to error handler
 app.use((req, res, next) => {

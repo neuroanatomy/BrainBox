@@ -210,7 +210,17 @@ var AtlasMakerWidget = {
 
         // Init the toolbar
         // configure and append tools
-        let svg, tools = me.html.tools;
+        let svg, tools;
+
+        if(typeof me.useFullTools === 'undefined') {
+            me.useFullTools = true;
+        }
+        if(me.useFullTools) {
+            tools = me.html.toolsFull;
+        } else {
+            tools = me.html.toolsLight;
+        }
+
         for(svg in me.svg) {
             tools = tools.replace(
                 new RegExp('/img/' + svg + '.svg', 'g'),

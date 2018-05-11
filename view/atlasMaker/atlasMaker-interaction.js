@@ -88,9 +88,7 @@ var AtlasMakerInteraction = {
             case 'Adjust':
                 me.User.tool='adjust';
                 if($("#adjust").length==0) {
-                    $.get(me.hostname + "/templates/adjust.html",function(html) {
-                        me.container.find("#resizable").append(html);
-                    });
+                    me.container.find("#resizable").append(me.html.adjust);
                 }
                 break;
             case 'Eyedrop':
@@ -128,10 +126,6 @@ var AtlasMakerInteraction = {
     changeSlice: function changeSlice(x) {
         var me=AtlasMakerWidget;
         var l=me.traceLog(changeSlice,1,"#f00");if(l)console.log.apply(undefined,l);
-
-        var max=$("#slice").data("max");
-        $("#slice").data("val",x);
-        $("#slice .thumb")[0].style.left=(x*100/max)+"%";
     
         me.User.slice=x;
         me.sendUserDataMessage(JSON.stringify({'slice':me.User.slice}));
@@ -244,7 +238,7 @@ var AtlasMakerInteraction = {
         localStorage.brainbox=URL.createObjectURL(new Blob([me.encodeNifti()]));
         
         // opens 3d render window
-        window.open(me.hostname + "/templates/surface.html?path="+me.User.dirname+me.User.atlasFilename,"_blank");
+        window.open(me.hostname + "/surface.html?path="+me.User.dirname+me.User.atlasFilename,"_blank");
     },
     /**
      * @function link

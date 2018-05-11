@@ -59,13 +59,13 @@ server.on("upgrade", function(req, socket, head) {
 });
 
 const createDOMPurify = require('dompurify');
-const jsdom = require('jsdom');
-const window = jsdom.jsdom('', {
+const { JSDOM } = require('jsdom');
+const window = (new JSDOM('', {
     features: {
         FetchExternalResources: false, // disables resource loading over HTTP / filesystem
         ProcessExternalResources: false // do not execute JS within script blocks
     }
-}).defaultView;
+})).window;
 const DOMPurify = createDOMPurify(window);
 
 const jsonpatch = require('fast-json-patch');
@@ -2125,10 +2125,14 @@ const atlasMakerServer = (function() {
                         .then(function(atlas) {
                             me.sendAtlasToUser(atlas.data, userSocket, true);
                             sourceUS.User.isMRILoaded = true;
-                        });
+                        })
+                        .catch ((err) => console.log(new Error("ERROR: Unable to load atlas")));
                     }
                 } else {
                     // receive a specific field of the User data object from the user
+                    /**
+                     * @todo If the atlas/mri for the client failed to be sent, `User` is undefined
+                     */
                     var changes = JSON.parse(data.description);
                     for(i in changes) {
                         User[i] = changes[i];
@@ -2317,12 +2321,12 @@ const atlasMakerServer = (function() {
             try {
                 websocket = new WebSocketServer({ server: server, verifyClient: me.verifyClient });
 
-                websocket.on("connection", function connectionFromInitSocketConnection(s) {
+                websocket.on("connection", function connectionFromInitSocketConnection(s, req) {
                     me.traceLog(connectionFromInitSocketConnection);
 
                     /*-----------*/
                     /* BLACKLIST */
-                    var ip = s.upgradeReq.connection.remoteAddress;
+                    var ip = req.connection.remoteAddress;
                     ip = ip.split(":").pop();
                     if(useWhitelist && !whitelist[ip]) {
                             tracer.log("--------------------> REJECT ip not in whitelist", ip);
@@ -2339,7 +2343,7 @@ const atlasMakerServer = (function() {
 
                     /*-----------*/
 
-                    tracer.log("    remote_address", s.upgradeReq.connection.remoteAddress);
+                    tracer.log("    remote_address", req.connection.remoteAddress);
                     me.uidcounter += 1;
                     var newUS = { "uid": "u" + me.uidcounter, "socket": s };
                     me.US.push(newUS);
@@ -2354,7 +2358,8 @@ const atlasMakerServer = (function() {
                         var sourceUS = me.getUserFromSocket(s);
                         var data = {};
 
-                        if(msg instanceof Buffer) { // Handle binary data: a user uploaded an atlas file
+                        // Handle binary data: a user uploaded an atlas file
+                        if(msg instanceof Buffer) {
                             data.data = msg;
                             data.type = "atlas";
                         } else {
@@ -2362,7 +2367,7 @@ const atlasMakerServer = (function() {
                         }
                         data.uid = sourceUS.uid;
 
-                        // websocket traffic recording
+                        // Websocket traffic recording
                         if(me.recordWS) {
                             if(data.type === "atlas") {
                                 me.recordedWSTraffic.push({ type: 'atlas' });

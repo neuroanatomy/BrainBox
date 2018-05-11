@@ -37,7 +37,7 @@ function computeMesh() {
     self.postMessage({msg:"compute mesh"});
     
     var g=SurfaceNets(brain.data,brain.dim,brain.pixdim,brain.level);
-    self.postMessage({msg:"success",geometry:g});
+    self.postMessage({msg:"success",geometry:g}, [g.vertices, g.faces]);
 }
 function init_surfacenets() {
     self.postMessage({msg:"init_surfacenets"});

@@ -116,81 +116,80 @@ var BrainBox={
             // Copy MRI from source
             $("#msgLog").html("<p>Downloading from source to server...");
 
-          // Configure MRI into atlasMaker
-          if(param.info.success===false) {
-              date=new Date();
-              $("#msgLog").append("<p>ERROR: "+param.info.message+".");
-              console.log("<p>ERROR: "+param.info.message+".");
-              reject("ERROR: "+param.info.message);
+            // Configure MRI into atlasMaker
+            if(param.info.success===false) {
+                date=new Date();
+                $("#msgLog").append("<p>ERROR: "+param.info.message+".");
+                console.log("<p>ERROR: "+param.info.message+".");
+                reject("ERROR: "+param.info.message);
 
-              return;
-          }
-          BrainBox.info=param.info;
+                return;
+            }
+            BrainBox.info=param.info;
 
-          var arr=param.url.split("/");
-          var name=arr[arr.length-1];
-          date=new Date();
-          $("#msgLog").append("<p>Downloading from server...</p>");
+            var arr=param.url.split("/");
+            var name=arr[arr.length-1];
+            date=new Date();
+            $("#msgLog").append("<p>Downloading from server...</p>");
 
-          /**
-           * @todo Check it these two lines are of any use...
-           */
-          param.dim=BrainBox.info.dim; // this allows to keep dim and pixdim through annotation changes
-          param.pixdim=BrainBox.info.pixdim;
+            /**
+            * @todo Check it these two lines are of any use...
+            */
+            param.dim=BrainBox.info.dim; // this allows to keep dim and pixdim through annotation changes
+            param.pixdim=BrainBox.info.pixdim;
 
-          // re-instance stored configuration
-          var stored=localStorage.AtlasMaker;
-          if(stored) {
-              var stored=JSON.parse(stored);
-              if(stored.version && stored.version==BrainBox.version) {
-                  for(var i=0;i<stored.history.length;i++) {
-                      if(stored.history[i].url==param.url) {
-                          AtlasMakerWidget.User.view=stored.history[i].view;
-                          AtlasMakerWidget.User.slice=stored.history[i].slice;
-                          break;
-                      }
-                  }
-              }
-          }
+            // re-instance stored configuration
+            var stored=localStorage.AtlasMaker;
+            if(stored) {
+                var stored=JSON.parse(stored);
+                if(stored.version && stored.version==BrainBox.version) {
+                    for(var i=0;i<stored.history.length;i++) {
+                        if(stored.history[i].url==param.url) {
+                            AtlasMakerWidget.User.view=stored.history[i].view;
+                            AtlasMakerWidget.User.slice=stored.history[i].slice;
+                            break;
+                        }
+                    }
+                }
+            }
 
-          // enact configuration in param, eventually overriding the stored one
-          if(param.view) {
-              AtlasMakerWidget.User.view=param.view;
-              AtlasMakerWidget.User.slice=null; // this will set the slider to the middle slice in case no slice were specified
-          }
-          if(param.slice)
-              AtlasMakerWidget.User.slice=param.slice;
+            // enact configuration in param, eventually overriding the stored one
+            if(param.view) {
+                AtlasMakerWidget.User.view=param.view;
+                AtlasMakerWidget.User.slice=null; // this will set the slider to the middle slice in case no slice were specified
+            }
+            if(param.slice)
+                AtlasMakerWidget.User.slice=param.slice;
 
-          if(param.fullscreen) {
-              AtlasMakerWidget.fullscreen=param.fullscreen;
-          } else {
-              AtlasMakerWidget.fullscreen=false;
-          }
+            if(param.fullscreen) {
+                AtlasMakerWidget.fullscreen=param.fullscreen;
+            } else {
+                AtlasMakerWidget.fullscreen=false;
+            }
 
-          AtlasMakerWidget.configureAtlasMaker(BrainBox.info,index)
-          .then(function(info2) {
-              BrainBox.info = info2;
+            AtlasMakerWidget.configureAtlasMaker(BrainBox.info,index)
+            .then(function(info2) {
+                BrainBox.info = info2;
 
-              // check 'edit' access
-              var accessStr = BrainBox.info.mri.atlas[index].access;
-              var accessLvl = BrainBox.accessLevels.indexOf(accessStr);
-              if(accessLvl<0 || accessLvl>BrainBox.accessLevels.length-1)
-                  accessLvl = 0;
-              if(accessLvl>=2)
-                  AtlasMakerWidget.editMode = 1;
-              else
-                  AtlasMakerWidget.editMode = 0;
+                // check 'edit' access
+                var accessStr = BrainBox.info.mri.atlas[index].access;
+                var accessLvl = BrainBox.accessLevels.indexOf(accessStr);
+                if(accessLvl<0 || accessLvl>BrainBox.accessLevels.length-1)
+                    accessLvl = 0;
+                if(accessLvl>=2)
+                    AtlasMakerWidget.editMode = 1;
+                else
+                    AtlasMakerWidget.editMode = 0;
+                resolve({success: true});
 
-              resolve({success: true});
+                return;
+            })
+            .catch( (err) => {
+                console.log("ERROR:",err);
+                reject("ERROR: "+err);
 
-              return;
-          })
-          .catch( (err) => {
-              console.log("ERROR:",err);
-              reject("ERROR: "+err);
-
-              return;
-          });
+                return;
+            });
         });
 
         return pr;
@@ -315,6 +314,21 @@ var BrainBox={
         return arr;
     },
     /**
+     * @function selectAnnotation
+     */
+    selectAnnotation: function selectAnnotation(annName, annProject) {
+        var l=BrainBox.traceLog(selectAnnotation);if(l)console.log(l);
+        let i;
+        const atlas=BrainBox.info.mri.atlas;
+
+        for(i=0;i<atlas.length;i++) {
+            if(atlas[i].name === annName && atlas[i].project === annProject) {
+                AtlasMakerWidget.configureAtlasMaker(BrainBox.info,i);
+                return;
+            }
+        }
+    },
+    /**
      * @function selectAnnotationTableRow
      */
     selectAnnotationTableRow: function selectAnnotationTableRow(index, param) {
@@ -409,20 +423,28 @@ var BrainBox={
         });
     },
     widget: function widget(param) {
-        BrainBox.initBrainBox()
+        AtlasMakerWidget.useFullTools=false;
+
+        let pr = BrainBox.initBrainBox()
         .then(function() {return BrainBox.loadLabelsets()})
         .then(function() {return $.get({
             url: BrainBox.hostname + '/mri/json',
             data: {
                 url: param.url,
-                download: 'true'
+                download: true
             }
         })})
         .then(function(mriInfo) {
             param.info = mriInfo;
             let mri = mriInfo.mri;
-            // if preferred project and annotation were indicated, find them
-            if(mri.atlas) {
+            
+            // if the brain has not been downloaded, mriInfo only contains a url
+            // (this url is later used to trigger the file download)
+            // if the brain has been downloaded, all the other fields are available,
+            // in particular, the `mri` field. In this case, and if the widget aims
+            // at loading a specific atlas, this choice can be enforced.
+
+            if(mri && mri.atlas) {
                 for(i=0;i<mri.atlas.length;i++) {
                     if(param.project
                        && param.annotation
@@ -433,21 +455,30 @@ var BrainBox={
                     }
                 }
             }
+
+            $('#atlasMaker').append([
+            `<a href="${BrainBox.hostname}/mri?url=${param.url}">`,
+            '<div style="',
+                'position:absolute;',
+                'top:5px;',
+                'right:5px;',
+                'width:48px;',
+                'height:48px;',
+                'background-color:#222;',
+                'border:thin solid #555;',
+                'border-radius:32px;',
+                'box-shadow: 0px 0px 10px 1px #000;',
+                'z-index:10">',
+            `<img style="width:32px;position: absolute;left:50%;top:50%;transform:translate(-50%, -50%)" src="${BrainBox.hostname}/img/brainbox-logo-small_noFont.svg"/>`,
+            '</div>',
+            '</a>'].join(''));
+
             return BrainBox.configureBrainBox(param)
+        })
+        .catch((err) => {
+            console.log("ERROR",err);
         });
-        
-        $('#atlasMaker').append([
-        '<div style="',
-            'position:absolute;',
-            'top:5px;',
-            'right:5px;',
-            'width:42px;',
-            'height:42px;',
-            'background-color:#222;',
-            'border-radius:32px;',
-            'border:2px solid black;',
-            'z-index:10">',
-        '<img style="width:32px" src="'+ BrainBox.hostname + '/img/brainbox-logo-small_noFont.svg"/>',
-        '</div>'].join(''));
+
+        return pr;
     }
 }

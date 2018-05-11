@@ -8,9 +8,6 @@ var AtlasMakerUI = {
      * @function slider
      */
     slider: function slider(elem,callback) {
-        var me=AtlasMakerWidget;
-        var l=me.traceLog(slider,2);if(l)console.log.apply(undefined,l);
-    
         // Initialise a 'slider' control
 
         $(elem).data({
@@ -27,6 +24,9 @@ var AtlasMakerUI = {
                 if(x>1) x=1;
                 x=x*$(el).data("max");
                 if(x!=$(el).data("val")) {
+                    var max=$(el).data("max");
+                    $(el).data("val",x);
+                    $(el).find(".thumb")[0].style.left=(x*100/max)+"%";
                     callback(x);
                 }
             }

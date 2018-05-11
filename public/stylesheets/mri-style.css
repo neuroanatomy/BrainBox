@@ -23,6 +23,17 @@ td {
 #stereotaxic {
     width:600px;
 }
+select {
+    border:none;
+    background:none; /* no color, no decoration */
+    color:white;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 100px;
+    text-overflow: ellipsis;
+}
+
 /******************************** resizable layout ******************************/
 /* for larger screen (computer, big iPad, small iPad landscape) */
 @media all and (max-width: 1300px) {

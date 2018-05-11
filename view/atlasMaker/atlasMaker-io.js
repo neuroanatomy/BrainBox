@@ -113,11 +113,11 @@ var AtlasMakerIO = {
         var me=AtlasMakerWidget;
         var l=me.traceLog(encodeNifti);if(l)console.log.apply(undefined,l);
 
-        var    sizeof_hdr=348;
-        var    dimensions=4;            // number of dimension values provided
-        var    spacetimeunits=2+8;        // 2=nifti code for millimetres | 8=nifti code for seconds
-        var    datatype=2;                // datatype for 8 bits (DT_UCHAR8 in nifti or UCHAR in analyze)
-        var    vox_offset=352;
+        var sizeof_hdr=348;
+        var dimensions=4;            // number of dimension values provided
+        var spacetimeunits=2+8;        // 2=nifti code for millimetres | 8=nifti code for seconds
+        var datatype=2;                // datatype for 8 bits (DT_UCHAR8 in nifti or UCHAR in analyze)
+        var vox_offset=352;
         var bitsPerVoxel=8;
     
         var newHdr = {
@@ -151,14 +151,14 @@ var AtlasMakerIO = {
         for(i in newHdr)
             me.NiiHdrLE.fields[i] = newHdr[i];
         hdr = toArrayBuffer(niihdr);
-        var    data=me.atlas.data;
+        var data=me.atlas.data;
         var nii = new Uint8Array(vox_offset+data.length);
         for(i=0;i<sizeof_hdr;i++)
             nii[i]=hdr[i];
         for(i=0;i<data.length;i++)
             nii[i+vox_offset]=data[i];
 
-        var    niigz=new pako.Deflate({gzip:true});
+        var niigz=new pako.Deflate({gzip:true});
         niigz.push(nii,true);
             
         return niigz.result;

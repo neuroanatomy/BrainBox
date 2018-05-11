@@ -4,6 +4,7 @@ const fs = require('fs');
 const puppeteer = require('puppeteer');
 const {PNG} = require('pngjs');
 const pixelmatch = require('pixelmatch');
+const assert = require('assert');
 
 function delay(timeout) {
     console.log('  delay', timeout, 'milliseconds');
@@ -32,11 +33,11 @@ function comparePageScreenshots(page, url, filename) {
         delay(5000)
         .then(() => { return page.screenshot({path:'screenshots/' + filename})})
         .then(() => {
-            console.log("  pixdiff:", compareImages(newPath, refPath));
-            resolve();
+            const pixdiff = compareImages(newPath, refPath);
+            console.log("  pixdiff:", pixdiff);
+            resolve(pixdiff);
         })
         .catch( (err) => {
-            console.error("ERROR:", err);
             reject(err);
         });
     });
@@ -57,40 +58,47 @@ puppeteer.launch({headless: true, args: ['--no-sandbox', '--disable-setuid-sandb
         // OPEN HOMEPAGE
         .then(() => {return comparePageScreenshots(
             page,
-            'http://localhost:3000',
+            'http://localhost:3001',
             '01.home.png'
         )})
 
         // OPEN MRI PAGE
         .then(() => {return comparePageScreenshots(
             page,
-            'http://localhost:3000/mri?url=https://zenodo.org/record/44855/files/MRI-n4.nii.gz',
+            'http://localhost:3001/mri?url=https://zenodo.org/record/44855/files/MRI-n4.nii.gz',
             '02.mri.png'
         )})
 
         // OPEN PROJECT PAGE
         .then(() => {return comparePageScreenshots(
             page,
-            'http://localhost:3000/project/braincatalogue',
+            'http://localhost:3001/project/braincatalogue',
             '03.project.png'
         )})
 
         // OPEN PROJECT SETTINGS PAGE
         .then(() => {return comparePageScreenshots(
             page,
-            'http://localhost:3000/project/braincatalogue/settings',
+            'http://localhost:3001/project/braincatalogue/settings',
             '04.project-settings.png'
         )})
 
         // OPEN USER PAGE
         .then(() => {return comparePageScreenshots(
             page,
-            'http://localhost:3000/user/r03ert0',
+            'http://localhost:3001/user/r03ert0',
             '05.user.png'
         )})
 
         // CLOSE
         .then(() => browser.close())
-        .then(function() { console.log('browser closed'); });
+        .then(function() { console.log('browser closed'); })
+
+        // HANDLE ERRORS
+        .catch((err) => {
+            console.error("TESTS ABORTED");
+            console.error(err);
+            browser.close();
+        });
     });
 });

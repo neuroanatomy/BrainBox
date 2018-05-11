@@ -8,14 +8,13 @@ const checkAccess = require('../checkAccess/checkAccess.js');
 const dataSlices = require('../dataSlices/dataSlices.js');
 
 const createDOMPurify = require('dompurify');
-const jsdom = require('jsdom');
-
-const window = jsdom.jsdom('', {
+const { JSDOM } = require('jsdom');
+const window = (new JSDOM('', {
     features: {
-        FetchExternalResources: false, // Disables resource loading over HTTP / filesystem
-        ProcessExternalResources: false // Do not execute JS within script blocks
+        FetchExternalResources: false, // disables resource loading over HTTP / filesystem
+        ProcessExternalResources: false // do not execute JS within script blocks
     }
-}).defaultView;
+})).window;
 const DOMPurify = createDOMPurify(window);
 
 const validator = function (req, res, next) {
