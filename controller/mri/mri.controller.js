@@ -333,9 +333,11 @@ const apiMriPost = function (req, res) {
 const apiMriGet = function (req, res) {
     let { url: myurl,
           download: download,
-          page: page
+          page: page,
+          backups: backups
     } = req.query;
     download = (download === 'true');
+    backups = (backups === 'true');
 
     // check for token authentication
     let loggedUser = 'anonymous';
