@@ -85,6 +85,8 @@ const atlasMakerServer = (function() {
         Brains: [],
         US: [],
         uidcounter: 1,
+        backupInterval: 15*60*1000, // 15 minutes in milliseconds
+        timeMarkInterval: 60*60*1000, // 60 minutes in milliseconds
         enterCommands: false,
         UndoStack: [],
         recordWS: false,
@@ -180,9 +182,9 @@ const atlasMakerServer = (function() {
                 if(typeof me.US[i].User === 'undefined') {
                     tracer.log("ERROR: When counting the number of users connected to the atlas, user uid " + i + " was not defined");
                 } else if(typeof me.US[i].User.dirname === 'undefined') {
-                    tracer.log("ERROR: A user uid " + i + " dirname is unknown");
+                    tracer.log("ERROR: For user uid " + i + " dirname is unknown");
                 } else if(typeof me.US[i].User.atlasFilename === 'undefined') {
-                    tracer.log("ERROR: A user uid " + i + " atlasFilename is unknown");
+                    tracer.log("ERROR: For user uid " + i + " atlasFilename is unknown");
                 } else if(me.US[i].User.dirname === dirname && me.US[i].User.atlasFilename === atlasFilename) {
                     sum += 1;
                 }
@@ -351,19 +353,23 @@ const atlasMakerServer = (function() {
 
                     return Promise.reject("ERROR: [saveAtlas] atlas in Atlas array has no data");
                 } else {
+                    // check if atlas has changed since the last time...
                     var i;
                     var sum = 0;
                     for(i = 0; i<atlas.dim[0]*atlas.dim[1]*atlas.dim[2]; i += 1) {
                         sum+=atlas.data[i];
                     }
+
+                    // ...if it has not, return,
                     if(sum === atlas.sum) {
                         tracer.log("    Atlas", atlas.dirname, atlas.name,
                                     "no change, no save, freemem", os.freemem());
 
                         return Promise.resolve("Done. No save required");
                     }
-                    atlas.sum = sum;
 
+                    // ...if it has, save a backup copy.
+                    atlas.sum = sum;
                     var {hdrSz} = atlas;
                     var dataSz = atlas.data.length;
                     var ftrSz;
@@ -374,9 +380,7 @@ const atlasMakerServer = (function() {
                     } else {
                         ftrSz = 0;
                     }
-
                     mri = new Buffer(atlas.dim[0]*atlas.dim[1]*atlas.dim[2] + hdrSz + ftrSz);
-
                     tracer.log("        sum:", sum);
                     tracer.log("header size:", hdrSz);
                     tracer.log("  data size:", atlas.dim[0]*atlas.dim[1]*atlas.dim[2]);
@@ -385,13 +389,11 @@ const atlasMakerServer = (function() {
                     tracer.log(" Atlas", atlas.dirname, atlas.name,
                                 "hdr+data+ftr length", atlas.data.length + hdrSz + ftrSz,
                                 "buff length", mri.length);
-
                     atlas.hdr.copy(mri);
                     atlas.data.copy(mri, hdrSz);
                     if(ftrSz) {
                         atlas.ftr.copy(mri, hdrSz + dataSz);
                     }
-
                     var pr = new Promise(function (resolve, reject) {
                         zlib.gzip(mri, function (err, mrigz) {
                             if(err) {
@@ -404,6 +406,17 @@ const atlasMakerServer = (function() {
                             var path2 = me.dataDirectory + atlas.dirname + ms + "_" + atlas.name;
                             fs.rename(path1, path2, function () {
                                 fs.writeFileSync(path1, mrigz);
+                                // log backup creation
+                                db.get('log').insert({
+                                    key: "saveAtlasBackup",
+                                    value: {
+                                        atlasDirectory: atlas.dirname,
+                                        atlasFilename: atlas.name,
+                                        timestamp: ms
+                                    },
+                                    date: (new Date()).toJSON()
+                                })
+                                .then(()=>tracer.log("backup insertion logged"));
                                 resolve("Atlas saved");
                             });
                         });
@@ -1333,7 +1346,7 @@ const atlasMakerServer = (function() {
                 srow_y: [templateMRI.dir[1][0], templateMRI.dir[1][1], templateMRI.dir[1][2], templateMRI.ori[1]],
                 srow_z: [templateMRI.dir[2][0], templateMRI.dir[2][1], templateMRI.dir[2][2], templateMRI.ori[2]],
                 intent_name: '',
-                magic: 'n+1'
+                magic: 'n+1\0'
             };
 /*eslint-enable camelcase*/
 
@@ -1806,23 +1819,16 @@ const atlasMakerServer = (function() {
                 // get original object from db
                 db.get('mri').findOne({ source: json.source, backup: { $exists: 0 }}, { _id: 0 })
                     .then(function (ret) {
-
                         delete ret._id;
-
-                        // DEBUG: tracer.log("original mri:", JSON.stringify(ret));
-
                         // apply patch
                         jsonpatch.applyPatch( ret, data.patch );
-
-                        // DEBUG: tracer.log("patched mri:", JSON.stringify(ret));
-
                         // sanitise
                         ret = JSON.parse(DOMPurify.sanitize(JSON.stringify(ret))); // sanitize works on strings, not objects
-
+                        // mark previous as backup
                         db.get('mri').update({ source: json.source }, { $set: { backup: true }}, { multi: true })
                             .then(function () {
+                                // insert new
                                 db.get('mri').insert(ret);
-                                // DEBUG: tracer.log("inserted mri:", JSON.stringify(ret));
                             });
                     });
             } else {
@@ -2055,7 +2061,7 @@ const atlasMakerServer = (function() {
                 .then(function (theAtlas) {
                     me.Atlases.push(theAtlas);
                     User.iAtlas = me.Atlases.indexOf(theAtlas);
-                    atlas.timer = setInterval(function () { me.saveAtlas(theAtlas); }, 60*60*1000); // 60 minutes
+                    atlas.timer = setInterval(function () { me.saveAtlas(theAtlas); }, me.backupInterval);
 
                     resolve(theAtlas);
                 })
@@ -2295,7 +2301,7 @@ const atlasMakerServer = (function() {
             */
             tracer.log("atlasMakerServer.js");
             tracer.log("date:", new Date());
-            setInterval(function() { tracer.log("date:", new Date()); }, 60*60*1000); // time mark every 60 minutes
+            setInterval(function() { tracer.log("date:", new Date()); }, me.timeMarkInterval); // time mark
             tracer.log("free memory", os.freemem());
 
             /*
