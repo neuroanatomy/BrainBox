@@ -12,7 +12,7 @@
 var BrainBox={
     version: 1,
     debug: 1,
-    hostname: 'http://localhost:3000', //'', // 'http://brainbox.pasteur.fr',
+    hostname: 'http://localhost:3001', //'', // 'http://brainbox.pasteur.fr',
     info:{},
     labelSets:null,
     annotationType:["volume","text"],
