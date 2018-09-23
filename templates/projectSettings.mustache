@@ -299,9 +299,9 @@ BrainBox.loadLabelsets()
         trTemplate: $.map([
             "<tr>",
             " <td contentEditable=true class='noEmpty'></td>",
-            " <td><select>",BrainBox.annotationType.map(function(o){return "<option>"+o+"</option>"}),"</select></td>",	// append annotation types
+            " <td><select class='mui-select'>",BrainBox.annotationType.map(function(o){return "<option>"+o+"</option>"}),"</select></td>",	// append annotation types
             " <td contentEditable=true class='noEmpty'>",
-            "  <select>",BrainBox.labelSets.map(function(o){return "<option>"+o.name+"</option>"}),"</select>",
+            "  <select class='mui-select'>",BrainBox.labelSets.map(function(o){return "<option>"+o.name+"</option>"}),"</select>",
             " </td>",	// append label sets
             " <td>","<div class='display' data-check=0>","<span class='check' title='display'></span>","</div>","</td>",
             "</tr>"],function(o){return o}).join(""),

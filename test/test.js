@@ -19,15 +19,15 @@ function compareImages(pathImg1, pathImg2) {
     const data2 = fs.readFileSync(pathImg2);
     const img1 = PNG.sync.read(data1);
     const img2 = PNG.sync.read(data2);
-    const pixdiff = pixelmatch(img1.data, img2.data);
+    const pixdiff = pixelmatch(img1.data, img2.data, null, img1.width, img1.height);
 
     return pixdiff;
 }
 
 function comparePageScreenshots(page, url, filename) {
-    const newPath = 'screenshots/' + filename;
-    const refPath = 'data/reference-screenshots/' + filename;
     const pr = new Promise((resolve, reject) => {
+        const newPath = 'screenshots/' + filename;
+        const refPath = 'data/reference-screenshots/' + filename;
         console.log("go to page:", url);
         page.goto(url);
         delay(5000)
@@ -47,7 +47,9 @@ function comparePageScreenshots(page, url, filename) {
 
 puppeteer.launch({headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] })
 .then(function(browser) {
+
     console.log('puppeteer launched');
+
     browser.newPage()
     .then(function(page) {
         console.log('browser open');
