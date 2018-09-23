@@ -101,4 +101,5 @@ puppeteer.launch({headless: true, args: ['--no-sandbox', '--disable-setuid-sandb
             browser.close();
         });
     });
-});
+})
+.catch((e)=>console.error(e));

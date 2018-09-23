@@ -42,7 +42,7 @@ const expressValidator = require('express-validator');
 const dirname = __dirname; // Local directory
 /* jslint nomen: false */
 
-if (DOCKER_DEVELOP == '1') {
+if (DOCKER_DEVELOP === '1') {
     const livereload = require('livereload');
     // Create a livereload server
     const hotServer = livereload.createServer({
@@ -77,7 +77,7 @@ app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 app.use(expressValidator());
 app.use(cookieParser());
 app.use(express.static(path.join(dirname, 'public')));
-if (DOCKER_DEVELOP == '1') {
+if (DOCKER_DEVELOP === '1') {
     app.use(require('connect-livereload')());
 }
 
@@ -99,7 +99,7 @@ atlasMakerServer.dataDirectory = dirname + '/public';
 
 // { Check that the 'anyone' user exists. Insert it otherwise
 db.get('user').findOne({nickname: 'anyone'})
-    .then(obj => {
+    .then( (obj) => {
         if (!obj) {
             const anyone = {
                 name: 'Any BrainBox User',
@@ -169,7 +169,7 @@ app.get('/auth/github/callback',
     (req, res) => {
         // Successfully loged in. Check if user is new
         db.get('user').findOne({nickname: req.user.username}, '-_id')
-            .then(json => {
+            .then( (json) => {
                 if (!json) {
                     // Insert new user
                     json = {
@@ -209,24 +209,27 @@ global.tokenAuthentication = function (req, res, next) {
     if (!token) {
         tracer.log('>> No token');
         next();
+
         return;
     }
     req.db.get('log').findOne({token})
-    .then(obj => {
+    .then( (obj) => {
         if (obj) {
             // Check token expiry date
             const now = new Date();
-            if (obj.expiryDate.getTime() - now.getTime() < req.tokenDuration) {
+            if (now.getTime() - obj.expiryDate.getTime() < 0) {
                 tracer.log('>> Authenticated by token');
                 req.isTokenAuthenticated = true;
                 req.tokenUsername = obj.username;
             } else {
                 tracer.log('>> Token expired');
+                req.isTokenAuthenticated = false;
+                req.tokenUsername = obj.username;
             }
         }
         next();
     })
-    .catch(err => {
+    .catch( (err) => {
         tracer.log('ERROR:', err);
         next();
     });
@@ -254,9 +257,9 @@ app.use('/user', require('./controller/user/'));
 
 // { API routes
 app.get('/api/getLabelsets', (req, res) => {
-    let i,
-        arr = fs.readdirSync(dirname + '/public/labels/'),
-        info = [];
+    let i;
+    const arr = fs.readdirSync(dirname + '/public/labels/');
+    const info = [];
     for (i in arr) {
         const json = JSON.parse(fs.readFileSync(dirname + '/public/labels/' + arr[i]));
         info.push({
@@ -266,6 +269,81 @@ app.get('/api/getLabelsets', (req, res) => {
     }
     res.send(info);
 });
+
+app.get('/api/getAtlasBackups', (req, res) => {
+    const { source, atlasProject, atlasName } = req.query;
+
+    if(typeof source === "undefined"
+        || typeof atlasProject === "undefined"
+        || atlasName === "undefined") {
+        res.status(400);
+        res.render('error', {
+            message: "Missing source, atlasProject or atlasName"
+        });
+        return;
+    }
+
+    // get the mri object to which this atlas belongs
+    db.get('mri').findOne({
+        source: source,
+        "mri.atlas": {$elemMatch:{name: atlasName, project: atlasProject}},
+        backup: {$exists: 0}
+    }, {url: 1, "mri.atlas.$": 1})
+    .then( (obj) => {
+        // get all filenames that have ever been associated with this atlas
+        let {url: dataDir} = obj;
+        dataDir = dataDir.split("/")[2];
+        db.get('mri').aggregate([
+            { $match:{ source: source, "mri.atlas":{$elemMatch: {project: atlasProject, name: atlasName}}}},
+            { $unwind: "$mri.atlas" },
+            { $match: { "mri.atlas.project":atlasProject, "mri.atlas.name": atlasName}},
+            { $group: {_id:{filename: "$mri.atlas.filename"}}},
+            { $project: {_id:0, filename:"$_id.filename"}}
+        ])
+        .then( (obj2) => {
+            // get all backups for those files...
+            let i;
+            const promiseArray = [];
+            // ...from backup logs
+            for(i=0; i<obj2.length; i++) {
+                promiseArray.push(
+                    db.get('log').aggregate([
+                        { $match: {key:"saveAtlasBackup", "value.atlasDirectory": dataDir, "value.atlasFilename": obj2[i].filename}},
+                        { $project: {_id:0, filename:"$value.atlasFilename", timestamp:"$value.timestamp"}}
+                    ])
+                );
+            }
+            Promise.all(promiseArray)
+            .then((values) => {
+                let result = [].concat.apply([], values);
+                result = result.concat(obj2);
+                res.send(result);
+            })
+            .catch( (err) => {
+                res.status(500);
+                res.render('error', {
+                    message: "Can't query backup file logs",
+                    error: err
+                });
+            });
+        })
+        .catch( (err) => {
+                res.status(500);
+                res.render('error', {
+                    message: "Can't query backup files",
+                    error: err
+                });
+        });
+    })
+    .catch( (err) => {
+            res.status(400);
+            res.render('error', {
+                message: "Can't find atlas",
+                error: err
+            });
+    });
+});
+
 app.post('/api/log', (req, res) => {
     const loggedUser = req.isAuthenticated() ? req.user.username : 'anonymous';
     const json = req.body;
@@ -280,7 +358,7 @@ app.post('/api/log', (req, res) => {
                 'value.atlas': json.value.atlas
             };
             req.db.get('log').findOne(obj)
-            .then(result => {
+            .then( (result) => {
                 let length = 0;
                 if (result) {
                     length = parseFloat(result.value.length);
@@ -292,7 +370,7 @@ app.post('/api/log', (req, res) => {
                 }}, {upsert: true});
                 res.send({length: sum});
             })
-            .catch(err => {
+            .catch( (err) => {
                 tracer.log('ERROR', err);
                 res.send({error: JSON.stringify(err)});
             });
