@@ -22,6 +22,6 @@ jobs:
            command: 'echo "{}" > controller/atlasMakerServer/whitelist.json'
        - run:
            name: Run server in background
-           command: 'npm start'
+           command: 'PORT=3001 npm start'
            background: true
        - run: sleep 5
