@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 # Exit script if you try to use an uninitialized variable.
 #set -o nounset
