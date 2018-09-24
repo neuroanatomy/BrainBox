@@ -1,6 +1,17 @@
-cd scripts
+#!/usr/bin/env bash
 
-if [ $1 ]; then
+# Exit script if you try to use an uninitialized variable.
+set -o nounset
+
+# Exit script if a statement returns a non-true return value.
+set -o errexit
+
+# Use the error status of the first failure, rather than that of the last item in a pipeline.
+set -o pipefail
+
+cd scripts || return
+
+if [ "$1" ]; then
     MINIFY=true
     echo "Minifying"
 else
@@ -48,36 +59,36 @@ tocon=('jquery-3.2.1' 'jquery-ui' 'pako' 'fast-json-patch' 'struct' 'purify' 'at
 
 # minify
 echo "Minifying"
-for s in ${tomin[@]}; do
-    tmp=$(basename $s)
+for s in "${tomin[@]}"; do
+    tmp=$(basename "$s")
     if [ $MINIFY ]; then
-        uglifyjs $s -m -o ${tmp%.js}.min.js
+        uglifyjs "$s" -m -o "${tmp%.js}.min.js"
     else
-        cp $s $tmp
+        cp "$s" "$tmp"
     fi
 done
 
 # concatenate
 echo "Concatenating"
-dest=../view/dist/atlasMaker${min}.js
-if [ -f $dest ]; then
-    rm $dest
+dest="../view/dist/atlasMaker${min}.js"
+if [ -f "$dest" ]; then
+    rm "$dest"
 fi
-for s in ${tocon[@]}; do
-    if [ ! $MINIFY ] && [ -f ${s}.js ]; then
-        cat ${s}.js >> $dest
+for s in "${tocon[@]}"; do
+    if [ ! $MINIFY ] && [ -f "${s}.js" ]; then
+        cat "${s}.js" >> "$dest"
     else
-        cat ${s}.min.js >> $dest
+        cat "${s}.min.js" >> "$dest"
     fi
-    echo >> $dest
+    echo >> "$dest"
 done
 echo "Done"
 
 # cleanup
 echo "Clean up"
-for s in ${tocon[@]}; do
-    tmp=$(ls $s.*)
-    rm $tmp
+for s in "${tocon[@]}"; do
+    tmp=$(ls "$s".*)
+    rm "$tmp"
 done
 
 
@@ -97,12 +108,12 @@ tocon=('atlasMaker' 'twoWayBinding' 'brainbox')
 
 # minify
 echo "Minifying"
-for s in ${tomin[@]}; do
-    tmp=$(basename $s)
+for s in "${tomin[@]}"; do
+    tmp=$(basename "$s")
     if [ $MINIFY ]; then
-        uglifyjs $s -m -o ${tmp%.js}.min.js
+        uglifyjs "$s" -m -o "${tmp%.js}.min.js"
     else
-        cp $s $tmp
+        cp "$s" "$tmp"
     fi
 done
 
@@ -112,26 +123,26 @@ dest=../view/dist/brainbox${min}.js
 if [ -f $dest ]; then
     rm $dest
 fi
-for s in ${tocon[@]}; do
-    if [ ! $MINIFY ] && [ -f ${s}.js ]; then
-        cat ${s}.js >> $dest
+for s in "${tocon[@]}"; do
+    if [ ! $MINIFY ] && [ -f "${s}.js" ]; then
+        cat "${s}.js" >> "$dest"
     else
-        cat ${s}.min.js >> $dest
+        cat "${s}.min.js" >> $dest
     fi
-    echo >> $dest
+    echo >> "$dest"
 done
 echo "Done"
 
 # cleanup
 echo "Clean up"
-for s in ${tocon[@]}; do
-    tmp=$(ls $s.*)
-    rm $tmp
+for s in "${tocon[@]}"; do
+    tmp=$(ls "$s".*)
+    rm "$tmp"
 done
 
 
 # Copy brainbox.min.js to /public/lib
 #------------------------------------
-cp ../view/dist/brainbox${min}.js ../public/lib/
+cp "../view/dist/brainbox${min}.js" ../public/lib/
 
 cd ..
