@@ -24,5 +24,6 @@ public/doc2/*
 public/nihpd-plane/*
 .DS_Store
 package-lock.json
-
 js/.DS_Store
+view/brainbox/dist/
+
