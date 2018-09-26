@@ -15,7 +15,7 @@ var BrainBox={
     hostname: 'http://localhost:3001', //'', // 'http://brainbox.pasteur.fr',
     info:{},
     labelSets:null,
-    annotationType:["volume","text"],
+    annotationType:["volume", "text", "hidden text", "multiple choices"],
     accessLevels: ["none","view","edit","add","remove"],
 
     /**
