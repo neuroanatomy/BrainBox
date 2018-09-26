@@ -109,7 +109,8 @@ BrainBox.loadLabelsets()
             " <td contentEditable=true class='noEmpty'>",
             "  <select class='mui-select'>",BrainBox.labelSets.map(function(o){return "<option>"+o.name+"</option>"}),"</select>",
             " </td>",	// append label sets
-            " <td>","<div class='display' data-check=0>","<span class='check' title='display'></span>","</div>","</td>",
+            " <td>","<div class='display' data-check=0></div>","</td>",
+//            " <td>","<div class='display' data-check=0>","<span class='check' title='display'></span>","</div>","</td>",
             "</tr>"],function(o){return o}).join(""),
         objTemplate: [
             {	typeOfBinding:2,
@@ -222,7 +223,7 @@ $("#saveChanges").click(saveChanges);
 $("#deleteProject").click(deleteProject);
 $("#goToProject").click(function goToProject(){location.pathname=`/project/${projectShortname}`});
 
-$("body").on('click',".check",function(e){onCheckClicked(e)}); // for the display option
+$("body").on('click',".display",function(e){onCheckClicked(e)}); // for the display option
 
 $(document).on('click', "#addCollaborator", function(){addCollaborator(accParam)});
 $(document).on('click', "#removeCollaborator", function(){removeCollaborator(accParam)});

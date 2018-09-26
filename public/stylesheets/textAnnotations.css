@@ -1,42 +1,42 @@
 /* text annotations
 ------------------------ */
 tr {
-	vertical-align:top;
+    vertical-align:top;
 }
 tr.selected {
-	background-color: #444;
+    background-color: #444;
 }
 table {
-	border-collapse:collapse;
+    border-collapse:collapse;
 }
 .tabContent th {
-	font-weight: bold;
-	border-bottom:thin solid white;
+    font-weight: bold;
+    border-bottom:thin solid white;
 }
 .tabContent {
-	width:100%;
-	border-bottom:thin solid white;
-	table-layout: fixed;
+    width:100%;
+    border-bottom:thin solid white;
+    table-layout: fixed;
 }
 .tabContent td {
-	font-weight: normal;
+    font-weight: normal;
 }
 .tabContent th, .tabContent td {
-	padding:0;
+    padding:0;
 }
 ul {
-	list-style-type: none;
-	padding:0px;
-	margin:0px;
+    list-style-type: none;
+    padding:0px;
+    margin:0px;
 }
 li {
-	margin-bottom:1rem;
+    margin-bottom:1rem;
 }
 
 /* Content: Data
 ---------------------- */
 #data {
-	display:none;
+    display:none;
 }
 
 .hidden span {
@@ -46,11 +46,11 @@ li {
     content:'••••';
 }
 .noEmpty:empty:before {
-	content:'Empty';
-	color:rgba(255,255,255,0.4);
+    content:'Empty';
+    color:rgba(255,255,255,0.4);
 }
 
 .noEmptyWithPlaceholder:empty:before {
-	content:attr(placeholder);
-	color:rgba(255,255,255,0.4);
+    content:attr(placeholder);
+    color:rgba(255,255,255,0.4);
 }
