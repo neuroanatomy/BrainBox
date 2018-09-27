@@ -98,30 +98,30 @@ $("#settings").click(function(){
 
             if(annType === "multiple choices") {
                 // array of values
-                let {tr, obj} = multiple(
+                let {td, obj} = multiple(
                     annotations.text[g],
                     "files.list.#.mri.annotations." + projShortname + "." + annName,
                     AtlasMakerWidget.User.username
                 );
-                trTemplate.push(tr);
+                trTemplate.push(td);
                 objTemplate.push(obj);
             } else if(annType === "text") {
                 // freeform text
-                let {tr, obj} = freeform(
+                let {td, obj} = freeform(
                     annotations.text[g],
                     "files.list.#.mri.annotations." + projShortname + "." + annName,
                     AtlasMakerWidget.User.username
                 );
-                trTemplate.push(tr);
+                trTemplate.push(td);
                 objTemplate.push(obj);
             } else if(annType === "hidden text") {
                 // freeform text
-                let {tr, obj} = hidden(
+                let {td, obj} = hidden(
                     annotations.text[g],
                     "files.list.#.mri.annotations." + projShortname + "." + annName,
                     AtlasMakerWidget.User.username
                 );
-                trTemplate.push(tr);
+                trTemplate.push(td);
                 objTemplate.push(obj);
             }
             /**
