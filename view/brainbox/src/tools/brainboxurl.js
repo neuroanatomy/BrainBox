@@ -1,9 +1,9 @@
 export default function brainboxurl(annotation, path, username) {
-    let tr; // the object that will go into the table
+    let td; // the object that will go into the table
     let obj; // the object that will go into the database
 
     // configure table row
-    tr = "<td><a></a></td>";
+    td = "<td><a></a></td>";
 
     // configure database object
     obj = {
@@ -15,5 +15,5 @@ export default function brainboxurl(annotation, path, username) {
         }
     };
 
-    return {tr, obj};
+    return {td, obj};
 }

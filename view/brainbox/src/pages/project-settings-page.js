@@ -68,23 +68,23 @@ var accParam = {
         "    </td>",
         "</tr>"],function(o){return o}).join(""),
     objTemplate: [
-        {   typeOfBinding:2,
+        {	typeOfBinding:2,
             path:"collaborators.list.#.username" // nickname
         },
-        {   typeOfBinding:2,
+        {	typeOfBinding:2,
             path:"collaborators.list.#.name" // full name
         },
-        {   typeOfBinding:2,
+        {	typeOfBinding:2,
             path:"collaborators.list.#.access.collaborators",
             format: function(e,d){$(e).find(".access").attr('data-level',["none","view","edit","add","remove"].indexOf(d))},
             parse: function(e){var level=$(e).find(".access").attr("data-level");return ["none","view","edit","add","remove"][level]}
         },
-        {   typeOfBinding:2,
+        {	typeOfBinding:2,
             path:"collaborators.list.#.access.annotations",
             format: function(e,d){$(e).find(".access").attr('data-level',["none","view","edit","add","remove"].indexOf(d))},
             parse: function(e){var level=$(e).find(".access").attr("data-level");return ["none","view","edit","add","remove"][level]}
         },
-        {   typeOfBinding:2,
+        {	typeOfBinding:2,
             path:"collaborators.list.#.access.files",
             format: function(e,d){$(e).find(".access").attr('data-level',["none","view","edit","add","remove"].indexOf(d))},
             parse: function(e){var level=$(e).find(".access").attr("data-level");return ["none","view","edit","add","remove"][level]}
@@ -105,22 +105,23 @@ BrainBox.loadLabelsets()
         trTemplate: $.map([
             "<tr>",
             " <td contentEditable=true class='noEmpty'></td>",
-            " <td><select class='mui-select'>",BrainBox.annotationType.map(function(o){return "<option>"+o+"</option>"}),"</select></td>", // append annotation types
+            " <td><select class='mui-select'>",BrainBox.annotationType.map(function(o){return "<option>"+o+"</option>"}),"</select></td>",	// append annotation types
             " <td contentEditable=true class='noEmpty'>",
             "  <select class='mui-select'>",BrainBox.labelSets.map(function(o){return "<option>"+o.name+"</option>"}),"</select>",
-            " </td>",   // append label sets
-            " <td>","<div class='display' data-check=0>","<span class='check' title='display'></span>","</div>","</td>",
+            " </td>",	// append label sets
+            " <td>","<div class='display' data-check=0></div>","</td>",
+//            " <td>","<div class='display' data-check=0>","<span class='check' title='display'></span>","</div>","</td>",
             "</tr>"],function(o){return o}).join(""),
         objTemplate: [
-            {   typeOfBinding:2,
+            {	typeOfBinding:2,
                 path:"annotations.list.#.name"
             },
-            {   typeOfBinding:2,
+            {	typeOfBinding:2,
                 path:"annotations.list.#.type",
                 format: function(e,d){$(e).find("select").prop('selectedIndex',BrainBox.annotationType.indexOf(d))},
                 parse: function(e){return $(e).find("select").val()}
             },
-            {   typeOfBinding:2,
+            {	typeOfBinding:2,
                 path:"annotations.list.#.values",
                 format: function (e,d) {
                     var t=$(e).closest("tr").find("td:eq(1) select").prop('selectedIndex');
@@ -137,7 +138,7 @@ BrainBox.loadLabelsets()
                         return $(e).text();
                 }
             },
-            {   typeOfBinding:2,
+            {	typeOfBinding:2,
                 path:"annotations.list.#.display",
                 format: function(e,d){$(e).find(".display").attr("data-check",(d=='true')?"1":"0")},
                 parse: function(e){return ($(e).find(".display").attr("data-check")=="1"?'true':'false')}
@@ -173,10 +174,10 @@ var filesParam = {
         "    <td contentEditable=true class='noEmpty'></td>",
         "</tr>"],function(o){return o}).join(""),
     objTemplate: [
-        {   typeOfBinding:2,
+        {	typeOfBinding:2,
             path:"files.list.#.source"
         },
-        {   typeOfBinding:2,
+        {	typeOfBinding:2,
             path:"files.list.#.name"
         }
     ]

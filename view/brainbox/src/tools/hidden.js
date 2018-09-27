@@ -1,9 +1,13 @@
-export default function freeform(annotation, path, username) {
-    let tr; // the object that will go into the table
+/**
+ * @function hidden
+ * @desc Handles hidden text annotations
+ */
+export default function hidden(annotation, path, username) {
+    let td; // the object that will go into the table
     let obj; // the object that will go into the database
 
     // configure table row
-    tr = "<td contentEditable=true class='hidden'></td>";
+    td = "<td contentEditable=true class='hidden'></td>";
 
     // configure database object
     obj = {
@@ -25,5 +29,5 @@ export default function freeform(annotation, path, username) {
         }
     };
 
-    return {tr, obj};
+    return {td, obj};
 }

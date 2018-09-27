@@ -1,11 +1,7 @@
-import freeform from '../tools/freeform.js';
-import hidden from '../tools/hidden.js';
-import multiple from '../tools/multiple.js';
-
 var mriInfoOrig;
 var textAnnotationsArray = [];
 var version=1;
-var volAnnParam, textAnnParam;
+var volAnnParam, textAnnParam, info_proxy={};
 
 // Prevent zoom on double tap
 $('body').on('touchstart', function preventZoom(e) {
@@ -137,7 +133,6 @@ if( $.isEmptyObject(mriInfo)) {
         var trTemplate;
         var objTemplate;
         var i, j, p, n;
-
         trTemplate = [
             "<tr>",
             " <td contentEditable=true class='noEmpty'></td>", // name
@@ -154,13 +149,12 @@ if( $.isEmptyObject(mriInfo)) {
             " </td>",
             "</tr>"
         ].join("");
-
         objTemplate = [
             {   typeOfBinding:2,
                 path:"#.name", // name
             },
             {   typeOfBinding:2,
-                path:"#.data" // value
+                path:"#.data" // data
             },
             {   typeOfBinding:1,
                 path:"#.project", // project
@@ -176,7 +170,6 @@ if( $.isEmptyObject(mriInfo)) {
                 parse: function(e){var level=$(e).find(".access").attr("data-level");return BrainBox.accessLevels[level]}
             }
         ];
-
         textAnnParam = {
             table: $("table#textAnnotations"),
             info_proxy: info_proxy,
@@ -184,11 +177,9 @@ if( $.isEmptyObject(mriInfo)) {
             trTemplate: trTemplate,
             objTemplate: objTemplate
         };
-
         for(i=0;i<textAnnotationsArray.length;i++) {
             BrainBox.appendAnnotationTableRow(i,textAnnParam);
         }
-
         $(document).on('click touchstart', "#textAnnotations tr",function() {
             var table=$(this).closest("tbody");
             $(table).find("tr").removeClass("selected");
@@ -256,6 +247,7 @@ if( $.isEmptyObject(mriInfo)) {
             }
         });
 
+
     })
     .catch(err => {
         $("#msgLog").html("ERROR: Can't load data. " + err);
@@ -272,7 +264,7 @@ $("#addProject").click(function(){location="/project/new"});
 function addAnnotation(param) {
     var date=new Date();
     var i, found;
-
+    
     // check that there is no other empty annotation already created
     found = false;
     for(i=0;i<BrainBox.info.mri.atlas.length;i++) {
@@ -317,7 +309,7 @@ function addAnnotation(param) {
 function removeAnnotation(param) {
     // find row index
     var index=$(param.table).find("tbody .selected").index();
-
+    
     // prevent removal of a last projet-less annotation
     if(BrainBox.info.mri.atlas[index].project == "") {
         var nPublicAnnotations = BrainBox.info.mri.atlas.map(function(o){return (o.project=="")}).length;
@@ -327,10 +319,10 @@ function removeAnnotation(param) {
             return;
         }
     }
-
+    
     // remove row from table
     $(param.table).find('tbody tr:eq('+index+')').remove();
-
+    
     // select previous row (or 1st one)
     BrainBox.selectAnnotationTableRow(Math.max(0,index-1),param);
 
@@ -418,7 +410,7 @@ function selectTextAnnotationTableRow(index,param) {
  */
 function saveAnnotationsChange(info) {
     var i, j;
-
+    
     // update content of projectInfo object from proxy by calling all getters
     JSON.stringify(info_proxy);
 
@@ -437,6 +429,7 @@ function saveAnnotationsChange(info) {
     }
 
     // check the info object for duplicate text annotations
+    found = false;
     for(i=0;i<textAnnotationsArray.length-1;i++) {
         for(j=i+1;j<textAnnotationsArray.length;j++) {
             if( textAnnotationsArray[i].name === textAnnotationsArray[j].name
