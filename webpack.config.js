@@ -24,7 +24,9 @@ module.exports = {
                 'echo "Webpack End"',
                 'cp view/brainbox/dist/index-page.js public/js/index-page.js',
                 'cp view/brainbox/dist/mri-page.js public/js/mri-page.js',
-                'cp view/brainbox/dist/project-page.js public/js/project-page.js'
+                'cp view/brainbox/dist/project-page.js public/js/project-page.js',
+                'cp view/brainbox/dist/project-new-page.js public/js/project-new-page.js',
+                'cp view/brainbox/dist/project-settings-page.js public/js/project-settings-page.js'
             ]
         })
     ],
