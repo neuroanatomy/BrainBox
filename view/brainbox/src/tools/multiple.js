@@ -1,15 +1,20 @@
+/**
+ * @function multiple
+ * @desc Handles annotations restricted to a reduced number of options
+ */
+
 export default function multiple(annotation, path, username) {
-    let tr = []; // the object that will go into the table
+    let td = []; // the object that will go into the table
     let obj; // the object that will go into the database
     const values = annotation.values.split(/[, ]+/);
 
     // configure table row
-    tr.push("<td><select value=0><option value='' disabled selected hidden>Empty</option>");
+    td.push("<td><select value=0><option value='' disabled selected hidden>Empty</option>");
     for (var o in values) {
-        tr.push("<option value=\"" + values[o] + "\"" + ">" + values[o] + "</option>");
+        td.push("<option value=\"" + values[o] + "\"" + ">" + values[o] + "</option>");
     }
-    tr.push("</select></td>");
-    tr = tr.join("\n");
+    td.push("</select></td>");
+    td = td.join("\n");
 
     // configure database object
     obj = {
@@ -39,7 +44,7 @@ export default function multiple(annotation, path, username) {
         }
     };
 
-    return {tr, obj};
+    return {td, obj};
 }
 
 

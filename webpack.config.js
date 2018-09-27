@@ -22,6 +22,8 @@ module.exports = {
             onBuildStart:['echo "Webpack Start"'],
             onBuildEnd:[
                 'echo "Webpack End"',
+                'cp view/brainbox/dist/index-page.js public/js/index-page.js',
+                'cp view/brainbox/dist/mri-page.js public/js/mri-page.js',
                 'cp view/brainbox/dist/project-page.js public/js/project-page.js'
             ]
         })

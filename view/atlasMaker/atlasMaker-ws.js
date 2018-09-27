@@ -319,7 +319,7 @@ var AtlasMakerWS = {
         var theView = me.Collab[data.uid].view;
         var theSlice = me.Collab[data.uid].slice;
         var link = me.hostname + "/mri?url=" + theSource + "&view=" + theView + "&slice=" + theSlice;
-        var theUsername = data.username;
+        var theUsername = (data.username === "Anonymous")?data.uid:data.username;
         var msg = "<a href='" +link+"'><b>"+theUsername+":</b></a> "+data.msg+"<br />"
         $("#log").append(msg);
         $("#log").scrollTop($("#log")[0].scrollHeight);

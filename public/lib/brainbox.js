@@ -3465,7 +3465,7 @@ var AtlasMakerInteraction = {
     onkey: function onkey(e) {
         var me=AtlasMakerWidget;
         var l=me.traceLog(onkey,2,"#f00");if(l)console.log.apply(undefined,l);
-    
+
         if (e.keyCode == 13) {
             me.sendChatMessage();
         }
@@ -4613,7 +4613,7 @@ var AtlasMakerWS = {
         var theView = me.Collab[data.uid].view;
         var theSlice = me.Collab[data.uid].slice;
         var link = me.hostname + "/mri?url=" + theSource + "&view=" + theView + "&slice=" + theSlice;
-        var theUsername = data.username;
+        var theUsername = (data.username === "Anonymous")?data.uid:data.username;
         var msg = "<a href='" +link+"'><b>"+theUsername+":</b></a> "+data.msg+"<br />"
         $("#log").append(msg);
         $("#log").scrollTop($("#log")[0].scrollHeight);

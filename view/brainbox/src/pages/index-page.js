@@ -15,6 +15,9 @@ $(window).on('resize',function() {
     $("#neurons").css({width:window.innerWidth});
 });
 
+// go to url button
+$("#go").click(goToURL);
+
 // video settings
 var vid = document.getElementById("neurons");
 vid.playbackRate = 0.5;
@@ -95,7 +98,7 @@ var brainsToTry=[
 // Connect addProject button
     $("#addProject").click(function(){location="/project/new"});
 
-function goToURL(e) {
+function goToURL() {
     var url=$("#url").val();
     location="/mri?url="+url;
 }

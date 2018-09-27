@@ -9,7 +9,6 @@ const annotations = {
     volume: []  // collect volume annotations
 };
 let k, h, str, found, annType, annName, file;
-const info_proxy = {};
 let trTemplate;
 let objTemplate;
 let aParam;
@@ -94,7 +93,6 @@ $("#settings").click(function(){
         // determine their type of display (either select or freeform at the moment) based data type
         let g;
         for(g=0; g<annotations.text.length; g++) {
-            // annType = Object.prototype.toString.call(annotations.text[g].values); // a better object type description
             annType = annotations.text[g].type;
             annName = annotations.text[g].name;
 
