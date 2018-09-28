@@ -149,7 +149,7 @@ $("#settings").click(function(){
     })
     .then(function(list) {
         appendFilesToProject(list);
-        
+
         // mark first row as selected
         $("#projectFiles tbody tr:eq(0)").addClass("selected");
     })

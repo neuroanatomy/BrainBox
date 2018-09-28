@@ -5,7 +5,8 @@
  * @version 0.0.1
  * @brief Real-time collaboration in neuroimaging
  */
- 
+
+import * as tw from './twoWayBinding.js';
 var hashOld;
 
 /**
@@ -357,7 +358,7 @@ var BrainBox={
         for(var icol=0;icol<param.objTemplate.length;icol++) {
             switch(param.objTemplate[icol].typeOfBinding) {
                 case 1:
-                    bind1(
+                    tw.bind1(
                         param.info_proxy,
                         param.info,
                         param.objTemplate[icol].path.replace("#",irow),
@@ -366,7 +367,7 @@ var BrainBox={
                     );
                     break;
                 case 2:
-                    bind2(
+                    tw.bind2(
                         param.info_proxy,
                         param.info,
                         param.objTemplate[icol].path.replace("#",irow),
@@ -389,7 +390,7 @@ var BrainBox={
         for(var icol=0;icol<param.objTemplate.length;icol++) {
             switch(param.objTemplate[icol].typeOfBinding) {
                 case 1:
-                    bind1(
+                    tw.bind1(
                         param.info_proxy,
                         param.info,
                         param.objTemplate[icol].path.replace("#",iarr),
@@ -398,7 +399,7 @@ var BrainBox={
                     );
                     break;
                 case 2:
-                    bind2(
+                    tw.bind2(
                         param.info_proxy,
                         param.info,
                         param.objTemplate[icol].path.replace("#",iarr),
