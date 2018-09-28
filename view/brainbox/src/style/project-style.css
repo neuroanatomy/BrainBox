@@ -27,14 +27,14 @@ select {
 /* Project Page, Left Bar, Resize Button
 -----------------------------------------*/
 #resizeButton {
-	display:inline-block;
-	position:absolute;
-	width:10px;
-	height:20px;
-	top:50%;
-	left:100%;
-	background-color:#333;
-	transform:translate(-50%, -50%);
-	border-radius:5px;
-	z-index:5;
+    display:inline-block;
+    position:absolute;
+    width:10px;
+    height:20px;
+    top:50%;
+    left:100%;
+    background-color:#333;
+    transform:translate(-50%, -50%);
+    border-radius:5px;
+    z-index:5;
 }

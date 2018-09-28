@@ -4,6 +4,8 @@ import 'jquery-ui/themes/base/theme.css';
 import 'jquery-ui/themes/base/autocomplete.css';
 import 'jquery-ui/ui/core';
 import 'jquery-ui/ui/widgets/autocomplete';
+import * as jsonpatch from 'fast-json-patch';
+
 import * as tw from '../twoWayBinding';
 import freeform from '../tools/freeform';
 import hidden from '../tools/hidden';
