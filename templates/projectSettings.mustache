@@ -90,8 +90,8 @@
                                 </tbody>
                             </table>
                             <div style="text-align:right">
-                                <img id="addCollaborator" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/plus-square.svg' />
-                                <img id="removeCollaborator" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/minus-square.svg' />
+                                <img id="addCollaborator" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/plus-square.svg' title='add collaborator'/>
+                                <img id="removeCollaborator" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/minus-square.svg' title='remove collaborator'/>
                             </div>
                             
                             
@@ -110,10 +110,10 @@
                                 </tbody>
                             </table>
                             <div style="text-align:right">
-                                <img id="addAnnotation" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/plus-square.svg' />
-                                <img id="removeAnnotation" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/minus-square.svg' />
+                                <img id="addAnnotation" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/plus-square.svg' title='add annotation'/>
+                                <img id="removeAnnotation" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/minus-square.svg' title='remove annotation'/>
                             </div>
-                            
+
                             <!-- Tab Content 3: MRIs -->
                             <h2 class="selection-header">MRI Files</h2>
                             <table id="MRIFiles" class="tabContent" style="padding:10px">
@@ -127,9 +127,10 @@
                                 </tbody>
                             </table>
                             <div style="text-align:right">
-                                <img id="importFiles" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/upload-square.svg' />
-                                <img id="addFile" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/plus-square.svg' />
-                                <img id="removeFile" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/minus-square.svg' />
+                                <img id="importFiles" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/upload-square.svg' title='upload csv'/>
+                                <img id="exportFiles" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/download-square.svg' title='download csv'/>
+                                <img id="addFile" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/plus-square.svg' title='add new url entry'/>
+                                <img id="removeFile" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/minus-square.svg' title='remove url entry'/>
                             </div>
                 </div>
         </div>
@@ -185,6 +186,7 @@
 <!--
 <script src="/lib/brainbox.min.js"></script>
 -->
+<script src="/lib/atlasMaker.js"></script>
 <script src="/lib/brainbox.js"></script>
 <script>
 var projectInfo={{{projectInfo}}};

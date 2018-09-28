@@ -1,3 +1,10 @@
+import $ from 'jquery';
+import 'jquery-ui/themes/base/core.css';
+import 'jquery-ui/themes/base/theme.css';
+import 'jquery-ui/themes/base/autocomplete.css';
+import 'jquery-ui/ui/core';
+import 'jquery-ui/ui/widgets/autocomplete';
+
 import freeform from '../tools/freeform.js';
 import hidden from '../tools/hidden.js';
 import multiple from '../tools/multiple.js';

@@ -1,8 +1,10 @@
 /*! AtlasMaker: User Interface Elements */
+import * as $ from '../../downloads/jquery-3.2.1.min.js';
+
 /**
  * @page AtlasMaker: User Interface Elements
  */
-var AtlasMakerUI = {
+export var AtlasMakerUI = {
     /**
      * @function slider
      */

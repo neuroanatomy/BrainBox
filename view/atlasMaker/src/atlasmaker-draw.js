@@ -1,4 +1,5 @@
 /*! AtlasMaker: Image Drawing */
+import $ from 'jquery';
 
 /**
  * @page AtlasMaker: Image Drawing
@@ -182,23 +183,24 @@ export var AtlasMakerDraw = {
         if(!me.atlas)
             return;
 
-        var    data=me.atlas.data;
-        var    dim=me.atlas.dim;
-        var    s,val;
+        const data = me.atlas.data;
+        const dim = me.atlas.dim;
+        let i, s, val;
 
-        ys=yc=ya=slice;
-        for(y=0;y<me.brain_H;y++)
-        for(x=0;x<me.brain_W;x++) {
+        let x, y;
+        let ys=slice, yc=slice, ya=slice;
+        for(y = 0; y < me.brain_H; y++)
+        for(x = 0; x < me.brain_W; x++) {
             switch(view) {
-                case 'sag':s=[ys,x,me.brain_H-1-y]; break;
-                case 'cor':s=[x,yc,me.brain_H-1-y]; break;
-                case 'axi':s=[x,me.brain_H-1-y,ya]; break;
+                case 'sag':s = [ys,x,me.brain_H-1-y]; break;
+                case 'cor':s = [x,yc,me.brain_H-1-y]; break;
+                case 'axi':s = [x,me.brain_H-1-y,ya]; break;
             }
-            i=me.S2I(s,me.User);
+            i = me.S2I(s,me.User);
 
             var c=me.ontologyValueToColor(data[i]);
             var alpha=(data[i]>0)?255:0;
-            i=(y*me.atlas_offcn.width+x)*4;
+            i = (y*me.atlas_offcn.width+x)*4;
             me.atlas_px.data[ i ]  =c[0];
             me.atlas_px.data[ i+1 ]=c[1];
             me.atlas_px.data[ i+2 ]=c[2];

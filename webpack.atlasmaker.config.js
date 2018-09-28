@@ -5,12 +5,7 @@ const WebpackShellPlugin = require('webpack-shell-plugin');
 
 module.exports = {
     entry: {
-        brainbox: './view/brainbox/src/index.js',
-        "index-page": './view/brainbox/src/pages/index-page.js',
-        "mri-page": './view/brainbox/src/pages/mri-page.js',
-        "project-page": './view/brainbox/src/pages/project-page.js',
-        "project-new-page": './view/brainbox/src/pages/project-new-page.js',
-        "project-settings-page": './view/brainbox/src/pages/project-settings-page.js'
+        atlasmaker: './view/atlasMaker/src/atlasmaker.js'
     },
     devtool: 'eval-source-map',
     plugins: [
@@ -22,17 +17,15 @@ module.exports = {
             onBuildStart:['echo "Webpack Start"'],
             onBuildEnd:[
                 'echo "Webpack End"',
-                'cp view/brainbox/dist/index-page.js public/js/index-page.js',
-                'cp view/brainbox/dist/mri-page.js public/js/mri-page.js',
-                'cp view/brainbox/dist/project-page.js public/js/project-page.js',
-                'cp view/brainbox/dist/project-new-page.js public/js/project-new-page.js',
-                'cp view/brainbox/dist/project-settings-page.js public/js/project-settings-page.js'
+                'cp view/atlasMaker/dist/atlasMaker.js public/lib/atlasMaker.js'
             ]
         })
     ],
     output: {
-        filename: '[name].js',
-        path: path.resolve(__dirname, 'view/brainbox/dist')
+        filename: 'atlasmaker.js',
+        library: 'AtlasMakerWidget',
+        libraryExport: 'AtlasMakerWidget',
+        path: path.resolve(__dirname, 'view/atlasMaker/dist')
     },
     module: {
         rules: [

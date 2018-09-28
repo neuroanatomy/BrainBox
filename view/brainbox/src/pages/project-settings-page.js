@@ -2,6 +2,7 @@
 // @todo  implement the placeholder for the select tags in the anotation table
 // @todo  find a way for the user to give a set of values for the annotations and make it obvious that it works this way
 
+import $ from 'jquery'
 import * as tw from '../twoWayBinding.js';
 
 // Add avatar based on project's name
@@ -33,9 +34,9 @@ ws.onmessage = function(message) {
 
 var projectInfoProxy={};
 
-tw.bind2(projectInfoProxy,projectInfo,"url","#projDescription #url");
-tw.bind2(projectInfoProxy,projectInfo,"description","#projDescription #description");
-tw.bind2(projectInfoProxy,projectInfo,"name","#projectName");
+tw.bind2(projectInfoProxy,projectInfo,"url",$("#projDescription #url"));
+tw.bind2(projectInfoProxy,projectInfo,"description",$("#projDescription #description"));
+tw.bind2(projectInfoProxy,projectInfo,"name",$("#projectName"));
 
 var accParam = {
     table: $("table#access"),
@@ -243,6 +244,7 @@ $("table#annotations tbody tr").eq(0).addClass("selected");
 $(document).on('click', "#addFile", function(){addFile(filesParam)});
 $(document).on('click', "#removeFile", function(){removeFile(filesParam)});
 $(document).on('click', "#importFiles", function(){importFiles()});
+$(document).on('click', "#exportFiles", function(){exportFiles()});
 $("table#MRIFiles tr").removeClass("selected");
 $("table#MRIFiles tbody tr").eq(0).addClass("selected");
 
@@ -325,7 +327,7 @@ function importFilesDialog() {
         var url=$(o).find("td:eq(0)").text();
         var name=$(o).find("td:eq(1)").text();
         var i,found;
-        
+
         if(url.length<10)
             return;
         
@@ -357,6 +359,12 @@ function importFilesDialog() {
     $("#importFilesDialog").hide();
     console.log(sum,"files added");
 }
+
+function exportFiles() {
+    // @todo Implement this function
+    alert("implement export csv with files in project");
+}
+
 function addCollaborator(param) {
     projectInfo.collaborators.list.push({
         userID: "",

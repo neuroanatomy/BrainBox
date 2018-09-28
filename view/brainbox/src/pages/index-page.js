@@ -1,3 +1,5 @@
+import $ from 'jquery'
+
 testWebSockets()
 .then(function(m) {
     console.log("Connection to websockets is ok");

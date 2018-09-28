@@ -1,7 +1,14 @@
-import * as tw from '../twoWayBinding.js';
-import freeform from '../tools/freeform.js';
-import hidden from '../tools/hidden.js';
-import multiple from '../tools/multiple.js';
+import $ from 'jquery';
+import 'jquery-ui/themes/base/core.css';
+import 'jquery-ui/themes/base/theme.css';
+import 'jquery-ui/themes/base/autocomplete.css';
+import 'jquery-ui/ui/core';
+import 'jquery-ui/ui/widgets/autocomplete';
+
+import * as tw from '../twoWayBinding';
+import freeform from '../tools/freeform';
+import hidden from '../tools/hidden';
+import multiple from '../tools/multiple';
 
 var mriInfoOrig;
 var textAnnotationsArray = [];
@@ -258,7 +265,7 @@ if( $.isEmptyObject(mriInfo)) {
         });
 
     })
-    .catch(err => {
+    .catch((err) => {
         $("#msgLog").html("ERROR: Can't load data. " + err);
         console.error(err);
     });

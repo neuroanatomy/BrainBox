@@ -5,7 +5,9 @@
   "scripts": {
     "start": "PORT=3001 node ./bin/www",
     "prepare": "./scripts/build.sh",
-    "build": "webpack --config webpack.config.js",
+    "build-pages": "webpack --config webpack.pages.config.js",
+    "build-brainbox": "webpack --config webpack.brainbox.config.js",
+    "build-atlasmaker": "webpack --config webpack.atlasmaker.config.js",
     "mocha-test": "mocha --timeout 10000 ./test/runner.js test/unit/*.js test/integration/*.js",
     "lint": "eslint .",
     "test": "docker exec brainbox_web_1 /bin/bash -c 'cd /brainbox && npm run mocha-test'"
@@ -26,6 +28,8 @@
     "fs": "0.0.1-security",
     "http": "0.0.0",
     "jpeg-js": "^0.3.3",
+    "jquery": "^3.2.1",
+    "jquery-ui": "^1.12.1",
     "jsdom": "^11.6.2",
     "keypress": "^0.2.1",
     "merge": "^1.2.0",
