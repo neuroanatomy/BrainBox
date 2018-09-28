@@ -6,7 +6,7 @@
  * @brief Real-time collaboration in neuroimaging
  */
 
-import $ from '../../downloads/jquery-3.2.1.min';
+import $ from 'jquery'
 import * as tw from './twoWayBinding.js';
 var hashOld;
 
