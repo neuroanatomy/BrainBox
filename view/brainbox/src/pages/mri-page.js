@@ -1,3 +1,4 @@
+import * as tw from '../twoWayBinding.js';
 import freeform from '../tools/freeform.js';
 import hidden from '../tools/hidden.js';
 import multiple from '../tools/multiple.js';
@@ -53,9 +54,9 @@ if( $.isEmptyObject(mriInfo)) {
 
     // Bind general information
     //--------------------------
-        bind2(info_proxy,BrainBox.info,"name",$("#name"));
-        bind1(info_proxy,BrainBox.info,"source",$("#source"));
-        bind1(info_proxy,BrainBox.info,"included",$("#included"),date_format);
+        tw.bind2(info_proxy,BrainBox.info,"name",$("#name"));
+        tw.bind1(info_proxy,BrainBox.info,"source",$("#source"));
+        tw.bind1(info_proxy,BrainBox.info,"included",$("#included"), tw.date_format);
 
 
     // Bind volume-type annotations
@@ -94,7 +95,7 @@ if( $.isEmptyObject(mriInfo)) {
                 },
                 {   typeOfBinding:1,
                     path:"mri.atlas.#.modified",
-                    format: date_format
+                    format: tw.date_format
                 },
                 {   typeOfBinding:1,
                     path:"mri.atlas.#.access",
@@ -168,7 +169,7 @@ if( $.isEmptyObject(mriInfo)) {
             },
             {   typeOfBinding:1,
                 path:"#.modified", // modified
-                format: date_format
+                format: tw.date_format
             },
             {   typeOfBinding:1,
                 path:"#.access",
@@ -338,7 +339,7 @@ function removeAnnotation(param) {
     JSON.stringify(param.info_proxy); // update BrainBox.info from info_proxy
     var irow=BrainBox.info.mri.atlas.length-1;
     for(var icol=0; icol<param.objTemplate.length; icol++) {
-        unbind2(param.info_proxy,param.objTemplate[icol].path.replace("#", irow));
+        tw.unbind2(param.info_proxy,param.objTemplate[icol].path.replace("#", irow));
     }
 
     // remove row from BrainBox.info.mri.atlas
@@ -392,7 +393,7 @@ function removeTextAnnotation(param) {
     JSON.stringify(param.info_proxy); // update textAnnotationsArray from info_proxy
     var irow=textAnnotationsArray.length-1;
     for(var icol=0; icol<param.objTemplate.length; icol++) {
-        unbind2(param.info_proxy,param.objTemplate[icol].path.replace("#", irow));
+        tw.unbind2(param.info_proxy,param.objTemplate[icol].path.replace("#", irow));
     }
     // remove row from textAnnotationsArray
     textAnnotationsArray.splice(index,1);
@@ -430,7 +431,7 @@ function saveAnnotationsChange(info) {
                 $("#annotationMessage").text("There is already an annotation with that name and project");
                 setTimeout(function(){$("#annotationMessage").text("")},2000);
                 //$.extend(true, info.mri, mriInfoOrig.mri);
-                resetBindingProxy(volAnnParam, mriInfoOrig);
+                tw.resetBindingProxy(volAnnParam, mriInfoOrig);
                 return;
             }
         }
@@ -444,7 +445,7 @@ function saveAnnotationsChange(info) {
                 $("#textAnnotationMessage").text("There is already an annotation with that name and project");
                 setTimeout(function(){$("#textAnnotationMessage").text("")},2000);
                 //$.extend(true, textAnnotationsArray, BrainBox.annotationsObjectToArray(mriInfoOrig.mri.annotations));
-                resetBindingProxy(textAnnParam, BrainBox.annotationsObjectToArray(mriInfoOrig.mri.annotations));
+                tw.resetBindingProxy(textAnnParam, BrainBox.annotationsObjectToArray(mriInfoOrig.mri.annotations));
                 return;
             }
         }

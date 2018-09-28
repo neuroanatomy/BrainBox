@@ -1,17 +1,20 @@
-//TODO  check and be sure the user picks a username from the dropdown menu
-//TODO  implement the placeholder for the select tags in the anotation table
-//TODO  find a way for the user to give a set of values for the annotations and make it obvious that it works this way
+// @todo check and be sure the user picks a username from the dropdown menu
+// @todo  implement the placeholder for the select tags in the anotation table
+// @todo  find a way for the user to give a set of values for the annotations and make it obvious that it works this way
+
+import * as tw from '../twoWayBinding.js';
 
 // Add avatar based on project's name
 jdenticon.update($("svg")[0],md5(projectShortname));
 
 // WS Autocompletion
 var cb, label;
+let ws;
 var host = "ws://" + window.location.hostname + ":8080/";
 if (window.WebSocket) {
-    ws=new WebSocket(host);
+    ws = new WebSocket(host);
 } else if (window.MozWebSocket) {
-    ws=new MozWebSocket(host);
+    ws = new MozWebSocket(host);
 }
 ws.onopen = function(msg) {
     ws.send(JSON.stringify({"type":"autocompleteClient"}));
@@ -30,9 +33,9 @@ ws.onmessage = function(message) {
 
 var projectInfoProxy={};
 
-bind2(projectInfoProxy,projectInfo,"url","#projDescription #url");
-bind2(projectInfoProxy,projectInfo,"description","#projDescription #description");
-bind2(projectInfoProxy,projectInfo,"name","#projectName");
+tw.bind2(projectInfoProxy,projectInfo,"url","#projDescription #url");
+tw.bind2(projectInfoProxy,projectInfo,"description","#projDescription #description");
+tw.bind2(projectInfoProxy,projectInfo,"name","#projectName");
 
 var accParam = {
     table: $("table#access"),
@@ -410,7 +413,7 @@ function removeCollaborator(param) {
     JSON.stringify(param.info_proxy); // update projectInfo from projectInfoProxy
     var irow=projectInfo.collaborators.list.length-1;
     for(var icol=0; icol<param.objTemplate.length; icol++) {
-        unbind2(param.info_proxy,param.objTemplate[icol].path.replace("#", irow));
+        tw.unbind2(param.info_proxy,param.objTemplate[icol].path.replace("#", irow));
     }
     
     // remove row from BrainBox.info.mri.atlas
@@ -440,7 +443,7 @@ function removeAnnotation(param) {
     JSON.stringify(param.info_proxy); // update projectInfo from projectInfoProxy
     var irow=projectInfo.annotations.list.length-1;
     for(var icol=0; icol<param.objTemplate.length; icol++) {
-        unbind2(param.info_proxy,param.objTemplate[icol].path.replace("#", irow));
+        tw.unbind2(param.info_proxy,param.objTemplate[icol].path.replace("#", irow));
     }
     
     // remove row from BrainBox.info.mri.atlas
@@ -466,7 +469,7 @@ function removeFile(param) {
     JSON.stringify(param.info_proxy); // update projectInfo from projectInfoProxy
     var irow=projectInfo.files.list.length-1;
     for(var icol=0; icol<param.objTemplate.length; icol++) {
-        unbind2(param.info_proxy,param.objTemplate[icol].path.replace("#", irow));
+        tw.unbind2(param.info_proxy,param.objTemplate[icol].path.replace("#", irow));
     }
     
     // remove row from BrainBox.info.mri.atlas
