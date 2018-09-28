@@ -4,11 +4,16 @@ import 'jquery-ui/themes/base/theme.css';
 import 'jquery-ui/themes/base/autocomplete.css';
 import 'jquery-ui/ui/core';
 import 'jquery-ui/ui/widgets/autocomplete';
-
 import * as tw from '../twoWayBinding';
 import freeform from '../tools/freeform';
 import hidden from '../tools/hidden';
 import multiple from '../tools/multiple';
+
+import '../style/style.css';
+import '../style/textAnnotations.css';
+import '../style/mri-style.css';
+import '../style/access-style.css';
+import '../style/dropdown-style.css';
 
 var mriInfoOrig;
 var textAnnotationsArray = [];

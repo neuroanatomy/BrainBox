@@ -1,5 +1,9 @@
 import $ from 'jquery'
 
+import '../style/style.css'
+import '../style/index-style.css'
+import '../style/ui.css'
+
 testWebSockets()
 .then(function(m) {
     console.log("Connection to websockets is ok");

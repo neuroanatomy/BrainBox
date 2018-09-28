@@ -1,10 +1,15 @@
 import $ from 'jquery'
 
+import '../style/style.css';
+import '../style/ui.css';
+import '../style/projectNew-style.css';
+
 var host = "ws://" + window.location.hostname + ":8080/";
+let ws;
 if (window.WebSocket) {
-    ws=new WebSocket(host);
+    ws = new WebSocket(host);
 } else if (window.MozWebSocket) {
-    ws=new MozWebSocket(host);
+    ws = new MozWebSocket(host);
 }
 ws.onopen = function(msg) {
     ws.send(JSON.stringify({"type":"autocompleteClient"}));

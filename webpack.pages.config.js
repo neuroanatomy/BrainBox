@@ -9,7 +9,8 @@ module.exports = {
         "mri-page": './view/brainbox/src/pages/mri-page.js',
         "project-page": './view/brainbox/src/pages/project-page.js',
         "project-new-page": './view/brainbox/src/pages/project-new-page.js',
-        "project-settings-page": './view/brainbox/src/pages/project-settings-page.js'
+        "project-settings-page": './view/brainbox/src/pages/project-settings-page.js',
+        "user-page": './view/brainbox/src/pages/user-page.js'
     },
     devtool: 'eval-source-map',
     plugins: [
@@ -25,7 +26,8 @@ module.exports = {
                 'cp view/brainbox/dist/mri-page.js public/js/mri-page.js',
                 'cp view/brainbox/dist/project-page.js public/js/project-page.js',
                 'cp view/brainbox/dist/project-new-page.js public/js/project-new-page.js',
-                'cp view/brainbox/dist/project-settings-page.js public/js/project-settings-page.js'
+                'cp view/brainbox/dist/project-settings-page.js public/js/project-settings-page.js',
+                'cp view/brainbox/dist/user-page.js public/js/user-page.js'
             ]
         })
     ],
