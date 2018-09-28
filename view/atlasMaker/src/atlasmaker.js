@@ -1,6 +1,5 @@
 /*! AtlasMaker */
 import $ from 'jquery'
-import 'fast-json-patch';
 import * as Struct from '../../downloads/struct.js';
 
 import {AtlasMakerDraw} from './atlasMaker-draw.js';

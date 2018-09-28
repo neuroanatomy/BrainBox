@@ -52,20 +52,20 @@ h2 {
 }
 
  img#logo {
-	margin-top:20px;
-	margin-bottom:20px;
-	margin-left:50%;
-	transform:translate(-50%,0);
-	width:250px;
+    margin-top:20px;
+    margin-bottom:20px;
+    margin-left:50%;
+    transform:translate(-50%,0);
+    width:250px;
  }
 
 #neuronsImg {
-	filter:contrast(150%) brightness(60%);
-	-webkit-filter:contrast(150%) brightness(60%);
-	position:absolute;top:0;left:0
+    filter:contrast(150%) brightness(60%);
+    -webkit-filter:contrast(150%) brightness(60%);
+    position:absolute;top:0;left:0
 }
 #neurons {
-	filter:contrast(150%) brightness(60%);
-	-webkit-filter:contrast(150%) brightness(60%);
-	position:absolute;top:0;left:0
+    filter:contrast(150%) brightness(60%);
+    -webkit-filter:contrast(150%) brightness(60%);
+    position:absolute;top:0;left:0
 }
