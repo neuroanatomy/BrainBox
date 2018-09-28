@@ -1,6 +1,6 @@
 /*! AtlasMaker */
-import * as $ from '../../downloads/jquery-3.2.1.min.js';
-import * as jsonpatch from '../../downloads/fast-json-patch.min.js';
+import $ from 'jquery'
+import 'fast-json-patch';
 import * as Struct from '../../downloads/struct.js';
 
 import {AtlasMakerDraw} from './atlasMaker-draw.js';

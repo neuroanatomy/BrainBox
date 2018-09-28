@@ -1,5 +1,5 @@
 /*! AtlasMaker: Input/Output */
-import * as $ from '../../downloads/jquery-3.2.1.min.js';
+import $ from 'jquery'
 import * as pako from '../../downloads/pako.min.js';
 
 /**
