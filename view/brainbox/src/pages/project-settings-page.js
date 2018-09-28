@@ -3,7 +3,18 @@
 // @todo  find a way for the user to give a set of values for the annotations and make it obvious that it works this way
 
 import $ from 'jquery'
+import 'jquery-ui/themes/base/core.css';
+import 'jquery-ui/themes/base/theme.css';
+import 'jquery-ui/themes/base/autocomplete.css';
+import 'jquery-ui/ui/core';
+import 'jquery-ui/ui/widgets/autocomplete';
 import * as tw from '../twoWayBinding.js';
+
+import '../style/style.css';
+import '../style/ui.css';
+import '../style/projectSettings-style.css';
+import '../style/access-style.css';
+import '../style/dropdown-style.css';
 
 // Add avatar based on project's name
 jdenticon.update($("svg")[0],md5(projectShortname));

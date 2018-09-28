@@ -9,6 +9,11 @@ import freeform from '../tools/freeform.js';
 import hidden from '../tools/hidden.js';
 import multiple from '../tools/multiple.js';
 
+import '../style/style.css';
+import '../style/textAnnotations.css';
+import '../style/ui.css';
+import '../style/project-style.css';
+
 const projShortname = projectInfo.shortname;
 const numFilesQuery = 20;
 const annotations = {
