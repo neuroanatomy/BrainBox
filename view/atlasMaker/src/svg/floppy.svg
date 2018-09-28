@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="floppy.svg"
+   width="1536"
+   height="1536">
+  <metadata
+     id="metadata10">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs8" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1143"
+     inkscape:window-height="915"
+     id="namedview6"
+     showgrid="false"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:zoom="0.12792832"
+     inkscape:cx="50"
+     inkscape:cy="1358"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg2" />
+  <path
+     d="m 384,1408 768,0 0,-384 -768,0 0,384 z m 896,0 128,0 0,-896 q 0,-14 -10,-38.5 Q 1388,449 1378,439 L 1097,158 q -10,-10 -34,-20 -24,-10 -39,-10 l 0,416 q 0,40 -28,68 -28,28 -68,28 l -576,0 q -40,0 -68,-28 -28,-28 -28,-68 l 0,-416 -128,0 0,1280 128,0 0,-416 q 0,-40 28,-68 28,-28 68,-28 l 832,0 q 40,0 68,28 28,28 28,68 l 0,416 z M 896,480 896,160 q 0,-13 -9.5,-22.5 Q 877,128 864,128 l -192,0 q -13,0 -22.5,9.5 Q 640,147 640,160 l 0,320 q 0,13 9.5,22.5 9.5,9.5 22.5,9.5 l 192,0 q 13,0 22.5,-9.5 Q 896,493 896,480 Z m 640,32 0,928 q 0,40 -28,68 -28,28 -68,28 L 96,1536 Q 56,1536 28,1508 0,1480 0,1440 L 0,96 Q 0,56 28,28 56,0 96,0 l 928,0 q 40,0 88,20 48,20 76,48 l 280,280 q 28,28 48,76 20,48 20,88 z"
+     id="path4"
+     inkscape:connector-curvature="0"
+     style="fill:#ffffff;fill-opacity:1" />
+</svg>

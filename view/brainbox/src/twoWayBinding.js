@@ -1,10 +1,13 @@
 /*! Two-Way Binding */
+import DOMPurify from '../../downloads/purify.min.js';
 
 /**
  * @page Two-Way Binding
  */
 
-export const date_format=function(e,d){$(e).text(new Date(d).toLocaleDateString())};
+export const date_format = function(e, d) {
+    e.get(0).textContent = new Date(d).toLocaleDateString()
+};
 
 /*
  * @callback formatFunction
@@ -38,7 +41,7 @@ export function bind2(proxy,original,path,el,format,parse) {
             if(parse) {
                 v=parse(el,o[k[i]]);
             } else {
-                v=$(el).text();
+                v=el.get(0).textContent;
             }
             o[k[i]]=JSON.parse(DOMPurify.sanitize(JSON.stringify(v))||'""');
             return o[k[i]];
@@ -49,7 +52,7 @@ export function bind2(proxy,original,path,el,format,parse) {
             if(format)
                 format(el,v);
             else
-                $(el).text(v);
+                el.get(0).textContent = v;
         },
         configurable: true,
         enumerable: true
@@ -80,7 +83,7 @@ export function bind1(proxy,original,path,el,format) {
             if(format)
                 format(el,v);
             else
-                $(el).text(v);
+                el.get(0).textContent = v;
         },
         configurable: true,
         enumerable: true

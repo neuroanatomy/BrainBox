@@ -1,3 +1,5 @@
+import $ from 'jquery'
+
 var host = "ws://" + window.location.hostname + ":8080/";
 if (window.WebSocket) {
     ws=new WebSocket(host);

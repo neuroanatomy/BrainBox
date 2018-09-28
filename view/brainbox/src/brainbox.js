@@ -5,17 +5,21 @@
  * @version 0.0.1
  * @brief Real-time collaboration in neuroimaging
  */
- 
+
+import $ from '../../downloads/jquery-3.2.1.min';
+import * as tw from './twoWayBinding.js';
+var hashOld;
+
 /**
  * @page BrainBox
  */
-var BrainBox={
+export var BrainBox={
     version: 1,
     debug: 1,
     hostname: 'http://localhost:3001', //'', // 'http://brainbox.pasteur.fr',
     info:{},
     labelSets:null,
-    annotationType:["volume", "text", "hidden text", "multiple choices"],
+    annotationType:["volume","text"],
     accessLevels: ["none","view","edit","add","remove"],
 
     /**
@@ -40,8 +44,9 @@ var BrainBox={
         var l=BrainBox.traceLog(hash);if(l)console.log(l);
         
         var v0=0,v1,abc="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        let i;
         for(i=0;i<str.length;i++) {
-            ch=str.charCodeAt(i);
+            const ch=str.charCodeAt(i);
             v0=((v0<<5)-v0)+ch;
             v0=v0&v0;
         }
@@ -355,7 +360,7 @@ var BrainBox={
         for(var icol=0;icol<param.objTemplate.length;icol++) {
             switch(param.objTemplate[icol].typeOfBinding) {
                 case 1:
-                    bind1(
+                    tw.bind1(
                         param.info_proxy,
                         param.info,
                         param.objTemplate[icol].path.replace("#",irow),
@@ -364,7 +369,7 @@ var BrainBox={
                     );
                     break;
                 case 2:
-                    bind2(
+                    tw.bind2(
                         param.info_proxy,
                         param.info,
                         param.objTemplate[icol].path.replace("#",irow),
@@ -372,7 +377,7 @@ var BrainBox={
                         param.objTemplate[icol].format,
                         param.objTemplate[icol].parse
                     );
-                      break;
+                    break;
             }
         }
     },
@@ -387,7 +392,7 @@ var BrainBox={
         for(var icol=0;icol<param.objTemplate.length;icol++) {
             switch(param.objTemplate[icol].typeOfBinding) {
                 case 1:
-                    bind1(
+                    tw.bind1(
                         param.info_proxy,
                         param.info,
                         param.objTemplate[icol].path.replace("#",iarr),
@@ -396,7 +401,7 @@ var BrainBox={
                     );
                     break;
                 case 2:
-                    bind2(
+                    tw.bind2(
                         param.info_proxy,
                         param.info,
                         param.objTemplate[icol].path.replace("#",iarr),
