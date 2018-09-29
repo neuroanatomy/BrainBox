@@ -10,7 +10,7 @@ import 'jquery-ui/themes/base/autocomplete.css';
 import 'jquery-ui/ui/core';
 import 'jquery-ui/ui/widgets/autocomplete';
 import jdenticon from 'jdenticon'
-import 'md5'
+import md5 from 'md5'
 import * as tw from '../twoWayBinding.js';
 
 import '../style/style.css';
