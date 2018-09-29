@@ -8,7 +8,7 @@
     "build-pages": "webpack --config webpack.pages.config.js",
     "build-brainbox": "webpack --config webpack.brainbox.config.js",
     "build-atlasmaker": "webpack --config webpack.atlasmaker.config.js",
-    "mocha-test": "mocha --timeout 10000 ./test/runner.js test/unit/*.js test/integration/*.js",
+    "mocha-test": "mocha ./test/runner.js test/unit/*.js test/integration/*.js",
     "lint": "eslint .",
     "test": "docker exec brainbox_web_1 /bin/bash -c 'cd /brainbox && npm run mocha-test'"
   },
