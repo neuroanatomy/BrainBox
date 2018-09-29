@@ -99,33 +99,10 @@ export var AtlasMakerWidget = {
     version:    1, // version of the configuration file (slice number, plane, etc). Default=1
 
     /**
-     * @function traceLog
-     */
-    traceLog: function traceLog(f,l,c) {
-    /*
-        var me=AtlasMakerWidget;
-        if(me.debug && (l==undefined || me.debug>l)) {
-            var str,arg=[];
-            // str="am> "+(f.name)+" "+(f.caller?(f.caller.name||"annonymous"):"root");
-            str="am> ";//+(f.name);
-            if(c) {
-                str="%c"+str;
-            }
-            arg.push(str);
-            if(c) {
-                arg.push("color:"+c);
-            }
-            return arg;
-        }
-    */
-    },
-    /**
      * @function quit
      */
     quit: function quit() {
         var me=AtlasMakerWidget;
-        var l=me.traceLog(quit,0,"#bbd");if(l)console.log.apply(undefined,l);
-    
         me.log("","Goodbye!");
         me.socket.close();
         me.socket = null;
@@ -139,8 +116,6 @@ export var AtlasMakerWidget = {
      */
     initAtlasMaker: function initAtlasMaker(elem) {
         var me=AtlasMakerWidget;
-        var l=me.traceLog(initAtlasMaker,0,"#bbd");if(l)console.log.apply(undefined,l);
-
         $.extend(AtlasMakerWidget,AtlasMakerDraw);
         $.extend(AtlasMakerWidget,AtlasMakerInteraction);
         $.extend(AtlasMakerWidget,AtlasMakerIO);
@@ -288,8 +263,6 @@ export var AtlasMakerWidget = {
      */
     configureAtlasMaker: function configureAtlasMaker(info, index) {
         var me=AtlasMakerWidget;
-        var l=me.traceLog(configureAtlasMaker,0,"#bbd");if(l)console.log.apply(undefined,l);
-
         var pr = new Promise(function(resolve, reject) {
             me.configureMRI(info,index)
             .then(info2 => {
@@ -341,8 +314,6 @@ export var AtlasMakerWidget = {
      */
     configureOntology: function configureOntology(json) {
         var me=AtlasMakerWidget;
-        var l=me.traceLog(configureOntology,0,"#bbd");if(l)console.log.apply(undefined,l);
-
         me.ontology=json
         me.ontology.valueToIndex=[];
         me.ontology.labels.forEach(function(o,i){me.ontology.valueToIndex[o.value]=i});
@@ -356,8 +327,6 @@ export var AtlasMakerWidget = {
      */
     requestMRIInfo: function requestMRIInfo(source) {
         var me=AtlasMakerWidget;
-        var l=me.traceLog(requestMRIInfo,0,"#bbd");if(l)console.log.apply(undefined,l);
-
         $("#loadingIndicator p").text("Loading... ");
         var pr = new Promise(function(resolve, reject) {
             var timer = setInterval( function () {
@@ -393,7 +362,6 @@ export var AtlasMakerWidget = {
      */
     configureMRI: function configureMRI(info,index) {
         var me=AtlasMakerWidget;
-        var l=me.traceLog(configureMRI,0,"#bbd");if(l)console.log.apply(undefined,l);
 
         return new Promise(function(resolve, reject) {
             me.User.source = info.source;

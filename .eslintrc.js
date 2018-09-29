@@ -229,7 +229,7 @@ module.exports = {
         "prefer-template": "off",
         "quote-props": "off",
         "quotes": "off",
-        "radix": "error",
+        "radix": "off",
         "require-await": "error",
         "require-jsdoc": "off",
         "rest-spread-spacing": "error",

@@ -10,8 +10,6 @@ export var AtlasMakerPaint = {
     //====================================================================================
     showxy: function showxy(u,c,x,y,usr) {
         var me=AtlasMakerWidget;
-        var l=me.traceLog(showxy,1,"#0c0");if(l)console.log.apply(undefined,l);
-    
         // u: user number
         // c: command
         // x, y: coordinates
@@ -56,8 +54,6 @@ export var AtlasMakerPaint = {
      */
     paintxy: function paintxy(u,c,x,y,usr) {
         var me=AtlasMakerWidget;
-        var l=me.traceLog(paintxy,1,"#0c0");if(l)console.log.apply(undefined,l);
-    
         // u: user number
         // c: command
         // x, y: coordinates
@@ -121,8 +117,6 @@ export var AtlasMakerPaint = {
      */
     paintvol: function paintvol(voxels) {
         var me=AtlasMakerWidget;
-        var l=me.traceLog(paintvol,0,"#0c0");if(l)console.log.apply(undefined,l);
-    
         var i,
             ind,            // voxel index
             val;            // voxel delta-value, such that -=val undoes
@@ -146,8 +140,6 @@ export var AtlasMakerPaint = {
      */
     fill: function fill(x,y,z,val,myView) {
         var me=AtlasMakerWidget;
-        var l=me.traceLog(fill,0,"#0c0");if(l)console.log.apply(undefined,l);
-    
         var    atlas=me.atlas;
         var    dim=atlas.dim;
 
@@ -193,8 +185,6 @@ export var AtlasMakerPaint = {
      */
     line: function line(x,y,val,usr) {
         var me=AtlasMakerWidget;
-        var l=me.traceLog(line,1,"#0c0");if(l)console.log.apply(undefined,l);
-    
         // Bresenham's line algorithm adapted from
         // http://stackoverflow.com/questions/4672279/bresenham-algorithm-in-javascript
 
@@ -251,8 +241,6 @@ export var AtlasMakerPaint = {
      */
     slice2index: function slice2index(mx,my,mz,myView) {
         var me=AtlasMakerWidget;
-        var l=me.traceLog(slice2index,3,"#0c0");if(l)console.log.apply(undefined,l);
-    
         var    dim=me.atlas.dim;
         var    x,y,z,i;
         switch(myView) {
@@ -275,8 +263,6 @@ export var AtlasMakerPaint = {
      */
     slice2xyzi: function slice2xyzi(mx,my,mz,myView) {
         var me=AtlasMakerWidget;
-        var l=me.traceLog(slice2xyzi,1,"#0c0");if(l)console.log.apply(undefined,l);
-    
         var    dim=me.atlas.dim;
         var    x,y,z,i;
         switch(myView) {

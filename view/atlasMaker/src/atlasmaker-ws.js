@@ -17,8 +17,6 @@ export var AtlasMakerWS = {
      */
     createSocket: function createSocket(host) {
         var me = AtlasMakerWidget;
-        var l = me.traceLog(createSocket, 0, "#aca"); if (l) console.log.apply(undefined, l);
-
         var ws;
 
         if (window.WebSocket) {
@@ -36,7 +34,6 @@ export var AtlasMakerWS = {
     */
     initSocketConnection: function initSocketConnection() {
         var me = AtlasMakerWidget;
-        var l = me.traceLog(initSocketConnection, 0, "#aca"); if (l) console.log.apply(undefined, l);
 
         return new Promise(function (resolve, reject) {
             // WS connection
@@ -130,8 +127,6 @@ export var AtlasMakerWS = {
      */
     receiveSocketMessage: function receiveSocketMessage(msg) {
         var me = AtlasMakerWidget;
-        var l = me.traceLog(receiveSocketMessage, 1, "#aca"); if (l) console.log.apply(undefined, l);
-
         // Message: atlas data initialisation
         if (msg.data instanceof Blob) {
             me.receiveBinaryMessage(msg.data);
@@ -147,8 +142,6 @@ export var AtlasMakerWS = {
      */
     sendUserDataMessage: function sendUserDataMessage(description) {
         var me = AtlasMakerWidget;
-        var l = me.traceLog(sendUserDataMessage, 1, "#aca"); if (l) console.log.apply(undefined, l);
-
         if (me.flagConnected == 0)
             return;
 
@@ -169,8 +162,6 @@ export var AtlasMakerWS = {
      */
     receiveBinaryMessage: function receiveBinaryMessage(msgData) {
         var me = AtlasMakerWidget;
-        var l = me.traceLog(receiveBinaryMessage, 1, "#aca"); if (l) console.log.apply(undefined, l);
-
         var fileReader = new FileReader();
         fileReader.onload = function from_receiveSocketMessage() {
             var data = new Uint8Array(this.result);
@@ -248,8 +239,6 @@ export var AtlasMakerWS = {
      */
     receiveUserDataMessage: function receiveUserDataMessage(data) {
         var me = AtlasMakerWidget;
-        var l = me.traceLog(receiveUserDataMessage, 0, "#aca"); if (l) console.log.apply(undefined, l);
-
         if (me.debug > 1) console.log("description: " + data.description, data);
 
         var u = data.uid;
@@ -295,8 +284,6 @@ export var AtlasMakerWS = {
      */
     sendChatMessage: function sendChatMessage() {
         var me = AtlasMakerWidget;
-        var l = me.traceLog(sendChatMessage, 0, "#aca"); if (l) console.log.apply(undefined, l);
-
         if (me.flagConnected == 0)
             return;
         var msg = DOMPurify.sanitize($('input#msg')[0].value);
@@ -315,7 +302,6 @@ export var AtlasMakerWS = {
      */
     receiveChatMessage: function receiveChatMessage(data) {
         var me = AtlasMakerWidget;
-        var l = me.traceLog(receiveChatMessage, 0, "#aca"); if (l) console.log.apply(undefined, l);
         console.log(data);
 
         var theSource = me.Collab[data.uid].source;
@@ -334,8 +320,6 @@ export var AtlasMakerWS = {
      */
     sendPaintMessage: function sendPaintMessage(msg) {
         var me=AtlasMakerWidget;
-        var l=me.traceLog(sendPaintMessage,1,"#aca");if(l)console.log.apply(undefined,l);
-
         if(me.flagConnected==0)
             return;
         try {
@@ -350,8 +334,6 @@ export var AtlasMakerWS = {
      */
     receivePaintMessage: function receivePaintMessage(data) {
         var me=AtlasMakerWidget;
-        var l=me.traceLog(receivePaintMessage,3,"#aca");if(l)console.log.apply(undefined,l);
-
         var    msg=data.data;
         var u=data.uid;    // user
         var c=msg.c;    // command
@@ -368,8 +350,6 @@ export var AtlasMakerWS = {
      */
     sendShowMessage: function sendShowMessage(msg) {
         var me=AtlasMakerWidget;
-        var l=me.traceLog(sendShowMessage,1,"#aca");if(l)console.log.apply(undefined,l);
-
         if(me.flagConnected==0)
             return;
         try {
@@ -384,8 +364,6 @@ export var AtlasMakerWS = {
      */
     receiveShowMessage: function receiveShowMessage(data) {
         var me=AtlasMakerWidget;
-        var l=me.traceLog(receiveShowMessage,3,"#aca");if(l)console.log.apply(undefined,l);
-
         var    msg=data.data;
         var u=data.uid;    // user
         var c=msg.c;    // command
@@ -400,8 +378,6 @@ export var AtlasMakerWS = {
      */
     receivePaintVolumeMessage: function receivePaintVolumeMessage(data) {
         var me=AtlasMakerWidget;
-        var l=me.traceLog(receivePaintVolumeMessage,0,"#aca");if(l)console.log.apply(undefined,l);
-
         var    i,ind,val,voxels;
 
         voxels=data.data;
@@ -417,8 +393,6 @@ export var AtlasMakerWS = {
      */
     sendUndoMessage: function sendUndoMessage() {
         var me=AtlasMakerWidget;
-        var l=me.traceLog(sendUndoMessage,0,"#aca");if(l)console.log.apply(undefined,l);
-
         if(me.flagConnected==0)
             return;
         try {
@@ -432,8 +406,6 @@ export var AtlasMakerWS = {
      */
     sendSaveMessage: function sendSaveMessage() {
         var me=AtlasMakerWidget;
-        var l=me.traceLog(sendSaveMessage,0,"#aca");if(l)console.log.apply(undefined,l);
-
         if(me.flagConnected==0)
             return;
         try {
@@ -447,8 +419,6 @@ export var AtlasMakerWS = {
      */
     sendRequestMRIMessage: function sendRequestMRIMessage(source) {
         var me=AtlasMakerWidget;
-        var l=me.traceLog(sendRequestMRIMessage,1,"#aca");if(l)console.log.apply(undefined,l);
-
         if(me.flagConnected==0)
             return;
 
@@ -466,8 +436,6 @@ export var AtlasMakerWS = {
      */
     sendRequestSliceMessage: function sendRequestSliceMessage() {
         var me=AtlasMakerWidget;
-        var l=me.traceLog(sendRequestSliceMessage,1,"#aca");if(l)console.log.apply(undefined,l);
-
         if(me.flagConnected==0)
             return;
         if(me.flagLoadingImg.loading==true)
@@ -501,7 +469,6 @@ export var AtlasMakerWS = {
      */
     receiveMetadata: function receiveMetadata(data) {
         var me=AtlasMakerWidget;
-        var l=me.traceLog(receiveMetadata,1,"#aca");if(l)console.log.apply(undefined,l);
         var projShortname = projectInfo.shortname;
         for (var i in projectInfo.files.list) {
             if (projectInfo.files.list[i].source == data.metadata.source) {
@@ -518,7 +485,6 @@ export var AtlasMakerWS = {
      */
     sendSaveMetadataMessage: function sendSaveMetadataMessage(info, method, patch) {
         var me=AtlasMakerWidget;
-        var l=me.traceLog(sendSaveMetadataMessage,1,"#aca");if(l)console.log.apply(undefined,l);
 
         return new Promise(function(resolve, reject) {
             if(me.flagConnected==0) {
@@ -562,8 +528,6 @@ export var AtlasMakerWS = {
      */
     receiveDisconnectMessage: function receiveDisconnectMessage(data) {
         var me=AtlasMakerWidget;
-        var l=me.traceLog(receiveDisconnectMessage,0,"#aca");if(l)console.log.apply(undefined,l);
-
         var u=data.uid;    // user
         if(me.Collab[u]) {
             var    msg;
@@ -585,7 +549,6 @@ export var AtlasMakerWS = {
      */
     receiveServerMessage: function receiveServerMessage(data) {
         var me=AtlasMakerWidget;
-        var l=me.traceLog(receiveServerMessage,0,"#aca");if(l)console.log.apply(undefined,l);
 
         var msg=data.msg;
         var prevMsg=$("#chat").text();
@@ -599,7 +562,6 @@ export var AtlasMakerWS = {
      */
     replayWSTraffic: function replayWSTraffic(recorded) {
         var me=AtlasMakerWidget;
-        var l=me.traceLog(replayWSTraffic,0,"#aca");if(l)console.log.apply(undefined,l);
         var i;
         for(i=0;i<recorded.length;i++) {
             me.socket.send(JSON.stringify(recorded[i]));
@@ -614,7 +576,6 @@ export var AtlasMakerWS = {
     logToDatabase: function logToDatabase(key,value) {
         return new Promise(function(resolve, reject) {
             var me=AtlasMakerWidget;
-            var l=me.traceLog(logToDatabase,1,"#bbd");if(l)console.log.apply(undefined,l);
             $.ajax({
                 url: me.hostname + "/api/log",
                 type: "POST",
