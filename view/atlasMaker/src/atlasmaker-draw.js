@@ -15,7 +15,6 @@ export var AtlasMakerDraw = {
      */
     resizeWindow: function resizeWindow() {
         const me = AtlasMakerWidget;
-        const l = me.traceLog(resizeWindow, 1); if(l) { console.log.apply(undefined, l); }
         const wH = me.container.height();
         const wW = me.container.width();
         const wAspect = wW/wH;
@@ -30,18 +29,17 @@ export var AtlasMakerDraw = {
 
     /**
      * @function configureBrainImage
+     * @returns {void}
      */
     configureBrainImage: function configureBrainImage() {
         var me = AtlasMakerWidget;
-        var l = me.traceLog(configureBrainImage); if(l) { console.log.apply(undefined, l); }
-
         if(me.User.view === null) { me.User.view = "sag"; }
 
-        var s2v = me.User.s2v;
+        const {s2v} = me.User;
         switch(me.User.view) {
-            case 'sag': me.brain_W = s2v.sdim[1]; me.brain_H = s2v.sdim[2]; me.brain_D = s2v.sdim[0]; me.brain_Wdim = s2v.wpixdim[1]; me.brain_Hdim = s2v.wpixdim[2]; break; // sagital
-            case 'cor': me.brain_W = s2v.sdim[0]; me.brain_H = s2v.sdim[2]; me.brain_D = s2v.sdim[1]; me.brain_Wdim = s2v.wpixdim[0]; me.brain_Hdim = s2v.wpixdim[2]; break; // coronal
-            case 'axi': me.brain_W = s2v.sdim[0]; me.brain_H = s2v.sdim[1]; me.brain_D = s2v.sdim[2]; me.brain_Wdim = s2v.wpixdim[0]; me.brain_Hdim = s2v.wpixdim[1]; break; // axial
+            case 'sag': [me.brain_W, me.brain_H, me.brain_D, me.brain_Wdim, me.brain_Hdim] = [s2v.sdim[1], s2v.sdim[2], s2v.sdim[0], s2v.wpixdim[1], s2v.wpixdim[2]]; break; // sagital
+            case 'cor': [me.brain_W, me.brain_H, me.brain_D, me.brain_Wdim, me.brain_Hdim] = [s2v.sdim[0], s2v.sdim[2], s2v.sdim[1], s2v.wpixdim[0], s2v.wpixdim[2]]; break; // coronal
+            case 'axi': [me.brain_W, me.brain_H, me.brain_D, me.brain_Wdim, me.brain_Hdim] = [s2v.sdim[0], s2v.sdim[1], s2v.sdim[2], s2v.wpixdim[0], s2v.wpixdim[1]]; break; // axial
         }
 
         me.canvas.width = me.brain_W;
@@ -63,11 +61,10 @@ export var AtlasMakerDraw = {
 
     /**
      * @function configureAtlasImage
+     * @returns {void}
      */
     configureAtlasImage: function configureAtlasImage() {
         var me = AtlasMakerWidget;
-        var l = me.traceLog(configureAtlasImage); if(l) { console.log.apply(undefined, l); }
-
         // has to be run *after* configureBrainImage
         me.atlas_offcn.width = me.brain_W;
         me.atlas_offcn.height = me.brain_H;
@@ -76,26 +73,23 @@ export var AtlasMakerDraw = {
 
     /**
      * @function nearestNeighbour
+     * @param {object} ctx Drawing context
+     * @returns {void}
      */
     nearestNeighbour: function nearestNeighbour(ctx) {
-        var me = AtlasMakerWidget;
-        var l = me.traceLog(nearestNeighbour, 1); if(l) { console.log.apply(undefined, l); }
-
         ctx.imageSmoothingEnabled = false;
         ctx.mozImageSmoothingEnabled = false;
     },
 
     /**
      * @function computeSegmentedVolume
+     * @returns {number} Volume in voxel units
      */
     computeSegmentedVolume: function computeSegmentedVolume() {
         var me = AtlasMakerWidget;
-        var l = me.traceLog(computeSegmentedVolume, 1); if(l) { console.log.apply(undefined, l); }
-
-        var i,
-sum = 0;
-        var data = me.atlas.data;
-        var dim = me.atlas.dim;
+        let i;
+        let sum = 0;
+        const {data, dim} = me.atlas;
 
         for(i = 0; i<dim[0]*dim[1]*dim[2]; i++) {
             if(data[i]>0) { sum++; }
@@ -107,20 +101,22 @@ sum = 0;
     /**
      * @function displayInformation
      * @desc Overlays text and vectorial information on top of the annotation volume slice. Text information is added from the AtlasMakerWidget.info object. Vectorial information is displayed using svg format
+     * @returns {void}
      */
     displayInformation: function displayInformation() {
         var me = AtlasMakerWidget;
-        var l = me.traceLog(displayInformation, 1); if(l) { console.log.apply(undefined, l); }
-
-        me.info.slice = me.User.slice;
-        var i = 0,
-str;
         var text = me.container.find("#text-layer");
         var vector = me.container.find("#vector-layer");
+        let i = 0;
+        let k, str;
+
+        me.info.slice = me.User.slice;
 
         str = "";
-        for(var k in me.info) {
-            str += "<span>" + k + ": " + me.info[k] + "</span><br/>";
+        for(k in me.info) {
+            if (Object.prototype.hasOwnProperty.call(me.info, k)) {
+                str += "<span>" + k + ": " + me.info[k] + "</span><br/>";
+            }
         }
         text.html(str);
 
@@ -128,30 +124,28 @@ str;
         if(me.User.measureLength) {
             var W = parseFloat($('#atlasMaker canvas').css('width'));
             var w = parseFloat($('#atlasMaker canvas').attr('width'));
-            var zx = W/w,
-zy = zx*me.brain_Hdim/me.brain_Wdim,
-p = me.User.measureLength,
-str1;
-            var W = parseFloat($('#atlasMaker canvas').css('width'));
-            var w = parseFloat($('#atlasMaker canvas').attr('width'));
-            str1 = "M" + zx*p[0].x + ", " + zy*p[0].y;
-            for(i = 1; i<p.length; i++) { str1 += "L" + zx*p[i].x + ", " + zy*p[i].y; }
+            var zx = W/w;
+            var zy = zx*me.brain_Hdim/me.brain_Wdim;
+            var p = me.User.measureLength;
+            var str1 = "M" + zx*p[0].x + ", " + zy*p[0].y;
+            for(i = 1; i<p.length; i++) {
+                str1 += "L" + zx*p[i].x + ", " + zy*p[i].y;
+            }
             str += [
-    "<circle fill='#00ff00' cx=" + zx*p[0].x + " cy=" + zy*p[0].y + " r=3 />",
-                    "<path stroke='#00ff00' fill='none' d='" + str1 + "'/>",
-                    (i>0)?"<circle fill='#00ff00' cx=" + zx*p[i-1].x + " cy=" + zy*p[i-1].y + " r=3 />":""
-].join("\n");
+                "<circle fill='#00ff00' cx=" + zx*p[0].x + " cy=" + zy*p[0].y + " r=3 />",
+                "<path stroke='#00ff00' fill='none' d='" + str1 + "'/>",
+                (i>0)?"<circle fill='#00ff00' cx=" + zx*p[i-1].x + " cy=" + zy*p[i-1].y + " r=3 />":""
+            ].join("\n");
         }
         vector.html(str);
     },
 
     /**
      * @function drawImages
+     * @returns {void}
      */
     drawImages: function drawImages() {
         var me = AtlasMakerWidget;
-        var l = me.traceLog(drawImages, 1); if(l) { console.log.apply(undefined, l); }
-
         if(me.brain_img.img
            && me.flagLoadingImg.view
            && me.flagLoadingImg.slice) {
@@ -164,48 +158,41 @@ str1;
             me.drawAtlasImage(me.flagLoadingImg.view, me.flagLoadingImg.slice);
         }
 
-        if(!me.brain_img.img || me.brain_img.view != me.User.view || me.brain_img.slice != me.User.slice) {
+        if(!me.brain_img.img || me.brain_img.view !== me.User.view || me.brain_img.slice !== me.User.slice) {
             me.sendRequestSliceMessage();
         }
     },
 
     /**
      * @function drawAtlasImage
+     * @param {string} view View string: 'sag', 'cor', or 'axi'
+     * @param {number} slice The slice number
+     * @returns {void}
      */
     drawAtlasImage: function drawAtlasImage(view, slice) {
         var me = AtlasMakerWidget;
-        var l = me.traceLog(drawAtlasImage, 1); if(l) { console.log.apply(undefined, l); }
-
         if(!me.atlas) { return; }
-
-        const data = me.atlas.data;
-        const dim = me.atlas.dim;
-        let i, s, val;
-
-        let x, y;
-        let ys = slice,
-yc = slice,
-ya = slice;
+        const {data} = me.atlas;
+        let i, s, x, y;
+        const [ys, yc, ya] = [slice, slice, slice];
         for(y = 0; y < me.brain_H; y++) {
-for(x = 0; x < me.brain_W; x++) {
-            switch(view) {
-                case 'sag': s = [ys, x, me.brain_H-1-y]; break;
-                case 'cor': s = [x, yc, me.brain_H-1-y]; break;
-                case 'axi': s = [x, me.brain_H-1-y, ya]; break;
+            for(x = 0; x < me.brain_W; x++) {
+                switch(view) {
+                    case 'sag': s = [ys, x, me.brain_H-1-y]; break;
+                    case 'cor': s = [x, yc, me.brain_H-1-y]; break;
+                    case 'axi': s = [x, me.brain_H-1-y, ya]; break;
+                }
+                i = me.S2I(s, me.User);
+                var c = me.ontologyValueToColor(data[i]);
+                var alpha = (data[i]>0)?255:0;
+                i = (y*me.atlas_offcn.width + x)*4;
+                me.atlas_px.data[i] = c[0];
+                me.atlas_px.data[i + 1] = c[1];
+                me.atlas_px.data[i + 2] = c[2];
+                me.atlas_px.data[i + 3] = alpha*me.alphaLevel;
             }
-            i = me.S2I(s, me.User);
-
-            var c = me.ontologyValueToColor(data[i]);
-            var alpha = (data[i]>0)?255:0;
-            i = (y*me.atlas_offcn.width + x)*4;
-            me.atlas_px.data[i] =c[0];
-            me.atlas_px.data[i + 1] = c[1];
-            me.atlas_px.data[i + 2] = c[2];
-            me.atlas_px.data[i + 3] = alpha*me.alphaLevel;
         }
-}
         me.atlas_offtx.putImageData(me.atlas_px, 0, 0);
-
         me.nearestNeighbour(me.context);
         me.context.drawImage(me.atlas_offcn, 0, 0, me.brain_W, me.brain_H*me.brain_Hdim/me.brain_Wdim);
     }
