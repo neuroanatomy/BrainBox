@@ -1,3 +1,4 @@
+/*globals projectInfo BrainBox projectShortname*/
 // @todo check and be sure the user picks a username from the dropdown menu
 // @todo  implement the placeholder for the select tags in the anotation table
 // @todo  find a way for the user to give a set of values for the annotations and make it obvious that it works this way
@@ -8,6 +9,8 @@ import 'jquery-ui/themes/base/theme.css';
 import 'jquery-ui/themes/base/autocomplete.css';
 import 'jquery-ui/ui/core';
 import 'jquery-ui/ui/widgets/autocomplete';
+import jdenticon from 'jdenticon'
+import 'md5'
 import * as tw from '../twoWayBinding.js';
 
 import '../style/style.css';
@@ -514,7 +517,8 @@ function importFiles() {
             $("#importFilesDialog").show();
             var result=e.target.result;
             var lines=result.split("\n");
-            var html=[];           
+            var html=[];
+            let cols;
             for(i in lines) {
                 cols=lines[i].split(/[ ]*,[ ]*/);
                 html.push("<tr><td contentEditable='true'>"+cols[0]+"</td><td>"+cols[1]+"</td></tr>");

@@ -1,3 +1,5 @@
+/*global info_proxy projectInfo BrainBox AtlasMakerWidget*/
+
 import $ from 'jquery';
 import 'jquery-ui/themes/base/core.css';
 import 'jquery-ui/themes/base/theme.css';

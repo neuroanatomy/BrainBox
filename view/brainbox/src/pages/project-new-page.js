@@ -1,4 +1,5 @@
 import $ from 'jquery'
+import * as DOMPurify from '../../../downloads/purify.min.js';
 
 import '../style/style.css';
 import '../style/ui.css';

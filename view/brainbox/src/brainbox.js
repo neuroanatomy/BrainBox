@@ -19,7 +19,7 @@ export var BrainBox={
     hostname: 'http://localhost:3001', //'', // 'http://brainbox.pasteur.fr',
     info:{},
     labelSets:null,
-    annotationType:["volume","text"],
+    annotationType:["volume", "text", "multiple choices", "hidden text"],
     accessLevels: ["none","view","edit","add","remove"],
 
     /**
@@ -442,6 +442,7 @@ export var BrainBox={
         .then(function(mriInfo) {
             param.info = mriInfo;
             let mri = mriInfo.mri;
+            let i;
             
             // if the brain has not been downloaded, mriInfo only contains a url
             // (this url is later used to trigger the file download)

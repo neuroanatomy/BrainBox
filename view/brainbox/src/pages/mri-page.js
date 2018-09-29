@@ -1,3 +1,5 @@
+/*global AtlasMakerWidget BrainBox info_proxy mriInfo params*/
+
 import $ from 'jquery';
 import 'jquery-ui/themes/base/core.css';
 import 'jquery-ui/themes/base/theme.css';
