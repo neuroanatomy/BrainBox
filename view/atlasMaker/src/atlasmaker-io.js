@@ -1,6 +1,7 @@
 /*! AtlasMaker: Input/Output */
 import $ from 'jquery'
 import * as pako from '../../downloads/pako.min.js';
+import '../../downloads/struct.js';
 
 /**
  * @page AtlasMaker: Input/Output
@@ -149,10 +150,11 @@ export var AtlasMakerIO = {
                 magic: 'n+1'
         };
         me.NiiHdrLE.allocate();
-        niihdr = me.NiiHdrLE.buffer();
+        const niihdr = me.NiiHdrLE.buffer();
+        let i;
         for(i in newHdr)
             me.NiiHdrLE.fields[i] = newHdr[i];
-        hdr = toArrayBuffer(niihdr);
+        const hdr = toArrayBuffer(niihdr);
         var data=me.atlas.data;
         var nii = new Uint8Array(vox_offset+data.length);
         for(i=0;i<sizeof_hdr;i++)

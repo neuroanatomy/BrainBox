@@ -15,7 +15,7 @@ export var AtlasMakerPaint = {
         // u: user number
         // c: command
         // x, y: coordinates
-        msg={c: c, x: x, y: y};
+        let msg={c: c, x: x, y: y};
         if(u==-1 && JSON.stringify(msg)!=JSON.stringify(me.msg0)) {
             me.sendShowMessage(msg);
             me.msg0=msg;
@@ -61,16 +61,16 @@ export var AtlasMakerPaint = {
         // u: user number
         // c: command
         // x, y: coordinates
-        msg={c:c,x:x,y:y};
+        let msg={c:c,x:x,y:y};
         
         if(u==-1 && JSON.stringify(msg)!=JSON.stringify(me.msg0)) {
             me.sendPaintMessage(msg);
-            me.msg0=msg;
+            me.msg0 = msg;
         }
         
-        var    dim=me.atlas.dim;
+        var dim = me.atlas.dim;
     
-        var    coord={x:x,y:y,z:usr.slice};
+        var coord={x:x,y:y,z:usr.slice};
         if(usr.x0<0) {
             usr.x0=coord.x;
             usr.y0=coord.y;
@@ -123,7 +123,7 @@ export var AtlasMakerPaint = {
         var me=AtlasMakerWidget;
         var l=me.traceLog(paintvol,0,"#0c0");if(l)console.log.apply(undefined,l);
     
-        var    i,
+        var i,
             ind,            // voxel index
             val;            // voxel delta-value, such that -=val undoes
         for(i=0;i<voxels.length;i++) {
@@ -202,7 +202,7 @@ export var AtlasMakerPaint = {
         var    dim=atlas.dim;
         var    xyzi1=new Array(4);
         var    xyzi2=new Array(4);
-        var    i;
+        var    i, j, k;
         var    x1=usr.x0;
         var y1=usr.y0;
         var x2=x;

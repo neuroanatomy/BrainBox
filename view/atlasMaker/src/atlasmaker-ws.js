@@ -1,6 +1,7 @@
 /*! AtlasMaker: WebSockets */
 import $ from 'jquery'
 import * as pako from '../../downloads/pako.min.js';
+import * as DOMPurify from '../../downloads/purify.min.js';
 
 /**
  * @page AtlasMaker: WebSockets
