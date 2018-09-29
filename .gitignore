@@ -21,5 +21,6 @@ public/lib/atlasMaker.js
 public/lib/brainbox.js
 test/screenshots/
 tmp
+view/atlasMaker/dist/
 view/brainbox/dist/
 whitelist.json
