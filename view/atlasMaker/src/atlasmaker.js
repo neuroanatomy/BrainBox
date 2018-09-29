@@ -1,6 +1,6 @@
 /*! AtlasMaker */
 import $ from 'jquery'
-import * as Struct from '../../downloads/struct.js';
+import '../../downloads/struct.js';
 
 import {AtlasMakerDraw} from './atlasMaker-draw.js';
 import {AtlasMakerInteraction} from './atlasMaker-interaction.js';
