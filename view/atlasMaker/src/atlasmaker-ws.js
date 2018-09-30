@@ -1,7 +1,8 @@
+/* global AtlasMakerWidget projectInfo info_proxy MozWebSocket*/
 /*! AtlasMaker: WebSockets */
-import $ from 'jquery'
-import * as pako from '../../downloads/pako.min.js';
 import * as DOMPurify from '../../downloads/purify.min.js';
+import * as pako from '../../downloads/pako.min.js';
+import $ from 'jquery';
 
 /**
  * @page AtlasMaker: WebSockets
@@ -14,9 +15,10 @@ export var AtlasMakerWS = {
      * @function createSocket
      * @desc  Create a WebSocket connection using the WebSocket object or the MozWebSocket
      *        object.
+     * @param {string} host Websocket host
+     * @returns {object} Websocket
      */
     createSocket: function createSocket(host) {
-        var me = AtlasMakerWidget;
         var ws;
 
         if (window.WebSocket) {
@@ -29,8 +31,10 @@ export var AtlasMakerWS = {
 
         return ws;
     },
+
     /**
     * @function initSocketConnection
+    * @returns {void}
     */
     initSocketConnection: function initSocketConnection() {
         var me = AtlasMakerWidget;
@@ -40,17 +44,14 @@ export var AtlasMakerWS = {
             //var host = "ws://" + window.location.hostname + ":8080/";
             var host = me.wshostname;
 
-            if (me.debug)
-                console.log("[initSocketConnection] host:", host);
-            if (me.progress)
-                me.progress.html("Connecting...");
+            if (me.debug) { console.log("[initSocketConnection] host:", host); }
+            if (me.progress) { me.progress.html("Connecting..."); }
 
             try {
                 me.socket = me.createSocket(host);
 
                 me.socket.onopen = function (msg) {
-                    if (me.debug)
-                        console.log("[initSocketConnection] connection open", msg);
+                    if (me.debug) { console.log("[initSocketConnection] connection open", msg); }
                     me.progress.html("<img src='" + me.hostname + "/img/download.svg' style='vertical-align:middle'/>MRI");
                     $("#chat").text("Chat (1 connected)");
                     me.flagConnected = 1;
@@ -58,22 +59,22 @@ export var AtlasMakerWS = {
                     resolve();
                 };
 
-                me.receiveFunctions["saveMetadata"] = me.receiveMetadata;
-                me.receiveFunctions["userData"] = me.receiveUserDataMessage;
-                me.receiveFunctions["volInfo"] = function (data) { console.log("volInfo", data) };
-                me.receiveFunctions["chat"] = me.receiveChatMessage;
-                me.receiveFunctions["show"] = me.receiveShowMessage;
-                me.receiveFunctions["paint"] = me.receivePaintMessage;
-                me.receiveFunctions["paintvol"] = me.receivePaintVolumeMessage;
-                me.receiveFunctions["disconnect"] = me.receiveDisconnectMessage;
-                me.receiveFunctions["serverMessage"] = me.receiveServerMessage;
+                me.receiveFunctions.saveMetadata = me.receiveMetadata;
+                me.receiveFunctions.userData = me.receiveUserDataMessage;
+                me.receiveFunctions.volInfo = function (data) { console.log("volInfo", data); };
+                me.receiveFunctions.chat = me.receiveChatMessage;
+                me.receiveFunctions.show = me.receiveShowMessage;
+                me.receiveFunctions.paint = me.receivePaintMessage;
+                me.receiveFunctions.paintvol = me.receivePaintVolumeMessage;
+                me.receiveFunctions.disconnect = me.receiveDisconnectMessage;
+                me.receiveFunctions.serverMessage = me.receiveServerMessage;
 
-                me.receiveFunctions["requestSlice"] = function (data) { console.log("requestSlice", data) };
-                me.receiveFunctions["requestSlice2"] = function (data) { console.log("requestSlice2", data) };
+                me.receiveFunctions.requestSlice = function (data) { console.log("requestSlice", data); };
+                me.receiveFunctions.requestSlice2 = function (data) { console.log("requestSlice2", data); };
 
                 me.socket.onmessage = me.receiveSocketMessage;
 
-                me.socket.onclose = function (msg) {
+                me.socket.onclose = function () {
                     me.flagConnected = 0;
 
                     // Try to reconnect
@@ -113,23 +114,27 @@ export var AtlasMakerWS = {
                 };
 
                 window.onbeforeunload = function () {
-                    me.socket.onclose = function () { }; // disable onclose handler first
-                    me.socket.close()
+                    // me.socket.onclose = function () { }; // disable onclose handler first
+                    me.socket.close();
                 };
-            }
-            catch (ex) {
+            } catch (ex) {
                 $("#chat").text("Chat (not connected - connection error)");
+                reject(ex);
             }
-        })
+        });
     },
+
     /**
-     * @function receiveSocketMessage
-     */
+    * @function receiveSocketMessage
+    * @param {object} msg The message received
+    * @returns {void}
+    */
     receiveSocketMessage: function receiveSocketMessage(msg) {
         var me = AtlasMakerWidget;
         // Message: atlas data initialisation
         if (msg.data instanceof Blob) {
             me.receiveBinaryMessage(msg.data);
+
             return;
         }
 
@@ -137,44 +142,50 @@ export var AtlasMakerWS = {
         var data = JSON.parse(msg.data);
         me.receiveFunctions[data.type](data);
     },
+
     /**
-     * @function sendUserDataMessage
-     */
+    * @function sendUserDataMessage
+    * @param {string} description The type of user data message to send
+    * @returns {void}
+    */
     sendUserDataMessage: function sendUserDataMessage(description) {
         var me = AtlasMakerWidget;
-        if (me.flagConnected == 0)
-            return;
+        if (me.flagConnected === 0) { return; }
 
-        if (me.debug > 1) console.log("message: " + description);
-
-        if (description === "allUserData")
-            var msg = { "type": "userData", "user": me.User, "description": description };
-        else
-            var msg = { "type": "userData", "description": description };
+        if (me.debug > 1) { console.log("message: " + description); }
+        var msg;
+        if (description === "allUserData") {
+            msg = { "type": "userData", "user": me.User, "description": description };
+        } else {
+            msg = { "type": "userData", "description": description };
+        }
         try {
             me.socket.send(JSON.stringify(msg));
         } catch (ex) {
             console.log("ERROR: Unable to sendUserDataMessage", ex);
         }
     },
+
     /**
-     * @function receiveBinaryMessage
-     */
+    * @function receiveBinaryMessage
+    * @param {object} msgData Binary data received
+    * @returns {void}
+    */
     receiveBinaryMessage: function receiveBinaryMessage(msgData) {
         var me = AtlasMakerWidget;
         var fileReader = new FileReader();
-        fileReader.onload = function from_receiveSocketMessage() {
+        fileReader.onload = function () {
             var data = new Uint8Array(this.result);
             var sz = data.length;
             var ext = String.fromCharCode(data[sz - 8], data[sz - 7], data[sz - 6]);
 
-            if (me.debug > 1) console.log("type: " + ext);
+            if (me.debug > 1) { console.log("type: " + ext); }
 
             switch (ext) {
                 case 'nii': {
                     var inflate = new pako.Inflate();
                     inflate.push(data, true);
-                    var atlas = new Object();
+                    var atlas = {};
                     atlas.data = inflate.result;
                     atlas.name = me.atlasFilename;
                     atlas.dim = me.brain_dim;
@@ -209,8 +220,8 @@ export var AtlasMakerWS = {
 
                     me.isMRILoaded = true; // receiving a jpg is proof of a loaded MRI
 
-                    img.onload = function from_initSocketConnection() {
-                        var flagFirstImage = (me.brain_img.img == null);
+                    img.onload = function () {
+                        var flagFirstImage = (me.brain_img.img === null);
                         me.brain_img.img = img;
                         me.brain_img.view = me.flagLoadingImg.view;
                         me.brain_img.slice = me.flagLoadingImg.slice;
@@ -219,13 +230,13 @@ export var AtlasMakerWS = {
 
                         me.flagLoadingImg.loading = false;
 
-                        if (flagFirstImage || me.flagLoadingImg.view != me.User.view || me.flagLoadingImg.slice != me.User.slice) {
+                        if (flagFirstImage || me.flagLoadingImg.view !== me.User.view || me.flagLoadingImg.slice !== me.User.slice) {
                             me.sendRequestSliceMessage();
                         }
 
                         // remove loading indicator
                         $("#loadingIndicator").hide();
-                    }
+                    };
                     img.src = imageUrl;
 
                     break;
@@ -234,21 +245,24 @@ export var AtlasMakerWS = {
         };
         fileReader.readAsArrayBuffer(msgData);
     },
+
     /**
-     * @function receiveUserDataMessage
-     */
+    * @function receiveUserDataMessage
+    * @param {object} data Data received
+    * @returns {void}
+    */
     receiveUserDataMessage: function receiveUserDataMessage(data) {
         var me = AtlasMakerWidget;
-        if (me.debug > 1) console.log("description: " + data.description, data);
+        if (me.debug > 1) { console.log("description: " + data.description, data); }
 
         var u = data.uid;
 
         // First time the user is observed
-        if (me.Collab[u] === undefined) {
+        if (typeof me.Collab[u] === 'undefined') {
             try {
                 //var    msg="<b>"+data.user.username+"</b> entered atlas "+data.user.specimenName+"/"+data.user.atlasFilename+"<br />"
                 var msg;
-                if (data.user === undefined || data.user.username === "Anonymous") {
+                if (typeof data.user === 'undefined' || data.user.username === "Anonymous") {
                     msg = "<b>" + data.uid + "</b> entered<br />";
                 } else {
                     msg = "<b>" + data.user.username + "</b> entered<br />";
@@ -261,35 +275,41 @@ export var AtlasMakerWS = {
             }
         }
 
-        if (data.description === "allUserData")
-            me.Collab[u] = data.user;
-        else {
+        if (data.description === "allUserData") { me.Collab[u] = data.user; } else {
             try {
                 var changes = JSON.parse(data.description);
                 var i;
-                for (i in changes)
-                    me.Collab[u][i] = changes[i];
+                for (i in changes) {
+                    if({}.hasOwnProperty.call(changes, i)) {
+                        me.Collab[u][i] = changes[i];
+                    }
+                }
             } catch (e) {
                 console.log(e);
             }
         }
 
-        var v, nusers = 1;
-        for (v in me.Collab)
-            nusers++;
+        let v;
+        let nusers = 1;
+        for (v in me.Collab) {
+            if({}.hasOwnProperty.call(me.Collab, v)) {
+                nusers++;
+            }
+        }
         $("#chat").text("Chat (" + nusers + " connected)");
     },
+
     /**
-     * @function sendChatMessage
-     */
+    * @function sendChatMessage
+    * @returns {void}
+    */
     sendChatMessage: function sendChatMessage() {
         var me = AtlasMakerWidget;
-        if (me.flagConnected == 0)
-            return;
+        if (me.flagConnected === 0) { return; }
         var msg = DOMPurify.sanitize($('input#msg')[0].value);
         try {
             me.socket.send(JSON.stringify({ "type": "chat", "msg": msg, "username": me.User.username }));
-            var msg = "<b>me: </b>" + msg + "<br />";
+            msg = "<b>me: </b>" + msg + "<br />";
             $("#log").append(msg);
             $("#log").scrollTop($("#log")[0].scrollHeight);
             $('input#msg').val("");
@@ -297,9 +317,12 @@ export var AtlasMakerWS = {
             console.log("ERROR: Unable to sendChatMessage", ex);
         }
     },
+
     /**
-     * @function receiveChatMessage
-     */
+    * @function receiveChatMessage
+    * @param {object} data Data received
+    * @returns {void}
+    */
     receiveChatMessage: function receiveChatMessage(data) {
         var me = AtlasMakerWidget;
         console.log(data);
@@ -309,76 +332,82 @@ export var AtlasMakerWS = {
         var theSlice = me.Collab[data.uid].slice;
         var link = me.hostname + "/mri?url=" + theSource + "&view=" + theView + "&slice=" + theSlice;
         var theUsername = (data.username === "Anonymous")?data.uid:data.username;
-        var msg = "<a href='" +link+"'><b>"+theUsername+":</b></a> "+data.msg+"<br />"
+        var msg = "<a href='" +link+"'><b>"+theUsername+":</b></a> "+data.msg+"<br />";
         $("#log").append(msg);
         $("#log").scrollTop($("#log")[0].scrollHeight);
     },
+
     /**
-     * @function sendPaintMessage
-     * @desc On user painting, this function broadcasts the painting event to all other connected users
-     * @param {Object} msg Painting event object: {"c":c,"x":x,"y":y}, where "c" is the command (l,e,lf,ef) and x and y are the coordinates in slice space
-     */
+    * @function sendPaintMessage
+    * @desc On user painting, this function broadcasts the painting event to all other connected users
+    * @param {object} msg Painting event object: {"c":c,"x":x,"y":y}, where "c" is the command (l,e,lf,ef) and x and y are the coordinates in slice space
+    * @returns {void}
+    */
     sendPaintMessage: function sendPaintMessage(msg) {
         var me=AtlasMakerWidget;
-        if(me.flagConnected==0)
-            return;
+        if(me.flagConnected === 0) { return; }
         try {
-            me.socket.send(JSON.stringify({type:"paint",data:msg}));
+            me.socket.send(JSON.stringify({type:"paint", data:msg}));
         } catch (ex) {
-            console.log("ERROR: Unable to sendPaintMessage",ex);
+            console.log("ERROR: Unable to sendPaintMessage", ex);
         }
     },
+
     /**
-     * @function receivePaintMessage
-     * @desc Receive paint events from other connected users
-     */
+    * @function receivePaintMessage
+    * @desc Receive paint events from other connected users
+    * @param {object} data Paint message received
+    * @returns {void}
+    */
     receivePaintMessage: function receivePaintMessage(data) {
         var me=AtlasMakerWidget;
-        var    msg=data.data;
-        var u=data.uid;    // user
-        var c=msg.c;    // command
-        var x=parseInt(msg.x);    // x coordinate
-        var y=parseInt(msg.y);    // y coordinate
+        var {uid:u, c, data:msg}=data; // user
+        var x=parseInt(msg.x); // x coordinate
+        var y=parseInt(msg.y); // y coordinate
 
-        if(me.Collab[u])
-            me.paintxy(u,c,x,y,me.Collab[u]);
+        if(me.Collab[u]) { me.paintxy(u, c, x, y, me.Collab[u]); }
     },
+
     /**
-     * @function sendShowMessage
-     * @desc On user showing, this function broadcasts the showing event to all other connected users
-     * @param {Object} msg Showing event object: {"x":x,"y":y}, where x and y are the coordinates in slice space
-     */
+    * @function sendShowMessage
+    * @desc On user showing, this function broadcasts the showing event to all other connected users
+    * @param {object} msg Showing event object: {"x":x,"y":y}, where x and y are the coordinates in slice space
+    * @returns {void}
+    */
     sendShowMessage: function sendShowMessage(msg) {
         var me=AtlasMakerWidget;
-        if(me.flagConnected==0)
-            return;
+        if(me.flagConnected === 0) { return; }
         try {
-            me.socket.send(JSON.stringify({type:"show",data:msg}));
+            me.socket.send(JSON.stringify({type:"show", data:msg}));
         } catch (ex) {
-            console.log("ERROR: Unable to sendShowMessage",ex);
+            console.log("ERROR: Unable to sendShowMessage", ex);
         }
     },
+
     /**
-     * @function receiveShowMessage
-     * @desc Receive show events from other connected users
-     */
+    * @function receiveShowMessage
+    * @desc Receive show events from other connected users
+    * @param {object} data Show message received with x and y coordinates of the location to show
+    * @returns {void}
+    */
     receiveShowMessage: function receiveShowMessage(data) {
         var me=AtlasMakerWidget;
-        var    msg=data.data;
-        var u=data.uid;    // user
-        var c=msg.c;    // command
-        var x=parseInt(msg.x);    // x coordinate
-        var y=parseInt(msg.y);    // y coordinate
+        var {uid:u, data:msg} = data; // user
+        var {c} = msg; // command
+        var x=parseInt(msg.x); // x coordinate
+        var y=parseInt(msg.y); // y coordinate
 
-        if(me.Collab[u])
-            me.showxy(u,c,x,y,me.Collab[u]);
+        if(me.Collab[u]) { me.showxy(u, c, x, y, me.Collab[u]); }
     },
+
     /**
-     * @function receivePaintVolumeMessage
-     */
+    * @function receivePaintVolumeMessage
+    * @param {object} data List of voxels to paint
+    * @returns {void}
+    */
     receivePaintVolumeMessage: function receivePaintVolumeMessage(data) {
         var me=AtlasMakerWidget;
-        var    i,ind,val,voxels;
+        var voxels;
 
         voxels=data.data;
         me.paintvol(voxels.data);
@@ -388,39 +417,42 @@ export var AtlasMakerWS = {
         */
         me.sendRequestSliceMessage();
     },
-     /**
-     * @function sendUndoMessage
-     */
+
+    /**
+    * @function sendUndoMessage
+    * @returns {void}
+    */
     sendUndoMessage: function sendUndoMessage() {
         var me=AtlasMakerWidget;
-        if(me.flagConnected==0)
-            return;
+        if(me.flagConnected === 0) { return; }
         try {
-            me.socket.send(JSON.stringify({type:"paint",data:{c:"u"}}));
+            me.socket.send(JSON.stringify({type:"paint", data:{c:"u"}}));
         } catch (ex) {
-            console.log("ERROR: Unable to sendUndoMessage",ex);
+            console.log("ERROR: Unable to sendUndoMessage", ex);
         }
     },
-     /**
-     * @function sendSaveMessage
-     */
+
+    /**
+    * @function sendSaveMessage
+    * @returns {void}
+    */
     sendSaveMessage: function sendSaveMessage() {
         var me=AtlasMakerWidget;
-        if(me.flagConnected==0)
-            return;
+        if(me.flagConnected === 0) { return; }
         try {
             me.socket.send(JSON.stringify({type:"save"}));
         } catch (ex) {
-            console.log("ERROR: Unable to sendSaveMessage",ex);
+            console.log("ERROR: Unable to sendSaveMessage", ex);
         }
     },
+
     /**
-     * @function sendRequestMRIMessage
-     */
-    sendRequestMRIMessage: function sendRequestMRIMessage(source) {
+    * @function sendRequestMRIMessage
+    * @returns {void}
+    */
+    sendRequestMRIMessage: function sendRequestMRIMessage() {
         var me=AtlasMakerWidget;
-        if(me.flagConnected==0)
-            return;
+        if(me.flagConnected === 0) { return; }
 
         try {
             me.socket.send(JSON.stringify({
@@ -428,22 +460,23 @@ export var AtlasMakerWS = {
                 source:"sendRequestMRIMessage"
             }));
         } catch (ex) {
-            console.log("ERROR: Unable to sendRequestMRIMessage",ex);
+            console.log("ERROR: Unable to sendRequestMRIMessage", ex);
         }
     },
+
     /**
-     * @function sendRequestSliceMessage
-     */
+    * @function sendRequestSliceMessage
+    * @returns {void}
+    */
     sendRequestSliceMessage: function sendRequestSliceMessage() {
         var me=AtlasMakerWidget;
-        if(me.flagConnected==0)
-            return;
-        if(me.flagLoadingImg.loading==true)
-            return;
+        if(me.flagConnected === 0) { return; }
+        if(me.flagLoadingImg.loading === true) { return; }
         try {
             me.socket.send(JSON.stringify({
 
                 type:"requestSlice",
+
                 /*
                     TEST
                 */
@@ -457,45 +490,58 @@ export var AtlasMakerWS = {
             me.flagLoadingImg.slice=me.User.slice;
 
         } catch (ex) {
-            console.log("ERROR: Unable to sendRequestSliceMessage",ex);
+            console.log("ERROR: Unable to sendRequestSliceMessage", ex);
         }
     },
+
     /**
-     * @todo This is really not the place for some of this code. The receiveMetadata
-     *       function is ok, but the direct references to projectInfo -- a structure
-     *       exclusively used by project.mustache -- should go to that file. Now, the
-     *       mechanism for uncoupling the 2 pieces of code is not clear. It could be
-     *       a subscription, for example.
-     */
+    * @function receiveMetadata
+    * @param {object} data The metadata to send
+    * @returns {void}
+    * @todo This is really not the place for some of this code. The receiveMetadata
+    *       function is ok, but the direct references to projectInfo -- a structure
+    *       exclusively used by project.mustache -- should go to that file. Now, the
+    *       mechanism for uncoupling the 2 pieces of code is not clear. It could be
+    *       a subscription, for example.
+    */
     receiveMetadata: function receiveMetadata(data) {
-        var me=AtlasMakerWidget;
         var projShortname = projectInfo.shortname;
         for (var i in projectInfo.files.list) {
-            if (projectInfo.files.list[i].source == data.metadata.source) {
+            if (projectInfo.files.list[i].source === data.metadata.source) {
                 for (var key in projectInfo.files.list[i].mri.annotations[projShortname]) {
-                    info_proxy["files.list." + i + ".mri.annotations." + projShortname + "." + key] = data.metadata.mri.annotations[projShortname][key];
+                    if({}.hasOwnProperty.call(projectInfo.files.list[i].mri.annotations[projShortname], key)) {
+                        info_proxy["files.list." + i + ".mri.annotations." + projShortname + "." + key] = data.metadata.mri.annotations[projShortname][key];
+                    }
                 }
                 info_proxy["files.list." + i + ".name"] = data.metadata.name;
                 break;
             }
         }
     },
+
     /**
-     * @function sendSaveMetadataMessage
-     */
+    * @function sendSaveMetadataMessage
+    * @param {object} info Metadata
+    * @param {string} method Method "patch" or "append"
+    * @param {object} patch Path object used in case method is "patch"
+    * @returns {void}
+    */
     sendSaveMetadataMessage: function sendSaveMetadataMessage(info, method, patch) {
         var me=AtlasMakerWidget;
 
         return new Promise(function(resolve, reject) {
-            if(me.flagConnected==0) {
+            if(me.flagConnected === 0) {
                 console.log("WARNING: Not connected: will not save metadata");
-                return reject();
+
+                return reject(new Error("Not connected"));
             }
 
             try {
-                var rnd = Math.random().toString(36).slice(20);
+                var rnd = Math.random()
+                            .toString(36)
+                            .slice(20);
                 var met = method || "append";
-                if(method == "patch") {
+                if(method === "patch") {
                     me.socket.send(JSON.stringify({
                         type:"saveMetadata",
                         metadata: info,
@@ -518,62 +564,81 @@ export var AtlasMakerWS = {
                 resolve();
 
             } catch (ex) {
-                console.log("ERROR: Unable to sendSaveMetadataMessage",ex);
-                reject();
+                console.log("ERROR: Unable to sendSaveMetadataMessage", ex);
+                reject(ex);
             }
         });
     },
+
     /**
-     * @function receiveDisconnectMessage
-     */
+    * @function receiveDisconnectMessage
+    * @param {object} data Message data
+    * @returns {void}
+    */
     receiveDisconnectMessage: function receiveDisconnectMessage(data) {
         var me=AtlasMakerWidget;
-        var u=data.uid;    // user
-        if(me.Collab[u]) {
-            var    msg;
-            if(me.Collab[u].username === undefined || me.Collab[u].username === "Anonymous")
-                msg = "<b>"+me.Collab[u].uid+"</b> left<br />";
-            else
-                msg = "<b>"+me.Collab[u].username+"</b> left<br />";
+        var {uid} = data; // user
+        let msg;
+        if(me.Collab[uid]) {
+            if(typeof me.Collab[uid].username === 'undefined' || me.Collab[uid].username === "Anonymous") {
+                msg = "<b>"+me.Collab[uid].uid+"</b> left<br />";
+            } else {
+                msg = "<b>"+me.Collab[uid].username+"</b> left<br />";
+            }
+        } else {
+            msg="<b>"+uid+"</b> left<br />";
         }
-        else
-            var    msg="<b>"+u+"</b> left<br />";
-        delete me.Collab[u];
-        var    v,nusers=1; for(v in me.Collab) nusers++;
+        delete me.Collab[uid];
+        let v;
+        let nusers=1;
+        for(v in me.Collab) {
+            if({}.hasOwnProperty.call(me.Collab, v)) {
+                nusers++;
+            }
+        }
         $("#chat").text("Chat ("+nusers+" connected)");
         $("#log").append(msg);
         $("#log").scrollTop($("#log")[0].scrollHeight);
     },
-    /**
-     * @function receiveServerMessage
-     */
-    receiveServerMessage: function receiveServerMessage(data) {
-        var me=AtlasMakerWidget;
 
-        var msg=data.msg;
+    /**
+    * @function receiveServerMessage
+    * @param {object} data Message data
+    * @returns {void}
+    */
+    receiveServerMessage: function receiveServerMessage(data) {
+        var {msg}=data;
         var prevMsg=$("#chat").text();
         $("#chat").text(msg);
-        setTimeout(function(){$("#chat").text(prevMsg)},5000);
+        setTimeout(function() { $("#chat").text(prevMsg); }, 5000);
     },
+
     /**
-     * @function replayWSTraffic
-     * @desc Replays websocket traffic recorded at the served. Used for debugging
-     * @param Array recorded An array of websocket messages recorded in the server
-     */
+    * @function replayWSTraffic
+    * @desc Replays websocket traffic recorded at the served. Used for debugging
+    * @param {array} recorded An array of websocket messages recorded in the server
+    * @returns {void}
+    */
     replayWSTraffic: function replayWSTraffic(recorded) {
         var me=AtlasMakerWidget;
         var i;
-        for(i=0;i<recorded.length;i++) {
+        for(i=0; i<recorded.length; i++) {
             me.socket.send(JSON.stringify(recorded[i]));
         }
     },
+
     //==========
     // Database
     //==========
+
     /**
-     * @function logToDatabase
-     */
-    logToDatabase: function logToDatabase(key,value) {
+    * @function logToDatabase
+    * @desc Logs a key-value pair to the 'log' database
+    * @param {string} key The key
+    * @param {string} value The value
+    * @returns {void}
+    */
+    logToDatabase: function logToDatabase(key, value) {
         return new Promise(function(resolve, reject) {
             var me=AtlasMakerWidget;
             $.ajax({
@@ -587,9 +652,9 @@ export var AtlasMakerWS = {
             .done(function(data) {
                 resolve(data);
             })
-            .fail(function() {
-                reject("Error");
+            .fail((err) => {
+                reject(err);
             });
         });
     }
-}
+};
