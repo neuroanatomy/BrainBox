@@ -18,6 +18,7 @@ public/js/project-settings-page.js
 public/js/user-page.js
 public/lib/.DS_Store
 public/lib/atlasMaker.js
+public/lib/atlasMaker-tools
 public/lib/brainbox.js
 test/screenshots/
 tmp
