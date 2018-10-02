@@ -4,6 +4,7 @@ const CleanWebpackPlugin = require('clean-webpack-plugin');
 const WebpackShellPlugin = require('webpack-shell-plugin');
 
 module.exports = {
+    mode: 'development',
     entry: {
         "index-page": './view/brainbox/src/pages/index-page.js',
         "mri-page": './view/brainbox/src/pages/mri-page.js',
@@ -17,18 +18,6 @@ module.exports = {
         new CleanWebpackPlugin(['dist']),
         new HtmlWebpackPlugin({
             title: 'Output Management'
-        }),
-        new WebpackShellPlugin({
-            onBuildStart:['echo "Webpack Start"'],
-            onBuildEnd:[
-                'echo "Webpack End"',
-                'cp view/brainbox/dist/index-page.js public/js/index-page.js',
-                'cp view/brainbox/dist/mri-page.js public/js/mri-page.js',
-                'cp view/brainbox/dist/project-page.js public/js/project-page.js',
-                'cp view/brainbox/dist/project-new-page.js public/js/project-new-page.js',
-                'cp view/brainbox/dist/project-settings-page.js public/js/project-settings-page.js',
-                'cp view/brainbox/dist/user-page.js public/js/user-page.js'
-            ]
         })
     ],
     output: {

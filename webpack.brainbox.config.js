@@ -4,6 +4,7 @@ const CleanWebpackPlugin = require('clean-webpack-plugin');
 const WebpackShellPlugin = require('webpack-shell-plugin');
 
 module.exports = {
+    mode: 'development',
     entry: {
         brainbox: './view/brainbox/src/brainbox.js'
     },
@@ -12,13 +13,6 @@ module.exports = {
         new CleanWebpackPlugin(['dist']),
         new HtmlWebpackPlugin({
             title: 'Output Management'
-        }),
-        new WebpackShellPlugin({
-            onBuildStart:['echo "Webpack Start"'],
-            onBuildEnd:[
-                'echo "Webpack End"',
-                'cp view/brainbox/dist/brainbox.js public/lib/brainbox.js'
-            ]
         })
     ],
     output: {
