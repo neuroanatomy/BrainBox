@@ -4,22 +4,13 @@ const CleanWebpackPlugin = require('clean-webpack-plugin');
 const WebpackShellPlugin = require('webpack-shell-plugin');
 
 module.exports = {
+    mode: 'development',
     entry: {
         atlasmaker: './view/atlasMaker/src/atlasmaker.js'
     },
     devtool: 'eval-source-map',
     plugins: [
-        new CleanWebpackPlugin(['dist']),
-        new HtmlWebpackPlugin({
-            title: 'Output Management'
-        }),
-        new WebpackShellPlugin({
-            onBuildStart:['echo "Webpack Start"'],
-            onBuildEnd:[
-                'echo "Webpack End"',
-                'cp view/atlasMaker/dist/atlasMaker.js public/lib/atlasMaker.js'
-            ]
-        })
+        new CleanWebpackPlugin(['dist'])
     ],
     output: {
         filename: 'atlasmaker.js',
@@ -40,6 +31,12 @@ module.exports = {
                 test: /\.(png|svg|jpg|gif)$/,
                 use: [
                     'file-loader'
+                ]
+            },
+            {
+                test: /\.(html)$/,
+                use: [
+                    'html-loader'
                 ]
             }
         ]
