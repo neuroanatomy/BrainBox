@@ -122,7 +122,7 @@ function queryProjects() {
     .then(function(res) {
         if(res.success) {
             appendProjects(res.list);
-            cursorProject += 100;
+            cursorProjects += 100;
             queryProjects();
         }
     });
