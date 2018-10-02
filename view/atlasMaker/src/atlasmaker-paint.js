@@ -1,6 +1,5 @@
-/* global AtlasMakerWidget */
+/* global AtlasMakerWidget $ */
 /*! AtlasMaker: Painting commands */
-import $ from 'jquery';
 
 /**
  * @page AtlasMaker: Painting commands

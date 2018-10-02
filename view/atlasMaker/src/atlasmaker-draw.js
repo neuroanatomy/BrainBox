@@ -1,6 +1,5 @@
-/*global AtlasMakerWidget*/
+/*global AtlasMakerWidget $*/
 /*! AtlasMaker: Image Drawing */
-import $ from 'jquery';
 
 /**
  * @page AtlasMaker: Image Drawing
