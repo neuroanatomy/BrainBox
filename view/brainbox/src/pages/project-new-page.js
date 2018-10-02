@@ -1,4 +1,5 @@
-import $ from 'jquery'
+/* global $ */
+
 import * as DOMPurify from '../../../downloads/purify.min.js';
 
 import '../style/style.css';

@@ -1,9 +1,9 @@
 /*globals projectInfo BrainBox projectShortname*/
+
 // @todo check and be sure the user picks a username from the dropdown menu
 // @todo  implement the placeholder for the select tags in the anotation table
 // @todo  find a way for the user to give a set of values for the annotations and make it obvious that it works this way
-
-import $ from 'jquery'
+import $ from 'jquery';
 import 'jquery-ui/themes/base/core.css';
 import 'jquery-ui/themes/base/theme.css';
 import 'jquery-ui/themes/base/autocomplete.css';
