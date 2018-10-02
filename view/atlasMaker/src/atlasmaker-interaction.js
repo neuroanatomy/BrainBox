@@ -1,7 +1,8 @@
-/* global AtlasMakerWidget */
+/* global AtlasMakerWidget $ */
 /*! AtlasMaker: Interaction */
 import * as pako from '../../downloads/pako.min.js';
-import $ from 'jquery';
+import toolsFull from './html/toolsFull.html';
+import toolsLight from './html/toolsLight.html';
 
 /**
  * @page AtlasMaker: Interaction
@@ -88,8 +89,8 @@ export var AtlasMakerInteraction = {
                 break;
             case 'Adjust':
                 me.User.tool = 'adjust';
-                if($("#adjust").length === 0) {
-                    me.container.find("#resizable").append(me.html.adjust);
+                if($("#adjust").length==0) {
+                    me.loadScript("/lib/atlasMaker-tools/adjust.js");
                 }
                 break;
             case 'Eyedrop':

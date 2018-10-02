@@ -1,8 +1,7 @@
-/* global AtlasMakerWidget projectInfo info_proxy MozWebSocket*/
+/* global AtlasMakerWidget projectInfo info_proxy MozWebSocket $*/
 /*! AtlasMaker: WebSockets */
 import * as DOMPurify from '../../downloads/purify.min.js';
 import * as pako from '../../downloads/pako.min.js';
-import $ from 'jquery';
 
 /**
  * @page AtlasMaker: WebSockets

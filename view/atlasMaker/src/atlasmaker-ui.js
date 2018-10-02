@@ -1,5 +1,5 @@
+/* global $ */
 /*! AtlasMaker: User Interface Elements */
-import $ from 'jquery';
 
 /**
  * @page AtlasMaker: User Interface Elements

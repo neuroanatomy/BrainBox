@@ -1,6 +1,11 @@
 /*! AtlasMaker */
+
 import '../../downloads/struct.js';
+
 import $ from 'jquery';
+import toolsFull from './html/toolsFull.html';
+import toolsLight from './html/toolsLight.html';
+
 import {AtlasMakerDraw} from './atlasMaker-draw.js';
 import {AtlasMakerInteraction} from './atlasMaker-interaction.js';
 import {AtlasMakerIO} from './atlasMaker-io.js';
@@ -9,6 +14,8 @@ import {AtlasMakerUI} from './atlasMaker-ui.js';
 import {AtlasMakerWS} from './atlasMaker-ws.js';
 
 import {AtlasMakerResources} from '../../dist/atlasMaker-resources.js';
+
+window.$ = $;
 
 /**
  * @page AtlasMaker
@@ -204,11 +211,10 @@ export var AtlasMakerWidget = {
             me.useFullTools = true;
         }
         if(me.useFullTools) {
-            tools = me.html.toolsFull;
+            tools = toolsFull; //me.html.toolsFull;
         } else {
-            tools = me.html.toolsLight;
+            tools = toolsLight; //me.html.toolsLight;
         }
-
         for(svg in me.svg) {
             if({}.hasOwnProperty.call(me.svg, svg)) {
                 tools = tools.replace(
@@ -329,6 +335,30 @@ export var AtlasMakerWidget = {
         me.ontology.labels.forEach(function(o, i) { me.ontology.valueToIndex[o.value]=i; });
         // to clear the region name being displayed on the info text-layer when having used eyedrop
         delete me.info.region;
+    },
+
+    /**
+     * @function loadScript
+     * @desc Loads script from path if test is not fulfilled
+     * @param {string} path Path to script, either a local path or a url
+     * @param {function} testScriptPresent Function to test if the script is already present.
+     *        If undefined, the script will be loaded.
+     */
+    loadScript: function loadScript(path, testScriptPresent) {
+        var def = new $.Deferred();
+    
+        if(testScriptPresent && testScriptPresent()) {
+            console.log("[loadScript] Script",path,"already present, not loading it again");
+            return def.resolve().promise();
+        }
+        var s = document.createElement("script");
+        s.src = path;
+        s.onload=function () {
+            console.log("Loaded",path);
+            def.resolve();
+        };
+        document.body.appendChild(s);
+        return def.promise();
     },
 
     /**
