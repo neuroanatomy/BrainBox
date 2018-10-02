@@ -1,4 +1,4 @@
-/* global AtlasMakerWidget*/
+/* global AtlasMakerWidget $ */
 /*! BrainBox */
 
 /**
@@ -8,7 +8,6 @@
  */
 
 import * as tw from './twoWayBinding.js';
-import $ from 'jquery';
 
 var hashOld;
 
