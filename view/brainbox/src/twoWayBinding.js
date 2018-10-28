@@ -31,15 +31,22 @@ export const date_format = function(e, d) {
  * @param {formatFunction} Transformation between the object property's value and the result displayed in the DOM element
  * @param {parseFunction} Transformation between the DOM element's value and what will be stored in the object's property
  */
+<<<<<<< HEAD:view/brainbox/src/twoWayBinding.js
 export function bind2(proxy,original,path,el,format,parse) {
     var i,k=path.split("."),o=original;
     for(i=0;i<k.length-1;i++)
+=======
+function bind2(proxy,original,path,el,format,parse) {
+	var i,k=path.split("."),o=original;
+	for(i=0;i<k.length-1;i++)
+>>>>>>> master:public/js/twoWayBinding.js
         o=o[k[i]];
-    Object.defineProperty(proxy,path,{
-        get: function(){
-            var v;
-            if(parse) {
+	Object.defineProperty(proxy,path,{
+		get: function(){
+		    var v;
+			if(parse) {
                 v=parse(el,o[k[i]]);
+<<<<<<< HEAD:view/brainbox/src/twoWayBinding.js
             } else {
                 v=el.get(0).textContent;
             }
@@ -58,6 +65,26 @@ export function bind2(proxy,original,path,el,format,parse) {
         enumerable: true
     });
     proxy[path]=o[k[i]];
+=======
+			} else {
+				v=$(el).text();
+			}
+            o[k[i]]=JSON.parse(DOMPurify.sanitize(JSON.stringify(v))||'""');
+			return o[k[i]];
+		},
+		set: function(v) {
+		    v=JSON.parse(DOMPurify.sanitize(JSON.stringify(v))||'""');
+			o[k[i]]=v;
+			if(format)
+				format(el,v);
+			else
+				$(el).text(v);
+		},
+		configurable: true,
+		enumerable: true
+	});
+	proxy[path]=o[k[i]];
+>>>>>>> master:public/js/twoWayBinding.js
 }
 
 /**
@@ -69,6 +96,7 @@ export function bind2(proxy,original,path,el,format,parse) {
  * @param {string} el Selector for the element in the DOM to bind
  * @param {formatFunction} Transformation between the object property's value and the result displayed in the DOM element
  */
+<<<<<<< HEAD:view/brainbox/src/twoWayBinding.js
 export function bind1(proxy,original,path,el,format) {
     var i,k=path.split("."),o=original;
     for(i=0;i<k.length-1;i++)
@@ -89,6 +117,28 @@ export function bind1(proxy,original,path,el,format) {
         enumerable: true
     });
     proxy[path]=o[k[i]];
+=======
+ function bind1(proxy,original,path,el,format) {
+	var i,k=path.split("."),o=original;
+	for(i=0;i<k.length-1;i++)
+		o=o[k[i]];
+	Object.defineProperty(proxy,path,{
+		get: function(){
+			return DOMPurify.sanitize(o[k[i]]);
+		},
+		set: function(v) {
+		    v=DOMPurify.sanitize(v);
+			o[k[i]]=v;
+			if(format)
+				format(el,v);
+			else
+				$(el).text(v);
+		},
+		configurable: true,
+		enumerable: true
+	});
+	proxy[path]=o[k[i]];
+>>>>>>> master:public/js/twoWayBinding.js
 }
 
 /**
@@ -97,8 +147,13 @@ export function bind1(proxy,original,path,el,format) {
  * @param {object} proxy The object that will bind the source object and the DOM element
  * @param {string} path Path to the property in the original object to bind
  */
+<<<<<<< HEAD:view/brainbox/src/twoWayBinding.js
 export function unbind2(proxy,path) {
     delete proxy[path];
+=======
+ function unbind2(proxy,path) {
+	delete proxy[path];
+>>>>>>> master:public/js/twoWayBinding.js
 }
 
 /**
