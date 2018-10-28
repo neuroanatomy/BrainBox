@@ -5,6 +5,7 @@ admin
 blacklist.json
 bulk-upload.sh
 github-keys.json
+js/.DS_Store
 node_modules
 npm-debug.log
 public/.DS_Store

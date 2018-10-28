@@ -33,11 +33,19 @@
     cursor: pointer;
 }
 img.button {
+<<<<<<< HEAD:view/brainbox/src/style/ui.css
     width:0.9rem;
     height:0.9rem;
     margin:8px 2px;
     vertical-align:middle;
     cursor:pointer;
+=======
+	width:1rem;
+	height:1rem;
+	margin:8px 2px;
+	vertical-align:middle;
+	cursor:pointer;
+>>>>>>> master:public/stylesheets/ui.css
 }
 img.button:hover {
     opacity:0.5;
