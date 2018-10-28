@@ -1,9 +1,9 @@
-'use strict';
+"use strict";
 
 /*
     Atlas Maker Server
     Roberto Toro, 25 July 2014
-
+    
     Launch using > node atlasMakerServer.js
 */
 
@@ -32,11 +32,12 @@ const DOCKER_DEVELOP = process.env.DEVELOP;
 if (DOCKER_DB) {
     MONGO_DB = DOCKER_DB.replace('tcp', 'mongodb') + '/brainbox';
 } else {
-    MONGO_DB = 'localhost:27017/brainbox'; // Process.env.MONGODB;
+  MONGO_DB = 'localhost:27017/brainbox'; //process.env.MONGODB;
 }
 
-const db = monk(MONGO_DB);
-const expressValidator = require('express-validator');
+var db = monk(MONGO_DB);
+var fs = require('fs');
+var expressValidator = require('express-validator');
 
 /* jslint nomen: true */
 const dirname = __dirname; // Local directory
@@ -47,9 +48,9 @@ if (DOCKER_DEVELOP === '1') {
     // Create a livereload server
     const hotServer = livereload.createServer({
       // Reload on changes to these file extensions.
-        exts: ['json', 'mustache'],
+      exts: [ 'json', 'mustache' ],
       // Print debug info
-        debug: true
+      debug: true
     });
 
     // Specify the folder to watch for file-changes.
@@ -71,12 +72,13 @@ app.set('views', path.join(dirname, 'templates'));
 app.set('view engine', 'mustache');
 app.use(favicon(dirname + '/public/favicon.png'));
 app.set('trust proxy', 'loopback');
-app.use(logger(':remote-addr :method :url :status :response-time ms - :res[content-length]'));// App.use(logger('dev'));
+app.use(logger(':remote-addr :method :url :status :response-time ms - :res[content-length]'));//app.use(logger('dev'));
 app.use(bodyParser.json({limit: '50mb'}));
 app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 app.use(expressValidator());
 app.use(cookieParser());
 app.use(express.static(path.join(dirname, 'public')));
+
 if (DOCKER_DEVELOP === '1') {
     app.use(require('connect-livereload')());
 }
@@ -85,7 +87,7 @@ if (DOCKER_DEVELOP === '1') {
 app.use((req, res, next) => {
     req.dirname = dirname;
     req.db = db;
-    req.tokenDuration = 24 * (1000 * 3600); // Token duration in milliseconds
+    req.tokenDuration = 24 * (1000 * 3600); // token duration in milliseconds
 
     next();
 });
@@ -121,13 +123,11 @@ const passport = require('passport');
 const GithubStrategy = require('passport-github').Strategy;
 
 passport.use(new GithubStrategy(
-    JSON.parse(fs.readFileSync(dirname + '/github-keys.json')),
-    (accessToken, refreshToken, profile, done) => {
-        return done(null, profile);
-    }
+    JSON.parse(fs.readFileSync(dirname + "/github-keys.json")),
+    function (accessToken, refreshToken, profile, done) {return done(null, profile); }
 ));
 app.use(session({
-    secret: 'a mi no me gusta la sémola',
+    secret: "a mi no me gusta la sémola",
     resave: false,
     saveUninitialized: false
 }));
@@ -147,15 +147,13 @@ function ensureAuthenticated(req, res, next) {
     }
     res.redirect('/');
 }
-app.get('/secure-route-example', ensureAuthenticated, (req, res) => {
-    res.send('access granted');
-});
-app.get('/logout', (req, res) => {
+app.get('/secure-route-example', ensureAuthenticated, function (req, res) {res.send("access granted"); });
+app.get('/logout', function (req, res) {
     req.logout();
     res.redirect(req.session.returnTo || '/');
     delete req.session.returnTo;
 });
-app.get('/loggedIn', (req, res) => {
+app.get('/loggedIn', function (req, res) {
     if (req.isAuthenticated()) {
         res.send({loggedIn: true, username: req.user.username});
     } else {
@@ -171,12 +169,12 @@ app.get('/auth/github/callback',
         db.get('user').findOne({nickname: req.user.username}, '-_id')
             .then( (json) => {
                 if (!json) {
-                    // Insert new user
+                    // insert new user
                     json = {
                         name: req.user.displayName,
                         nickname: req.user.username,
                         url: req.user._json.blog,
-                        brainboxURL: '/user/' + req.user.username,
+                        brainboxURL: "/user/" + req.user.username,
                         avatarURL: req.user._json.avatar_url,
                         joined: (new Date()).toJSON()
                     };
@@ -190,8 +188,8 @@ app.get('/auth/github/callback',
                     }});
                 }
             });
-        res.redirect(req.session.returnTo || '/');
-        delete req.session.returnTo;
+            res.redirect(req.session.returnTo || '/');
+            delete req.session.returnTo;
     });
 // }
 
@@ -201,10 +199,8 @@ global.tokenAuthentication = function (req, res, next) {
     let token;
     if (req.params.token) {
         token = req.params.token;
-    }
-    if (req.query.token) {
+    if(req.query.token)
         token = req.query.token;
-    }
 
     if (!token) {
         tracer.log('>> No token');
@@ -242,14 +238,15 @@ app.get('/', (req, res) => { // /auth/github
                 ('<a href=\'/user/' + req.user.username + '\'>' + req.user.username + '</a> (<a href=\'/logout\'>Log Out</a>)') :
                 ('<a href=\'/auth/github\'>Log in with GitHub</a>');
 
-    // Store return path in case of login
+    // store return path in case of login
     req.session.returnTo = req.originalUrl;
 
     res.render('index', {
         title: 'BrainBox',
-        login
+        login: login
     });
 });
+
 app.use('/mri', require('./controller/mri/'));
 app.use('/project', require('./controller/project/'));
 app.use('/user', require('./controller/user/'));
@@ -261,7 +258,7 @@ app.get('/api/getLabelsets', (req, res) => {
     const arr = fs.readdirSync(dirname + '/public/labels/');
     const info = [];
     for (i in arr) {
-        const json = JSON.parse(fs.readFileSync(dirname + '/public/labels/' + arr[i]));
+        var json = JSON.parse(fs.readFileSync(dirname + "/public/labels/" + arr[i]));
         info.push({
             name: json.name,
             source: arr[i]
@@ -352,10 +349,10 @@ app.post('/api/log', (req, res) => {
     switch (json.key) {
         case 'annotationLength':
             obj = {
-                key: 'annotationLength',
+                key: "annotationLength",
                 username: loggedUser,
-                'value.source': json.value.source,
-                'value.atlas': json.value.atlas
+                "value.source": json.value.source,
+                "value.atlas": json.value.atlas
             };
             req.db.get('log').findOne(obj)
             .then( (result) => {
@@ -363,9 +360,9 @@ app.post('/api/log', (req, res) => {
                 if (result) {
                     length = parseFloat(result.value.length);
                 }
-                const sum = parseFloat(json.value.length) + length;
-                req.db.get('log').update(obj, {$set: {
-                    'value.length': sum,
+                var sum = parseFloat(json.value.length) + length;
+                req.db.get('log').update(obj,{$set:{
+                    "value.length":sum,
                     date: (new Date()).toJSON()
                 }}, {upsert: true});
                 res.send({length: sum});
@@ -391,28 +388,28 @@ app.post('/api/log', (req, res) => {
 
     req.db.get('mri').update({
         source: json.value.source,
-        'mri.atlas': {$elemMatch: {filename: json.value.atlas}}
+        "mri.atlas":{$elemMatch:{filename:json.value.atlas}}
     }, {
         $set: {
-            'mri.atlas.$.modified': (new Date()).toJSON(),
-            'mri.atlas.$.modifiedBy': loggedUser
+            "mri.atlas.$.modified": (new Date()).toJSON(),
+            "mri.atlas.$.modifiedBy": loggedUser
         }
     });
 });
 // }
 
-// Catch 404 and forward to error handler
-app.use((req, res, next) => {
-    const err = new Error('Not Found');
+// catch 404 and forward to error handler
+app.use(function (req, res, next) {
+    var err = new Error('Not Found');
     err.status = 404;
     next(err);
 });
 
-// Error handlers
+// error handlers
 // development error handler
 // will print stacktrace
 if (app.get('env') === 'development') {
-    app.use((err, req, res, next) => {
+    app.use(function (err, req, res, next) {
         res.status(err.status || 500);
         res.render('error', {
             message: err.message,
@@ -420,9 +417,9 @@ if (app.get('env') === 'development') {
         });
     });
 }
-// Production error handler
+// production error handler
 // no stacktraces leaked to user
-app.use((err, req, res, next) => {
+app.use(function (err, req, res, next) {
     res.status(err.status || 500);
     res.render('error', {
         message: err.message,
