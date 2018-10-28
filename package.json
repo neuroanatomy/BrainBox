@@ -6,10 +6,10 @@
     "start": "PORT=3001 node ./bin/www",
     "prepare": "./scripts/build.sh",
     "build-atlasmaker": "webpack --config webpack.atlasmaker.config.js && cp view/atlasMaker/dist/atlasMaker.js public/lib/atlasMaker.js",
+    "build-atlasmaker-tools": "webpack --config webpack.atlasmaker-tools.config.js && cp  -r view/atlasMaker/dist/atlasMaker-tools public/lib/",
     "build-brainbox": "webpack --config webpack.brainbox.config.js && cp view/brainbox/dist/brainbox.js public/lib/brainbox.js",
     "build-pages": "webpack --config webpack.pages.config.js && cp view/brainbox/dist/*-page.js public/js/",
-    "build-tools": "mkdir -p public/lib/atlasMaker-tools && cp  -r view/atlasMaker/src/tools/dist/*.js public/lib/atlasMaker-tools/",
-    "build": "npm run build-atlasmaker && npm run build-brainbox && npm run build-pages && npm run build-tools",
+    "build": "npm run build-atlasmaker && npm run build-atlasmaker-tools && npm run build-brainbox && npm run build-pages",
     "mocha-test": "mocha ./test/runner.js test/unit/*.js test/integration/*.js",
     "lint": "eslint .",
     "test": "docker exec brainbox_web_1 /bin/bash -c 'cd /brainbox && npm run mocha-test'"
