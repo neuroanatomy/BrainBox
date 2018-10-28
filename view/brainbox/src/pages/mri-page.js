@@ -1,3 +1,4 @@
+<<<<<<< HEAD:view/brainbox/src/pages/mri-page.js
 /*global AtlasMakerWidget BrainBox info_proxy mriInfo params*/
 import $ from 'jquery';
 import 'jquery-ui/themes/base/core.css';
@@ -18,6 +19,162 @@ import '../style/mri-style.css';
 import '../style/access-style.css';
 import '../style/dropdown-style.css';
 
+=======
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+	<link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
+    <title>{{title}}</title>
+	<link rel="stylesheet" type="text/css" href="/stylesheets/style.css" />
+	<link rel="stylesheet" type="text/css" href="/stylesheets/atlasMaker.css" />
+	<link rel="stylesheet" type="text/css" href="/stylesheets/textAnnotations.css" />
+	<link rel="stylesheet" type="text/css" href="/stylesheets/ui.css" />
+	<link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="/stylesheets/mri-style.css" />
+    <link rel="stylesheet" type="text/css" href="/stylesheets/access-style.css" />
+    <link rel="stylesheet" type="text/css" href="/stylesheets/loading-style.css" />
+    <link rel="stylesheet" type="text/css" href="/stylesheets/dropdown-style.css" />
+</head>
+
+<body>
+
+<div style="width:100%;height:100%;display:flex;flex-direction:column">
+	
+	<!-- Header (fixed height) -->
+	<div style="flex:0 0 64px">
+	    <!-- Top-right menu bar -->
+		<div id="menu">
+			<img id="addProject" class="button" title="add project" style='width:13px' src='/img/plus.svg'/>
+            <a href="http://openneu.ro/metasearch" target="_blank"><img id="search" class="button" title="search" style='width:13px' src='/img/search.svg'/></a>
+			<img id="doc" class="button" title="documentation" style='width:13px' src='/img/doc.svg'/>
+			<a href="https://github.com/OpenNeuroLab/BrainBox/issues" target="_blank"><img id="bug" class="button" title="report a bug" style='width:14px' src='/img/bug.svg'/></a>
+            <a href="https://github.com/OpenNeuroLab" target="_blank"><img id="github" class="button" title="join our github project" style='width:15px' src='/img/github.svg'/></a>
+			<div id="MyLogin">
+				<span>{{{login}}}</span>
+			</div>
+		</div>
+
+        <!-- Small left-top logo -->
+        <div style="display:inline-block;margin:10px">
+            <a href='/' style="text-decoration:none">
+                <img style='height:56px;vertical-align:middle' src='/img/brainbox-logo-small_noFont.svg'/>
+            </a><span style="font-family: Roboto, sans-serif; font-size: 36px; font-weight:100;vertical-align:middle" id="fontLogo"> 
+                <a href='/' style="font-family: Roboto, sans-serif; font-size: 36px; font-weight:100; text-decoration:none">BrainBox</a>
+            </span>
+        </div>
+	</div>
+	
+	<!-- Content (variable height) -->
+	<div style="flex:1 0 auto">
+			
+		<!-- Data -->
+		<div id="data">		
+			<!-- Data Flex -->
+			<div id="content" style="display:flex;justify-content:center">
+					<!-- Annotations -->
+					<div style="flex:0 1 auto">
+                        <div id="annotationsPane">
+                            <table>
+                                <tr>
+                                <th><b>Name</b></th>
+                                <td><span id="name" contentEditable=true class='noEmpty'></span></td>
+                                </tr>
+                            
+                                <tr>
+                                <th><b>Data&nbsp;source</b></th>
+                                <td><span id="source" style="word-break:break-all"></span></td>
+                                </tr>
+                            
+                                <tr>
+                                <th><b>Inclusion&nbsp;date</b></th>
+                                <td><span id="included"></span></td>
+                                </tr>
+                            </table>
+
+                            <br/>
+                        
+                            <b>Volume Annotations</b><br/>
+                            <table id="annotations" class="tabContent">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Value</th>
+                                    <th>Project</th>
+                                    <th>Modified</th>
+                                    <th style="width:80px">Access</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                            </table>
+                            <div style="text-align:right">
+                                <span id="annotationMessage"></span>
+                                <img id="addAnnotation"    class="button" style="width:19px; height:19px" src='/img/plus-square.svg'/>
+                                <img id="removeAnnotation" class="button" style="width:19px; height:19px" src='/img/minus-square.svg'/>
+                            </div>
+
+                            <b>Text Annotations</b><br/>
+                            <table id="textAnnotations" class="tabContent">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Value</th>
+                                    <th>Project</th>
+                                    <th>Modified</th>
+                                    <th style="width:80px">Access</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                            </table>
+                            <div style="text-align:right">
+                                <span id="textAnnotationMessage"></span>
+                                <img id="addTextAnnotation"    class="button" style="width:19px; height:19px" src='/img/plus-square.svg'/>
+                                <img id="removeTextAnnotation" class="button" style="width:19px; height:19px" src='/img/minus-square.svg'/>
+                            </div>
+
+                        </div>
+                    </div>
+                    <!-- end of Annotations -->
+
+					<!-- AtlasMaker -->
+					<div style="flex:0 0 auto;position:relative">
+						<!-- AtlasMaker -->
+						<div id="stereotaxic" style="display:inline-block">
+						</div>
+						<!-- End AtlasMaker -->
+					</div>
+			</div>
+			<!-- End Data Flex -->
+		</div>
+		<!-- End Data -->
+
+	</div>
+	<!-- End Content -->
+	
+	<!-- Space (fixed height) -->
+	<div style="flex:0 0 50px">
+	</div>
+
+	<!-- Footer (fixed height) -->
+	<div style="flex:0 0 100px;background-color:#000">
+		<p style="width:100%;font-size:small;text-align:center"> 
+			<a target="_blank" href="http://neuroanatomy.github.io">
+				<img src="img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/></a>
+			<a target="_blank" href="http://neuroanatomy.github.io" class="linkNoULine">
+				group de neuroanatomie appliquée et théorique
+			</a>
+		</p>
+	</div>
+</div>
+
+<script src="/lib/jquery-3.1.1.min.js"></script>
+<script src="/js/brainbox.js"></script>
+<script>
+
+var params={{{params}}};
+var mriInfo={{{mriInfo}}};
+>>>>>>> master:views/mri.mustache
 var mriInfoOrig;
 var textAnnotationsArray = [];
 var version=1;
