@@ -83,7 +83,7 @@ if( $.isEmptyObject(mriInfo)) {
             trTemplate: $.map([
                 "<tr>",
                 " <td contentEditable=true class='noEmpty'></td>", // name
-                " <td><select>",$.map(BrainBox.labelSets,function(o){return "<option>"+o.name+"</option>"}),"</select></td>",	// value
+                " <td><select>",$.map(BrainBox.labelSets,function(o){return "<option>"+o.name+"</option>"}),"</select></td>",    // value
                 " <td class='noEmpty'></td>", // project
                 " <td></td>", // modified
                 " <td>", // access
@@ -310,7 +310,7 @@ function addAnnotation(param) {
         access: "edit", 
         created: date.toJSON(), 
         modified: date.toJSON(), 
-        filename: Math.random().toString(36).slice(2)+".nii.gz",	// automatically generated filename
+        filename: Math.random().toString(36).slice(2)+".nii.gz",    // automatically generated filename
         labels: "foreground.json",
         owner: AtlasMakerWidget.User.username,
         type: "volume"

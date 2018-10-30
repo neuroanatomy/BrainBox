@@ -368,7 +368,7 @@ function loadProjectFile(index) {
                     created: date.toJSON(), 
                     modified: date.toJSON(), 
                     modifiedBy: AtlasMakerWidget.User.username, 
-                    filename: Math.random().toString(36).slice(2)+".nii.gz",	// automatically generated filename
+                    filename: Math.random().toString(36).slice(2)+".nii.gz",    // automatically generated filename
                     labels: annotations.volume[irow].values,
                     owner: AtlasMakerWidget.User.username,
                     type: "volume"
@@ -399,13 +399,13 @@ function loadProjectFile(index) {
                 trTemplate: $.map([
                     "<tr>",
                     " <td></td>",           // volume name
-                    " <td></td>",	        // volume label set
+                    " <td></td>",           // volume label set
                     "</tr>"],function(o){return o}).join(),
                 objTemplate: [
-                    {	typeOfBinding:1,
+                    {   typeOfBinding:1,
                         path:"mri.atlas.#.name"
                     },
-                    {	typeOfBinding:1,
+                    {   typeOfBinding:1,
                         path:"mri.atlas.#.labels"
                     }
                 ]
