@@ -36,7 +36,6 @@ if (DOCKER_DB) {
 }
 
 var db = monk(MONGO_DB);
-var fs = require('fs');
 var expressValidator = require('express-validator');
 
 /* jslint nomen: true */
@@ -197,7 +196,7 @@ app.get('/auth/github/callback',
 global.tokenAuthentication = function (req, res, next) {
     tracer.log('>> Check token');
     let token;
-    if (req.params.token) {
+    if (req.params.token)
         token = req.params.token;
     if(req.query.token)
         token = req.query.token;
