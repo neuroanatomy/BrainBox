@@ -1,0 +1,90 @@
+/* User interface widgets: buttons, sliders
+-----------------------------------------------------------------------------*/
+
+* {
+    box-sizing: border-box;
+}
+.a {
+    border:thin solid #777;
+    border-radius:3px;
+    margin:1px;
+    text-align:center;
+    height: 24px;
+    position: relative;
+    color: white;
+    user-select: none;
+}
+.a:hover {
+    opacity:0.5;
+    -webkit-user-select:none;
+    -moz-user-select:none;
+    user-select:none;
+}
+.label {
+    color: white;
+    user-select: none;
+}
+.pressed {
+    background-color:#555 !important;
+}
+.icon {
+    width:16px;
+    vertical-align:middle;
+    user-select: none;
+}
+
+/* svg buttons
+----------------------- */
+.pushButton {
+    border:1px solid #ddd;
+    border-radius:6px;
+    color:#ddd;
+    text-align:center;
+    -webkit-appearance:none;
+    cursor: pointer;
+}
+.chose {
+    border-radius:3px;
+    background:#777;
+    margin:2px;
+}
+.chose .a {
+    border: none;
+    border-radius:0px;
+    height:22px;
+    background: #222;
+}
+img.button {
+    width:0.9rem;
+    height:0.9rem;
+    margin:8px 2px;
+    vertical-align:middle;
+    cursor:pointer;
+}
+img.button:hover {
+    opacity:0.5;
+}
+img.icon {
+    width:1rem;
+    height:1rem;
+    position: absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%, -50%);
+    cursor:pointer;
+}
+
+.noBorder {
+    border: none;
+}
+
+.mui-select {
+    border:none;
+    background:none; /* no color, no decoration */
+    color:white;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    outline: none;
+    cursor: pointer;
+}

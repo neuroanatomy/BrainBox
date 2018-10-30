@@ -10,9 +10,9 @@ self.addEventListener('message', function(e) {
     }
 });
 
-var cube_edges = new Int32Array(24);    // surfacenets
-var edge_table = new Int32Array(256);    // surfacenets
-var buffer = new Int32Array(4096);        // surfacenets
+var cube_edges = new Int32Array(24);	// surfacenets
+var edge_table = new Int32Array(256);	// surfacenets
+var buffer = new Int32Array(4096);		// surfacenets
 var brain={};
 
 function init(param) {
@@ -22,12 +22,12 @@ function init(param) {
 
     var path=param.path;
     brain.level=param.level;
-    
+
     importScripts("/lib/pako/pako.min.js");
 
     if(param.niigz) {
         self.postMessage({msg:"render from localStorage"});
-        configureNifti(param.niigz,computeMesh);        
+        configureNifti(param.niigz,computeMesh);		
     } else {
         self.postMessage({msg:"render from server"});
         loadNifti(path,computeMesh);
@@ -35,7 +35,7 @@ function init(param) {
 }
 function computeMesh() {
     self.postMessage({msg:"compute mesh"});
-    
+
     var g=SurfaceNets(brain.data,brain.dim,brain.pixdim,brain.level);
     self.postMessage({msg:"success",geometry:g}, [g.vertices, g.faces]);
 }
@@ -153,7 +153,7 @@ function SurfaceNets(data, dims, pixdims, level) {
 function configureNifti(niigz, callback) {
     self.postMessage({msg:"configureNifti"});
 
-    var    inflate=new pako.Inflate();
+    var	inflate=new pako.Inflate();
     try {
         inflate.push(new Uint8Array(niigz),true);
         var data=inflate.result.buffer;
@@ -161,9 +161,9 @@ function configureNifti(niigz, callback) {
         self.postMessage({msg:"ERROR: cannot decompress segmentation data"});
         self.close();
     }
-    var    dv=new DataView(data);
-    var    sizeof_hdr=dv.getInt32(0,true);
-    var    dimensions=dv.getInt16(40,true);
+    var	dv=new DataView(data);
+    var	sizeof_hdr=dv.getInt32(0,true);
+    var	dimensions=dv.getInt16(40,true);
 
     brain.dim=[];
     brain.dim[0]=dv.getInt16(42,true);
@@ -174,7 +174,7 @@ function configureNifti(niigz, callback) {
     brain.pixdim[0]=dv.getFloat32(80,true);
     brain.pixdim[1]=dv.getFloat32(84,true);
     brain.pixdim[2]=dv.getFloat32(88,true);
-    var    vox_offset=dv.getFloat32(108,true);
+    var	vox_offset=dv.getFloat32(108,true);
 
     switch(brain.datatype)
     {

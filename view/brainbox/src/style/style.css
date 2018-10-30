@@ -1,0 +1,53 @@
+/* BrainBox common style */
+* {
+     font-size:14px;
+    color:white;
+}
+html,body {
+    background-color:#222;
+    height:100%;
+    margin:0px;
+    font: 16px/20px "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-font-smoothing: antialiased;
+}
+h1 {
+     font-size: 1rem;
+    text-align:center;
+}
+h2, p {
+    font-family: sans-serif;
+    text-align:center;
+}
+a {
+    color:white;
+}
+.linkNoULine {
+    text-decoration: none;
+    font-weight: lighter;
+}
+
+#menu {
+    float:right;
+    /* margin-top: 10px; */
+    margin-right: 10px;
+    display: inline-block;
+    font: 16px/24px "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
+}
+#menu img{
+     margin-left: 15px;
+}
+#MyLogin {
+     display:inline-block;
+     margin-left:15px;
+}
+
+/*
+.icon {
+    width: 0.9rem;
+    height: 0.9rem;
+    margin: 8px 2px;
+    vertical-align: middle;
+    cursor: pointer;
+}
+*/
