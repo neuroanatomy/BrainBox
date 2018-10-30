@@ -1,7 +1,7 @@
 {
-	"name":"Ferret 50 Regions",
-	"source":"http://brainbox.pasteur.fr/labels/ferret50.json",
-	"labels":[
+    "name":"Ferret 50 Regions",
+    "source":"http://brainbox.pasteur.fr/labels/ferret50.json",
+    "labels":[
         {"name":"WhiteMatter","value":1,"color":[243,243,243],"url":""},
         {"name":"GrayMatter","value":2,"color":[188,188,188],"url":""},
         {"name":"CorpusCallosum","value":3,"color":[51,255,255],"url":""},

@@ -79,7 +79,7 @@ function bufferTag(str, sz) {
 
 const atlasMakerServer = (function() {
     const me = {
-        debug: 1,
+        debug: 2,
         dataDirectory: '',
         Atlases: [],
         Brains: [],
@@ -2459,9 +2459,9 @@ const atlasMakerServer = (function() {
                         }
 
                         // scan through connected users
-                        for(i in websocket.clients) {
+                        for(client of websocket.clients) {
                             // i-th user
-                            var targetUS = me.getUserFromSocket(websocket.clients[i]);
+                            var targetUS = me.getUserFromSocket(client);
 
                             // do not auto-broadcast
                             if(sourceUS.uid === targetUS.uid) {
@@ -2489,19 +2489,18 @@ const atlasMakerServer = (function() {
                                 }
                                 continue;
                             }
-
                             if (( targetUS.User.projectPage && targetUS.User.projectPage === sourceUS.User.projectPage)
                                 || (targetUS.User.iAtlas === sourceUS.User.iAtlas)
                                 || (data.type === "userData")
                                 || (data.type === "chat")
                             ) {
                                 if(data.type === "atlas") {
-                                    me.sendAtlasToUser(data.data, websocket.clients[i], false);
+                                    me.sendAtlasToUser(data.data, client, false);
                                 } else {
                                     // sanitise data
                                     const cleanData = DOMPurify.sanitize(JSON.stringify(data));
                                     try {
-                                        websocket.clients[i].send(cleanData);
+                                        client.send(cleanData);
                                     } catch (err) {
                                         tracer.log("ERROR:", err);
                                     }
