@@ -2,24 +2,24 @@
 <html>
 
 <head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> 
-	<link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> 
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
     <title>{{title}}</title>
-	<link rel="stylesheet" type="text/css" href="/stylesheets/style.css" />
-	<link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
-	<link rel="stylesheet" type="text/css" href="/stylesheets/user-style.css" />
+    <link rel="stylesheet" type="text/css" href="/stylesheets/style.css" />
+    <link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="/stylesheets/user-style.css" />
 </head>
 
 <body>
 
 <div style="width:100%;height:100%;display:flex;flex-direction:column">
-	
-	<!-- Header (fixed height) -->
-	<div style="flex:0 0 64px">
-	    <!-- Top-right menu bar -->
-		<div id="menu">
-			<img id="addProject" class="button" title="add project" style='width:13px' src='/img/plus.svg'/>
+    
+    <!-- Header (fixed height) -->
+    <div style="flex:0 0 64px">
+        <!-- Top-right menu bar -->
+        <div id="menu">
+            <img id="addProject" class="button" title="add project" style='width:13px' src='/img/plus.svg'/>
             <a href="http://openneu.ro/metasearch" target="_blank"><img id="search" class="button" title="search" style='width:13px' src='/img/search.svg'/></a>
 			<img id="doc" class="button" title="documentation" style='width:13px' src='/img/doc.svg'/>
 			<a href="https://github.com/neuroanatomy/BrainBox/issues/new" target="_blank"><img id="bug" class="button" title="report a bug" style='width:14px' src='/img/bug.svg'/></a>
@@ -37,31 +37,31 @@
                 <a href='/' style="font-family: Roboto, sans-serif; font-size: 36px; font-weight:100; text-decoration:none">{{nickname}}</a>
             </span>
         </div>
-	</div>
+    </div>
 
-	<!-- Content (variable height) -->
-	<div id="content" style="flex:1 0 auto;justify-content:center">
-	
-		<!-- to center -->
-		<!--<table style="margin:auto;width:1000px">-->
-		<div id="centeringDiv">
-		    
-		    <div id="userImage">
+    <!-- Content (variable height) -->
+    <div id="content" style="flex:1 0 auto;justify-content:center">
+    
+        <!-- to center -->
+        <!--<table style="margin:auto;width:1000px">-->
+        <div id="centeringDiv">
+            
+            <div id="userImage">
                 <img src='{{{avatar}}}' style="width:100%"/>
-		    </div>
-		    <!-- end of #userImage -->
-		    
-		    <div id="userDescription">
+            </div>
+            <!-- end of #userImage -->
+            
+            <div id="userDescription">
                 <h1>{{username}}</h1>
                 <h2>{{nickname}}</h2>
                 <p>{{joined}}</p>
                 <p><span id="numMRI"></span> MRI Files</p>
                 <p><span id="numAtlas"></span> Atlas Files</p>
                 <p><span id="numProjects"></span> Projects</p>
-		    </div>
-		    <!-- end of #userDescription -->
-		    
-		    <div id="userTable">
+            </div>
+            <!-- end of #userDescription -->
+            
+            <div id="userTable">
                 <!-- Tab heads -->
                 <div>
                     <a class="tab" value='mri'>MRI Files</a>
@@ -115,56 +115,56 @@
                     </table>
             
                 </div>
-		    </div>
-		    <!-- end of #userTable -->
+            </div>
+            <!-- end of #userTable -->
 
-		</div>
+        </div>
 
-	</div>
-	<!-- End Content -->
-	
-	<!-- Space (fixed height) -->
-	<div style="flex:0 0 50px">
-	</div>
+    </div>
+    <!-- End Content -->
+    
+    <!-- Space (fixed height) -->
+    <div style="flex:0 0 50px">
+    </div>
 
-	<!-- Footer (fixed height) -->
-	<div style="flex:0 0 100px;background-color:#000">
-		<p style="width:100%;font-size:small;text-align:center"> 
-			<a target="_blank" href="http://neuroanatomy.github.io">
-				<img src="/img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/></a>
-			<a target="_blank" href="http://neuroanatomy.github.io" class="linkNoULine">
-				group de neuroanatomie appliquée et théorique
-			</a>
-		</p>
-	</div>
-	
+    <!-- Footer (fixed height) -->
+    <div style="flex:0 0 100px;background-color:#000">
+        <p style="width:100%;font-size:small;text-align:center"> 
+            <a target="_blank" href="http://neuroanatomy.github.io">
+                <img src="/img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/></a>
+            <a target="_blank" href="http://neuroanatomy.github.io" class="linkNoULine">
+                group de neuroanatomie appliquée et théorique
+            </a>
+        </p>
+    </div>
+    
 </div>
 
 <script src="/lib/jquery-3.1.1.min.js"></script>
 <script>
-	var userInfo='{{{userInfo}}}';
-	var cursorFiles = 0;
-	var cursorAtlas = 0;
-	var cursorProjects = 0;
-	
-	userInfo=JSON.parse(userInfo);
-	userInfo.MRIFiles = [];
-	userInfo.atlasFiles = [];
-	userInfo.projects = [];
-	
-	// switch tabs
-	$("a.tab").click(function() {
-		$("a.tab").removeClass("selected");
-		$(this).addClass("selected");
-		$(".tabContent").hide();
-		selectTab($(this).attr('value'));
-	});
-	selectTab('{{tab}}');
-	
-	queryFiles();
-	queryAtlas();
-	queryProjects();
-	
+    var userInfo='{{{userInfo}}}';
+    var cursorFiles = 0;
+    var cursorAtlas = 0;
+    var cursorProjects = 0;
+    
+    userInfo=JSON.parse(userInfo);
+    userInfo.MRIFiles = [];
+    userInfo.atlasFiles = [];
+    userInfo.projects = [];
+    
+    // switch tabs
+    $("a.tab").click(function() {
+        $("a.tab").removeClass("selected");
+        $(this).addClass("selected");
+        $(".tabContent").hide();
+        selectTab($(this).attr('value'));
+    });
+    selectTab('{{tab}}');
+    
+    queryFiles();
+    queryAtlas();
+    queryProjects();
+    
     $("#addProject").click(function(){location="/project/new"});
     $("#settings").click(function(){
         var pathname=location.pathname;
@@ -192,14 +192,14 @@ function selectTab(tab) {
     }
 }
 function queryFiles() {
-	$.getJSON("/user/json/{{nickname}}/files", {start:cursorFiles, length:100})
-	.then(function(res) {
-	    if(res.success) {
+    $.getJSON("/user/json/{{nickname}}/files", {start:cursorFiles, length:100})
+    .then(function(res) {
+        if(res.success) {
             appendFiles(res.list);
             cursorFiles += 100;
             queryFiles();
         }
-	});
+    });
 }
 function appendFiles(list) {
     userInfo.MRIFiles.push.apply(userInfo.MRIFiles, list);
@@ -219,14 +219,14 @@ function appendFiles(list) {
     $("#numMRI").text(userInfo.MRIFiles.length);
 }
 function queryAtlas(list) {
-	$.getJSON("/user/json/{{nickname}}/atlas", {start:userInfo.atlasFiles.length, length:100})
-	.then(function(res) {
-	    if(res.success) {	        
+    $.getJSON("/user/json/{{nickname}}/atlas", {start:userInfo.atlasFiles.length, length:100})
+    .then(function(res) {
+        if(res.success) {            
             appendAtlas(res.list);
             cursorAtlas += 100;
             queryAtlas();
         }
-	});
+    });
 }
 function appendAtlas(list) {
     userInfo.atlasFiles.push.apply(userInfo.atlasFiles, list);
@@ -250,14 +250,14 @@ function appendAtlas(list) {
     $("#numAtlas").text(userInfo.atlasFiles.length);
 }
 function queryProjects() {
-	$.getJSON("/user/json/{{nickname}}/projects", {start:userInfo.projects.length, length:100})
-	.then(function(res) {
-	    if(res.success) {
+    $.getJSON("/user/json/{{nickname}}/projects", {start:userInfo.projects.length, length:100})
+    .then(function(res) {
+        if(res.success) {
             appendProjects(res.list);
             cursorProject += 100;
             queryProjects();
         }
-	});
+    });
 }
 function appendProjects(list) {
     userInfo.projects.push.apply(userInfo.projects, list);
