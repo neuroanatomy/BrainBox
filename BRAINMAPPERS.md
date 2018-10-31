@@ -15,6 +15,12 @@ Slice numbers:      axial (cor) __
 Length:             __ mm  
 Volume:             __ mm3  
 
+Name:               **faruk**  
+GitHub:             @ofgulban  
+Species:            Bottlenose dolphin  
+Slice numbers:      all  
+Length:             mm  
+Volume:             445 823 mm3  
 
 Name:               **katja**  
 GitHub:             @katjaq  
