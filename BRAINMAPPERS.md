@@ -6,7 +6,9 @@ Here, we are segmenting an amazingly folded [**dolphin brain**](http://brainbox.
 
 **Our BrainMapper team**
 
-current Volume segmented: **509 368 mm3** (please update! :D)
+initial volume segmented: 509 368 mm3
+
+current volume segmented: **445 823 mm3** (please update! :D)
 
 Name:               **name**  
 GitHub:             @  
