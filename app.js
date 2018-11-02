@@ -196,7 +196,7 @@ app.get('/auth/github/callback',
 global.tokenAuthentication = function (req, res, next) {
     tracer.log('>> Check token');
     let token;
-    if (req.params.token) {
+    if (req.params.token)
         token = req.params.token;
     if(req.query.token)
         token = req.query.token;
