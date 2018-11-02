@@ -40,8 +40,12 @@ export var AtlasMakerWS = {
 
         return new Promise(function (resolve, reject) {
             // WS connection
-            //var host = "ws://" + window.location.hostname + ":8080/";
-            var host = me.wshostname;
+            let host;
+            if(me.secure) {
+                host = "wss://" + me.wshostname;
+            } else {
+                host = "ws://" + me.wshostname;
+            }
 
             if (me.debug) { console.log("[initSocketConnection] host:", host); }
             if (me.progress) { me.progress.html("Connecting..."); }
