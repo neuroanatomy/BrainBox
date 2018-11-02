@@ -36,7 +36,6 @@ if (DOCKER_DB) {
 }
 
 var db = monk(MONGO_DB);
-var fs = require('fs');
 var expressValidator = require('express-validator');
 
 /* jslint nomen: true */
