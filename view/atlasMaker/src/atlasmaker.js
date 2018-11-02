@@ -104,7 +104,7 @@ export var AtlasMakerWidget = {
     info:{}, // information displayed over each brain slice
     // undo stack
     /* DEPRECATED Undo:[], */
-    secure: true,
+    secure: false,
     version: 1, // version of the configuration file (slice number, plane, etc). Default=1
 
     /**
