@@ -1,9 +1,3 @@
-var async = require("async");
-var url = require('url');
-var crypto = require('crypto');
-var dateFormat = require('dateformat');
-var validatorNPM = require('validator');
-var async = require('async');
 const url = require('url');
 const crypto = require('crypto');
 const dateFormat = require('dateformat');
@@ -52,7 +46,8 @@ var isProjectObject = function(req,res,object) {
 
     var pr = new Promise(function(resolve, reject) {
         var i, k, flag, arr;
-        var allowed="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890.,_- '–:;".split("");
+        var allowed="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,_- '–:;".split("");
+        var allowedAlphanumericHyphen="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-".split("");
     
         // 1. Synchronous checks
         //----------------------
@@ -96,7 +91,7 @@ var isProjectObject = function(req,res,object) {
         console.log("> owner and project shortname present")
     
         // check that shortname is alphanumeric
-        if(!validatorNPM.isAlphanumeric(object.owner) || !validatorNPM.isAlphanumeric(object.shortname)) {
+        if(!validatorNPM.isWhitelisted(object.owner, allowedAlphanumericHyphen) || !validatorNPM.isWhitelisted(object.shortname, allowedAlphanumericHyphen)) {
             reject({success:false,error:"Invalid owner or project shortname, not alphanumeric"});
             return;
         }

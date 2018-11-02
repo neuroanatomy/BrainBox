@@ -1,4 +1,3 @@
-<<<<<<< HEAD:view/brainbox/src/pages/project-page.js
 /*global info_proxy projectInfo BrainBox AtlasMakerWidget $*/
 
 import 'jquery-ui/themes/base/core.css';
@@ -19,122 +18,6 @@ import '../style/project-style.css';
 const projShortname = projectInfo.shortname;
 const numFilesQuery = 20;
 const annotations = {
-=======
-<!DOCTYPE html>
-<html>
-
-<head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> 
-	<link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
-    <title>{{title}}</title>
-	<link rel="stylesheet" type="text/css" href="/stylesheets/style.css" />
-	<link rel="stylesheet" type="text/css" href="/stylesheets/atlasMaker.css" />
-	<link rel="stylesheet" type="text/css" href="/stylesheets/textAnnotations.css" />
-	<link rel="stylesheet" type="text/css" href="/stylesheets/ui.css" />
-	<link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
-	<link rel="stylesheet" type="text/css" href="/stylesheets/project-style.css" />
-    <link rel="stylesheet" type="text/css" href="/stylesheets/loading-style.css" />
-</head>
-
-<body>
-
-<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:stretch">
-	
-	<!-- Header (fixed height) -->
-	<div style="flex:0 0 64px">
-	    <!-- Top-right menu bar -->
-		<div id="menu">
-			<img id="addProject" class="button" title="add project" style='width:13px' src='/img/plus.svg'/>
-			<img id="settings" class="button" title="Settings" style='width:13px' src='/img/settings.svg'/>
-            <a href="http://openneu.ro/metasearch" target="_blank"><img id="search" class="button" title="search" style='width:13px' src='/img/search.svg'/></a>
-			<img id="doc" class="button" title="documentation" style='width:13px' src='/img/doc.svg'/>
-			<a href="https://github.com/OpenNeuroLab/BrainBox/issues" target="_blank"><img id="bug" class="button" title="report a bug" style='width:14px' src='/img/bug.svg'/></a>
-            <a href="https://github.com/OpenNeuroLab" target="_blank"><img id="github" class="button" title="join our github project" style='width:15px' src='/img/github.svg'/></a>
-			<div id="MyLogin">
-				<span>{{{login}}}</span>
-			</div>
-		</div>
-
-        <!-- Small left-top logo -->
-        <div style="display:inline-block;margin:10px">
-            <a href='/' style="text-decoration:none">
-                <img style='height:56px;vertical-align:middle' src='/img/brainbox-logo-small_noFont.svg'/>
-            </a><span style="font-family: Roboto, sans-serif; font-size: 36px; font-weight:100;vertical-align:middle" id="fontLogo"> 
-                <a href='/' style="font-family: Roboto, sans-serif; font-size: 36px; font-weight:100; text-decoration:none">{{projectName}}</a>
-            </span>
-        </div>
-	</div>
-	
-	<!-- Content -->
-	<div id="content" style="flex:1 1 auto;position:relative">
-		<div style="display:flex;width:100%;height:100%;align-items:stretch;position:absolute">
-
-			<div id="left" style="flex:0 0 400px;position:relative">
-			
-				<div style="display:flex;flex-direction:column;height:100%">
-					<!-- Tools -->
-					<div id="tools" class="block" style="flex:1 0 auto">
-					</div>
-				
-					<!-- Project Files -->
-					<div id="projectFiles" class="block" style="flex:1 1 auto">
-						<table style="width:100%;text-align:left">
-							<thead>
-								<tr>
-									<th>Name</th>
-									<th>File</th>
-								</tr>
-							</thead>
-							<tbody>
-							</tbody>
-						</table>
-					</div>
-				
-					<!-- File Annotations -->
-					<div id="annotations" class="block" style="flex:1 1 200px">
-						<table id="volAnnotations" style="width:100%;text-align:left">
-							<thead>
-								<tr>
-									<th>Name</th>
-									<th>Label Set</th>
-								</tr>
-							</thead>
-                            <tbody>
-                            </tbody>
-						</table>
-					</div>
-				</div>
-				
-				<div id="resizeButton" class="block">
-				</div>
-				
-			</div>
-			
-			<div id="right" style="flex:1 0;position:relative">
-				<!-- AtlasMaker -->
-				<div id="stereotaxic" style="width:100%;height:100%">
-				<!-- End of AtlasMaker -->
-				</div>
-			</div>
-
-		</div>
-	</div>
-</div>
-
-<script src="/lib/jquery-3.1.1.min.js"></script>
-<script src="/js/brainbox.js"></script>
-<script>
-
-/*
-	This variable contains project metadata
-	and is filled by the server, from the database.
-*/
-var projectInfo={{{projectInfo}}};
-var projShortname = projectInfo.shortname;
-var numFilesQuery = 20;
-var annotations = {
->>>>>>> master:views/project.mustache
     text: [],   // collect text annotations
     volume: []  // collect volume annotations
 };
@@ -485,7 +368,7 @@ function loadProjectFile(index) {
                     created: date.toJSON(), 
                     modified: date.toJSON(), 
                     modifiedBy: AtlasMakerWidget.User.username, 
-                    filename: Math.random().toString(36).slice(2)+".nii.gz",	// automatically generated filename
+                    filename: Math.random().toString(36).slice(2)+".nii.gz",    // automatically generated filename
                     labels: annotations.volume[irow].values,
                     owner: AtlasMakerWidget.User.username,
                     type: "volume"
@@ -516,13 +399,13 @@ function loadProjectFile(index) {
                 trTemplate: $.map([
                     "<tr>",
                     " <td></td>",           // volume name
-                    " <td></td>",	        // volume label set
+                    " <td></td>",           // volume label set
                     "</tr>"],function(o){return o}).join(),
                 objTemplate: [
-                    {	typeOfBinding:1,
+                    {   typeOfBinding:1,
                         path:"mri.atlas.#.name"
                     },
-                    {	typeOfBinding:1,
+                    {   typeOfBinding:1,
                         path:"mri.atlas.#.labels"
                     }
                 ]

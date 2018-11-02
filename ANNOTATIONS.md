@@ -1,5 +1,5 @@
 **Come and join our team of
- [BrainMappers](https://github.com/OpenNeuroLab/BrainBox/blob/master/BRAINMAPPERS.md)!!**  
+ [BrainMappers](https://github.com/neuroanatomy/BrainBox/blob/master/BRAINMAPPERS.md)!!**
 We will be happy to work with anyone who would love to join our effort.
  While you can see in real-time what your collaborators are writing or drawing on a given
  data set, you can also chat with them, and ask for help or approval of your work. We want
@@ -14,8 +14,8 @@ Come to our [**dolphin brain**](http://brainbox.pasteur.fr/mri?url=http://brainc
 
 <img width="769" alt="screen shot 2017-06-01 at 11 08 34" src="https://cloud.githubusercontent.com/assets/6297454/26672835/f7892d80-46ba-11e7-8be8-51adbee9288d.png">
 
-When you have done 1 slice, 
-* add your name or github handle to our [BRAINMAPPERS.md](https://github.com/OpenNeuroLab/BrainBox/blob/master/BRAINMAPPERS.md) file
+When you have done 1 slice,
+* add your name or github handle to our [BRAINMAPPERS.md](https://github.com/neuroanatomy/BrainBox/blob/master/BRAINMAPPERS.md) file
 * add the slice number where you have been working (currently, 111 & 112 are done, you could continue with 113++)
 * add "length:..." and 
 * "volume:..." from the upper left corner of the BrainBox viewer into the file (just for the fun!! :D)

@@ -1,4 +1,3 @@
-<<<<<<< HEAD:view/brainbox/src/pages/project-settings-page.js
 /*globals projectInfo BrainBox projectShortname*/
 
 // @todo check and be sure the user picks a username from the dropdown menu
@@ -19,205 +18,6 @@ import '../style/ui.css';
 import '../style/projectSettings-style.css';
 import '../style/access-style.css';
 import '../style/dropdown-style.css';
-=======
-<!DOCTYPE html>
-<html>
-
-<head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> 
-	<link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
-    <title>{{projectShortname}}</title>
-	
-	<link rel="stylesheet" type="text/css" href="/stylesheets/style.css" />
-	<link rel="stylesheet" type="text/css" href="/stylesheets/ui.css" />
-	<link rel="stylesheet" href="/lib/jquery-ui.css"><!--https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css-->
-	<link rel="stylesheet" href='https://fonts.googleapis.com/css?family=Roboto:100' type='text/css'>
-	<link rel="stylesheet" type="text/css" href="/stylesheets/projectSettings-style.css" />
-	<link rel="stylesheet" type="text/css" href="/stylesheets/access-style.css" />
-	<link rel="stylesheet" type="text/css" href="/stylesheets/dropdown-style.css" />
-</head>
-
-<body>
-
-<div style="width:100%;height:100%;display:flex;flex-direction:column">
-	
-	<!-- Header (fixed height) -->
-	<div style="flex:0 0 64px">
-	    <!-- Top-right menu bar -->
-		<div id="menu">
-			<img id="addProject" class="button" title="add project" style='width:13px' src='/img/plus.svg'/>
-            <a href="http://openneu.ro/metasearch" target="_blank"><img id="search" class="button" title="search" style='width:13px' src='/img/search.svg'/></a>
-			<img id="doc" class="button" title="documentation" style='width:13px' src='/img/doc.svg'/>
-			<a href="https://github.com/OpenNeuroLab/BrainBox/issues" target="_blank"><img id="bug" class="button" title="report a bug" style='width:14px' src='/img/bug.svg'/></a>
-			<a href="https://github.com/OpenNeuroLab" target="_blank"><img id="github" class="button" title="join our github project" style='width:15px' src='/img/github.svg'/></a>
-			<div id="MyLogin">
-				<span>{{{login}}}</span>
-			</div>
-		</div>
-
-        <!-- Small left-top logo -->
-        <div style="display:inline-block;margin:10px">
-            <a href='/' style="text-decoration:none">
-                <img style='height:56px;vertical-align:middle' src='/img/brainbox-logo-small_noFont.svg'/>
-            </a>
-            <span style="font-family: Roboto, sans-serif; font-size: 36px; font-weight:100;vertical-align:middle" id="projectName" contentEditable=true class="noEmptyWithPlaceholder" placeholder="Enter a project name">
-            </span>
-        </div>
-	</div>
-	
-	<!-- Content (variable height) -->
-	<div id="content" style="flex:1 0 auto;justify-content:center;position:relative">
-	
-		<!-- to center -->
-		<div id="centeringDiv">
-
-				<div id="projImage">
-					<a href='/project/{{projectShortname}}'><svg width="100%" height="100%"></svg></a>
-				</div>
-				
-				<div id="projDescription">
-					<a href='/project/{{projectShortname}}'><h1>{{projectShortname}}</h1></a>
-					<h2 id="url" contentEditable=true class="noEmptyWithPlaceholder" placeholder="Enter a project website"></h2>
-					<p>by <a href='/user/{{owner}}'>{{owner}}</a></p>
-					<p id="description" contentEditable=true class="noEmptyWithPlaceholder" placeholder="Enter a project description"></p>
-					<p><span id="numCollaborators"></span> Collaborators</p>
-					<p><span id="numAnnotations"></span> Annotations</p>
-					<p><span id="numFiles"></span> MRI Files</p>
-
-                    <!-- Save or Cancel -->
-                    <div style="display:block;margin:0 auto;width:200px">
-                        <h2 id="saveChanges" class="pushButton">Save Changes</h2>
-                        <h2 id="deleteProject" class="pushButton">Delete Project</h2>
-                        <h2 id="goToProject" class="pushButton">Go to Project</h2>
-                        <p id="saveFeedback"></p>
-                    </div>
-				</div>
-				
-				<div id="projTable">
-
-							<!-- Tab Content 1: Access -->
-							<h2 class="selection-header">Access</h2>
-							<table id="access" class="tabContent" style="padding:10px;display:table">
-								<thead>
-									<tr>
-										<th>Nickname</th>
-										<th>Name</th>
-										<th>Collaborators</th>
-										<th>Annotations</th>
-										<th>MRI Files</th>
-									</tr>
-								</thead>
-								<tbody>
-								</tbody>
-							</table>
-							<div style="text-align:right">
-								<img id="addCollaborator" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/plus-square.svg' />
-								<img id="removeCollaborator" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/minus-square.svg' />
-							</div>
-							
-							
-							<!-- Tab Content 2: Annotations -->
-							<h2 class="selection-header">Annotations</h2>
-							<table id="annotations" class="tabContent" style="padding:10px">
-								<thead>
-									<tr>
-										<th>Name</th>
-										<th>Type</th>
-										<th>Value</th>
-										<th>Display</th>
-									</tr>
-								</thead>
-								<tbody>
-								</tbody>
-							</table>
-							<div style="text-align:right">
-								<img id="addAnnotation" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/plus-square.svg' />
-								<img id="removeAnnotation" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/minus-square.svg' />
-							</div>
-							
-							<!-- Tab Content 3: MRIs -->
-							<h2 class="selection-header">MRI Files</h2>
-							<table id="MRIFiles" class="tabContent" style="padding:10px">
-								<thead>
-									<tr>
-										<th>URL</th>
-										<th>Name</th>
-									</tr>
-								</thead>
-								<tbody>
-								</tbody>
-							</table>
-							<div style="text-align:right">
-								<img id="importFiles" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/upload-square.svg' />
-								<img id="addFile" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/plus-square.svg' />
-								<img id="removeFile" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/minus-square.svg' />
-							</div>
-				</div>
-		</div>
-		<!-- end of centering div -->
-
-	</div>
-	<!-- End Content -->
-	
-	<!-- Space (fixed height) -->
-	<div style="flex:0 0 50px">
-	</div>
-
-	<!-- Footer (fixed height) -->
-	<div style="flex:0 0 100px;background-color:#000">
-		<p style="width:100%;font-size:small;text-align:center"> 
-			<a target="_blank" href="http://neuroanatomy.github.io">
-				<img src="/img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/></a>
-			<a target="_blank" href="http://neuroanatomy.github.io" class="linkNoULine">
-				group de neuroanatomie appliquée et théorique
-			</a>
-		</p>
-	</div>
-	
-    <!-- Import files -->
-    <!-- black overlay -->
-    <div id='importFilesDialog' style='display:none;position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(0,0,0,0.7);z-index:100'>
-        <!-- centered content -->
-        <div style='position:relative;padding:1rem;margin:2rem auto;background-color:#333;max-width:600px;text-align:center;border:1px solid #777;height:calc(100% - 4rem);box-sizing:border-box'>
-            <!-- overflow: scroll -->
-            <div style='display:inline-block;max-width:600px;padding:2rem;overflow:scroll;max-height:calc(100% - 10rem)'>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>URL</th>
-                            <th>Name</th>
-                        </tr>
-                    <tbody>
-                    </tbody>
-                </table>
-            </div>
-            <!-- Import/Cancel buttons -->
-            <div style="display:block;margin:0 auto;max-width:200px">
-                <h2 id="importFilesDialogOk" class="pushButton">Import</h2>
-                <h2 id="importFilesDialogCancel" class="pushButton">Cancel</h2>
-            </div>
-        </div>
-    </div>
-	
-</div>
-
-<script src="/lib/jquery-3.1.1.min.js"></script>
-<script src="/lib/jquery-ui.min.js"></script><!--https://code.jquery.com/ui/1.12.1/jquery-ui.min.js-->
-<script src="/lib/jdenticon.min.js"></script><!--https://cdn.jsdelivr.net/jdenticon/1.3.2/jdenticon.min.js-->
-<script src="/lib/md5.min.js"></script><!--https://cdn.jsdelivr.net/js-md5/0.3.0/md5.min.js"-->
-<script src="/lib/purify.min.js"></script>
-<script src="/js/twoWayBinding.js"></script>
-<script src="/js/brainbox.js"></script>
-
-<script>
-
-//TODO  check and be sure the user picks a username from the dropdown menu
-//TODO  implement the placeholder for the select tags in the anotation table
-//TODO  find a way for the user to give a set of values for the annotations and make it obvious that it works this way
-
-var projectInfo={{{projectInfo}}};
->>>>>>> master:views/projectSettings.mustache
 
 // Add avatar based on project's name
 jdenticon.update($("svg")[0],md5(projectShortname));
@@ -286,23 +86,23 @@ var accParam = {
         "    </td>",
         "</tr>"],function(o){return o}).join(""),
     objTemplate: [
-        {	typeOfBinding:2,
+        {   typeOfBinding:2,
             path:"collaborators.list.#.username" // nickname
         },
-        {	typeOfBinding:2,
+        {   typeOfBinding:2,
             path:"collaborators.list.#.name" // full name
         },
-        {	typeOfBinding:2,
+        {   typeOfBinding:2,
             path:"collaborators.list.#.access.collaborators",
             format: function(e,d){$(e).find(".access").attr('data-level',["none","view","edit","add","remove"].indexOf(d))},
             parse: function(e){var level=$(e).find(".access").attr("data-level");return ["none","view","edit","add","remove"][level]}
         },
-        {	typeOfBinding:2,
+        {   typeOfBinding:2,
             path:"collaborators.list.#.access.annotations",
             format: function(e,d){$(e).find(".access").attr('data-level',["none","view","edit","add","remove"].indexOf(d))},
             parse: function(e){var level=$(e).find(".access").attr("data-level");return ["none","view","edit","add","remove"][level]}
         },
-        {	typeOfBinding:2,
+        {   typeOfBinding:2,
             path:"collaborators.list.#.access.files",
             format: function(e,d){$(e).find(".access").attr('data-level',["none","view","edit","add","remove"].indexOf(d))},
             parse: function(e){var level=$(e).find(".access").attr("data-level");return ["none","view","edit","add","remove"][level]}
@@ -323,23 +123,23 @@ BrainBox.loadLabelsets()
         trTemplate: $.map([
             "<tr>",
             " <td contentEditable=true class='noEmpty'></td>",
-            " <td><select class='mui-select'>",BrainBox.annotationType.map(function(o){return "<option>"+o+"</option>"}),"</select></td>",	// append annotation types
+            " <td><select class='mui-select'>",BrainBox.annotationType.map(function(o){return "<option>"+o+"</option>"}),"</select></td>",    // append annotation types
             " <td contentEditable=true class='noEmpty'>",
             "  <select class='mui-select'>",BrainBox.labelSets.map(function(o){return "<option>"+o.name+"</option>"}),"</select>",
-            " </td>",	// append label sets
+            " </td>", // append label sets
             " <td>","<div class='display' data-check=0></div>","</td>",
 //            " <td>","<div class='display' data-check=0>","<span class='check' title='display'></span>","</div>","</td>",
             "</tr>"],function(o){return o}).join(""),
         objTemplate: [
-            {	typeOfBinding:2,
+            {   typeOfBinding:2,
                 path:"annotations.list.#.name"
             },
-            {	typeOfBinding:2,
+            {   typeOfBinding:2,
                 path:"annotations.list.#.type",
                 format: function(e,d){$(e).find("select").prop('selectedIndex',BrainBox.annotationType.indexOf(d))},
                 parse: function(e){return $(e).find("select").val()}
             },
-            {	typeOfBinding:2,
+            {   typeOfBinding:2,
                 path:"annotations.list.#.values",
                 format: function (e,d) {
                     var t=$(e).closest("tr").find("td:eq(1) select").prop('selectedIndex');
@@ -356,7 +156,7 @@ BrainBox.loadLabelsets()
                         return $(e).text();
                 }
             },
-            {	typeOfBinding:2,
+            {   typeOfBinding:2,
                 path:"annotations.list.#.display",
                 format: function(e,d){$(e).find(".display").attr("data-check",(d=='true')?"1":"0")},
                 parse: function(e){return ($(e).find(".display").attr("data-check")=="1"?'true':'false')}
@@ -392,10 +192,10 @@ var filesParam = {
         "    <td contentEditable=true class='noEmpty'></td>",
         "</tr>"],function(o){return o}).join(""),
     objTemplate: [
-        {	typeOfBinding:2,
+        {   typeOfBinding:2,
             path:"files.list.#.source"
         },
-        {	typeOfBinding:2,
+        {   typeOfBinding:2,
             path:"files.list.#.name"
         }
     ]

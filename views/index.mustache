@@ -1,35 +1,35 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-	<meta name="google-site-verification" content="L1xtN9FsDfn0xTs79ssAN_BXfcr6t-wkYW6iFjCOuy8" />
-	<link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta name="google-site-verification" content="L1xtN9FsDfn0xTs79ssAN_BXfcr6t-wkYW6iFjCOuy8" />
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
     <title>{{title}}</title>
-	<link rel="stylesheet" type="text/css" href="/stylesheets/style.css" />
-	<link rel="stylesheet" type="text/css" href="/stylesheets/index-style.css" />
-	<link rel="stylesheet" type="text/css" href="/stylesheets/ui.css" />
-	<link rel="stylesheet" type="text/css" href="/stylesheets/introjs.css" />
-	<link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="/stylesheets/style.css" />
+    <link rel="stylesheet" type="text/css" href="/stylesheets/index-style.css" />
+    <link rel="stylesheet" type="text/css" href="/stylesheets/ui.css" />
+    <link rel="stylesheet" type="text/css" href="/stylesheets/introjs.css" />
+    <link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
 </head>
 
 <body>
 
-	<!-- Login (fixed height) -->
+    <!-- Login (fixed height) -->
     <div id="menu">
         <div style="padding-right:10px">
             <img id="addProject" class="button" title="add project" style='width:13px' src='/img/plus.svg'/>
             <a href="http://openneu.ro/metasearch" target="_blank"><img id="search" class="button" title="search" style='width:13px' src='/img/search.svg'/></a>
             <a href="/doc/index.html" target="_blank"><img id="doc" class="button" title="documentation" style='width:13px' src='/img/doc.svg'/></a>
-            <a href="https://github.com/OpenNeuroLab/BrainBox/issues" target="_blank"><img id="bug" class="button" title="report a bug" style='width:14px' src='/img/bug.svg'/></a>
-            <a href="https://github.com/OpenNeuroLab" target="_blank"><img id="github" class="button" title="join our github project" style='width:15px' src='/img/github.svg'/></a>
+            <a href="https://github.com/neuroanatomy/BrainBox/issues/new" target="_blank"><img id="bug" class="button" title="report a bug" style='width:14px' src='/img/bug.svg'/></a>
+            <a href="https://github.com/neuroanatomy" target="_blank"><img id="github" class="button" title="join our github project" style='width:15px' src='/img/github.svg'/></a>
             <div id="MyLogin">
                 <span>{{{login}}}</span>
             </div>
         </div>
     </div>
-	
-	<!-- Content  -->			
+    
+    <!-- Content  -->            
     <div class="slide" style="background:#222">
     <!-- Slide: Landing -->
         <img id="neuronsImg" src="/img/neurons.jpg" width="100%" />
@@ -87,17 +87,17 @@
     -->
     <!-- End Content-->
 
-	<!-- Footer (fixed height) -->
+    <!-- Footer (fixed height) -->
     <div id="footer">
-		<p style="width:100%;font-size:small;text-align:center"> 
-			<a target="_blank" href="http://neuroanatomy.github.io">
-				<img src="/img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/></a>
-			<a target="_blank" href="http://neuroanatomy.github.io" class="linkNoULine">
-				group de neuro anatomie appliquée et théorique
-			</a>
-		</p>
-	</div>
-	<!-- End Footer -->
+        <p style="width:100%;font-size:small;text-align:center"> 
+            <a target="_blank" href="http://neuroanatomy.github.io">
+                <img src="/img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/></a>
+            <a target="_blank" href="http://neuroanatomy.github.io" class="linkNoULine">
+                group de neuro anatomie appliquée et théorique
+            </a>
+        </p>
+    </div>
+    <!-- End Footer -->
 
 <script src="/lib/jquery-3.1.1.min.js"></script>
 <!--<link rel="stylesheet" type="text/css" href="/lib/introjs/introjs.css" />-->
@@ -159,43 +159,43 @@ $("#logout").click(function(){$.get("/logout",function(r){console.log(r)})});
 
 var version=1;
 var brainsToTry=[
-	"https://zenodo.org/record/44855/files/MRI-n4.nii.gz",
-	"http://files.figshare.com/2284784/MRI_n4.nii.gz",
-	"https://dl.dropbox.com/s/cny5b3so267bv94/p32-f18-uchar.nii.gz",
-	"https://fcp-indi.s3.amazonaws.com/data/Projects/ABIDE_Initiative/RawData/NYU/0050952/session_1/anat_1/mprage.nii.gz"
+    "https://zenodo.org/record/44855/files/MRI-n4.nii.gz",
+    "http://files.figshare.com/2284784/MRI_n4.nii.gz",
+    "https://dl.dropbox.com/s/cny5b3so267bv94/p32-f18-uchar.nii.gz",
+    "https://fcp-indi.s3.amazonaws.com/data/Projects/ABIDE_Initiative/RawData/NYU/0050952/session_1/anat_1/mprage.nii.gz"
 ]
 
 // Present the history in localStorage if it exists.
-	if(localStorage.AtlasMaker) {
-		var stored=JSON.parse(localStorage.AtlasMaker);
-		if(stored.version && stored.version==version) {
-			var str = "<br/><p><b>Recently visited</b><br/>";
-			for(var i=stored.history.length-1;i>=Math.max(0,stored.history.length-10);i--) {
-				str += "<a href='"+location+"mri?url="+stored.history[i].url+"'>"+stored.history[i].url+"</a><br />";
-				
-				/**
-				 * @todo Add image thumbnails
-				 */
-				/**/
-				if(stored.history[i].img) {
-				    $("#intro").append('<img src="'+stored.history[i].img+'"/>');
-				}
-				/**/
-			}
-			str += "</p>";
-			$("#intro").append(str);
-		} else {
-			localStorage.clear();
-		}
-	}
-	if(localStorage.AtlasMaker==undefined || stored.history.length<5) {
-		var str="<br/><p><b>Some brains to try</b><br/>";
-		for(var i=0;i<brainsToTry.length;i++) {
-			str+="<a href='"+location+"mri?url="+brainsToTry[i]+"'>"+brainsToTry[i]+"</a><br />";
-		}
-		str+="</p>";
-		$("#intro").append(str);
-	}
+    if(localStorage.AtlasMaker) {
+        var stored=JSON.parse(localStorage.AtlasMaker);
+        if(stored.version && stored.version==version) {
+            var str = "<br/><p><b>Recently visited</b><br/>";
+            for(var i=stored.history.length-1;i>=Math.max(0,stored.history.length-10);i--) {
+                str += "<a href='"+location+"mri?url="+stored.history[i].url+"'>"+stored.history[i].url+"</a><br />";
+                
+                /**
+                 * @todo Add image thumbnails
+                 */
+                /**/
+                if(stored.history[i].img) {
+                    $("#intro").append('<img src="'+stored.history[i].img+'"/>');
+                }
+                /**/
+            }
+            str += "</p>";
+            $("#intro").append(str);
+        } else {
+            localStorage.clear();
+        }
+    }
+    if(localStorage.AtlasMaker==undefined || stored.history.length<5) {
+        var str="<br/><p><b>Some brains to try</b><br/>";
+        for(var i=0;i<brainsToTry.length;i++) {
+            str+="<a href='"+location+"mri?url="+brainsToTry[i]+"'>"+brainsToTry[i]+"</a><br />";
+        }
+        str+="</p>";
+        $("#intro").append(str);
+    }
 
 // Add URL loading
     $("#url").keyup(function(e) {
@@ -209,8 +209,8 @@ var brainsToTry=[
     $("#addProject").click(function(){location="/project/new"});
 
 function goToURL(e) {
-	var url=$("#url").val();
-	location="/mri?url="+url;
+    var url=$("#url").val();
+    location="/mri?url="+url;
 }
 /**
  * @function testWebSockets
