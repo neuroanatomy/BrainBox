@@ -5,6 +5,7 @@ admin
 blacklist.json
 bulk-upload.sh
 github-keys.json
+js/.DS_Store
 node_modules
 npm-debug.log
 public/.DS_Store
@@ -20,10 +21,11 @@ public/lib/.DS_Store
 public/lib/atlasMaker.js
 public/lib/atlasMaker-tools
 public/lib/brainbox.js
+scripts/atlasMaker-resources.js
 test/screenshots/
 tmp
 view/atlasMaker/dist/
 view/atlasMaker/src/tools/dist/
 view/brainbox/dist/
 whitelist.json
-js/.DS_Store
+ws_cfg.json

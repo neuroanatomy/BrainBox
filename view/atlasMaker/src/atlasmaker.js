@@ -26,7 +26,7 @@ export var AtlasMakerWidget = {
     //========================================================================================
     debug:            1,
     hostname: 'http://localhost:3001', // '', // 'http://brainbox.pasteur.fr',
-    wshostname: 'ws://localhost:8080', // 'ws://brainbox.pasteur.fr:8080',
+    wshostname: 'localhost:8080', // 'ws://brainbox.pasteur.fr:8080',
     container:        null, // Element where atlasMaker lives
     brain_offcn:    null,
     brain_offtx:    null,
@@ -104,7 +104,8 @@ export var AtlasMakerWidget = {
     info:{}, // information displayed over each brain slice
     // undo stack
     /* DEPRECATED Undo:[], */
-    version:    1, // version of the configuration file (slice number, plane, etc). Default=1
+    secure: false,
+    version: 1, // version of the configuration file (slice number, plane, etc). Default=1
 
     /**
      * @function quit
