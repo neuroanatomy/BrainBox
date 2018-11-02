@@ -21,6 +21,7 @@ public/lib/.DS_Store
 public/lib/atlasMaker.js
 public/lib/atlasMaker-tools
 public/lib/brainbox.js
+scripts/atlasMaker-resources.js
 test/screenshots/
 tmp
 view/atlasMaker/dist/
