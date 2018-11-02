@@ -91,7 +91,6 @@ var isProjectObject = function(req,res,object) {
         console.log("> owner and project shortname present")
     
         // check that shortname is alphanumeric
-        //if(!validatorNPM.isAlphanumeric(object.owner) || !validatorNPM.isAlphanumeric(object.shortname)) {
         if(!validatorNPM.isWhitelisted(object.owner, allowedAlphanumericHyphen) || !validatorNPM.isWhitelisted(object.shortname, allowedAlphanumericHyphen)) {
             reject({success:false,error:"Invalid owner or project shortname, not alphanumeric"});
             return;
