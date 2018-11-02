@@ -40,6 +40,7 @@ export var AtlasMakerWS = {
 
         return new Promise(function (resolve, reject) {
             // WS connection
+            let host;
             if(me.secure) {
                 host = "wss://" + me.wshostname;
             } else {
