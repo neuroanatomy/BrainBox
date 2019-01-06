@@ -34,7 +34,7 @@ Our aim is to make BrainBox into a reliable tool for open, reproducible, collabo
 
 We will be happy to work with anyone who would love to join our effort.
 While you can see in real-time what your collaborators are writing or drawing on a given data set, you can also chat with them, and ask for help or approval of your work. We want to open this scientific process to everyone with any background including citizen scientists and researchers. Join us!
-**Join our segmentation sprint!** In our [GitHub issue #42](https://github.com/neuroanatomy/BrainBox/issues/177) you find detailed information on how to participate and get credit for your work. Currently, we are trying to complete the dolphin brain! Join our team of [BrainMappers](https://github.com/neuroanatomy/BrainBox/blob/master/BRAINMAPPERS.md)
+**Join our segmentation sprint!** In our [GitHub issue #42](https://github.com/neuroanatomy/BrainBox/issues/177) you find detailed information on how to participate and get credit for your work. Currently, we are trying to complete the dolphin brain! Join our team of [BrainMappers](https://github.com/neuroanatomy/BrainBox/blob/master/BrainMappers.md)
 
 And please also feel free to join our efforts on GitHub! Everybody very welcome!
 
@@ -68,7 +68,26 @@ Or launch your own collaborative project on [BrainBox](http://brainbox.pasteur.f
 
 If you want to work on BrainBox's code, you'll need a local installation:
 
+
+## Non docker developer install instructions
+
+1. install and start `mongo` database
+2. clone the repo and `cd` to the brainbox directory
+4. [create a new OAuth application](https://github.com/settings/applications/new) for your local brainbox url (http://localhost:3000 by default)
+5. paste the keys into the github-keys.json.example file, and drop the .example
+6. drop the `.example` from `controller/atlasMakerServer/blacklist.json.example`
+7. drop the `.example` from `controller/atlasMakerServer/whitelist.json.example`
+8. drop the `.example` from `blacklist.json.example`
+9. drop the `.example` from `whitelist.json.example`
+10. `npm install`
+11. `npm run prepare`
+12. `npm run build`
+13. `npm start`
+14. To check that your code style is like the one we use,  enter `npm run lint`, or you can type `eslint` before committing, to do that install `eslint` globally using `npm i -g eslint` (our code style rules are in the file `.eslintrc`).
+
+
 ## Using Docker to install and run BrainBox
+These installation instructions may need to be updated.  
 
 1. `git clone` this repository or download it
 2. `mv BrainBox brainbox` to rename the directory
@@ -81,17 +100,6 @@ If you want to work on BrainBox's code, you'll need a local installation:
 8. `docker-compose up`
 9. Then open `http://localhost:3000` in your browser.
 
-## Non docker developer install instructions
-
-1. install and start `mongo` database
-2. clone the repo and `cd` to the brainbox directory
-4. [create a new OAuth application](https://github.com/settings/applications/new) for your local brainbox url (http://localhost:3000 by default)
-5. paste the keys into the github-keys.json.example file, and drop the .example
-6. drop the `.example` from `controller/atlasMakerServer/blacklist.json.example`
-7. drop the `.example` from `controller/atlasMakerServer/whitelist.json.example`
-8. `npm install`
-9. `npm start`
-10. To check that your code style is like the one we use,  enter `npm run lint`, or you can type `eslint` before committing, to do that install `eslint` globally using `npm i -g eslint` (our code style rules are in the file `.eslintrc`).
 
 ## Tests
 
