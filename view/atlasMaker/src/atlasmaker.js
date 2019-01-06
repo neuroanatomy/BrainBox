@@ -344,12 +344,14 @@ export var AtlasMakerWidget = {
      * @param {string} path Path to script, either a local path or a url
      * @param {function} testScriptPresent Function to test if the script is already present.
      *        If undefined, the script will be loaded.
+     * @returns {object} A promise
      */
     loadScript: function loadScript(path, testScriptPresent) {
         var def = new $.Deferred();
     
         if(testScriptPresent && testScriptPresent()) {
             console.log("[loadScript] Script",path,"already present, not loading it again");
+
             return def.resolve().promise();
         }
         var s = document.createElement("script");
@@ -359,6 +361,7 @@ export var AtlasMakerWidget = {
             def.resolve();
         };
         document.body.appendChild(s);
+
         return def.promise();
     },
 

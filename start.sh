@@ -1,5 +1,5 @@
 #!/bin/bash
 
-cd /brainbox
+cd /brainbox || exit
 npm install
 node ./bin/www
