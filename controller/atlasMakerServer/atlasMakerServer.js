@@ -159,7 +159,7 @@ const atlasMakerServer = (function() {
 
         traceLog: function traceLog(f, l) {
             if(typeof l === 'undefined' || me.debug>l) {
-                tracer.log("" + (f.name) + " " + (f.caller?(f.caller.name||"annonymous"): "root"));
+                tracer.log(String(f.name) + " " + (f.caller?(f.caller.name||"annonymous"): "root"));
             }
         },
         niiTag: bufferTag("nii", 8),
