@@ -1,9 +1,10 @@
+/* eslint-disable no-sync */
 "use strict";
 
 /*
     Atlas Maker Server
     Roberto Toro, 25 July 2014
-    
+
     Launch using > node atlasMakerServer.js
 */
 
@@ -47,7 +48,7 @@ if (DOCKER_DEVELOP === '1') {
     // Create a livereload server
     const hotServer = livereload.createServer({
       // Reload on changes to these file extensions.
-      exts: [ 'json', 'mustache' ],
+      exts: ['json', 'mustache'],
       // Print debug info
       debug: true
     });
@@ -123,7 +124,7 @@ const GithubStrategy = require('passport-github').Strategy;
 
 passport.use(new GithubStrategy(
     JSON.parse(fs.readFileSync(dirname + "/github-keys.json")),
-    function (accessToken, refreshToken, profile, done) {return done(null, profile); }
+    function (accessToken, refreshToken, profile, done) { return done(null, profile); }
 ));
 app.use(session({
     secret: "a mi no me gusta la sémola",
@@ -146,7 +147,7 @@ function ensureAuthenticated(req, res, next) {
     }
     res.redirect('/');
 }
-app.get('/secure-route-example', ensureAuthenticated, function (req, res) {res.send("access granted"); });
+app.get('/secure-route-example', ensureAuthenticated, function (req, res) { res.send("access granted"); });
 app.get('/logout', function (req, res) {
     req.logout();
     res.redirect(req.session.returnTo || '/');
@@ -195,12 +196,7 @@ app.get('/auth/github/callback',
 // { Token authentication
 global.tokenAuthentication = function (req, res, next) {
     tracer.log('>> Check token');
-    let token;
-    if (req.params.token)
-        token = req.params.token;
-    if(req.query.token)
-        token = req.query.token;
-
+    const token = req.params.token | req.query.token;
     if (!token) {
         tracer.log('>> No token');
         next();
@@ -276,6 +272,7 @@ app.get('/api/getAtlasBackups', (req, res) => {
         res.render('error', {
             message: "Missing source, atlasProject or atlasName"
         });
+
         return;
     }
 
@@ -360,7 +357,7 @@ app.post('/api/log', (req, res) => {
                     length = parseFloat(result.value.length);
                 }
                 var sum = parseFloat(json.value.length) + length;
-                req.db.get('log').update(obj,{$set:{
+                req.db.get('log').update(obj, {$set:{
                     "value.length":sum,
                     date: (new Date()).toJSON()
                 }}, {upsert: true});
