@@ -47,7 +47,7 @@ gulp.task('pack-atlasMaker-dev', ['download', 'pack-resources'], function () {
 
 gulp.task('pack-brainbox', ['pack-atlasMaker'], function () {
     return gulp.src(brainboxFiles)
-        .pipe(gulpif(file => !(file.path.includes('.min.js')), uglify()))
+        .pipe(gulpif((file) => !(file.path.includes('.min.js')), uglify()))
         .pipe(concat('brainbox.js'))
         .pipe(gulp.dest(jsdest))
         .pipe(rename('brainbox.min.js'))
@@ -56,7 +56,7 @@ gulp.task('pack-brainbox', ['pack-atlasMaker'], function () {
 
 gulp.task('pack-atlasMaker', ['download', 'pack-resources'], function () {
     return gulp.src(atlasmakerFiles)
-        .pipe(gulpif(file => !(file.path.includes('.min.js')), uglify()))
+        .pipe(gulpif((file) => !(file.path.includes('.min.js')), uglify()))
         .pipe(concat('atlasMaker.js'))
         .pipe(gulp.dest(jsdest))
         .pipe(rename('atlasMaker.min.js'))
