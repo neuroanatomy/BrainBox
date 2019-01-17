@@ -5,7 +5,7 @@
 
 [![Join the chat at https://gitter.im/OpenNeuroLab-Brainbox/Lobby](https://badges.gitter.im/OpenNeuroLab-Brainbox/Lobby.svg)](https://gitter.im/OpenNeuroLab-Brainbox/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-BrainBox is a web application for the collaborative curation of neuroimaging data
+BrainBox is a Web application for the collaborative curation of neuroimaging data
  available online. You can share, visualise and annotate MRI brain
  data in real-time, collaboratively. BrainBox will provide the means to create a
  layer of collaborative annotation over all the available MRI data without
