@@ -1,7 +1,7 @@
 const path = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
-const WebpackShellPlugin = require('webpack-shell-plugin');
+// const HtmlWebpackPlugin = require('html-webpack-plugin');
+// const WebpackShellPlugin = require('webpack-shell-plugin');
 
 module.exports = {
     mode: 'development',
@@ -9,9 +9,7 @@ module.exports = {
         atlasmaker: './view/atlasMaker/src/atlasmaker.js'
     },
     devtool: 'eval-source-map',
-    plugins: [
-        new CleanWebpackPlugin(['dist'])
-    ],
+    plugins: [new CleanWebpackPlugin(['dist'])],
     output: {
         filename: 'atlasmaker.js',
         library: 'AtlasMakerWidget',
@@ -29,15 +27,11 @@ module.exports = {
             },
             {
                 test: /\.(png|svg|jpg|gif)$/,
-                use: [
-                    'file-loader'
-                ]
+                use: ['file-loader']
             },
             {
                 test: /\.(html)$/,
-                use: [
-                    'html-loader'
-                ]
+                use: ['html-loader']
             }
         ]
     }

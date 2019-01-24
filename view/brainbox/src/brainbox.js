@@ -33,23 +33,23 @@ export var BrainBox={
      * @returns {string} A hash
      */
     hash: function hash(str) {
-        let v0 = 0;
-        let v1;
-        const abc="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        let i;
-        for(i=0; i<str.length; i++) {
-            const ch=str.charCodeAt(i);
-            v0=((v0<<5)-v0)+ch;
-            v0&=v0;
+        let i, res, v, v0, v1;
+        const abc = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const sz = abc.length;
+
+        v0 = 0;
+        for(i = 0; i<str.length; i++) {
+            const ch = str.charCodeAt(i);
+            v0 = ((v0<<5)-v0)+ch;
+            v0 &= v0;
         }
-        const sz=abc.length;
-        let v;
-        let res="";
-        for(i=0; i<8; i++) {
-            v1=parseInt(v0/sz);
-            v=Math.abs(v0-v1*sz);
-            res+=abc[v];
-            v0=v1;
+
+        res = "";
+        for(i = 0; i<8; i++) {
+            v1 = parseInt(v0/sz);
+            v = Math.abs(v0-v1*sz);
+            res += abc[v];
+            v0 = v1;
         }
 
         return res;
@@ -276,15 +276,15 @@ export var BrainBox={
             stored={version:BrainBox.version,history:[]};
             obj0 = {};
         }
-        
-        obj1 = {    
+
+        obj1 = {
             url:BrainBox.info.source,
             view:AtlasMakerWidget.User.view?AtlasMakerWidget.User.view.toLowerCase():"sag",
             slice:AtlasMakerWidget.User.slice?AtlasMakerWidget.User.slice:0,
             lastVisited:(new Date()).toJSON()
         };
         $.extend(obj0, obj1);
-        
+
         stored.history.push(obj0);
         localStorage.AtlasMaker=JSON.stringify(stored);
         */
