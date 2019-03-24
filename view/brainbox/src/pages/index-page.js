@@ -53,17 +53,20 @@ testWebSockets()
 $(".slide").height(window.innerHeight);
 $(window).on('resize', function() {
     $(".slide").height(window.innerHeight);
-    $("#neurons").css({width:window.innerWidth});
+    $("#bgBrains").css({width:window.innerWidth});
 });
 
 // go to url button
 $("#go").click(goToURL);
 
 // video settings
-var vid = document.getElementById("neurons");
+var vid = document.getElementById("bgBrains");
+//vid.autoplay = true;
+//vid.muted = true;
+//vid.loop = true;
 vid.playbackRate = 0.5;
 vid.onloadedmetadata = function() {
-    $("#neurons").css({width:window.innerWidth});
+    $("#bgBrains").css({width:window.innerWidth});
 };
 
 // List of brains
