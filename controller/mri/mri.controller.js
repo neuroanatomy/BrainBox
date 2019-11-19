@@ -5,7 +5,7 @@ const url = require('url');
 const fs = require('fs');
 const request = require('request');
 const path = require('path');
-const atlasMakerServer = require('../atlasMakerServer/atlasMakerServer');
+const atlasmakerServer = require('../atlasmakerServer/atlasmakerServer');
 const checkAccess = require('../checkAccess/checkAccess.js');
 const dataSlices = require('../dataSlices/dataSlices.js');
 
@@ -121,7 +121,7 @@ function downloadMRI(myurl, req, res, callback) {
             dest = newDest;
 
             // NOTE: getBrainAtPath has to be called with a client-side path like "/data/[md5hash]/..."
-            atlasMakerServer.getBrainAtPath('/data/' + hash + '/' + filename)
+            atlasmakerServer.getBrainAtPath('/data/' + hash + '/' + filename)
             .then(mri => {
                 // Create json file for new dataset
                 const ip = req.headers['x-forwarded-for'] ||
@@ -455,7 +455,7 @@ const reset = function reset(req, res) {
     req.db.get('mri').findOne({source: myurl, backup: {$exists: 0}})
     .then(mridb => {
         const filename = mridb.filename;
-        atlasMakerServer.getBrainAtPath('/data/' + hash + '/' + filename)
+        atlasmakerServer.getBrainAtPath('/data/' + hash + '/' + filename)
         .then(mri => {
             req.db.get('mri').update({source: myurl, backup: {$exists: 0}}, {$set: {
                 dim: mri.dim,

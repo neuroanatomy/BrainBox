@@ -91,7 +91,7 @@ export var AtlasMakerInteraction = {
             case 'Adjust':
                 me.User.tool = 'adjust';
                 if($("#adjust").length==0) {
-                    me.loadScript("/lib/atlasMaker-tools/adjust.js");
+                    me.loadScript("/lib/atlasmaker-tools/adjust.js");
                 }
                 break;
             case 'Eyedrop':
@@ -204,8 +204,8 @@ export var AtlasMakerInteraction = {
             $('body').append(black);
 
             // configure display mode
-            $("body").addClass('atlasMaker-fullscreen');
-            $("#atlasMaker")
+            $("body").addClass('atlasmaker-fullscreen');
+            $("#atlasmaker")
               .detach()
               .appendTo('body');
             me.resizeWindow();
@@ -221,8 +221,8 @@ export var AtlasMakerInteraction = {
             $("#blackOverlay").remove();
 
             // go back to display mode
-            $("body").removeClass('atlasMaker-fullscreen');
-            $("#atlasMaker").detach()
+            $("body").removeClass('atlasmaker-fullscreen');
+            $("#atlasmaker").detach()
 .appendTo('#stereotaxic');
             me.resizeWindow();
             me.fullscreen = false;
@@ -400,10 +400,10 @@ export var AtlasMakerInteraction = {
      */
     initCursor: function initCursor() {
         var me = AtlasMakerWidget;
-        var W = parseFloat($('#atlasMaker canvas').css('width'));
-        var H = parseFloat($('#atlasMaker canvas').css('height'));
-        var w = parseFloat($('#atlasMaker canvas').attr('width'));
-        var h = parseFloat($('#atlasMaker canvas').attr('height'));
+        var W = parseFloat($('#atlasmaker canvas').css('width'));
+        var H = parseFloat($('#atlasmaker canvas').css('height'));
+        var w = parseFloat($('#atlasmaker canvas').attr('width'));
+        var h = parseFloat($('#atlasmaker canvas').attr('height'));
 
         me.Crsr.x = parseInt(w/2);
         me.Crsr.y = parseInt(h/2);
@@ -464,11 +464,11 @@ export var AtlasMakerInteraction = {
         var me = AtlasMakerWidget;
         e.preventDefault();
 
-        var W = parseFloat($('#atlasMaker canvas').css('width'));
-        var H = parseFloat($('#atlasMaker canvas').css('height'));
-        var w = parseFloat($('#atlasMaker canvas').attr('width'));
-        var h = parseFloat($('#atlasMaker canvas').attr('height'));
-        var o = $('#atlasMaker canvas').offset();
+        var W = parseFloat($('#atlasmaker canvas').css('width'));
+        var H = parseFloat($('#atlasmaker canvas').css('height'));
+        var w = parseFloat($('#atlasmaker canvas').attr('width'));
+        var h = parseFloat($('#atlasmaker canvas').attr('height'));
+        var o = $('#atlasmaker canvas').offset();
         var x = parseInt((e.pageX-o.left)*(w/W));
         // i have to add here the compensation for rectangular pixels: f(brain_Wdim, brain_Hdim)
         var y = parseInt((e.pageY-o.top)*(h/H));
@@ -484,11 +484,11 @@ export var AtlasMakerInteraction = {
     mousemove: function mousemove(e) {
         var me = AtlasMakerWidget;
         e.preventDefault();
-        var W = parseFloat($('#atlasMaker canvas').css('width'));
-        var H = parseFloat($('#atlasMaker canvas').css('height'));
-        var w = parseFloat($('#atlasMaker canvas').attr('width'));
-        var h = parseFloat($('#atlasMaker canvas').attr('height'));
-        var o = $('#atlasMaker canvas').offset();
+        var W = parseFloat($('#atlasmaker canvas').css('width'));
+        var H = parseFloat($('#atlasmaker canvas').css('height'));
+        var w = parseFloat($('#atlasmaker canvas').attr('width'));
+        var h = parseFloat($('#atlasmaker canvas').attr('height'));
+        var o = $('#atlasmaker canvas').offset();
         var x = parseInt((e.pageX-o.left)*(w/W));
         var y = parseInt((e.pageY-o.top)*(h/H));
 
@@ -520,11 +520,11 @@ export var AtlasMakerInteraction = {
         var me = AtlasMakerWidget;
         e.preventDefault();
 
-        var W = parseFloat($('#atlasMaker canvas').css('width'));
-        var H = parseFloat($('#atlasMaker canvas').css('height'));
-        var w = parseFloat($('#atlasMaker canvas').attr('width'));
-        var h = parseFloat($('#atlasMaker canvas').attr('height'));
-        var o = $('#atlasMaker canvas').offset();
+        var W = parseFloat($('#atlasmaker canvas').css('width'));
+        var H = parseFloat($('#atlasmaker canvas').css('height'));
+        var w = parseFloat($('#atlasmaker canvas').attr('width'));
+        var h = parseFloat($('#atlasmaker canvas').attr('height'));
+        var o = $('#atlasmaker canvas').offset();
         var touchEvent;
         if(e.originalEvent) { touchEvent = e.originalEvent.changedTouches[0]; } else { touchEvent = e.changedTouches[0]; }
         var x = parseInt((touchEvent.pageX-o.left)*(w/W));
@@ -571,11 +571,11 @@ export var AtlasMakerInteraction = {
 
         e.preventDefault();
 
-        var W = parseFloat($('#atlasMaker canvas').css('width'));
-        var H = parseFloat($('#atlasMaker canvas').css('height'));
-        var w = parseFloat($('#atlasMaker canvas').attr('width'));
-        var h = parseFloat($('#atlasMaker canvas').attr('height'));
-        var o = $('#atlasMaker canvas').offset();
+        var W = parseFloat($('#atlasmaker canvas').css('width'));
+        var H = parseFloat($('#atlasmaker canvas').css('height'));
+        var w = parseFloat($('#atlasmaker canvas').attr('width'));
+        var h = parseFloat($('#atlasmaker canvas').attr('height'));
+        var o = $('#atlasmaker canvas').offset();
         var touchEvent;
         if(e.originalEvent) { touchEvent = e.originalEvent.changedTouches[0]; } else { touchEvent = e.changedTouches[0]; }
         var x = parseInt((touchEvent.pageX-o.left)*(w/W));

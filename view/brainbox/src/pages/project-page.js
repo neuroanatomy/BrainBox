@@ -6,20 +6,21 @@ import 'jquery-ui/themes/base/autocomplete.css';
 import 'jquery-ui/ui/core';
 import 'jquery-ui/ui/widgets/autocomplete';
 
-import freeform from '../tools/freeform.js';
-import hidden from '../tools/hidden.js';
-import multiple from '../tools/multiple.js';
-
 import '../style/style.css';
 import '../style/textAnnotations.css';
 import '../style/ui.css';
 import '../style/project-style.css';
 
+import freeform from '../tools/freeform.js';
+import hidden from '../tools/hidden.js';
+import multiple from '../tools/multiple.js';
+
+
 const projShortname = projectInfo.shortname;
 const numFilesQuery = 20;
 const annotations = {
-    text: [],   // collect text annotations
-    volume: []  // collect volume annotations
+    text: [], // collect text annotations
+    volume: [] // collect volume annotations
 };
 let k, h, str, found, annType, annName, file;
 let trTemplate;

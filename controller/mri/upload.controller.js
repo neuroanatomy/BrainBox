@@ -1,7 +1,7 @@
 "use strict";
 
 const fs = require('fs');
-const atlasMakerServer = require('../atlasMakerServer/atlasMakerServer');
+const atlasmakerServer = require('../atlasmakerServer/atlasmakerServer');
 // ExpressValidator = require('express-validator')
 
 var validator = function (req, res, next) {
@@ -130,7 +130,7 @@ var upload = function(req, res) {
 
     // Check that the dimensions of the atlas are the same as its parent mri
     console.log("> load parent mri");
-    atlasMakerServer.loadMRI(path)
+    atlasmakerServer.loadMRI(path)
     .then(function(atlas){
         console.log("atlas.dim: ",atlas.dim);
         console.log("mri.dim: ",mri.dim);

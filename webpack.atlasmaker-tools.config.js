@@ -2,7 +2,7 @@ const path = require('path');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 var glob = require("glob");
 
-const list = glob.sync("./view/atlasMaker/src/tools/*/index.js");
+const list = glob.sync("./view/atlasmaker/src/tools/*/index.js");
 const entries = {};
 for(const item of list) {
     const arr = item.split('/');
@@ -18,7 +18,7 @@ module.exports = {
     plugins: [new CleanWebpackPlugin(['dist'])],
     output: {
         filename: '[name].js',
-        path: path.resolve(__dirname, 'view/atlasMaker/dist/atlasMaker-tools')
+        path: path.resolve(__dirname, 'view/atlasmaker/dist/atlasmaker-tools')
     },
     module: {
         rules: [

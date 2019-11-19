@@ -6,7 +6,7 @@ const CleanWebpackPlugin = require('clean-webpack-plugin');
 module.exports = {
     mode: 'development',
     entry: {
-        atlasmaker: './view/atlasMaker/src/atlasmaker.js'
+        atlasmaker: './view/atlasmaker/src/atlasmaker.js'
     },
     devtool: 'eval-source-map',
     plugins: [new CleanWebpackPlugin(['dist'])],
@@ -14,7 +14,7 @@ module.exports = {
         filename: 'atlasmaker.js',
         library: 'AtlasMakerWidget',
         libraryExport: 'AtlasMakerWidget',
-        path: path.resolve(__dirname, 'view/atlasMaker/dist')
+        path: path.resolve(__dirname, 'view/atlasmaker/dist')
     },
     module: {
         rules: [

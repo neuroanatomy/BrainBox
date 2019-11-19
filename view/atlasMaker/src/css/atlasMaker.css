@@ -1,6 +1,6 @@
-/* atlasMaker
+/* atlasmaker
 -----------------------------------------------------------------------------*/
-#atlasMaker {
+#atlasmaker {
     position: relative;
     background-color:#222;
     color:white;
@@ -57,7 +57,7 @@
 #tools-side #tools-maximized {
     pointer-events: all;
 }
-.atlasMaker-fullscreen #atlasMaker {
+.atlasmaker-fullscreen #atlasmaker {
     position:fixed;
     top:0px;
     left:0px;
@@ -66,23 +66,23 @@
     height:100%;
     z-index:10;
 }
-.atlasMaker-fullscreen #tools-side {
+.atlasmaker-fullscreen #tools-side {
     position:fixed;
     top:0px;
     width:250px;
     height:100%;
     z-index:11;
 }
-.atlasMaker-fullscreen[data-toolbarDisplay=left] #tools-side {
+.atlasmaker-fullscreen[data-toolbarDisplay=left] #tools-side {
     left: 0;
 }
-.atlasMaker-fullscreen[data-toolbarDisplay=right] #tools-side {
+.atlasmaker-fullscreen[data-toolbarDisplay=right] #tools-side {
     right: 0;
 }
-.atlasMaker-fullscreen[data-toolbarDisplay=left] #text-layer {
+.atlasmaker-fullscreen[data-toolbarDisplay=left] #text-layer {
     text-align: right;
 }
-.atlasMaker-fullscreen[data-toolbarDisplay=right] #text-layer {
+.atlasmaker-fullscreen[data-toolbarDisplay=right] #text-layer {
     text-align: left;
 }
 
@@ -97,11 +97,11 @@
     margin: 10px;
     cursor: pointer;
 }
-.atlasMaker-fullscreen[data-toolbarDisplay=left] #tools-minimized div {
+.atlasmaker-fullscreen[data-toolbarDisplay=left] #tools-minimized div {
     top: 0;
     left: 0;
 }
-.atlasMaker-fullscreen[data-toolbarDisplay=right] #tools-minimized div {
+.atlasmaker-fullscreen[data-toolbarDisplay=right] #tools-minimized div {
     top: 0;
     right: 0;
 }
@@ -109,7 +109,7 @@
 #headerBlock {
     display: none;
 }
-.atlasMaker-fullscreen #headerBlock {
+.atlasmaker-fullscreen #headerBlock {
     display: block;
 }
 
@@ -127,12 +127,12 @@
 
 /* cursor
 ------------------------------- */
-#atlasMaker .drawingcursor {
+#atlasmaker .drawingcursor {
     border: 1px solid #F00;
     position: absolute;
     pointer-events:none;
 }
-#atlasMaker .hidepaintcursor {
+#atlasmaker .hidepaintcursor {
     display: none;
 }
 

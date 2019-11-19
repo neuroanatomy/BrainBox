@@ -133,11 +133,11 @@ var AtlasMakerDraw = {
 
         str="";
         if(me.User.measureLength) {
-            var W=parseFloat($('#atlasMaker canvas').css('width'));
-            var w=parseFloat($('#atlasMaker canvas').attr('width'));
+            var W=parseFloat($('#atlasmaker canvas').css('width'));
+            var w=parseFloat($('#atlasmaker canvas').attr('width'));
             var zx=W/w,zy=zx*me.brain_Hdim/me.brain_Wdim,p=me.User.measureLength,str1;
-            var W=parseFloat($('#atlasMaker canvas').css('width'));
-            var w=parseFloat($('#atlasMaker canvas').attr('width'));
+            var W=parseFloat($('#atlasmaker canvas').css('width'));
+            var w=parseFloat($('#atlasmaker canvas').attr('width'));
             str1="M"+zx*p[0].x+","+zy*p[0].y;
             for(i=1;i<p.length;i++)
                 str1+="L"+zx*p[i].x+","+zy*p[i].y;

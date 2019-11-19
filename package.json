@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "start": "PORT=3001 node ./bin/www",
-    "build-atlasmaker": "webpack --config webpack.atlasmaker.config.js && cp view/atlasMaker/dist/atlasMaker.js public/lib/atlasMaker.js",
-    "build-atlasmaker-tools": "webpack --config webpack.atlasmaker-tools.config.js && cp  -r view/atlasMaker/dist/atlasMaker-tools public/lib/",
+    "build-atlasmaker": "webpack --config webpack.atlasmaker.config.js && cp view/atlasmaker/dist/atlasmaker.js public/lib/atlasmaker.js",
+    "build-atlasmaker-tools": "webpack --config webpack.atlasmaker-tools.config.js && cp  -r view/atlasmaker/dist/atlasmaker-tools public/lib/",
     "build-brainbox": "webpack --config webpack.brainbox.config.js && cp view/brainbox/dist/brainbox.js public/lib/brainbox.js",
     "build-pages": "webpack --config webpack.pages.config.js && cp view/brainbox/dist/*-page.js public/js/",
     "build": "npm run build-atlasmaker && npm run build-atlasmaker-tools && npm run build-brainbox && npm run build-pages",

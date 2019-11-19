@@ -75,8 +75,8 @@ If you want to work on BrainBox's code, you'll need a local installation:
 2. clone the repo and `cd` to the brainbox directory
 4. [create a new OAuth application](https://github.com/settings/applications/new) for your local brainbox url (http://localhost:3000 by default)
 5. paste the keys into the github-keys.json.example file, and drop the .example
-6. drop the `.example` from `controller/atlasMakerServer/blacklist.json.example`
-7. drop the `.example` from `controller/atlasMakerServer/whitelist.json.example`
+6. drop the `.example` from `controller/atlasmakerServer/blacklist.json.example`
+7. drop the `.example` from `controller/atlasmakerServer/whitelist.json.example`
 8. drop the `.example` from `blacklist.json.example`
 9. drop the `.example` from `whitelist.json.example`
 10. `npm install`
@@ -94,8 +94,8 @@ These installation instructions may need to be updated.
 3. `cd` to brainbox
 4. [create a new OAuth application](https://github.com/settings/applications/new) for your local brainbox url (http://localhost:3000 by default)
 5. paste the keys into the github-keys.json.example file, change the `callbackURL` to `"http://localhost:3000/auth/github/callback"` and drop the .example
-6. drop the `.example` from `controller/atlasMakerServer/blacklist.json.example`
-7. drop the `.example` from `controller/atlasMakerServer/whitelist.json.example`
+6. drop the `.example` from `controller/atlasmakerServer/blacklist.json.example`
+7. drop the `.example` from `controller/atlasmakerServer/whitelist.json.example`
 7. make sure Docker is installed
 8. `docker-compose up`
 9. Then open `http://localhost:3000` in your browser.

@@ -94,7 +94,7 @@ function bufferTag(str, sz) {
     return buf;
 }
 
-const atlasMakerServer = (function() {
+const atlasmakerServer = (function() {
     const me = {
         debug: 2,
         dataDirectory: '',
@@ -2316,7 +2316,7 @@ const atlasMakerServer = (function() {
             /*
                 Init
             */
-            tracer.log("atlasMakerServer.js");
+            tracer.log("atlasmakerServer.js");
             tracer.log("date:", new Date());
             setInterval(function() { tracer.log("date:", new Date()); }, me.timeMarkInterval); // time mark
             tracer.log("free memory", os.freemem());
@@ -2605,7 +2605,7 @@ const atlasMakerServer = (function() {
     return me;
 }());
 
-module.exports = atlasMakerServer;
+module.exports = atlasmakerServer;
 
 /*
     Atlases

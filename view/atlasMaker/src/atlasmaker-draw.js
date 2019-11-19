@@ -121,8 +121,8 @@ export var AtlasMakerDraw = {
 
         str = "";
         if(me.User.measureLength) {
-            var W = parseFloat($('#atlasMaker canvas').css('width'));
-            var w = parseFloat($('#atlasMaker canvas').attr('width'));
+            var W = parseFloat($('#atlasmaker canvas').css('width'));
+            var w = parseFloat($('#atlasmaker canvas').attr('width'));
             var zx = W/w;
             var zy = zx*me.brain_Hdim/me.brain_Wdim;
             var p = me.User.measureLength;

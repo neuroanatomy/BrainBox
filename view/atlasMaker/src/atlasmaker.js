@@ -13,10 +13,10 @@ import {AtlasMakerPaint} from './atlasmaker-paint.js';
 import {AtlasMakerUI} from './atlasmaker-ui.js';
 import {AtlasMakerWS} from './atlasmaker-ws.js';
 
-import "./css/atlasMaker.css";
+import "./css/atlasmaker.css";
 import "./css/loading-style.css";
 
-// import {AtlasMakerResources} from '../../dist/atlasMaker-resources.js';
+// import {AtlasMakerResources} from '../../dist/atlasmaker-resources.js';
 
 window.$ = $;
 
@@ -30,7 +30,7 @@ export var AtlasMakerWidget = {
     debug:            1,
     hostname: 'http://localhost:3001', // '', // 'http://brainbox.pasteur.fr',
     wshostname: 'localhost:8080', // 'ws://brainbox.pasteur.fr:8080',
-    container:        null, // Element where atlasMaker lives
+    container:        null, // Element where atlasmaker lives
     brain_offcn:    null,
     brain_offtx:    null,
     canvas:            null,
@@ -163,7 +163,7 @@ export var AtlasMakerWidget = {
 
         // Set widget div (create one if none)
         if(typeof elem === 'undefined') {
-            me.container=$("<div class='atlasMaker'");
+            me.container=$("<div class='atlasmaker'");
             $(document.body).append(me.container);
         } else {
             me.container=elem;

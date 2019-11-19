@@ -5,7 +5,7 @@
     Atlas Maker Server
     Roberto Toro, 25 July 2014
 
-    Launch using > node atlasMakerServer.js
+    Launch using > node atlasmakerServer.js
 */
 
 const fs = require('fs');
@@ -95,9 +95,9 @@ app.use((req, res, next) => {
 // }
 
 // { Init web socket server
-const atlasMakerServer = require('./controller/atlasMakerServer/atlasMakerServer.js');
-atlasMakerServer.initSocketConnection();
-atlasMakerServer.dataDirectory = dirname + '/public';
+const atlasmakerServer = require('./controller/atlasmakerServer/atlasmakerServer.js');
+atlasmakerServer.initSocketConnection();
+atlasmakerServer.dataDirectory = dirname + '/public';
 // }
 
 // { Check that the 'anyone' user exists. Insert it otherwise

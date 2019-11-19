@@ -87,10 +87,10 @@ export var BrainBox={
     initBrainBox: function initBrainBox() {
         var pr = new Promise(function(resolve, reject) {
             // Add AtlasMaker and friends
-            $("#stereotaxic").html('<div id="atlasMaker"></div>');
-            $("#atlasMaker").addClass('edit-mode');
+            $("#stereotaxic").html('<div id="atlasmaker"></div>');
+            $("#atlasmaker").addClass('edit-mode');
 
-            AtlasMakerWidget.initAtlasMaker($("#atlasMaker"))
+            AtlasMakerWidget.initAtlasMaker($("#atlasmaker"))
             .then(function() {
                 resolve();
             })
@@ -118,7 +118,7 @@ export var BrainBox={
             // Copy MRI from source
             $("#msgLog").html("<p>Downloading from source to server...");
 
-            // Configure MRI into atlasMaker
+            // Configure MRI into atlasmaker
             if(param.info.success===false) {
                 $("#msgLog").append("<p>ERROR: "+param.info.message+".");
                 console.log("<p>ERROR: "+param.info.message+".");
@@ -504,7 +504,7 @@ export var BrainBox={
                 }
             }
 
-            $('#atlasMaker').append([
+            $('#atlasmaker').append([
                 `<a href="${BrainBox.hostname}/mri?url=${param.url}">`,
                 '<div style="',
                     'position:absolute;',
