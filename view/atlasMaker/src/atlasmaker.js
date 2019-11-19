@@ -6,12 +6,12 @@ import $ from 'jquery';
 import toolsFull from './html/toolsFull.html';
 import toolsLight from './html/toolsLight.html';
 
-import {AtlasMakerDraw} from './atlasMaker-draw.js';
-import {AtlasMakerInteraction} from './atlasMaker-interaction.js';
-import {AtlasMakerIO} from './atlasMaker-io.js';
-import {AtlasMakerPaint} from './atlasMaker-paint.js';
-import {AtlasMakerUI} from './atlasMaker-ui.js';
-import {AtlasMakerWS} from './atlasMaker-ws.js';
+import {AtlasMakerDraw} from './atlasmaker-draw.js';
+import {AtlasMakerInteraction} from './atlasmaker-interaction.js';
+import {AtlasMakerIO} from './atlasmaker-io.js';
+import {AtlasMakerPaint} from './atlasmaker-paint.js';
+import {AtlasMakerUI} from './atlasmaker-ui.js';
+import {AtlasMakerWS} from './atlasmaker-ws.js';
 
 import "./css/atlasMaker.css";
 import "./css/loading-style.css";
