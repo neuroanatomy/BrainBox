@@ -11,11 +11,11 @@ const timeout = 30*1000; // time in milliseconds
 let browser;
 let page;
 
-function delay(timeout) {
+function delay(delayTimeout) {
 //    console.log('  delay', timeout, 'milliseconds');
 
     return new Promise((resolve) => {
-        setTimeout(resolve, timeout);
+        setTimeout(resolve, delayTimeout);
     });
 }
 
@@ -29,17 +29,17 @@ function compareImages(pathImg1, pathImg2) {
     return pixdiff;
 }
 
-async function comparePageScreenshots(page, url, filename) {
+async function comparePageScreenshots(testPage, url, filename) {
     const pr = new Promise((resolve, reject) => {
         const newPath = './test/screenshots/' + filename;
         const refPath = './test/data/reference-screenshots/' + filename;
-//        console.log("go to page:", url);
-        page.goto(url, {waitUntil: 'domcontentloaded'});
+        // console.log("go to page:", url);
+        testPage.goto(url, {waitUntil: 'domcontentloaded'});
         delay(5000)
-        .then(() => { return page.screenshot({path:'./test/screenshots/' + filename})})
+        .then(() => { return testPage.screenshot({path:'./test/screenshots/' + filename})})
         .then(() => {
             const pixdiff = compareImages(newPath, refPath);
-//            console.log("  pixdiff:", pixdiff);
+            // console.log("  pixdiff:", pixdiff);
             resolve(pixdiff);
         })
         .catch( (err) => {
@@ -76,7 +76,7 @@ describe('Test website rendering', async () => {
 
     it('Page opens', async () => {
         page = await browser.newPage();
-        page.setViewport({width: 1600, height: 1200});
+        await page.setViewport({width: 1600, height: 1200});
     }).timeout(timeout);
 
     // OPEN HOMEPAGE
@@ -86,6 +86,7 @@ describe('Test website rendering', async () => {
             'http://localhost:3001',
             '01.home.png'
         );
+        console.log(diff);
         assert(diff<1000);
     }).timeout(timeout);
 
@@ -103,7 +104,7 @@ describe('Test website rendering', async () => {
     it('Project page renders as expected', async () => {
         const diff = await comparePageScreenshots(
             page,
-            'http://localhost:3001/project/braincatalogue',
+            'http://localhost:3001/project/test',
             '03.project.png'
         );
         assert(diff<1000);
@@ -113,7 +114,7 @@ describe('Test website rendering', async () => {
     it('Project Settings page renders as expected', async () => {
         const diff = await comparePageScreenshots(
             page,
-            'http://localhost:3001/project/braincatalogue/settings',
+            'http://localhost:3001/project/test/settings',
             '04.project-settings.png'
         );
         assert(diff<1000);

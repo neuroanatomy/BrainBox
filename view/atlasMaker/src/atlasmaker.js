@@ -1,6 +1,6 @@
 /*! AtlasMaker */
 
-import '../../downloads/struct.js';
+import 'structjs';
 
 import $ from 'jquery';
 import toolsFull from './html/toolsFull.html';
@@ -13,7 +13,10 @@ import {AtlasMakerPaint} from './atlasMaker-paint.js';
 import {AtlasMakerUI} from './atlasMaker-ui.js';
 import {AtlasMakerWS} from './atlasMaker-ws.js';
 
-import {AtlasMakerResources} from '../../dist/atlasMaker-resources.js';
+import "./css/atlasMaker.css";
+import "./css/loading-style.css";
+
+// import {AtlasMakerResources} from '../../dist/atlasMaker-resources.js';
 
 window.$ = $;
 
@@ -134,17 +137,17 @@ export var AtlasMakerWidget = {
         $.extend(AtlasMakerWidget, AtlasMakerPaint);
         $.extend(AtlasMakerWidget, AtlasMakerUI);
         $.extend(AtlasMakerWidget, AtlasMakerWS);
-        $.extend(AtlasMakerWidget, AtlasMakerResources);
+        // $.extend(AtlasMakerWidget, AtlasMakerResources);
 
         // Add css
-        var css;
-        for(css in me.css) {
-            if({}.hasOwnProperty.call(me.css, css)) {
-                const node = document.createElement('style');
-                node.innerHTML = me.css[css];
-                document.body.appendChild(node);
-            }
-        }
+        // var css;
+        // for(css in me.css) {
+        //     if({}.hasOwnProperty.call(me.css, css)) {
+        //         const node = document.createElement('style');
+        //         node.innerHTML = me.css[css];
+        //         document.body.appendChild(node);
+        //     }
+        // }
 
         // check if user is loged in
         $.get("/loggedIn", function(res) {
@@ -206,7 +209,8 @@ export var AtlasMakerWidget = {
 
         // Init the toolbar
         // configure and append tools
-        let svg, tools;
+        // let svg;
+        let tools;
 
         if(typeof me.useFullTools === 'undefined') {
             me.useFullTools = true;
@@ -216,14 +220,14 @@ export var AtlasMakerWidget = {
         } else {
             tools = toolsLight; //me.html.toolsLight;
         }
-        for(svg in me.svg) {
-            if({}.hasOwnProperty.call(me.svg, svg)) {
-                tools = tools.replace(
-                    new RegExp('/img/' + svg + '.svg', 'g'),
-                    'data:image/svg+xml;utf8,' + me.svg[svg]
-                );
-            }
-        }
+        // for(svg in me.svg) {
+        //     if({}.hasOwnProperty.call(me.svg, svg)) {
+        //         tools = tools.replace(
+        //             new RegExp('/img/' + svg + '.svg', 'g'),
+        //             'data:image/svg+xml;utf8,' + me.svg[svg]
+        //         );
+        //     }
+        // }
         me.container.append(tools);
         // intercept keyboard events
         $(document).keydown(function(e) { me.keyDown(e); });

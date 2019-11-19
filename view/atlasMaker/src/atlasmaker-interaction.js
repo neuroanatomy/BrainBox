@@ -1,6 +1,7 @@
 /* global AtlasMakerWidget $ */
 /*! AtlasMaker: Interaction */
-import * as pako from '../../downloads/pako.min.js';
+import * as pako from 'pako';
+// import * as pako from '../../downloads/pako.min.js';
 import toolsFull from './html/toolsFull.html';
 import toolsLight from './html/toolsLight.html';
 

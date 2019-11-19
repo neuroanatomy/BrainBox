@@ -1,7 +1,8 @@
 /* global AtlasMakerWidget toBuffer toArrayBuffer Struct $ */
 /*! AtlasMaker: Input/Output */
-import '../../downloads/struct.js';
-import * as pako from '../../downloads/pako.min.js';
+import 'structjs';
+import * as pako from 'pako';
+// import * as pako from '../../downloads/pako.min.js';
 
 /**
  * @page AtlasMaker: Input/Output

@@ -1,22 +1,24 @@
 /*global AtlasMakerWidget BrainBox info_proxy mriInfo params*/
-import $ from 'jquery';
+import '../style/style.css';
+import '../style/textAnnotations.css';
+import '../style/ui.css';
+import '../style/mri-style.css';
+import '../style/access-style.css';
+import '../style/dropdown-style.css';
+
 import 'jquery-ui/themes/base/core.css';
 import 'jquery-ui/themes/base/theme.css';
 import 'jquery-ui/themes/base/autocomplete.css';
 import 'jquery-ui/ui/core';
 import 'jquery-ui/ui/widgets/autocomplete';
-import * as jsonpatch from 'fast-json-patch';
 
+import * as jsonpatch from 'fast-json-patch';
 import * as tw from '../twoWayBinding';
+
+import $ from 'jquery';
 import freeform from '../tools/freeform';
 import hidden from '../tools/hidden';
 import multiple from '../tools/multiple';
-
-import '../style/style.css';
-import '../style/textAnnotations.css';
-import '../style/mri-style.css';
-import '../style/access-style.css';
-import '../style/dropdown-style.css';
 
 var mriInfoOrig;
 var textAnnotationsArray = [];

@@ -1,7 +1,7 @@
 
 [![CircleCI](https://circleci.com/gh/neuroanatomy/BrainBox/tree/master.svg?style=shield)](https://circleci.com/gh/neuroanatomy/BrainBox/tree/master) [![Join the chat at https://gitter.im/OpenNeuroLab-Brainbox/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/OpenNeuroLab-Brainbox/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-# BrainBox - An application from the [Open Neuroimaging Laboratory](http://openneu.ro/)
+# BrainBox - A platform for real-time collaboration in neuroimaging
 
 [![Join the chat at https://gitter.im/OpenNeuroLab-Brainbox/Lobby](https://badges.gitter.im/OpenNeuroLab-Brainbox/Lobby.svg)](https://gitter.im/OpenNeuroLab-Brainbox/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 

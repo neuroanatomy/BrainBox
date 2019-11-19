@@ -8,8 +8,6 @@
     Launch using > node atlasMakerServer.js
 */
 
-const debug = 1;
-
 const fs = require('fs');
 const express = require('express');
 const path = require('path');
@@ -19,12 +17,14 @@ const tracer = require('tracer').console({format: '[{{file}}:{{line}}]  {{messag
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const mustacheExpress = require('mustache-express');
-const crypto = require('crypto');
-const request = require('request');
-const url = require('url');
-const async = require('async');
-const mongo = require('mongodb');
 const monk = require('monk');
+
+// const debug = 1;
+// const crypto = require('crypto');
+// const request = require('request');
+// const url = require('url');
+// const async = require('async');
+// const mongo = require('mongodb');
 
 let MONGO_DB;
 const DOCKER_DB = process.env.DB_PORT;
@@ -36,6 +36,7 @@ if (DOCKER_DB) {
   MONGO_DB = 'localhost:27017/brainbox'; //process.env.MONGODB;
 }
 
+/** @todo Handle the case when MongoDB is not installed */
 var db = monk(MONGO_DB);
 var expressValidator = require('express-validator');
 
@@ -55,7 +56,7 @@ if (DOCKER_DEVELOP === '1') {
 
     // Specify the folder to watch for file-changes.
     hotServer.watch(__dirname);
-    tracer.log('Watching: ' + __dirname);
+    tracer.log(`Watching: ${__dirname}`);
 }
 
 const app = express();
@@ -249,14 +250,13 @@ app.use('/user', require('./controller/user/'));
 
 // { API routes
 app.get('/api/getLabelsets', (req, res) => {
-    let i;
     const arr = fs.readdirSync(dirname + '/public/labels/');
     const info = [];
-    for (i in arr) {
-        var json = JSON.parse(fs.readFileSync(dirname + "/public/labels/" + arr[i]));
+    for (const label of arr) {
+        var json = JSON.parse(fs.readFileSync(dirname + "/public/labels/" + label));
         info.push({
             name: json.name,
-            source: arr[i]
+            source: label
         });
     }
     res.send(info);

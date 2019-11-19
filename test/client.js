@@ -6,7 +6,7 @@ page.viewportSize = { width: 1024, height: 768 };
 //the clipRect is the portion of the page you are taking a screenshot of
 page.clipRect = { top: 0, left: 0, width: 1024, height: 768 };
 
-page.open('http://brainbox.dev', function(status) {
+page.open('http://localhost:3001', function(status) {
     if (status !== 'success') {
         console.log('Unable to access network');
     } else {
