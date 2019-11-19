@@ -1,6 +1,7 @@
 {
+  "secure": false,
   "port": 8080,
-  "ssl_key": "/path/to/privkey.pem",
-  "ssl_cert": "/path/to/fullchain.pem",
-  "ssl_chain": "/path/to/chain.pem"
+  "ssl_key": "privkey.pem",
+  "ssl_cert": "fullchain.pem",
+  "ssl_chain": "chain.pem"
 }

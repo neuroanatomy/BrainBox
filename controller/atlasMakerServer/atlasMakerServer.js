@@ -3,13 +3,13 @@ const os = require('os');
 const zlib = require('zlib');
 const tracer = require('tracer').console({format: '[{{file}}:{{line}}]  {{message}}'});
 const jpeg = require('jpeg-js'); // jpeg-js library: https://github.com/eugeneware/jpeg-js
-const keypress = require('keypress');
 const Struct = require('struct');
 const childProcess = require('child_process');
 const merge = require('merge');
 const path = require('path');
 const monk = require('monk');
 const db = monk('localhost:27017/brainbox');
+const keypress = require('keypress');
 
 // Get whitelist and blacklist
 const useWhitelist = false;
@@ -22,16 +22,33 @@ tracer.log("Use blacklist:", useBlacklist);
 tracer.log(blacklist);
 
 var http = require('http');
-//const server =  http.createServer(),
-const server = http.createServer(function(req, res) {
+let server;
+const ws_cfg = JSON.parse(fs.readFileSync('ws_cfg.json'));
+const {secure, port} = ws_cfg;
+if(secure) {
+    // wss
+    var http = require('https');
+    server = http.createServer({
+        key: fs.readFileSync(ws_cfg.ssl_key),
+        cert: fs.readFileSync(ws_cfg.ssl_cert),
+        ca: fs.readFileSync(ws_cfg.ssl_chain)
+    }, function(req, res) {
+        var ip = req.ip
+            || req.connection.remoteAddress
+            || req.socket.remoteAddress
+            || req.connection.socket.remoteAddress;
+    }).listen(ws_cfg.port);
+} else {
+    var http = require('http');
+    server = http.createServer(function(req, res) {
     var ip = req.ip
         || req.connection.remoteAddress
         || req.socket.remoteAddress
         || req.connection.socket.remoteAddress;
-});
+    });
+}
 const WebSocketServer = require('ws').Server;
 var websocket;
-const port = 8080;
 
 server.on("upgrade", function(req, socket, head) {
     var ip = req.ip
@@ -2325,7 +2342,11 @@ const atlasMakerServer = (function() {
                 Init WS connection
             */
             try {
-                websocket = new WebSocketServer({ server: server, verifyClient: me.verifyClient });
+                if(secure) {
+                    websocket = new WebSocketServer({server: server});
+                } else {
+                    websocket = new WebSocketServer({ server: server, verifyClient: me.verifyClient });
+                }
 
                 websocket.on("connection", function connectionFromInitSocketConnection(s, req) {
                     me.traceLog(connectionFromInitSocketConnection);

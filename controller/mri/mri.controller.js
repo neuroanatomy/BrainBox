@@ -367,7 +367,7 @@ const apiMriGet = function (req, res) {
         return;
     }
 
-    req.db.get('mri').findOne({source: myurl, backup: {$exists: 0}}, {_id: 0})
+    req.db.get('mri').findOne({source: myurl, backup: {$exists: backups}}, {_id: 0})
     .then(json => {
         if (!json) {
             console.log("MRI not present in DB");
