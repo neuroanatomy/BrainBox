@@ -22,6 +22,9 @@ jobs:
            name: Instantiate whitelist
            command: 'echo "{}" > controller/atlasmakerServer/whitelist.json'
        - run:
+           name: Instantiate websocket configuration file
+           command: 'echo "{\"secure\":false,\"port\":8080,\"ssl_key\": \"\",\"ssl_cert\": \"\",\"ssl_chain\":\"\"}" > ws_cfg.json'
+       - run:
            name: Run server in background
            command: 'PORT=3001 npm start'
            background: true
