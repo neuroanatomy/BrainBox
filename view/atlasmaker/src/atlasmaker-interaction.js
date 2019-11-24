@@ -1,9 +1,6 @@
 /* global AtlasMakerWidget $ */
 /*! AtlasMaker: Interaction */
-import * as pako from 'pako';
-// import * as pako from '../../downloads/pako.min.js';
-import toolsFull from './html/toolsFull.html';
-import toolsLight from './html/toolsLight.html';
+import pako from 'pako';
 
 /**
  * @page AtlasMaker: Interaction
@@ -90,7 +87,7 @@ export var AtlasMakerInteraction = {
                 break;
             case 'Adjust':
                 me.User.tool = 'adjust';
-                if($("#adjust").length==0) {
+                if($("#adjust").length===0) {
                     me.loadScript("/lib/atlasmaker-tools/adjust.js");
                 }
                 break;
@@ -222,8 +219,9 @@ export var AtlasMakerInteraction = {
 
             // go back to display mode
             $("body").removeClass('atlasmaker-fullscreen');
-            $("#atlasmaker").detach()
-.appendTo('#stereotaxic');
+            $("#atlasmaker")
+                .detach()
+                .appendTo('#stereotaxic');
             me.resizeWindow();
             me.fullscreen = false;
         }
@@ -238,8 +236,16 @@ export var AtlasMakerInteraction = {
         // puts a fresh version of the segmentation in localStorage
         localStorage.brainbox = URL.createObjectURL(new Blob([me.encodeNifti()]));
 
-        // opens 3d render window
-        window.open(me.hostname + "/surface.html?path = " + me.User.dirname + me.User.atlasFilename, "_blank");
+        const newWindow = window.open('', 'Render 3D', "width=800,height=600");
+        newWindow.document.write(`
+            <html>
+            <body>
+                <script>const path = "${me.User.dirname}${me.User.atlasFilename}";</script>
+                <script src="/lib/atlasmaker-tools/render3D.js"></script>
+            </body>
+            </html>`
+        );
+        newWindow.document.close();
     },
 
     /**

@@ -1,10 +1,8 @@
 /*! AtlasMaker */
 
 import 'structjs';
-
-import $ from 'jquery';
-import toolsFull from './html/toolsFull.html';
-import toolsLight from './html/toolsLight.html';
+import './css/atlasmaker.css';
+import './css/loading-style.css';
 
 import {AtlasMakerDraw} from './atlasmaker-draw.js';
 import {AtlasMakerInteraction} from './atlasmaker-interaction.js';
@@ -13,8 +11,10 @@ import {AtlasMakerPaint} from './atlasmaker-paint.js';
 import {AtlasMakerUI} from './atlasmaker-ui.js';
 import {AtlasMakerWS} from './atlasmaker-ws.js';
 
-import "./css/atlasmaker.css";
-import "./css/loading-style.css";
+import toolsFull from './html/toolsFull.html';
+import toolsLight from './html/toolsLight.html';
+import $ from 'jquery';
+
 
 // import {AtlasMakerResources} from '../../dist/atlasmaker-resources.js';
 
