@@ -1,23 +1,24 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
+    <meta name="description" content="open science neuroimaging collaboration neuroscience MRI">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <meta name="google-site-verification" content="L1xtN9FsDfn0xTs79ssAN_BXfcr6t-wkYW6iFjCOuy8" />
     <link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
     <title>{{title}}</title>
-    <link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:100" type="text/css">
 </head>
 
 <body>
 <!-- Login (fixed height) -->
 <div id="menu">
     <div>
-        <img id="addProject" class="button" title="add project" style="padding-right:0.5px" src='/img/plus.svg'/>
-        <a href="http://openneu.ro/metasearch" target="_blank"><img id="search" class="button" title="search" style="padding-right:0.5px" src='/img/search.svg'/></a>
-        <a href="/doc/index.html" target="_blank"><img id="doc" class="button" title="documentation" style="padding-right:0.5px" src='/img/doc.svg'/></a>
-        <a href="https://github.com/neuroanatomy/BrainBox/issues/new" target="_blank"><img id="bug" class="button" title="report a bug" style="padding-right:0.5px" src='/img/bug.svg'/></a>
-        <a href="https://github.com/neuroanatomy" target="_blank"><img id="github" class="button" title="join our github project" style='width:15px;height:15px;padding-right:1px' src='/img/github.svg'/></a>
+        <img id="addProject" class="button" title="add project" alt="add project" style="padding-right:0.5px" src="/img/plus.svg"/>
+        <a href="http://openneu.ro/metasearch" target="_blank"><img id="search" class="button" title="search" alt="search" style="padding-right:0.5px" src="/img/search.svg"/></a>
+        <a href="/doc/index.html" target="_blank"><img id="doc" class="button" title="documentation" alt="documentation" style="padding-right:0.5px" src="/img/doc.svg"/></a>
+        <a href="https://github.com/neuroanatomy/BrainBox/issues/new" target="_blank"><img id="bug" class="button" title="report a bug" alt="report a bug" style="padding-right:0.5px" src="/img/bug.svg"/></a>
+        <a href="https://github.com/neuroanatomy" target="_blank"><img id="github" class="button" title="join our github project" alt="join our github project" style="width:15px;height:15px;padding-right:1px" src="/img/github.svg"/></a>
         <div id="MyLogin" style="padding-right:10px">
             <span>{{{login}}}</span>
         </div>
@@ -33,8 +34,8 @@
     </video>
     <div class="content">
         <img id="logo" src="/img/brainbox-logo.svg" style="text-align:center"/>
-        <h2 style='margin-top:0'>Real-time collaboration in neuroimaging</h2>
-        <p style='margin-bottom:2rem'>
+        <h2 style="margin-top:0">Real-time collaboration in neuroimaging</h2>
+        <p style="margin-bottom:2rem">
             BrainBox allows you to visualise, segment and annotate collaboratively
             any brain MRI dataset available online. Segmentations and annotations are
             automatically saved. Point BrainBox to your own nii.gz or mgz data online,
@@ -43,12 +44,12 @@
 
         <div style="position:relative;text-align:center">
             <input id="url" style="display:block;width:100%;margin-bottom:1rem" type="text" placeholder="Enter the URL of an MRI (.nii.gz or .mgz) and click Go"></input>
-            <select id="list" style='width:200px;height:32px;background:none;text-align-last:center' class='pushButton'>
-                <option value='' disabled selected hidden>&#9662; A list of brains to try</option>
-                <option value='https://zenodo.org/record/44855/files/MRI-n4.nii.gz'>A Lion from Zenodo</option>
-                <option value='http://files.figshare.com/2284784/MRI_n4.nii.gz'>A Human from FigShare</option>
-                <option value='https://dl.dropbox.com/s/cny5b3so267bv94/p32-f18-uchar.nii.gz'>A 32 days old Ferret from DropBox</option>
-                <option value='https://s3.amazonaws.com/fcp-indi/data/Projects/ABIDE_Initiative/Outputs/freesurfer/5.1/Caltech_0051456/mri/T1.mgz&view=cor&slice=128'>A Subject from the ABIDE Initiative, from Amazon</option>
+            <select id="list" style="width:200px;height:32px;background:none;text-align-last:center" class="pushButton">
+                <option value="" disabled selected hidden>&#9662; A list of brains to try</option>
+                <option value="https://zenodo.org/record/44855/files/MRI-n4.nii.gz">A Lion from Zenodo</option>
+                <option value="http://files.figshare.com/2284784/MRI_n4.nii.gz">A Human from FigShare</option>
+                <option value="https://dl.dropbox.com/s/cny5b3so267bv94/p32-f18-uchar.nii.gz">A 32 days old Ferret from DropBox</option>
+                <option value="https://s3.amazonaws.com/fcp-indi/data/Projects/ABIDE_Initiative/Outputs/freesurfer/5.1/Caltech_0051456/mri/T1.mgz&view=cor&slice=128">A Subject from the ABIDE Initiative, from Amazon</option>
             </select>
             <div id="go" class="pushButton" style="display:inline-block;width:32px;line-height:30px">Go</div>
         </div>
