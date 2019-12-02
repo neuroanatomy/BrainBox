@@ -43,10 +43,5 @@ module.exports = {
         use: ['html-loader']
       }
     ]
-  },
-  optimization: {
-      splitChunks: {
-        chunks: 'all'
-      }
   }
 };
