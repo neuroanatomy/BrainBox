@@ -3,10 +3,14 @@
 <head>
     <meta charset="utf-8">
     <meta name="description" content="open science neuroimaging collaboration neuroscience MRI">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0">
     <link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
     <title>{{title}}</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:100" type="text/css">
+    {{! <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:100" type="text/css"> }}
+    <style>
+        @import url('https://fonts.googleapis.com/css?family=Roboto:100&display=swap');
+    </style>
+    <link rel="preconnect" href="https://www.google-analytics.com">
 </head>
 
 <body>
@@ -30,7 +34,7 @@
         <!-- Small left-top logo -->
         <div style="display:inline-block;margin:10px">
             <a href="/" style="text-decoration:none">
-                <img style="height:56px;vertical-align:middle" src="/img/brainbox-logo-small_noFont.svg"/>
+                <img style="height:56px;vertical-align:middle" src="/img/brainbox-logo-small_noFont.svg" alt="brainbox logo"/>
             </a><span style="font-family: Roboto, sans-serif; font-size: 36px; font-weight:100;vertical-align:middle" id="fontLogo"> 
                 <a href="/" style="font-family: Roboto, sans-serif; font-size: 36px; font-weight:100; text-decoration:none">BrainBox</a>
             </span>
@@ -81,8 +85,8 @@
                             </table>
                             <div style="text-align:right">
                                 <span id="annotationMessage"></span>
-                                <img id="addAnnotation"    class="button" style="width:19px; height:19px" src="/img/plus-square.svg"/>
-                                <img id="removeAnnotation" class="button" style="width:19px; height:19px" src="/img/minus-square.svg"/>
+                                <img id="addAnnotation" title="add annotation" alt="add annotation" class="button" style="width:19px; height:19px" src="/img/plus-square.svg"/>
+                                <img id="removeAnnotation" title="remove annotation" alt="remove annotation" class="button" style="width:19px; height:19px" src="/img/minus-square.svg"/>
                             </div>
 
                             <b>Text Annotations</b><br/>
@@ -100,8 +104,8 @@
                             </table>
                             <div style="text-align:right">
                                 <span id="textAnnotationMessage"></span>
-                                <img id="addTextAnnotation"    class="button" style="width:19px; height:19px" src="/img/plus-square.svg"/>
-                                <img id="removeTextAnnotation" class="button" style="width:19px; height:19px" src="/img/minus-square.svg"/>
+                                <img id="addTextAnnotation" title="add text annotation" alt="add text annotation" class="button" style="width:19px; height:19px" src="/img/plus-square.svg"/>
+                                <img id="removeTextAnnotation" title="remove text annotation" alt="remove text annotation" class="button" style="width:19px; height:19px" src="/img/minus-square.svg"/>
                             </div>
 
                         </div>
@@ -131,7 +135,7 @@
     <div style="flex:0 0 100px;background-color:#000">
         <p style="width:100%;font-size:small;text-align:center"> 
             <a target="_blank" href="http://neuroanatomy.github.io">
-                <img src="img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/></a>
+                <img title="naat logo" alt="naat logo" src="img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/></a>
             <a target="_blank" href="http://neuroanatomy.github.io" class="linkNoULine">
                 groupe de neuroanatomie appliquée et théorique
             </a>

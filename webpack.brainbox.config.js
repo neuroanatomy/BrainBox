@@ -3,7 +3,6 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 
 module.exports = {
-    mode: 'development',
     entry: {
         brainbox: './view/brainbox/src/brainbox.js'
     },
@@ -34,5 +33,10 @@ module.exports = {
                 use: ['file-loader']
             }
         ]
+    },
+    optimization: {
+        splitChunks: {
+            chunks: 'all'
+        }
     }
 };

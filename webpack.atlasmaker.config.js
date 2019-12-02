@@ -3,7 +3,6 @@ const CleanWebpackPlugin = require('clean-webpack-plugin');
 // const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
-    mode: 'development',
     entry: {
         atlasmaker: './view/atlasmaker/src/atlasmaker.js'
     },
@@ -37,5 +36,10 @@ module.exports = {
                 use: ['html-loader']
             }
         ]
+    },
+    optimization: {
+        splitChunks: {
+            chunks: 'all'
+        }
     }
 };

@@ -12,36 +12,41 @@ for(const item of list) {
 console.log(entries);
 
 module.exports = {
-    mode: 'development',
-    entry: entries,
-    devtool: 'eval-source-map',
-    plugins: [new CleanWebpackPlugin(['dist'])],
-    output: {
-        filename: '[name].js',
-        path: path.resolve(__dirname, 'view/atlasmaker/dist/atlasmaker-tools')
-    },
-    module: {
-        rules: [
-            {
-                test: /\.css$/,
-                use: [
-                    'style-loader',
-                    'css-loader'
-                ]
-            },
-            {
-                test: /\.(svg)$/,
-                use: {
-                    loader: 'url-loader',
-                    options: {
-                        noquotes: true
-                    }
-                }
-            },
-            {
-                test: /\.(html)$/,
-                use: ['html-loader']
-            }
+  mode: 'production',
+  entry: entries,
+  devtool: 'eval-source-map',
+  plugins: [new CleanWebpackPlugin(['dist'])],
+  output: {
+    filename: '[name].js',
+    path: path.resolve(__dirname, 'view/atlasmaker/dist/atlasmaker-tools')
+  },
+  module: {
+    rules: [
+      {
+        test: /\.css$/,
+        use: [
+          'style-loader',
+          'css-loader'
         ]
-    }
+      },
+      {
+        test: /\.(svg)$/,
+        use: {
+            loader: 'url-loader',
+            options: {
+              noquotes: true
+          }
+        }
+      },
+      {
+        test: /\.(html)$/,
+        use: ['html-loader']
+      }
+    ]
+  },
+  optimization: {
+      splitChunks: {
+        chunks: 'all'
+      }
+  }
 };

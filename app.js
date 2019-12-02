@@ -10,6 +10,7 @@
 
 const fs = require('fs');
 const express = require('express');
+var compression = require('compression');
 const path = require('path');
 const favicon = require('serve-favicon');
 const logger = require('morgan');
@@ -67,6 +68,9 @@ app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     next();
 });
+
+// enable compression
+app.use(compression());
 
 app.engine('mustache', mustacheExpress());
 app.set('views', path.join(dirname, 'templates'));

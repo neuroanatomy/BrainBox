@@ -23,19 +23,23 @@ import multiple from '../tools/multiple';
 var mriInfoOrig;
 var textAnnotationsArray = [];
 var version=1;
-var volAnnParam, textAnnParam;
+var volAnnParam;
+var textAnnParam;
 
 // Prevent zoom on double tap
 $('body').on('touchstart', function preventZoom(e) {
-    var t2 = e.timeStamp,
-        t1 = $(this).data('lastTouch') || t2,
-        dt = t2 - t1,
-        fingers = e.originalEvent.touches.length;
+    const t2 = e.timeStamp;
+    const t1 = $(this).data('lastTouch') || t2;
+    const dt = t2 - t1;
+    const fingers = e.originalEvent.touches.length;
     $(this).data('lastTouch', t2);
-    if (!dt || dt > 500 || fingers > 1) return; // not double-tap
+    if (!dt || dt > 500 || fingers > 1) {
+        return; // not double-tap
+    }
     e.preventDefault(); // double tap - prevent the zoom
     // also synthesize click events we just swallowed up
-    $(this).trigger('click').trigger('click');
+    $(this).trigger('click')
+        .trigger('click');
 });
 
 if( $.isEmptyObject(mriInfo)) {
@@ -56,8 +60,16 @@ if( $.isEmptyObject(mriInfo)) {
 
     // Load data
     BrainBox.initBrainBox()
-    .then(function () { console.log("BrainBox initialised"); return BrainBox.loadLabelsets(); })
-    .then(function () { console.log("Label sets loaded"); return BrainBox.configureBrainBox(params); })
+    .then(function () {
+        console.log("BrainBox initialised");
+
+        return BrainBox.loadLabelsets();
+    })
+    .then(function () {
+        console.log("Label sets loaded");
+
+        return BrainBox.configureBrainBox(params);
+    })
     .then(function () {
         console.log("BrainBox configured");
         // backup the original MRI info
