@@ -1,7 +1,7 @@
 "use strict";
 
 const fs = require('fs');
-const atlasMakerServer = require('../atlasMakerServer/atlasMakerServer');
+const atlasmakerServer = require('../atlasmakerServer/atlasmakerServer');
 // ExpressValidator = require('express-validator')
 
 var validator = function (req, res, next) {
@@ -85,7 +85,7 @@ var upload = function(req, res) {
     var files = req.files;
 
     delete mri._id;
-    
+
     console.log("Everything is in order");
     console.log("username:",username);
     console.log("url:", url);
@@ -94,19 +94,20 @@ var upload = function(req, res) {
     console.log("atlasProject:", atlasProject);
     console.log("atlasLabelSet:", atlasLabelSet);
     console.log("files:", files);
-        
+
     // create final filename
     var ext;
     var filename;
     var dir, path;
-    if(/.nii.gz$/.test(files[0].originalname))
+
+    if(/.nii.gz$/.test(files[0].originalname)) {
         ext=".nii.gz";
-    else
-    if(/.mgz$/.test(files[0].originalname))
+    } else if(/.mgz$/.test(files[0].originalname)) {
         ext=".mgz";
-    else {
+    } else {
         return res.json({error:"Atlas encoding neither .nii.gz nor .mgz"}).status(400).end();
     }
+
     filename=Math.random().toString(36).slice(2)+ext;
     
     // check if directory exists (it may not exist if a volume annotation is being uploaded
@@ -129,7 +130,7 @@ var upload = function(req, res) {
 
     // Check that the dimensions of the atlas are the same as its parent mri
     console.log("> load parent mri");
-    atlasMakerServer.loadMRI(path)
+    atlasmakerServer.loadMRI(path)
     .then(function(atlas){
         console.log("atlas.dim: ",atlas.dim);
         console.log("mri.dim: ",mri.dim);

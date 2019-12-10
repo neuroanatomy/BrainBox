@@ -1,7 +1,7 @@
 
 [![CircleCI](https://circleci.com/gh/neuroanatomy/BrainBox/tree/master.svg?style=shield)](https://circleci.com/gh/neuroanatomy/BrainBox/tree/master) [![Join the chat at https://gitter.im/OpenNeuroLab-Brainbox/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/OpenNeuroLab-Brainbox/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-# BrainBox - An application from the [Open Neuroimaging Laboratory](http://openneu.ro/)
+# BrainBox - A platform for real-time collaboration in neuroimaging
 
 [![Join the chat at https://gitter.im/OpenNeuroLab-Brainbox/Lobby](https://badges.gitter.im/OpenNeuroLab-Brainbox/Lobby.svg)](https://gitter.im/OpenNeuroLab-Brainbox/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
@@ -75,8 +75,8 @@ If you want to work on BrainBox's code, you'll need a local installation:
 2. clone the repo and `cd` to the brainbox directory
 4. [create a new OAuth application](https://github.com/settings/applications/new) for your local brainbox url (http://localhost:3000 by default)
 5. paste the keys into the github-keys.json.example file, and drop the .example
-6. drop the `.example` from `controller/atlasMakerServer/blacklist.json.example`
-7. drop the `.example` from `controller/atlasMakerServer/whitelist.json.example`
+6. drop the `.example` from `controller/atlasmakerServer/blacklist.json.example`
+7. drop the `.example` from `controller/atlasmakerServer/whitelist.json.example`
 8. drop the `.example` from `blacklist.json.example`
 9. drop the `.example` from `whitelist.json.example`
 10. `npm install`
@@ -94,8 +94,8 @@ These installation instructions may need to be updated.
 3. `cd` to brainbox
 4. [create a new OAuth application](https://github.com/settings/applications/new) for your local brainbox url (http://localhost:3000 by default)
 5. paste the keys into the github-keys.json.example file, change the `callbackURL` to `"http://localhost:3000/auth/github/callback"` and drop the .example
-6. drop the `.example` from `controller/atlasMakerServer/blacklist.json.example`
-7. drop the `.example` from `controller/atlasMakerServer/whitelist.json.example`
+6. drop the `.example` from `controller/atlasmakerServer/blacklist.json.example`
+7. drop the `.example` from `controller/atlasmakerServer/whitelist.json.example`
 7. make sure Docker is installed
 8. `docker-compose up`
 9. Then open `http://localhost:3000` in your browser.

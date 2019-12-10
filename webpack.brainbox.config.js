@@ -1,10 +1,8 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
-// const WebpackShellPlugin = require('webpack-shell-plugin');
 
 module.exports = {
-    mode: 'development',
     entry: {
         brainbox: './view/brainbox/src/brainbox.js'
     },

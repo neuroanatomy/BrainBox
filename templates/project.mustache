@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
     <meta charset="utf-8">
+    <meta name="description" content="open science neuroimaging collaboration neuroscience MRI">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> 
     <link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
     <title>{{title}}</title>
-    <link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:100" type="text/css">
 </head>
 
 <body>
@@ -17,12 +17,12 @@
     <div style="flex:0 0 64px">
         <!-- Top-right menu bar -->
         <div id="menu">
-            <img id="addProject" class="button" title="add project" src='/img/plus.svg'/>
-            <img id="settings" class="button" title="Settings" src='/img/settings.svg'/>
-            <a href="http://openneu.ro/metasearch" target="_blank"><img id="search" class="button" title="search" src='/img/search.svg'/></a>
-            <img id="doc" class="button" title="documentation" src='/img/doc.svg'/>
-            <a href="https://github.com/neuroanatomy/BrainBox/issues/new" target="_blank"><img id="bug" class="button" title="report a bug" src='/img/bug.svg'/></a>
-            <a href="https://github.com/neuroanatomy" target="_blank"><img id="github" class="button" title="join our github project" style="width:15px;height:15px" src='/img/github.svg'/></a>
+            <img id="addProject" class="button" title="add project" alt="add project" src="/img/plus.svg"/>
+            <img id="settings" class="button" title="settings" alt="settings" src="/img/settings.svg"/>
+            <a href="http://openneu.ro/metasearch" target="_blank"><img id="search" class="button" title="search" alt="search" src="/img/search.svg"/></a>
+            <img id="doc" class="button" title="documentation" alt="documentation" src="/img/doc.svg"/>
+            <a href="https://github.com/neuroanatomy/BrainBox/issues/new" target="_blank"><img id="bug" class="button" title="report a bug" alt="report a bug" src="/img/bug.svg"/></a>
+            <a href="https://github.com/neuroanatomy" target="_blank"><img id="github" class="button" title="join our github project" alt="join our github project" style="width:15px;height:15px" src="/img/github.svg"/></a>
             <div id="MyLogin">
                 <span>{{{login}}}</span>
             </div>
@@ -30,10 +30,10 @@
 
         <!-- Small left-top logo -->
         <div style="display:inline-block;margin:10px">
-            <a href='/' style="text-decoration:none">
-                <img style='height:56px;vertical-align:middle' src='/img/brainbox-logo-small_noFont.svg'/>
+            <a href="/" style="text-decoration:none">
+                <img style="height:56px;vertical-align:middle" src="/img/brainbox-logo-small_noFont.svg"/>
             </a><span style="font-family: Roboto, sans-serif; font-size: 36px; font-weight:100;vertical-align:middle" id="fontLogo"> 
-                <a href='/' style="font-family: Roboto, sans-serif; font-size: 36px; font-weight:100; text-decoration:none">{{projectName}}</a>
+                <a href="/" style="font-family: Roboto, sans-serif; font-size: 36px; font-weight:100; text-decoration:none">{{projectName}}</a>
             </span>
         </div>
     </div>
@@ -98,7 +98,7 @@
 const projectInfo={{{projectInfo}}};
 const info_proxy = {};
 </script>
-<script src="/lib/atlasMaker.js"></script>
+<script src="/lib/atlasmaker.js"></script>
 <script src="/lib/brainbox.js"></script>
 <script src="/js/project-page.js"></script>
 <script>

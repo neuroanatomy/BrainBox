@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
     <meta charset="utf-8">
+    <meta name="description" content="open science neuroimaging collaboration neuroscience MRI">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> 
     <link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
     <title>{{projectShortname}}</title>
-    <link rel="stylesheet" href='https://fonts.googleapis.com/css?family=Roboto:100' type='text/css'>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:100" type="text/css">
 </head>
 
 <body>
@@ -17,11 +17,11 @@
     <div style="flex:0 0 64px">
         <!-- Top-right menu bar -->
         <div id="menu">
-            <img id="addProject" class="button" title="add project" src='/img/plus.svg'/>
-            <a href="http://openneu.ro/metasearch" target="_blank"><img id="search" class="button" title="search" src='/img/search.svg'/></a>
-            <img id="doc" class="button" title="documentation" src='/img/doc.svg'/>
-            <a href="https://github.com/neuroanatomy/BrainBox/issues/new" target="_blank"><img id="bug" class="button" title="report a bug" src='/img/bug.svg'/></a>
-            <a href="https://github.com/neuroanatomy" target="_blank"><img id="github" class="button" title="join our github project" style='width:15px;height:15px' src='/img/github.svg'/></a>
+            <img id="addProject" class="button" title="add project" alt="add project" src="/img/plus.svg"/>
+            <a href="http://openneu.ro/metasearch" target="_blank"><img id="search" class="button" title="search" alt="search" src="/img/search.svg"/></a>
+            <img id="doc" class="button" title="documentation" alt="documentation" src="/img/doc.svg"/>
+            <a href="https://github.com/neuroanatomy/BrainBox/issues/new" target="_blank"><img id="bug" class="button" title="report a bug" alt="report a bug" src="/img/bug.svg"/></a>
+            <a href="https://github.com/neuroanatomy" target="_blank"><img id="github" class="button" title="join our github project" alt="join our github" style="width:15px;height:15px" src="/img/github.svg"/></a>
             <div id="MyLogin">
                 <span>{{{login}}}</span>
             </div>
@@ -29,8 +29,8 @@
 
         <!-- Small left-top logo -->
         <div style="display:inline-block;margin:10px">
-            <a href='/' style="text-decoration:none">
-                <img style='height:56px;vertical-align:middle' src='/img/brainbox-logo-small_noFont.svg'/>
+            <a href="/" style="text-decoration:none">
+                <img style="height:56px;vertical-align:middle" alt="brainbox logo" src="/img/brainbox-logo-small_noFont.svg"/>
             </a>
             <span style="font-family: Roboto, sans-serif; font-size: 36px; font-weight:100;vertical-align:middle" id="projectName" contentEditable=true class="noEmptyWithPlaceholder" placeholder="Enter a project name">
             </span>
@@ -44,13 +44,13 @@
         <div id="centeringDiv">
 
                 <div id="projImage">
-                    <a href='/project/{{projectShortname}}'><svg width="100%" height="100%"></svg></a>
+                    <a href="/project/{{projectShortname}}"><svg width="100%" height="100%"></svg></a>
                 </div>
                 
                 <div id="projDescription">
-                    <a href='/project/{{projectShortname}}'><h1>{{projectShortname}}</h1></a>
+                    <a href="/project/{{projectShortname}}"><h1>{{projectShortname}}</h1></a>
                     <h2 id="url" contentEditable=true class="noEmptyWithPlaceholder" placeholder="Enter a project website"></h2>
-                    <p>by <a href='/user/{{owner}}'>{{owner}}</a></p>
+                    <p>by <a href="/user/{{owner}}">{{owner}}</a></p>
                     <p id="description" contentEditable=true class="noEmptyWithPlaceholder" placeholder="Enter a project description"></p>
                     <p><span id="numCollaborators"></span> Collaborators</p>
                     <p><span id="numAnnotations"></span> Annotations</p>
@@ -83,8 +83,8 @@
                                 </tbody>
                             </table>
                             <div style="text-align:right">
-                                <img id="addCollaborator" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/plus-square.svg' title='add collaborator'/>
-                                <img id="removeCollaborator" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/minus-square.svg' title='remove collaborator'/>
+                                <img id="addCollaborator" class="button" style="width:20px; height:20px; margin:8 2 0 0" title="add collaborator" alt="add collaborator" src="/img/plus-square.svg"/>
+                                <img id="removeCollaborator" class="button" style="width:20px; height:20px; margin:8 2 0 0" title="remove collaborator" alt="remove collaborator" src="/img/minus-square.svg"/>
                             </div>
                             
                             
@@ -103,8 +103,8 @@
                                 </tbody>
                             </table>
                             <div style="text-align:right">
-                                <img id="addAnnotation" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/plus-square.svg' title='add annotation'/>
-                                <img id="removeAnnotation" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/minus-square.svg' title='remove annotation'/>
+                                <img id="addAnnotation" class="button" style="width:20px; height:20px; margin:8 2 0 0" title="add annotation" alt="add annotation" src="/img/plus-square.svg"/>
+                                <img id="removeAnnotation" class="button" style="width:20px; height:20px; margin:8 2 0 0" title="remove annotation" alt="remove annotation" src="/img/minus-square.svg"/>
                             </div>
 
                             <!-- Tab Content 3: MRIs -->
@@ -120,10 +120,10 @@
                                 </tbody>
                             </table>
                             <div style="text-align:right">
-                                <img id="importFiles" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/upload-square.svg' title='upload csv'/>
-                                <img id="exportFiles" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/download-square.svg' title='download csv'/>
-                                <img id="addFile" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/plus-square.svg' title='add new url entry'/>
-                                <img id="removeFile" class="button" style="width:20px; height:20px; margin:8 2 0 0" src='/img/minus-square.svg' title='remove url entry'/>
+                                <img id="importFiles" class="button" style="width:20px; height:20px; margin:8 2 0 0" src="/img/upload-square.svg" title="upload csv" alt="upload csv"/>
+                                <img id="exportFiles" class="button" style="width:20px; height:20px; margin:8 2 0 0" src="/img/download-square.svg" title="download csv" alt="download csv"/>
+                                <img id="addFile" class="button" style="width:20px; height:20px; margin:8 2 0 0" src="/img/plus-square.svg" title="add new url entry" alt="add new url entry"/>
+                                <img id="removeFile" class="button" style="width:20px; height:20px; margin:8 2 0 0" src="/img/minus-square.svg" title="remove url entry" alt="remove url entry"/>
                             </div>
                 </div>
         </div>
@@ -140,7 +140,7 @@
     <div style="flex:0 0 100px;background-color:#000">
         <p style="width:100%;font-size:small;text-align:center"> 
             <a target="_blank" href="http://neuroanatomy.github.io">
-                <img src="/img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/></a>
+                <img alt="naat logo" src="/img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/></a>
             <a target="_blank" href="http://neuroanatomy.github.io" class="linkNoULine">
                 groupe de neuroanatomie appliquée et théorique
             </a>
@@ -149,11 +149,11 @@
     
     <!-- Import files -->
     <!-- black overlay -->
-    <div id='importFilesDialog' style='display:none;position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(0,0,0,0.7);z-index:100'>
+    <div id="importFilesDialog" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(0,0,0,0.7);z-index:100">
         <!-- centered content -->
-        <div style='position:relative;padding:1rem;margin:2rem auto;background-color:#333;max-width:600px;text-align:center;border:1px solid #777;height:calc(100% - 4rem);box-sizing:border-box'>
+        <div style="position:relative;padding:1rem;margin:2rem auto;background-color:#333;max-width:600px;text-align:center;border:1px solid #777;height:calc(100% - 4rem);box-sizing:border-box">
             <!-- overflow: scroll -->
-            <div style='display:inline-block;max-width:600px;padding:2rem;overflow:scroll;max-height:calc(100% - 10rem)'>
+            <div style="display:inline-block;max-width:600px;padding:2rem;overflow:scroll;max-height:calc(100% - 10rem)">
                 <table>
                     <thead>
                         <tr>
@@ -174,7 +174,7 @@
     
 </div>
 
-<script src="/lib/atlasMaker.js"></script>
+<script src="/lib/atlasmaker.js"></script>
 <script src="/lib/brainbox.js"></script>
 <script>
 var projectInfo={{{projectInfo}}};

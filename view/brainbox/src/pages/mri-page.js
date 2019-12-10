@@ -1,39 +1,45 @@
 /*global AtlasMakerWidget BrainBox info_proxy mriInfo params*/
-import $ from 'jquery';
+import '../style/style.css';
+import '../style/textAnnotations.css';
+import '../style/ui.css';
+import '../style/mri-style.css';
+import '../style/access-style.css';
+import '../style/dropdown-style.css';
+
 import 'jquery-ui/themes/base/core.css';
 import 'jquery-ui/themes/base/theme.css';
 import 'jquery-ui/themes/base/autocomplete.css';
 import 'jquery-ui/ui/core';
 import 'jquery-ui/ui/widgets/autocomplete';
-import * as jsonpatch from 'fast-json-patch';
 
+import * as jsonpatch from 'fast-json-patch';
 import * as tw from '../twoWayBinding';
+
+import $ from 'jquery';
 import freeform from '../tools/freeform';
 import hidden from '../tools/hidden';
 import multiple from '../tools/multiple';
 
-import '../style/style.css';
-import '../style/textAnnotations.css';
-import '../style/mri-style.css';
-import '../style/access-style.css';
-import '../style/dropdown-style.css';
-
 var mriInfoOrig;
 var textAnnotationsArray = [];
 var version=1;
-var volAnnParam, textAnnParam;
+var volAnnParam;
+var textAnnParam;
 
 // Prevent zoom on double tap
 $('body').on('touchstart', function preventZoom(e) {
-    var t2 = e.timeStamp,
-        t1 = $(this).data('lastTouch') || t2,
-        dt = t2 - t1,
-        fingers = e.originalEvent.touches.length;
+    const t2 = e.timeStamp;
+    const t1 = $(this).data('lastTouch') || t2;
+    const dt = t2 - t1;
+    const fingers = e.originalEvent.touches.length;
     $(this).data('lastTouch', t2);
-    if (!dt || dt > 500 || fingers > 1) return; // not double-tap
+    if (!dt || dt > 500 || fingers > 1) {
+        return; // not double-tap
+    }
     e.preventDefault(); // double tap - prevent the zoom
     // also synthesize click events we just swallowed up
-    $(this).trigger('click').trigger('click');
+    $(this).trigger('click')
+        .trigger('click');
 });
 
 if( $.isEmptyObject(mriInfo)) {
@@ -54,8 +60,16 @@ if( $.isEmptyObject(mriInfo)) {
 
     // Load data
     BrainBox.initBrainBox()
-    .then(function () { console.log("BrainBox initialised"); return BrainBox.loadLabelsets(); })
-    .then(function () { console.log("Label sets loaded"); return BrainBox.configureBrainBox(params); })
+    .then(function () {
+        console.log("BrainBox initialised");
+
+        return BrainBox.loadLabelsets();
+    })
+    .then(function () {
+        console.log("Label sets loaded");
+
+        return BrainBox.configureBrainBox(params);
+    })
     .then(function () {
         console.log("BrainBox configured");
         // backup the original MRI info

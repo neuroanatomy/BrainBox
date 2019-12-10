@@ -4,7 +4,6 @@ const CleanWebpackPlugin = require('clean-webpack-plugin');
 // const WebpackShellPlugin = require('webpack-shell-plugin');
 
 module.exports = {
-    mode: 'development',
     entry: {
         "index-page": './view/brainbox/src/pages/index-page.js',
         "mri-page": './view/brainbox/src/pages/mri-page.js',

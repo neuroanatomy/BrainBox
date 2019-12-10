@@ -1,16 +1,18 @@
 /* global $ */
 
-import $ from 'jquery';
 import 'jquery-ui/themes/base/core.css';
 import 'jquery-ui/themes/base/theme.css';
 import 'jquery-ui/themes/base/autocomplete.css';
 import 'jquery-ui/ui/core';
 import 'jquery-ui/ui/widgets/autocomplete';
-import * as DOMPurify from '../../../downloads/purify.min.js';
 
 import '../style/style.css';
 import '../style/ui.css';
 import '../style/projectNew-style.css';
+
+import * as DOMPurify from 'dompurify';
+
+import $ from 'jquery';
 
 var host = "ws://" + window.location.hostname + ":8080/";
 let ws;

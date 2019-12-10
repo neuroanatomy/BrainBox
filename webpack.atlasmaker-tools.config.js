@@ -2,7 +2,7 @@ const path = require('path');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 var glob = require("glob");
 
-const list = glob.sync("./view/atlasMaker/src/tools/*/index.js");
+const list = glob.sync("./view/atlasmaker/src/tools/*/index.js");
 const entries = {};
 for(const item of list) {
     const arr = item.split('/');
@@ -12,40 +12,36 @@ for(const item of list) {
 console.log(entries);
 
 module.exports = {
-    mode: 'development',
-    entry: entries,
-    devtool: 'eval-source-map',
-    plugins: [new CleanWebpackPlugin(['dist'])],
-    output: {
-        filename: '[name].js',
-        path: path.resolve(__dirname, 'view/atlasMaker/dist/atlasMaker-tools')
-    },
-    module: {
-        rules: [
-            {
-                test: /\.css$/,
-                use: [
-                    'style-loader',
-                    'css-loader'
-                ]
-            },
-            {
-                test: /\.(png|jpg|gif)$/,
-                use: ['file-loader']
-            },
-            {
-                test: /\.(svg)$/,
-                use: {
-                    loader: 'url-loader',
-                    options: {
-                        noquotes: true
-                    }
-                }
-            },
-            {
-                test: /\.(html)$/,
-                use: ['html-loader']
-            }
+  mode: 'production',
+  entry: entries,
+  devtool: 'eval-source-map',
+  plugins: [new CleanWebpackPlugin(['dist'])],
+  output: {
+    filename: '[name].js',
+    path: path.resolve(__dirname, 'view/atlasmaker/dist/atlasmaker-tools')
+  },
+  module: {
+    rules: [
+      {
+        test: /\.css$/,
+        use: [
+          'style-loader',
+          'css-loader'
         ]
-    }
+      },
+      {
+        test: /\.(svg)$/,
+        use: {
+            loader: 'url-loader',
+            options: {
+              noquotes: true
+          }
+        }
+      },
+      {
+        test: /\.(html)$/,
+        use: ['html-loader']
+      }
+    ]
+  }
 };

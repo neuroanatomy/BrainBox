@@ -2,14 +2,13 @@
 import '../style/style.css';
 import '../style/index-style.css';
 import '../style/ui.css';
-import $ from 'jquery';
 
 /**
  * @function goToURL
  * @returns {void}
  */
 function goToURL() {
-    var url=$("#url").val();
+    const url = document.getElementById("url").value;
     location.href = "/mri?url="+url;
 }
 
@@ -47,96 +46,101 @@ testWebSockets()
       alert(m);
   });
 
-// intro.js test
-//startIntro();
+for(const slide of document.getElementsByClassName("slide")) {
+    slide.style.height = window.innerHeight + 'px';
+}
 
-$(".slide").height(window.innerHeight);
-$(window).on('resize', function() {
-    $(".slide").height(window.innerHeight);
-    $("#bgBrains").css({width:window.innerWidth});
+window.addEventListener('resize', () => {
+    for(const slide of document.getElementsByClassName("slide")) {
+        slide.style.height = window.innerHeight + 'px';
+    }
 });
 
 // go to url button
-$("#go").click(goToURL);
+document.getElementById("go").addEventListener('click', goToURL);
 
 // video settings
 var vid = document.getElementById("bgBrains");
-//vid.autoplay = true;
-//vid.muted = true;
-//vid.loop = true;
-vid.playbackRate = 0.5;
-vid.onloadedmetadata = function() {
-    $("#bgBrains").css({width:window.innerWidth});
+vid.onplaying = function() {
+    vid.playbackRate = 0.5;
 };
 
 // List of brains
-$("#list").change(function() {
-    $("#url").val($("#list").val());
+document.getElementById("list").addEventListener("change", () => {
+    document.getElementById("url").value = document.getElementById("list").value;
 });
 
+document.querySelector("h2").style.marginLeft = 0;
+document.querySelector("h2").style.opacity = 1;
+
+// Add URL loading
+document.getElementById("url").addEventListener("keyup", (e) => {
+    if (e.keyCode === 13) {
+        goToURL(e);
+    }
+});
+
+// Connect addProject button
+document.getElementById("addProject").addEventListener("click", () => {
+    location.href = "/project/new";
+});
+
+// multiple div as slides
 var menuShowing = true;
-$(window).on('scroll', function() {
-    var y = window.pageYOffset;
+window.addEventListener("scroll", () => {
+    const y = window.pageYOffset;
     if(y>100 && menuShowing) {
-        $("#menu").css({top:-32, opacity:0});
+        document.getElementById("menu").style.top = -32;
+        document.getElementById("menu").style.opacity = 0;
         menuShowing = false;
 
-        $("#footer").show();
+        document.getElementById("footer").style.display = "";
     }
     if(y<100 && !menuShowing) {
-        $("#menu").css({top:0, opacity:1});
+        document.getElementById("menu").style.top = 0;
+        document.getElementById("menu").style.opacity = 1;
         menuShowing = true;
     }
 });
 
-$("h2").css({marginLeft:0, opacity:1});
-
-var version=1;
-var brainsToTry=[
-    "https://zenodo.org/record/44855/files/MRI-n4.nii.gz",
-    "http://files.figshare.com/2284784/MRI_n4.nii.gz",
-    "https://dl.dropbox.com/s/cny5b3so267bv94/p32-f18-uchar.nii.gz",
-    "https://fcp-indi.s3.amazonaws.com/data/Projects/ABIDE_Initiative/RawData/NYU/0050952/session_1/anat_1/mprage.nii.gz"
-];
-
+// intro.js test
+//startIntro();
+// var version=1;
+// var brainsToTry=[
+//     "https://zenodo.org/record/44855/files/MRI-n4.nii.gz",
+//     "http://files.figshare.com/2284784/MRI_n4.nii.gz",
+//     "https://dl.dropbox.com/s/cny5b3so267bv94/p32-f18-uchar.nii.gz",
+//     "https://fcp-indi.s3.amazonaws.com/data/Projects/ABIDE_Initiative/RawData/NYU/0050952/session_1/anat_1/mprage.nii.gz"
+// ];
 // Present the history in localStorage if it exists.
-    let i, stored, str;
-    if(localStorage.AtlasMaker) {
-        stored=JSON.parse(localStorage.AtlasMaker);
-        if(stored.version && stored.version === version) {
-            str = "<br/><p><b>Recently visited</b><br/>";
-            for(i=stored.history.length-1; i>=Math.max(0, stored.history.length-10); i--) {
-                str += "<a href='"+location+"mri?url="+stored.history[i].url+"'>"+stored.history[i].url+"</a><br />";
-
-                /**
-                 * @todo Add image thumbnails
-                 */
-                if(stored.history[i].img) {
-                    $("#intro").append('<img src="'+stored.history[i].img+'"/>');
-                }
-            }
-            str += "</p>";
-            $("#intro").append(str);
-        } else {
-            localStorage.clear();
-        }
-    }
-    if(typeof localStorage.AtlasMaker === 'undefined' || stored.history.length<5) {
-        str="<br/><p><b>Some brains to try</b><br/>";
-        for(i=0; i<brainsToTry.length; i++) {
-            str+="<a href='"+location+"mri?url="+brainsToTry[i]+"'>"+brainsToTry[i]+"</a><br />";
-        }
-        str+="</p>";
-        $("#intro").append(str);
-    }
-
-// Add URL loading
-    $("#url").keyup(function(e) {
-        //console.log(e,e.target);
-        if (e.keyCode === 13) {
-            goToURL(e);
-        }
-    });
-
-// Connect addProject button
-    $("#addProject").click(function() { location.href = "/project/new"; });
+// let i, stored, str;
+// if(localStorage.AtlasMaker) {
+//     stored=JSON.parse(localStorage.AtlasMaker);
+//     if(stored.version && stored.version === version) {
+//         str = "<br/><p><b>Recently visited</b><br/>";
+//         for(i=stored.history.length-1; i>=Math.max(0, stored.history.length-10); i--) {
+//             str += "<a href='"+location+"mri?url="+stored.history[i].url+"'>"+stored.history[i].url+"</a><br />";
+//             /**
+//              * @todo Add image thumbnails
+//              */
+//             if(stored.history[i].img) {
+//                 document.getElementById("intro").innerHTML += `<img src="${stored.history[i].img}"/>`;
+//                 // $("#intro").append('<img src="'+stored.history[i].img+'"/>');
+//             }
+//         }
+//         str += "</p>";
+//         document.getElementById("intro").innerHTML += str;
+//         // $("#intro").append(str);
+//     } else {
+//         localStorage.clear();
+//     }
+// }
+// if(typeof localStorage.AtlasMaker === 'undefined' || stored.history.length<5) {
+//     str="<br/><p><b>Some brains to try</b><br/>";
+//     for(i=0; i<brainsToTry.length; i++) {
+//         str+="<a href='"+location+"mri?url="+brainsToTry[i]+"'>"+brainsToTry[i]+"</a><br />";
+//     }
+//     str+="</p>";
+//     document.getElementById("intro").innerHTML += str;
+//     // $("#intro").append(str);
+// }
