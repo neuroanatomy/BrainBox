@@ -21,7 +21,7 @@ tracer.log(whitelist);
 tracer.log("Use blacklist:", useBlacklist);
 tracer.log(blacklist);
 
-var http = require('http');
+// var http = require('http');
 let server;
 const ws_cfg = JSON.parse(fs.readFileSync('ws_cfg.json'));
 const {secure, port} = ws_cfg;
@@ -37,7 +37,7 @@ if(secure) {
             || req.connection.remoteAddress
             || req.socket.remoteAddress
             || req.connection.socket.remoteAddress;
-    }).listen(ws_cfg.port);
+    }).listen(port);
 } else {
     var http = require('http');
     server = http.createServer(function(req, res) {
