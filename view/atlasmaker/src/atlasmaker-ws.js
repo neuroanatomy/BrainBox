@@ -383,11 +383,9 @@ export var AtlasMakerWS = {
     */
     receivePaintMessage: function receivePaintMessage(data) {
         var me=AtlasMakerWidget;
-        var {uid:u, c, data:msg}=data; // user
-        var x=parseInt(msg.x); // x coordinate
-        var y=parseInt(msg.y); // y coordinate
+        var {uid:u, data:msg}=data; // user
 
-        if(me.Collab[u]) { me.paintxy(u, c, x, y, me.Collab[u]); }
+        if(me.Collab[u]) { me.paintxy(u, msg.c, msg.x, msg.y, me.Collab[u]); }
     },
 
     /**
@@ -415,11 +413,8 @@ export var AtlasMakerWS = {
     receiveShowMessage: function receiveShowMessage(data) {
         var me=AtlasMakerWidget;
         var {uid:u, data:msg} = data; // user
-        var {c} = msg; // command
-        var x=parseInt(msg.x); // x coordinate
-        var y=parseInt(msg.y); // y coordinate
 
-        if(me.Collab[u]) { me.showxy(u, c, x, y, me.Collab[u]); }
+        if(me.Collab[u]) { me.showxy(u, msg.c, msg.x, msg.y, me.Collab[u]); }
     },
 
     /**

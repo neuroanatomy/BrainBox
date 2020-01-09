@@ -53,8 +53,8 @@
     position:relative;
     pointer-events:none;
 }
-#tools-side #tools-minimized,
-#tools-side #tools-maximized {
+#tools-side #tools-minimized div,
+#tools-side #tools-maximized div {
     pointer-events: all;
 }
 .atlasmaker-fullscreen #atlasmaker {
