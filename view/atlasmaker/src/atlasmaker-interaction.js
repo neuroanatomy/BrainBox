@@ -295,9 +295,7 @@ export var AtlasMakerInteraction = {
                 for(i = 0; i<me.atlas.data.length; i++) { me.atlas.data[i] = mri.data[i]; }
 
                 // send uploaded data to server (compressed)
-                me.socket.binaryType = "arraybuffer";
-                me.socket.send(pako.deflate(mri.data));
-                me.socket.binaryType = "blob";
+                me.sendAtlasDataMessage(mri.data);
 
                 // redraw images
                 me.drawImages();

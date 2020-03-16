@@ -376,6 +376,18 @@ export var AtlasMakerWS = {
     },
 
     /**
+     * @function sendAtlasDataMessage
+     * @param {array} atlasData Atlas data
+     * @returns {void}
+     */
+    sendAtlasDataMessage: function sendAtlasDataMessage(atlasData) {
+        var me=AtlasMakerWidget;
+        me.socket.binaryType = "arraybuffer";
+        me.socket.send(pako.deflate(atlasData));
+        me.socket.binaryType = "blob";
+    },
+
+    /**
     * @function receivePaintMessage
     * @desc Receive paint events from other connected users
     * @param {object} data Paint message received
