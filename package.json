@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "start": "PORT=3001 node ./bin/www",
+    "debug": "PORT=3001 node --inspect-brk ./bin/www",
     "build-atlasmaker": "webpack --mode production --config webpack.atlasmaker.config.js && cp view/atlasmaker/dist/atlasmaker.js public/lib/atlasmaker.js",
     "build-atlasmaker-tools": "webpack --mode production --config webpack.atlasmaker-tools.config.js && cp  -r view/atlasmaker/dist/atlasmaker-tools public/lib/",
     "build-brainbox": "webpack --mode production --config webpack.brainbox.config.js && cp view/brainbox/dist/brainbox.js public/lib/brainbox.js",
