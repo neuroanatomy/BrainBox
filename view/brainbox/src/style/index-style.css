@@ -60,12 +60,12 @@ h2 {
  }
 
 #bgBrainsImg {
-    filter:contrast(150%) brightness(60%);
-    -webkit-filter:contrast(150%) brightness(60%);
+    filter:saturate(60%) contrast(120%) brightness(80%);
+    -webkit-filter:saturate(60%) contrast(120%) brightness(80%);
     position:absolute;top:0;left:0
 }
 #bgBrains {
-    filter:contrast(150%) brightness(60%);
-    -webkit-filter:contrast(150%) brightness(60%);
+    filter:saturate(60%) contrast(120%) brightness(80%);
+    -webkit-filter:saturate(60%) contrast(120%) brightness(80%);
     position:absolute;top:0;left:0
 }

@@ -57,7 +57,7 @@ alt="IMAGE ALT TEXT HERE" width="640" height="480" border="10" /></a>
 
 Join our project on github any time
 You can also e-mail us to get in touch at openneurobrainbox at gmail dot com!
-Or launch your own collaborative project on [BrainBox](http://brainbox.pasteur.fr/project/new)
+Or launch your own collaborative project on [BrainBox](https://brainbox.pasteur.fr/project/new)
 
 
 **We are looking forward to meeting you!**
@@ -80,10 +80,9 @@ If you want to work on BrainBox's code, you'll need a local installation:
 8. drop the `.example` from `blacklist.json.example`
 9. drop the `.example` from `whitelist.json.example`
 10. `npm install`
-11. `npm run prepare`
-12. `npm run build`
-13. `npm start`
-14. To check that your code style is like the one we use,  enter `npm run lint`, or you can type `eslint` before committing, to do that install `eslint` globally using `npm i -g eslint` (our code style rules are in the file `.eslintrc`).
+11. `npm run build`
+12. `npm start`
+13. To check that your code style is like the one we use,  enter `npm run lint`, or you can type `eslint` before committing, to do that install `eslint` globally using `npm i -g eslint` (our code style rules are in the file `.eslintrc`).
 
 
 ## Using Docker to install and run BrainBox
