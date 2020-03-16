@@ -21,7 +21,7 @@ export var AtlasMakerUI = {
             max:100
         });
 
-        var movex = function (el, clientX) {
+        var movex = (el, clientX) => {
             if ($(el).data("drag") === true) {
                 var R = $(el).find(".track")[0].getBoundingClientRect();
                 var x = (clientX-R.left)/R.width;
@@ -29,7 +29,7 @@ export var AtlasMakerUI = {
                 if(x>1) { x=1; }
                 x *= $(el).data("max");
                 if(x !== $(el).data("val")) {
-                    var max=$(el).data("max");
+                    const max=$(el).data("max");
                     $(el).data("val", x);
                     $(el).find(".thumb")[0].style.left=(x*100/max)+"%";
 
@@ -37,10 +37,19 @@ export var AtlasMakerUI = {
                 }
             }
         };
+
+        var updateDisplay = () => {
+            const val=$(elem).data("val");
+            const max=$(elem).data("max");
+            const [thumb] = $(elem).find(".thumb");
+            thumb.style.left = (val*100/max) + "%";
+        };
+
         $(document).on("mousemove", (ev) => { movex(elem, ev.clientX); });
         $(document).on("touchmove", (ev) => { movex(elem, ev.originalEvent.changedTouches[0].pageX); });
         $(document).on("mouseup touchend", () => { $(elem).data({drag:false}); });
         $(elem).on('mousedown touchstart', () => { $(elem).data({drag:true}); });
+        $(elem).on('updateDisplay', () => { updateDisplay(); });
     },
 
     /**

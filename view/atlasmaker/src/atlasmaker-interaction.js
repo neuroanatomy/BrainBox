@@ -147,6 +147,7 @@ export var AtlasMakerInteraction = {
         if(x !== $("#slice").data("val")) {
             $("#slice").data("val", x);
             me.changeSlice(x);
+            $("#slice").trigger('updateDisplay');
         }
     },
 
@@ -163,6 +164,7 @@ export var AtlasMakerInteraction = {
         if(x !== $("#slice").data("val")) {
             $("#slice").data("val", x);
             me.changeSlice(x);
+            $("#slice").trigger('updateDisplay');
         }
     },
 
