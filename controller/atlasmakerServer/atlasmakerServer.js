@@ -2068,7 +2068,7 @@ const atlasmakerServer = (function() {
                 me.loadAtlas(User)
                 .then(function (theAtlas) {
                     me.Atlases.push(theAtlas);
-                    User.iAtlas = me.Atlases.indexOf(theAtlas);
+                    User.iAtlas = String(me.Atlases.indexOf(theAtlas));
                     atlas.timer = setInterval(function () { me.saveAtlas(theAtlas); }, me.backupInterval);
 
                     resolve(theAtlas);
@@ -2245,7 +2245,7 @@ const atlasmakerServer = (function() {
                 uid: uid
             }, uid);
         },
-        keyPressHandler: function () {
+        _initKeyPressHandler: function () {
             keypress(process.stdin);
             process.stdin.on('keypress', function (ch, key) {
                 if(key) {
@@ -2546,37 +2546,50 @@ const atlasmakerServer = (function() {
             // send data from previous users
             me.sendPreviousUserDataMessage(newUS);
         },
-
-        /*
-            Init
-        */
-        initSocketConnection: function () {
-
-            tracer.log("atlasmakerServer.js");
-            tracer.log("date:", new Date());
-            setInterval(function() { tracer.log("date:", new Date()); }, me.timeMarkInterval); // time mark
-            tracer.log("free memory", os.freemem());
-
-            /*
-                Init keypress handler
-            */
-            me.keyPressHandler();
-
-            /*
-                Init colormap
-            */
-            var i;
-            for(i = 1; i<256; i += 1) {
+        _initColorMap: function () {
+            for(let i = 1; i<256; i += 1) {
                 me.colormap.push({
                     r: 100 + Math.random()*155,
                     g: 100 + Math.random()*155,
                     b: 100 + Math.random()*155
                 });
             }
+        },
+        _handleWebSocketConnection: function (ws, req) {
+            if(me._isInBlacklist(req.connection.remoteAddress)) {
+                ws.close();
 
-            /*
-                Init WS connection
-            */
+                return;
+            }
+            me._pushNewUser({ws});
+            ws.on('message', function (msg) {
+                me._handleWebSocketMessage({msg, ws});
+            });
+            ws.on('close', function () {
+                me._handleWebSocketClose({ws});
+            });
+        },
+
+        /*
+            Init
+        */
+        initSocketConnection: function () {
+
+            tracer.log(`
+===================================
+Starting atlasmakerServer.js
+date: ${new Date()}
+free memory: ${os.freemem()}
+===================================
+`);
+
+            setInterval(function() { tracer.log("date:", new Date()); }, me.timeMarkInterval); // time mark
+
+            me._initKeyPressHandler();
+
+            me._initColorMap();
+
+            // Init WS connection
             try {
                 if(secure) {
                     websocketserver = new WebSocketServer({server: server});
@@ -2584,27 +2597,11 @@ const atlasmakerServer = (function() {
                     websocketserver = new WebSocketServer({ server: server, verifyClient: me.verifyClient });
                 }
 
-                websocketserver.on("connection", function (ws, req) {
+                websocketserver.on("connection", me._handleWebSocketConnection);
 
-                    if(me._isInBlacklist(req.connection.remoteAddress)) {
-                        ws.close();
-
-                        return;
-                    }
-
-                    me._pushNewUser({ws});
-
-                    ws.on('message', function (msg) {
-                        me._handleWebSocketMessage({msg, ws});
-                    });
-
-                    ws.on('close', function () {
-                        me._handleWebSocketClose({ws});
-                    });
-                });
                 server.listen(port, function () { tracer.log('Listening on ' + server.address().port, server.address()); });
             } catch (ex) {
-                tracer.log("ERROR: Unable to create a server", ex);
+                tracer.log("ERROR: Unable to create a Web socket server", ex);
             }
         }
     };
