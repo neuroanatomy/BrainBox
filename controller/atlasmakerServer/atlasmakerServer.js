@@ -1952,12 +1952,12 @@ const atlasmakerServer = (function() {
 // Load & Save
 //========================================================================================
         /**
-         * @func loadAtlas
-         * @desc The requested atlas is sent if it was already loaded, loaded from disk
+         * @function loadAtlas
+         * @description The requested atlas is sent if it was already loaded, loaded from disk
          *       if it was already downloaded but not yet loaded, or created if it's a
          *       new atlas.
-         * @param { Object } User A User object providing information about the requested atlas
-         * @return an atlas (mri structure)
+         * @param {Object} User A User object providing information about the requested atlas
+         * @returns {Object} An atlas (mri structure)
          */
         loadAtlas: function loadAtlas(User) {
             var pr = new Promise(function (resolve, reject) {
@@ -2050,10 +2050,10 @@ const atlasmakerServer = (function() {
 
         /**
          * @func addAtlas
-         * @desc input: A User structure providing information about the requested atlas
-         * process: an atlas is obtained, and added to the me.Atlases[] array if it
+         * @description An atlas is obtained, and added to the me.Atlases[] array if it
          *          wasn't already loaded.
-         * @returns {object} An atlas (mri structure)
+         * @param {Object} User A User structure providing information about the requested atlas
+         * @returns {Object} An atlas (mri structure)
          */
         addAtlas: function (User) {
             var atlas = {
@@ -2078,23 +2078,39 @@ const atlasmakerServer = (function() {
 
             return pr;
         },
-        receiveUserDataMessage: function (data, userSocket) {
-            if(me.debug>1) {
-                tracer.log("    data.description:", data.description);
+        _isUserFirstConnection: function (User) {
+            let firstConnectionFlag = false;
+
+            if(typeof User === 'undefined') {
+                firstConnectionFlag = true;
+            } else if(User.isMRILoaded === false) {
+                firstConnectionFlag = true;
             }
 
+            return firstConnectionFlag;
+        },
+        _findAtlas: function ({dirname, atlasFilename}) {
+            let iAtlas = me.Atlases.length;
+            let atlasLoadedFlag = false;
+            for(const i in me.Atlases) {
+                if({}.hasOwnProperty.call(me.Atlases, i)) {
+                    if(me.Atlases[i].dirname === dirname && me.Atlases[i].name === atlasFilename) {
+                        atlasLoadedFlag = true;
+                        iAtlas = i;
+                        break;
+                    }
+                }
+            }
+
+            return {iAtlas, atlasLoadedFlag};
+        },
+        receiveUserDataMessage: function (data, userSocket) {
             var sourceUS = me.getUserFromUserId(data.uid);
 
             var User;
-            var atlasLoadedFlag;
-            var firstConnectionFlag = false;
+            var firstConnectionFlag = me._isUserFirstConnection(sourceUS.User);
             var switchingAtlasFlag = false;
 
-            if(typeof sourceUS.User === 'undefined') {
-                firstConnectionFlag = true;
-            } else if(sourceUS.User.isMRILoaded === false) {
-                firstConnectionFlag = true;
-            }
 
             if(data.description === "allUserData" ) {
                 // receiving the complete User data object
@@ -2105,7 +2121,6 @@ const atlasmakerServer = (function() {
                 if(data.description === "sendAtlas") {
                     // receive an atlas from the user
                     // 1. Check if the atlas the user is requesting has not been loaded
-                    atlasLoadedFlag = false;
 
                     // check whether user is switching atlas.
                     switchingAtlasFlag = false;
@@ -2115,16 +2130,7 @@ const atlasmakerServer = (function() {
                         }
                     }
 
-                    let iAtlas = me.Atlases.length;
-                    for(const i in me.Atlases) {
-                        if({}.hasOwnProperty.call(me.Atlases, i)) {
-                            if(me.Atlases[i].dirname === User.dirname && me.Atlases[i].name === User.atlasFilename) {
-                                atlasLoadedFlag = true;
-                                iAtlas = i;
-                                break;
-                            }
-                        }
-                    }
+                    let {iAtlas, atlasLoadedFlag} = me._findAtlas({dirname: User.dirname, atlasFilename: User.atlasFilename});
                     User.iAtlas = iAtlas; // value i if it was found, or last available if it wasn't
 
                     // 2. Send the atlas to the user (load it if required)
@@ -2142,7 +2148,7 @@ const atlasmakerServer = (function() {
                             me.sendAtlasToUser(atlas.data, userSocket, true);
                             sourceUS.User.isMRILoaded = true;
                         })
-                        .catch ((err) => console.log(new Error("ERROR: Unable to load atlas")));
+                        .catch((err) => console.log(new Error("ERROR: Unable to load atlas", err)));
                     }
                 } else {
                     // receive a specific field of the User data object from the user
@@ -2161,14 +2167,14 @@ const atlasmakerServer = (function() {
             // 3. Update user data
             // If the user didn't have a name (wasn't logged in), but now has one,
             // display the name in the log
-            if(User.hasOwnProperty('username')) {
+            if({}.hasOwnProperty.call(User, 'username')) {
                 if(typeof sourceUS.User === 'undefined') {
                     tracer.log("    No User yet for id " + data.uid);
-                } else if(!sourceUS.User.hasOwnProperty('username')) {
+                } else if(!{}.hasOwnProperty.call(sourceUS.User, 'username')) {
                     tracer.log("    User " + User.username + ", id " + data.uid + " logged in");
                 }
             }
-            if(sourceUS.hasOwnProperty('User') === false) {
+            if({}.hasOwnProperty.call(sourceUS, 'User') === false) {
                 sourceUS.User = {};
             }
             for(const prop in User) {
