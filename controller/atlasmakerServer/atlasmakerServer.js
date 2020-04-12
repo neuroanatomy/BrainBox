@@ -435,7 +435,7 @@ const atlasmakerServer = (function() {
                                 },
                                 date: (new Date()).toJSON()
                             })
-                            .then(()=>tracer.log("backup insertion logged"));
+                            .then(() => tracer.log("backup insertion logged"));
                             resolve("Atlas saved");
                         });
                     });
@@ -636,7 +636,7 @@ const atlasmakerServer = (function() {
             }
         },
 
-        S2I: function (s, mri) {
+        screen2index: function (s, mri) {
             var {s2v} = mri;
             var v = [s2v.X + s2v.dx*s[s2v.x], s2v.Y + s2v.dy*s[s2v.y], s2v.Z + s2v.dz*s[s2v.z]];
             var index = v[0] + v[1]*mri.dim[0] + v[2]*mri.dim[0]*mri.dim[1];
@@ -660,7 +660,7 @@ const atlasmakerServer = (function() {
             }
 
             s = [x, y, z];
-            i = me.S2I(s, User);
+            i = me.screen2index(s, User);
             if(vol[i] !== val) {
                 undoLayer.actions[i] = vol[i];
                 vol[i] = val;
@@ -679,7 +679,7 @@ const atlasmakerServer = (function() {
             }
             var s;
             s = [x, y, z];
-            i = me.S2I(s, User);
+            i = me.screen2index(s, User);
 
             return i;
         },
@@ -687,17 +687,17 @@ const atlasmakerServer = (function() {
             // Bresenham's line algorithm adapted from
             // http://stackoverflow.com/questions/4672279/bresenham-algorithm-in-javascript
 
-            var atlas = me.Atlases[User.iAtlas];
-            var vol = atlas.data;
-            var x1 = User.x0; // screen coords
-            var y1 = User.y0; // screen coords
-            var z = User.slice; // screen coords
-            var {view} = User; // view: sag, cor or axi
-            var {sdim} = User.s2v;
-            var x2 = x;
-            var y2 = y;
-            var j, k;
-            var brainWidth, brainHeight;
+            const atlas = me.Atlases[User.iAtlas];
+            const vol = atlas.data;
+            let x1 = User.x0; // screen coords
+            let y1 = User.y0; // screen coords
+            const z = User.slice; // screen coords
+            const {view} = User; // view: sag, cor or axi
+            const {sdim} = User.s2v;
+            const x2 = x;
+            const y2 = y;
+            let brainWidth;
+            let brainHeight;
 
             if(Math.pow(x1-x2, 2) + Math.pow(y1-y2, 2)>20*20) {
                 tracer.log("WARNING: long line from", x1, y1, "to", x2, y2);
@@ -707,11 +707,11 @@ const atlasmakerServer = (function() {
             }
 
             // Define differences and error check
-            var dx = Math.abs(x2 - x1);
-            var dy = Math.abs(y2 - y1);
-            var sx = (x1 < x2) ? 1 : -1;
-            var sy = (y1 < y2) ? 1 : -1;
-            var err = dx - dy;
+            const dx = Math.abs(x2 - x1);
+            const dy = Math.abs(y2 - y1);
+            const sx = (x1 < x2) ? 1 : -1;
+            const sy = (y1 < y2) ? 1 : -1;
+            let err = dx - dy;
 
             switch(view) {
                 case 'sag': [brainWidth, brainHeight] = [sdim[1], sdim[2]]; break; // sagital
@@ -719,8 +719,8 @@ const atlasmakerServer = (function() {
                 case 'axi': [brainWidth, brainHeight] = [sdim[0], sdim[1]]; break; // axial
             }
 
-            for(j = 0; j<Math.min(User.penSize, brainWidth-x1); j += 1) {
-                for(k = 0; k<Math.min(User.penSize, brainHeight-y1); k += 1) {
+            for(let j = 0; j<Math.min(User.penSize, brainWidth-x1); j += 1) {
+                for(let k = 0; k<Math.min(User.penSize, brainHeight-y1); k += 1) {
                     me.paintVoxel(x1 + j, y1 + k, z, User, vol, val, undoLayer);
                 }
             }
@@ -735,8 +735,8 @@ const atlasmakerServer = (function() {
                     err += dx;
                     y1 += sy;
                 }
-                for(j = 0; j<Math.min(User.penSize, brainWidth-x1); j += 1) {
-                    for(k = 0; k<Math.min(User.penSize, brainHeight-y1); k += 1) {
+                for(let j = 0; j<Math.min(User.penSize, brainWidth-x1); j += 1) {
+                    for(let k = 0; k<Math.min(User.penSize, brainHeight-y1); k += 1) {
                         me.paintVoxel(x1 + j, y1 + k, z, User, vol, val, undoLayer);
                     }
                 }
@@ -744,10 +744,10 @@ const atlasmakerServer = (function() {
         },
         fill: function (x, y, z, val, User, undoLayer) {
             var {view} = User;
-            var vol = me.Atlases[User.iAtlas].data;
-    //        var dim = me.Atlases[User.iAtlas].dim;
-            var brainWidth, brainHeight;
-            var {sdim} = User.s2v;
+            const vol = me.Atlases[User.iAtlas].data;
+            let brainWidth;
+            let brainHeight;
+            const {sdim} = User.s2v;
             switch(view) {
                 case 'sag': [brainWidth, brainHeight] = [sdim[1], sdim[2]]; break; // sagital
                 case 'cor': [brainWidth, brainHeight] = [sdim[0], sdim[2]]; break; // coronal
@@ -795,11 +795,12 @@ const atlasmakerServer = (function() {
             }
             tracer.log("Max array size for fill:", max);
         },
-        paintxy: function (u, c, x, y, User, undoLayer) {
+
         /*
             From 'User' we know slice, atlas, vol, view, dim.
             [issue: undoLayer also has a User field. Maybe only undoLayer should be kept?]
         */
+        paintxy: function (u, c, x, y, User, undoLayer) {
             var atlas = me.Atlases[User.iAtlas];
             if(typeof atlas.data === 'undefined') {
                 tracer.log("ERROR: No atlas to draw into");
@@ -922,9 +923,9 @@ const atlasmakerServer = (function() {
             // tracer.log(["v2w", v2w, "wori", wori, "wpixdim", wpixdim, "wvmax", wvmax, "wvmin", wvmin, "wmin", wmin, "wmax", wmax, "w2s", w2s]);
 
             var [i, j, k] = v2w;
-            var mi = { i: 0, v: 0 }; i.map(function(o, n) { if(Math.abs(o)>Math.abs(mi.v)) { mi = { i: n, v: o }; } });
-            var mj = { i: 0, v: 0 }; j.map(function(o, n) { if(Math.abs(o)>Math.abs(mj.v)) { mj = { i: n, v: o }; } });
-            var mk = { i: 0, v: 0 }; k.map(function(o, n) { if(Math.abs(o)>Math.abs(mk.v)) { mk = { i: n, v: o }; } });
+            var mi = { i: 0, v: 0 }; i.forEach(function(o, n) { if(Math.abs(o)>Math.abs(mi.v)) { mi = { i: n, v: o }; } });
+            var mj = { i: 0, v: 0 }; j.forEach(function(o, n) { if(Math.abs(o)>Math.abs(mj.v)) { mj = { i: n, v: o }; } });
+            var mk = { i: 0, v: 0 }; k.forEach(function(o, n) { if(Math.abs(o)>Math.abs(mk.v)) { mk = { i: n, v: o }; } });
 
             mri.s2v = {
                 // old s2v fields
@@ -1600,7 +1601,7 @@ const atlasmakerServer = (function() {
                         case 'cor': s = [x, yc, s2v.sdim[2]-1-y]; break;
                         case 'axi': s = [x, s2v.sdim[1]-1-y, ya]; break;
                     }
-                    i = me.S2I(s, brain);
+                    i = me.screen2index(s, brain);
 
                     val = 255*(brain.data[i]-brain.min)/(brain.max-brain.min);
                     frameData[4*j + 0] = val; // red
@@ -1654,7 +1655,7 @@ const atlasmakerServer = (function() {
                         case 'cor': s = [x, yc, s2v.sdim[2]-1-y]; break;
                         case 'axi': s = [x, s2v.sdim[1]-1-y, ya]; break;
                     }
-                    i = me.S2I(s, brain);
+                    i = me.screen2index(s, brain);
 
                     // brain data
                     val = (brain.data[i]-brain.min)/(brain.max-brain.min);
@@ -2130,7 +2131,7 @@ const atlasmakerServer = (function() {
                         }
                     }
 
-                    let {iAtlas, atlasLoadedFlag} = me._findAtlas({dirname: User.dirname, atlasFilename: User.atlasFilename});
+                    const {iAtlas, atlasLoadedFlag} = me._findAtlas({dirname: User.dirname, atlasFilename: User.atlasFilename});
                     User.iAtlas = iAtlas; // value i if it was found, or last available if it wasn't
 
                     // 2. Send the atlas to the user (load it if required)
