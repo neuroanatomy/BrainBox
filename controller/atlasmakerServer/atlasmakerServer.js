@@ -88,7 +88,7 @@ const DOMPurify = createDOMPurify(window);
 const jsonpatch = require('fast-json-patch');
 
 function bufferTag(str, sz) {
-    var buf = new Buffer(sz).fill(32);
+    const buf = Buffer.alloc(sz).fill(32);
     buf.write(str);
 
     return buf;
@@ -397,7 +397,7 @@ const atlasmakerServer = (function() {
                     } else {
                         ftrSz = 0;
                     }
-                    mri = new Buffer(atlas.dim[0]*atlas.dim[1]*atlas.dim[2] + hdrSz + ftrSz);
+                    mri = Buffer.alloc(atlas.dim[0]*atlas.dim[1]*atlas.dim[2] + hdrSz + ftrSz);
                     tracer.log("        sum:", sum);
                     tracer.log("header size:", hdrSz);
                     tracer.log("  data size:", atlas.dim[0]*atlas.dim[1]*atlas.dim[2]);
@@ -1186,7 +1186,7 @@ const atlasmakerServer = (function() {
             var pr = new Promise(function (resolve, reject) {
                 try {
                     childProcess.execFile("gunzip", ["-c", mriPath], { encoding: 'binary', maxBuffer: 200*1024*1024 }, function(err, stdout) {
-                        var mgh = new Buffer(stdout, 'binary');
+                        var mgh = Buffer.from(stdout, 'binary');
                         var i, j;
                         var tmp;
                         var sum;
@@ -1388,7 +1388,7 @@ const atlasmakerServer = (function() {
             mri.hdrSz = vox_offset;
 
             // zero the data
-            mri.data = new Buffer(sz);
+            mri.data = Buffer.alloc(sz);
             for(i = 0; i<sz; i += 1) {
                 mri.data[i] = 0;
             }
@@ -1566,7 +1566,7 @@ const atlasmakerServer = (function() {
                 case 'axi': [brainWidth, brainHeight] = [s2v.sdim[0], s2v.sdim[1]]; break; //brain_D = s2v.sdim[2]; break; // axial
             }
 
-            var frameData = new Buffer(brainWidth * brainHeight * 4);
+            var frameData = Buffer.alloc(brainWidth * brainHeight * 4);
 
             j = 0;
             switch(view) {
@@ -1622,7 +1622,7 @@ const atlasmakerServer = (function() {
                 case 'axi': [brainWidth, brainHeight] = [s2v.sdim[0], s2v.sdim[1]]; break; //brain_D = s2v.sdim[2]; break; // axial
             }
 
-            var frameData = new Buffer(brainWidth * brainHeight * 4);
+            var frameData = Buffer.alloc(brainWidth * brainHeight * 4);
 
             j = 0;
             switch(view) {
