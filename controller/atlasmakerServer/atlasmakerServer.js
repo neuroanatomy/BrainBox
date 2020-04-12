@@ -382,12 +382,11 @@ const atlasmakerServer = (function() {
                         tracer.log("atlas:", atlas);
                     }
 
-                    return Promise.reject("ERROR: [saveAtlas] atlas in Atlas array has no data");
+                    return Promise.reject(new Error("ERROR: [saveAtlas] atlas in Atlas array has no data"));
                 } else {
                     // check if atlas has changed since the last time...
-                    var i;
-                    var sum = 0;
-                    for(i = 0; i<atlas.dim[0]*atlas.dim[1]*atlas.dim[2]; i += 1) {
+                    let sum = 0;
+                    for(let i = 0; i<atlas.dim[0]*atlas.dim[1]*atlas.dim[2]; i += 1) {
                         sum+=atlas.data[i];
                     }
 
@@ -455,7 +454,7 @@ const atlasmakerServer = (function() {
                 }
             } else {
 
-                return Promise.reject("ERROR: No atlas to save");
+                return Promise.reject(new Error("ERROR: No atlas to save"));
             }
 
             return pr;
@@ -1108,7 +1107,7 @@ const atlasmakerServer = (function() {
                             }
                         } catch(err2) {
                             tracer.log("ERROR Cannot read nifti header:", err2);
-                            reject("ERROR Cannot read nifti header: " + err2);
+                            reject(new Error("ERROR Cannot read nifti header: " + err2));
 
                             return;
                         }
@@ -1166,7 +1165,7 @@ const atlasmakerServer = (function() {
                                 }
                                 break;
                             default: {
-                                reject("ERROR: Unknown dataType: " + mri.datatype);
+                                reject(new Error("ERROR: Unknown dataType: " + mri.datatype));
 
                                 return;
                             }
@@ -1187,7 +1186,7 @@ const atlasmakerServer = (function() {
                         resolve(mri);
                     });
                 } catch(e) {
-                    reject("ERROR Cannot uncompress nifti file:" + e);
+                    reject(new Error("ERROR Cannot uncompress nifti file:", e));
                 }
             });
 
@@ -1223,7 +1222,7 @@ const atlasmakerServer = (function() {
                         // Test Header
                         if(h.v<1 || h.v>100) {
                             tracer.log("ERROR: Wrong MGH Header", h);
-                            reject("ERROR: Wrong MGH Header", h);
+                            reject(new Error("ERROR: Wrong MGH Header", h));
 
                             return;
                         }
@@ -1319,7 +1318,7 @@ const atlasmakerServer = (function() {
                         resolve(mri);
                     });
                 } catch(e) {
-                    reject("ERROR Cannot uncompress mgz file: " + e);
+                    reject(new Error("ERROR Cannot uncompress mgz file: ", e));
                 }
             });
 
@@ -1488,7 +1487,7 @@ const atlasmakerServer = (function() {
                             resolve(obj);
                         });
                 } else {
-                    reject();
+                    reject(new Error("Can't find user"));
                 }
             });
         },
@@ -1525,7 +1524,7 @@ const atlasmakerServer = (function() {
                             resolve(obj);
                         });
                 } else {
-                    reject();
+                    reject(new Error("can't find similar project names"));
                 }
             });
         },
