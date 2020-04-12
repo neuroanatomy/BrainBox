@@ -989,7 +989,7 @@ const atlasmakerServer = (function() {
         //         tracer.log("    ok");
         //     }
         // },
-        filetypeFromFilename: function (mriPath) {
+        _filetypeFromFilename: function (mriPath) {
             if(mriPath.match(/.nii.gz$/)) {
                 return "nii.gz";
             } else
@@ -1106,10 +1106,16 @@ const atlasmakerServer = (function() {
             */
 
             var pr = new Promise(function (resolve, reject) {
-                try {
-                    var niigz = fs.readFileSync(mriPath);
-                    tracer.log("niigz length:", niigz.length);
+                let niigz;
 
+                try {
+                    niigz = fs.readFileSync(mriPath);
+                    tracer.log("niigz length:", niigz.length);
+                } catch(e) {
+                    reject(e);
+                }
+
+                try {
                     zlib.gunzip(niigz, function (err, nii) {
                         if(err) {
                             reject(err);
@@ -1150,7 +1156,7 @@ const atlasmakerServer = (function() {
                         resolve(mri);
                     });
                 } catch(e) {
-                    reject(new Error("ERROR Cannot uncompress nifti file:", e));
+                    reject(e);
                 }
             });
 
@@ -1216,11 +1222,11 @@ const atlasmakerServer = (function() {
             mri.ftr = mgh.slice(hdrSize + sz*bpv);
 
             // print info
-            tracer.log("    mgh.length:", mgh.length);
-            tracer.log("       hdrSize:", hdrSize);
-            tracer.log("        sz*bpv:", sz*bpv);
-            tracer.log("         ftrSz:", ftrSz);
-            tracer.log("mri.ftr.length:", mri.ftr.length);
+            // tracer.log("    mgh.length:", mgh.length);
+            // tracer.log("       hdrSize:", hdrSize);
+            // tracer.log("        sz*bpv:", sz*bpv);
+            // tracer.log("         ftrSz:", ftrSz);
+            // tracer.log("mri.ftr.length:", mri.ftr.length);
 
             switch(hdr.type) {
                 case 0: // MGHUCHAR
@@ -1263,12 +1269,6 @@ const atlasmakerServer = (function() {
             var pr = new Promise(function (resolve, reject) {
                 try {
                     childProcess.execFile("gunzip", ["-c", mriPath], { encoding: 'binary', maxBuffer: 200*1024*1024 }, function(err, stdout) {
-                        if(err) {
-                            reject(err);
-
-                            return;
-                        }
-
                         var mgh = Buffer.from(stdout, 'binary');
                         const mri = {};
                         const hdr = {};
@@ -1410,7 +1410,7 @@ const atlasmakerServer = (function() {
                 output: an mri structure
             */
             var pr = new Promise(function (resolve, reject) {
-                switch(me.filetypeFromFilename(mriPath)) {
+                switch(me._filetypeFromFilename(mriPath)) {
                     case "nii.gz":
                         tracer.log("reading nii");
                         me.readNifti(mriPath)
@@ -1990,7 +1990,7 @@ const atlasmakerServer = (function() {
                         loadedAtlas.dirname = User.dirname;
 
                         // cast atlas data to 8bits
-                        switch(me.filetypeFromFilename(User.atlasFilename)) {
+                        switch(me._filetypeFromFilename(User.atlasFilename)) {
                             case "nii.gz":
                                 me.createNifti(loadedAtlas)
                                 .then(function(atlas8bit) {
