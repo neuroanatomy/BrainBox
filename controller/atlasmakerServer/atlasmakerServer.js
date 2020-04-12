@@ -96,7 +96,7 @@ function bufferTag(str, sz) {
 
 const atlasmakerServer = (function() {
     const me = {
-        debug: 2,
+        debug: 0,
         dataDirectory: '',
         Atlases: [],
         Brains: [],
@@ -1101,7 +1101,7 @@ const atlasmakerServer = (function() {
 
             return success;
         },
-        _computeNiftiVolumeStats: function ({mri}) {
+        _computeVolumeStats: function ({mri}) {
             let sum = 0;
             let [min, max] = [mri.data[0], mri.data[0]];
             for(let i = 0; i<mri.dim[0]*mri.dim[1]*mri.dim[2]; i += 1) {
@@ -1165,7 +1165,7 @@ const atlasmakerServer = (function() {
                         }
 
                         // compute stats: sum, min and max
-                        me._computeNiftiVolumeStats({mri});
+                        me._computeVolumeStats({mri});
 
                         resolve(mri);
                     });
@@ -1176,59 +1176,132 @@ const atlasmakerServer = (function() {
 
             return pr;
         },
-//            this.readNifti = readNifti;
 
+        _readMGZHeader: function({mgh, mri, hdr}) {
+            let success = true;
+
+            me.MghHdr.allocate();
+            me.MghHdr._setBuff(mgh);
+            const h = JSON.parse(JSON.stringify(me.MghHdr.fields));
+            for(const prop in h) {
+                if({}.hasOwnProperty.call(h, prop)) {
+                    hdr[prop] = h[prop];
+                }
+            }
+
+            // Test Header
+            if(h.v<1 || h.v>100) {
+                tracer.log("ERROR: Wrong MGH Header", h);
+                success = false;
+            } else {
+                // Equations from freesurfer/matlab/load_mgh.m
+                const PcrsC = [h.ndim1/2, h.ndim2/2, h.ndim3/2];
+                //var D = [[h.delta[0], 0, 0], [0, h.delta[1], 0], [0, 0, h.delta[2]]];
+                const MdcD = [
+                    [h.Mdc[0]*h.delta[0], h.Mdc[3]*h.delta[1], h.Mdc[6]*h.delta[2]],
+                    [h.Mdc[1]*h.delta[0], h.Mdc[4]*h.delta[1], h.Mdc[7]*h.delta[2]],
+                    [h.Mdc[2]*h.delta[0], h.Mdc[5]*h.delta[1], h.Mdc[8]*h.delta[2]]
+                ];
+                const Pxyz0 = me.subVecVec(h.Pxyz_c, me.mulMatVec(MdcD, PcrsC));
+                const M = [
+                    h.Mdc[0]*h.delta[0], h.Mdc[3]*h.delta[1], h.Mdc[6]*h.delta[2], Pxyz0[0],
+                    h.Mdc[1]*h.delta[0], h.Mdc[4]*h.delta[1], h.Mdc[7]*h.delta[2], Pxyz0[1],
+                    h.Mdc[2]*h.delta[0], h.Mdc[5]*h.delta[1], h.Mdc[8]*h.delta[2], Pxyz0[2],
+                    0, 0, 0, 1
+                ];
+
+                mri.dim = [h.ndim1, h.ndim2, h.ndim3];
+                mri.pixdim = [h.delta[0], h.delta[1], h.delta[2]];
+                mri.dir = [[M[0], -M[1], -M[2]], [M[4], -M[5], -M[6]], [M[8], -M[9], -M[10]]];
+                mri.ori = [M[3], M[7], M[11]];
+            }
+
+            return success;
+        },
+
+        _readMGZData: function ({mgh, mri, hdr}) {
+            let success = true;
+            const hdrSize = 284;
+            let tmp;
+
+            const sz = mri.dim[0]*mri.dim[1]*mri.dim[2];
+            const bpv = [1, 4, 0, 4, 2][hdr.type]; // bytes per voxel
+            tracer.log("sz:", sz);
+            tracer.log("bpv:", bpv, "type:", hdr.type);
+
+            // keep the header
+            mri.hdr = mgh.slice(0, hdrSize);
+            mri.hdrSz = hdrSize;
+
+            // keep the footer
+            const ftrSz = mgh.length-hdrSize-sz*bpv;
+            mri.ftr = mgh.slice(hdrSize + sz*bpv);
+
+            // print info
+            tracer.log("    mgh.length:", mgh.length);
+            tracer.log("       hdrSize:", hdrSize);
+            tracer.log("        sz*bpv:", sz*bpv);
+            tracer.log("         ftrSz:", ftrSz);
+            tracer.log("mri.ftr.length:", mri.ftr.length);
+
+            switch(hdr.type) {
+                case 0: // MGHUCHAR
+                    mri.data = mgh.slice(hdrSize, -ftrSz);
+                    break;
+                case 1: // MGHINT
+                    tmp = mgh.slice(hdrSize, -ftrSz);
+                    mri.data = new Uint32Array(sz);
+                    for(let j = 0; j<sz; j += 1) {
+                        mri.data[j] = tmp.readUInt32BE(j*4);
+                    }
+                    break;
+                case 3: // MGHFLOAT
+                    tmp = mgh.slice(hdrSize, -ftrSz);
+                    mri.data = new Float32Array(sz);
+                    for(let j = 0; j<sz; j += 1) {
+                        mri.data[j] = tmp.readFloatBE(j*4);
+                    }
+                    break;
+                case 4: // MGHSHORT
+                    tmp = mgh.slice(hdrSize, -ftrSz);
+                    mri.data = new Int16Array(sz);
+                    for(let j = 0; j<sz; j += 1) {
+                        mri.data[j] = tmp.readInt16BE(j*2);
+                    }
+                    break;
+                default:
+                    success = false;
+                    tracer.log("ERROR: Unknown dataType: " + hdr.type);
+            }
+
+            return success;
+        },
+
+        /*
+            readMGZ
+            input: path to a .mgz file
+            output: an mri structure
+        */
         readMGZ: function (mriPath) {
-            /*
-                readMGZ
-                input: path to a .mgz file
-                output: an mri structure
-            */
-
             var pr = new Promise(function (resolve, reject) {
                 try {
                     childProcess.execFile("gunzip", ["-c", mriPath], { encoding: 'binary', maxBuffer: 200*1024*1024 }, function(err, stdout) {
-                        var mgh = Buffer.from(stdout, 'binary');
-                        var i, j;
-                        var tmp;
-                        var sum;
-                        var mri = {};
-                        var sz;
-                        var bpv;
-                        var hdrSize = 284;
-                        var ftrSz;
-                        me.MghHdr.allocate();
-                        me.MghHdr._setBuff(mgh);
-                        var h = JSON.parse(JSON.stringify(me.MghHdr.fields));
-
-                        // Test Header
-                        if(h.v<1 || h.v>100) {
-                            tracer.log("ERROR: Wrong MGH Header", h);
-                            reject(new Error("ERROR: Wrong MGH Header", h));
+                        if(err) {
+                            reject(err);
 
                             return;
                         }
 
-                        // Equations from freesurfer/matlab/load_mgh.m
-                        var PcrsC = [h.ndim1/2, h.ndim2/2, h.ndim3/2];
-                        //var D = [[h.delta[0], 0, 0], [0, h.delta[1], 0], [0, 0, h.delta[2]]];
-                        var MdcD = [
-                            [h.Mdc[0]*h.delta[0], h.Mdc[3]*h.delta[1], h.Mdc[6]*h.delta[2]],
-                            [h.Mdc[1]*h.delta[0], h.Mdc[4]*h.delta[1], h.Mdc[7]*h.delta[2]],
-                            [h.Mdc[2]*h.delta[0], h.Mdc[5]*h.delta[1], h.Mdc[8]*h.delta[2]]
-                        ];
-                        var Pxyz0 = me.subVecVec(h.Pxyz_c, me.mulMatVec(MdcD, PcrsC));
-                        var M = [
-                            h.Mdc[0]*h.delta[0], h.Mdc[3]*h.delta[1], h.Mdc[6]*h.delta[2], Pxyz0[0],
-                            h.Mdc[1]*h.delta[0], h.Mdc[4]*h.delta[1], h.Mdc[7]*h.delta[2], Pxyz0[1],
-                            h.Mdc[2]*h.delta[0], h.Mdc[5]*h.delta[1], h.Mdc[8]*h.delta[2], Pxyz0[2],
-                            0, 0, 0, 1
-                        ];
+                        var mgh = Buffer.from(stdout, 'binary');
+                        const mri = {};
+                        const hdr = {};
 
-                        mri.dim = [h.ndim1, h.ndim2, h.ndim3];
-                        mri.pixdim = [h.delta[0], h.delta[1], h.delta[2]];
-                        mri.dir = [[M[0], -M[1], -M[2]], [M[4], -M[5], -M[6]], [M[8], -M[9], -M[10]]];
-                        mri.ori = [M[3], M[7], M[11]];
+                        // read header
+                        if(!me._readMGZHeader({mgh, mri, hdr})) {
+                            reject(new Error("Failed to read MGZ header"));
+
+                            return;
+                        }
 
                          // compute the transformation from voxel space to screen space
                         me.computeS2VTransformation(mri);
@@ -1236,66 +1309,15 @@ const atlasmakerServer = (function() {
                         // test if the transformation looks incorrect. Reset it if it does
                         //testS2VTransformation(mri);
 
-                        sz = mri.dim[0]*mri.dim[1]*mri.dim[2];
-                        bpv = [1, 4, 0, 4, 2][h.type]; // bytes per voxel
-                        tracer.log("sz:", sz);
-                        tracer.log("bpv:", bpv, "type:", h.type);
+                        // read binary data
+                        if(!me._readMGZData({mgh, mri, hdr})) {
+                            reject(new Error("Failed to read MGZ binary data"));
 
-                        // keep the header
-                        mri.hdr = mgh.slice(0, hdrSize);
-                        mri.hdrSz = hdrSize;
-
-                        // keep the footer
-                        ftrSz = mgh.length-hdrSize-sz*bpv;
-                        mri.ftr = mgh.slice(hdrSize + sz*bpv);
-
-                        // print info
-                        tracer.log("    mgh.length:", mgh.length);
-                        tracer.log("       hdrSize:", hdrSize);
-                        tracer.log("        sz*bpv:", sz*bpv);
-                        tracer.log("         ftrSz:", ftrSz);
-                        tracer.log("mri.ftr.length:", mri.ftr.length);
-
-                        switch(h.type) {
-                            case 0: // MGHUCHAR
-                                mri.data = mgh.slice(hdrSize, -ftrSz);
-                                break;
-                            case 1: // MGHINT
-                                tmp = mgh.slice(hdrSize, -ftrSz);
-                                mri.data = new Uint32Array(sz);
-                                for(j = 0; j<sz; j += 1) {
-                                    mri.data[j] = tmp.readUInt32BE(j*4);
-                                }
-                                break;
-                            case 3: // MGHFLOAT
-                                tmp = mgh.slice(hdrSize, -ftrSz);
-                                mri.data = new Float32Array(sz);
-                                for(j = 0; j<sz; j += 1) {
-                                    mri.data[j] = tmp.readFloatBE(j*4);
-                                }
-                                break;
-                            case 4: // MGHSHORT
-                                tmp = mgh.slice(hdrSize, -ftrSz);
-                                mri.data = new Int16Array(sz);
-                                for(j = 0; j<sz; j += 1) {
-                                    mri.data[j] = tmp.readInt16BE(j*2);
-                                }
-                                break;
-                            default:
-                                tracer.log("ERROR: Unknown dataType: " + h.type);
+                            return;
                         }
 
-                        var min;
-                        var max;
-                        sum = 0;
-                        [min, max] = [mri.data[0], mri.data[0]];
-                        for(i = 0; i<sz; i += 1) {
-                            sum+=mri.data[i];
-
-                            if(mri.data[i]<min) { min = mri.data[i]; }
-                            if(mri.data[i]>max) { max = mri.data[i]; }
-                        }
-                        [mri.sum, mri.min, mri.max] = [sum, min, max];
+                        // compute volume stats
+                        me._computeVolumeStats({mri});
 
                         resolve(mri);
                     });
@@ -1307,14 +1329,14 @@ const atlasmakerServer = (function() {
             return pr;
         },
 
+        /*
+            createNifti
+            input: a template mri structure
+            output: a new empty mri structure, datatype = 2 (1 byte per voxel), same dimensions as template
+        */
         createNifti: function (templateMRI) {
-            /*
-                createNifti
-                input: a template mri structure
-                output: a new empty mri structure, datatype = 2 (1 byte per voxel), same dimensions as template
-            */
 
-/*eslint-disable camelcase*/
+            /*eslint-disable camelcase*/
             var mri = {};
             var props = ["dim", "pixdim", "hdr"];
             var datatype = 2;
@@ -1365,7 +1387,7 @@ const atlasmakerServer = (function() {
                 intent_name: '',
                 magic: 'n+1\0'
             };
-/*eslint-enable camelcase*/
+            /*eslint-enable camelcase*/
 
             me.NiiHdr.allocate();
             niihdr = me.NiiHdr.buffer();
