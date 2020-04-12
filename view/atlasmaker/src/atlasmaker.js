@@ -28,8 +28,8 @@ export var AtlasMakerWidget = {
     // Globals
     //========================================================================================
     debug:            1,
-    hostname: 'http://localhost:3001', // '', // 'http://brainbox.pasteur.fr',
-    wshostname: 'localhost:8080', // 'ws://brainbox.pasteur.fr:8080',
+    hostname: 'https://brainbox.pasteur.fr', //'https://connect-project.io', // 'http://localhost:3001', // '', // 'http://brainbox.pasteur.fr',
+    wshostname: 'brainbox.pasteur.fr:8080', //'connect-project.io:8080', //'localhost:8080', // 'brainbox.pasteur.fr:8080',
     container:        null, // Element where atlasmaker lives
     brain_offcn:    null,
     brain_offtx:    null,
@@ -107,7 +107,7 @@ export var AtlasMakerWidget = {
     info:{}, // information displayed over each brain slice
     // undo stack
     /* DEPRECATED Undo:[], */
-    secure: false,
+    secure: true,
     version: 1, // version of the configuration file (slice number, plane, etc). Default=1
 
     /**

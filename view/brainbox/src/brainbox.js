@@ -17,7 +17,7 @@ var hashOld;
 export var BrainBox={
     version: 1,
     debug: 1,
-    hostname: 'http://localhost:3001', //'', // 'http://brainbox.pasteur.fr',
+    hostname: 'https://brainbox.pasteur.fr', //'https://connect-project.io', //'http://localhost:3001', //'', // 'http://brainbox.pasteur.fr',
     info:{},
     labelSets:null,
     annotationType:["volume", "text", "multiple choices", "hidden text"],

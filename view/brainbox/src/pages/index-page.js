@@ -17,12 +17,13 @@ function goToURL() {
  * @returns {void}
  */
 function testWebSockets() {
+console.log("testWebSockets");
     return new Promise(function(resolve, reject) {
-        var host = "ws://websocketstest.com:8080/service";
+        var host = "wss://websocketstest.com/service";
         var ws;
 
         if (window.WebSocket) {
-            ws=new WebSocket(host);
+            ws=new window.WebSocket(host);
         } else if (window.MozWebSocket) {
             ws=new MozWebSocket(host);
         } else {
@@ -32,7 +33,8 @@ function testWebSockets() {
             ws.close();
             resolve("Connection ok");
         };
-        ws.onerror = function() {
+        ws.onerror = function(err) {
+console.log(err);
             reject(new Error("BrainBox requires access to WebSockets, but your connection does not allow it. Ask your provider to allow WebSockets on port 8080"));
         };
     });
