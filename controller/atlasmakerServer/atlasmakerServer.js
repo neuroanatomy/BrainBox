@@ -2090,7 +2090,7 @@ const atlasmakerServer = (function() {
             return firstConnectionFlag;
         },
         _findAtlas: function ({dirname, atlasFilename}) {
-            let iAtlas = me.Atlases.length;
+            let iAtlas = String(me.Atlases.length);
             let atlasLoadedFlag = false;
             for(const i in me.Atlases) {
                 if({}.hasOwnProperty.call(me.Atlases, i)) {
@@ -2384,6 +2384,168 @@ const atlasmakerServer = (function() {
                     break;
             }
         },
+        _fitsBroadcastExclusionCriteria: function ({sourceUS, targetUS}) {
+            let exclude = false;
+
+            if(sourceUS.uid === targetUS.uid) {
+                // do not auto-broadcast
+                exclude = true;
+            } else if(sourceUS.autocompleteClient) {
+                // do not broadcast to autocomplete clients
+                exclude = true;
+            } else if(typeof sourceUS.User === 'undefined' || typeof targetUS.User === 'undefined') {
+                // do not broadcast to undefined users
+                exclude = true;
+            }
+
+            return exclude;
+        },
+        _fitsBroadcastInclusionCriteria: function ({sourceUS, targetUS, data}) {
+            let include = false;
+            if ( targetUS.User.projectPage && targetUS.User.projectPage === sourceUS.User.projectPage) {
+                // users are annotating on the same project page
+                include = true;
+            } else if (targetUS.User.iAtlas === sourceUS.User.iAtlas) {
+                // users are annotating the same atlas
+                include = true;
+            } else if (data.type === "userData") {
+                // users are exchanging identity information
+                include = true;
+            } else if (data.type === "chat") {
+                // users are chatting
+                include = true;
+            }
+
+            return include;
+        },
+        _handleBroadcastWebSocketMessage: function ({data, sourceUS}) {
+            // do not broadcast the following messages
+            if(data.type === "requestSlice" ||
+                data.type === "requestSlice2" ||
+                (data.type === "userData" && data.description === "sendAtlas")) {
+
+                return;
+            }
+
+            // scan through connected users
+            for(const client of websocketserver.clients) {
+                const targetUS = me.getUserFromSocket(client);
+
+                // check exclusion criteria
+                if(me._fitsBroadcastExclusionCriteria({sourceUS, targetUS})) {
+                    continue;
+                }
+
+                // check inclusion criteria
+                if(!me._fitsBroadcastInclusionCriteria({sourceUS, targetUS, data})) {
+                    continue;
+                }
+
+                // do broadcast
+                if(data.type === "atlas") {
+                    me.sendAtlasToUser(data.data, client, false);
+                } else {
+                    // sanitise data
+                    const cleanData = DOMPurify.sanitize(JSON.stringify(data));
+                    try {
+                        client.send(cleanData);
+                    } catch (err) {
+                        tracer.log("ERROR:", err);
+                    }
+                }
+            }
+        },
+        _handleWebSocketMessage: function ({msg, ws}) {
+            // var sender = ws;
+            var sourceUS = me.getUserFromSocket(ws);
+            var data = {};
+
+            // Handle binary data: a user uploaded an atlas file
+            if(msg instanceof Buffer) {
+                data.data = msg;
+                data.type = "atlas";
+            } else {
+                data = JSON.parse(msg);
+            }
+            data.uid = sourceUS.uid;
+
+            // Websocket traffic recorder
+            if(me.recordWS) {
+                if(data.type === "atlas") {
+                    me.recordedWSTraffic.push({ type: 'atlas' });
+                } else {
+                    me.recordedWSTraffic.push(data);
+                }
+            }
+
+            // handle single user Web socket messages
+            me._handleUserWebSocketMessage({data, ws});
+
+            // handle broadcast of messages
+            me._handleBroadcastWebSocketMessage({data, sourceUS});
+        },
+        _handleWebSocketClose: function ({ws}) {
+            let sum;
+            let nconnected = me.US.filter(function(o) { return typeof o !== 'undefined'; }).length;
+            const sourceUS = me.getUserFromSocket(ws);
+
+            tracer.log(`User ${sourceUS.uid} disconnecting. There are ${nconnected} connected`);
+
+            if(typeof sourceUS.User === 'undefined') {
+                tracer.log(`WARNING: The 'User' structure for ${sourceUS.uid} is undefined. Maybe never assigned?`);
+            } else if(sourceUS.User.dirname) {
+                const mriPath = sourceUS.User.dirname + sourceUS.User.mri;
+                const {specimenName} = sourceUS;
+                const atlasPath = sourceUS.User.dirname + sourceUS.User.atlasFilename;
+                tracer.log(`Was connected to MRI: ${mriPath}, atlas: ${atlasPath}, specimen: ${specimenName}`);
+
+                // count how many users remain connected to the MRI after user leaves, remove current user
+                sum = me.numberOfUsersConnectedToMRI(sourceUS.User.dirname + sourceUS.User.mri) - 1;
+                if(sum) {
+                    tracer.log("    There remain " + sum + " users connected to that MRI");
+                } else {
+                    tracer.log("    No user connected to MRI "
+                                + sourceUS.User.dirname
+                                + sourceUS.User.mri + ": unloading it", sourceUS.specimenName);
+                    me.unloadMRI(sourceUS.User.dirname + sourceUS.User.mri);
+                }
+
+                // count how many users remain connected to the atlas after user leaves, remove current user
+                sum = me.numberOfUsersConnectedToAtlas(sourceUS.User.dirname, sourceUS.User.atlasFilename) - 1;
+                if(sum) {
+                    tracer.log("    There remain " + sum + " users connected to that atlas");
+                } else {
+                    tracer.log("    No user connected to atlas "
+                                + sourceUS.User.dirname
+                                + sourceUS.User.atlasFilename + ": unloading it", sourceUS.specimenName);
+                    me.unloadAtlas(sourceUS.User.dirname, sourceUS.User.atlasFilename, sourceUS.specimenName);
+                }
+            } else {
+                tracer.log("<ERROR: dirname was not defined>", sourceUS.User);
+            }
+
+            // send user disconnect message to remaining users
+            me.sendDisconnectMessage(sourceUS.uid);
+
+            // remove the user from the list
+            me.removeUser(ws);
+
+            // display the total number of connected users
+            nconnected = me.US.filter(function(o) { return typeof o !== 'undefined'; }).length;
+            tracer.log(`${nconnected} users remain connected`);
+        },
+        _pushNewUser: function ({ws}) {
+            me.uidcounter += 1;
+
+            const newUS = { "uid": "u" + me.uidcounter, "socket": ws };
+            me.US.push(newUS);
+
+            const nconnected = me.US.filter(function(o) { return typeof o !== 'undefined'; }).length;
+            tracer.log(`User id ${newUS.uid} connected, total: ${nconnected} users`);
+
+            // send data from previous users
+            me.sendPreviousUserDataMessage(newUS);
+        },
 
         /*
             Init
@@ -2430,163 +2592,14 @@ const atlasmakerServer = (function() {
                         return;
                     }
 
-                    tracer.log("    remote_address", req.connection.remoteAddress);
-                    me.uidcounter += 1;
-                    var newUS = { "uid": "u" + me.uidcounter, "socket": ws };
-                    me.US.push(newUS);
-                    tracer.log("    User id " + newUS.uid + " connected, total: " + me.US.filter(function(o) { return typeof o !== 'undefined'; }).length + " users");
-
-                    // send data from previous users
-                    me.sendPreviousUserDataMessage(newUS);
+                    me._pushNewUser({ws});
 
                     ws.on('message', function (msg) {
-                        var sender = ws;
-                        var sourceUS = me.getUserFromSocket(ws);
-                        var data = {};
-
-                        // Handle binary data: a user uploaded an atlas file
-                        if(msg instanceof Buffer) {
-                            data.data = msg;
-                            data.type = "atlas";
-                        } else {
-                            data = JSON.parse(msg);
-                        }
-                        data.uid = sourceUS.uid;
-
-                        // Websocket traffic recording
-                        if(me.recordWS) {
-                            if(data.type === "atlas") {
-                                me.recordedWSTraffic.push({ type: 'atlas' });
-                            } else {
-                                me.recordedWSTraffic.push(data);
-                            }
-                        }
-
-                        // handle single user Web socket messages
-                        me._handleUserWebSocketMessage({data, ws});
-
-                        // handle broadcast of messages
-                        var n = 0;
-
-                        // do not broadcast the following messages
-                        if(data.type === "requestSlice"
-                            || data.type === "requestSlice2"
-                            || (data.type === "userData" && data.description === "sendAtlas")) {
-
-                            return;
-                        }
-
-                        // scan through connected users
-                        for(client of websocketserver.clients) {
-                            // i-th user
-                            var targetUS = me.getUserFromSocket(client);
-
-                            // do not auto-broadcast
-                            if(sourceUS.uid === targetUS.uid) {
-                                if(me.debug>1) {
-                                    tracer.log("    no broadcast to self");
-                                }
-                                continue;
-                            }
-
-                            // do not broadcast to autocomplete clients
-                            if(sourceUS.autocompleteClient) {
-                                if(me.debug>1) {
-                                    tracer.log("    no broadcast to autocomplete clients");
-                                }
-                                continue;
-                            }
-
-                            // do not broadcast to undefined users
-                            if( typeof sourceUS.User === 'undefined' || typeof targetUS.User === 'undefined') {
-                                if(me.debug) {
-                                    tracer.log("    User " + sourceUS.uid + ": " + (typeof sourceUS.User === 'undefined')?"undefined": "defined");
-                                }
-                                if(me.debug) {
-                                    tracer.log("    User " + targetUS.uid + ": " + (typeof targetUS.User === 'undefined')?"undefined": "defined");
-                                }
-                                continue;
-                            }
-                            if (( targetUS.User.projectPage && targetUS.User.projectPage === sourceUS.User.projectPage)
-                                || (targetUS.User.iAtlas === sourceUS.User.iAtlas)
-                                || (data.type === "userData")
-                                || (data.type === "chat")
-                            ) {
-                                if(data.type === "atlas") {
-                                    me.sendAtlasToUser(data.data, client, false);
-                                } else {
-                                    // sanitise data
-                                    const cleanData = DOMPurify.sanitize(JSON.stringify(data));
-                                    try {
-                                        client.send(cleanData);
-                                    } catch (err) {
-                                        tracer.log("ERROR:", err);
-                                    }
-                                }
-                            } else if(me.debug>1) {
-                                tracer.log("    no broadcast to user " + targetUS.User.username + " [uid: " + targetUS.uid + "] of atlas " + targetUS.User.specimenName + "/" + targetUS.User.atlasFilename);
-                            }
-                            n += 1;
-                        }
-                        if(me.debug>2) {
-                            tracer.log("    broadcasted to", n, "users");
-                        }
+                        me._handleWebSocketMessage({msg, ws});
                     });
 
                     ws.on('close', function () {
-                        var sum;
-                        var sourceUS;
-
-                        tracer.log("A user is disconnecting");
-                        tracer.log("There are " + me.US.filter(function(o) { return typeof o !== 'undefined'; }).length + " connected");
-
-                        sourceUS = me.getUserFromSocket(ws);
-                        tracer.log("    The user disconnecting is: " + sourceUS.uid);
-
-                        if(typeof sourceUS.User === 'undefined') {
-                            tracer.log("<WARNING: The 'User' structure for " + sourceUS.uid + " is undefined. Maybe never assigned?");
-                            // tracer.log("    US:", me.US);
-                            tracer.log(" WARNING>");
-                        } else if(sourceUS.User.dirname) {
-                            tracer.log("    User was connected to MRI "+ sourceUS.User.dirname + sourceUS.User.mri, sourceUS.specimenName);
-                            tracer.log("    User was connected to atlas "+ sourceUS.User.dirname + sourceUS.User.atlasFilename, sourceUS.specimenName);
-
-                            // count how many users remain connected to the MRI after user leaves
-                            sum = me.numberOfUsersConnectedToMRI(sourceUS.User.dirname + sourceUS.User.mri);
-                            sum -= 1; // subtract current user
-                            if(sum) {
-                                tracer.log("    There remain " + sum + " users connected to that MRI");
-                            } else {
-                                tracer.log("    No user connected to MRI "
-                                            + sourceUS.User.dirname
-                                            + sourceUS.User.mri + ": unloading it", sourceUS.specimenName);
-                                me.unloadMRI(sourceUS.User.dirname + sourceUS.User.mri);
-                            }
-
-                            // count how many users remain connected to the atlas after user leaves
-                            sum = me.numberOfUsersConnectedToAtlas(sourceUS.User.dirname, sourceUS.User.atlasFilename);
-                            sum -= 1; // subtract current user
-                            if(sum) {
-                                tracer.log("    There remain " + sum + " users connected to that atlas");
-                            } else {
-                                tracer.log("    No user connected to atlas "
-                                            + sourceUS.User.dirname
-                                            + sourceUS.User.atlasFilename + ": unloading it", sourceUS.specimenName);
-                                me.unloadAtlas(sourceUS.User.dirname, sourceUS.User.atlasFilename, sourceUS.specimenName);
-                            }
-                        } else {
-                            tracer.log("<ERROR: dirname was not defined>", sourceUS.User);
-                        }
-
-                        // send user disconnect message to remaining users
-                        me.sendDisconnectMessage(sourceUS.uid);
-
-                        // remove the user from the list
-                        me.removeUser(ws);
-
-                        // display the total number of connected users
-                        tracer.log("    " + me.US.filter(function(o) { return typeof o !== 'undefined'; }).length + " remain connected");
-
+                        me._handleWebSocketClose({ws});
                     });
                 });
                 server.listen(port, function () { tracer.log('Listening on ' + server.address().port, server.address()); });
@@ -2628,7 +2641,7 @@ module.exports = atlasmakerServer;
             .username:    string, for example, roberto
             .specimenName: string, for example, Crab-eating_macaque
             .atlasFilename:    string, atlas filename, for example, Cerebellum.nii.gz
-            .iAtlas:    index of atlas in Atlases[]
+            .iAtlas:    String(index) of atlas in Atlases[]
             .dim:        array, size of the mri the user is editing, for example, [160, 224, 160]
 
     undoBuffer
