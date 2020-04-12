@@ -25,7 +25,7 @@ jdenticon.update($("svg")[0],md5(projectShortname));
 // WS Autocompletion
 var cb, label;
 let ws;
-var host = "ws://" + window.location.hostname + ":8080/";
+var host = "wss://" + window.location.hostname + ":8080/";
 if (window.WebSocket) {
     ws = new WebSocket(host);
 } else if (window.MozWebSocket) {

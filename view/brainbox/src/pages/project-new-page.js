@@ -14,7 +14,7 @@ import * as DOMPurify from 'dompurify';
 
 import $ from 'jquery';
 
-var host = "ws://" + window.location.hostname + ":8080/";
+var host = "wss://" + window.location.hostname + ":8080/";
 let ws;
 if (window.WebSocket) {
     ws = new WebSocket(host);

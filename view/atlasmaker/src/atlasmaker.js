@@ -29,7 +29,7 @@ export var AtlasMakerWidget = {
     //========================================================================================
     debug:            1,
     hostname: 'http://localhost:3001', // '', // 'http://brainbox.pasteur.fr',
-    wshostname: 'localhost:8080', // 'ws://brainbox.pasteur.fr:8080',
+    wshostname: 'localhost:8080', // 'brainbox.pasteur.fr:8080',
     container:        null, // Element where atlasmaker lives
     brain_offcn:    null,
     brain_offtx:    null,
