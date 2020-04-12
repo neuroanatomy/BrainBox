@@ -76,13 +76,13 @@ server.on("upgrade", function(req, socket, head) {
 });
 
 const createDOMPurify = require('dompurify');
-const { JSDOM } = require('jsdom');
-const window = (new JSDOM('', {
+const {JSDOM} = require('jsdom');
+const {window} = (new JSDOM('', {
     features: {
         FetchExternalResources: false, // disables resource loading over HTTP / filesystem
         ProcessExternalResources: false // do not execute JS within script blocks
     }
-})).window;
+}));
 const DOMPurify = createDOMPurify(window);
 
 const jsonpatch = require('fast-json-patch');
