@@ -37,7 +37,7 @@ if(secure) {
             || req.connection.remoteAddress
             || req.socket.remoteAddress
             || req.connection.socket.remoteAddress;
-    }).listen(port);
+    }); //.listen(port);
 } else {
     var http = require('http');
     server = http.createServer(function(req, res) {
