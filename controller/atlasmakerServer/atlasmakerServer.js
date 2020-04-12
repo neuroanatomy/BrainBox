@@ -188,14 +188,13 @@ const atlasmakerServer = (function() {
 
         numberOfUsersConnectedToAtlas: function numberOfUsersConnectedToAtlas(dirname, atlasFilename) {
             me.traceLog(me.numberOfUsersConnectedToAtlas);
-            var i;
             var sum = 0;
 
             if(typeof dirname === 'undefined' || typeof atlasFilename === 'undefined') {
                 return sum;
             }
 
-            for(i in me.US) {
+            for(const i in me.US) {
                 if({}.hasOwnProperty.call(me.US, i)) {
                     if(typeof me.US[i].User === 'undefined') {
                         tracer.log("ERROR: When counting the number of users connected to the atlas, user uid " + i + " was not defined");
@@ -235,25 +234,22 @@ const atlasmakerServer = (function() {
                     }
                     if(me.US[i].User.dirname + me.US[i].User.mri === mriPath) {
                         sum += 1;
-                    }    
+                    }
                 }
             }
-
-            /* sum--; */
 
             return sum;
         },
         displayAtlases: function displayAtlases() {
             me.traceLog(me.displayAtlases);
-            var i;
             tracer.log("\n" + me.Atlases.filter( function(o) { return typeof o !== 'undefined'; } ).length + " Atlases:");
-            for(i in me.Atlases) {
+            for(const i in me.Atlases) {
                 if({}.hasOwnProperty.call(me.Atlases, i)) {
                     var sum = me.numberOfUsersConnectedToAtlas(me.Atlases[i].dirname, me.Atlases[i].name);
                     tracer.log("Atlases[" + i + "] path:" + me.Atlases[i].dirname + me.Atlases[i].name + ", " + sum + " users connected");
                 }
             }
-            for(i in me.Atlases) {
+            for(const i in me.Atlases) {
                 if({}.hasOwnProperty.call(me.Atlases, i)) {
                     tracer.log("atlas", i, me.Atlases[i]);
                 }
@@ -262,14 +258,13 @@ const atlasmakerServer = (function() {
         displayBrains: function displayBrains() {
             me.traceLog(displayBrains);
             tracer.log("\n" + me.Brains.filter(function(o) { return typeof o !== 'undefined'; }).length + " Brains:");
-            var i;
-            for(i in me.Brains) {
+            for(const i in me.Brains) {
                 if({}.hasOwnProperty.call(me.Brains, i)) {
                     var sum = me.numberOfUsersConnectedToMRI(me.Brains[i].path);
-                    tracer.log("Brains[" + i + "].path=" + me.Brains[i].path + ", " + sum + " users connected");    
+                    tracer.log("Brains[" + i + "].path=" + me.Brains[i].path + ", " + sum + " users connected");
                 }
             }
-            for(i in me.Brains) {
+            for(const i in me.Brains) {
                 if({}.hasOwnProperty.call(me.Brains, i)) {
                     tracer.log("Brains[" + i + "]");
                     tracer.log("           path:", me.Brains[i].path);
@@ -283,16 +278,18 @@ const atlasmakerServer = (function() {
                     tracer.log("      data.wori:", me.Brains[i].data.wori);
                     tracer.log("  data.datatype:", me.Brains[i].data.datatype);
                     tracer.log("       data.sum:", me.Brains[i].data.sum);
-                    tracer.log();    
+                    tracer.log();
                 }
             }
         },
         displayUsers: function displayUsers() {
             me.traceLog(me.displayUsers);
             tracer.log("\n" + me.US.filter(function(o) { return typeof o !== 'undefined'; }).length + " User Sockets:");
-            for(var i in me.US) {
-                tracer.log("US[" + i + "].uid=", me.US[i].uid);
-                tracer.log("US[" + i + "]=", me.US[i].User);
+            for(const i in me.US) {
+                if({}.hasOwnProperty.call(me.US, i)) {
+                    tracer.log("US[" + i + "].uid=", me.US[i].uid);
+                    tracer.log("US[" + i + "]=", me.US[i].User);
+                }
             }
         },
         toggleWebsocketRecording: function toggleWebsocketRecording() {
@@ -310,9 +307,11 @@ const atlasmakerServer = (function() {
         //========================================================================================
         getUserFromSocket: function getUserFromSocket(socket) {
             me.traceLog(me.getUserFromSocket, 1);
-            for(var i in me.US) {
-                if(socket === me.US[i].socket) {
-                    return me.US[i];
+            for(const i in me.US) {
+                if({}.hasOwnProperty.call(me.US, i)) {
+                    if(socket === me.US[i].socket) {
+                        return me.US[i];
+                    }
                 }
             }
 
@@ -320,8 +319,7 @@ const atlasmakerServer = (function() {
         },
         getUserFromUserId: function getUserFromUserId(uid) {
             me.traceLog(me.getUserFromUserId, 1);
-            var i;
-            for( i in me.US) {
+            for(const i in me.US) {
                 if(uid === me.US[i].uid) {
                     return me.US[i];
                 }
@@ -333,9 +331,11 @@ const atlasmakerServer = (function() {
     /*
         getUserIdFromSocket: function getUserIdFromSocket(socket) {
             me.traceLog(getUserIdFromSocket);
-            for(var i in me.US) {
-                if(socket === me.US[i].socket)
-                    return me.US[i].uid;
+            for(const i in me.US) {
+                if({}.hasOwnProperty.call(me.US, i)) {
+                    if(socket === me.US[i].socket)
+                        return me.US[i].uid;
+                }
             }
 
             return null;
@@ -343,26 +343,24 @@ const atlasmakerServer = (function() {
     */
         removeUser: function removeUser(socket) {
             me.traceLog(removeUser);
-            var i;
-            for(i in me.US) {
+            for(const i in me.US) {
                 if({}.hasOwnProperty.call(me.US, i)) {
                     if(socket === me.US[i].socket) {
                         delete me.US[i];
                         break;
-                    }    
+                    }
                 }
             }
         },
         unloadMRI: function unloadMRI(mriPath) {
             me.traceLog(me.unloadMRI);
-            var i;
-            for(i in me.Brains) {
+            for(const i in me.Brains) {
                 if({}.hasOwnProperty.call(me.Brains, i)) {
                     if(me.Brains[i].path === mriPath) {
                         delete me.Brains[i];
                         tracer.log("    free memory", os.freemem());
                         break;
-                    }    
+                    }
                 }
             }
         },
@@ -464,8 +462,7 @@ const atlasmakerServer = (function() {
         },
         unloadAtlas: function unloadAtlas(dirname, atlasFilename) {
             me.traceLog(me.unloadAtlas);
-            var i;
-            for(i in me.Atlases) {
+            for(const i in me.Atlases) {
                 if({}.hasOwnProperty.call(me.Atlases, i)) {
                     if(me.Atlases[i].dirname === dirname && me.Atlases[i].name === atlasFilename) {
                         me.saveAtlas(me.Atlases[i])
@@ -476,7 +473,7 @@ const atlasmakerServer = (function() {
                                 tracer.log("    free memory", os.freemem());
                             });
                         break;
-                    }    
+                    }
                 }
             }
         },
@@ -485,9 +482,8 @@ const atlasmakerServer = (function() {
 
             try {
                 var n = 0;
-                var i;
                 var msg2 = JSON.stringify({ "type": "paintvol", "data": msg });
-                for(i in me.US) {
+                for(const i in me.US) {
                     if({}.hasOwnProperty.call(me.US, i)) {
                         if( typeof me.US[i].User !== 'undefined' &&
                             me.US[i].User.iAtlas !== User.iAtlas ) {
@@ -598,7 +594,7 @@ const atlasmakerServer = (function() {
             me.traceLog(me.undo);
 
             var undoLayer;
-            var i, j;
+            var i;
             var found = false;
 
             // find latest undo layer for user
@@ -640,18 +636,18 @@ const atlasmakerServer = (function() {
             var vol = atlas.data;
             var val;
 
-            for(j in undoLayer.actions) {
+            for(const j in undoLayer.actions) {
                 if({}.hasOwnProperty.call(undoLayer.actions, j)) {
                     i = parseInt(j, 10);
                     val = undoLayer.actions[i];
                     arr.push([i, val]);
-    
+
                     // The actual undo having place:
                     vol[i] = val;
-    
+
                     if(me.debug>=3) {
                         tracer.log("    Undo:", i%User.dim[0], parseInt(i/User.dim[0], 10)%User.dim[1], parseInt(i/User.dim[0]/User.dim[1], 10)%User.dim[2]);
-                    }    
+                    }
                 }
             }
             msg = { "data": arr };
@@ -944,16 +940,17 @@ const atlasmakerServer = (function() {
                 w refers to world coordinates
                 s refers screen pixel coordinates
             */
-            var a, b;
             var wori = mri.ori;
             // space directions are transposed!
             var v2w = [[], [], []];
             //for(b in mri.dir) for(a in mri.dir[b]) v2w[a][b] = mri.dir[b][a]; // transpose
-            for(b in mri.dir) {
+            for(const b in mri.dir) {
                 if({}.hasOwnProperty.call(mri.dir, b)) {
-                    for(a in mri.dir[b]) {
-                        v2w[a][b] = mri.dir[a][b]; // do not transpose
-                    }    
+                    for(const a in mri.dir[b]) {
+                        if({}.hasOwnProperty.call(mri.dir[b], a)) {
+                            v2w[a][b] = mri.dir[a][b]; // do not transpose
+                        }
+                    }
                 }
             }
             var wpixdim = me.subVecVec(me.mulMatVec(v2w, [1, 1, 1]), me.mulMatVec(v2w, [0, 0, 0]));
@@ -1542,16 +1539,15 @@ const atlasmakerServer = (function() {
                         wasn't already loaded.
                 output: a brain (mri structure)
             */
-            var i;
-            for(i in me.Brains) {
+            for(const i in me.Brains) {
                 if({}.hasOwnProperty.call(me.Brains, i)) {
                     if(me.Brains[i].path === brainPath) {
                         if(me.debug>1) {
                             tracer.log("    brain already loaded");
                         }
-    
+
                         return Promise.resolve(me.Brains[i].data);
-                    }    
+                    }
                 }
             }
 
@@ -1761,7 +1757,6 @@ const atlasmakerServer = (function() {
             var sourceUS = me.getUserFromUserId(data.uid);
             var brainPath = sourceUS.User.dirname + sourceUS.User.mri;
             var atlasPath = sourceUS.User.dirname + sourceUS.User.atlasFilename;
-            var i;
             var atlas;
 
             sourceUS.User.view = view;
@@ -1772,12 +1767,12 @@ const atlasmakerServer = (function() {
 
             me.getBrainAtPath(brainPath)
                 .then(function promiseFromReceiveRequestSliceMessage(brain) {
-                    for(i in me.Atlases) {
+                    for(const i in me.Atlases) {
                         if({}.hasOwnProperty.call(me.Atlases, i)) {
                             if(me.Atlases[i].dirname + me.Atlases[i].name === atlasPath) {
                                 atlas = me.Atlases[i];
                                 break;
-                            }                                
+                            }
                         }
                     }
 
@@ -1795,14 +1790,13 @@ const atlasmakerServer = (function() {
             me.traceLog(me.broadcastMessage);
 
             try {
-                var i;
                 var n = 0;
-                for(i in me.US) {
+                for(const i in me.US) {
                     if({}.hasOwnProperty.call(me.US, i)) {
                         if(me.US[i].uid !== uid ) {
                             me.US[i].socket.send(JSON.stringify(msg));
                             n += 1;
-                        }    
+                        }
                     }
                 }
                 if(me.debug) {
@@ -1818,13 +1812,12 @@ const atlasmakerServer = (function() {
             var sourceUS = me.getUserFromUserId(data.uid);
     //        var brainPath = sourceUS.User.dirname + sourceUS.User.mri;
             var atlasPath = sourceUS.User.dirname + sourceUS.User.atlasFilename;
-            var i;
 
             var time = new Date();
     //        var modified = time.toJSON();
     //        var modifiedBy = (sourceUS.User && sourceUS.User.username) ? sourceUS.User.username : "anonymous";
 
-            for(i in me.Atlases) {
+            for(const i in me.Atlases) {
                 if({}.hasOwnProperty.call(me.Atlases, i)) {
                     if(me.Atlases[i].dirname + me.Atlases[i].name === atlasPath) {
                         me.saveAtlas(me.Atlases[i])
@@ -1837,7 +1830,7 @@ const atlasmakerServer = (function() {
                                 });
                             });
                         break;
-                    }    
+                    }
                 }
             }
 
@@ -1936,28 +1929,26 @@ const atlasmakerServer = (function() {
 
         unloadUnusedBrains: function unloadUnusedBrains() {
             me.traceLog(me.unloadUnusedBrains);
-            var i;
-            for(i in me.Brains) {
+            for(const i in me.Brains) {
                 if({}.hasOwnProperty.call(me.Brains, i)) {
                     var sum = me.numberOfUsersConnectedToMRI(me.Brains[i].path);
 
                     if(sum === 0) {
                         tracer.log("    No user connected to MRI " + me.Brains[i].path + ": unloading it");
                         me.unloadMRI(me.Brains[i].path);
-                    }    
+                    }
                 }
             }
         },
         unloadUnusedAtlases: function unloadUnusedAtlases() {
             me.traceLog(me.unloadUnusedAtlases);
-            var i;
-            for(i in me.Atlases) {
+            for(const i in me.Atlases) {
                 if({}.hasOwnProperty.call(me.Atlases, i)) {
                     var sum = me.numberOfUsersConnectedToAtlas(me.Atlases[i].dirname, me.Atlases[i].name);
                     if(sum === 0) {
                         tracer.log("    No user connected to Atlas " + me.Atlases[i].dirname + me.Atlases[i].name + ": unloading it");
                         me.unloadAtlas(me.Atlases[i].dirname, me.Atlases[i].name);
-                    }    
+                    }
                 }
             }
         },
@@ -2136,7 +2127,6 @@ const atlasmakerServer = (function() {
             var sourceUS = me.getUserFromUserId(data.uid);
 
             var User;
-            var i;
             var atlasLoadedFlag;
             var firstConnectionFlag = false;
             var switchingAtlasFlag = false;
@@ -2166,12 +2156,12 @@ const atlasmakerServer = (function() {
                         }
                     }
 
-                    for(i in me.Atlases) {
+                    for(const i in me.Atlases) {
                         if({}.hasOwnProperty.call(me.Atlases, i)) {
                             if(me.Atlases[i].dirname === User.dirname && me.Atlases[i].name === User.atlasFilename) {
                                 atlasLoadedFlag = true;
                                 break;
-                            }    
+                            }
                         }
                     }
                     User.iAtlas = atlasLoadedFlag?parseInt(i, 10): me.Atlases.length; // value i if it was found, or last available if it wasn't
@@ -2199,7 +2189,7 @@ const atlasmakerServer = (function() {
                      * @todo If the atlas/mri for the client failed to be sent, `User` is undefined
                      */
                     var changes = JSON.parse(data.description);
-                    for(i in changes) {
+                    for(const i in changes) {
                         if({}.hasOwnProperty.call(changes, i)) {
                             User[i] = changes[i];
                         }
@@ -2220,8 +2210,10 @@ const atlasmakerServer = (function() {
             if(sourceUS.hasOwnProperty('User') === false) {
                 sourceUS.User = {};
             }
-            for(var prop in User) {
-                sourceUS.User[prop] = User[prop];
+            for(const prop in User) {
+                if({}.hasOwnProperty.call(User, prop)) {
+                    sourceUS.User[prop] = User[prop];
+                }
             }
 
         /*
@@ -2229,12 +2221,14 @@ const atlasmakerServer = (function() {
             if(firstConnectionFlag) {
                 var sumAtlas = 0,
                     sumMRI = 0;
-                for(i in me.US) {
-                    if(me.US[i].User.dirname === User.dirname && me.US[i].User.atlasFilename === User.atlasFilename) {
-                        sumAtlas += 1;
-                    }
-                    if(me.US[i].User.dirname === User.dirname && me.US[i].User.mri === User.mri) {
-                        sumMRI += 1;
+                for(const i in me.US) {
+                    if({}.hasOwnProperty.call(me.US, i)) {
+                        if(me.US[i].User.dirname === User.dirname && me.US[i].User.atlasFilename === User.atlasFilename) {
+                            sumAtlas += 1;
+                        }
+                        if(me.US[i].User.dirname === User.dirname && me.US[i].User.mri === User.mri) {
+                            sumMRI += 1;
+                        }
                     }
                 }
                 tracer.log(sumMRI + " user" + ((sumMRI === 1)?" is":"s are") + " requesting MRI " + User.dirname + User.mri);
@@ -2267,16 +2261,15 @@ const atlasmakerServer = (function() {
         sendPreviousUserDataMessage: function sendPreviousUserDataMessage(newUS) {
             me.traceLog(me.sendPreviousUserDataMessage);
 
-            var i;
             var n = 0;
-            for(i in me.US) {
+            for(const i in me.US) {
                 if({}.hasOwnProperty.call(me.US, i)) {
                     if(me.US[i].socket === newUS.socket) {
                         continue;
                     }
                     var msg = JSON.stringify({ type: "userData", user: me.US[i].User, uid: me.US[i].uid, description: "allUserData" });
                     newUS.socket.send(msg);
-                    n += 1;    
+                    n += 1;
                 }
             }
             if(me.debug) {
