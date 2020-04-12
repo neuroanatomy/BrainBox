@@ -196,14 +196,16 @@ const atlasmakerServer = (function() {
             }
 
             for(i in me.US) {
-                if(typeof me.US[i].User === 'undefined') {
-                    tracer.log("ERROR: When counting the number of users connected to the atlas, user uid " + i + " was not defined");
-                } else if(typeof me.US[i].User.dirname === 'undefined') {
-                    tracer.log("ERROR: For user uid " + i + " dirname is unknown");
-                } else if(typeof me.US[i].User.atlasFilename === 'undefined') {
-                    tracer.log("ERROR: For user uid " + i + " atlasFilename is unknown");
-                } else if(me.US[i].User.dirname === dirname && me.US[i].User.atlasFilename === atlasFilename) {
-                    sum += 1;
+                if({}.hasOwnProperty.call(me.US, i)) {
+                    if(typeof me.US[i].User === 'undefined') {
+                        tracer.log("ERROR: When counting the number of users connected to the atlas, user uid " + i + " was not defined");
+                    } else if(typeof me.US[i].User.dirname === 'undefined') {
+                        tracer.log("ERROR: For user uid " + i + " dirname is unknown");
+                    } else if(typeof me.US[i].User.atlasFilename === 'undefined') {
+                        tracer.log("ERROR: For user uid " + i + " atlasFilename is unknown");
+                    } else if(me.US[i].User.dirname === dirname && me.US[i].User.atlasFilename === atlasFilename) {
+                        sum += 1;
+                    }
                 }
             }
 
@@ -244,11 +246,15 @@ const atlasmakerServer = (function() {
             var i;
             tracer.log("\n" + me.Atlases.filter( function(o) { return typeof o !== 'undefined'; } ).length + " Atlases:");
             for(i in me.Atlases) {
-                var sum = me.numberOfUsersConnectedToAtlas(me.Atlases[i].dirname, me.Atlases[i].name);
-                tracer.log("Atlases[" + i + "] path:" + me.Atlases[i].dirname + me.Atlases[i].name + ", " + sum + " users connected");
+                if({}.hasOwnProperty.call(me.Atlases, i)) {
+                    var sum = me.numberOfUsersConnectedToAtlas(me.Atlases[i].dirname, me.Atlases[i].name);
+                    tracer.log("Atlases[" + i + "] path:" + me.Atlases[i].dirname + me.Atlases[i].name + ", " + sum + " users connected");
+                }
             }
             for(i in me.Atlases) {
-                tracer.log("atlas", i, me.Atlases[i]);
+                if({}.hasOwnProperty.call(me.Atlases, i)) {
+                    tracer.log("atlas", i, me.Atlases[i]);
+                }
             }
         },
         displayBrains: function displayBrains() {
@@ -256,23 +262,27 @@ const atlasmakerServer = (function() {
             tracer.log("\n" + me.Brains.filter(function(o) { return typeof o !== 'undefined'; }).length + " Brains:");
             var i;
             for(i in me.Brains) {
-                var sum = me.numberOfUsersConnectedToMRI(me.Brains[i].path);
-                tracer.log("Brains[" + i + "].path=" + me.Brains[i].path + ", " + sum + " users connected");
+                if({}.hasOwnProperty.call(me.Brains, i)) {
+                    var sum = me.numberOfUsersConnectedToMRI(me.Brains[i].path);
+                    tracer.log("Brains[" + i + "].path=" + me.Brains[i].path + ", " + sum + " users connected");    
+                }
             }
             for(i in me.Brains) {
-                tracer.log("Brains[" + i + "]");
-                tracer.log("           path:", me.Brains[i].path);
-                tracer.log("       data.dim:", me.Brains[i].data.dim);
-                tracer.log("    data.pixdim:", me.Brains[i].data.pixdim);
-                tracer.log("data.vox_offset:", me.Brains[i].data.vox_offset);
-                tracer.log("       data.dir:", me.Brains[i].data.dir);
-                tracer.log("       data.ori:", me.Brains[i].data.ori);
-                tracer.log("       data.s2v:", me.Brains[i].data.s2v);
-                tracer.log("       data.v2w:", me.Brains[i].data.v2w);
-                tracer.log("      data.wori:", me.Brains[i].data.wori);
-                tracer.log("  data.datatype:", me.Brains[i].data.datatype);
-                tracer.log("       data.sum:", me.Brains[i].data.sum);
-                tracer.log();
+                if({}.hasOwnProperty.call(me.Brains, i)) {
+                    tracer.log("Brains[" + i + "]");
+                    tracer.log("           path:", me.Brains[i].path);
+                    tracer.log("       data.dim:", me.Brains[i].data.dim);
+                    tracer.log("    data.pixdim:", me.Brains[i].data.pixdim);
+                    tracer.log("data.vox_offset:", me.Brains[i].data.vox_offset);
+                    tracer.log("       data.dir:", me.Brains[i].data.dir);
+                    tracer.log("       data.ori:", me.Brains[i].data.ori);
+                    tracer.log("       data.s2v:", me.Brains[i].data.s2v);
+                    tracer.log("       data.v2w:", me.Brains[i].data.v2w);
+                    tracer.log("      data.wori:", me.Brains[i].data.wori);
+                    tracer.log("  data.datatype:", me.Brains[i].data.datatype);
+                    tracer.log("       data.sum:", me.Brains[i].data.sum);
+                    tracer.log();    
+                }
             }
         },
         displayUsers: function displayUsers() {
@@ -333,9 +343,11 @@ const atlasmakerServer = (function() {
             me.traceLog(removeUser);
             var i;
             for(i in me.US) {
-                if(socket === me.US[i].socket) {
-                    delete me.US[i];
-                    break;
+                if({}.hasOwnProperty.call(me.US, i)) {
+                    if(socket === me.US[i].socket) {
+                        delete me.US[i];
+                        break;
+                    }    
                 }
             }
         },
@@ -343,10 +355,12 @@ const atlasmakerServer = (function() {
             me.traceLog(me.unloadMRI);
             var i;
             for(i in me.Brains) {
-                if(me.Brains[i].path === mriPath) {
-                    delete me.Brains[i];
-                    tracer.log("    free memory", os.freemem());
-                    break;
+                if({}.hasOwnProperty.call(me.Brains, i)) {
+                    if(me.Brains[i].path === mriPath) {
+                        delete me.Brains[i];
+                        tracer.log("    free memory", os.freemem());
+                        break;
+                    }    
                 }
             }
         },
@@ -450,15 +464,17 @@ const atlasmakerServer = (function() {
             me.traceLog(me.unloadAtlas);
             var i;
             for(i in me.Atlases) {
-                if(me.Atlases[i].dirname === dirname && me.Atlases[i].name === atlasFilename) {
-                    me.saveAtlas(me.Atlases[i])
-                        .then(function () {
-                            tracer.log("    Atlas saved. Unloading it");
-                            clearInterval(me.Atlases[i].timer);
-                            delete me.Atlases[i];
-                            tracer.log("    free memory", os.freemem());
-                        });
-                    break;
+                if({}.hasOwnProperty.call(me.Atlases, i)) {
+                    if(me.Atlases[i].dirname === dirname && me.Atlases[i].name === atlasFilename) {
+                        me.saveAtlas(me.Atlases[i])
+                            .then(function () {
+                                tracer.log("    Atlas saved. Unloading it");
+                                clearInterval(me.Atlases[i].timer);
+                                delete me.Atlases[i];
+                                tracer.log("    free memory", os.freemem());
+                            });
+                        break;
+                    }    
                 }
             }
         },
@@ -470,12 +486,14 @@ const atlasmakerServer = (function() {
                 var i;
                 var msg2 = JSON.stringify({ "type": "paintvol", "data": msg });
                 for(i in me.US) {
-                    if( typeof me.US[i].User !== 'undefined' &&
-                        me.US[i].User.iAtlas !== User.iAtlas ) {
-                        continue;
+                    if({}.hasOwnProperty.call(me.US, i)) {
+                        if( typeof me.US[i].User !== 'undefined' &&
+                            me.US[i].User.iAtlas !== User.iAtlas ) {
+                            continue;
+                        }
+                        me.US[i].socket.send(msg2);
+                        n += 1;
                     }
-                    me.US[i].socket.send(msg2);
-                    n += 1;
                 }
                 if(me.debug) {
                     tracer.log("    paintVolume message broadcasted to " + n + " users");
@@ -621,15 +639,17 @@ const atlasmakerServer = (function() {
             var val;
 
             for(j in undoLayer.actions) {
-                i = parseInt(j, 10);
-                val = undoLayer.actions[i];
-                arr.push([i, val]);
-
-                // The actual undo having place:
-                vol[i] = val;
-
-                if(me.debug>=3) {
-                    tracer.log("    Undo:", i%User.dim[0], parseInt(i/User.dim[0], 10)%User.dim[1], parseInt(i/User.dim[0]/User.dim[1], 10)%User.dim[2]);
+                if({}.hasOwnProperty.call(undoLayer.actions, j)) {
+                    i = parseInt(j, 10);
+                    val = undoLayer.actions[i];
+                    arr.push([i, val]);
+    
+                    // The actual undo having place:
+                    vol[i] = val;
+    
+                    if(me.debug>=3) {
+                        tracer.log("    Undo:", i%User.dim[0], parseInt(i/User.dim[0], 10)%User.dim[1], parseInt(i/User.dim[0]/User.dim[1], 10)%User.dim[2]);
+                    }    
                 }
             }
             msg = { "data": arr };
@@ -928,8 +948,10 @@ const atlasmakerServer = (function() {
             var v2w = [[], [], []];
             //for(b in mri.dir) for(a in mri.dir[b]) v2w[a][b] = mri.dir[b][a]; // transpose
             for(b in mri.dir) {
-                for(a in mri.dir[b]) {
-                    v2w[a][b] = mri.dir[a][b]; // do not transpose
+                if({}.hasOwnProperty.call(mri.dir, b)) {
+                    for(a in mri.dir[b]) {
+                        v2w[a][b] = mri.dir[a][b]; // do not transpose
+                    }    
                 }
             }
             var wpixdim = me.subVecVec(me.mulMatVec(v2w, [1, 1, 1]), me.mulMatVec(v2w, [0, 0, 0]));
@@ -1370,12 +1392,16 @@ const atlasmakerServer = (function() {
             me.NiiHdr.allocate();
             niihdr = me.NiiHdr.buffer();
             for(i in newHdr) {
-                me.NiiHdr.fields[i] = newHdr[i];
+                if({}.hasOwnProperty.call(newHdr, i)) {
+                    me.NiiHdr.fields[i] = newHdr[i];
+                }
             }
 
             // copy information from templateMRI
             for( i in props) {
-                mri[props[i]] = templateMRI[props[i]];
+                if({}.hasOwnProperty.call(props, i)) {
+                    mri[props[i]] = templateMRI[props[i]];
+                }
             }
 
             // get volume size
@@ -1516,12 +1542,14 @@ const atlasmakerServer = (function() {
             */
             var i;
             for(i in me.Brains) {
-                if(me.Brains[i].path === brainPath) {
-                    if(me.debug>1) {
-                        tracer.log("    brain already loaded");
-                    }
-
-                    return Promise.resolve(me.Brains[i].data);
+                if({}.hasOwnProperty.call(me.Brains, i)) {
+                    if(me.Brains[i].path === brainPath) {
+                        if(me.debug>1) {
+                            tracer.log("    brain already loaded");
+                        }
+    
+                        return Promise.resolve(me.Brains[i].data);
+                    }    
                 }
             }
 
@@ -1743,9 +1771,11 @@ const atlasmakerServer = (function() {
             me.getBrainAtPath(brainPath)
                 .then(function promiseFromReceiveRequestSliceMessage(brain) {
                     for(i in me.Atlases) {
-                        if(me.Atlases[i].dirname + me.Atlases[i].name === atlasPath) {
-                            atlas = me.Atlases[i];
-                            break;
+                        if({}.hasOwnProperty.call(me.Atlases, i)) {
+                            if(me.Atlases[i].dirname + me.Atlases[i].name === atlasPath) {
+                                atlas = me.Atlases[i];
+                                break;
+                            }                                
                         }
                     }
 
@@ -1766,9 +1796,11 @@ const atlasmakerServer = (function() {
                 var i;
                 var n = 0;
                 for(i in me.US) {
-                    if(me.US[i].uid !== uid ) {
-                        me.US[i].socket.send(JSON.stringify(msg));
-                        n += 1;
+                    if({}.hasOwnProperty.call(me.US, i)) {
+                        if(me.US[i].uid !== uid ) {
+                            me.US[i].socket.send(JSON.stringify(msg));
+                            n += 1;
+                        }    
                     }
                 }
                 if(me.debug) {
@@ -1791,17 +1823,19 @@ const atlasmakerServer = (function() {
     //        var modifiedBy = (sourceUS.User && sourceUS.User.username) ? sourceUS.User.username : "anonymous";
 
             for(i in me.Atlases) {
-                if(me.Atlases[i].dirname + me.Atlases[i].name === atlasPath) {
-                    me.saveAtlas(me.Atlases[i])
-                        .then(function () {
-                            tracer.log("    Atlas saved");
-                            clearInterval(me.Atlases[i].timer);
-                            me.broadcastMessage({
-                                type: 'serverMessage',
-                                msg: "Atlas saved " + time
+                if({}.hasOwnProperty.call(me.Atlases, i)) {
+                    if(me.Atlases[i].dirname + me.Atlases[i].name === atlasPath) {
+                        me.saveAtlas(me.Atlases[i])
+                            .then(function () {
+                                tracer.log("    Atlas saved");
+                                clearInterval(me.Atlases[i].timer);
+                                me.broadcastMessage({
+                                    type: 'serverMessage',
+                                    msg: "Atlas saved " + time
+                                });
                             });
-                        });
-                    break;
+                        break;
+                    }    
                 }
             }
 
@@ -1902,11 +1936,13 @@ const atlasmakerServer = (function() {
             me.traceLog(me.unloadUnusedBrains);
             var i;
             for(i in me.Brains) {
-                var sum = me.numberOfUsersConnectedToMRI(me.Brains[i].path);
+                if({}.hasOwnProperty.call(me.Brains, i)) {
+                    var sum = me.numberOfUsersConnectedToMRI(me.Brains[i].path);
 
-                if(sum === 0) {
-                    tracer.log("    No user connected to MRI " + me.Brains[i].path + ": unloading it");
-                    me.unloadMRI(me.Brains[i].path);
+                    if(sum === 0) {
+                        tracer.log("    No user connected to MRI " + me.Brains[i].path + ": unloading it");
+                        me.unloadMRI(me.Brains[i].path);
+                    }    
                 }
             }
         },
@@ -1914,10 +1950,12 @@ const atlasmakerServer = (function() {
             me.traceLog(me.unloadUnusedAtlases);
             var i;
             for(i in me.Atlases) {
-                var sum = me.numberOfUsersConnectedToAtlas(me.Atlases[i].dirname, me.Atlases[i].name);
-                if(sum === 0) {
-                    tracer.log("    No user connected to Atlas " + me.Atlases[i].dirname + me.Atlases[i].name + ": unloading it");
-                    me.unloadAtlas(me.Atlases[i].dirname, me.Atlases[i].name);
+                if({}.hasOwnProperty.call(me.Atlases, i)) {
+                    var sum = me.numberOfUsersConnectedToAtlas(me.Atlases[i].dirname, me.Atlases[i].name);
+                    if(sum === 0) {
+                        tracer.log("    No user connected to Atlas " + me.Atlases[i].dirname + me.Atlases[i].name + ": unloading it");
+                        me.unloadAtlas(me.Atlases[i].dirname, me.Atlases[i].name);
+                    }    
                 }
             }
         },
@@ -2127,9 +2165,11 @@ const atlasmakerServer = (function() {
                     }
 
                     for(i in me.Atlases) {
-                        if(me.Atlases[i].dirname === User.dirname && me.Atlases[i].name === User.atlasFilename) {
-                            atlasLoadedFlag = true;
-                            break;
+                        if({}.hasOwnProperty.call(me.Atlases, i)) {
+                            if(me.Atlases[i].dirname === User.dirname && me.Atlases[i].name === User.atlasFilename) {
+                                atlasLoadedFlag = true;
+                                break;
+                            }    
                         }
                     }
                     User.iAtlas = atlasLoadedFlag?parseInt(i, 10): me.Atlases.length; // value i if it was found, or last available if it wasn't
@@ -2158,7 +2198,9 @@ const atlasmakerServer = (function() {
                      */
                     var changes = JSON.parse(data.description);
                     for(i in changes) {
-                        User[i] = changes[i];
+                        if({}.hasOwnProperty.call(changes, i)) {
+                            User[i] = changes[i];
+                        }
                     }
                 }
             }
@@ -2226,12 +2268,14 @@ const atlasmakerServer = (function() {
             var i;
             var n = 0;
             for(i in me.US) {
-                if(me.US[i].socket === newUS.socket) {
-                    continue;
+                if({}.hasOwnProperty.call(me.US, i)) {
+                    if(me.US[i].socket === newUS.socket) {
+                        continue;
+                    }
+                    var msg = JSON.stringify({ type: "userData", user: me.US[i].User, uid: me.US[i].uid, description: "allUserData" });
+                    newUS.socket.send(msg);
+                    n += 1;    
                 }
-                var msg = JSON.stringify({ type: "userData", user: me.US[i].User, uid: me.US[i].uid, description: "allUserData" });
-                newUS.socket.send(msg);
-                n += 1;
             }
             if(me.debug) {
                 tracer.log("    send user data from " + n + " users");
