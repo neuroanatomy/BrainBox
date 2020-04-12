@@ -23,6 +23,7 @@ public/lib/atlasmaker-tools
 public/lib/brainbox.js
 scripts/atlasmaker-resources.js
 test/screenshots/
+test/images/
 tmp
 view/atlasmaker/dist/
 view/atlasmaker/src/tools/dist/
