@@ -355,13 +355,14 @@ const atlasmakerServer = (function() {
         },
 
         saveAtlas: function (atlas) {
+
             /*
                 saveAtlas
                 input: an mri structure
                 process: a .nii.gz or .mgz file is saved at the position indicated in the mri structure
                 output: success message
             */
-
+            var pr;
             if(atlas && atlas.dim ) {
                 if(typeof atlas.data === 'undefined') {
                     tracer.log("ERROR: [saveAtlas] atlas in Atlas array has no data");
@@ -370,75 +371,75 @@ const atlasmakerServer = (function() {
                     }
 
                     return Promise.reject(new Error("ERROR: [saveAtlas] atlas in Atlas array has no data"));
+                }
+
+                // check if atlas has changed since the last time...
+                let sum = 0;
+                for(let i = 0; i<atlas.dim[0]*atlas.dim[1]*atlas.dim[2]; i += 1) {
+                    sum+=atlas.data[i];
+                }
+
+                // ...if it has not, return,
+                if(sum === atlas.sum) {
+                    tracer.log("    Atlas", atlas.dirname, atlas.name,
+                                "no change, no save, freemem", os.freemem());
+
+                    return Promise.resolve("Done. No save required");
+                }
+
+                // ...if it has, save a backup copy.
+                atlas.sum = sum;
+                var {hdrSz} = atlas;
+                var dataSz = atlas.data.length;
+                var ftrSz;
+                var mri;
+
+                if(atlas.ftr) {
+                    ftrSz = atlas.ftr.length;
                 } else {
-                    // check if atlas has changed since the last time...
-                    let sum = 0;
-                    for(let i = 0; i<atlas.dim[0]*atlas.dim[1]*atlas.dim[2]; i += 1) {
-                        sum+=atlas.data[i];
-                    }
+                    ftrSz = 0;
+                }
+                mri = Buffer.alloc(atlas.dim[0]*atlas.dim[1]*atlas.dim[2] + hdrSz + ftrSz);
+                tracer.log("        sum:", sum);
+                tracer.log("header size:", hdrSz);
+                tracer.log("  data size:", atlas.dim[0]*atlas.dim[1]*atlas.dim[2]);
+                tracer.log("footer size:", ftrSz);
+                tracer.log("        dim:", atlas.dim);
+                tracer.log(" Atlas", atlas.dirname, atlas.name,
+                            "hdr+data+ftr length", atlas.data.length + hdrSz + ftrSz,
+                            "buff length", mri.length);
+                atlas.hdr.copy(mri);
+                atlas.data.copy(mri, hdrSz);
+                if(ftrSz) {
+                    atlas.ftr.copy(mri, hdrSz + dataSz);
+                }
+                pr = new Promise(function (resolve, reject) {
+                    zlib.gzip(mri, function (err, mrigz) {
+                        if(err) {
+                            reject(err);
 
-                    // ...if it has not, return,
-                    if(sum === atlas.sum) {
-                        tracer.log("    Atlas", atlas.dirname, atlas.name,
-                                    "no change, no save, freemem", os.freemem());
-
-                        return Promise.resolve("Done. No save required");
-                    }
-
-                    // ...if it has, save a backup copy.
-                    atlas.sum = sum;
-                    var {hdrSz} = atlas;
-                    var dataSz = atlas.data.length;
-                    var ftrSz;
-                    var mri;
-
-                    if(atlas.ftr) {
-                        ftrSz = atlas.ftr.length;
-                    } else {
-                        ftrSz = 0;
-                    }
-                    mri = Buffer.alloc(atlas.dim[0]*atlas.dim[1]*atlas.dim[2] + hdrSz + ftrSz);
-                    tracer.log("        sum:", sum);
-                    tracer.log("header size:", hdrSz);
-                    tracer.log("  data size:", atlas.dim[0]*atlas.dim[1]*atlas.dim[2]);
-                    tracer.log("footer size:", ftrSz);
-                    tracer.log("        dim:", atlas.dim);
-                    tracer.log(" Atlas", atlas.dirname, atlas.name,
-                                "hdr+data+ftr length", atlas.data.length + hdrSz + ftrSz,
-                                "buff length", mri.length);
-                    atlas.hdr.copy(mri);
-                    atlas.data.copy(mri, hdrSz);
-                    if(ftrSz) {
-                        atlas.ftr.copy(mri, hdrSz + dataSz);
-                    }
-                    var pr = new Promise(function (resolve, reject) {
-                        zlib.gzip(mri, function (err, mrigz) {
-                            if(err) {
-                                reject(err);
-
-                                return;
-                            }
-                            var ms=Number(new Date());
-                            var path1 = me.dataDirectory + atlas.dirname + atlas.name;
-                            var path2 = me.dataDirectory + atlas.dirname + ms + "_" + atlas.name;
-                            fs.rename(path1, path2, function () {
-                                fs.writeFileSync(path1, mrigz);
-                                // log backup creation
-                                db.get('log').insert({
-                                    key: "saveAtlasBackup",
-                                    value: {
-                                        atlasDirectory: atlas.dirname,
-                                        atlasFilename: atlas.name,
-                                        timestamp: ms
-                                    },
-                                    date: (new Date()).toJSON()
-                                })
-                                .then(()=>tracer.log("backup insertion logged"));
-                                resolve("Atlas saved");
-                            });
+                            return;
+                        }
+                        var ms=Number(new Date());
+                        var path1 = me.dataDirectory + atlas.dirname + atlas.name;
+                        var path2 = me.dataDirectory + atlas.dirname + ms + "_" + atlas.name;
+                        fs.rename(path1, path2, function () {
+                            fs.writeFileSync(path1, mrigz);
+                            // log backup creation
+                            db.get('log').insert({
+                                key: "saveAtlasBackup",
+                                value: {
+                                    atlasDirectory: atlas.dirname,
+                                    atlasFilename: atlas.name,
+                                    timestamp: ms
+                                },
+                                date: (new Date()).toJSON()
+                            })
+                            .then(()=>tracer.log("backup insertion logged"));
+                            resolve("Atlas saved");
                         });
                     });
-                }
+                });
             } else {
 
                 return Promise.reject(new Error("ERROR: No atlas to save"));
@@ -514,9 +515,9 @@ const atlasmakerServer = (function() {
                 tracer.log("==========> REJECT ip in blacklist", ip);
 
                 return false;
-            } else {
-                tracer.log("==========> ACCEPT ip ", ip);
             }
+
+            tracer.log("==========> ACCEPT ip ", ip);
 
             return true;
         },
@@ -881,6 +882,7 @@ const atlasmakerServer = (function() {
             return [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
         },
         computeS2VTransformation: function (mri) {
+
             /*
                 The basic transformation is
                 w = v2w * v + wori
@@ -1015,8 +1017,108 @@ const atlasmakerServer = (function() {
                 return "mgz";
             }
         },
+        _readNiftiHeader: function ({nii, mri}) {
+            // read standard nii header
+            let success = true;
+            try {
+                me.NiiHdr.allocate();
+                me.NiiHdr._setBuff(nii);
+                var h = JSON.parse(JSON.stringify(me.NiiHdr.fields));
 
+                //var sizeof_hdr = h.sizeof_hdr;
+                mri.dim = [h.dim[1], h.dim[2], h.dim[3]];
+                mri.pixdim = [h.pixdim[1], h.pixdim[2], h.pixdim[3]];
+                mri.vox_offset = h.vox_offset;
+
+                // nrrd-compatible header, computes space directions and space origin
+                tracer.log("sform code:", h.sform_code);
+                if(h.sform_code>0) {
+                    mri.dir = [
+                        [h.srow_x[0], h.srow_y[0], h.srow_z[0]],
+                        [h.srow_x[1], h.srow_y[1], h.srow_z[1]],
+                        [h.srow_x[2], h.srow_y[2], h.srow_z[2]]
+                    ];
+                    mri.ori = [h.srow_x[3], h.srow_y[3], h.srow_z[3]];
+                } else {
+                    mri.dir = [[mri.pixdim[0], 0, 0], [0, mri.pixdim[1], 0], [0, 0, mri.pixdim[2]]];
+                    mri.ori = [0, 0, 0];
+                }
+            } catch(err) {
+                tracer.log("ERROR Cannot read nifti header:", err);
+                success = false;
+            }
+
+            return success;
+        },
+        _readNiftiData: function ({nii, mri}) {
+            let success = true;
+            let j;
+            let tmp;
+
+            switch(mri.datatype) {
+                case 2: // UCHAR
+                    mri.data = nii.slice(mri.vox_offset);
+                    break;
+                case 4: // SHORT
+                    tmp = nii.slice(mri.vox_offset);
+                    mri.data = new Int16Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);
+                    for(j = 0; j<mri.dim[0]*mri.dim[1]*mri.dim[2]; j += 1) {
+                        mri.data[j] = tmp.readInt16LE(j*2);
+                    }
+                    break;
+                case 8: // INT
+                    tmp = nii.slice(mri.vox_offset);
+                    mri.data = new Uint32Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);
+                    for(j = 0; j<mri.dim[0]*mri.dim[1]*mri.dim[2]; j += 1) {
+                        mri.data[j] = tmp.readUInt32LE(j*4);
+                    }
+                    break;
+                case 16: // FLOAT
+                    tmp = nii.slice(mri.vox_offset);
+                    mri.data = new Float32Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);
+                    for(j = 0; j<mri.dim[0]*mri.dim[1]*mri.dim[2]; j += 1) {
+                        mri.data[j] = tmp.readFloatLE(j*4);
+                    }
+                    break;
+                case 256: // INT8
+                    tmp = nii.slice(mri.vox_offset);
+                    mri.data = new Int8Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);
+                    for(j = 0; j<mri.dim[0]*mri.dim[1]*mri.dim[2]; j += 1) {
+                        mri.data[j] = tmp.readInt8(j);
+                    }
+                    break;
+                case 512: // UINT16
+                    tmp = nii.slice(mri.vox_offset);
+                    mri.data = new Uint16Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);
+                    for(j = 0; j<mri.dim[0]*mri.dim[1]*mri.dim[2]; j += 1) {
+                        mri.data[j] = tmp.readUInt16LE(j*2);
+                    }
+                    break;
+                default:
+                    success = false;
+                    tracer.log("ERROR: Unknown dataType: " + mri.datatype);
+            }
+
+            return success;
+        },
+        _computeNiftiVolumeStats: function ({mri}) {
+            let sum = 0;
+            let [min, max] = [mri.data[0], mri.data[0]];
+            for(let i = 0; i<mri.dim[0]*mri.dim[1]*mri.dim[2]; i += 1) {
+                sum += mri.data[i];
+
+                if(mri.data[i]<min) {
+                    min = mri.data[i];
+                }
+
+                if(mri.data[i]>max) {
+                    max = mri.data[i];
+                }
+            }
+            [mri.sum, mri.min, mri.max] = [sum, min, max];
+        },
         readNifti: function (mriPath) {
+
             /*
                 readNifti
                 input: path to a .nii.gz file
@@ -1029,38 +1131,17 @@ const atlasmakerServer = (function() {
                     tracer.log("niigz length:", niigz.length);
 
                     zlib.gunzip(niigz, function (err, nii) {
-                        var i, j;
-                        var sum, tmp;
+                        if(err) {
+                            reject(err);
+
+                            return;
+                        }
+
                         var mri = {};
 
-                        // standard nii header
-                        try {
-                            me.NiiHdr.allocate();
-                            tracer.log("nii length:", nii.length);
-                            me.NiiHdr._setBuff(nii);
-                            var h = JSON.parse(JSON.stringify(me.NiiHdr.fields));
-
-                            //var sizeof_hdr = h.sizeof_hdr;
-                            mri.dim = [h.dim[1], h.dim[2], h.dim[3]];
-                            mri.pixdim = [h.pixdim[1], h.pixdim[2], h.pixdim[3]];
-                            mri.vox_offset = h.vox_offset;
-
-                            // nrrd-compatible header, computes space directions and space origin
-                            tracer.log("sform code:", h.sform_code);
-                            if(h.sform_code>0) {
-                                mri.dir = [
-                                    [h.srow_x[0], h.srow_y[0], h.srow_z[0]],
-                                    [h.srow_x[1], h.srow_y[1], h.srow_z[1]],
-                                    [h.srow_x[2], h.srow_y[2], h.srow_z[2]]
-                                ];
-                                mri.ori = [h.srow_x[3], h.srow_y[3], h.srow_z[3]];
-                            } else {
-                                mri.dir = [[mri.pixdim[0], 0, 0], [0, mri.pixdim[1], 0], [0, 0, mri.pixdim[2]]];
-                                mri.ori = [0, 0, 0];
-                            }
-                        } catch(err2) {
-                            tracer.log("ERROR Cannot read nifti header:", err2);
-                            reject(new Error("ERROR Cannot read nifti header: " + err2));
+                        // read header
+                        if(!me._readNiftiHeader({nii, mri})) {
+                            reject(new Error("Cannot read nifti header"));
 
                             return;
                         }
@@ -1076,65 +1157,15 @@ const atlasmakerServer = (function() {
                         mri.hdrSz = 352;
                         mri.datatype = nii.readUInt16LE(70);
 
-                        tracer.log("reading datatype", mri.datatype);
-                        tracer.log("dim:", mri.dim[0], mri.dim[1], mri.dim[2]);
-                        switch(mri.datatype) {
-                            case 2: // UCHAR
-                                mri.data = nii.slice(mri.vox_offset);
-                                break;
-                            case 4: // SHORT
-                                tmp = nii.slice(mri.vox_offset);
-                                mri.data = new Int16Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);
-                                for(j = 0; j<mri.dim[0]*mri.dim[1]*mri.dim[2]; j += 1) {
-                                    mri.data[j] = tmp.readInt16LE(j*2);
-                                }
-                                break;
-                            case 8: // INT
-                                tmp = nii.slice(mri.vox_offset);
-                                mri.data = new Uint32Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);
-                                for(j = 0; j<mri.dim[0]*mri.dim[1]*mri.dim[2]; j += 1) {
-                                    mri.data[j] = tmp.readUInt32LE(j*4);
-                                }
-                                break;
-                            case 16: // FLOAT
-                                tmp = nii.slice(mri.vox_offset);
-                                mri.data = new Float32Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);
-                                for(j = 0; j<mri.dim[0]*mri.dim[1]*mri.dim[2]; j += 1) {
-                                    mri.data[j] = tmp.readFloatLE(j*4);
-                                }
-                                break;
-                            case 256: // INT8
-                                tmp = nii.slice(mri.vox_offset);
-                                mri.data = new Int8Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);
-                                for(j = 0; j<mri.dim[0]*mri.dim[1]*mri.dim[2]; j += 1) {
-                                    mri.data[j] = tmp.readInt8(j);
-                                }
-                                break;
-                            case 512: // UINT16
-                                tmp = nii.slice(mri.vox_offset);
-                                mri.data = new Uint16Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);
-                                for(j = 0; j<mri.dim[0]*mri.dim[1]*mri.dim[2]; j += 1) {
-                                    mri.data[j] = tmp.readUInt16LE(j*2);
-                                }
-                                break;
-                            default: {
-                                reject(new Error("ERROR: Unknown dataType: " + mri.datatype));
+                        // read binary data
+                        if(!me._readNiftiData({nii, mri})) {
+                            reject(new Error("Cannot read nifti binary data"));
 
-                                return;
-                            }
+                            return;
                         }
 
-                        // compute sum, min and max
-                        var min, max;
-                        sum = 0;
-                        [min, max] = [mri.data[0], mri.data[0]];
-                        for(i = 0; i<mri.dim[0]*mri.dim[1]*mri.dim[2]; i += 1) {
-                            sum += mri.data[i];
-
-                            if(mri.data[i]<min) { min = mri.data[i]; }
-                            if(mri.data[i]>max) { max = mri.data[i]; }
-                        }
-                        [mri.sum, mri.min, mri.max] = [sum, min, max];
+                        // compute stats: sum, min and max
+                        me._computeNiftiVolumeStats({mri});
 
                         resolve(mri);
                     });
@@ -1487,7 +1518,7 @@ const atlasmakerServer = (function() {
                 if({}.hasOwnProperty.call(me.Brains, i)) {
                     if(me.Brains[i].path === brainPath) {
                         if(me.debug>1) {
-                            tracer.log("    brain already loaded");
+                            tracer.log("brain already loaded");
                         }
 
                         return Promise.resolve(me.Brains[i].data);
@@ -1495,9 +1526,6 @@ const atlasmakerServer = (function() {
                 }
             }
 
-            if(me.debug) {
-                tracer.log("    Loading brain at", brainPath);
-            }
             var pr = new Promise(function (resolve, reject) {
                 me.loadMRI(me.dataDirectory + brainPath)
                     .then(function (mri) {
@@ -2065,21 +2093,23 @@ const atlasmakerServer = (function() {
                         }
                     }
 
+                    let iAtlas = me.Atlases.length;
                     for(const i in me.Atlases) {
                         if({}.hasOwnProperty.call(me.Atlases, i)) {
                             if(me.Atlases[i].dirname === User.dirname && me.Atlases[i].name === User.atlasFilename) {
                                 atlasLoadedFlag = true;
+                                iAtlas = i;
                                 break;
                             }
                         }
                     }
-                    User.iAtlas = atlasLoadedFlag?parseInt(i, 10): me.Atlases.length; // value i if it was found, or last available if it wasn't
+                    User.iAtlas = iAtlas; // value i if it was found, or last available if it wasn't
 
                     // 2. Send the atlas to the user (load it if required)
                     if(atlasLoadedFlag) {
                         if(firstConnectionFlag || switchingAtlasFlag) {
                             // send the new user our data
-                            me.sendAtlasToUser(me.Atlases[i].data, userSocket, true);
+                            me.sendAtlasToUser(me.Atlases[iAtlas].data, userSocket, true);
                             sourceUS.User.isMRILoaded = true;
                         }
                     } else {
