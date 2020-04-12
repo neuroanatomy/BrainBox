@@ -669,13 +669,6 @@ const atlasmakerServer = (function() {
             let brainWidth;
             let brainHeight;
 
-            if(Math.pow(x1-x2, 2) + Math.pow(y1-y2, 2)>20*20) {
-                tracer.log("WARNING: long line from", x1, y1, "to", x2, y2);
-                tracer.log("User.uid:", User.uid);
-                me.displayUsers();
-                tracer.log("END WARNING");
-            }
-
             // Define differences and error check
             const dx = Math.abs(x2 - x1);
             const dy = Math.abs(y2 - y1);
