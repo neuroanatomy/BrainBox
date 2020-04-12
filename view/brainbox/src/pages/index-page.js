@@ -19,7 +19,8 @@ function goToURL() {
 function testWebSockets() {
 console.log("testWebSockets");
     return new Promise(function(resolve, reject) {
-        var host = "wss://websocketstest.com/service";
+        // var host = "wss://websocketstest.com/service";
+        var host = "wss://websocketstest.com:8080/service";
         var ws;
 
         if (window.WebSocket) {
