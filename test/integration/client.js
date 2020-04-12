@@ -8,8 +8,6 @@ const pixelmatch = require('pixelmatch');
 const assert = require('assert');
 
 const timeout = 30*1000; // time in milliseconds
-let browser;
-let page;
 
 function delay(delayTimeout) {
 //    console.log('  delay', timeout, 'milliseconds');
@@ -62,14 +60,15 @@ describe('Load index page', async () => {
         const page = await browser.newPage();
         await page.goto(`${options.appUrl}`);
         await page.waitFor('h2');
-        const headerText = await page.evaluate(() => {
-            return document.querySelector('h2').innerText;
-        }, 'h2');
+        const headerText = await page.evaluate(() => document.querySelector('h2').innerText, 'h2');
         assert.equal(headerText, 'Real-time collaboration in neuroimaging');
     }));
 });
 
-describe('Test website rendering', async () => {
+describe('Test website rendering', async function () {
+    let browser;
+    let page;
+
     it('Browser opens', async () => {
         browser = await puppeteer.launch({headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     });
@@ -86,7 +85,6 @@ describe('Test website rendering', async () => {
             'http://localhost:3001',
             '01.home.png'
         );
-        console.log(diff);
         assert(diff<1000);
     }).timeout(timeout);
 
