@@ -219,21 +219,23 @@ const atlasmakerServer = (function() {
                 return sum;
             }
 
-            for(var i in me.US) {
-                if(typeof me.US[i].User === 'undefined') {
-                    tracer.log("ERROR: When counting the number of users connected to MRI, user uid " + i + " was not defined");
-                    continue;
-                }
-                if(typeof me.US[i].User.dirname === 'undefined') {
-                    tracer.log("ERROR: A user uid " + i + " dirname is unknown");
-                    continue;
-                }
-                if(typeof me.US[i].User.mri === 'undefined') {
-                    tracer.log("ERROR: A user uid " + i + " MRI is unknown");
-                    continue;
-                }
-                if(me.US[i].User.dirname + me.US[i].User.mri === mriPath) {
-                    sum += 1;
+            for(const i in me.US) {
+                if({}.hasOwnProperty.call(me.US, i)) {
+                    if(typeof me.US[i].User === 'undefined') {
+                        tracer.log("ERROR: When counting the number of users connected to MRI, user uid " + i + " was not defined");
+                        continue;
+                    }
+                    if(typeof me.US[i].User.dirname === 'undefined') {
+                        tracer.log("ERROR: A user uid " + i + " dirname is unknown");
+                        continue;
+                    }
+                    if(typeof me.US[i].User.mri === 'undefined') {
+                        tracer.log("ERROR: A user uid " + i + " MRI is unknown");
+                        continue;
+                    }
+                    if(me.US[i].User.dirname + me.US[i].User.mri === mriPath) {
+                        sum += 1;
+                    }    
                 }
             }
 
