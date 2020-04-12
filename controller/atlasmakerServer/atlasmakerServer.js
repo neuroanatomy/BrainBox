@@ -48,7 +48,7 @@ if(secure) {
     });
 }
 const WebSocketServer = require('ws').Server;
-var websocket;
+var websocketserver;
 
 server.on("upgrade", function(req, socket, head) {
     var ip = req.ip
@@ -2310,11 +2310,86 @@ const atlasmakerServer = (function() {
             }
             process.stdin.resume();
         },
+        _isInBlacklist: function (remoteAddress) {
+            let isInBlacklist = false;
+            const ip = remoteAddress.split(":").pop();
+            if(useWhitelist && !whitelist[ip]) {
+                    tracer.log("--------------------> REJECT ip not in whitelist", ip);
+                    isInBlacklist = true;
+            }
+            if(useBlacklist && blacklist[ip]) {
+                    tracer.log("--------------------> REJECT ip in blacklist", ip);
+                    isInBlacklist = true;
+            }
+
+            return isInBlacklist;
+        },
+        _handleUserWebSocketMessage: function ({data, ws}) {
+            switch(data.type) {
+                case "userData":
+                    me.receiveUserDataMessage(data, ws); // sender);
+                    break;
+                case "show":
+                    // no action performed
+                    break;
+                case "paint":
+                    me.receivePaintMessage(data);
+                    break;
+                case "requestSlice":
+                    me.receiveRequestSliceMessage(data, ws); // sender);
+                    break;
+                case "requestSlice2":
+                    me.receiveRequestSlice2Message(data, ws); // sender);
+                    break;
+                case "save":
+                    me.receiveSaveMessage(data, ws);
+                    break;
+                case "saveMetadata":
+                    me.receiveSaveMetadataMessage(data, ws); // sender);
+                    break;
+                case "atlas":
+                    me.receiveAtlasFromUserMessage(data, ws); // sender);
+                    break;
+                case "echo":
+                    tracer.log("ECHO: '" + data.msg + "' from user " + data.username);
+                    break;
+                case "userNameQuery":
+                    me.queryUserName(data)
+                    .then(function(obj) {
+                        data.metadata = obj;
+                        ws.send(JSON.stringify(data)); // sender.send(JSON.stringify(data));
+                    })
+                    .catch((err) => tracer.log(err));
+                    break;
+                case "projectNameQuery":
+                    me.queryProjectName(data)
+                    .then(function(obj) {
+                        data.metadata = obj;
+                        ws.send(JSON.stringify(data)); // sender.send(JSON.stringify(data));
+                    })
+                    .catch(function(err) { tracer.log(err); });
+                    break;
+                case "similarProjectNamesQuery":
+                    me.querySimilarProjectNames(data)
+                    .then(function(obj) {
+                        data.metadata = obj;
+                        ws.send(JSON.stringify(data)); // sender.send(JSON.stringify(data));
+                    })
+                    .catch(function(err) { tracer.log(err); });
+                    break;
+                case "autocompleteClient":
+                    me.declareAutocompleteClient(data, ws); // sender);
+                    break;
+                default:
+                    break;
+            }
+        },
+
+        /*
+            Init
+        */
         initSocketConnection: function () {
 
-            /*
-                Init
-            */
             tracer.log("atlasmakerServer.js");
             tracer.log("date:", new Date());
             setInterval(function() { tracer.log("date:", new Date()); }, me.timeMarkInterval); // time mark
@@ -2342,44 +2417,31 @@ const atlasmakerServer = (function() {
             */
             try {
                 if(secure) {
-                    websocket = new WebSocketServer({server: server});
+                    websocketserver = new WebSocketServer({server: server});
                 } else {
-                    websocket = new WebSocketServer({ server: server, verifyClient: me.verifyClient });
+                    websocketserver = new WebSocketServer({ server: server, verifyClient: me.verifyClient });
                 }
 
-                websocket.on("connection", function (s, req) {
+                websocketserver.on("connection", function (ws, req) {
 
-                    /*-----------*/
-                    /* BLACKLIST */
-                    var ip = req.connection.remoteAddress;
-                    ip = ip.split(":").pop();
-                    if(useWhitelist && !whitelist[ip]) {
-                            tracer.log("--------------------> REJECT ip not in whitelist", ip);
-                            s.close();
+                    if(me._isInBlacklist(req.connection.remoteAddress)) {
+                        ws.close();
 
-                            return;
+                        return;
                     }
-                    if(useBlacklist && blacklist[ip]) {
-                            tracer.log("--------------------> REJECT ip in blacklist", ip);
-                            s.close();
-
-                            return;
-                    }
-
-                    /*-----------*/
 
                     tracer.log("    remote_address", req.connection.remoteAddress);
                     me.uidcounter += 1;
-                    var newUS = { "uid": "u" + me.uidcounter, "socket": s };
+                    var newUS = { "uid": "u" + me.uidcounter, "socket": ws };
                     me.US.push(newUS);
                     tracer.log("    User id " + newUS.uid + " connected, total: " + me.US.filter(function(o) { return typeof o !== 'undefined'; }).length + " users");
 
                     // send data from previous users
                     me.sendPreviousUserDataMessage(newUS);
 
-                    s.on('message', function (msg) {
-                        var sender = s;
-                        var sourceUS = me.getUserFromSocket(s);
+                    ws.on('message', function (msg) {
+                        var sender = ws;
+                        var sourceUS = me.getUserFromSocket(ws);
                         var data = {};
 
                         // Handle binary data: a user uploaded an atlas file
@@ -2400,71 +2462,10 @@ const atlasmakerServer = (function() {
                             }
                         }
 
-                        if(me.debug>1) {
-                            tracer.log("data type:", data.type);
-                        }
+                        // handle single user Web socket messages
+                        me._handleUserWebSocketMessage({data, ws});
 
-                        switch(data.type) {
-                            case "userData":
-                                me.receiveUserDataMessage(data, sender);
-                                break;
-                            case "show":
-                                // no action performed
-                                break;
-                            case "paint":
-                                me.receivePaintMessage(data);
-                                break;
-                            case "requestSlice":
-                                me.receiveRequestSliceMessage(data, sender);
-                                break;
-                            case "requestSlice2":
-                                me.receiveRequestSlice2Message(data, sender);
-                                break;
-                            case "save":
-                                me.receiveSaveMessage(data, s);
-                                break;
-                            case "saveMetadata":
-                                me.receiveSaveMetadataMessage(data, sender);
-                                break;
-                            case "atlas":
-                                me.receiveAtlasFromUserMessage(data, sender);
-                                break;
-                            case "echo":
-                                tracer.log("ECHO: '" + data.msg + "' from user " + data.username);
-                                break;
-                            case "userNameQuery":
-                                me.queryUserName(data)
-                                .then(function(obj) {
-                                    data.metadata = obj;
-                                    sender.send(JSON.stringify(data));
-                                })
-                                .catch((err) => tracer.log(err));
-                                break;
-                            case "projectNameQuery":
-                                me.queryProjectName(data)
-                                .then(function(obj) {
-                                    data.metadata = obj;
-                                    sender.send(JSON.stringify(data));
-                                })
-                                .catch(function(err) { tracer.log("err:", err); });
-                                break;
-                            case "similarProjectNamesQuery":
-                                me.querySimilarProjectNames(data)
-                                .then(function(obj) {
-                                    data.metadata = obj;
-                                    sender.send(JSON.stringify(data));
-                                })
-                                .catch(function(err) { tracer.log("err:", err); });
-                                break;
-                            case "autocompleteClient":
-                                me.declareAutocompleteClient(data, sender);
-                                break;
-                            default:
-                                break;
-                        }
-
-                        // Broadcast
-                        //----------
+                        // handle broadcast of messages
                         var n = 0;
 
                         // do not broadcast the following messages
@@ -2476,7 +2477,7 @@ const atlasmakerServer = (function() {
                         }
 
                         // scan through connected users
-                        for(client of websocket.clients) {
+                        for(client of websocketserver.clients) {
                             // i-th user
                             var targetUS = me.getUserFromSocket(client);
 
@@ -2532,14 +2533,14 @@ const atlasmakerServer = (function() {
                         }
                     });
 
-                    s.on('close', function () {
+                    ws.on('close', function () {
                         var sum;
                         var sourceUS;
 
                         tracer.log("A user is disconnecting");
                         tracer.log("There are " + me.US.filter(function(o) { return typeof o !== 'undefined'; }).length + " connected");
 
-                        sourceUS = me.getUserFromSocket(s);
+                        sourceUS = me.getUserFromSocket(ws);
                         tracer.log("    The user disconnecting is: " + sourceUS.uid);
 
                         if(typeof sourceUS.User === 'undefined') {
@@ -2581,7 +2582,7 @@ const atlasmakerServer = (function() {
                         me.sendDisconnectMessage(sourceUS.uid);
 
                         // remove the user from the list
-                        me.removeUser(s);
+                        me.removeUser(ws);
 
                         // display the total number of connected users
                         tracer.log("    " + me.US.filter(function(o) { return typeof o !== 'undefined'; }).length + " remain connected");
