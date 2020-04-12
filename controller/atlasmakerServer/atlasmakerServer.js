@@ -110,7 +110,7 @@ const atlasmakerServer = (function() {
         recordedWSTraffic: [],
         colormap: [{ r: 0, g: 0, b: 0 }],
 
-/*eslint-disable no-multi-spaces*/
+        /*eslint-disable no-multi-spaces*/
         NiiHdr: new Struct()
             .word32Sle('sizeof_hdr')        // Size of the header. Must be 348 (bytes)
             .chars('data_type', 10)         // Not used; compatibility with analyze.
@@ -155,7 +155,7 @@ const atlasmakerServer = (function() {
             .array('srow_z', 4, 'floatle')  // 3rd row affine transform.
             .chars('intent_name', 16)       // Name or meaning of the data.
             .chars('magic', 4),             // Magic string.
-/*eslint-enable no-multi-spaces*/
+        /*eslint-enable no-multi-spaces*/
         MghHdr: new Struct()
             .word32Sbe('v')
             .word32Sbe('ndim1')
@@ -168,22 +168,14 @@ const atlasmakerServer = (function() {
             .array('delta', 3, 'floatbe')
             .array('Mdc', 9, 'floatbe')
             .array('Pxyz_c', 3, 'floatbe'),
-
-/*
-        const MghFtr = Struct()
-            .array('mrparms', 4, 'floatbe');
-*/
-
+        // const MghFtr = Struct().array('mrparms', 4, 'floatbe');
         traceLog: function (f, l) {
             if(typeof l === 'undefined' || me.debug>l) {
                 tracer.log(String(f.name) + " " + (f.caller?(f.caller.name||"annonymous"): "root"));
             }
         },
         niiTag: bufferTag("nii", 8),
-
-/*
-        const mghTag = bufferTag("mgh", 8);
-*/
+        // const mghTag = bufferTag("mgh", 8);
         jpgTag: bufferTag("jpg", 8),
 
         numberOfUsersConnectedToAtlas: function (dirname, atlasFilename) {
@@ -296,6 +288,7 @@ const atlasmakerServer = (function() {
                 me.recordedWSTraffic = [];
             }
         },
+
         //========================================================================================
         // Web socket
         //========================================================================================
@@ -319,19 +312,18 @@ const atlasmakerServer = (function() {
 
             return null;
         },
-
-    /*
-        getUserIdFromSocket: function (socket) {
-            for(const i in me.US) {
-                if({}.hasOwnProperty.call(me.US, i)) {
-                    if(socket === me.US[i].socket)
-                        return me.US[i].uid;
+        /*
+            getUserIdFromSocket: function (socket) {
+                for(const i in me.US) {
+                    if({}.hasOwnProperty.call(me.US, i)) {
+                        if(socket === me.US[i].socket)
+                            return me.US[i].uid;
+                    }
                 }
-            }
 
-            return null;
-        },
-    */
+                return null;
+            },
+        */
         removeUser: function (socket) {
             for(const i in me.US) {
                 if({}.hasOwnProperty.call(me.US, i)) {
@@ -353,7 +345,6 @@ const atlasmakerServer = (function() {
                 }
             }
         },
-
         saveAtlas: function (atlas) {
 
             /*
@@ -486,8 +477,9 @@ const atlasmakerServer = (function() {
             }
         },
 
-        /*-----------*/
-        /* BLACKLIST */
+        //========================================================================================
+        // Black list
+        //========================================================================================
         verifyClient: function (info) {
             var ip;
 
@@ -522,8 +514,6 @@ const atlasmakerServer = (function() {
             return true;
         },
 
-        /*-----------*/
-
         //========================================================================================
         // Undo
         //========================================================================================
@@ -534,7 +524,6 @@ const atlasmakerServer = (function() {
          * when a user leaves, its undo stack is disposed. With the current
          * implementation, we'll be storing undo stacks for long gone users...
         */
-
         pushUndoLayer: function (User) {
             var undoLayer = { User: User, actions: [] };
             me.UndoStack.push(undoLayer);
@@ -636,19 +625,17 @@ const atlasmakerServer = (function() {
             }
         },
 
-        screen2index: function (s, mri) {
+        //========================================================================================
+        // Painting
+        //========================================================================================
+        _screen2index: function (s, mri) {
             var {s2v} = mri;
             var v = [s2v.X + s2v.dx*s[s2v.x], s2v.Y + s2v.dy*s[s2v.y], s2v.Z + s2v.dz*s[s2v.z]];
             var index = v[0] + v[1]*mri.dim[0] + v[2]*mri.dim[0]*mri.dim[1];
 
             return index;
         },
-
-
-        //========================================================================================
-        // Painting
-        //========================================================================================
-         paintVoxel: function (mx, my, mz, User, vol, val, undoLayer) {
+        paintVoxel: function (mx, my, mz, User, vol, val, undoLayer) {
             var {view} = User;
             var i, s, x, y, z;
             var {sdim} = User.s2v;
@@ -660,28 +647,11 @@ const atlasmakerServer = (function() {
             }
 
             s = [x, y, z];
-            i = me.screen2index(s, User);
+            i = me._screen2index(s, User);
             if(vol[i] !== val) {
                 undoLayer.actions[i] = vol[i];
                 vol[i] = val;
             }
-        },
-        sliceXYZ2index: function (mx, my, mz, User) {
-            var {view} = User;
-            var x, y, z;
-            var i = -1;
-            var {sdim} = User.s2v;
-
-            switch(view) {
-                case 'sag': x = mz; y = mx; z = sdim[2]-1-my; break; // sagital
-                case 'cor': x = mx; y = mz; z = sdim[2]-1-my; break; // coronal
-                case 'axi': x = mx; y = sdim[1]-1-my; z = mz; break; // axial
-            }
-            var s;
-            s = [x, y, z];
-            i = me.screen2index(s, User);
-
-            return i;
         },
         line: function (x, y, val, User, undoLayer) {
             // Bresenham's line algorithm adapted from
@@ -742,6 +712,23 @@ const atlasmakerServer = (function() {
                 }
             }
         },
+        _sliceXYZ2index: function (mx, my, mz, User) {
+            var {view} = User;
+            var x, y, z;
+            var i = -1;
+            var {sdim} = User.s2v;
+
+            switch(view) {
+                case 'sag': x = mz; y = mx; z = sdim[2]-1-my; break; // sagital
+                case 'cor': x = mx; y = mz; z = sdim[2]-1-my; break; // coronal
+                case 'axi': x = mx; y = sdim[1]-1-my; z = mz; break; // axial
+            }
+            var s;
+            s = [x, y, z];
+            i = me._screen2index(s, User);
+
+            return i;
+        },
         fill: function (x, y, z, val, User, undoLayer) {
             var {view} = User;
             const vol = me.Atlases[User.iAtlas].data;
@@ -758,7 +745,7 @@ const atlasmakerServer = (function() {
             var left, right;
             var n;
             var max = 0;
-            var bval = vol[me.sliceXYZ2index(x, y, z, User)]; // background-value: value of the voxel where the click occurred
+            var bval = vol[me._sliceXYZ2index(x, y, z, User)]; // background-value: value of the voxel where the click occurred
 
             if(bval === val) { // nothing to do
 
@@ -771,31 +758,30 @@ const atlasmakerServer = (function() {
                     max = Q.length;
                 }
                 n = Q.shift();
-                if(vol[me.sliceXYZ2index(n.x, n.y, z, User)] !== bval) {
+                if(vol[me._sliceXYZ2index(n.x, n.y, z, User)] !== bval) {
                     continue;
                 }
                 left = n.x;
                 right = n.x;
                 y = n.y;
-                while (left-1>=0 && vol[me.sliceXYZ2index(left-1, y, z, User)] === bval) {
+                while (left-1>=0 && vol[me._sliceXYZ2index(left-1, y, z, User)] === bval) {
                     left--;
                 }
-                while (right + 1<brainWidth && vol[me.sliceXYZ2index(right + 1, y, z, User)] === bval) {
+                while (right + 1<brainWidth && vol[me._sliceXYZ2index(right + 1, y, z, User)] === bval) {
                     right += 1;
                 }
                 for(x = left; x<=right; x += 1) {
                     me.paintVoxel(x, y, z, User, vol, val, undoLayer);
-                    if(y-1>=0 && vol[me.sliceXYZ2index(x, y-1, z, User)] === bval) {
+                    if(y-1>=0 && vol[me._sliceXYZ2index(x, y-1, z, User)] === bval) {
                         Q.push({ x: x, y: y-1 });
                     }
-                    if(y + 1<brainHeight && vol[me.sliceXYZ2index(x, y + 1, z, User)] === bval) {
+                    if(y + 1<brainHeight && vol[me._sliceXYZ2index(x, y + 1, z, User)] === bval) {
                         Q.push({ x: x, y: y + 1 });
                     }
                 }
             }
             tracer.log("Max array size for fill:", max);
         },
-
         /*
             From 'User' we know slice, atlas, vol, view, dim.
             [issue: undoLayer also has a User field. Maybe only undoLayer should be kept?]
@@ -849,6 +835,9 @@ const atlasmakerServer = (function() {
             }
         },
 
+        //========================================================================================
+        // MRI I/O
+        //========================================================================================
         mulMatVec: function (m, v) {
             return [
                 m[0][0]*v[0] + m[0][1]*v[1] + m[0][2]*v[2],
@@ -950,66 +939,63 @@ const atlasmakerServer = (function() {
             mri.wori = wori;
             [mri.s2v.sdim[mi.i], mri.s2v.sdim[mj.i], mri.s2v.sdim[mk.i]] = mri.dim;
         },
+        // testS2VTransformation: function (mri) {
+        //     //  check the S2V transformation to see if it looks correct.
+        //     //  If it does not, reset it
+        //     var doReset = false;
 
-    /*
-        testS2VTransformation: function (mri) {
-            //  check the S2V transformation to see if it looks correct.
-            //  If it does not, reset it
-            var doReset = false;
+        //     tracer.log("    Transformation TEST:");
 
-            tracer.log("    Transformation TEST:");
+        //     if(me.debug) {
+        //         process.stdout.write("  1. transformation volume: ");
+        //     }
+        //     var vv = mri.dim[0]*mri.dim[1]*mri.dim[2];
+        //     var vs = mri.s2v.sdim[0]*mri.s2v.sdim[1]*mri.s2v.sdim[2];
+        //     var diff = (vs-vv)/vv;
+        //     if(Math.abs(diff)>0.001) {
+        //         doReset = true;
+        //         if(me.debug) {
+        //             tracer.log("    fail. Voxel volume:", vv, "Screen volume:", vs, "Difference (%):", diff);
+        //         }
+        //     } else {
+        //         if(me.debug) {
+        //             tracer.log("    ok");
+        //         }
+        //     }
 
-            if(me.debug) {
-                process.stdout.write("  1. transformation volume: ");
-            }
-            var vv = mri.dim[0]*mri.dim[1]*mri.dim[2];
-            var vs = mri.s2v.sdim[0]*mri.s2v.sdim[1]*mri.s2v.sdim[2];
-            var diff = (vs-vv)/vv;
-            if(Math.abs(diff)>0.001) {
-                doReset = true;
-                if(me.debug) {
-                    tracer.log("    fail. Voxel volume:", vv, "Screen volume:", vs, "Difference (%):", diff);
-                }
-            } else {
-                if(me.debug) {
-                    tracer.log("    ok");
-                }
-            }
+        //     if(me.debug) {
+        //         process.stdout.write("  2. transformation origin: ");
+        //     }
+        //     if(    mri.s2v.sori[0]<0||mri.s2v.sori[0]>mri.s2v.sdim[0] ||
+        //         mri.s2v.sori[1]<0||mri.s2v.sori[1]>mri.s2v.sdim[1] ||
+        //         mri.s2v.sori[2]<0||mri.s2v.sori[2]>mri.s2v.sdim[2]) {
+        //         doReset = true;
+        //         if(me.debug) {
+        //             tracer.log("    fail");
+        //         }
+        //     } else {
+        //         if(me.debug) {
+        //             tracer.log("    ok");
+        //         }
+        //     }
 
-            if(me.debug) {
-                process.stdout.write("  2. transformation origin: ");
-            }
-            if(    mri.s2v.sori[0]<0||mri.s2v.sori[0]>mri.s2v.sdim[0] ||
-                mri.s2v.sori[1]<0||mri.s2v.sori[1]>mri.s2v.sdim[1] ||
-                mri.s2v.sori[2]<0||mri.s2v.sori[2]>mri.s2v.sdim[2]) {
-                doReset = true;
-                if(me.debug) {
-                    tracer.log("    fail");
-                }
-            } else {
-                if(me.debug) {
-                    tracer.log("    ok");
-                }
-            }
+        //     if(doReset) {
+        //         tracer.log("    FAIL: TRANSFORMATION WILL BE RESET");
+        //         tracer.log(mri.dir);
+        //         tracer.log(mri.ori);
+        //         mri.dir = [[mri.pixdim[0], 0, 0], [0, -mri.pixdim[1], 0], [0, 0, -mri.pixdim[2]]];
+        //         mri.ori = [0, mri.dim[1]-1, mri.dim[2]-1];
+        //         me.computeS2VTransformation(mri);
 
-            if(doReset) {
-                tracer.log("    FAIL: TRANSFORMATION WILL BE RESET");
-                tracer.log(mri.dir);
-                tracer.log(mri.ori);
-                mri.dir = [[mri.pixdim[0], 0, 0], [0, -mri.pixdim[1], 0], [0, 0, -mri.pixdim[2]]];
-                mri.ori = [0, mri.dim[1]-1, mri.dim[2]-1];
-                me.computeS2VTransformation(mri);
-
-                if(me.debug>2) {
-                    tracer.log("dir", mri.dir);
-                    tracer.log("ori", mri.ori);
-                    tracer.log("s2v", mri.s2v);
-                }
-            } else {
-                tracer.log("    ok");
-            }
-        },
-    */
+        //         if(me.debug>2) {
+        //             tracer.log("dir", mri.dir);
+        //             tracer.log("ori", mri.ori);
+        //             tracer.log("s2v", mri.s2v);
+        //         }
+        //     } else {
+        //         tracer.log("    ok");
+        //     }
+        // },
         filetypeFromFilename: function (mriPath) {
             if(mriPath.match(/.nii.gz$/)) {
                 return "nii.gz";
@@ -1177,7 +1163,6 @@ const atlasmakerServer = (function() {
 
             return pr;
         },
-
         _readMGZHeader: function({mgh, mri, hdr}) {
             let success = true;
 
@@ -1219,7 +1204,6 @@ const atlasmakerServer = (function() {
 
             return success;
         },
-
         _readMGZData: function ({mgh, mri, hdr}) {
             let success = true;
             const hdrSize = 284;
@@ -1277,7 +1261,6 @@ const atlasmakerServer = (function() {
 
             return success;
         },
-
         /*
             readMGZ
             input: path to a .mgz file
@@ -1329,7 +1312,6 @@ const atlasmakerServer = (function() {
 
             return pr;
         },
-
         /*
             createNifti
             input: a template mri structure
@@ -1465,8 +1447,10 @@ const atlasmakerServer = (function() {
 
             return pr;
         },
-//            this.loadMRI = loadMRI;
 
+        //========================================================================================
+        // DB querying
+        //========================================================================================
         queryUserName: function (data) {
             return new Promise(function(resolve, reject) {
                 if (data.metadata && data.metadata.nickname) {
@@ -1564,11 +1548,10 @@ const atlasmakerServer = (function() {
 
             return pr;
         },
-//            this.getBrainAtPath = getBrainAtPath;
 
-        /*
-            Serve brain slices
-        */
+        //========================================================================================
+        // Volume slice server
+        //========================================================================================
         drawSlice: function (brain, view, slice) {
             var x, y;
             var i, j;
@@ -1601,7 +1584,7 @@ const atlasmakerServer = (function() {
                         case 'cor': s = [x, yc, s2v.sdim[2]-1-y]; break;
                         case 'axi': s = [x, s2v.sdim[1]-1-y, ya]; break;
                     }
-                    i = me.screen2index(s, brain);
+                    i = me._screen2index(s, brain);
 
                     val = 255*(brain.data[i]-brain.min)/(brain.max-brain.min);
                     frameData[4*j + 0] = val; // red
@@ -1655,7 +1638,7 @@ const atlasmakerServer = (function() {
                         case 'cor': s = [x, yc, s2v.sdim[2]-1-y]; break;
                         case 'axi': s = [x, s2v.sdim[1]-1-y, ya]; break;
                     }
-                    i = me.screen2index(s, brain);
+                    i = me._screen2index(s, brain);
 
                     // brain data
                     val = (brain.data[i]-brain.min)/(brain.max-brain.min);
@@ -1690,7 +1673,6 @@ const atlasmakerServer = (function() {
 
             return jpeg.encode(rawImageData, 99);
         },
-
         receivePaintMessage: function (data) {
             var msg = data.data;
             var sourceUS = me.getUserFromUserId(data.uid); // user data
@@ -1733,7 +1715,6 @@ const atlasmakerServer = (function() {
                     me.sendSliceToUser(theData, view, slice, userSocket);
                 });
         },
-
         receiveRequestSlice2Message: function (data, userSocket) {
             var {view} = data; // user view
             var slice = parseInt(data.slice, 10); // user slice
@@ -1901,7 +1882,6 @@ const atlasmakerServer = (function() {
                 });
             });
         },
-
         unloadUnusedBrains: function () {
             for(const i in me.Brains) {
                 if({}.hasOwnProperty.call(me.Brains, i)) {
@@ -1949,9 +1929,10 @@ const atlasmakerServer = (function() {
                 }
             }
         },
-//========================================================================================
-// Load & Save
-//========================================================================================
+
+        //========================================================================================
+        // Load & Save
+        //========================================================================================
         /**
          * @function loadAtlas
          * @description The requested atlas is sent if it was already loaded, loaded from disk
@@ -2079,6 +2060,10 @@ const atlasmakerServer = (function() {
 
             return pr;
         },
+
+        //========================================================================================
+        // Web socket handling
+        //========================================================================================
         _isUserFirstConnection: function (User) {
             let firstConnectionFlag = false;
 
@@ -2210,7 +2195,6 @@ const atlasmakerServer = (function() {
                 me.unloadUnusedAtlases();
             }
         },
-
         declareAutocompleteClient: function (data/*, userSocket*/) {
             var sourceUS = me.getUserFromUserId(data.uid);
 
@@ -2219,7 +2203,6 @@ const atlasmakerServer = (function() {
                 uid: data.uid
             };
         },
-
         /*
          send new user information to old users,
          and old users information to new user.
@@ -2570,10 +2553,6 @@ const atlasmakerServer = (function() {
                 me._handleWebSocketClose({ws});
             });
         },
-
-        /*
-            Init
-        */
         initSocketConnection: function () {
 
             tracer.log(`
