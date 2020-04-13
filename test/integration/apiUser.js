@@ -9,15 +9,7 @@ const url = "http://localhost:3001";
 
 chai.use(chaiHttp);
 
-describe('Array', () => {
-  describe('#indexOf()', () => {
-    it('should return -1 when the value is not present', () => {
-      assert.equal(-1, [1, 2, 3].indexOf(4)); // 4 is not present in this array so indexOf returns -1
-    });
-  });
-});
-
-describe('/GET', () => {
+describe('/user route', () => {
   it('get("/") should return status 200', async () => {
     const res = await chai.request(url)
       .get('/');
@@ -28,12 +20,13 @@ describe('/GET', () => {
   it('get("/user/json/") should get an error message requesting page', async () => {
     const res = await chai.request(url).get('/user/json/');
     const {body} = res;
-    const expected = {error: "The 'page' parameter has to be specified"};
+    const expected = {error: "Provide the parameter 'page'"};
     assert.deepEqual(body, expected);
   });
 
   it('get("/user/json?page=0") should return an array', async () => {
-    const res = await chai.request(url).get('/user/json?page=0').query({page: 0});
+    const res = await chai.request(url).get('/user/json?page=0')
+      .query({page: 0});
     const {body} = res;
     assert(Array.isArray(body));
   });
