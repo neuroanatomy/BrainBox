@@ -4,8 +4,6 @@
 /*
     Atlas Maker Server
     Roberto Toro, 25 July 2014
-
-    Launch using > node atlasmakerServer.js
 */
 
 const fs = require('fs');
@@ -62,14 +60,18 @@ if (DOCKER_DEVELOP === '1') {
 
 const app = express();
 
-// allow CORS
+//========================================================================================
+// Allow CORS
+//========================================================================================
 app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     next();
 });
 
-// enable compression
+//========================================================================================
+// Enable compression
+//========================================================================================
 app.use(compression());
 
 app.engine('mustache', mustacheExpress());
@@ -88,7 +90,9 @@ if (DOCKER_DEVELOP === '1') {
     app.use(require('connect-livereload')());
 }
 
-// { App-wide variables
+//========================================================================================
+// App-wide variables
+//========================================================================================
 app.use((req, res, next) => {
     req.dirname = dirname;
     req.db = db;
@@ -96,15 +100,17 @@ app.use((req, res, next) => {
 
     next();
 });
-// }
 
-// { Init web socket server
+//========================================================================================
+// Init web socket server
+//========================================================================================
 const atlasmakerServer = require('./controller/atlasmakerServer/atlasmakerServer.js');
 atlasmakerServer.initSocketConnection();
 atlasmakerServer.dataDirectory = dirname + '/public';
-// }
 
-// { Check that the 'anyone' user exists. Insert it otherwise
+//========================================================================================
+// Check that the 'anyone' user exists. Insert it otherwise
+//========================================================================================
 db.get('user').findOne({nickname: 'anyone'})
     .then( (obj) => {
         if (!obj) {
@@ -120,9 +126,10 @@ db.get('user').findOne({nickname: 'anyone'})
             tracer.log('\'anyone\' user correctly configured.');
         }
     });
-// }
 
-// { Passport: OAuth2 authentication
+//========================================================================================
+// Passport: OAuth2 authentication
+//========================================================================================
 const session = require('express-session');
 const passport = require('passport');
 const GithubStrategy = require('passport-github').Strategy;
@@ -165,7 +172,8 @@ app.get('/loggedIn', function (req, res) {
         res.send({loggedIn: false});
     }
 });
-// start the GitHub Login process
+
+// GitHub Login process
 app.get('/auth/github', passport.authenticate('github'));
 app.get('/auth/github/callback',
     passport.authenticate('github', {failureRedirect: '/'}),
@@ -196,9 +204,10 @@ app.get('/auth/github/callback',
             res.redirect(req.session.returnTo || '/');
             delete req.session.returnTo;
     });
-// }
 
-// { Token authentication
+//========================================================================================
+// Token authentication
+//========================================================================================
 global.tokenAuthentication = function (req, res, next) {
     tracer.log('>> Check token');
     const token = req.params.token | req.query.token;
@@ -230,9 +239,10 @@ global.tokenAuthentication = function (req, res, next) {
         next();
     });
 };
-// }
 
-// { GUI routes
+//========================================================================================
+// GUI routes
+//========================================================================================
 app.get('/', (req, res) => { // /auth/github
     const login = (req.isAuthenticated()) ?
                 ('<a href=\'/user/' + req.user.username + '\'>' + req.user.username + '</a> (<a href=\'/logout\'>Log Out</a>)') :
@@ -252,7 +262,9 @@ app.use('/project', require('./controller/project/'));
 app.use('/user', require('./controller/user/'));
 // }
 
-// { API routes
+//========================================================================================
+// API routes
+//========================================================================================
 app.get('/api/getLabelsets', (req, res) => {
     const arr = fs.readdirSync(dirname + '/public/labels/');
     const info = [];
@@ -396,8 +408,10 @@ app.post('/api/log', (req, res) => {
         }
     });
 });
-// }
 
+//========================================================================================
+// Error handlers
+//========================================================================================
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
     var err = new Error('Not Found');
@@ -405,7 +419,6 @@ app.use(function (req, res, next) {
     next(err);
 });
 
-// error handlers
 // development error handler
 // will print stacktrace
 if (app.get('env') === 'development') {
