@@ -381,7 +381,7 @@ const apiMriGet = function (req, res) {
     // if the query does not contain a specific mri, send a paginated list of mris
     if (!myurl) {
         if (typeof page === "undefined") {
-            res.send({error: 'Specify the \'page\' parameter'});
+            res.send({error: "Provide the parameter 'page'"});
 
             return;
         }
