@@ -72,7 +72,7 @@ var apiUser = function(req, res) {
 
 var apiUserAll = function(req, res) {
     if(!req.query.page) {
-        res.json({error:"The 'pages' parameter has to be specified"});
+        res.json({error:"The 'page' parameter has to be specified"});
 
         return;
     }

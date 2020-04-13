@@ -63,6 +63,8 @@
     "ws": "^5.1.0"
   },
   "devDependencies": {
+    "chai": "^4.2.0",
+    "chai-http": "^4.3.0",
     "clean-webpack-plugin": "^0.1.19",
     "connect-livereload": "^0.6.0",
     "copy-webpack-plugin": "^5.0.5",
