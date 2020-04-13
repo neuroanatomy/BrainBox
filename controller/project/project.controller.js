@@ -40,7 +40,7 @@ var validator = function(req, res, next) {
  * @param {Object} object Project definition object
  * @todo object.annotations??
  */
-var isProjectObject = function(req,res,object) {
+var isProjectObject = function(req, res, object) {
     var goodOwner = false;
     var goodCollaborators = false;
 
@@ -48,19 +48,19 @@ var isProjectObject = function(req,res,object) {
         var i, k, flag, arr;
         var allowed="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,_- '–:;".split("");
         var allowedAlphanumericHyphen="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-".split("");
-    
+
         // 1. Synchronous checks
         //----------------------
-    
+
         // files
         if (object.files) {
             for (k in object.files.list) {
                 if (!validatorNPM.isURL(object.files.list[k].source)) {
-                    reject({success:false,error:"Invalid file URL"});
+                    reject({success:false, error:"Invalid file URL"});
                     return;
                 }
                 if(!validatorNPM.isWhitelisted(object.files.list[k].name, allowed)) {
-                    reject({success:false,error:"Invalid file name"});
+                    reject({success:false, error:"Invalid file name"});
                     return;
                 }
             }
@@ -69,7 +69,7 @@ var isProjectObject = function(req,res,object) {
 
         // description
         if (object.description && !validatorNPM.isWhitelisted(object.description, allowed)) {
-            reject({success:false,error:"Invalid project description"});
+            reject({success:false, error:"Invalid project description"});
             return;
             // delete object.description;
         }
@@ -77,7 +77,7 @@ var isProjectObject = function(req,res,object) {
 
         // name
         if (object.name && !validatorNPM.isWhitelisted(object.name, allowed)) {
-            reject({success:false,error:"Invalid name"});
+            reject({success:false, error:"Invalid name"});
             return;
             //delete object.name;
         }
@@ -85,14 +85,14 @@ var isProjectObject = function(req,res,object) {
 
         // check that owner and shortname are present
         if (!object.owner || !object.shortname) {
-            reject({success:false,error:"Invalid owner or project shortname, not present"});
+            reject({success:false, error:"Invalid owner or project shortname, not present"});
             return;
         }
         console.log("> owner and project shortname present")
-    
+
         // check that shortname is alphanumeric
         if(!validatorNPM.isWhitelisted(object.owner, allowedAlphanumericHyphen) || !validatorNPM.isWhitelisted(object.shortname, allowedAlphanumericHyphen)) {
-            reject({success:false,error:"Invalid owner or project shortname, not alphanumeric"});
+            reject({success:false, error:"Invalid owner or project shortname, not alphanumeric"});
             return;
         }
         console.log("> owner and project shortname present")
@@ -109,10 +109,10 @@ var isProjectObject = function(req,res,object) {
             }
         }
         if(flag === false) {
-            reject({success:false,error:"User 'anynone' is not present"});
+            reject({success:false, error:"User 'anynone' is not present"});
             return;
         }
-    
+
         // check that collaborator's access values are valid
         flag=true;
         for(i=0;i<arr.length;i++) {
@@ -133,11 +133,11 @@ var isProjectObject = function(req,res,object) {
             }
         }
         if(flag === false) {
-            reject({success:false,error:"Access values are invalid"});
+            reject({success:false, error:"Access values are invalid"});
             return;
         }
         console.log("> Access values ok");
-    
+
         // check that the list of annotations contains at least 1 volume-type entry
         flag = false;
         for(i=0;i<object.annotations.list.length;i++) {
@@ -147,14 +147,14 @@ var isProjectObject = function(req,res,object) {
             }
         }
         if(flag == false) {
-            reject({success:false,error:"Annotations must contain at least 1 volume-type entry"});
+            reject({success:false, error:"Annotations must contain at least 1 volume-type entry"});
             return;
         }
-            
-    
+
+
         // 2. Asynchronous checks
         //-----------------------
-    
+
         /**
          * @todo Replace the .find calls by .findOne. The check if(val[i].length === 0)
          *       should change to if(val[i])
@@ -173,10 +173,10 @@ var isProjectObject = function(req,res,object) {
                 }
             }
             if(notFound === true) {
-                reject({success:false,error:"Users are invalid, one or more do not exist"});
+                reject({success:false, error:"Users are invalid, one or more do not exist"});
                 return;
             }
-        
+
             // All checks are successful, resolve the promisse
             // console.log({success:true,message:"All checks ok. Project object looks valid"});
             resolve(object);
@@ -206,7 +206,7 @@ var project = function(req, res) {
     // store return path in case of login
     req.session.returnTo = req.originalUrl;
 
-    req.db.get('project').findOne({shortname:req.params.projectName,backup:{$exists:0}},"-_id")
+    req.db.get('project').findOne({shortname:req.params.projectName, backup:{$exists:0}}, "-_id")
     .then(function(json) {
         if (json) {
             // check that the logged user has access to view this project
@@ -244,7 +244,7 @@ var api_project = function(req, res) {
         loggedUser = req.tokenUsername;
     }
 
-    req.db.get('project').findOne({shortname:req.params.projectName,backup:{$exists:0}},"-_id")
+    req.db.get('project').findOne({shortname:req.params.projectName, backup:{$exists:0}}, "-_id")
     .then(function(json) {
         if(json) {
             // check that the logged user has access to view this project
@@ -254,7 +254,7 @@ var api_project = function(req, res) {
             }
 
             if(req.query.var) {
-                var i,arr=req.query.var.split("/");
+                var i, arr=req.query.var.split("/");
                 for(i in arr)
                     json=json[arr[i]];
             }
@@ -283,14 +283,14 @@ var api_projectAll = function(req, res) {
     }
 
     if(!req.query.page) {
-        res.send({error:"Specify the 'page' parameter"});
+        res.send({error:"Provide the parameter 'page'"});
         return;
     }
 
-    page = Math.max(0,parseInt(req.query.page));
+    page = Math.max(0, parseInt(req.query.page));
     nItemsPerPage = 20;
 
-    dataSlices.getProjectsSlice(req,page*nItemsPerPage,nItemsPerPage)
+    dataSlices.getProjectsSlice(req, page*nItemsPerPage, nItemsPerPage)
     .then(function (values) {
         res.json(values);
     });
@@ -304,18 +304,27 @@ var api_projectAll = function(req, res) {
  * @result A json object with project data
  */
 var api_projectFiles = function(req, res) {
-    var projShortname = req.params.projectName;
-    var start = req.query.start;
-    var length = req.query.length;
-    var namesFlag = req.query.names;
+    const projShortname = req.params.projectName;
+    const {start, length, names: namesFlag} = req.query;
+    console.log("projShortname:", projShortname, "start:", start, "length:", length, "namesFlag:", namesFlag);
 
-    console.log("projShortname:",projShortname, "start:",start, "length:",length, "namesFlag:",namesFlag);
-    dataSlices.getProjectFilesSlice(req,projShortname, start, length, namesFlag)
+    if(typeof start === "undefined") {
+        res.send({error: "Provide 'start'"});
+
+        return;
+    }
+    if(typeof length === "undefined") {
+        res.send({error: "Provide 'length'"});
+
+        return;
+    }
+
+    dataSlices.getProjectFilesSlice(req, projShortname, start, length, namesFlag)
     .then(function(list) {
-        res.send(list);    
+        res.send(list);
     })
     .catch(function(err) {
-        console.log("ERROR:",err);
+        console.log("ERROR:", err);
         res.send();
     });
 };
@@ -341,7 +350,7 @@ var settings = function(req, res) {
     // store return path in case of login
     req.session.returnTo = req.originalUrl;
 
-    req.db.get('project').findOne({shortname:req.params.projectName,backup:{$exists:0}},"-_id")
+    req.db.get('project').findOne({shortname:req.params.projectName, backup:{$exists:0}}, "-_id")
     .then(function(json) {
         if(json) {
             // check that the logged user has access to view this project
@@ -384,7 +393,7 @@ var settings = function(req, res) {
         // find username and name for each of the collaborators in the project
         var j, arr1 = [];
         for(j=0;j<json.collaborators.list.length;j++) {
-            arr1.push(req.db.get('user').findOne({nickname:json.collaborators.list[j].userID,backup:{$exists:0}},{name:1,_id:0}));
+            arr1.push(req.db.get('user').findOne({nickname:json.collaborators.list[j].userID, backup:{$exists:0}}, {name:1, _id:0}));
         }
         Promise.all(arr1)
         .then(function(obj) {
@@ -403,7 +412,7 @@ var settings = function(req, res) {
                 projectInfo: JSON.stringify(json),
                 login: login
             };
-            res.render('projectSettings',context);
+            res.render('projectSettings', context);
         });
     });
 };
@@ -435,33 +444,33 @@ var newProject = function(req, res) {
             functionality: "create a new project",
             login: login
         };
-        res.render('askForLogin',context);
+        res.render('askForLogin', context);
     } else {
         var context = {
             title: "BrainBox: New Project",
             login: login
         };
-        res.render('projectNew',context);
+        res.render('projectNew', context);
     }
 };
 
-function insertMRInames(req,res,list) {
+function insertMRInames(req, res, list) {
     // insert MRI names, but only if they don't exist
     for(var i=0;i<list.length;i++) {
         var name=list[i].name;
         var source=list[i].source;
         var filename = url.parse(source).pathname.split("/").pop();
-    
+
         // it there's no name, continue to the next mri
         if(!name)
             continue;
-    
+
         // check if the mri entry already exists
-        (function(na,so,fi) { // without a closure, only the last name in the list is used and repeated
-            req.db.get('mri').findOne({source:so,backup:{$exists:0}})
+        (function(na, so, fi) { // without a closure, only the last name in the list is used and repeated
+            req.db.get('mri').findOne({source:so, backup:{$exists:0}})
             .then(function (mri) {
                 var hash = crypto.createHash('md5').update(so).digest('hex');
-            
+
                 // if mri exists, and has no name, insert the name
                 if(!mri) {
                     mri = {
@@ -487,27 +496,27 @@ function insertMRInames(req,res,list) {
                 }
                 mri.modified=(new Date()).toJSON();
                 mri.modifiedBy = req.user.username;
-            
+
                 /* Use this if you want imported names to overwrite existing ones */
                 mri.name = na;
-            
+
                 /* Use this if you want imported names to be used only if no previous name exists */
                 /*
                 if(!mri.name) {
                     mri.name=na;
                 }
                 */
-            
+
                 // sanitise json
                 mri=JSON.parse(DOMPurify.sanitize(JSON.stringify(mri))); // sanitize works on strings, not objects
 
                 // update and insert
-                req.db.get('mri').update({source:mri.source},{$set:{backup:true}},{multi:true})
+                req.db.get('mri').update({source:mri.source}, {$set:{backup:true}}, {multi:true})
                     .then(function () {
                         req.db.get('mri').insert(mri);
                     });
             });
-        })(name,source,filename);
+        })(name, source, filename);
     }
 }
 
@@ -529,7 +538,7 @@ var post_project = function(req, res) {
     if (loggedUser == "anonymous")
     {
         console.log("ERROR not Authenticated");
-        res.status(403).json({error:"error",message:"User not authenticated"});
+        res.status(403).json({error:"error", message:"User not authenticated"});
         return;
     }
 
@@ -541,7 +550,7 @@ var post_project = function(req, res) {
      *       to if(result)
      */
 
-    isProjectObject(req,res,obj)
+    isProjectObject(req, res, obj)
     .then(function(obj) {
         req.db.get('project').findOne({shortname:obj.shortname, backup:{$exists:false}})
             .then(function (project) {
@@ -550,27 +559,27 @@ var post_project = function(req, res) {
                     // project exists, save update
                     if(checkAccess.toProject(project, loggedUser, "edit") == false ) {
                         console.log("User does not have edit rights");
-                        res.status(403).json({error:"error",message:"User does not have edit rights"});
+                        res.status(403).json({error:"error", message:"User does not have edit rights"});
                         return;
                     }
                     console.log("updating...");
-                    req.db.get('project').update({shortname:obj.shortname},{$set:{backup:true}},{multi:true})
+                    req.db.get('project').update({shortname:obj.shortname}, {$set:{backup:true}}, {multi:true})
                         .then(function () {
                             obj.modified=(new Date()).toJSON();
                             obj.modifiedBy = req.user.username;
                             req.db.get('project').insert(obj);
-                        
+
                             // insert MRI names if provided
                             console.log("insert mri names");
-                            insertMRInames(req,res,obj.files.list);
-                        
+                            insertMRInames(req, res, obj.files.list);
+
                             // reformat file list
                             console.log("reformat file list");
                             for(k=0;k<obj.files.list.length;k++)
                                 obj.files.list[k]=obj.files.list[k].source;
-                        
+
                             console.log("success: true");
-                            res.json({success:true,message:"Project settings updated"});
+                            res.json({success:true, message:"Project settings updated"});
                         });
                 } else {
                     // new project, insert
@@ -578,7 +587,7 @@ var post_project = function(req, res) {
                     req.db.get('project').insert(obj);
 
                     console.log("insert mri names");
-                    insertMRInames(req,res,obj.files.list);
+                    insertMRInames(req, res, obj.files.list);
 
                     // reformat file list
                     console.log("reformat file list");
@@ -586,12 +595,12 @@ var post_project = function(req, res) {
                         obj.files.list[k]=obj.files.list[k].source;
 
                     console.log("success: true");
-                    res.json({success:true,message:"New project inserted"});
+                    res.json({success:true, message:"New project inserted"});
                 }
             });
     })
     .catch(function(error) {
-        console.log("ERROR",error);
+        console.log("ERROR", error);
         res.status(300).json({"error":error});
     });
 }
@@ -613,7 +622,7 @@ var delete_project = function(req, res) {
 
     if (loggedUser == "anonymous") {
         console.log("The user is not logged in");
-        res.json({success:false,message:"User not authenticated"});
+        res.json({success:false, message:"User not authenticated"});
         return;
     }
 
@@ -624,13 +633,13 @@ var delete_project = function(req, res) {
             console.log(">> project does exist");
             if(checkAccess.toProject(project, loggedUser, "remove") == true ) {
                 console.log(">> user does have remove rights");
-            
+
                 var query = {}, update = {};
                 query["mri.annotations."+shortname] = {$exists:1};
                 query["backup"] = {$exists:0};
                 update["$unset"] = {};
                 update["$unset"]["mri.annotations."+shortname] = "";
-            
+
                 Promise.all([
                     req.db.get('project').remove({_id:project._id, backup:{$exists:false}}),
                     req.db.get('mri').update(query, update, {multi: true}),
@@ -642,20 +651,20 @@ var delete_project = function(req, res) {
                 })
                 .catch(function(err) {
                     console.log("ERROR: cannot remove project or project-related annotations");
-                    res.json({success:false ,message:"Unable to delete. Try again later"});
+                    res.json({success:false , message:"Unable to delete. Try again later"});
                 });
             } else {
                 console.log("WARNING: user does not have remove rights");
-                res.json({success:false,message:"The user is not allowed to delete this project"});
+                res.json({success:false, message:"The user is not allowed to delete this project"});
             }
         } else {
             console.log("WARNING: project does not exist");
-            res.json({success:false,message:"Unable to delete. Project does not exist in the database"});
+            res.json({success:false, message:"Unable to delete. Project does not exist in the database"});
         }
-        
+
     }).catch(function(err) {
         console.log("ERROR: unable to query the db");
-        res.json({success:false,message:"Unable to delete. Try again later"});
+        res.json({success:false, message:"Unable to delete. Try again later"});
     });
 }
 
