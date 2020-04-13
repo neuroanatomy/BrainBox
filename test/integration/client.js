@@ -10,8 +10,6 @@ const assert = require('assert');
 const timeout = 30*1000; // time in milliseconds
 
 function delay(delayTimeout) {
-//    console.log('  delay', timeout, 'milliseconds');
-
     return new Promise((resolve) => {
         setTimeout(resolve, delayTimeout);
     });
@@ -132,5 +130,4 @@ describe('Test website rendering', async function () {
     it('Browser closes successfully', async () => {
         await browser.close();
     }).timeout(timeout);
-
 });
