@@ -10,8 +10,8 @@ const checkAccess = require(__dirname + '/../checkAccess/checkAccess.js');
  * @param {integer} start Start index of the file slice
  * @param {integer} length Number of files to include in the slice
  */
-var getUserFilesSlice = function getUserFilesSlice(req,requestedUser,start,length) {
-    console.log('getUserFilesSlice. Start, end:',start,length);
+var getUserFilesSlice = function getUserFilesSlice(req, requestedUser, start, length) {
+    console.log('getUserFilesSlice. Start, end:', start, length);
     var loggedUser = "anonymous";
     if(req.isAuthenticated()) {
         loggedUser = req.user.username;
@@ -23,7 +23,7 @@ var getUserFilesSlice = function getUserFilesSlice(req,requestedUser,start,lengt
     return new Promise(function (resolve, reject) {
         Promise.all([
             req.db.get('mri')
-            .find({owner: requestedUser, backup: {$exists: false}},{skip:start,limit:length}),
+            .find({owner: requestedUser, backup: {$exists: false}}, {skip:start, limit:length}),
             req.db.get('project').find({
                 $or: [
                     {owner: requestedUser},
@@ -39,7 +39,7 @@ var getUserFilesSlice = function getUserFilesSlice(req,requestedUser,start,lengt
             
             // filter for view access
             for(i in unfilteredMRI)
-                if(checkAccess.toFileByAllProjects(unfilteredMRI[i],unfilteredProjects,loggedUser,"view"))
+                if(checkAccess.toFileByAllProjects(unfilteredMRI[i], unfilteredProjects, loggedUser, "view"))
                     mri.push(unfilteredMRI[i]);
         
             mri.map(function (o) {
@@ -60,7 +60,7 @@ var getUserFilesSlice = function getUserFilesSlice(req,requestedUser,start,lengt
                 resolve({success:false, list:[]});
         })
         .catch(function(err) {
-            console.log("ERROR:",err);
+            console.log("ERROR:", err);
             reject();
         })
     });
@@ -73,7 +73,7 @@ var getUserFilesSlice = function getUserFilesSlice(req,requestedUser,start,lengt
  * @param {integer} start Start index of the file slice
  * @param {integer} length Number of files to include in the slice
  */
-var getUserAtlasSlice = function getUserAtlasSlice(req,requestedUser,start,length) {
+var getUserAtlasSlice = function getUserAtlasSlice(req, requestedUser, start, length) {
     var loggedUser = "anonymous";
     if(req.isAuthenticated()) {
         loggedUser = req.user.username;
@@ -84,7 +84,7 @@ var getUserAtlasSlice = function getUserAtlasSlice(req,requestedUser,start,lengt
     return new Promise(function (resolve, reject) {
         Promise.all([
             req.db.get('mri')
-            .find({"mri.atlas": {$elemMatch: {owner: requestedUser}}, backup: {$exists: false}}, {skip:start,limit:length}),
+            .find({"mri.atlas": {$elemMatch: {owner: requestedUser}}, backup: {$exists: false}}, {skip:start, limit:length}),
             req.db.get('project').find({
                 $or: [
                     {owner: requestedUser},
@@ -100,7 +100,7 @@ var getUserAtlasSlice = function getUserAtlasSlice(req,requestedUser,start,lengt
 
             // filter for view access
             for(i in unfilteredAtlas)
-                if(checkAccess.toFileByAllProjects(unfilteredAtlas[i],unfilteredProjects,loggedUser,"view"))
+                if(checkAccess.toFileByAllProjects(unfilteredAtlas[i], unfilteredProjects, loggedUser, "view"))
                     atlas.push(unfilteredAtlas[i]);
 
             atlas.map(function (o) {
@@ -123,7 +123,7 @@ var getUserAtlasSlice = function getUserAtlasSlice(req,requestedUser,start,lengt
                 resolve({success:false, list:[]});
         })
         .catch(function(err) {
-            console.log("ERROR:",err);
+            console.log("ERROR:", err);
             reject();
         })
     });
@@ -136,7 +136,7 @@ var getUserAtlasSlice = function getUserAtlasSlice(req,requestedUser,start,lengt
  * @param {integer} start Start index of the file slice
  * @param {integer} length Number of files to include in the slice
  */
-var getUserProjectsSlice = function getUserProjectsSlice(req,requestedUser,start,length) {
+var getUserProjectsSlice = function getUserProjectsSlice(req, requestedUser, start, length) {
     var loggedUser = "anonymous";
     if(req.isAuthenticated()) {
         loggedUser = req.user.username;
@@ -151,13 +151,13 @@ var getUserProjectsSlice = function getUserProjectsSlice(req,requestedUser,start
                 {"collaborators.list": {$elemMatch:{userID:requestedUser}}}
             ],
             backup: {$exists: false}
-        },{skip:start,limit:length})
+        }, {skip:start, limit:length})
         .then(function(unfilteredProjects) {
             var projects = [];
 
             // filter for view access
             for(i in unfilteredProjects)
-                if(checkAccess.toProject(unfilteredProjects[i],loggedUser,"view"))
+                if(checkAccess.toProject(unfilteredProjects[i], loggedUser, "view"))
                     projects.push(unfilteredProjects[i]);
 
             projects = projects.map(function (o) {return {
@@ -176,7 +176,7 @@ var getUserProjectsSlice = function getUserProjectsSlice(req,requestedUser,start
                 resolve({success:false, list:[]});
         })
         .catch(function(err) {
-            console.log("ERROR:",err);
+            console.log("ERROR:", err);
             reject();
         })
     });
@@ -203,31 +203,34 @@ var getProjectFilesSlice = function getProjectFilesSlice(req, projShortname, sta
         start = parseInt(start);
         length = parseInt(length);
         req.db.get('project')
-        .findOne({shortname:projShortname,backup:{$exists:0}},"-_id")
+        .findOne({shortname:projShortname, backup:{$exists:0}}, "-_id")
         .then(function(project) {
             // check access
             if(checkAccess.toProject(project, loggedUser, "view") === false) {
                 var msg = "User "+loggedUser+" is not allowed to view project "+projShortname;
-                console.log("ERROR:",msg);
+                console.log("ERROR:", msg);
                 reject(msg);
+
                 return;
             }
 
             if (project) {
-                var list = project.files.list, newList = [], arr = [];
+                const {list} = project.files;
+                const newList = [];
+                const arr = [];
                 var i;
                 start = Math.min(start, list.length);
                 length = Math.min(length, list.length-start);
-                for(i=start;i<start+length;i++) {
-                    arr.push(req.db.get('mri').findOne({source:list[i],backup:{$exists:0}},{_id:0}));
+                for(i=start; i<start+length; i++) {
+                    arr.push(req.db.get('mri').findOne({source:list[i], backup:{$exists:0}}, {_id:0}));
                 }
                 Promise.all(arr)
                 .then(function(mris) {
                     var j;
-                    for(j=0;j<mris.length;j++) {
+                    for(j=0; j<mris.length; j++) {
                         if(mris[j]) {
                             // check j-th mri annotation access
-                            checkAccess.filterAnnotationsByProjects(mris[j],[project],loggedUser);
+                            checkAccess.filterAnnotationsByProjects(mris[j], [project], loggedUser);
                         
                             // append to list
                             if(namesFlag) {
@@ -245,15 +248,15 @@ var getProjectFilesSlice = function getProjectFilesSlice(req, projShortname, sta
                     resolve(newList);
                 })
                 .catch(function(err) {
-                    console.log("ERROR:",err);
-                    reject();
+                    console.log("ERROR:", err);
+                    reject(err);
                 });
             } else {
                 console.log("project is empty");
             }
         })
         .catch(function(err) {
-            console.log("ERROR:",err);
+            console.log("ERROR:", err);
             reject();
         });
     });
@@ -265,7 +268,7 @@ var getProjectFilesSlice = function getProjectFilesSlice(req, projShortname, sta
  * @param {integer} start Start index of the file slice
  * @param {integer} length Number of files to include in the slice
  */
-var getFilesSlice = function getFilesSlice(req,start,length) {
+var getFilesSlice = function getFilesSlice(req, start, length) {
     var loggedUser = "anonymous";
     if(req.isAuthenticated()) {
         loggedUser = req.user.username;
@@ -277,7 +280,7 @@ var getFilesSlice = function getFilesSlice(req,start,length) {
     return new Promise(function (resolve, reject) {
         Promise.all([
             req.db.get('mri')
-            .find({backup: {$exists: false}},{fields:{source:1,_id:0}},{skip:start,limit:length}),
+            .find({backup: {$exists: false}}, {fields:{source:1, _id:0}}, {skip:start, limit:length}),
             req.db.get('project').find({backup: {$exists: false}})
         ])
         .then(function(values) {
@@ -286,8 +289,8 @@ var getFilesSlice = function getFilesSlice(req,start,length) {
                 mri = [], mriFiles = [], i;
 
             // filter for view access
-            for(i=0;i<unfilteredMRI.length;i++)
-                if(checkAccess.toFileByAllProjects(unfilteredMRI[i],unfilteredProjects,loggedUser,"view"))
+            for(i=0; i<unfilteredMRI.length; i++)
+                if(checkAccess.toFileByAllProjects(unfilteredMRI[i], unfilteredProjects, loggedUser, "view"))
                     mri.push(unfilteredMRI[i]);
 
             mri.map(function (o) {
@@ -297,12 +300,12 @@ var getFilesSlice = function getFilesSlice(req,start,length) {
             // constrain start and length to available data
             start = Math.min(start, mriFiles.length);
             length = Math.min(length, mriFiles.length-start);
-            mriFiles = mriFiles.slice(start,start+length);
+            mriFiles = mriFiles.slice(start, start+length);
 
             resolve(mriFiles);
         })
         .catch(function(err) {
-            console.log("ERROR:",err);
+            console.log("ERROR:", err);
             reject();
         })
     });
@@ -314,7 +317,7 @@ var getFilesSlice = function getFilesSlice(req,start,length) {
  * @param {integer} start Start index of the file slice
  * @param {integer} length Number of files to include in the slice
  */
-var getProjectsSlice = function getProjectsSlice(req,start,length) {
+var getProjectsSlice = function getProjectsSlice(req, start, length) {
     var loggedUser = "anonymous";
     if(req.isAuthenticated()) {
         loggedUser = req.user.username;
@@ -325,20 +328,20 @@ var getProjectsSlice = function getProjectsSlice(req,start,length) {
 
     return new Promise(function (resolve, reject) {
         req.db.get('project')
-        .find({backup: {$exists: false}},{skip:start,limit:length})
+        .find({backup: {$exists: false}}, {skip:start, limit:length})
         .then(function(unfilteredProjects) {
             var projects = [];
 
             // filter for view access
             for(i in unfilteredProjects)
-                if(checkAccess.toProject(unfilteredProjects[i],loggedUser,"view"))
+                if(checkAccess.toProject(unfilteredProjects[i], loggedUser, "view"))
                     projects.push(unfilteredProjects[i]);
 
             // constrain start and length to available data
             start = Math.min(start, projects.length);
             length = Math.min(length, projects.length-start);
 
-            projects = projects.slice(start,start+length);
+            projects = projects.slice(start, start+length);
         
             projects = projects.map(function (o) {return {
                 project: o.shortname,
@@ -351,7 +354,7 @@ var getProjectsSlice = function getProjectsSlice(req,start,length) {
             resolve(projects);
         })
         .catch(function(err) {
-            console.log("ERROR:",err);
+            console.log("ERROR:", err);
             reject();
         })
     });
