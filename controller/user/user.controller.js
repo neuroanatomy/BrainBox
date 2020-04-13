@@ -1,6 +1,4 @@
-const async = require('async');
 const dateFormat = require('dateformat');
-const checkAccess = require('../checkAccess/checkAccess.js');
 const dataSlices = require('../dataSlices/dataSlices.js');
 
 var validator = function(req, res, next) {
@@ -18,7 +16,7 @@ var validator = function(req, res, next) {
     }
     */
     next();
-}
+};
 
 var user = function(req, res) {
     var login = (req.isAuthenticated()) ?
@@ -42,25 +40,27 @@ var user = function(req, res) {
                     tab: req.query.tab||"mri",
                     login: login
                 };
-                res.render('user',context);                    
+                res.render('user', context);
             } else {
                 res.status(404).send("User Not Found");
             }
         })
         .catch(function(err) {
-            console.log("ERROR:",err);
+            console.log("ERROR:", err);
             res.status(400).send("Error");
         });
 };
 
-var api_user = function(req, res) {
+var apiUser = function(req, res) {
     req.db.get('user').findOne({nickname: req.params.userName, backup: {$exists: false}}, "-_id")
         .then(function (json) {
             if (json) {
                 if (req.query.var) {
-                    var i, arr = req.query.var.split("/");
-                    for (i in arr) {
-                        json = json[arr[i]];
+                    const arr = req.query.var.split("/");
+                    for (const i in arr) {
+                        if({}.hasOwnProperty.call(arr, i)) {
+                            json = json[arr[i]];
+                        }
                     }
                 }
                 res.send(json);
@@ -70,10 +70,10 @@ var api_user = function(req, res) {
         });
 };
 
-var api_userAll = function(req, res) {
-    console.log("api_userAll");
+var apiUserAll = function(req, res) {
     if(!req.query.page) {
         res.json({error:"The 'pages' parameter has to be specified"});
+
         return;
     }
 
@@ -88,78 +88,84 @@ var api_userAll = function(req, res) {
     });
 };
 
+
 /**
- * @function api_userFiles
+ * @function apiUserFiles
+ * @param {Object} req Request object
+ * @param {Object} res Response object
+ * @returns {Object} Object with a list of user mri files
  */
-/**
- * @todo Check access rights for this route
- */
-var api_userFiles = function(req, res) {
-    var userName = req.params.userName;
+var apiUserFiles = function(req, res) {
+    // @todo Check access rights for this route
+    var {userName} = req.params;
     var start = parseInt(req.query.start);
     var length = parseInt(req.query.length);
 
-    console.log("userName:",userName, "start:",start, "length:",length);
-    dataSlices.getUserFilesSlice(req,userName, start, length)
+    console.log("userName:", userName, "start:", start, "length:", length);
+    dataSlices.getUserFilesSlice(req, userName, start, length)
     .then(function(result) {
-        res.send(result);    
+        res.send(result);
     })
     .catch(function(err) {
-        console.log("ERROR:",err);
-        res.send({success:false,list:[]});
-    });
-};
-/**
- * @function api_userAtlas
- */
-/**
- * @todo Check access rights for this route
- */
-var api_userAtlas = function(req, res) {
-    var userName = req.params.userName;
-    var start = parseInt(req.query.start);
-    var length = parseInt(req.query.length);
-
-    console.log("userName:",userName, "start:",start, "length:",length);
-    dataSlices.getUserAtlasSlice(req,userName, start, length)
-    .then(function(result) {
-        res.send(result);    
-    })
-    .catch(function(err) {
-        console.log("ERROR:",err);
-        res.send({success:false,list:[]});
-    });
-}
-/**
- * @function api_userProjects
- */
-/**
- * @todo Check access rights for this route
- */
-var api_userProjects = function(req, res) {
-    var userName = req.params.userName;
-    var start = parseInt(req.query.start);
-    var length = parseInt(req.query.length);
-
-    console.log("userName:",userName, "start:",start, "length:",length);
-    dataSlices.getUserProjectsSlice(req,userName, start, length)
-    .then(function(result) {
-        res.send(result);    
-    })
-    .catch(function(err) {
-        console.log("ERROR:",err);
+        console.log("ERROR:", err);
         res.send({success:false, list:[]});
     });
-}
+};
 
-var userController = function(){
+/**
+ * @function apiUserAtlas
+ * @param {Object} req Request object
+ * @param {Object} res Response object
+ * @returns {Object} Object with a list of user atlases
+ */
+var apiUserAtlas = function(req, res) {
+    // @todo Check access rights for this route
+    var {userName} = req.params;
+    var start = parseInt(req.query.start);
+    var length = parseInt(req.query.length);
+
+    console.log("userName:", userName, "start:", start, "length:", length);
+    dataSlices.getUserAtlasSlice(req, userName, start, length)
+    .then(function(result) {
+        res.send(result);
+    })
+    .catch(function(err) {
+        console.log("ERROR:", err);
+        res.send({success:false, list:[]});
+    });
+};
+
+/**
+ * @function apiUserProjects
+ * @param {Object} req Request object
+ * @param {Object} res Response object
+ * @returns {Object} Object with a list of user projects
+ */
+var apiUserProjects = function(req, res) {
+    // @todo Check access rights for this route
+    var {userName} = req.params;
+    var start = parseInt(req.query.start);
+    var length = parseInt(req.query.length);
+
+    console.log("userName:", userName, "start:", start, "length:", length);
+    dataSlices.getUserProjectsSlice(req, userName, start, length)
+    .then(function(result) {
+        res.send(result);
+    })
+    .catch(function(err) {
+        console.log("ERROR:", err);
+        res.send({success:false, list:[]});
+    });
+};
+
+var UserController = function() {
     this.validator = validator;
-    this.api_user = api_user;
-    this.api_userAll = api_userAll;
-    this.api_userFiles = api_userFiles;
-    this.api_userAtlas = api_userAtlas;
-    this.api_userProjects = api_userProjects;
+    this.apiUser = apiUser;
+    this.apiUserAll = apiUserAll;
+    this.apiUserFiles = apiUserFiles;
+    this.apiUserAtlas = apiUserAtlas;
+    this.apiUserProjects = apiUserProjects;
     this.user = user;
-}
+};
 
-module.exports = new userController();
+module.exports = new UserController();
