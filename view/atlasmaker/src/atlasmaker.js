@@ -393,8 +393,6 @@ export var AtlasMakerWidget = {
                         console.log('requestMRIInfo promise resolved');
                         clearInterval(timer);
                         resolve(info);
-
-
                     } else if(info.success === 'downloading') {
                         if(me.User.source !== url) {
                             clearInterval(timer);
