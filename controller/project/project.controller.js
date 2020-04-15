@@ -27,7 +27,7 @@ var validator = function(req, res, next) {
     // .matches("localpath|filename|source|url|dim|pixdim"); //todo: decent regexp
     var errors = req.validationErrors();
     if (errors) {
-        res.send(errors).status(403).end();
+        res.status(403).send(errors).end();
     } else {
         return next();
     }
