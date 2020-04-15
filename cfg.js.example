@@ -1,0 +1,4 @@
+export var Config = {
+    hostname: "https://brainbox.pasteur.fr",
+    wshostname: "brainbox.pasteur.fr:8080"
+}
