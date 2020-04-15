@@ -301,12 +301,10 @@ const apiMriPost = function (req, res) {
                    .update(myurl)
                    .digest('hex');
 
-    console.log("checking authentication", req.isAuthenticated(), req.isTokenAuthenticated);
-    if (!(req.isAuthenticated() || req.isTokenAuthenticated)) {
-        console.log("not authenticated, throwing an error");
-        return res.status(403).send({error: "Provide authentication"}).end();
-    }
-    console.log("authentication is good, continuing");
+    // It's fine to post(/mri/json) without being authenticated
+    // if (!(req.isAuthenticated() || req.isTokenAuthenticated)) {
+    //     return res.status(403).send({error: "Provide authentication"}).end();
+    // }
 
     req.db.get('mri').findOne({source: myurl, backup: {$exists: 0}}, {_id: 0})
         .then((json) => {

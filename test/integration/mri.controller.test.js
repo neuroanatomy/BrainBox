@@ -54,17 +54,18 @@ describe('TESTING THE /mri ROUTE', async () => {
       assert.equal(res.statusCode, 403);
     });
 
-    it('POST /mri/json with token but without url should fail', async () => {
-      const res = await chai.request(U.serverURL).post('/mri/json').send({token: U.testToken});
-      assert.equal(res.statusCode, 403);
-    });
+    // It's fine to post /mri/json without being authenticated
+    // it('POST /mri/json with token but without url should fail', async () => {
+    //   const res = await chai.request(U.serverURL).post('/mri/json').send({token: U.testToken});
+    //   assert.equal(res.statusCode, 403);
+    // });
 
-    it('POST /mri/json with url but without token should fail', async () => {
-      const res = await chai.request(U.serverURL).post('/mri/json').send({url: U.localBertURL});
-      assert.equal(res.statusCode, 403);
-    });
+    // it('POST /mri/json with url but without token should fail', async () => {
+    //   const res = await chai.request(U.serverURL).post('/mri/json').send({url: U.localBertURL});
+    //   assert.equal(res.statusCode, 403);
+    // });
 
-    it('POST /mri/json with url and token should start a download', async () => {
+    it('POST /mri/json with url should start a download', async () => {
       let res = await chai.request(U.serverURL).post('/mri/json').send({
         url: U.localBertURL,
         token: U.testToken
@@ -85,11 +86,10 @@ describe('TESTING THE /mri ROUTE', async () => {
       assert.equal(res.statusCode, 200);
     });
 
-    it('POST /mri/json with token and url should return MRI info once the file is downloaded', async () => {
+    it('POST /mri/json with url should return MRI info once the file is downloaded', async () => {
       await U.delay(U.shortTimeout);
       const res = await chai.request(U.serverURL).post('/mri/json').send({
-        url: U.localBertURL,
-        token: U.testToken
+        url: U.localBertURL
       });
       const {body} = res;
       assert.equal(body.success, true);
