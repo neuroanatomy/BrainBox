@@ -16,6 +16,7 @@ import * as tw from '../twoWayBinding.js';
 import '../style/style.css';
 import '../style/ui.css';
 import '../style/projectSettings-style.css';
+import '../style/textAnnotations.css';
 import '../style/access-style.css';
 import '../style/dropdown-style.css';
 
