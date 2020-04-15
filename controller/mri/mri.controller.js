@@ -20,21 +20,30 @@ const validator = function (req, res, next) {
     console.log('body:', req.body);
     console.log('query:', req.query);
 
-    if (!req.query.url) {
+    let myurl;
+    if(typeof req.body.url !== "undefined") {
+        myurl = req.body.url;
+    } else if(typeof req.query.url !== "undefined") {
+        myurl = req.query.url;
+    }
+
+    console.log("validator: myurl", myurl);
+    if (typeof myurl !== "undefined") {
+        console.log("next");
         return next();
     }
-    req.checkQuery('url', 'please enter a valid URL')
-            .isURL();
 
-        // Req.checkQuery('var', 'please enter one of the variables that are indicated')
+    // req.check('url', 'please enter a valid URL').isURL();
+
+        // req.checkQuery('var', 'please enter one of the variables that are indicated')
         // .optional()
         // .matches("localpath|filename|source|url|dim|pixdim");    // todo: decent regexp
     const errors = req.validationErrors();
     console.log('errors:', errors);
     if (errors) {
         res
-          .send(errors)
-          .status(403)
+            .status(403)
+            .send(errors)
           .end();
     } else {
         return next();
@@ -43,19 +52,23 @@ const validator = function (req, res, next) {
 
 // eslint-disable-next-line func-style
 const validatorPost = function (req, res, next) {
-    req.checkBody('url', 'please enter a valid URL')
+
+    console.log("mri body", req.body);
+    console.log("mri query", req.query);
+    console.log("mri params", req.params);
+
+    req.checkBody('url', 'Provide a URL')
+        .notEmpty();
+    req.checkBody('url', 'Provide a valid URL')
         .isURL();
 
-    // Req.checkQuery('var', 'please enter one of the variables that are indicated')
+    // req.checkQuery('var', 'please enter one of the variables that are indicated')
     // .optional()
-    // .matches("localpath|filename|source|url|dim|pixdim");    // todo: decent regexp
+    // .matches("localpath|filename|source|url|dim|pixdim");    // @todo: decent regexp
     const errors = req.validationErrors();
-    console.log('errors:', errors);
     if (errors) {
-        res
-          .send(errors)
-          .status(403)
-          .end();
+        console.log("mri send error 403");
+        res.status(403).send(errors).end();
     } else {
         return next();
     }
@@ -101,7 +114,7 @@ function downloadMRI(myurl, req, res, callback) {
         let len, newDest, newFilename;
         let cur = 0;
 
-        request({uri: myurl, followAllRedirects: true})
+        request({uri: myurl, followAllRedirects: true, rejectUnauthorized : false})
         .on('error', (err) => {
             console.log('ERROR in downloadMRI', err);
             callback({error: err});
@@ -124,12 +137,10 @@ function downloadMRI(myurl, req, res, callback) {
             console.log('file length:', len);
         })
         .on('data', (chunk) => {
-    //      Body += chunk;
             cur += chunk.length;
             console.log('downloaded:', cur, '/', len, newFilename);
             downloadQueue[myurl].cur = cur;
             downloadQueue[myurl].len = len;
-    //      Obj.innerHTML = "Downloading " + (100.0 * cur / len).toFixed(2) + "% " + (cur / 1048576).toFixed(2) + " mb\r" + ".<br/> Total size: " + total.toFixed(2) + " mb";
         })
         .pipe(fs.createWriteStream(dest))
         .on('close', () => {
@@ -270,20 +281,32 @@ const mri = function (req, res) {
     });
 };
 
+function removeVariablesFromURL(url) {
+    return url.split("&")[0];
+}
+
 // eslint-disable-next-line func-style
 const apiMriPost = function (req, res) {
-    const myurl = req.body.url;
+    console.log("apiMriPost");
+    let myurl;
+    if(typeof req.body.url !== "undefined") {
+        myurl = req.body.url;
+    } else if(typeof req.query.url !== "undefined") {
+        myurl = req.query.url;
+    }
+    myurl = removeVariablesFromURL(myurl);
+
     const hash = crypto
                    .createHash('md5')
                    .update(myurl)
                    .digest('hex');
-    // let loggedUser = 'anonymous';
-    // if (req.isAuthenticated()) {
-    //     loggedUser = req.user.username;
-    // } else
-    // if (req.isTokenAuthenticated) {
-    //     loggedUser = req.tokenUsername;
-    // }
+
+    console.log("checking authentication", req.isAuthenticated(), req.isTokenAuthenticated);
+    if (!(req.isAuthenticated() || req.isTokenAuthenticated)) {
+        console.log("not authenticated, throwing an error");
+        return res.status(403).send({error: "Provide authentication"}).end();
+    }
+    console.log("authentication is good, continuing");
 
     req.db.get('mri').findOne({source: myurl, backup: {$exists: 0}}, {_id: 0})
         .then((json) => {
@@ -291,7 +314,7 @@ const apiMriPost = function (req, res) {
             let doDownload = false;
 
             // If client is not requesting a specific MRI variable
-            if (!req.body.var) {
+            if (typeof req.body.var === "undefined") {
                 // If the json object is empty, download
                 if (!json) {
                     console.log('No DB entry for MRI: download');
@@ -335,7 +358,7 @@ const apiMriPost = function (req, res) {
                             downloadQueue[myurl] = obj;
                         } else {
                             console.log('Download failed:', obj);
-                            downloadQueue[myurl] = {success: 'error'};
+                            downloadQueue[myurl] = {success: `error ${JSON.stringify(obj.error)}`};
                         }
                     });
 
@@ -426,9 +449,11 @@ const apiMriGet = function (req, res) {
                 }
             }
             // Check access to text annotations
-            for (i of json.mri.annotations) {
-                console.log('text annotation is in project', i);
-                prj.add(i);
+            if(typeof json.mri.annotations !== "undefined") {
+                for (i of json.mri.annotations) {
+                    console.log('text annotation is in project', i);
+                    prj.add(i);
+                }
             }
             arr = [...prj].map((o) => {
                 return req.db.get('project').findOne({
@@ -455,14 +480,16 @@ const apiMriGet = function (req, res) {
                     }
                 }
                 // Set access to text annotations
-                for (i of json.mri.annotations) {
-                    for (j = 0; j < projects.length; j++) {
-                        if (projects[j] && projects[j].shortname == i) {
-                            const access = checkAccess.toAnnotationByProject(projects[j], loggedUser);
-                            const level = checkAccess.accessStringToLevel(access);
-                            console.log('loggedUser,access,level:', loggedUser, access, level);
-                            if (level === 0) {
-                                delete json.mri.annotations[i];
+                if(typeof json.mri.annotations !== "undefined") {
+                    for (i of json.mri.annotations) {
+                        for (j = 0; j < projects.length; j++) {
+                            if (projects[j] && projects[j].shortname == i) {
+                                const access = checkAccess.toAnnotationByProject(projects[j], loggedUser);
+                                const level = checkAccess.accessStringToLevel(access);
+                                console.log('loggedUser,access,level:', loggedUser, access, level);
+                                if (level === 0) {
+                                    delete json.mri.annotations[i];
+                                }
                             }
                         }
                     }
@@ -507,25 +534,25 @@ const reset = function reset(req, res) {
             .catch((err) => {
                 console.log('ERROR:', err);
                 res
-                  .send(err)
-                  .status(403)
-                  .end();
+                    .status(403)
+                    .send(err)
+                    .end();
             });
         })
         .catch((err) => {
             console.log('ERROR:', err);
             res
-              .send(err)
-              .status(403)
-              .end();
+                .status(403)
+                .send(err)
+                .end();
         });
     })
     .catch((err) => {
         console.log('ERROR:', err);
         res
-          .send(err)
-          .status(403)
-          .end();
+            .status(403)
+            .send(err)
+            .end();
     });
 };
 
