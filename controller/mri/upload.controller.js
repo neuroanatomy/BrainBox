@@ -5,19 +5,26 @@ const atlasmakerServer = require('../atlasmakerServer/atlasmakerServer');
 // ExpressValidator = require('express-validator')
 
 var validator = function (req, res, next) {
-    req.checkBody('url', 'please enter a valid URL')
-        .notEmpty()
+    console.log("upload.controller body", req.body);
+    console.log("upload.controller query", req.query);
+    console.log("upload.controller params", req.params);
+
+    req.checkBody('url', 'Provide a URL')
+        .notEmpty();
+    req.checkBody('url', 'Provide a valid URL')
         .isURL();
-    req.checkBody('atlasName', 'please enter an Atlas Name')
-        .notEmpty()
+    req.checkBody('atlasName', 'Provide an atlasName')
+        .notEmpty();
+    req.checkBody('atlasName', 'Provide an alphanumeric atlasName')
         .isAlphanumeric();
-    req.checkBody('atlasProject', 'please enter an Atlas Project')
-        .notEmpty()
+    req.checkBody('atlasProject', 'Provide an atlasProject')
+        .notEmpty();
+    req.checkBody('atlasProject', 'Provide an alphanumeric atlasProject')
         .isAlphanumeric();
-    req.checkBody('atlasLabelSet', 'please enter an Atlas Project')
-        .notEmpty()
-    req.checkBody('token', 'please enter an upload token')
-        .notEmpty()
+    req.checkBody('atlasLabelSet', 'Provide an atlasLabelSet')
+        .notEmpty();
+    req.checkBody('token', 'Provide an upload token')
+        .notEmpty();
     /*
         Check for all these required fields:
         url: url
@@ -28,9 +35,8 @@ var validator = function (req, res, next) {
     */
     
     var errors = req.validationErrors();
-    console.log("errors 33:",errors);
     if (errors) {
-        return res.send(errors).status(403).end();
+        return res.status(403).send(errors).end();
     } else {
         return next();
     }
@@ -59,29 +65,26 @@ var other_validations = function(req, res, next) {
                         if (req.files.length == 0 || !req.files) {err.push({error:"there is no File"});}
                         if (!json) {err.push({error:"Unkown URL"});}
                         console.log("err 63:",err);
-                        return res.json(err).status(403).end();
+                        return res.status(403).json(err).end();
                     }
                 })
             } else {
-                return res.send("ERROR: Token expired").status(403).end();
+                return res.status(403).send("ERROR: Token expired").end();
             }
         } else {
-            return res.send("ERROR: Cannot find token").status(403).end();
+            return res.status(403).send("ERROR: Cannot find token").end();
         }                
     })
     .catch(function (err) {
         console.log("ERROR:",err);
-        res.send().status(403).end();
+        res.status(403).send().end();
     });
 }
 
 var upload = function(req, res) {
     var username = req.atlasUpload.username;
-    var url = req.body.url;
-    var mri = req.atlasUpload.mri;
-    var atlasName = req.body.atlasName;
-    var atlasProject = req.body.atlasProject;
-    var atlasLabelSet = req.body.atlasLabelSet;
+    var {url, atlasName, atlasProject, atlasLabelSet} = req.body;
+    var {mri} = req.atlasUpload;
     var files = req.files;
 
     delete mri._id;
@@ -105,7 +108,7 @@ var upload = function(req, res) {
     } else if(/.mgz$/.test(files[0].originalname)) {
         ext=".mgz";
     } else {
-        return res.json({error:"Atlas encoding neither .nii.gz nor .mgz"}).status(400).end();
+        return res.status(400).json({error:"Atlas encoding neither .nii.gz nor .mgz"}).end();
     }
 
     filename=Math.random().toString(36).slice(2)+ext;
@@ -125,7 +128,7 @@ var upload = function(req, res) {
         fs.renameSync(req.dirname  + "/" + files[0].path, path);
     } catch(err) {
         console.log("ERROR rename failed:",err);
-        return res.json({error:"cannot upload volume annotation"}).status(400).end();
+        return res.status(400).json({error:"cannot upload volume annotation"}).end();
     };
 
     // Check that the dimensions of the atlas are the same as its parent mri
@@ -144,7 +147,7 @@ var upload = function(req, res) {
         if (atlas.dim[0] != mri.dim[0] ||
             atlas.dim[1] != mri.dim[1] ||
             atlas.dim[2] != mri.dim[2]) {
-            return res.json({error:"the Atlas doesn't match with the mri"}).status(400).end();
+            return res.status(400).json({error:"the Atlas doesn't match with the mri"}).end();
         }
         */
 
@@ -184,11 +187,11 @@ var upload = function(req, res) {
         });
 
         // return the full mri object ???
-        return res.json(mri).status(200).end();
+        return res.status(200).json(mri).end();
     })
     .catch(function (err) {
         console.log("ERROR: mri file is not valid: ",err);
-        return res.json({error:"mri file is not valid: "+err}).status(400).end();
+        return res.status(400).json({error:"mri file is not valid: "+err}).end();
     });
 }
 
