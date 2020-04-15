@@ -74,12 +74,22 @@ describe('TESTING CLIENT-SIDE RENDERING', () => {
             assert(diff<1000);
         }).timeout(U.longTimeout);
 
-        // OPEN PROJECT SETTINGS PAGE
-        it('Project Settings page renders as expected', async () => {
+        // OPEN PROJECT SETTINGS PAGE FOR EXISTING PROJECT
+        it('Project Settings page for an existing project renders as expected', async () => {
             const diff = await U.comparePageScreenshots(
                 page,
                 'https://localhost:3001/project/test/settings',
-                '04.project-settings.png'
+                '04.project-settings-existing.png'
+            );
+            assert(diff<1000);
+        }).timeout(U.longTimeout);
+
+        // OPEN PROJECT SETTINGS PAGE FOR EMPTY PROJECT
+        it('Project Settings page for an empty project renders as expected', async () => {
+            const diff = await U.comparePageScreenshots(
+                page,
+                'https://localhost:3001/project/nonexisting/settings',
+                '05.project-settings-nonexisting.png'
             );
             assert(diff<1000);
         }).timeout(U.longTimeout);
@@ -89,7 +99,7 @@ describe('TESTING CLIENT-SIDE RENDERING', () => {
             const diff = await U.comparePageScreenshots(
                 page,
                 'https://localhost:3001/user/r03ert0',
-                '05.user.png'
+                '06.user.png'
             );
             assert(diff<1000);
         }).timeout(U.longTimeout);
