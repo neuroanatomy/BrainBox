@@ -173,9 +173,9 @@ export var AtlasMakerWS = {
         if (me.debug > 1) { console.log("message: " + description); }
         var msg;
         if (description === "allUserData") {
-            msg = { "type": "userData", "user": me.User, "description": description };
+            msg = { type: "userData", user: me.User, description };
         } else {
-            msg = { "type": "userData", "description": description };
+            msg = { type: "userData", description };
         }
         try {
             me.socket.send(JSON.stringify(msg));
