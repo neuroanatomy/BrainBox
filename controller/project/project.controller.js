@@ -430,8 +430,7 @@ var newProject = function(req, res) {
     var loggedUser = "anonymous";
     if(req.isAuthenticated()) {
         loggedUser = req.user.username;
-    } else
-    if(req.isTokenAuthenticated) {
+    } else if(req.isTokenAuthenticated) {
         loggedUser = req.tokenUsername;
     }
 
