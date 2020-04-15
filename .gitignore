@@ -29,6 +29,6 @@ view/atlasmaker/dist/
 view/atlasmaker/src/tools/dist/
 view/brainbox/dist/
 whitelist.json
-ws_cfg.json
+cfg.json
 cert.pem
 key.pem

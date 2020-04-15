@@ -10,13 +10,11 @@ import {AtlasMakerIO} from './atlasmaker-io.js';
 import {AtlasMakerPaint} from './atlasmaker-paint.js';
 import {AtlasMakerUI} from './atlasmaker-ui.js';
 import {AtlasMakerWS} from './atlasmaker-ws.js';
-import {Config} from './../../../cfg.js';
+import Config from './../../../cfg.json';
 
 import toolsFull from './html/toolsFull.html';
 import toolsLight from './html/toolsLight.html';
 import $ from 'jquery';
-
-console.log(Config);
 
 window.$ = $;
 

@@ -1,0 +1,8 @@
+export var Config = {
+    hostname: "https://brainbox.pasteur.fr",
+    wshostname: "brainbox.pasteur.fr:8080",
+    secure": false,
+    ssl_key: "privkey.pem",
+    ssl_cert: "fullchain.pem",
+    ssl_chain: "chain.pem"
+}

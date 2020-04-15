@@ -1,7 +1,0 @@
-{
-  "secure": false,
-  "port": 8080,
-  "ssl_key": "privkey.pem",
-  "ssl_cert": "fullchain.pem",
-  "ssl_chain": "chain.pem"
-}

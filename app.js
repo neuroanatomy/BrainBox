@@ -17,6 +17,7 @@ const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const mustacheExpress = require('mustache-express');
 const monk = require('monk');
+const Config = JSON.parse(fs.readFileSync('./cfg.json'));
 
 let MONGO_DB;
 const DOCKER_DB = process.env.DB_PORT;
@@ -97,11 +98,10 @@ app.use((req, res, next) => {
 //========================================================================================
 // Configure server and web socket
 //========================================================================================
-const ws_cfg = JSON.parse(fs.readFileSync('ws_cfg.json'));
 const https = require('https');
 const options = {
-    key: fs.readFileSync(ws_cfg.ssl_key),
-    cert: fs.readFileSync(ws_cfg.ssl_cert)
+    key: fs.readFileSync(Config.ssl_key),
+    cert: fs.readFileSync(Config.ssl_cert)
 };
 https.createServer(options, app)
     .listen(3001, () => {
