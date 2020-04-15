@@ -64,22 +64,30 @@ describe('TESTING CLIENT-SIDE RENDERING', () => {
             assert(diff<1000);
         }).timeout(U.longTimeout);
 
+        // ASK FOR AUTHENTICATION IF CREATING A PROJECT
+        it('"Ask for login" renders as expected', async () => {
+            const diff = await U.comparePageScreenshots(
+                page,
+                'https://localhost:3001/project/new',
+                '03.ask-for-login.png'
+            );
+            assert(diff<1000);
+        }).timeout(U.longTimeout);
+
         // OPEN PROJECT PAGE
         it('Project page renders as expected', async () => {
             const diff = await U.comparePageScreenshots(
                 page,
                 'https://localhost:3001/project/test',
-                '03.project.png'
+                '04.project.png'
             );
             assert(diff<1000);
-        }).timeout(U.longTimeout);
-
-        // OPEN PROJECT SETTINGS PAGE FOR EXISTING PROJECT
+        }).timeout(U.longTimeout);        // OPEN PROJECT SETTINGS PAGE FOR EXISTING PROJECT
         it('Project Settings page for an existing project renders as expected', async () => {
             const diff = await U.comparePageScreenshots(
                 page,
                 'https://localhost:3001/project/test/settings',
-                '04.project-settings-existing.png'
+                '05.project-settings-existing.png'
             );
             assert(diff<1000);
         }).timeout(U.longTimeout);
@@ -89,7 +97,7 @@ describe('TESTING CLIENT-SIDE RENDERING', () => {
             const diff = await U.comparePageScreenshots(
                 page,
                 'https://localhost:3001/project/nonexisting/settings',
-                '05.project-settings-nonexisting.png'
+                '06.project-settings-nonexisting.png'
             );
             assert(diff<1000);
         }).timeout(U.longTimeout);
@@ -99,7 +107,7 @@ describe('TESTING CLIENT-SIDE RENDERING', () => {
             const diff = await U.comparePageScreenshots(
                 page,
                 'https://localhost:3001/user/r03ert0',
-                '06.user.png'
+                '07.user.png'
             );
             assert(diff<1000);
         }).timeout(U.longTimeout);
