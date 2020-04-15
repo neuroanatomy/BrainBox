@@ -10,13 +10,13 @@ import {AtlasMakerIO} from './atlasmaker-io.js';
 import {AtlasMakerPaint} from './atlasmaker-paint.js';
 import {AtlasMakerUI} from './atlasmaker-ui.js';
 import {AtlasMakerWS} from './atlasmaker-ws.js';
+import {Config} from './../../../cfg.js';
 
 import toolsFull from './html/toolsFull.html';
 import toolsLight from './html/toolsLight.html';
 import $ from 'jquery';
 
-
-// import {AtlasMakerResources} from '../../dist/atlasmaker-resources.js';
+console.log(Config);
 
 window.$ = $;
 
@@ -27,43 +27,41 @@ export var AtlasMakerWidget = {
     //========================================================================================
     // Globals
     //========================================================================================
-    debug:            1,
-    hostname: 'https://brainbox.pasteur.fr', //'https://connect-project.io', // 'http://localhost:3001', // '', // 'http://brainbox.pasteur.fr',
-    wshostname: 'brainbox.pasteur.fr:8080', //'connect-project.io:8080', //'localhost:8080', // 'brainbox.pasteur.fr:8080',
-    // hostname: 'http://localhost:3001', // '', // 'http://brainbox.pasteur.fr',
-    // wshostname: 'localhost:8080', // 'brainbox.pasteur.fr:8080',
-    container:        null, // Element where atlasmaker lives
-    brain_offcn:    null,
-    brain_offtx:    null,
-    canvas:            null,
-    context:        null,
-    brain_px:        null,
-    brain_W:        null,
-    brain_H:        null,
-    brain_D:        null,
-    brain_Wdim:        null,
-    brain_Hdim:        null,
-    max:            0,
+    debug: 1,
+    hostname: Config.hostname,
+    wshostname: Config.wshostname,
+    container: null, // Element where atlasmaker lives
+    brain_offcn: null,
+    brain_offtx: null,
+    canvas: null,
+    context: null,
+    brain_px: null,
+    brain_W: null,
+    brain_H: null,
+    brain_D: null,
+    brain_Wdim: null,
+    brain_Hdim: null,
+    max: 0,
 
     /*
         {FIX: TRY TO KEEP ALL 3D STUFF INSIDE Users
     */
-    brain_dim:        new Array(3),
-    brain_pixdim:    new Array(3),
-    brain_datatype:    null,
+    brain_dim: new Array(3),
+    brain_pixdim: new Array(3),
+    brain_datatype: null,
 
     /*
         }
     */
-    brain_img:      { img: null,
+    brain_img: { img: null,
                          view: null,
                         slice: null
                     },
-    brain:            0,
-    alphaLevel:        0.5,
+    brain: 0,
+    alphaLevel: 0.5,
     annotationLength:0,
-    measureLength:    null,
-    User:            { view:null,
+    measureLength: null,
+    User: { view:null,
                        tool:'show',
                       slice:null,
                     penSize:1,
@@ -74,25 +72,25 @@ export var AtlasMakerWidget = {
                          y0:-1,
                         mri:{}
             },
-    Collab:                 [],
-    atlas:                 null,
-    atlas_offcn:         null,
-    atlas_offtx:         null,
-    atlas_px:             null,
-    name:                 null,
-    url:                 null,
-    atlasFilename:         null,
-    socket:                 null,
-    receiveFunctions:    [],
-    sendFunctions:       [],
-    flagConnected:         0,
+    Collab: [],
+    atlas: null,
+    atlas_offcn: null,
+    atlas_offtx: null,
+    atlas_px: null,
+    name: null,
+    url: null,
+    atlasFilename: null,
+    socket: null,
+    receiveFunctions: [],
+    sendFunctions: [],
+    flagConnected: 0,
     reconnectionTimeout: 5, // reconnection timeout starts at 5 seconds
-    flagLoadingImg:      {loading:false},
+    flagLoadingImg: {loading:false},
     flagUsePreciseCursor: false,
-    msg:                 null,
-    msg0:                 "",
-    prevData:             0,
-    Crsr:            { x:void 0, // cursor x coord
+    msg: null,
+    msg0: "",
+    prevData: 0,
+    Crsr: { x:void 0, // cursor x coord
                        y:void 0, // cursor y coord
                        fx:void 0, // finger x coord
                        fy:void 0, // finger y coord
@@ -104,8 +102,8 @@ export var AtlasMakerWidget = {
                        prevState:void 0, // state before configure
                        touchStarted:false // touch started flag
                     },
-    editMode:        0, // editMode=0 to prevent editing, editMode=1 to accept it
-    fullscreen:        false, // fullscreen mode
+    editMode: 0, // editMode=0 to prevent editing, editMode=1 to accept it
+    fullscreen: false, // fullscreen mode
     info:{}, // information displayed over each brain slice
     // undo stack
     /* DEPRECATED Undo:[], */
@@ -153,8 +151,11 @@ export var AtlasMakerWidget = {
 
         // check if user is loged in
         $.get("/loggedIn", function(res) {
-            console.log(res);
-            if(res.loggedIn) { me.User.username=res.username; } else { me.User.username='Anonymous'; }
+            if(res.loggedIn) {
+                me.User.username=res.username;
+            } else {
+                me.User.username='Anonymous';
+            }
         });
 
         // Create offscreen canvas for mri and atlas
@@ -371,6 +372,10 @@ export var AtlasMakerWidget = {
         return def.promise();
     },
 
+    _removeVariablesFromURL: function (url) {
+        return url.split("&")[0];
+    },
+
     /**
      * @function requestMRIInfo
      * @desc Request to download an MRI, with polling to prevent hangouts on lengthy
@@ -380,11 +385,12 @@ export var AtlasMakerWidget = {
      */
     requestMRIInfo: function requestMRIInfo(source) {
         var me=AtlasMakerWidget;
+        const url = me._removeVariablesFromURL(source);
         $("#loadingIndicator p").text("Loading... ");
         var pr = new Promise(function(resolve, reject) {
             var timer = setInterval( function () {
-                console.log("polling for data...");
-                $.post(me.hostname + "/mri/json", {url:source}, function(info) {
+                console.log("polling for data...", url);
+                $.post(me.hostname + "/mri/json", {url}, function(info) {
                     if(info.success === true) {
                         console.log('requestMRIInfo promise resolved');
                         clearInterval(timer);
@@ -392,7 +398,7 @@ export var AtlasMakerWidget = {
 
 
                     } else if(info.success === 'downloading') {
-                        if(me.User.source !== source) {
+                        if(me.User.source !== url) {
                             clearInterval(timer);
                             reject(new Error("source changed. Probably no longer requested?"));
 
