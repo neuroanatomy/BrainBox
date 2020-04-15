@@ -10,5 +10,4 @@ router.get('/json/:userName/atlas', controller.validator, controller.apiUserAtla
 router.get('/json/:userName/projects', controller.validator, controller.apiUserProjects);
 router.get('/:userName', controller.validator, controller.user);
 
-
 module.exports = router;
