@@ -16,64 +16,10 @@ const useWhitelist = false;
 const useBlacklist = true;
 const whitelist = JSON.parse(fs.readFileSync(path.join(__dirname, "whitelist.json")));
 const blacklist = JSON.parse(fs.readFileSync(path.join(__dirname, "blacklist.json")));
-tracer.log("Use whitelist:", useWhitelist);
-tracer.log(whitelist);
-tracer.log("Use blacklist:", useBlacklist);
-tracer.log(blacklist);
 
 // var http = require('http');
-let server;
-const ws_cfg = JSON.parse(fs.readFileSync('ws_cfg.json'));
-const {secure, port} = ws_cfg;
-if(secure) {
-    // wss
-    var http = require('https');
-    server = http.createServer({
-        key: fs.readFileSync(ws_cfg.ssl_key),
-        cert: fs.readFileSync(ws_cfg.ssl_cert),
-        ca: fs.readFileSync(ws_cfg.ssl_chain)
-    }, function(req, res) {
-        var ip = req.ip
-            || req.connection.remoteAddress
-            || req.socket.remoteAddress
-            || req.connection.socket.remoteAddress;
-    }); //.listen(port);
-} else {
-    var http = require('http');
-    server = http.createServer(function(req, res) {
-    var ip = req.ip
-        || req.connection.remoteAddress
-        || req.socket.remoteAddress
-        || req.connection.socket.remoteAddress;
-    });
-}
 const WebSocketServer = require('ws').Server;
 var websocketserver;
-
-server.on("upgrade", function(req, socket, head) {
-    var ip = req.ip
-        || req.connection.remoteAddress
-        || req.socket.remoteAddress
-        || req.connection.socket.remoteAddress;
-    ip = ip.split(":").pop();
-    tracer.log("UPGRADING SERVER WITH IP", ip);
-
-    if(useWhitelist && !whitelist[ip]) {
-        tracer.log("------------------------------> not in whitelist", ip);
-        setTimeout(function() {
-            tracer.log("not in whitelist: end");
-            socket.destroy();
-        }, 5000);
-    }
-
-    if (useBlacklist && blacklist[ip]) {
-        tracer.log("------------------------------> blacklist", ip);
-        setTimeout(function() {
-            tracer.log("blacklist: end");
-            socket.destroy();
-        }, 5000);
-    }
-});
 
 const createDOMPurify = require('dompurify');
 const {JSDOM} = require('jsdom');
@@ -1011,7 +957,6 @@ const atlasmakerServer = (function() {
                 mri.vox_offset = h.vox_offset;
 
                 // nrrd-compatible header, computes space directions and space origin
-                tracer.log("sform code:", h.sform_code);
                 if(h.sform_code>0) {
                     mri.dir = [
                         [h.srow_x[0], h.srow_y[0], h.srow_z[0]],
@@ -1110,7 +1055,6 @@ const atlasmakerServer = (function() {
 
                 try {
                     niigz = fs.readFileSync(mriPath);
-                    tracer.log("niigz length:", niigz.length);
                 } catch(e) {
                     reject(e);
                 }
@@ -1210,8 +1154,6 @@ const atlasmakerServer = (function() {
 
             const sz = mri.dim[0]*mri.dim[1]*mri.dim[2];
             const bpv = [1, 4, 0, 4, 2][hdr.type]; // bytes per voxel
-            tracer.log("sz:", sz);
-            tracer.log("bpv:", bpv, "type:", hdr.type);
 
             // keep the header
             mri.hdr = mgh.slice(0, hdrSize);
@@ -2103,7 +2045,7 @@ const atlasmakerServer = (function() {
 
                     // check whether user is switching atlas.
                     switchingAtlasFlag = false;
-                    if(sourceUS.User) {
+                    if(typeof sourceUS.User !== "undefined") {
                         if((sourceUS.User.atlasFilename !== User.atlasFilename)||(sourceUS.User.dirname !== User.dirname)) {
                             switchingAtlasFlag = true;
                         }
@@ -2557,22 +2499,38 @@ free memory: ${os.freemem()}
 `);
 
             setInterval(function() { tracer.log("date:", new Date()); }, me.timeMarkInterval); // time mark
-
             me._initKeyPressHandler();
-
             me._initColorMap();
+
+            me.server.on("upgrade", function(req, socket, head) {
+                var ip = req.ip
+                    || req.connection.remoteAddress
+                    || req.socket.remoteAddress
+                    || req.connection.socket.remoteAddress;
+                ip = ip.split(":").pop();
+                tracer.log("UPGRADING SERVER WITH IP", ip);
+            
+                if(useWhitelist && !whitelist[ip]) {
+                    tracer.log("------------------------------> not in whitelist", ip);
+                    setTimeout(function() {
+                        tracer.log("not in whitelist: end");
+                        socket.destroy();
+                    }, 5000);
+                }
+            
+                if (useBlacklist && blacklist[ip]) {
+                    tracer.log("------------------------------> blacklist", ip);
+                    setTimeout(function() {
+                        tracer.log("blacklist: end");
+                        socket.destroy();
+                    }, 5000);
+                }
+            });
 
             // Init WS connection
             try {
-                if(secure) {
-                    websocketserver = new WebSocketServer({server: server});
-                } else {
-                    websocketserver = new WebSocketServer({ server: server, verifyClient: me.verifyClient });
-                }
-
+                websocketserver = new WebSocketServer({ server: me.server, verifyClient: me.verifyClient });
                 websocketserver.on("connection", me._handleWebSocketConnection);
-
-                server.listen(port, function () { tracer.log('Listening on ' + server.address().port, server.address()); });
             } catch (ex) {
                 tracer.log("ERROR: Unable to create a Web socket server", ex);
             }
