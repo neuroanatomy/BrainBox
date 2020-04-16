@@ -12,6 +12,7 @@ public/.DS_Store
 public/data
 public/doc2/*
 public/js/index-page.js
+public/js/ask-for-login-page.js
 public/js/mri-page.js
 public/js/project-new-page.js
 public/js/project-page.js
