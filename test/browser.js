@@ -22,10 +22,9 @@ class Browser {
    * @param {any} done Callback function from mocha
    * @memberof Browser
    */
-  init(done) {
-    puppeteer.launch(browserOpts).then(async (browser) => {
+  init() {
+    return puppeteer.launch(browserOpts).then(async (browser) => {
       this.setBrowser(browser);
-      done();
     });
   }
 
