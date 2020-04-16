@@ -20,7 +20,7 @@ function testWebSockets() {
 console.log("testWebSockets");
     return new Promise(function(resolve, reject) {
         // var host = "wss://websocketstest.com/service";
-        var host = "wss://websocketstest.com:8080/service";
+        var host = "wss://echo.websocket.org";
         var ws;
 
         if (window.WebSocket) {
