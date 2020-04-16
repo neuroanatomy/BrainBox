@@ -27,49 +27,44 @@ describe('TESTING THE /user ROUTE', () => {
     assert(Array.isArray(body));
   });
 
-  it('get("/user/json/r03ert0") should return status 200', async () => {
-    const res = await chai.request(U.serverURL).get('/user/json/r03ert0');
+  it('get("/user/json/foo") should return status 200', async () => {
+    const res = await chai.request(U.serverURL).get(`/user/json/${U.userFoo.nickname}`);
     assert.equal(res.statusCode, 200);
   });
 
-  it('get("/user/json/r03ert0/files") should return an object with an array of files', async () => {
-    const res = await chai.request(U.serverURL).get('/user/json/r03ert0/files');
+  it('get("/user/json/foo/files") should return an object with an array of files', async () => {
+    const res = await chai.request(U.serverURL).get(`/user/json/${U.userFoo.nickname}/files`);
     const {body} = res;
     assert.isObject(body);
     assert.equal(body.success, true);
     assert.isArray(body.list);
   });
 
-  it('get("/user/json/r03ert0/atlas") should return an object with an array of atlas', async () => {
-    const res = await chai.request(U.serverURL).get('/user/json/r03ert0/atlas');
+  it('get("/user/json/foo/atlas") should return an object with an array of atlas', async () => {
+    const res = await chai.request(U.serverURL).get(`/user/json/${U.userFoo.nickname}/atlas`);
     const {body} = res;
     assert.isObject(body);
     assert.equal(body.success, true);
     assert.isArray(body.list);
   });
 
-  it('get("/user/json/r03ert0/projects") should return an object with an array of projects', async () => {
-    const res = await chai.request(U.serverURL).get('/user/json/r03ert0/projects');
+  it('get("/user/json/foo/projects") should return an object with an array of projects', async () => {
+    const res = await chai.request(U.serverURL).get(`/user/json/${U.userFoo.nickname}/projects`);
     const {body} = res;
     assert.isObject(body);
     assert.equal(body.success, true);
     assert.isArray(body.list);
   });
 
-  it('get("/user/r03ert0") should return status 200', async () => {
-    const res = await chai.request(U.serverURL).get('/user/json/r03ert0');
+  it('get("/user/foo") should return status 200', async () => {
+    const res = await chai.request(U.serverURL).get(`/user/${U.userFoo.nickname}`);
     assert.equal(res.statusCode, 200);
   });
 
-  it('get("/user/json/r03ert0") should return expected values', async () => {
-    const res = await chai.request(U.serverURL).get('/user/json/r03ert0');
+  it('get("/user/json/foo") should return expected values', async () => {
+    const res = await chai.request(U.serverURL).get(`/user/json/${U.userFoo.nickname}`);
     const {body} = res;
-    const expected = {
-      name: 'Roberto Toro',
-      nickname: 'r03ert0',
-      url: 'http://neuroanatomy.github.io',
-      brainboxURL: '/user/r03ert0'
-    };
+    const expected = U.userFoo;
     assert.equal(body.name, expected.name);
     assert.equal(body.nickname, expected.nickname);
     assert.equal(body.url, expected.url);

@@ -29,12 +29,12 @@ describe('TESTING THE /project ROUTE', () => {
   });
 
   it('get("/project/json/test") should return status 200', async () => {
-    const res = await chai.request(U.serverURL).get('/project/json/test');
+    const res = await chai.request(U.serverURL).get(`/project/json/${U.projectTest.shortname}`);
     assert.equal(res.statusCode, 200);
   });
 
   it('get("/project/json/test") should return an object with appropriate keys', async () => {
-    const res = await chai.request(U.serverURL).get('/project/json/test');
+    const res = await chai.request(U.serverURL).get(`/project/json/${U.projectTest.shortname}`);
     const {body} = res;
     const expectedKeys = [
         "name", "shortname", "url", "brainboxURL", "created", "owner",
@@ -46,7 +46,7 @@ describe('TESTING THE /project ROUTE', () => {
 
   it('get("/project/json/test/files") should return an array with >=1 file', async () => {
     const res = await chai.request(U.serverURL)
-        .get('/project/json/test/files')
+        .get(`/project/json/${U.projectTest.shortname}/files`)
         .query({start: 0, length: 10});
     const {body} = res;
     assert.isArray(body);
@@ -55,7 +55,7 @@ describe('TESTING THE /project ROUTE', () => {
 
   it('get("/project/json/test/files") should return objects with appropriate keys', async () => {
     const res = await chai.request(U.serverURL)
-        .get('/project/json/test/files')
+        .get(`/project/json/${U.projectTest.shortname}/files`)
         .query({start: 0, length: 10});
     const {body} = res;
     const expectedKeys = [
@@ -69,7 +69,7 @@ describe('TESTING THE /project ROUTE', () => {
 
   it('get("/project/json/test/files") should return only sources and names if required', async () => {
     const res = await chai.request(U.serverURL)
-        .get('/project/json/test/files')
+        .get(`/project/json/${U.projectTest.shortname}/files`)
         .query({start: 0, length: 10, names: true});
     const {body} = res;
     const expectedKeys = ["source", "name"];

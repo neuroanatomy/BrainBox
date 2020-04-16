@@ -49,6 +49,49 @@ const userBarB = {
     avatarURL: "https://127.0.0.1:3001/test_data/bar.png",
     joined: (new Date()).toJSON()
 }
+const projectTest = {
+    name: "Test Project",
+    shortname: "testproject",
+    url: "https://testproject.org",
+    brainboxURL: "/project/testproject",
+    created: (new Date()).toJSON(),
+    owner: "foo",
+    collaborators: {
+        list: [
+            {
+                userID: "anyone",
+                access: {
+                    collaborators: "view",
+                    annotations: "edit",
+                    files: "view"
+                },
+                username: "anyone",
+                name: "Any BrainBox User"
+            }
+        ]
+    },
+    files: {
+        list: [
+            "https://zenodo.org/record/44855/files/MRI-n4.nii.gz",
+            "http://files.figshare.com/2284784/MRI_n4.nii.gz",
+            "https://dl.dropbox.com/s/cny5b3so267bv94/p32-f18-uchar.nii.gz",
+            "https://s3.amazonaws.com/fcp-indi/data/Projects/ABIDE_Initiative/Outputs/freesurfer/5.1/Caltech_0051456/mri/T1.mgz"
+        ]
+    },
+    annotations: {
+        list: [
+            {
+                type: "volume",
+                values: "cerebellum.json",
+                display: "true",
+                name: "Cerebrum"
+            }
+        ]
+    },
+    description: "A test project used for checking that rendering is behaving as expected.",
+    modified: (new Date()).toJSON(),
+    modifiedBy: "foo"
+};
 
 async function currentDirectory() {
     console.log("Current directory:", __dirname);
@@ -70,10 +113,17 @@ async function removeUser(nickname) {
     return db.get('user').remove({nickname});
 }
 
+async function insertProject(project) {
+    return db.get('project').insert(project);
+}
+
+async function removeProject(shortname) {
+    return db.get('project').remove({shortname});
+}
 async function insertTestTokenForUser(nickname) {
     const now = new Date();
     const obj = {
-        token: testToken,
+        token: testToken + nickname,
         now,
         expiryDate: new Date(now.getTime() + testTokenDuration),
         username: nickname
@@ -81,8 +131,8 @@ async function insertTestTokenForUser(nickname) {
     return db.get("log").insert(obj);
 }
 
-async function removeTestToken() {
-    return db.get("log").remove({token: testToken});
+async function removeTestTokenForUser(nickname) {
+    return db.get("log").remove({token: testToken + nickname});
 }
 
 function delay(delayTimeout) {
@@ -144,14 +194,17 @@ module.exports = {
     userBar,
     userFooB,
     userBarB,
+    projectTest,
     testToken,
     removeMRI,
     currentDirectory,
     insertTestTokenForUser,
-    removeTestToken,
+    removeTestTokenForUser,
     queryUser,
     insertUser,
     removeUser,
+    insertProject,
+    removeProject,
     delay,
     compareImages,
     comparePageScreenshots,

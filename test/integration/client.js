@@ -8,10 +8,10 @@ const U = require('../utils.js');
 
 describe('TESTING CLIENT-SIDE RENDERING', () => {
     describe('Check testing works', () => {
-    it( 'test1', () => {
-        const result = true;
-        assert.strictEqual( result, true );
-    });
+        it( 'test1', () => {
+            const result = true;
+            assert.strictEqual( result, true );
+        });
     });
 
     describe('Load index page', async () => {
@@ -34,17 +34,6 @@ describe('TESTING CLIENT-SIDE RENDERING', () => {
     describe('Test website rendering', async function () {
         let browser;
         let page;
-
-        before(async () => {
-            // insert a test user in the DB
-            await U.insertUser(U.userFoo);
-        });
-    
-        after(async () => {
-            // remove test user in the DB
-            await U.removeUser(U.userFoo.nickname);
-        });
-        
 
         it('Browser opens', async () => {
             browser = await puppeteer.launch({headless: true, ignoreHTTPSErrors: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
@@ -89,7 +78,7 @@ describe('TESTING CLIENT-SIDE RENDERING', () => {
         it('Project page renders as expected', async () => {
             const diff = await U.comparePageScreenshots(
                 page,
-                'https://localhost:3001/project/test',
+                'https://localhost:3001/project/' + U.projectTest.shortname,
                 '04.project.png'
             );
             assert(diff<1000);
@@ -97,7 +86,7 @@ describe('TESTING CLIENT-SIDE RENDERING', () => {
         it('Project Settings page for an existing project renders as expected', async () => {
             const diff = await U.comparePageScreenshots(
                 page,
-                'https://localhost:3001/project/test/settings',
+                `https://localhost:3001/project/${U.projectTest.shortname}/settings`,
                 '05.project-settings-existing.png'
             );
             assert(diff<1000);

@@ -11,16 +11,6 @@ const U = require('../utils.js');
 // });
 
 describe('UNIT TESTING ATLASMAKER SERVER', async () => {
-  before(async () => {
-    // insert a test user in the DB
-      await U.insertUser(U.userFoo);
-  });
-
-  after(async () => {
-    // remove test user in the DB
-      await U.removeUser(U.userFoo.nickname);
-  });
-
   describe('MRI IO', async () => {
     let mri1, mri2;
 
@@ -87,15 +77,18 @@ describe('UNIT TESTING ATLASMAKER SERVER', async () => {
     });
 
     it('Find project', async () => {
-      const data = {type: "projectNameQuery", metadata: {name: "test"}};
+      const data = {type: "projectNameQuery", metadata: {name: U.projectTest.shortname}};
       const result = await AMS.queryProjectName(data);
-      assert.equal(result.name, "Test");
+      assert.equal(result.name, U.projectTest.name);
     });
 
     it('Find similar project names', async () => {
-      const data = {type: "similarProjectNamesQuery", metadata: {projectName: "tes"}};
+      const data = {
+        type: "similarProjectNamesQuery",
+        metadata: {projectName: U.projectTest.shortname.slice(0,3)}
+      };
       const result = await AMS.querySimilarProjectNames(data);
-      assert.equal(result[0].name, "Test");
+      assert.equal(result[0].name, U.projectTest.name);
     });
   });
 
@@ -118,5 +111,3 @@ describe('UNIT TESTING ATLASMAKER SERVER', async () => {
     });
   });
 });
-
-// Buffer.compare(atlasmakerServer.niiTag, "");

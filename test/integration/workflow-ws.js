@@ -23,9 +23,13 @@ let mri;
 
 describe('TESTING WEBSOCKET WORKFLOW', () => {
     before(async () => {
-        await U.insertTestTokenForUser("foo");
         u1 = new WebSocket('wss://localhost:8080');
         u2 = new WebSocket('wss://localhost:8080');
+    });
+
+    after(async function () {
+        u1.close();
+        u2.close();
     });
 
     describe('WS connection', async function () {
@@ -68,9 +72,5 @@ describe('TESTING WEBSOCKET WORKFLOW', () => {
         });
     });
 
-    after(async function () {
-        await U.removeTestToken();
-        u1.close();
-        u2.close();
-    });
+
 });

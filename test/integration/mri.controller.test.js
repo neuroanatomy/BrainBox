@@ -8,11 +8,6 @@ chai.use(chaiHttp);
 const U = require('../utils.js');
 
 describe('TESTING THE /mri ROUTE', async () => {
-  before(async () => {
-      // insert test token
-      await U.insertTestTokenForUser("foo");
-  });
-
   after(async () => {
     // remove MRI from db and file system
     const res = await chai.request(U.serverURL).post('/mri/json').send({
@@ -22,9 +17,6 @@ describe('TESTING THE /mri ROUTE', async () => {
     const {body} = res;
     const dirPath = "./public" + body.url;
     await U.removeMRI({dirPath, srcURL: U.localBertURL});
-
-    // remove test token
-    await U.removeTestToken();
   });
 
   describe('/mri route', async () => {
