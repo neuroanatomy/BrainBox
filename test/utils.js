@@ -22,7 +22,7 @@ const userFoo = {
     nickname: "foo",
     url: "https://foo.bar",
     brainboxURL: "/user/foo",
-    avatarURL: "https://foo.bar/avatar.jpg",
+    avatarURL: "https://127.0.0.1:3001/test_data/foo.png",
     joined: (new Date()).toJSON()
 };
 const userBar = {
@@ -30,7 +30,7 @@ const userBar = {
     nickname: "bar",
     url: "https://bar.foo",
     brainboxURL: "/user/foo",
-    avatarURL: "https://bar.foo/avatar.jpg",
+    avatarURL: "https://127.0.0.1:3001/test_data/bar.png",
     joined: (new Date()).toJSON()
 }
 const userFooB = {
@@ -38,7 +38,7 @@ const userFooB = {
     username: "foo",
     url: "https://foo.bar",
     brainboxURL: "/user/foo",
-    avatarURL: "https://foo.bar/avatar.jpg",
+    avatarURL: "https://127.0.0.1:3001/test_data/foo.png",
     joined: (new Date()).toJSON()
 };
 const userBarB = {
@@ -46,7 +46,7 @@ const userBarB = {
     username: "bar",
     url: "https://bar.foo",
     brainboxURL: "/user/foo",
-    avatarURL: "https://bar.foo/avatar.jpg",
+    avatarURL: "https://127.0.0.1:3001/test_data/bar.png",
     joined: (new Date()).toJSON()
 }
 

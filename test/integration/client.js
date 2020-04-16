@@ -35,6 +35,17 @@ describe('TESTING CLIENT-SIDE RENDERING', () => {
         let browser;
         let page;
 
+        before(async () => {
+            // insert a test user in the DB
+            await U.insertUser(U.userFoo);
+        });
+    
+        after(async () => {
+            // remove test user in the DB
+            await U.removeUser(U.userFoo.nickname);
+        });
+        
+
         it('Browser opens', async () => {
             browser = await puppeteer.launch({headless: true, ignoreHTTPSErrors: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
         });
@@ -106,7 +117,7 @@ describe('TESTING CLIENT-SIDE RENDERING', () => {
         it('User page renders as expected', async () => {
             const diff = await U.comparePageScreenshots(
                 page,
-                'https://localhost:3001/user/r03ert0',
+                'https://localhost:3001/user/' + U.userFoo.nickname,
                 '07.user.png'
             );
             assert(diff<1000);

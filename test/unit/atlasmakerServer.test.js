@@ -11,6 +11,16 @@ const U = require('../utils.js');
 // });
 
 describe('UNIT TESTING ATLASMAKER SERVER', async () => {
+  before(async () => {
+    // insert a test user in the DB
+      await U.insertUser(U.userFoo);
+  });
+
+  after(async () => {
+    // remove test user in the DB
+      await U.removeUser(U.userFoo.nickname);
+  });
+
   describe('MRI IO', async () => {
     let mri1, mri2;
 
@@ -65,15 +75,15 @@ describe('UNIT TESTING ATLASMAKER SERVER', async () => {
 
   describe('Database', async () => {
     it('Find user name given their nickname', async () => {
-      const data = {type: "userNameQuery", metadata: {nickname: "r03ert0"}};
+      const data = {type: "userNameQuery", metadata: {nickname: U.userFoo.nickname}};
       const result = await AMS.queryUserName(data);
-      assert.equal(result[0].name, "Roberto Toro");
+      assert.equal(result[0].name, U.userFoo.name);
     });
 
     it('Find user nickname given their name', async () => {
-      const data = {type: "userNameQuery", metadata: {name: "Roberto Toro"}};
+      const data = {type: "userNameQuery", metadata: {name: U.userFoo.name}};
       const result = await AMS.queryUserName(data);
-      assert.equal(result[0].nickname, "r03ert0");
+      assert.equal(result[0].nickname, U.userFoo.nickname);
     });
 
     it('Find project', async () => {
