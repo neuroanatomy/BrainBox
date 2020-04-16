@@ -14,7 +14,7 @@ import * as DOMPurify from 'dompurify';
 
 import $ from 'jquery';
 
-var host = "ws://" + window.location.hostname + ":8080/";
+var host = "wss://" + window.location.hostname + ":8080/";
 let ws;
 if (window.WebSocket) {
     ws = new WebSocket(host);
@@ -46,7 +46,7 @@ $("#projectName").on('keyup',function(e) {
     if(/[^a-zA-Z0-9]+/.test(name) === true) {
         $("#warning").html("The name <strong>"+name+"</strong> is not allowed. Project short names can only contain letters and numbers");
         $("#warning").show();
-        $("#createProject").css({'pointer-events':'none',opacity:0.5});
+        $("#createProject").css({'pointer-events':'none', opacity:0.5});
     } else {
     // check if name already exists
         ws.send(JSON.stringify({"type":"projectNameQuery", "metadata":{"name":name}}));

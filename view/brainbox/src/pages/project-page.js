@@ -334,7 +334,7 @@ function loadProjectFile(index) {
     var def = new $.Deferred();
     
     var url=projectInfo.files.list[index].source;
-    var params={url:url,view:"cor",slice:180,fullscreen:false};
+    var params={url: url, view: "cor", slice: 180, fullscreen: false};
     $("#loadingIndicator p").text("Loading...");
     $("#loadingIndicator").show();
     

@@ -53,7 +53,10 @@ export var AtlasMakerDraw = {
 
         // configure toolbar slider
         $(".slider#slice").data({ max:me.brain_D-1, val:me.User.slice });
-        if($("#slice .thumb")[0]) { $("#slice .thumb")[0].style.left = (me.User.slice/(me.brain_D-1)*100) + "%"; }
+
+        // if($("#slice .thumb")[0]) { $("#slice .thumb")[0].style.left = (me.User.slice/(me.brain_D-1)*100) + "%"; }
+        $("#slice").trigger("updateDisplay");
+
         me.drawImages();
         me.initCursor();
     },

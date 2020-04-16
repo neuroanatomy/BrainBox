@@ -173,9 +173,9 @@ export var AtlasMakerWS = {
         if (me.debug > 1) { console.log("message: " + description); }
         var msg;
         if (description === "allUserData") {
-            msg = { "type": "userData", "user": me.User, "description": description };
+            msg = { type: "userData", user: me.User, description };
         } else {
-            msg = { "type": "userData", "description": description };
+            msg = { type: "userData", description };
         }
         try {
             me.socket.send(JSON.stringify(msg));
@@ -373,6 +373,18 @@ export var AtlasMakerWS = {
         } catch (ex) {
             console.log("ERROR: Unable to sendPaintMessage", ex);
         }
+    },
+
+    /**
+     * @function sendAtlasDataMessage
+     * @param {array} atlasData Atlas data
+     * @returns {void}
+     */
+    sendAtlasDataMessage: function sendAtlasDataMessage(atlasData) {
+        var me=AtlasMakerWidget;
+        me.socket.binaryType = "arraybuffer";
+        me.socket.send(pako.deflate(atlasData));
+        me.socket.binaryType = "blob";
     },
 
     /**

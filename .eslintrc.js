@@ -4,6 +4,9 @@ module.exports = {
         "es6": true,
         "node": true
     },
+    "standard": {
+        "env": ["mocha"]
+    },
     "extends": "eslint:recommended",
     "parserOptions": {
         "sourceType": "module",
@@ -59,10 +62,7 @@ module.exports = {
         "func-call-spacing": "error",
         "func-name-matching": "error",
         "func-names": "off",
-        "func-style": [
-            "error",
-            "declaration"
-        ],
+        "func-style": "off",
         "function-paren-newline": "off",
         "generator-star-spacing": "error",
         "getter-return": "error",

@@ -4,8 +4,6 @@
 /*
     Atlas Maker Server
     Roberto Toro, 25 July 2014
-
-    Launch using > node atlasmakerServer.js
 */
 
 const fs = require('fs');
@@ -19,13 +17,7 @@ const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const mustacheExpress = require('mustache-express');
 const monk = require('monk');
-
-// const debug = 1;
-// const crypto = require('crypto');
-// const request = require('request');
-// const url = require('url');
-// const async = require('async');
-// const mongo = require('mongodb');
+const Config = JSON.parse(fs.readFileSync('./cfg.json'));
 
 let MONGO_DB;
 const DOCKER_DB = process.env.DB_PORT;
@@ -62,14 +54,18 @@ if (DOCKER_DEVELOP === '1') {
 
 const app = express();
 
-// allow CORS
+//========================================================================================
+// Allow CORS
+//========================================================================================
 app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     next();
 });
 
-// enable compression
+//========================================================================================
+// Enable compression
+//========================================================================================
 app.use(compression());
 
 app.engine('mustache', mustacheExpress());
@@ -88,7 +84,9 @@ if (DOCKER_DEVELOP === '1') {
     app.use(require('connect-livereload')());
 }
 
-// { App-wide variables
+//========================================================================================
+// App-wide variables
+//========================================================================================
 app.use((req, res, next) => {
     req.dirname = dirname;
     req.db = db;
@@ -96,15 +94,31 @@ app.use((req, res, next) => {
 
     next();
 });
-// }
 
-// { Init web socket server
+//========================================================================================
+// Configure server and web socket
+//========================================================================================
+const https = require('https');
+const options = {
+    key: fs.readFileSync(Config.ssl_key),
+    cert: fs.readFileSync(Config.ssl_cert)
+};
+https.createServer(options, app)
+    .listen(3001, () => {
+        console.log('Listening https on port 3001');
+    });
 const atlasmakerServer = require('./controller/atlasmakerServer/atlasmakerServer.js');
-atlasmakerServer.initSocketConnection();
 atlasmakerServer.dataDirectory = dirname + '/public';
-// }
 
-// { Check that the 'anyone' user exists. Insert it otherwise
+atlasmakerServer.server = https.createServer(options, app)
+    .listen(8080, () => {
+        console.log('Listening wss on port 8080');
+        atlasmakerServer.initSocketConnection();
+    });
+
+//========================================================================================
+// Check that the 'anyone' user exists. Insert it otherwise
+//========================================================================================
 db.get('user').findOne({nickname: 'anyone'})
     .then( (obj) => {
         if (!obj) {
@@ -120,9 +134,10 @@ db.get('user').findOne({nickname: 'anyone'})
             tracer.log('\'anyone\' user correctly configured.');
         }
     });
-// }
 
-// { Passport: OAuth2 authentication
+//========================================================================================
+// Passport: OAuth2 authentication
+//========================================================================================
 const session = require('express-session');
 const passport = require('passport');
 const GithubStrategy = require('passport-github').Strategy;
@@ -165,48 +180,69 @@ app.get('/loggedIn', function (req, res) {
         res.send({loggedIn: false});
     }
 });
-// start the GitHub Login process
+
+function insertUser(user) {
+    // insert new user
+    const userObj = {
+        name: user.displayName,
+        nickname: user.username,
+        url: user._json.blog,
+        brainboxURL: "/user/" + user.username,
+        avatarURL: user._json.avatar_url,
+        joined: (new Date()).toJSON()
+    };
+    db.get('user').insert(userObj);
+}
+function updateUser(user) {
+    db.get('user').update(
+        {
+            nickname: user.username
+        }, {
+            $set: {
+                name: user.displayName,
+                url: user._json.blog,
+                avatarURL: user._json.avatar_url
+            }
+        }
+    );
+}
+function upsertUser(req, res) {
+    // Check if user is new
+    db.get('user').findOne({nickname: req.user.username}, '-_id')
+        .then( (json) => {
+            if (!json) {
+                insertUser(req.user);
+            } else {
+                updateUser(req.user);
+            }
+        });
+    res.redirect(req.session.returnTo || '/');
+    delete req.session.returnTo;
+}
+
+// GitHub Login process
 app.get('/auth/github', passport.authenticate('github'));
 app.get('/auth/github/callback',
     passport.authenticate('github', {failureRedirect: '/'}),
-    (req, res) => {
-        // Successfully loged in. Check if user is new
-        db.get('user').findOne({nickname: req.user.username}, '-_id')
-            .then( (json) => {
-                if (!json) {
-                    // insert new user
-                    json = {
-                        name: req.user.displayName,
-                        nickname: req.user.username,
-                        url: req.user._json.blog,
-                        brainboxURL: "/user/" + req.user.username,
-                        avatarURL: req.user._json.avatar_url,
-                        joined: (new Date()).toJSON()
-                    };
-                    db.get('user').insert(json);
-                } else {
-                    tracer.log('Update user data from GitHub');
-                    db.get('user').update({nickname: req.user.username}, {$set: {
-                        name: req.user.displayName,
-                        url: req.user._json.blog,
-                        avatarURL: req.user._json.avatar_url
-                    }});
-                }
-            });
-            res.redirect(req.session.returnTo || '/');
-            delete req.session.returnTo;
-    });
-// }
+    upsertUser
+);
 
-// { Token authentication
+//========================================================================================
+// Token authentication
+//========================================================================================
 global.tokenAuthentication = function (req, res, next) {
     tracer.log('>> Check token');
-    const token = req.params.token | req.query.token;
-    if (!token) {
+    let token;
+    if(typeof req.params.token !== "undefined") {
+        token = req.params.token;
+    } else if(typeof req.query.token !== "undefined") {
+        token = req.query.token;
+    } else if(typeof req.body.token !== "undefined") {
+        token = req.body.token;
+    }
+    if (typeof token === "undefined") {
         tracer.log('>> No token');
-        next();
-
-        return;
+        return next();
     }
     req.db.get('log').findOne({token})
     .then( (obj) => {
@@ -230,10 +266,11 @@ global.tokenAuthentication = function (req, res, next) {
         next();
     });
 };
-// }
 
-// { GUI routes
-app.get('/', (req, res) => { // /auth/github
+//========================================================================================
+// GUI routes
+//========================================================================================
+app.get('/', (req, res) => {
     const login = (req.isAuthenticated()) ?
                 ('<a href=\'/user/' + req.user.username + '\'>' + req.user.username + '</a> (<a href=\'/logout\'>Log Out</a>)') :
                 ('<a href=\'/auth/github\'>Log in with GitHub</a>');
@@ -250,9 +287,10 @@ app.get('/', (req, res) => { // /auth/github
 app.use('/mri', require('./controller/mri/'));
 app.use('/project', require('./controller/project/'));
 app.use('/user', require('./controller/user/'));
-// }
 
-// { API routes
+//========================================================================================
+// API routes
+//========================================================================================
 app.get('/api/getLabelsets', (req, res) => {
     const arr = fs.readdirSync(dirname + '/public/labels/');
     const info = [];
@@ -396,8 +434,10 @@ app.post('/api/log', (req, res) => {
         }
     });
 });
-// }
 
+//========================================================================================
+// Error handlers
+//========================================================================================
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
     var err = new Error('Not Found');
@@ -405,7 +445,6 @@ app.use(function (req, res, next) {
     next(err);
 });
 
-// error handlers
 // development error handler
 // will print stacktrace
 if (app.get('env') === 'development') {

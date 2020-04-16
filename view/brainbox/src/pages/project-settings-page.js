@@ -16,6 +16,7 @@ import * as tw from '../twoWayBinding.js';
 import '../style/style.css';
 import '../style/ui.css';
 import '../style/projectSettings-style.css';
+import '../style/textAnnotations.css';
 import '../style/access-style.css';
 import '../style/dropdown-style.css';
 
@@ -25,7 +26,7 @@ jdenticon.update($("svg")[0],md5(projectShortname));
 // WS Autocompletion
 var cb, label;
 let ws;
-var host = "ws://" + window.location.hostname + ":8080/";
+var host = "wss://" + window.location.hostname + ":8080/";
 if (window.WebSocket) {
     ws = new WebSocket(host);
 } else if (window.MozWebSocket) {

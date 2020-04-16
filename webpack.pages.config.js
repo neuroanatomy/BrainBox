@@ -5,6 +5,7 @@ const CleanWebpackPlugin = require('clean-webpack-plugin');
 
 module.exports = {
     entry: {
+        "ask-for-login-page": './view/brainbox/src/pages/ask-for-login-page.js',
         "index-page": './view/brainbox/src/pages/index-page.js',
         "mri-page": './view/brainbox/src/pages/mri-page.js',
         "project-page": './view/brainbox/src/pages/project-page.js',
