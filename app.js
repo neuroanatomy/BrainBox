@@ -99,14 +99,14 @@ app.use((req, res, next) => {
 // Configure server and web socket
 //========================================================================================
 const https = require('https');
+const http = require('http');
 const options = {
     key: fs.readFileSync(Config.ssl_key),
-    cert: fs.readFileSync(Config.ssl_cert)
+    cert: fs.readFileSync(Config.ssl_cert),
+    ca: fs.readFileSync(Config.ssl_chain)
 };
-https.createServer(options, app)
-    .listen(3001, () => {
-        console.log('Listening https on port 3001');
-    });
+
+http.createServer(app).listen(3001, ()=>{console.log("Listening http on port 3001");});
 const atlasmakerServer = require('./controller/atlasmakerServer/atlasmakerServer.js');
 atlasmakerServer.dataDirectory = dirname + '/public';
 
