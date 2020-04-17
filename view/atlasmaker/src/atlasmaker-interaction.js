@@ -872,7 +872,7 @@ export var AtlasMakerInteraction = {
                     var hdim = me.brain_Hdim;
                     var i;
                     for(i = 1; i<p.length; i++) { length += Math.sqrt(Math.pow(wdim*(p[i].x-p[i-1].x), 2) + Math.pow(hdim*(p[i].y-p[i-1].y), 2)); }
-                    $("#log").append("Length: " + length + "<br/>");
+                    $("#logChat").append("Length: " + length + "<br/>");
                     me.User.measureLength = null;
                     me.displayInformation();
                 }
