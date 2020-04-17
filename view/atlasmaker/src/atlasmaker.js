@@ -244,7 +244,7 @@ export var AtlasMakerWidget = {
         me.toggle($(".toggle#precise"), me.togglePreciseCursor);
         me.toggle($(".toggle#fill"), me.toggleFill);
         me.toggle($(".toggle#fullscreen"), me.toggleFullscreen);
-        me.toggle($(".toggle#bubble"), me.toggleChat);
+        me.chose3state($(".chose#text"), me.toggleTextInput);
         me.push($(".push#3drender"), me.render3D);
         me.push($(".push#link"), me.link);
         me.push($(".push#upload"), me.upload);
@@ -259,6 +259,9 @@ export var AtlasMakerWidget = {
         $("#msg").keypress((e) => { me.onkey(e); });
 
         $("#tools-minimized").hide();
+
+        // load tools
+        me.loadTools();
 
         const pr = new Promise(function(resolve, reject) {
             me.initSocketConnection()

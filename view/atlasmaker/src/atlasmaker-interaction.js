@@ -7,6 +7,41 @@ import pako from 'pako';
  */
 export var AtlasMakerInteraction = {
     //========================================================================================
+    // Load graphic tools and commands
+    //========================================================================================
+    _loadCommandTool: async function(tool) {
+        var me = AtlasMakerWidget;
+        // const path = `/lib/atlasmaker-tools/${tool.name}.js`;
+        // const path = `../tools/${tool.name}.js`;
+        // let cmd = await import(path);
+        // let cmd = await import(/* webpackIgnore: true */`/lib/atlasmaker-tools/${tool.name}.js`);
+        // console.log("cmd:", tool.name, cmd, cmd());
+        me.loadScript(`/lib/atlasmaker-tools/${tool.name}.js`)
+            .then(()=>{
+                window[tool.name] = cmd;
+            })
+    },
+    _loadTools: function(list) {
+        var me = AtlasMakerWidget;
+        for(const tool of list) {
+            if(tool.type === "cmd") {
+                me._loadCommandTool(tool);
+            }
+        }
+    },
+    /**
+     * @function loadTools
+     * @description Load graphic tools and commands
+     * @returns {void}
+     */
+    loadTools: function () {
+        var me = AtlasMakerWidget;
+        $.get("/lib/atlasmaker-tools/tools.json", (res) => {
+            me._loadTools(res);
+        });
+    },
+
+    //========================================================================================
     // Local user interaction
     //========================================================================================
     /**
@@ -87,7 +122,7 @@ export var AtlasMakerInteraction = {
                 break;
             case 'Adjust':
                 me.User.tool = 'adjust';
-                if($("#adjust").length===0) {
+                if($("#adjust").length === 0) {
                     me.loadScript("/lib/atlasmaker-tools/adjust.js");
                 }
                 break;
@@ -180,11 +215,24 @@ export var AtlasMakerInteraction = {
     },
 
     /**
-     * @function toggleChat
+     * @function toggleTextInput
      * @returns {void}
      */
-    toggleChat: function toggleChat() {
-        $("#chatBlock").toggle();
+    toggleTextInput: function toggleTextInput(mode) {
+        switch(mode) {
+            case "Chat":
+                $("#textInputBlock").show();
+                document.getElementById("logScript").classList.add("hidden");
+                document.getElementById("logChat").classList.remove("hidden");
+                break;
+            case "Script":
+                $("#textInputBlock").show();
+                document.getElementById("logScript").classList.remove("hidden");
+                document.getElementById("logChat").classList.add("hidden");
+                break;
+            default:
+                $("#textInputBlock").hide();
+        }
     },
 
     /**

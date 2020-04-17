@@ -56,7 +56,7 @@ export var AtlasMakerWS = {
                 me.socket.onopen = function (msg) {
                     if (me.debug) { console.log("[initSocketConnection] connection open", msg); }
                     me.progress.html("<img src='" + me.hostname + "/img/download.svg' style='vertical-align:middle'/>MRI");
-                    $("#chat").text("Chat (1 connected)");
+                    $("#notifications").text("Chat (1 connected)");
                     me.flagConnected = 1;
                     me.reconnectionTimeout = 5;
                     resolve();
@@ -87,7 +87,7 @@ export var AtlasMakerWS = {
                     console.log("Initial random time:", rand);
                     setTimeout(function () {
                         var timeout = me.reconnectionTimeout;
-                        $("#chat").text("Disconnected. Try to reconnect in " + (timeout--) + " s...");
+                        $("#notifications").text("Disconnected. Try to reconnect in " + (timeout--) + " s...");
                         if (me.timer) {
                             clearInterval(me.timer);
                             setTimeout(function() {
@@ -100,15 +100,15 @@ export var AtlasMakerWS = {
                                 })
                                 .catch(function() {
                                     timeout=me.reconnectionTimeout;
-                                    $("#chat").text("Disconnected. Try to reconnect in "+(timeout--)+" s...");
+                                    $("#notifications").text("Disconnected. Try to reconnect in "+(timeout--)+" s...");
                                 });
                             }, 1000);
                         } else {
-                            $("#chat").text("Disconnected. Try to reconnect in "+(timeout--)+" s...");
+                            $("#notifications").text("Disconnected. Try to reconnect in "+(timeout--)+" s...");
                         }
                         me.timer = setInterval(function () {
                             if (timeout < 0) {
-                                $("#chat").text("Reconnecting...");
+                                $("#notifications").text("Reconnecting...");
                                 me.socket = null;
                                 clearInterval(me.timer);
                                 setTimeout(function () {
@@ -121,11 +121,11 @@ export var AtlasMakerWS = {
                                         })
                                         .catch(function () {
                                             timeout = me.reconnectionTimeout;
-                                            $("#chat").text("Disconnected. Try to reconnect in " + (timeout--) + " s...");
+                                            $("#notifications").text("Disconnected. Try to reconnect in " + (timeout--) + " s...");
                                         });
                                 }, 1000);
                             } else {
-                                $("#chat").text("Disconnected. Try to reconnect in " + (timeout--) + " s...");
+                                $("#notifications").text("Disconnected. Try to reconnect in " + (timeout--) + " s...");
                             }
                         }, 1000);
                     }, rand);
@@ -136,7 +136,7 @@ export var AtlasMakerWS = {
                     me.socket.close();
                 };
             } catch (ex) {
-                $("#chat").text("Chat (not connected - connection error)");
+                $("#notifications").text("Chat (not connected - connection error)");
                 reject(ex);
             }
         });
@@ -318,7 +318,7 @@ export var AtlasMakerWS = {
                 nusers++;
             }
         }
-        $("#chat").text("Chat (" + nusers + " connected)");
+        $("#notifications").text("Chat (" + nusers + " connected)");
     },
 
     /**
@@ -625,7 +625,7 @@ export var AtlasMakerWS = {
                 nusers++;
             }
         }
-        $("#chat").text("Chat ("+nusers+" connected)");
+        $("#notifications").text("Chat ("+nusers+" connected)");
         $("#log").append(msg);
         $("#log").scrollTop($("#log")[0].scrollHeight);
     },
@@ -637,9 +637,9 @@ export var AtlasMakerWS = {
     */
     receiveServerMessage: function receiveServerMessage(data) {
         var {msg}=data;
-        var prevMsg=$("#chat").text();
-        $("#chat").text(msg);
-        setTimeout(function() { $("#chat").text(prevMsg); }, 5000);
+        var prevMsg=$("#notifications").text();
+        $("#notifications").text(msg);
+        setTimeout(function() { $("#notifications").text(prevMsg); }, 5000);
     },
 
     /**

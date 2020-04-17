@@ -4,6 +4,7 @@
 * {
     box-sizing: border-box;
 }
+
 .a {
     border:thin solid #777;
     border-radius:3px;
@@ -20,6 +21,43 @@
     -moz-user-select:none;
     user-select:none;
 }
+
+.chose {
+    border:thin solid #777;
+    border-radius:3px;
+    margin:1px;
+    text-align:center;
+    height: 24px;
+    position: relative;
+}
+.a.sub {
+    border:none;
+    margin:0;
+    height: 22px;
+}
+.a.sub:hover {
+    opacity:0.5;
+    -webkit-user-select:none;
+    -moz-user-select:none;
+    user-select:none;
+}
+
+.text {
+    border:thin solid #777;
+    background: #000;
+    opacity: 0.5;
+    border-radius:3px;
+    margin:1px;
+    user-select: text;
+}
+.text * {
+    font-size: 12px !important;
+    line-height: 15px !important;
+}
+.text:hover {
+    opacity:1;
+}
+
 .label {
     color: white;
     user-select: none;
@@ -33,6 +71,10 @@
     user-select: none;
 }
 
+.hidden {
+    display:none;
+}
+
 /* svg buttons
 ----------------------- */
 .pushButton {
@@ -42,17 +84,6 @@
     text-align:center;
     -webkit-appearance:none;
     cursor: pointer;
-}
-.chose {
-    border-radius:3px;
-    background:#777;
-    margin:2px;
-}
-.chose .a {
-    border: none;
-    border-radius:0px;
-    height:22px;
-    background: #222;
 }
 img.button {
     width:0.9rem;

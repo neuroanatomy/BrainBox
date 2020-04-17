@@ -29,6 +29,7 @@ tmp
 view/atlasmaker/dist/
 view/atlasmaker/src/tools/dist/
 view/brainbox/dist/
+view/dist/
 whitelist.json
 cfg.json
 cert.pem

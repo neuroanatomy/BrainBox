@@ -76,10 +76,9 @@ div::before {
                     <div id='view' style='display:flex;background:green'>
                         <div style='flex:1'><div id='fullscreen' title='Full screen' class='a toggle'><span class='img icon'></span></div></div>
                         <div style='flex:1'><div id='3drender' title='3D render' class='a push'><span class='img icon'></span></div></div>
-                        <div style='flex:1'><div id='link' title='Link' class='a push'><span class='img icon'></span></div></div>
                         <div style='flex:1'><div id='bubble' title='Chat' class='a toggle pressed'><span class='img icon'></span></div></div>
-                        <div style='flex:1'><div id='upload' title='Upload' class='a push'><span class='img icon'></span></div></div>
-                        <div style='flex:1'><div id='download' title='Download' class='a push'><span class='img icon'></span></div></div>
+                        <div style='flex:1'><div id='script' title='Script' class='a toggle pressed'><span class='img icon'></span></div></div>
+                        <div style='flex:1'><div id='link' title='Link' class='a push'><span class='img icon'></span></div></div>
                         <div style='flex:1'><div id='precise' title='Precise cursor' class='a toggle'><span class='img icon'></span></div></div>
                     </div>
                 </div>
@@ -97,6 +96,8 @@ div::before {
                         <div style='flex:1'><div id='color'><span class='img icon'></span></div></div>
                         <div style='flex:1'><div id='fill' class='a toggle'><span class='img icon'></span></div></div>
                         <div style='flex:1'><div id='undo' title='Undo' class='a push'><span class='img icon'></span></div></div>
+                        <div style='flex:1'><div id='upload' title='Upload' class='a push'><span class='img icon'></span></div></div>
+                        <div style='flex:1'><div id='download' title='Download' class='a push'><span class='img icon'></span></div></div>
                         <div style='flex:1'><div id='save' title='Save' class='a push'><span class='img icon'></span></div></div>
                     </div>
                 </div>
@@ -116,12 +117,20 @@ div::before {
             </div>
         </div>
 
+        <!-- notifications -->
+        <div style='flex:0 0 28px;background:yellow;'>
+            <div id='notifications'>Notifications</div>
+        </div>
+
         <!-- chat -->
-        <div id='textInputBlock' style='flex:1 1 auto;background:#afa;position:relative;display:flex'>
-            <div id='textInputBlockContent' style='flex:1;background:yellow;display:flex;flex-direction:column'>
-                <div style='flex:0 0 28px'><div id='chat'>Chat (disconnected)</div></div>
+        <div id='textBlock' style='flex:1 1 auto;background:#afa;position:relative;display:flex'>
+            <div id='textBlockContent' style='flex:1;background:yellow;display:flex;flex-direction:column'>
+                <div style='flex:0 0 28px;display:flex'>
+                    <div id='tabChat' style="flex:0 0 40px">Chat</div>
+                    <div id='tabScript' style="flex:0 0 40px">Script</div>
+                </div>
                 <div style='flex:1 1 auto;background:#f99;display:flex'><div id='log' class='a' style='flex:1;height:auto'></div></div>
-                <div style='flex:0 0 28px'><input id='msg' type='text' style='width:100%'></div>
+                <div style='flex:0 0 28px'><input id='textEnter' type='text' style='width:100%'></div>
             </div>
         </div>
     </div>

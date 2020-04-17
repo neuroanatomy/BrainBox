@@ -55,7 +55,7 @@ export var AtlasMakerUI = {
     /**
      * @function chose
      * @param {object} elem DOM element
-     * @param {function} callback Function called after the slider position is updated
+     * @param {function} callback Function called after a button is pressed
      * @returns {void}
      */
     chose: function chose(elem, callback) {
@@ -65,6 +65,30 @@ export var AtlasMakerUI = {
             $(d).click(function() {
                 if($(d).hasClass("pressed")) {
                     return callback($(d).attr('title'));
+                }
+                ch.each(function(c1, d1) { $(d1).removeClass("pressed"); });
+                $(d).addClass("pressed");
+                if(callback) {
+                    return callback($(d).attr('title'));
+                }
+            });
+        });
+    },
+
+    /**
+     * @function chose3state
+     * @param {object} elem DOM element
+     * @param {function} callback Function called after a button is pressed
+     * @returns {void}
+     */
+    chose3state: function chose3state(elem, callback) {
+        // Initialise a 'chose3state' control
+        var ch=$(elem).find(".a");
+        ch.each(function(c, d) {
+            $(d).click(function() {
+                if($(d).hasClass("pressed")) {
+                    $(d).removeClass("pressed");
+                    return callback("none");
                 }
                 ch.each(function(c1, d1) { $(d1).removeClass("pressed"); });
                 $(d).addClass("pressed");
