@@ -23,13 +23,11 @@ describe('TESTING THE /mri ROUTE', function () {
     });
 
     it('POST /mri/json without parameters should fail', async function () {
-      await chai.request(U.serverURL).get('/0--------------------------------');
       const res = await chai.request(U.serverURL).post('/mri/json');
       assert.equal(res.statusCode, 403);
     });
 
     it('POST /mri/json with url should start a download', async function () {
-      await chai.request(U.serverURL).get('/A--------------------------------');
       let shouldContinue = true;
       let body, res;
       while(shouldContinue) {
@@ -48,7 +46,6 @@ describe('TESTING THE /mri ROUTE', function () {
     }).timeout(U.longTimeout);
 
     it('POST /mri/json with url should return MRI info once the file is downloaded', async function () {
-      await chai.request(U.serverURL).get('/B--------------------------------');
       await U.delay(U.shortTimeout);
       const res = await chai.request(U.serverURL).post('/mri/json').send({
         url: U.localBertURL,
