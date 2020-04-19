@@ -1,4 +1,4 @@
-<div id="tools-side" style="display:block">
+<div id="tools-side" style="display:block;height:100%">
     <div id="tools-minimized">
         <div>
             <img alt="menu" style="width:28px;position:absolute;top:10px;left:10px" src="./img/bars.svg" />
@@ -113,6 +113,13 @@
             }
             .codeflask {
                 background:rgba(0,0,0,1);
+                position: relative;
+            }
+            #logChat:not(.hidden) {
+                flex:1;
+                height:auto;
+                display:flex;
+                flex-direction:column;
             }
         </style>
         <script>
@@ -123,13 +130,27 @@
 
         <div id="textInputBlock" style="flex:1 1 auto;position:relative;display:flex">
             <div id="textInputBlockContent" style="flex:1;display:flex;flex-direction:column">
+                <div style="flex:1 1 80px;display:flex">
+                    <div id="logChat">
+                        <div style="flex:1 1 30px; overflow:scroll">
+                            <div class="text" style="overflow:auto;height:100%"></div>
+                        </div>
+                        <div style="flex:0"><input id="msg" type="text" style="width:100%" /></div>
+                    </div>
+                    <div id="logScript" class="text hidden" style="flex:1;height:auto"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- <div id="textInputBlock" style="flex:1 1 auto;position:relative;display:flex">
+            <div id="textInputBlockContent" style="flex:1;display:flex;flex-direction:column">
                 <div style="flex:1 1 58px;display:flex">
                     <div id="logChat" class="text" style="flex:1;height:auto"></div>
                     <div id="logScript" class="text hidden" style="flex:1;height:auto"></div>
                 </div>
                 <div style="flex:0 0 28px"><input id="msg" type="text" style="width:100%"></div>
             </div>
-        </div>
+        </div> -->
     </div>
 
 </div>

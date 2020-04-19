@@ -289,8 +289,8 @@ export var AtlasMakerWS = {
                 } else {
                     msg = "<b>" + data.user.username + "</b> entered<br />";
                 }
-                $("#logChat").append(msg);
-                $("#logChat").scrollTop($("#logChat")[0].scrollHeight);
+                $("#logChat .text").append(msg);
+                $("#logChat .text").scrollTop($("#logChat .text")[0].scrollHeight);
             } catch (e) {
                 console.log("data:", data);
                 console.log(e);
@@ -332,8 +332,8 @@ export var AtlasMakerWS = {
         try {
             me.socket.send(JSON.stringify({ "type": "chat", "msg": msg, "username": me.User.username }));
             msg = "<b>me: </b>" + msg + "<br />";
-            $("#logChat").append(msg);
-            $("#logChat").scrollTop($("#logChat")[0].scrollHeight);
+            $("#logChat .text").append(msg);
+            $("#logChat .text").scrollTop($("#logChat .text")[0].scrollHeight);
             $('input#msg').val("");
         } catch (ex) {
             console.log("ERROR: Unable to sendChatMessage", ex);
@@ -355,8 +355,8 @@ export var AtlasMakerWS = {
         var link = me.hostname + "/mri?url=" + theSource + "&view=" + theView + "&slice=" + theSlice;
         var theUsername = (data.username === "Anonymous")?data.uid:data.username;
         var msg = "<a href='" +link+"'><b>"+theUsername+":</b></a> "+data.msg+"<br />";
-        $("#logChat").append(msg);
-        $("#logChat").scrollTop($("#logChat")[0].scrollHeight);
+        $("#logChat .text").append(msg);
+        $("#logChat .text").scrollTop($("#logChat .text")[0].scrollHeight);
     },
 
     /**
@@ -626,8 +626,8 @@ export var AtlasMakerWS = {
             }
         }
         $("#notifications").text("Chat ("+nusers+" connected)");
-        $("#logChat").append(msg);
-        $("#logChat").scrollTop($("#logChat")[0].scrollHeight);
+        $("#logChat .text").append(msg);
+        $("#logChat .text").scrollTop($("#logChat .text")[0].scrollHeight);
     },
 
     /**

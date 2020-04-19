@@ -224,11 +224,13 @@ export var AtlasMakerInteraction = {
                 $("#textInputBlock").show();
                 document.getElementById("logScript").classList.add("hidden");
                 document.getElementById("logChat").classList.remove("hidden");
+                document.querySelector("#logChat #msg").focus();
                 break;
             case "Script":
                 $("#textInputBlock").show();
                 document.getElementById("logScript").classList.remove("hidden");
                 document.getElementById("logChat").classList.add("hidden");
+                document.querySelector("#logScript textarea").focus();
                 break;
             default:
                 $("#textInputBlock").hide();
@@ -872,7 +874,7 @@ export var AtlasMakerInteraction = {
                     var hdim = me.brain_Hdim;
                     var i;
                     for(i = 1; i<p.length; i++) { length += Math.sqrt(Math.pow(wdim*(p[i].x-p[i-1].x), 2) + Math.pow(hdim*(p[i].y-p[i-1].y), 2)); }
-                    $("#logChat").append("Length: " + length + "<br/>");
+                    $("#logChat .text").append("Length: " + length + "<br/>");
                     me.User.measureLength = null;
                     me.displayInformation();
                 }
