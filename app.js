@@ -73,7 +73,9 @@ app.set('views', path.join(dirname, 'templates'));
 app.set('view engine', 'mustache');
 app.use(favicon(dirname + '/public/favicon.png'));
 app.set('trust proxy', 'loopback');
-app.use(logger(':remote-addr :method :url :status :response-time ms - :res[content-length]'));//app.use(logger('dev'));
+if (app.get('env') == 'development') {
+    app.use(logger(':remote-addr :method :url :status :response-time ms - :res[content-length]'));//app.use(logger('dev'));
+}
 app.use(bodyParser.json({limit: '50mb'}));
 app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 app.use(expressValidator());
@@ -102,9 +104,11 @@ const https = require('https');
 const http = require('http');
 const options = {
     key: fs.readFileSync(Config.ssl_key),
-    cert: fs.readFileSync(Config.ssl_cert),
-    ca: fs.readFileSync(Config.ssl_chain)
+    cert: fs.readFileSync(Config.ssl_cert)
 };
+if(Config.ssl_chain) {
+    options.ca = fs.readFileSync(Config.ssl_chain);
+}
 
 http.createServer(app).listen(3001, ()=>{console.log("Listening http on port 3001");});
 const atlasmakerServer = require('./controller/atlasmakerServer/atlasmakerServer.js');
@@ -240,10 +244,14 @@ global.tokenAuthentication = function (req, res, next) {
     } else if(typeof req.body.token !== "undefined") {
         token = req.body.token;
     }
+
     if (typeof token === "undefined") {
         tracer.log('>> No token');
         return next();
+    } else {
+        console.log('>> Token prrovided. Checking if good');
     }
+
     req.db.get('log').findOne({token})
     .then( (obj) => {
         if (obj) {
