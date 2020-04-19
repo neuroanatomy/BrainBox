@@ -62,7 +62,7 @@ function selectTab(tab) {
 function queryFiles() {
     $.getJSON(`/user/json/${nickname}/files`, {start:cursorFiles, length:100})
     .then(function(res) {
-        if(res.success) {
+        if(res.success && res.list.length > 0) {
             appendFiles(res.list);
             cursorFiles += 100;
             queryFiles();
@@ -89,7 +89,7 @@ function appendFiles(list) {
 function queryAtlas(list) {
     $.getJSON(`/user/json/${nickname}/atlas`, {start:userInfo.atlasFiles.length, length:100})
     .then(function(res) {
-        if(res.success) {            
+        if(res.success && res.list.length > 0) {            
             appendAtlas(res.list);
             cursorAtlas += 100;
             queryAtlas();
@@ -120,7 +120,7 @@ function appendAtlas(list) {
 function queryProjects() {
     $.getJSON(`/user/json/${nickname}/projects`, {start:userInfo.projects.length, length:100})
     .then(function(res) {
-        if(res.success) {
+        if(res.success & res.list.length > 0) {
             appendProjects(res.list);
             cursorProjects += 100;
             queryProjects();
