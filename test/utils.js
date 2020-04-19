@@ -8,21 +8,21 @@ const pixelmatch = require('pixelmatch');
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
-const localBertURL = "https://127.0.0.1:3001/test_data/bert_brain.nii.gz";
+const localBertURL = "http://127.0.0.1:3001/test_data/bert_brain.nii.gz";
 const cheetahURL = "https://zenodo.org/record/44846/files/MRI.nii.gz?download=1";
-const serverURL = "https://localhost:3001";
+const serverURL = "http://localhost:3001";
 const testToken = "qwertyuiopasdfghjklzxcvbnm";
 const testTokenDuration = 2 * (1000 * 3600); // 2h
-const longTimeout = 30 * 1000; // 30 sec
-const mediumTimeout = 10 * 1000; // 10 sec
-const shortTimeout = 5 * 1000; // 5 sec
+const longTimeout = 10 * 1000; // 30 sec
+const mediumTimeout = 5 * 1000; // 10 sec
+const shortTimeout = 3 * 1000; // 5 sec
 
 const userFoo = {
     name: "Founibald Barr",
     nickname: "foo",
     url: "https://foo.bar",
     brainboxURL: "/user/foo",
-    avatarURL: "https://127.0.0.1:3001/test_data/foo.png",
+    avatarURL: "http://127.0.0.1:3001/test_data/foo.png",
     joined: (new Date()).toJSON()
 };
 const userBar = {
@@ -30,7 +30,7 @@ const userBar = {
     nickname: "bar",
     url: "https://bar.foo",
     brainboxURL: "/user/foo",
-    avatarURL: "https://127.0.0.1:3001/test_data/bar.png",
+    avatarURL: "http://127.0.0.1:3001/test_data/bar.png",
     joined: (new Date()).toJSON()
 }
 const userFooB = {
@@ -38,7 +38,7 @@ const userFooB = {
     username: "foo",
     url: "https://foo.bar",
     brainboxURL: "/user/foo",
-    avatarURL: "https://127.0.0.1:3001/test_data/foo.png",
+    avatarURL: "http://127.0.0.1:3001/test_data/foo.png",
     joined: (new Date()).toJSON()
 };
 const userBarB = {
@@ -46,7 +46,7 @@ const userBarB = {
     username: "bar",
     url: "https://bar.foo",
     brainboxURL: "/user/foo",
-    avatarURL: "https://127.0.0.1:3001/test_data/bar.png",
+    avatarURL: "http://127.0.0.1:3001/test_data/bar.png",
     joined: (new Date()).toJSON()
 }
 const projectTest = {
@@ -72,6 +72,7 @@ const projectTest = {
     },
     files: {
         list: [
+            "http://127.0.0.1:3001/test_data/bert_brain.nii.gz",
             "https://zenodo.org/record/44855/files/MRI-n4.nii.gz",
             "http://files.figshare.com/2284784/MRI_n4.nii.gz",
             "https://dl.dropbox.com/s/cny5b3so267bv94/p32-f18-uchar.nii.gz",
@@ -128,11 +129,12 @@ async function insertTestTokenForUser(nickname) {
         expiryDate: new Date(now.getTime() + testTokenDuration),
         username: nickname
     };
-    return db.get("log").insert(obj);
+    const res = await db.get("log").insert(obj);
+    return res;
 }
 
 async function removeTestTokenForUser(nickname) {
-    return db.get("log").remove({token: testToken + nickname});
+    await db.get("log").remove({token: testToken + nickname});
 }
 
 function delay(delayTimeout) {
@@ -143,7 +145,8 @@ function delay(delayTimeout) {
 
 async function removeMRI({dirPath, srcURL}) {
   rimraf.sync(dirPath, {}, (err) => console.log);
-  return await db.get('mri').remove({source: srcURL});
+  const res = await db.get('mri').remove({source: srcURL});
+  return res;
 }
 
 function compareImages(pathImg1, pathImg2) {
