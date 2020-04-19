@@ -1,4 +1,6 @@
-window.max_filter = () => {
+window.max_filter = (cmd) => {
+    if(cmd === "help") { return "Replaces the label of each voxel by the most common neighbour"; }
+
     const me = AtlasMakerWidget;
     const {data,dim} = me.atlas;
 
@@ -11,7 +13,7 @@ window.max_filter = () => {
         }
     }
 
-    console.time('maxFilter');
+    console.time('max_filter');
     const voxels = [];
     const f = [];
     const d1d0 = dim[1]*dim[0];
@@ -38,7 +40,7 @@ window.max_filter = () => {
             }
         }
     }
-    console.timeEnd('maxFilter');
+    console.timeEnd('max_filter');
 
     me.paintvol(voxels);
     me.sendAtlasDataMessage(data);
