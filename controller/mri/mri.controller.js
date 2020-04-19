@@ -380,8 +380,8 @@ const apiMriPost = async function (req, res) {
                         console.log("downloadMRI obj:", obj);
                         if (typeof obj.error === "undefined") {
                             console.log('Download succeeded. Insert in DB, remove from queue');
+                            obj.success = true;
                             req.db.get('mri').insert(obj);
-                            // obj.success = true;
                             // downloadQueue[myurl] = obj;
                             delete downloadQueue[myurl];
                         } else {
