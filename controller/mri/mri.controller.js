@@ -322,7 +322,7 @@ const apiMriPost = async function (req, res) {
     //     return res.status(403).send({error: "Provide authentication"}).end();
     // }
 
-    req.db.get('mri').findOne({source: myurl, backup: {$exists: 0}}, {_id: 0})
+    req.db.get('mri').findOne({source: myurl, backup: {$exists: 0}, success: {$exists: 1}}, {_id: 0})
         .then((json) => {
             // Determine whether we need to download the data from the source
             let doDownload = false;
