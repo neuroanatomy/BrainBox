@@ -114,7 +114,7 @@ export var AtlasMakerIO = {
      * @function encodeNifti
      * @returns {object} Nifti structure
      */
-    encodeNifti: function encodeNifti() {
+    encodeNifti: function () {
         var me = AtlasMakerWidget;
         var sizeof_hdr = 348;
         var datatype = 2; // datatype for 8 bits (DT_UCHAR8 in nifti or UCHAR in analyze)
@@ -191,7 +191,7 @@ export var AtlasMakerIO = {
      * @function saveNifti
      * @returns {void}
      */
-    saveNifti: function saveNifti() {
+    saveNifti: function () {
         var me = AtlasMakerWidget;
         var niigz = me.encodeNifti();
         var niigzBlob = new Blob([niigz]);
@@ -200,7 +200,7 @@ export var AtlasMakerIO = {
         $("a#download_atlas").attr("download", me.User.atlasFilename);
     },
 
-    swapInt16: function swapInt16(arr) {
+    swapInt16: function (arr) {
         var i;
         const dv = new DataView(arr.buffer);
         for(i = 0; i<arr.length; i++) {
@@ -210,7 +210,7 @@ export var AtlasMakerIO = {
         return arr;
     },
 
-    swapUint16: function swapUint16(arr) {
+    swapUint16: function (arr) {
         var i;
         const dv = new DataView(arr.buffer);
         for(i = 0; i<arr.length; i++) {
@@ -220,7 +220,7 @@ export var AtlasMakerIO = {
         return arr;
     },
 
-    swapInt32: function swapInt32(arr) {
+    swapInt32: function (arr) {
         var i;
         const dv = new DataView(arr.buffer);
         for(i = 0; i<arr.length; i++) {
@@ -230,7 +230,7 @@ export var AtlasMakerIO = {
         return arr;
     },
 
-    swapFloat32: function swapFloat32(arr) {
+    swapFloat32: function (arr) {
         var i;
         const dv = new DataView(arr.buffer);
         for(i = 0; i<arr.length; i++) {
@@ -245,7 +245,7 @@ export var AtlasMakerIO = {
      * @param {object} nii Nifti structure
      * @returns {object} mri structure
      */
-    loadNifti: function loadNifti(nii) {
+    loadNifti: function (nii) {
         var me = AtlasMakerWidget;
         var endianness = 'le';
         me.NiiHdrLE._setBuff(toBuffer(nii));
@@ -310,7 +310,7 @@ export var AtlasMakerIO = {
      * @function computeS2VTransformation
      * @returns {void}
      */
-    computeS2VTransformation: function computeS2VTransformation() {
+    computeS2VTransformation: function () {
         var me = AtlasMakerWidget;
 
         /**
@@ -360,7 +360,7 @@ export var AtlasMakerIO = {
      * @desc check the S2V transformation to see if it looks correct. If it does not, reset it
      * @returns {void}
      */
-    testS2VTransformation: function testS2VTransformation() {
+    testS2VTransformation: function () {
         var me = AtlasMakerWidget;
         var mri = me.User; // this line is different from server
         var doReset = false;
@@ -400,7 +400,7 @@ export var AtlasMakerIO = {
      * @param {object} mri mri structure
      * @returns {number} Index of the voxel corresponding to the coordinate s
      */
-    S2I: function S2I(s, mri) {
+    S2I: function (s, mri) {
         const {s2v} = mri;
         var v = [s2v.X + s2v.dx*s[s2v.x], s2v.Y + s2v.dy*s[s2v.y], s2v.Z + s2v.dz*s[s2v.z]];
         const index = v[0] + v[1]*mri.dim[0] + v[2]*mri.dim[0]*mri.dim[1];
@@ -414,7 +414,7 @@ export var AtlasMakerIO = {
      * @param {array} v Vector 1x3
      * @returns {array} Vector 3x1
      */
-    mulMatVec: function mulMatVec(m, v) {
+    mulMatVec: function (m, v) {
 
         return [
             m[0][0]*v[0] + m[0][1]*v[1] + m[0][2]*v[2],
@@ -428,7 +428,7 @@ export var AtlasMakerIO = {
      * @param {array} m Matrix 3x3
      * @returns {array} Matrix 3x3
      */
-    invMat: function invMat(m) {
+    invMat: function (m) {
         var det;
         var w = [[], [], []];
 
@@ -455,7 +455,7 @@ export var AtlasMakerIO = {
      * @param {array} b Vector 1x3
      * @returns {array} Vector 1x3
      */
-    subVecVec: function subVecVec(a, b) {
+    subVecVec: function (a, b) {
         return [a[0]-b[0], a[1]-b[1], a[2]-b[2]];
     },
 
@@ -465,7 +465,7 @@ export var AtlasMakerIO = {
      * @param {array} b Vector 1x3
      * @returns {array} Vector 1x3
      */
-    addVecVec: function addVecVec(a, b) {
+    addVecVec: function (a, b) {
         return [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
     }
 

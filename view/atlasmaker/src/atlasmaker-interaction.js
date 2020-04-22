@@ -50,7 +50,7 @@ export var AtlasMakerInteraction = {
      * @param {string} display Position where the toolbar is displayed
      * @returns {void}
      */
-    changeToolbarDisplay: function changeToolbarDisplay(display) {
+    changeToolbarDisplay: function (display) {
         switch(display) {
             case "minimize":
                 $("#tools-maximized").hide();
@@ -74,7 +74,7 @@ export var AtlasMakerInteraction = {
      * @param {string} theView The view plane to use.
      * @returns {void}
      */
-    changeView: function changeView(theView) {
+    changeView: function (theView) {
         var me = AtlasMakerWidget;
         switch(theView) {
             case 'sag':
@@ -101,7 +101,7 @@ export var AtlasMakerInteraction = {
      * @param { string } theTool Name of the tool: Paint, Erase, Measure, Adjust
      * @returns {void}
      */
-    changeTool: function changeTool(theTool) {
+    changeTool: function (theTool) {
         var me = AtlasMakerWidget;
         if(theTool.toLowerCase() === me.User.tool) {
             return;
@@ -139,7 +139,7 @@ export var AtlasMakerInteraction = {
      * @param {number} theSize Size of the pen
      * @returns {void}
      */
-    changePenSize: function changePenSize(theSize) {
+    changePenSize: function (theSize) {
         var me = AtlasMakerWidget;
         me.User.penSize = parseInt(theSize);
         me.sendUserDataMessage(JSON.stringify({ 'penSize':me.User.penSize }));
@@ -150,7 +150,7 @@ export var AtlasMakerInteraction = {
      * @param {number} index Index of the color to use for the pen
      * @returns {void}
      */
-    changePenColor: function changePenColor(index) {
+    changePenColor: function (index) {
         var me = AtlasMakerWidget;
         var c = me.ontology.labels[index].color;
         $("#color").css({ backgroundColor:'rgb(' + c[0] + ', ' + c[1] + ', ' + c[2] + ')' });
@@ -163,7 +163,7 @@ export var AtlasMakerInteraction = {
      * @param {number} x New slice number
      * @returns {void}
      */
-    changeSlice: function changeSlice(x) {
+    changeSlice: function (x) {
         var me = AtlasMakerWidget;
         me.User.slice = x;
         me.sendUserDataMessage(JSON.stringify({ 'slice':me.User.slice }));
@@ -174,7 +174,7 @@ export var AtlasMakerInteraction = {
      * @function prevSlice
      * @returns {void}
      */
-    prevSlice: function prevSlice() {
+    prevSlice: function () {
         var me = AtlasMakerWidget;
         var x = $("#slice").data("val")-1;
         if(x<0) { x = 0; }
@@ -190,7 +190,7 @@ export var AtlasMakerInteraction = {
      * @function nextSlice
      * @returns {void}
      */
-    nextSlice: function nextSlice() {
+    nextSlice: function () {
         var me = AtlasMakerWidget;
         var max = $("#slice").data("max");
         var x = $("#slice").data("val") + 1;
@@ -208,7 +208,7 @@ export var AtlasMakerInteraction = {
      * @param {bool} doFill Whether to fill or not
      * @returns {void}
      */
-    toggleFill: function toggleFill(doFill) {
+    toggleFill: function (doFill) {
         var me = AtlasMakerWidget;
         me.User.doFill = doFill;
         me.sendUserDataMessage(JSON.stringify({ 'doFill':me.User.doFill }));
@@ -218,7 +218,7 @@ export var AtlasMakerInteraction = {
      * @function toggleTextInput
      * @returns {void}
      */
-    toggleTextInput: function toggleTextInput(mode) {
+    toggleTextInput: function (mode) {
         switch(mode) {
             case "Chat":
                 $("#textInputBlock").show();
@@ -241,7 +241,7 @@ export var AtlasMakerInteraction = {
      * @function toggleFullscreen
      * @returns {void}
      */
-    toggleFullscreen: function toggleFullscreen() {
+    toggleFullscreen: function () {
         var me = AtlasMakerWidget;
         if(me.fullscreen === false) {
             // Enter fullscreen
@@ -283,7 +283,7 @@ export var AtlasMakerInteraction = {
      * @function render3D
      * @returns {void}
      */
-    render3D: function render3D() {
+    render3D: function () {
         var me = AtlasMakerWidget;
         // puts a fresh version of the segmentation in localStorage
         localStorage.brainbox = URL.createObjectURL(new Blob([me.encodeNifti()]));
@@ -304,7 +304,7 @@ export var AtlasMakerInteraction = {
      * @function link
      * @returns {void}
      */
-    link: function link() {
+    link: function () {
         window.prompt("Copy to clipboard:", location.href + "&view = " + AtlasMakerWidget.User.view + "&slice = " + AtlasMakerWidget.User.slice);
     },
 
@@ -312,7 +312,7 @@ export var AtlasMakerInteraction = {
      * @function upload
      * @returns {void}
      */
-    upload: function upload() {
+    upload: function () {
         var me = AtlasMakerWidget;
         var inp = $("<input>");
         inp.hide();
@@ -360,7 +360,7 @@ export var AtlasMakerInteraction = {
      * @function download
      * @returns {void}
      */
-    download: function download() {
+    download: function () {
         var me = AtlasMakerWidget;
         var a = document.createElement('a');
         var niigz = me.encodeNifti();
@@ -375,7 +375,7 @@ export var AtlasMakerInteraction = {
      * @function color
      * @returns {void}
      */
-    color: function color() {
+    color: function () {
         var me = AtlasMakerWidget;
         $("#labelset").appendTo(me.container);
         $("#labelset").show();
@@ -411,7 +411,7 @@ export var AtlasMakerInteraction = {
      * @param {number} val Numerical value used for painting with the selected label
      * @returns {array} Red, green and blue colors
      */
-    ontologyValueToColor: function ontologyValueToColor(val) {
+    ontologyValueToColor: function (val) {
         var me = AtlasMakerWidget;
         var c = [0, 0, 0];
         var i;
@@ -432,7 +432,7 @@ export var AtlasMakerInteraction = {
      * @param {object} usr User structure for the current user
      * @returns {number} The value at the given location
      */
-    eyedrop : function eyedrop( x, y, usr) {
+    eyedrop : function ( x, y, usr) {
         var me = AtlasMakerWidget;
         var z = usr.slice;
         var i = me.slice2index( x, y, z, usr.view );
@@ -444,7 +444,7 @@ export var AtlasMakerInteraction = {
      * @function togglePreciseCursor
      * @returns {void}
      */
-    togglePreciseCursor: function togglePreciseCursor() {
+    togglePreciseCursor: function () {
         var me = AtlasMakerWidget;
         me.flagUsePreciseCursor = !me.flagUsePreciseCursor;
         me.initCursor();
@@ -454,7 +454,7 @@ export var AtlasMakerInteraction = {
      * @function initCursor
      * @returns {void}
      */
-    initCursor: function initCursor() {
+    initCursor: function () {
         var me = AtlasMakerWidget;
         var W = parseFloat($('#atlasmaker canvas').css('width'));
         var H = parseFloat($('#atlasmaker canvas').css('height'));
@@ -501,7 +501,7 @@ export var AtlasMakerInteraction = {
      * @function updateCursor
      * @returns {void}
      */
-    updateCursor: function updateCursor() {
+    updateCursor: function () {
         var me = AtlasMakerWidget;
         $("#finger").removeClass("move draw configure");
         switch(me.Crsr.state) {
@@ -516,7 +516,7 @@ export var AtlasMakerInteraction = {
      * @param {object} e Event object
      * @returns {void}
      */
-    mousedown: function mousedown(e) {
+    mousedown: function (e) {
         var me = AtlasMakerWidget;
         e.preventDefault();
 
@@ -537,7 +537,7 @@ export var AtlasMakerInteraction = {
      * @param {object} e Event object
      * @returns {void}
      */
-    mousemove: function mousemove(e) {
+    mousemove: function (e) {
         var me = AtlasMakerWidget;
         e.preventDefault();
         var W = parseFloat($('#atlasmaker canvas').css('width'));
@@ -562,7 +562,7 @@ export var AtlasMakerInteraction = {
      * @param {object} e Event object
      * @returns {void}
      */
-    mouseup: function mouseup(e) {
+    mouseup: function (e) {
         var me = AtlasMakerWidget;
         me.up(e);
     },
@@ -572,7 +572,7 @@ export var AtlasMakerInteraction = {
      * @param {object} e Event object
      * @returns {void}
      */
-    touchstart: function touchstart(e) {
+    touchstart: function (e) {
         var me = AtlasMakerWidget;
         e.preventDefault();
 
@@ -619,7 +619,7 @@ export var AtlasMakerInteraction = {
      * @param {object} e Event object
      * @returns {void}
      */
-    touchmove: function touchmove(e) {
+    touchmove: function (e) {
         var me = AtlasMakerWidget;
         if(me.Crsr.touchStarted === false && me.debug) {
             console.log("WARNING: touch can move without having started");
@@ -669,7 +669,7 @@ export var AtlasMakerInteraction = {
      * @param {object} e Event object
      * @returns {void}
      */
-    touchend: function touchend(e) {
+    touchend: function (e) {
         var me = AtlasMakerWidget;
         e.preventDefault();
 
@@ -691,7 +691,7 @@ export var AtlasMakerInteraction = {
      * @param { integer } y Y coordinate in slice space
      * @returns {void}
      */
-    down: function down(x, y) {
+    down: function (x, y) {
         var me = AtlasMakerWidget;
 
         switch(me.User.tool) {
@@ -764,7 +764,7 @@ export var AtlasMakerInteraction = {
      * @param {number} y Y coordinate in slice space
      * @returns {void}
      */
-    move: function move(x, y) {
+    move: function (x, y) {
         var me = AtlasMakerWidget;
         if(!me.User.mouseIsDown) { return; }
 
@@ -792,7 +792,7 @@ export var AtlasMakerInteraction = {
      * @param {object} e Event object
      * @returns {void}
      */
-    up: function up(e) {
+    up: function (e) {
         var me = AtlasMakerWidget;
 
         // Send mouse up (touch ended) message
@@ -853,7 +853,7 @@ export var AtlasMakerInteraction = {
      * @param {object} e Event object
      * @returns {void}
      */
-    keyDown: function keyDown(e) {
+    keyDown: function (e) {
         var me = AtlasMakerWidget;
         // console.log("key:", e.which);
 
@@ -895,7 +895,7 @@ export var AtlasMakerInteraction = {
      * @param {object} e Event object
      * @returns {void}
      */
-    onkey: function onkey(e) {
+    onkey: function (e) {
         var me = AtlasMakerWidget;
         if (e.keyCode === 13) {
             me.sendChatMessage();

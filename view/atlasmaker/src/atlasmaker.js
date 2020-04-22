@@ -112,7 +112,7 @@ export var AtlasMakerWidget = {
      * @function quit
      * @return {void}
      */
-    quit: function quit() {
+    quit: function () {
         var me=AtlasMakerWidget;
         me.log("", "Goodbye!");
         me.socket.close();
@@ -127,7 +127,7 @@ export var AtlasMakerWidget = {
      * @param {object} elem DOM element
      * @return {object} Returns a promise
      */
-    initAtlasMaker: function initAtlasMaker(elem) {
+    initAtlasMaker: function (elem) {
         var me=AtlasMakerWidget;
         $.extend(AtlasMakerWidget, AtlasMakerDraw);
         $.extend(AtlasMakerWidget, AtlasMakerInteraction);
@@ -283,7 +283,7 @@ export var AtlasMakerWidget = {
      * @param {number} index Index of the atlas to use
      * @return {object} A promise
      */
-    configureAtlasMaker: function configureAtlasMaker(info, index) {
+    configureAtlasMaker: function (info, index) {
         var me=AtlasMakerWidget;
         var pr = new Promise(function(resolve, reject) {
             me.configureMRI(info, index)
@@ -337,7 +337,7 @@ export var AtlasMakerWidget = {
      * @param {object} json A json object with ontology information
      * @return {void}
      */
-    configureOntology: function configureOntology(json) {
+    configureOntology: function (json) {
         var me=AtlasMakerWidget;
         me.ontology=json;
         me.ontology.valueToIndex=[];
@@ -354,7 +354,7 @@ export var AtlasMakerWidget = {
      *        If undefined, the script will be loaded.
      * @returns {object} A promise
      */
-    loadScript: function loadScript(path, testScriptPresent) {
+    loadScript: function (path, testScriptPresent) {
         var def = new $.Deferred();
     
         if(testScriptPresent && testScriptPresent()) {
@@ -384,7 +384,7 @@ export var AtlasMakerWidget = {
      * @param {string} source The MRI source, a URL
      * @return {object} A promise
      */
-    requestMRIInfo: function requestMRIInfo(source) {
+    requestMRIInfo: function (source) {
         var me=AtlasMakerWidget;
         const url = me._removeVariablesFromURL(source);
         $("#loadingIndicator p").text("Loading... ");
@@ -422,7 +422,7 @@ export var AtlasMakerWidget = {
      * @param {number} index Index of the atlas to use
      * @return {object} A promise
      */
-    configureMRI: function configureMRI(info, index) {
+    configureMRI: function (info, index) {
         var me=AtlasMakerWidget;
 
         return new Promise(function(resolve, reject) {
