@@ -34,3 +34,9 @@ whitelist.json
 cfg.json
 cert.pem
 key.pem
+public/_img-all/
+public/js/
+view/atlasmaker/_resources/
+view/atlasmaker/src/html/_img-all/
+view/atlasmaker/src/tools/and_label.js
+view/brainbox/_resources/
