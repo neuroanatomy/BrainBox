@@ -59,6 +59,7 @@ export var AtlasMakerWidget = {
     alphaLevel: 0.5,
     annotationLength:0,
     measureLength: null,
+    clickTools: [],
     User: { view:null,
                        tool:'show',
                       slice:null,
@@ -117,6 +118,26 @@ export var AtlasMakerWidget = {
         me.log("", "Goodbye!");
         me.socket.close();
         me.socket = null;
+    },
+
+    _registerClickTool: function(tool) {
+        const me=AtlasMakerWidget;
+        const {name, func} = tool;
+        me.clickTools[name] = func;
+    },
+    _registerClickTools: function () {
+        const me = AtlasMakerWidget;
+        const arr = [
+            {name: 'show', func: me._showToolHandler},
+            {name: 'paint', func: me._paintToolHandler},
+            {name: 'erase', func: me._eraseToolHandler},
+            {name: 'measure', func: me._measureToolHandler},
+            {name: 'adjust', func: me._adjustToolHandler},
+            {name: 'eyedrop', func: me._eyedropToolHandler}
+        ];
+        for(const tool of arr) {
+            me._registerClickTool(tool);
+        }
     },
 
     //====================================================================================
@@ -262,6 +283,9 @@ export var AtlasMakerWidget = {
 
         // load tools
         me.loadTools();
+
+        // register click tools
+        me._registerClickTools();
 
         const pr = new Promise(function(resolve, reject) {
             me.initSocketConnection()
