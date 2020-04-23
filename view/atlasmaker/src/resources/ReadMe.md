@@ -19,8 +19,8 @@ is to make the chat box itself a flex container, and then make the div inside it
 In the chat box this pattern is used several times, like this:
 
 ```
-<div id='chatBlock' style='flex:1 1 auto;display:flex'>
-    <div id='chatBlockContent' style='flex:1;display:flex;flex-direction:column'>
+<div id='textInputBlock' style='flex:1 1 auto;display:flex'>
+    <div id='textInputBlockContent' style='flex:1;display:flex;flex-direction:column'>
         <div style='flex:0 0 28px'></div>
         <div style='flex:1 1 auto;display:flex'>
             <div id='log' class='a' style='flex:1'></div>

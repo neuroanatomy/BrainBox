@@ -113,7 +113,7 @@
     display: block;
 }
 
-#log {
+#logChat {
     -webkit-user-select:all;
     -moz-user-select:all;
     user-select:all;
@@ -174,7 +174,7 @@
 
 /* chat log
 ----------------------- */
-#log {
+#logChat {
     text-align:left;
     overflow: auto;
     background:#333;

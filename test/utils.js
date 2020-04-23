@@ -8,21 +8,21 @@ const pixelmatch = require('pixelmatch');
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
-const localBertURL = "https://127.0.0.1:3001/test_data/bert_brain.nii.gz";
+const localBertURL = "http://127.0.0.1:3001/test_data/bert_brain.nii.gz";
 const cheetahURL = "https://zenodo.org/record/44846/files/MRI.nii.gz?download=1";
-const serverURL = "https://localhost:3001";
+const serverURL = "http://localhost:3001";
 const testToken = "qwertyuiopasdfghjklzxcvbnm";
 const testTokenDuration = 2 * (1000 * 3600); // 2h
-const longTimeout = 30 * 1000; // 30 sec
-const mediumTimeout = 10 * 1000; // 10 sec
-const shortTimeout = 5 * 1000; // 5 sec
+const longTimeout = 10 * 1000; // 30 sec
+const mediumTimeout = 5 * 1000; // 10 sec
+const shortTimeout = 3 * 1000; // 5 sec
 
 const userFoo = {
     name: "Founibald Barr",
     nickname: "foo",
     url: "https://foo.bar",
     brainboxURL: "/user/foo",
-    avatarURL: "https://foo.bar/avatar.jpg",
+    avatarURL: "http://127.0.0.1:3001/test_data/foo.png",
     joined: (new Date()).toJSON()
 };
 const userBar = {
@@ -30,7 +30,7 @@ const userBar = {
     nickname: "bar",
     url: "https://bar.foo",
     brainboxURL: "/user/foo",
-    avatarURL: "https://bar.foo/avatar.jpg",
+    avatarURL: "http://127.0.0.1:3001/test_data/bar.png",
     joined: (new Date()).toJSON()
 }
 const userFooB = {
@@ -38,7 +38,7 @@ const userFooB = {
     username: "foo",
     url: "https://foo.bar",
     brainboxURL: "/user/foo",
-    avatarURL: "https://foo.bar/avatar.jpg",
+    avatarURL: "http://127.0.0.1:3001/test_data/foo.png",
     joined: (new Date()).toJSON()
 };
 const userBarB = {
@@ -46,9 +46,53 @@ const userBarB = {
     username: "bar",
     url: "https://bar.foo",
     brainboxURL: "/user/foo",
-    avatarURL: "https://bar.foo/avatar.jpg",
+    avatarURL: "http://127.0.0.1:3001/test_data/bar.png",
     joined: (new Date()).toJSON()
 }
+const projectTest = {
+    name: "Test Project",
+    shortname: "testproject",
+    url: "https://testproject.org",
+    brainboxURL: "/project/testproject",
+    created: (new Date()).toJSON(),
+    owner: "foo",
+    collaborators: {
+        list: [
+            {
+                userID: "anyone",
+                access: {
+                    collaborators: "view",
+                    annotations: "edit",
+                    files: "view"
+                },
+                username: "anyone",
+                name: "Any BrainBox User"
+            }
+        ]
+    },
+    files: {
+        list: [
+            "http://127.0.0.1:3001/test_data/bert_brain.nii.gz",
+            "https://zenodo.org/record/44855/files/MRI-n4.nii.gz",
+            "http://files.figshare.com/2284784/MRI_n4.nii.gz",
+            "https://dl.dropbox.com/s/cny5b3so267bv94/p32-f18-uchar.nii.gz",
+            "https://s3.amazonaws.com/fcp-indi/data/Projects/ABIDE_Initiative/Outputs/freesurfer/5.1/Caltech_0051456/mri/T1.mgz"
+        ]
+    },
+    annotations: {
+        list: [
+            {
+                type: "volume",
+                values: "cerebellum.json",
+                display: "true",
+                name: "Cerebrum"
+            }
+        ]
+    },
+    description: "A test project used for checking that rendering is behaving as expected.",
+    modified: (new Date()).toJSON(),
+    modifiedBy: "foo"
+};
 
 async function currentDirectory() {
     console.log("Current directory:", __dirname);
@@ -70,19 +114,27 @@ async function removeUser(nickname) {
     return db.get('user').remove({nickname});
 }
 
+async function insertProject(project) {
+    return db.get('project').insert(project);
+}
+
+async function removeProject(shortname) {
+    return db.get('project').remove({shortname});
+}
 async function insertTestTokenForUser(nickname) {
     const now = new Date();
     const obj = {
-        token: testToken,
+        token: testToken + nickname,
         now,
         expiryDate: new Date(now.getTime() + testTokenDuration),
         username: nickname
     };
-    return db.get("log").insert(obj);
+    const res = await db.get("log").insert(obj);
+    return res;
 }
 
-async function removeTestToken() {
-    return db.get("log").remove({token: testToken});
+async function removeTestTokenForUser(nickname) {
+    await db.get("log").remove({token: testToken + nickname});
 }
 
 function delay(delayTimeout) {
@@ -93,7 +145,8 @@ function delay(delayTimeout) {
 
 async function removeMRI({dirPath, srcURL}) {
   rimraf.sync(dirPath, {}, (err) => console.log);
-  return await db.get('mri').remove({source: srcURL});
+  const res = await db.get('mri').remove({source: srcURL});
+  return res;
 }
 
 function compareImages(pathImg1, pathImg2) {
@@ -144,14 +197,17 @@ module.exports = {
     userBar,
     userFooB,
     userBarB,
+    projectTest,
     testToken,
     removeMRI,
     currentDirectory,
     insertTestTokenForUser,
-    removeTestToken,
+    removeTestTokenForUser,
     queryUser,
     insertUser,
     removeUser,
+    insertProject,
+    removeProject,
     delay,
     compareImages,
     comparePageScreenshots,

@@ -64,7 +64,7 @@ var other_validations = function(req, res, next) {
                         var err = new Array();
                         if (req.files.length == 0 || !req.files) {err.push({error:"there is no File"});}
                         if (!json) {err.push({error:"Unkown URL"});}
-                        console.log("err 63:",err);
+                        console.log("err", err);
                         return res.status(403).json(err).end();
                     }
                 })

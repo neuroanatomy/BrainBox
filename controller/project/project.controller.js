@@ -305,7 +305,7 @@ var api_projectAll = function(req, res) {
  */
 var api_projectFiles = function(req, res) {
     const projShortname = req.params.projectName;
-    const {start, length, names: namesFlag} = req.query;
+    let {start, length, names: namesFlag} = req.query;
     console.log("projShortname:", projShortname, "start:", start, "length:", length, "namesFlag:", namesFlag);
 
     if(typeof start === "undefined") {
@@ -318,6 +318,10 @@ var api_projectFiles = function(req, res) {
 
         return;
     }
+
+    start = parseInt(start);
+    length = parseInt(length);
+    namesFlag = (namesFlag === "true");
 
     dataSlices.getProjectFilesSlice(req, projShortname, start, length, namesFlag)
     .then(function(list) {

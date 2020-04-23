@@ -1,5 +1,5 @@
 {
-    "hostname": "https://localhost:3001",
+    "hostname": "http://localhost:3001",
     "wshostname": "localhost:8080",
     "secure": true,
     "ssl_key": "./key.pem",

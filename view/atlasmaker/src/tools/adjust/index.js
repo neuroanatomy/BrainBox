@@ -49,7 +49,7 @@ var observer = new MutationObserver(function(mutations) {
         if (mutation.attributeName === 'class') {
             console.log('mutation',mutation);
             var attributeValue = $(mutation.target).prop(mutation.attributeName);
-            if(attributeValue=='a')
+            if(attributeValue=='a sub')
                 $('#adjust').remove();
                 observer.disconnect();
                 // delete observer;

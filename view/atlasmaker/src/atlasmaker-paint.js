@@ -10,7 +10,7 @@ export var AtlasMakerPaint = {
     //====================================================================================
     // Paint functions
     //====================================================================================
-    showxy: function showxy(u, c, x, y, usr) {
+    showxy: function (u, c, x, y, usr) {
         const me=AtlasMakerWidget;
         // u: user number
         // c: command
@@ -58,7 +58,7 @@ export var AtlasMakerPaint = {
      * @param {Object} usr User object for the current user. Contains the painting value, view and slice
      * @returns {void}
      */
-    paintxy: function paintxy(u, c, x, y, usr) {
+    paintxy: function (u, c, x, y, usr) {
         const me=AtlasMakerWidget;
         // u: user number
         // c: command
@@ -131,7 +131,7 @@ export var AtlasMakerPaint = {
      * @param {Array} voxels Array where each object contains a voxel index and a voxel value. The voxel index goes from 0 to dim[0]*dim[1]*dim[2]-1
      * @returns {void}
      */
-    paintvol: function paintvol(voxels) {
+    paintvol: function (voxels) {
         const me=AtlasMakerWidget;
         let i;
         for(i=0; i<voxels.length; i++) {
@@ -153,7 +153,7 @@ export var AtlasMakerPaint = {
      * @param {string} myView The stereotaxic plane along which to fill: either 'cor', 'axi' or 'sag'
      * @returns {void}
      */
-    fill: function fill(x, y, z, val, myView) {
+    fill: function (x, y, z, val, myView) {
         const me = AtlasMakerWidget;
         const {atlas} = me;
 
@@ -196,7 +196,7 @@ export var AtlasMakerPaint = {
      * @param {object} usr User object
      * @returns {void}
      */
-    line: function line(x, y, val, usr) {
+    line: function (x, y, val, usr) {
         const me=AtlasMakerWidget;
         // Bresenham's line algorithm adapted from
         // http://stackoverflow.com/questions/4672279/bresenham-algorithm-in-javascript
@@ -260,7 +260,7 @@ export var AtlasMakerPaint = {
      * @param {string} myView String representing the view: 'sag', 'cor' or 'axi'
      * @returns {number} MRI volume voxel index
      */
-    slice2index: function slice2index(mx, my, mz, myView) {
+    slice2index: function (mx, my, mz, myView) {
         const me=AtlasMakerWidget;
         let x, y, z;
         switch(myView) {
@@ -283,7 +283,7 @@ export var AtlasMakerPaint = {
      * @param {string} myView String representing the view: 'sag', 'cor' or 'axi'
      * @returns {array} An array [x,y,z,i] where the first 3 values are the voxel coordinates and the 4th value is the voxel index (value from 0 to dim[0]*dim[1]*dim[2]-1)
      */
-    slice2xyzi: function slice2xyzi(mx, my, mz, myView) {
+    slice2xyzi: function (mx, my, mz, myView) {
         const me=AtlasMakerWidget;
         let x, y, z;
         switch(myView) {

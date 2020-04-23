@@ -12,7 +12,7 @@ export var AtlasMakerDraw = {
      * @function resizeWindow
      * @returns {void}
      */
-    resizeWindow: function resizeWindow() {
+    resizeWindow: function () {
         const me = AtlasMakerWidget;
         const wH = me.container.height();
         const wW = me.container.width();
@@ -30,7 +30,7 @@ export var AtlasMakerDraw = {
      * @function configureBrainImage
      * @returns {void}
      */
-    configureBrainImage: function configureBrainImage() {
+    configureBrainImage: function () {
         var me = AtlasMakerWidget;
         if(me.User.view === null) { me.User.view = "sag"; }
 
@@ -65,7 +65,7 @@ export var AtlasMakerDraw = {
      * @function configureAtlasImage
      * @returns {void}
      */
-    configureAtlasImage: function configureAtlasImage() {
+    configureAtlasImage: function () {
         var me = AtlasMakerWidget;
         // has to be run *after* configureBrainImage
         me.atlas_offcn.width = me.brain_W;
@@ -78,7 +78,7 @@ export var AtlasMakerDraw = {
      * @param {object} ctx Drawing context
      * @returns {void}
      */
-    nearestNeighbour: function nearestNeighbour(ctx) {
+    nearestNeighbour: function (ctx) {
         ctx.imageSmoothingEnabled = false;
         ctx.mozImageSmoothingEnabled = false;
     },
@@ -87,7 +87,7 @@ export var AtlasMakerDraw = {
      * @function computeSegmentedVolume
      * @returns {number} Volume in voxel units
      */
-    computeSegmentedVolume: function computeSegmentedVolume() {
+    computeSegmentedVolume: function () {
         var me = AtlasMakerWidget;
         let i;
         let sum = 0;
@@ -105,7 +105,7 @@ export var AtlasMakerDraw = {
      * @desc Overlays text and vectorial information on top of the annotation volume slice. Text information is added from the AtlasMakerWidget.info object. Vectorial information is displayed using svg format
      * @returns {void}
      */
-    displayInformation: function displayInformation() {
+    displayInformation: function () {
         var me = AtlasMakerWidget;
         var text = me.container.find("#text-layer");
         var vector = me.container.find("#vector-layer");
@@ -146,7 +146,7 @@ export var AtlasMakerDraw = {
      * @function drawImages
      * @returns {void}
      */
-    drawImages: function drawImages() {
+    drawImages: function () {
         var me = AtlasMakerWidget;
         if(me.brain_img.img
            && me.flagLoadingImg.view
@@ -171,7 +171,7 @@ export var AtlasMakerDraw = {
      * @param {number} slice The slice number
      * @returns {void}
      */
-    drawAtlasImage: function drawAtlasImage(view, slice) {
+    drawAtlasImage: function (view, slice) {
         var me = AtlasMakerWidget;
         if(!me.atlas) { return; }
         const {data} = me.atlas;

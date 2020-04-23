@@ -2,8 +2,8 @@ const puppeteer = require('puppeteer');
 
 // Options for headless browser
 const browserOpts = {
-  appUrl: 'https://localhost:3001',
-  lionUrl: 'https://localhost:3001/mri?url=https://zenodo.org/record/44855/files/MRI-n4.nii.gz',
+  appUrl: 'http://localhost:3001',
+  lionUrl: 'http://localhost:3001/mri?url=https://zenodo.org/record/44855/files/MRI-n4.nii.gz',
   args: ['--no-sandbox']
 };
 
@@ -22,10 +22,9 @@ class Browser {
    * @param {any} done Callback function from mocha
    * @memberof Browser
    */
-  init(done) {
-    puppeteer.launch(browserOpts).then(async (browser) => {
+  init() {
+    return puppeteer.launch(browserOpts).then(async (browser) => {
       this.setBrowser(browser);
-      done();
     });
   }
 

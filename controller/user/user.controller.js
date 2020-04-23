@@ -97,11 +97,25 @@ var apiUserAll = function(req, res) {
  */
 var apiUserFiles = function(req, res) {
     // @todo Check access rights for this route
-    var {userName} = req.params;
-    var start = parseInt(req.query.start);
-    var length = parseInt(req.query.length);
+    const {userName} = req.params;
+    let {start, length} = req.query;
 
     console.log("userName:", userName, "start:", start, "length:", length);
+
+    if(typeof start === "undefined") {
+        res.status(403).send({error: "Provide 'start'"});
+
+        return;
+    }
+    if(typeof length === "undefined") {
+        res.status(403).send({error: "Provide 'length'"});
+
+        return;
+    }
+
+    start = parseInt(start);
+    length = parseInt(length);
+
     dataSlices.getUserFilesSlice(req, userName, start, length)
     .then(function(result) {
         res.send(result);
@@ -121,10 +135,22 @@ var apiUserFiles = function(req, res) {
 var apiUserAtlas = function(req, res) {
     // @todo Check access rights for this route
     var {userName} = req.params;
-    var start = parseInt(req.query.start);
-    var length = parseInt(req.query.length);
+    let {start, length} = req.query;
 
     console.log("userName:", userName, "start:", start, "length:", length);
+    if(typeof start === "undefined") {
+        res.status(403).send({error: "Provide 'start'"});
+
+        return;
+    }
+    if(typeof length === "undefined") {
+        res.status(403).send({error: "Provide 'length'"});
+
+        return;
+    }
+    start = parseInt(start);
+    length = parseInt(length);
+
     dataSlices.getUserAtlasSlice(req, userName, start, length)
     .then(function(result) {
         res.send(result);
@@ -144,10 +170,22 @@ var apiUserAtlas = function(req, res) {
 var apiUserProjects = function(req, res) {
     // @todo Check access rights for this route
     var {userName} = req.params;
-    var start = parseInt(req.query.start);
-    var length = parseInt(req.query.length);
+    let {start, length} = req.query;
 
     console.log("userName:", userName, "start:", start, "length:", length);
+    if(typeof start === "undefined") {
+        res.status(403).send({error: "Provide 'start'"});
+
+        return;
+    }
+    if(typeof length === "undefined") {
+        res.status(403).send({error: "Provide 'length'"});
+
+        return;
+    }
+    start = parseInt(start);
+    length = parseInt(length);
+
     dataSlices.getUserProjectsSlice(req, userName, start, length)
     .then(function(result) {
         res.send(result);

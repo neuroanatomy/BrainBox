@@ -1,4 +1,4 @@
-<div id="tools-side" style="display:block">
+<div id="tools-side" style="display:block;height:100%">
     <div id="tools-minimized">
         <div>
             <img alt="menu" style="width:28px;position:absolute;top:10px;left:10px" src="./img/bars.svg" />
@@ -43,34 +43,37 @@
 
                 <div style="flex:1 0 250px;width:50px">
                     <div id="plane" style="display:flex" class="chose">
-                        <div style="flex:1"><div title="sag" class="a pressed">Sag</div></div>
-                        <div style="flex:1"><div title="cor" class="a">Cor</div></div>
-                        <div style="flex:1"><div title="axi" class="a">Axi</div></div>
+                        <div style="flex:1"><div title="sag" class="a sub pressed">Sag</div></div>
+                        <div style="flex:1"><div title="cor" class="a sub">Cor</div></div>
+                        <div style="flex:1"><div title="axi" class="a sub">Axi</div></div>
                     </div>
                     <div style="display:flex">
                         <div style="flex:1"><div id="fullscreen" title="Full screen" class="a toggle"><img class="icon" alt="fullscreen" src="./img/fullscreen.svg" /></div></div>
                         <div style="flex:1"><div id="3drender" title="3D render" class="a push"><img class="icon" alt="3d render" src="./img/3drender.svg" /></div></div>
+                        <div id="text" style="flex:2;display:flex" class="chose">
+                            <div style="flex:1"><div id="bubble" title="Chat" class="a sub pressed"><img class="icon" alt="chat" src="./img/chat.svg" /></div></div>
+                            <div style="flex:1"><div id="script" title="Script" class="a sub"><img class="icon" alt="script" src="./img/scroll.svg" /></div></div>
+                        </div>
                         <div style="flex:1"><div id="link" title="Link" class="a push"><img class="icon" alt="link" src="./img/link.svg" /></div></div>
-                        <div style="flex:1"><div id="bubble" title="Chat" class="a toggle pressed"><img class="icon" alt="chat" src="./img/chat.svg" /></div></div>
-                        <div style="flex:1"><div id="upload" title="Upload" class="a push"><img class="icon" alt="upload" src="./img/upload.svg" /></div></div>
-                        <div style="flex:1"><div id="download" title="Download" class="a push"><img class="icon" alt="download" src="./img/download.svg" /></div></div>
                         <div style="flex:1"><div id="precise" title="Precise cursor" class="a toggle"><img class="icon" alt="precise cursor" src="./img/preciseCursor.svg" /></div></div>
                     </div>
                 </div>
 
                 <div style="flex:1 0 250px;width:50px">
                     <div id="paintTool" style="display:flex" class="chose">
-                        <div style="flex:1"><div title="Show" class="a pressed"><img class="icon" alt="show" src="./img/show.svg" /></div></div>
-                        <div style="flex:1"><div title="Paint" class="a"><img class="icon" alt="paint" src="./img/paint.svg" /></div></div>
-                        <div style="flex:1"><div title="Erase" class="a"><img class="icon" alt="erase" src="./img/erase.svg" /></div></div>
-                        <div style="flex:1"><div title="Measure" class="a"><img class="icon" alt="ruler" src="./img/ruler.svg" /></div></div>
-                        <div style="flex:1"><div title="Adjust" class="a"><img class="icon" alt="adjust" src="./img/adjust.svg" /></div></div>
-                        <div style="flex:1"><div title="Eyedrop" class="a"><img class="icon" alt="eyedropper" src="./img/eyedropper.svg" /></div></div>
+                        <div style="flex:1"><div title="Show" class="a sub pressed"><img class="icon" alt="show" src="./img/show.svg" /></div></div>
+                        <div style="flex:1"><div title="Paint" class="a sub"><img class="icon" alt="paint" src="./img/paint.svg" /></div></div>
+                        <div style="flex:1"><div title="Erase" class="a sub"><img class="icon" alt="erase" src="./img/erase.svg" /></div></div>
+                        <div style="flex:1"><div title="Measure" class="a sub"><img class="icon" alt="ruler" src="./img/ruler.svg" /></div></div>
+                        <div style="flex:1"><div title="Adjust" class="a sub"><img class="icon" alt="adjust" src="./img/adjust.svg" /></div></div>
+                        <div style="flex:1"><div title="Eyedrop" class="a sub"><img class="icon" alt="eyedropper" src="./img/eyedropper.svg" /></div></div>
                     </div>
                     <div style="display:flex">
                         <div style="flex:1"><div id="color" title="Color" style="height:24px;background:#f00" class="a push"></div></div>
                         <div style="flex:1"><div id="fill" class="a toggle"><img class="icon" alt="fill" src="./img/fill.svg" /></div></div>
                         <div style="flex:1"><div id="undo" title="Undo" class="a push"><img class="icon" alt="undo" src="./img/undo.svg" /></div></div>
+                        <div style="flex:1"><div id="upload" title="Upload" class="a push"><img class="icon" alt="upload" src="./img/upload.svg" /></div></div>
+                        <div style="flex:1"><div id="download" title="Download" class="a push"><img class="icon" alt="download" src="./img/download.svg" /></div></div>
                         <div style="flex:1"><div id="save" title="Save" class="a push"><img class="icon" alt="save" src="./img/floppy.svg" /></div></div>
                     </div>
                 </div>
@@ -81,23 +84,64 @@
         <!-- pen size -->
         <div id="penSizeBlock" style="flex:0 0 28px">
             <div style="display:flex" class="chose" id="penSize">
-                <div style="flex:1"><div title="1" class="a pressed">1</div></div>
-                <div style="flex:1"><div title="2" class="a">2</div></div>
-                <div style="flex:1"><div title="3" class="a">3</div></div>
-                <div style="flex:1"><div title="5" class="a">5</div></div>
-                <div style="flex:1"><div title="10" class="a">10</div></div>
-                <div style="flex:1"><div title="15" class="a">15</div></div>
+                <div style="flex:1"><div title="1" class="a sub pressed">1</div></div>
+                <div style="flex:1"><div title="2" class="a sub">2</div></div>
+                <div style="flex:1"><div title="3" class="a sub">3</div></div>
+                <div style="flex:1"><div title="5" class="a sub">5</div></div>
+                <div style="flex:1"><div title="10" class="a sub">10</div></div>
+                <div style="flex:1"><div title="15" class="a sub">15</div></div>
             </div>
         </div>
 
-        <!-- chat -->
-        <div id="chatBlock" style="flex:1 1 auto;position:relative;display:flex">
-            <div id="chatBlockContent" style="flex:1;display:flex;flex-direction:column">
-                <div style="flex:0 0 28px"><div id="chat" class="label">Chat (disconnected)</div></div>
-                <div style="flex:1 1 58px;display:flex"><div id="log" class="a" style="flex:1;height:auto"></div></div>
-                <div style="flex:0 0 28px"><input id="msg" type="text" style="width:100%"></div>
+        <!-- notifications -->
+        <div id="notificationsBlock" style="flex:0 1 auto;position:relative;display:flex">
+            <div style="flex:1 1 28px"><div id="notifications" class="label">Chat (disconnected)</div></div>
+        </div>
+
+        <!-- text input -->
+        <script src="https://unpkg.com/codeflask/build/codeflask.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/gh/r03ert0/consolita.js@v0.1.1/consolita.js"></script>
+        <style>
+            .token.message {
+                color: red;
+            }
+            .codeflask__flatten {
+                white-space: pre-wrap;
+                word-wrap: break-word;
+                caret-color:white;
+                font-size:inherit;
+            }
+            .codeflask {
+                background:rgba(0,0,0,1);
+                position: relative;
+            }
+            #logChat:not(.hidden) {
+                flex:1;
+                height:auto;
+                display:flex;
+                flex-direction:column;
+            }
+        </style>
+        <script>
+            window.onload = () => {
+                Consolita.init("#logScript");
+            }
+        </script>
+
+        <div id="textInputBlock" style="flex:1 1 auto;position:relative;display:flex">
+            <div id="textInputBlockContent" style="flex:1;display:flex;flex-direction:column">
+                <div style="flex:1 1 80px;display:flex">
+                    <div id="logChat">
+                        <div style="flex:1 1 30px; overflow:scroll">
+                            <div class="text" style="overflow:auto;height:100%"></div>
+                        </div>
+                        <div style="flex:0"><input id="msg" type="text" style="width:100%" /></div>
+                    </div>
+                    <div id="logScript" class="text hidden" style="flex:1;height:auto"></div>
+                </div>
             </div>
         </div>
+
     </div>
 
 </div>

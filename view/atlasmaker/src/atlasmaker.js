@@ -59,6 +59,7 @@ export var AtlasMakerWidget = {
     alphaLevel: 0.5,
     annotationLength:0,
     measureLength: null,
+    clickTools: [],
     User: { view:null,
                        tool:'show',
                       slice:null,
@@ -112,11 +113,31 @@ export var AtlasMakerWidget = {
      * @function quit
      * @return {void}
      */
-    quit: function quit() {
+    quit: function () {
         var me=AtlasMakerWidget;
         me.log("", "Goodbye!");
         me.socket.close();
         me.socket = null;
+    },
+
+    _registerClickTool: function(tool) {
+        const me=AtlasMakerWidget;
+        const {name, func} = tool;
+        me.clickTools[name] = func;
+    },
+    _registerClickTools: function () {
+        const me = AtlasMakerWidget;
+        const arr = [
+            {name: 'show', func: me._showToolHandler},
+            {name: 'paint', func: me._paintToolHandler},
+            {name: 'erase', func: me._eraseToolHandler},
+            {name: 'measure', func: me._measureToolHandler},
+            {name: 'adjust', func: me._adjustToolHandler},
+            {name: 'eyedrop', func: me._eyedropToolHandler}
+        ];
+        for(const tool of arr) {
+            me._registerClickTool(tool);
+        }
     },
 
     //====================================================================================
@@ -127,7 +148,7 @@ export var AtlasMakerWidget = {
      * @param {object} elem DOM element
      * @return {object} Returns a promise
      */
-    initAtlasMaker: function initAtlasMaker(elem) {
+    initAtlasMaker: function (elem) {
         var me=AtlasMakerWidget;
         $.extend(AtlasMakerWidget, AtlasMakerDraw);
         $.extend(AtlasMakerWidget, AtlasMakerInteraction);
@@ -244,7 +265,7 @@ export var AtlasMakerWidget = {
         me.toggle($(".toggle#precise"), me.togglePreciseCursor);
         me.toggle($(".toggle#fill"), me.toggleFill);
         me.toggle($(".toggle#fullscreen"), me.toggleFullscreen);
-        me.toggle($(".toggle#bubble"), me.toggleChat);
+        me.chose3state($(".chose#text"), me.toggleTextInput);
         me.push($(".push#3drender"), me.render3D);
         me.push($(".push#link"), me.link);
         me.push($(".push#upload"), me.upload);
@@ -259,6 +280,12 @@ export var AtlasMakerWidget = {
         $("#msg").keypress((e) => { me.onkey(e); });
 
         $("#tools-minimized").hide();
+
+        // load tools
+        me.loadTools();
+
+        // register click tools
+        me._registerClickTools();
 
         const pr = new Promise(function(resolve, reject) {
             me.initSocketConnection()
@@ -280,7 +307,7 @@ export var AtlasMakerWidget = {
      * @param {number} index Index of the atlas to use
      * @return {object} A promise
      */
-    configureAtlasMaker: function configureAtlasMaker(info, index) {
+    configureAtlasMaker: function (info, index) {
         var me=AtlasMakerWidget;
         var pr = new Promise(function(resolve, reject) {
             me.configureMRI(info, index)
@@ -334,7 +361,7 @@ export var AtlasMakerWidget = {
      * @param {object} json A json object with ontology information
      * @return {void}
      */
-    configureOntology: function configureOntology(json) {
+    configureOntology: function (json) {
         var me=AtlasMakerWidget;
         me.ontology=json;
         me.ontology.valueToIndex=[];
@@ -351,7 +378,7 @@ export var AtlasMakerWidget = {
      *        If undefined, the script will be loaded.
      * @returns {object} A promise
      */
-    loadScript: function loadScript(path, testScriptPresent) {
+    loadScript: function (path, testScriptPresent) {
         var def = new $.Deferred();
     
         if(testScriptPresent && testScriptPresent()) {
@@ -381,7 +408,7 @@ export var AtlasMakerWidget = {
      * @param {string} source The MRI source, a URL
      * @return {object} A promise
      */
-    requestMRIInfo: function requestMRIInfo(source) {
+    requestMRIInfo: function (source) {
         var me=AtlasMakerWidget;
         const url = me._removeVariablesFromURL(source);
         $("#loadingIndicator p").text("Loading... ");
@@ -419,7 +446,7 @@ export var AtlasMakerWidget = {
      * @param {number} index Index of the atlas to use
      * @return {object} A promise
      */
-    configureMRI: function configureMRI(info, index) {
+    configureMRI: function (info, index) {
         var me=AtlasMakerWidget;
 
         return new Promise(function(resolve, reject) {

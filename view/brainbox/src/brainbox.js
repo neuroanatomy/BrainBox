@@ -8,6 +8,7 @@
  */
 
 import * as tw from './twoWayBinding.js';
+import Config from './../../../cfg.json';
 
 var hashOld;
 
@@ -17,7 +18,7 @@ var hashOld;
 export var BrainBox={
     version: 1,
     debug: 1,
-    hostname: 'https://brainbox.pasteur.fr', //'https://connect-project.io', //'http://localhost:3001', //'', // 'http://brainbox.pasteur.fr',
+    hostname: Config.hostname,
     info:{},
     labelSets:null,
     annotationType:["volume", "text", "multiple choices", "hidden text"],

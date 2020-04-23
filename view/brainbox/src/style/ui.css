@@ -1,12 +1,19 @@
-/* User interface widgets style: buttons, sliders */
+/* User interface widgets: buttons, sliders
+-----------------------------------------------------------------------------*/
+
+* {
+    box-sizing: border-box;
+}
 
 .a {
     border:thin solid #777;
     border-radius:3px;
     margin:1px;
     text-align:center;
-    height: 22px;
-    outline: none
+    height: 24px;
+    position: relative;
+    color: white;
+    user-select: none;
 }
 .a:hover {
     opacity:0.5;
@@ -14,12 +21,58 @@
     -moz-user-select:none;
     user-select:none;
 }
+
+.chose {
+    border:thin solid #777;
+    border-radius:3px;
+    margin:1px;
+    text-align:center;
+    height: 24px;
+    position: relative;
+}
+.a.sub {
+    border:none;
+    margin:0;
+    height: 22px;
+}
+.a.sub:hover {
+    opacity:0.5;
+    -webkit-user-select:none;
+    -moz-user-select:none;
+    user-select:none;
+}
+
+.text {
+    border:thin solid #777;
+    background: #000;
+    opacity: 0.5;
+    border-radius:3px;
+    margin:1px;
+    user-select: text;
+}
+.text * {
+    font-size: 12px !important;
+    line-height: 15px !important;
+}
+.text:hover {
+    opacity:1;
+}
+
+.label {
+    color: white;
+    user-select: none;
+}
 .pressed {
     background-color:#555 !important;
 }
 .icon {
     width:16px;
     vertical-align:middle;
+    user-select: none;
+}
+
+.hidden {
+    display:none;
 }
 
 /* svg buttons
@@ -45,9 +98,15 @@ img.button:hover {
 img.icon {
     width:1rem;
     height:1rem;
-    margin:4px 2px;
-    vertical-align:middle;
+    position: absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%, -50%);
     cursor:pointer;
+}
+
+.noBorder {
+    border: none;
 }
 
 .mui-select {

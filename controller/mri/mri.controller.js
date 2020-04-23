@@ -154,11 +154,24 @@ function downloadMRI(myurl, req, res, callback) {
             atlasmakerServer.getBrainAtPath('/data/' + hash + '/' + filename)
             .then((mri) => {
                 // Create json file for new dataset
-                const ip = req.headers['x-forwarded-for'] ||
-                    req.connection.remoteAddress ||
-                    req.socket.remoteAddress ||
-                    req.connection.socket.remoteAddress;
-                const username = (req.isAuthenticated()) ? req.user.username : ip;
+                let ip = "";
+                if(typeof req.headers['x-forwarded-for'] !== "undefined") {
+                    ip = req.headers['x-forwarded-for'];
+                } else if (req.connection.remoteAddress !== "undefined") {
+                    ip = req.connection.remoteAddress;
+                } else if (req.socket.remoteAddress !== "undefined") {
+                    ip = req.socket.remoteAddress;
+                } else if (req.connection.socket.remoteAddress !== "undefined") {
+                    ip = req.connection.socket.remoteAddress;
+                }
+
+                let username = ip;
+                if(req.isAuthenticated()) {
+                    username = req.user.username;
+                } else if(req.isTokenAuthenticated) {
+                    username = req.tokenUsername;
+                }
+
                 const json = {
                     filename,
                     success: true,
@@ -170,10 +183,12 @@ function downloadMRI(myurl, req, res, callback) {
                     voxel2world: mri.v2w,
                     worldOrigin: mri.wori,
                     owner: username,
+                    name: "",
+                    modified: (new Date()).toJSON(),
+                    modifiedBy: username,
                     mri: {
                         brain: filename,
-                        atlas: [
-{
+                        atlas: [{
                             created: (new Date()).toJSON(),
                             modified: (new Date()).toJSON(),
                             access: 'edit',
@@ -181,8 +196,7 @@ function downloadMRI(myurl, req, res, callback) {
                             name: 'Default',
                             filename: 'Atlas.nii.gz',
                             labels: 'foreground.json'
-                        }
-]
+                        }]
                     }
                 };
                 callback(json);
@@ -233,9 +247,9 @@ const mri = function (req, res) {
                 }
             }
             // Check access to text annotations
-            if(typeof json.mri.annotations !== "undefined" && isIterable(json.mri.annotations)) {
-                for (i of json.mri.annotations) {
-                    prj.add(i);
+            if(typeof json.mri.annotations !== "undefined") {
+                for (const key of Object.keys(json.mri.annotations)) {
+                    prj.add(key);
                 }
             }
             arr = [...prj].map((o) => req.db.get('project').findOne({
@@ -246,18 +260,18 @@ const mri = function (req, res) {
                 checkAccess.filterAnnotationsByProjects(json.mri, projects, loggedUser);
 
                 // Set access to text annotations
-                if(typeof json.mri.annotations !== "undefined" && isIterable(json.mri.annotations)) {
-                    for (i of json.mri.annotations) {
+                if(typeof json.mri.annotations !== "undefined") {
+                    for (const key of Object.keys(json.mri.annotations)) {
                         for (j = 0; j < projects.length; j++) {
                             if (projects[j] && projects[j].shortname === i) {
                                 const access = checkAccess.toAnnotationByProject(projects[j], loggedUser);
                                 const level = checkAccess.accessStringToLevel(access);
                                 if (level > 0) {
-                                    for (k of json.mri.annotations[i]) {
-                                        json.mri.annotations[i][k].access = access;
+                                    for (k of json.mri.annotations[key]) {
+                                        json.mri.annotations[key][k].access = access;
                                     }
                                 } else {
-                                    delete json.mri.annotations[i];
+                                    delete json.mri.annotations[key];
                                 }
                             }
                         }
@@ -286,8 +300,9 @@ function removeVariablesFromURL(url) {
 }
 
 // eslint-disable-next-line func-style
-const apiMriPost = function (req, res) {
+const apiMriPost = async function (req, res) {
     console.log("apiMriPost");
+
     let myurl;
     if(typeof req.body.url !== "undefined") {
         myurl = req.body.url;
@@ -295,6 +310,7 @@ const apiMriPost = function (req, res) {
         myurl = req.query.url;
     }
     myurl = removeVariablesFromURL(myurl);
+    console.log("url:", myurl);
 
     const hash = crypto
                    .createHash('md5')
@@ -306,15 +322,19 @@ const apiMriPost = function (req, res) {
     //     return res.status(403).send({error: "Provide authentication"}).end();
     // }
 
-    req.db.get('mri').findOne({source: myurl, backup: {$exists: 0}}, {_id: 0})
+    req.db.get('mri').findOne({source: myurl, backup: {$exists: 0}, success: {$exists: 1}}, {_id: 0})
         .then((json) => {
             // Determine whether we need to download the data from the source
             let doDownload = false;
 
-            // If client is not requesting a specific MRI variable
-            if (typeof req.body.var === "undefined") {
-                // If the json object is empty, download
+            // Check if client is requesting for a specific variable
+            const doReturnAll = (typeof req.body.var === "undefined");
+
+            // Asking for a single variable does not trigger a download in case
+            // the file is not already present.
+            if (doReturnAll) {
                 if (!json) {
+                    // If the json object is empty, request download
                     console.log('No DB entry for MRI: download');
                     doDownload = true;
                 } else {
@@ -325,8 +345,8 @@ const apiMriPost = function (req, res) {
                         console.log('No MRI file in server: download');
                         doDownload = true;
                     } else
-                    // If the json object exists, there's a file, but no .dim object, download
                     if (!json.dim) {
+                        // If the json object exists, there's a file, but no .dim object, download
                         // If(debug>1) console.log("No dim[] field in DB entry: download");
                         doDownload = true;
                     }
@@ -334,29 +354,39 @@ const apiMriPost = function (req, res) {
             }
 
             if (doDownload === true) {
-                if (downloadQueue[myurl]) {
-                    console.log('>> poll for download finished', downloadQueue[myurl], myurl);
-                    if (downloadQueue[myurl].success === true) {
-                        console.log('>> finished. Send info to user');
-                        const info = JSON.parse(JSON.stringify(downloadQueue[myurl]));
-                        delete downloadQueue[myurl];
-                        res.json(info);
-                    } else {
-                        console.log('>> still downloading');
+                const isInQueue = downloadQueue.hasOwnProperty(myurl);
+                if (isInQueue) {
+                    console.log('>> Download queued, check status', downloadQueue[myurl], myurl);
+                    const {success} = downloadQueue[myurl];
+                    // if (success === true) {
+                    //     console.log('>> Finished. Send result to user');
+                    //     const info = JSON.parse(JSON.stringify(downloadQueue[myurl]));
+                    //     console.log("before delete", downloadQueue);
+                    //     delete downloadQueue[myurl];
+                    //     console.log("after delete". downloadQueue);
+                    //     res.json(info);
+                    // } else
+                    if (success === "downloading") {
+                        console.log('>> Still downloading. Wait');
                         res.json(downloadQueue[myurl]);
+                    } else {
+                        console.log(">> Failed. Throw an error");
+                        res.status(403).json(downloadQueue[myurl]);
                     }
                 } else {
                     console.log('Start download:');
                     downloadQueue[myurl] = {success: 'downloading', cur: 0, len: 1};
                     downloadMRI(myurl, req, res, (obj) => {
+                        console.log("downloadMRI obj:", obj);
                         if (typeof obj.error === "undefined") {
-                            console.log('Download succeeded');
-                            req.db.get('mri').insert(obj);
+                            console.log('Download succeeded. Insert in DB, remove from queue');
                             obj.success = true;
-                            downloadQueue[myurl] = obj;
+                            req.db.get('mri').insert(obj);
+                            // downloadQueue[myurl] = obj;
+                            delete downloadQueue[myurl];
                         } else {
                             console.log('Download failed:', obj);
-                            downloadQueue[myurl] = {success: `error ${JSON.stringify(obj.error)}`};
+                            downloadQueue[myurl] = {success: false, error: `${JSON.stringify(obj.error)}`};
                         }
                     });
 
@@ -364,8 +394,8 @@ const apiMriPost = function (req, res) {
                 }
             } else {
                 // Return a specific variable, or the complete json object
-                console.log('Send requested variable to the client.');
-                if (req.body.var) {
+                if (doReturnAll === false) {
+                    console.log('Send only the requested variable to the client.');
                     let i;
                     const arr = req.body.var.split('/');
                     for (i of arr) {
@@ -448,9 +478,9 @@ const apiMriGet = function (req, res) {
             }
             // Check access to text annotations
             if(typeof json.mri.annotations !== "undefined") {
-                for (i of json.mri.annotations) {
-                    console.log('text annotation is in project', i);
-                    prj.add(i);
+                for (const key of Object.keys(json.mri.annotations)) {
+                    console.log('text annotation is in project', key);
+                    prj.add(key);
                 }
             }
             arr = [...prj].map((o) => {
@@ -479,14 +509,14 @@ const apiMriGet = function (req, res) {
                 }
                 // Set access to text annotations
                 if(typeof json.mri.annotations !== "undefined") {
-                    for (i of json.mri.annotations) {
+                    for (const key of Object.keys(json.mri.annotations)) {
                         for (j = 0; j < projects.length; j++) {
-                            if (projects[j] && projects[j].shortname == i) {
+                            if (projects[j] && projects[j].shortname == key) {
                                 const access = checkAccess.toAnnotationByProject(projects[j], loggedUser);
                                 const level = checkAccess.accessStringToLevel(access);
                                 console.log('loggedUser,access,level:', loggedUser, access, level);
                                 if (level === 0) {
-                                    delete json.mri.annotations[i];
+                                    delete json.mri.annotations[key];
                                 }
                             }
                         }
