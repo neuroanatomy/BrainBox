@@ -247,8 +247,6 @@ export var AtlasMakerWS = {
                         me.brain_img.slice = me.flagLoadingImg.slice;
 
                         me.drawImages();
-                                                            
-                        me.flagLoadingImg.loading=false;
 
                         me.flagLoadingImg.loading = false;
 
