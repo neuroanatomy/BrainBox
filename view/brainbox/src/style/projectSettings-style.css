@@ -15,7 +15,7 @@ tr.selected{
 }
 td {
     word-break: break-word;
-    vertical-align: middle;
+    vertical-align: top;
 }
 #files, #annotations, #access {
     color:white;
