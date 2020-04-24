@@ -32,16 +32,3 @@ li div {
     margin: none;
     padding: none;
 }
-.display {
-    text-decoration:none;
-    width:12px;
-    height:12px;
-    border: thin solid white;
-    border-radius:12px;
-}
-.display[data-check='0'] {
-    background: none;
-}
-.display[data-check='1'] {
-    background: white;
-}

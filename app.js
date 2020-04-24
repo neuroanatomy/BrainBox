@@ -312,6 +312,22 @@ app.get('/api/getLabelsets', (req, res) => {
     res.send(info);
 });
 
+app.get('/api/userNameQuery', (req, res) => {
+    const {query} = req;
+    db.get('user')
+        .find(
+            { $or: [
+                {nickname: {$regex:query.q}},
+                {name: {$regex:query.q}}
+            ]},
+            { fields: ['name', 'nickname'], limit: 10 }
+        )
+        .then((list) => {
+            res.send(list);
+        })
+        .catch(tracer.log);
+});
+
 app.get('/api/getAtlasBackups', (req, res) => {
     const { source, atlasProject, atlasName } = req.query;
 
