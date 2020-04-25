@@ -34,6 +34,7 @@
             </a>
             <span
                 contentEditable
+                v-once
                 @input="handleInput($event,projectInfo,'name')"
                 style="width:auto;text-align:left;font-family:Roboto,sans-serif;font-size:36px;font-weight:100;vertical-align:middle"
                 class="noEmptyWithPlaceholder"
@@ -54,6 +55,7 @@
                 <a href="/project/{{projectShortname}}"><h1>{{projectShortname}}</h1></a>
                 <p
                     contentEditable
+                    v-once
                     @input="handleInput($event,projectInfo,'url')"
                     style="text-align:center"
                     class="noEmptyWithPlaceholder"
@@ -62,6 +64,7 @@
                 <p>by <a href="/user/{{owner}}">{{owner}}</a></p>
                 <p
                     contentEditable
+                    v-once
                     @input="handleInput($event,projectInfo,'description')"
                     class="noEmptyWithPlaceholder"
                     placeholder="Enter a project description"
@@ -158,19 +161,26 @@
                     </thead>
                     <tbody>
                         <tr v-for="val in projectInfo.annotations.list">
-                            <td contentEditable=true @input="handleInput($event,val,'name')" class='noEmptyWithPlaceholder' placeholder="Enter annotation name">[[val.name]]</td>
+                            <td
+                                contentEditable
+                                v-once
+                                v-html="val.name"
+                                @input="handleInput($event,val,'name')"
+                                class='noEmptyWithPlaceholder'
+                                placeholder="Enter annotation name"
+                            ></td>
                             <td>
-                                <select class='mui-select' :selectedIndex="annotationType.indexOf(val.type)">
+                                <select class='mui-select' v-model="val.type">
                                     <option v-for="opt in annotationType">[[opt]]</option>
                                 </select>
                             </td>
-                            <td contentEditable=true class='noEmpty'>
-                                <select class='mui-select' :selectedIndex="labelSets.indexOf(val.values)">
-                                    <option v-for="opt in labelSets">[[opt.name]]</option>
+                            <td>
+                                <select v-if="val.type==='volume'" class="mui-select" v-model="val.values">
+                                    <option v-for="opt in labelSets" :value=opt.source>[[opt.name]]</option>
                                 </select>
                             </td>
                             <td align="center" style="vertical-align:middle">
-                                <div class='display' @input="handleCheck($event,val,'display')":data-check='val.display'></div>
+                                <div class="display" @input="handleCheck($event,val,'display')" :data-check="val.display"></div>
                             </td>
                         </tr>
                     </tbody>
@@ -191,8 +201,21 @@
                     </thead>
                     <tbody>
                         <tr v-for="val in projectInfo.files.list">
-                            <td contentEditable=true @input="handleInput($event, val, 'source')" class='noEmptyWithPlaceholder' placeholder="Enter data file URL">[[val.source]]</td>
-                            <td contentEditable=true @input="handleInput($event, val, 'name')" class='noEmptyWithPlaceholder' placeholder="Enter data file name">[[val.name]]</td>
+                            <td
+                                contentEditable
+                                v-html="val.source"
+                                @input="handleInput($event, val, 'source')"
+                                class='noEmptyWithPlaceholder'
+                                placeholder="Enter data file URL"
+                            ></td>
+                            <td
+                                contentEditable
+                                v-once
+                                v-html="val.name"
+                                @input="handleInput($event, val, 'name')"
+                                class='noEmptyWithPlaceholder'
+                                placeholder="Enter data file name"
+                            ></td>
                         </tr>
                     </tbody>
                 </table>

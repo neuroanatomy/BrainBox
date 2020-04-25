@@ -18,6 +18,7 @@ var app = new Vue({
   delimiters: ['[[', ']]'],
   data: {
     projectInfo: projectInfo,
+    txt: '',
     annotationType: ['volume', 'text'],
     labelSets: []
   },
@@ -34,12 +35,7 @@ var app = new Vue({
                 });
       },
       handleInput: function (e, val, key) {
-        const sel = document.getSelection();
-        const offset = sel.anchorOffset;
-        val[key] = e.target.textContent;
-        app.$nextTick(() => {
-            sel.collapse(sel.anchorNode, offset);
-        });
+        val[key] = e.target.innerHTML;
       },
       handleAccess: function (e, val, key) {
           const levelIndex = e.target.dataset.level;
@@ -225,7 +221,7 @@ function onAccessClicked( e, l ) {
  * @desc Handles click on 'display' option for annotations in the project settings; 0=do not display; 1=display
  * @param {Event} e Event triggered by click
  */
-function onCheckClicked( e, l ) {
+function onCheckClicked( e) {
     // checkbox toggle for 'display' option
     var checkbox = e.target.getAttribute("data-check");
     if( checkbox == "false" ) {
@@ -319,25 +315,25 @@ function addCollaborator() {
         }
     });
 }
-function removeCollaborator(param) {
+function removeCollaborator() {
     var index=document.querySelector("table#access .selected").rowIndex - 1;
     app.projectInfo.collaborators.list.splice(index, 1);
 }
 function addAnnotation() {
     app.projectInfo.annotations.list.push({
-        type: "vectorial",
-        values: app.labelSets[0], // .source,
+        type: "volume",
+        values: app.labelSets[0].source,
         display: "true"
     });
 }
-function removeAnnotation(param) {
+function removeAnnotation() {
     var index=document.querySelector("table#annotations .selected").rowIndex - 1;
     app.projectInfo.annotations.list.splice(index, 1);
 }
 function addFile() {
-    app.projectInfo.files.list.push({source:'', name:''});
+    app.projectInfo.files.list.push({});
 }
-function removeFile(param) {
+function removeFile() {
     var index=document.querySelector("table#files .selected").rowIndex - 1;
     app.projectInfo.files.list.splice(index, 1);
 }
@@ -384,7 +380,7 @@ function saveChanges() {
                 },2000);
             }
         } else {
-            document.querySelector("#saveFeedback").textContent = "Unable to save. Please try again later";
+            document.querySelector("#saveFeedback").textContent = `Unable to save: ${xhr.responseText}`;
             setTimeout(function() {
                 document.querySelector("#saveFeedback").textContent = "";
             },3000);
@@ -408,7 +404,6 @@ function deleteProject() {
         return;
     }
 
-    const msg = "";
     const xhr = new XMLHttpRequest();
     xhr.onload = function () {
         if (xhr.status >= 200 && xhr.status < 300) {
