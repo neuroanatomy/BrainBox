@@ -241,9 +241,6 @@ function updateName (ind, ev) {
       app.$forceUpdate();
     });
 }
-function handleInput (ev, val, key) {
-  val[key] = ev.target.innerText;
-}
 function handleAccess (ev, val, key) {
   const levelIndex = ev.target.dataset.level;
   const level = ["none", "view", "edit", "add", "remove"][levelIndex];
@@ -293,7 +290,6 @@ app = new Vue({
   },
   methods: {
     updateName,
-    handleInput,
     handleAccess,
     handleCheck
   },

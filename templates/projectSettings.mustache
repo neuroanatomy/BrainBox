@@ -32,14 +32,13 @@
             <a href="/" style="text-decoration:none">
                 <img style="height:56px;vertical-align:middle" alt="brainbox logo" src="/img/brainbox-logo-small_noFont.svg"/>
             </a>
-            <span
-                contentEditable
-                v-once
-                @input="handleInput($event,projectInfo,'name')"
-                style="width:auto;text-align:left;font-family:Roboto,sans-serif;font-size:36px;font-weight:100;vertical-align:middle"
+            <editable
+                :content="projectInfo.name"
+                @update="projectInfo.name=$event"
+                style="display:inline-block;width:auto;text-align:left;font-family:Roboto,sans-serif;font-size:36px;font-weight:100;vertical-align:middle"
                 class="noEmptyWithPlaceholder"
                 placeholder="Enter a project name"
-            >[[projectInfo.name]]</span>
+            ></editable>
         </div>
     </div>
     
@@ -53,22 +52,21 @@
             
             <div id="projDescription">
                 <a href="/project/{{projectShortname}}"><h1>{{projectShortname}}</h1></a>
-                <p
-                    contentEditable
-                    v-once
-                    @input="handleInput($event,projectInfo,'url')"
-                    style="text-align:center"
+                <editable
+                    :content="projectInfo.url"
+                    @update="projectInfo.url=$event"
+                    style="display:block;text-align:center"
                     class="noEmptyWithPlaceholder"
                     placeholder="Enter a project website"
-                >[[projectInfo.url]]</p>
+                ></editable>
                 <p>by <a href="/user/{{owner}}">{{owner}}</a></p>
-                <p
-                    contentEditable
-                    v-once
-                    @input="handleInput($event,projectInfo,'description')"
+                <editable
+                    :content="projectInfo.description"
+                    @update="projectInfo.description=$event"
+                    style="display:block;text-align:center"
                     class="noEmptyWithPlaceholder"
                     placeholder="Enter a project description"
-                >[[projectInfo.description]]</p>
+                ></editable>
                 <p><span id="numCollaborators">[[projectInfo.collaborators.list.length]]</span> Collaborators</p>
                 <p><span id="numAnnotations">[[projectInfo.annotations.list.length]]</span> Annotations</p>
                 <p><span id="numFiles">[[projectInfo.files.list.length]]</span> MRI Files</p>
