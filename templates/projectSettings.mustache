@@ -98,10 +98,10 @@
                     <tbody>
                         <tr v-for="(val,ind) in projectInfo.collaborators.list">
                             <td>
-                                <autocomplete-input v-model="val.userID" @change="updateName(ind, $event)" class="userID noEmptyWithPlaceholder" placeholder="User GitHub ID"></autocomplete-input>
+                                <autocomplete v-model="val.userID" @change="updateName(ind, $event)" class="userID noEmptyWithPlaceholder" placeholder="User GitHub ID"></autocomplete>
                             </td>
                             <td>
-                                <autocomplete-input v-model="val.name" @change="updateName(ind, $event)" class="userName noEmptyWithPlaceholder" placeholder="User Name"></autocomplete-input>
+                                <autocomplete v-model="val.name" @change="updateName(ind, $event)" class="userName noEmptyWithPlaceholder" placeholder="User Name"></autocomplete>
                             </td>
                             <td>
                                 <div
@@ -161,14 +161,9 @@
                     </thead>
                     <tbody>
                         <tr v-for="val in projectInfo.annotations.list">
-                            <td
-                                contentEditable
-                                v-once
-                                v-html="val.name"
-                                @input="handleInput($event,val,'name')"
-                                class='noEmptyWithPlaceholder'
-                                placeholder="Enter annotation name"
-                            ></td>
+                            <td>
+                                <editable :content="val.name" @update="val.name=$event" class="noEmptyWithPlaceholder" placeholder="Enter annotation name"></editable>
+                            </td>
                             <td>
                                 <select class='mui-select' v-model="val.type">
                                     <option v-for="opt in annotationType">[[opt]]</option>
@@ -201,21 +196,12 @@
                     </thead>
                     <tbody>
                         <tr v-for="val in projectInfo.files.list">
-                            <td
-                                contentEditable
-                                v-html="val.source"
-                                @input="handleInput($event, val, 'source')"
-                                class='noEmptyWithPlaceholder'
-                                placeholder="Enter data file URL"
-                            ></td>
-                            <td
-                                contentEditable
-                                v-once
-                                v-html="val.name"
-                                @input="handleInput($event, val, 'name')"
-                                class='noEmptyWithPlaceholder'
-                                placeholder="Enter data file name"
-                            ></td>
+                            <td>
+                                <editable :content="val.source" @update="val.source=$event" class='noEmptyWithPlaceholder' placeholder="Enter data file URL"></editable>
+                            </td>
+                            <td>
+                                <editable :content="val.name" @update="val.name=$event" class='noEmptyWithPlaceholder' placeholder="Enter data file name"></editable>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -300,9 +286,24 @@ var projectShortname = "{{{projectShortname}}}";
         background: #555;
     }
 </style>
+<script>
+// thank you https://codepen.io/supraniti/pen/Lypobx !
+Vue.component('editable',{
+  template:'<div contenteditable="true" @input="update"></div>',
+  props:['content'],
+  mounted:function(){
+    this.$el.innerText = this.content;
+  },
+  methods:{
+    update:function(event){
+      this.$emit('update',event.target.innerText);
+    }
+  }
+});
+</script>
 
 <script>
-Vue.component('autocomplete-input', {
+Vue.component('autocomplete', {
   data () { return { list: [] } },
   props: ['value'],
   mounted () {
