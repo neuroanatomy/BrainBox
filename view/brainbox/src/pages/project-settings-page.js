@@ -284,7 +284,6 @@ app = new Vue({
   delimiters: ['[[', ']]'],
   data: {
     projectInfo: projectInfo,
-    txt: "hello",
     annotationType: ['volume', 'text'],
     labelSets: []
   },
