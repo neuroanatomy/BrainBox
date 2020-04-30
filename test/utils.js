@@ -18,202 +18,204 @@ const mediumTimeout = 5 * 1000; // 10 sec
 const shortTimeout = 3 * 1000; // 5 sec
 
 const userFoo = {
-    name: "Founibald Barr",
-    nickname: "foo",
-    url: "https://foo.bar",
-    brainboxURL: "/user/foo",
-    avatarURL: "http://127.0.0.1:3001/test_data/foo.png",
-    joined: (new Date()).toJSON()
+  name: "Founibald Barr",
+  nickname: "foo",
+  url: "https://foo.bar",
+  brainboxURL: "/user/foo",
+  avatarURL: "http://127.0.0.1:3001/test_data/foo.png",
+  joined: (new Date()).toJSON()
 };
 const userBar = {
-    name: "Barton Fouquet",
-    nickname: "bar",
-    url: "https://bar.foo",
-    brainboxURL: "/user/foo",
-    avatarURL: "http://127.0.0.1:3001/test_data/bar.png",
-    joined: (new Date()).toJSON()
-}
+  name: "Barton Fouquet",
+  nickname: "bar",
+  url: "https://bar.foo",
+  brainboxURL: "/user/foo",
+  avatarURL: "http://127.0.0.1:3001/test_data/bar.png",
+  joined: (new Date()).toJSON()
+};
 const userFooB = {
-    name: "Founibald Barr",
-    username: "foo",
-    url: "https://foo.bar",
-    brainboxURL: "/user/foo",
-    avatarURL: "http://127.0.0.1:3001/test_data/foo.png",
-    joined: (new Date()).toJSON()
+  name: "Founibald Barr",
+  username: "foo",
+  url: "https://foo.bar",
+  brainboxURL: "/user/foo",
+  avatarURL: "http://127.0.0.1:3001/test_data/foo.png",
+  joined: (new Date()).toJSON()
 };
 const userBarB = {
-    name: "Barton Fouquet",
-    username: "bar",
-    url: "https://bar.foo",
-    brainboxURL: "/user/foo",
-    avatarURL: "http://127.0.0.1:3001/test_data/bar.png",
-    joined: (new Date()).toJSON()
-}
+  name: "Barton Fouquet",
+  username: "bar",
+  url: "https://bar.foo",
+  brainboxURL: "/user/foo",
+  avatarURL: "http://127.0.0.1:3001/test_data/bar.png",
+  joined: (new Date()).toJSON()
+};
 const projectTest = {
-    name: "Test Project",
-    shortname: "testproject",
-    url: "https://testproject.org",
-    brainboxURL: "/project/testproject",
-    created: (new Date()).toJSON(),
-    owner: "foo",
-    collaborators: {
-        list: [
-            {
-                userID: "anyone",
-                access: {
-                    collaborators: "view",
-                    annotations: "edit",
-                    files: "view"
-                },
-                username: "anyone",
-                name: "Any BrainBox User"
-            }
-        ]
-    },
-    files: {
-        list: [
-            "http://127.0.0.1:3001/test_data/bert_brain.nii.gz",
-            "https://zenodo.org/record/44855/files/MRI-n4.nii.gz",
-            "http://files.figshare.com/2284784/MRI_n4.nii.gz",
-            "https://dl.dropbox.com/s/cny5b3so267bv94/p32-f18-uchar.nii.gz",
-            "https://s3.amazonaws.com/fcp-indi/data/Projects/ABIDE_Initiative/Outputs/freesurfer/5.1/Caltech_0051456/mri/T1.mgz"
-        ]
-    },
-    annotations: {
-        list: [
-            {
-                type: "volume",
-                values: "cerebellum.json",
-                display: "true",
-                name: "Cerebrum"
-            }
-        ]
-    },
-    description: "A test project used for checking that rendering is behaving as expected.",
-    modified: (new Date()).toJSON(),
-    modifiedBy: "foo"
+  name: "Test Project",
+  shortname: "testproject",
+  url: "https://testproject.org",
+  brainboxURL: "/project/testproject",
+  created: (new Date()).toJSON(),
+  owner: "foo",
+  collaborators: {
+    list: [
+      {
+        userID: "anyone",
+        access: {
+          collaborators: "view",
+          annotations: "edit",
+          files: "view"
+        },
+        username: "anyone",
+        name: "Any BrainBox User"
+      }
+    ]
+  },
+  files: {
+    list: [
+      "http://127.0.0.1:3001/test_data/bert_brain.nii.gz",
+      "https://zenodo.org/record/44855/files/MRI-n4.nii.gz",
+      "http://files.figshare.com/2284784/MRI_n4.nii.gz",
+      "https://dl.dropbox.com/s/cny5b3so267bv94/p32-f18-uchar.nii.gz",
+      "https://s3.amazonaws.com/fcp-indi/data/Projects/ABIDE_Initiative/Outputs/freesurfer/5.1/Caltech_0051456/mri/T1.mgz"
+    ]
+  },
+  annotations: {
+    list: [
+      {
+        type: "volume",
+        values: "cerebellum.json",
+        display: "true",
+        name: "Cerebrum"
+      }
+    ]
+  },
+  description: "A test project used for checking that rendering is behaving as expected.",
+  modified: (new Date()).toJSON(),
+  modifiedBy: "foo"
 };
 
-async function currentDirectory() {
-    console.log("Current directory:", __dirname);
-    const { exec } = require("child_process");
-    exec('ls -l', (error, stdout, std_err) => {
-      console.log(stdout);
-    });
+function currentDirectory() {
+  console.log("Current directory:", __dirname);
+  const { exec } = require("child_process");
+  exec('ls -l', (error, stdout, stderr) => {
+    console.log(stdout);
+  });
 }
 
-async function queryUser(nickname) {
-    return db.get('user').findOne({nickname});
+function queryUser(nickname) {
+  return db.get('user').findOne({nickname});
 }
 
-async function insertUser(user) {
-    return db.get('user').insert(user);
+function insertUser(user) {
+  return db.get('user').insert(user);
 }
 
-async function removeUser(nickname) {
-    return db.get('user').remove({nickname});
+function removeUser(nickname) {
+  return db.get('user').remove({nickname});
 }
 
-async function insertProject(project) {
-    return db.get('project').insert(project);
+function insertProject(project) {
+  return db.get('project').insert(project);
 }
 
-async function removeProject(shortname) {
-    return db.get('project').remove({shortname});
+function removeProject(shortname) {
+  return db.get('project').remove({shortname});
 }
 async function insertTestTokenForUser(nickname) {
-    const now = new Date();
-    const obj = {
-        token: testToken + nickname,
-        now,
-        expiryDate: new Date(now.getTime() + testTokenDuration),
-        username: nickname
-    };
-    const res = await db.get("log").insert(obj);
-    return res;
+  const now = new Date();
+  const obj = {
+    token: testToken + nickname,
+    now,
+    expiryDate: new Date(now.getTime() + testTokenDuration),
+    username: nickname
+  };
+  const res = await db.get("log").insert(obj);
+
+  return res;
 }
 
 async function removeTestTokenForUser(nickname) {
-    await db.get("log").remove({token: testToken + nickname});
+  await db.get("log").remove({token: testToken + nickname});
 }
 
 function delay(delayTimeout) {
   return new Promise((resolve) => {
-      setTimeout(resolve, delayTimeout);
+    setTimeout(resolve, delayTimeout);
   });
 }
 
 async function removeMRI({dirPath, srcURL}) {
-  rimraf.sync(dirPath, {}, (err) => console.log);
+  rimraf.sync(dirPath, {}, (err) => console.log(new Error(err)));
   const res = await db.get('mri').remove({source: srcURL});
+
   return res;
 }
 
 function compareImages(pathImg1, pathImg2) {
-    const data1 = fs.readFileSync(pathImg1);
-    const data2 = fs.readFileSync(pathImg2);
-    let img1, img2;
-    if(pathImg1.split(".").pop() === "png") {
-        img1 = PNG.sync.read(data1);
-    } else if(pathImg1.split(".").pop() === "jpg") {
-        img1 = jpeg.decode(data1);
-    }
-    if(pathImg2.split(".").pop() === "png") {
-        img2 = PNG.sync.read(data2);
-    } else if(pathImg2.split(".").pop() === "jpg") {
-        img2 = jpeg.decode(data2);
-    }
-    const pixdiff = pixelmatch(img1.data, img2.data, null, img1.width, img1.height);
+  const data1 = fs.readFileSync(pathImg1);
+  const data2 = fs.readFileSync(pathImg2);
+  let img1, img2;
+  if(pathImg1.split(".").pop() === "png") {
+    img1 = PNG.sync.read(data1);
+  } else if(pathImg1.split(".").pop() === "jpg") {
+    img1 = jpeg.decode(data1);
+  }
+  if(pathImg2.split(".").pop() === "png") {
+    img2 = PNG.sync.read(data2);
+  } else if(pathImg2.split(".").pop() === "jpg") {
+    img2 = jpeg.decode(data2);
+  }
+  const pixdiff = pixelmatch(img1.data, img2.data, null, img1.width, img1.height);
 
-    return pixdiff;
+  return pixdiff;
 }
 
-async function comparePageScreenshots(testPage, url, filename) {
-    const pr = new Promise((resolve, reject) => {
-        const newPath = './test/screenshots/' + filename;
-        const refPath = './test/data/reference-screenshots/' + filename;
-        // console.log("go to page:", url);
-        testPage.goto(url, {waitUntil: 'domcontentloaded'});
-        delay(5000)
-        .then(() => { return testPage.screenshot({path:'./test/screenshots/' + filename})})
-        .then(() => {
-            const pixdiff = compareImages(newPath, refPath);
-            // console.log("  pixdiff:", pixdiff);
-            resolve(pixdiff);
-        })
-        .catch( (err) => {
-            reject(err);
-        });
-    });
+function comparePageScreenshots(testPage, url, filename) {
+  const pr = new Promise((resolve, reject) => {
+    const newPath = './test/screenshots/' + filename;
+    const refPath = './test/data/reference-screenshots/' + filename;
+    // console.log("go to page:", url);
+    testPage.goto(url, {waitUntil: 'domcontentloaded'});
+    delay(5000)
+      .then(() => testPage.screenshot({path:'./test/screenshots/' + filename}))
+      .then(() => {
+        const pixdiff = compareImages(newPath, refPath);
+        // console.log("  pixdiff:", pixdiff);
+        resolve(pixdiff);
+      })
+      .catch( (err) => {
+        reject(err);
+      });
+  });
 
-    return pr;
+  return pr;
 }
 
 module.exports = {
-    serverURL,
-    cheetahURL,
-    localBertURL,
-    userFoo,
-    userBar,
-    userFooB,
-    userBarB,
-    projectTest,
-    testToken,
-    removeMRI,
-    currentDirectory,
-    insertTestTokenForUser,
-    removeTestTokenForUser,
-    queryUser,
-    insertUser,
-    removeUser,
-    insertProject,
-    removeProject,
-    delay,
-    compareImages,
-    comparePageScreenshots,
-    longTimeout,
-    mediumTimeout,
-    shortTimeout
+  serverURL,
+  cheetahURL,
+  localBertURL,
+  userFoo,
+  userBar,
+  userFooB,
+  userBarB,
+  projectTest,
+  testToken,
+  removeMRI,
+  currentDirectory,
+  insertTestTokenForUser,
+  removeTestTokenForUser,
+  queryUser,
+  insertUser,
+  removeUser,
+  insertProject,
+  removeProject,
+  delay,
+  compareImages,
+  comparePageScreenshots,
+  longTimeout,
+  mediumTimeout,
+  shortTimeout
 };
 
 
