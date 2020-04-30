@@ -39,11 +39,17 @@ li {
     display:none;
 }
 
-.hidden span {
-    display:none;
+.hiddenText {
+    position: relative;
 }
-.hidden:after {
+.hiddenText:not(:focus):after {
     content:'••••';
+    position: absolute;
+    top:0;
+    left:0;
+    right:0;
+    bottom:0;
+    background:#222;
 }
 .noEmpty:empty:before {
     content:'Empty';

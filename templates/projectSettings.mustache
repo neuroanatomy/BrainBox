@@ -171,6 +171,8 @@
                                 <select v-if="val.type==='volume'" class="mui-select" v-model="val.values">
                                     <option v-for="opt in labelSets" :value=opt.source>[[opt.name]]</option>
                                 </select>
+                                <editable v-if="val.type==='survey'" :content="val.values" @update="val.values=$event" class="noEmptyWithPlaceholder" placeholder="Enter annotation name"></editable>
+                                <editable v-if="val.type==='multiple choices'" :content="val.values" @update="val.values=$event" class="noEmptyWithPlaceholder" placeholder="Enter annotation name"></editable>
                             </td>
                             <td align="center" style="vertical-align:middle">
                                 <div class="display" @input="handleCheck($event,val,'display')" :data-check="val.display"></div>
