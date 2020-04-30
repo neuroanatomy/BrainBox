@@ -37,7 +37,7 @@
     "http": "0.0.0",
     "jdenticon": "^2.1.0",
     "jpeg-js": "^0.3.3",
-    "jquery": "^3.4.1",
+    "jquery": "^3.5.0",
     "jquery-ui": "^1.12.1",
     "jsdom": "^11.6.2",
     "keypress": "^0.2.1",
