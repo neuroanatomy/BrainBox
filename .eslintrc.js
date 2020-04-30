@@ -4,9 +4,9 @@ module.exports = {
         "es6": true,
         "node": true
     },
-    "standard": {
-        "env": ["mocha"]
-    },
+    // "standard": {
+    //     "env": ["mocha"]
+    // },
     "extends": "eslint:recommended",
     "parserOptions": {
         "sourceType": "module",
@@ -72,7 +72,7 @@ module.exports = {
         "id-blacklist": "error",
         "id-length": "off",
         "id-match": "error",
-        "indent": "off",
+        "indent": ["error", 2],
         "indent-legacy": "off",
         "init-declarations": "off",
         "jsx-quotes": "error",
@@ -174,12 +174,7 @@ module.exports = {
         "no-shadow": "error",
         "no-shadow-restricted-names": "error",
         "no-spaced-func": "error",
-        "no-sync": [
-            "error",
-            {
-                "allowAtRootLevel": true
-            }
-        ],
+        "no-sync": "off",
         "no-tabs": "error",
         "no-template-curly-in-string": "error",
         "no-ternary": "off",

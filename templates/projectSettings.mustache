@@ -11,7 +11,7 @@
 
 <body>
 
-<div style="width:100%;height:100%;display:flex;flex-direction:column">
+<div id="app" style="width:100%;height:100%;display:flex;flex-direction:column">
     
     <!-- Header (fixed height) -->
     <div style="flex:0 0 64px">
@@ -32,103 +32,188 @@
             <a href="/" style="text-decoration:none">
                 <img style="height:56px;vertical-align:middle" alt="brainbox logo" src="/img/brainbox-logo-small_noFont.svg"/>
             </a>
-            <span style="font-family: Roboto, sans-serif; font-size: 36px; font-weight:100;vertical-align:middle" id="projectName" contentEditable=true class="noEmptyWithPlaceholder" placeholder="Enter a project name">
-            </span>
+            <editable
+                :content="projectInfo.name"
+                @update="projectInfo.name=$event"
+                style="display:inline-block;width:auto;text-align:left;font-family:Roboto,sans-serif;font-size:36px;font-weight:100;vertical-align:middle"
+                class="noEmptyWithPlaceholder"
+                placeholder="Enter a project name"
+            ></editable>
         </div>
     </div>
     
     <!-- Content (variable height) -->
     <div id="content" style="flex:1 0 auto;justify-content:center;position:relative">
-    
         <!-- to center -->
         <div id="centeringDiv">
+            <div id="projImage">
+                <a href="/project/{{projectShortname}}"><svg width="100%" height="100%"></svg></a>
+            </div>
+            
+            <div id="projDescription">
+                <a href="/project/{{projectShortname}}"><h1>{{projectShortname}}</h1></a>
+                <editable
+                    :content="projectInfo.url"
+                    @update="projectInfo.url=$event"
+                    style="display:block;text-align:center"
+                    class="noEmptyWithPlaceholder"
+                    placeholder="Enter a project website"
+                ></editable>
+                <p>by <a href="/user/{{owner}}">{{owner}}</a></p>
+                <editable
+                    :content="projectInfo.description"
+                    @update="projectInfo.description=$event"
+                    style="display:block;text-align:center"
+                    class="noEmptyWithPlaceholder"
+                    placeholder="Enter a project description"
+                ></editable>
+                <p><span id="numCollaborators">[[projectInfo.collaborators.list.length]]</span> Collaborators</p>
+                <p><span id="numAnnotations">[[projectInfo.annotations.list.length]]</span> Annotations</p>
+                <p><span id="numFiles">[[projectInfo.files.list.length]]</span> MRI Files</p>
 
-                <div id="projImage">
-                    <a href="/project/{{projectShortname}}"><svg width="100%" height="100%"></svg></a>
+                <!-- Save or Cancel -->
+                <div style="display:block;margin:0 auto;width:200px">
+                    <h2 id="saveChanges" class="pushButton">Save Changes</h2>
+                    <h2 id="deleteProject" class="pushButton">Delete Project</h2>
+                    <h2 id="goToProject" class="pushButton">Go to Project</h2>
+                    <p id="saveFeedback"></p>
+                </div>
+            </div>
+            
+            <div id="projTable">
+                <!-- Tab Content 1: Access -->
+                <h2 class="selection-header">Access</h2>
+                <table id="access" class="tabContent" style="padding:10px;display:table">
+                    <thead>
+                        <tr>
+                            <th>Nickname</th>
+                            <th>Name</th>
+                            <th>Collaborators</th>
+                            <th>Annotations</th>
+                            <th>MRI Files</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="(val,ind) in projectInfo.collaborators.list">
+                            <td>
+                                <autocomplete v-model="val.userID" @change="updateName(ind, $event)" class="userID noEmptyWithPlaceholder" placeholder="User GitHub ID"></autocomplete>
+                            </td>
+                            <td>
+                                <autocomplete v-model="val.name" @change="updateName(ind, $event)" class="userName noEmptyWithPlaceholder" placeholder="User Name"></autocomplete>
+                            </td>
+                            <td>
+                                <div
+                                    class='access'
+                                    @input="handleAccess($event,val.access,'collaborators')"
+                                    :data-level='["none","view","edit","add","remove"].indexOf(val.access.collaborators)'
+                                >
+                                    <span class='view' title='view collaborators'></span>
+                                    <span class='edit' title='edit collaborators'></span>
+                                    <span class='add' title='add collaborators'></span>
+                                    <span class='remove' title='remove collaborators'></span>
+                                </div>
+                            </td>
+                            <td>
+                                <div
+                                    class='access'
+                                    @input="handleAccess($event,val.access,'annotations')"
+                                    :data-level='["none","view","edit","add","remove"].indexOf(val.access.annotations)'
+                                >
+                                    <span class='view' title='view collaborators'></span>
+                                    <span class='edit' title='edit collaborators'></span>
+                                    <span class='add' title='add collaborators'></span>
+                                    <span class='remove' title='remove collaborators'></span>
+                                </div>
+                            </td>
+                            <td>
+                                <div
+                                    class='access'
+                                    @input="handleAccess($event,val.access,'files')"
+                                    :data-level='["none","view","edit","add","remove"].indexOf(val.access.files)'
+                                >
+                                    <span class='view' title='view collaborators'></span>
+                                    <span class='edit' title='edit collaborators'></span>
+                                    <span class='add' title='add collaborators'></span>
+                                    <span class='remove' title='remove collaborators'></span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div style="text-align:right">
+                    <img id="addCollaborator" class="button" style="width:20px; height:20px; margin:8 2 0 0" title="add collaborator" alt="add collaborator" src="/img/plus-square.svg"/>
+                    <img id="removeCollaborator" class="button" style="width:20px; height:20px; margin:8 2 0 0" title="remove collaborator" alt="remove collaborator" src="/img/minus-square.svg"/>
                 </div>
                 
-                <div id="projDescription">
-                    <a href="/project/{{projectShortname}}"><h1>{{projectShortname}}</h1></a>
-                    <h2 id="url" contentEditable=true class="noEmptyWithPlaceholder" placeholder="Enter a project website"></h2>
-                    <p>by <a href="/user/{{owner}}">{{owner}}</a></p>
-                    <p id="description" contentEditable=true class="noEmptyWithPlaceholder" placeholder="Enter a project description"></p>
-                    <p><span id="numCollaborators"></span> Collaborators</p>
-                    <p><span id="numAnnotations"></span> Annotations</p>
-                    <p><span id="numFiles"></span> MRI Files</p>
-
-                    <!-- Save or Cancel -->
-                    <div style="display:block;margin:0 auto;width:200px">
-                        <h2 id="saveChanges" class="pushButton">Save Changes</h2>
-                        <h2 id="deleteProject" class="pushButton">Delete Project</h2>
-                        <h2 id="goToProject" class="pushButton">Go to Project</h2>
-                        <p id="saveFeedback"></p>
-                    </div>
-                </div>
                 
-                <div id="projTable">
-
-                            <!-- Tab Content 1: Access -->
-                            <h2 class="selection-header">Access</h2>
-                            <table id="access" class="tabContent" style="padding:10px;display:table">
-                                <thead>
-                                    <tr>
-                                        <th>Nickname</th>
-                                        <th>Name</th>
-                                        <th>Collaborators</th>
-                                        <th>Annotations</th>
-                                        <th>MRI Files</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                </tbody>
-                            </table>
-                            <div style="text-align:right">
-                                <img id="addCollaborator" class="button" style="width:20px; height:20px; margin:8 2 0 0" title="add collaborator" alt="add collaborator" src="/img/plus-square.svg"/>
-                                <img id="removeCollaborator" class="button" style="width:20px; height:20px; margin:8 2 0 0" title="remove collaborator" alt="remove collaborator" src="/img/minus-square.svg"/>
-                            </div>
-                            
-                            
-                            <!-- Tab Content 2: Annotations -->
-                            <h2 class="selection-header">Annotations</h2>
-                            <table id="annotations" class="tabContent" style="padding:10px">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Type</th>
-                                        <th>Value</th>
-                                        <th>Display</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                </tbody>
-                            </table>
-                            <div style="text-align:right">
-                                <img id="addAnnotation" class="button" style="width:20px; height:20px; margin:8 2 0 0" title="add annotation" alt="add annotation" src="/img/plus-square.svg"/>
-                                <img id="removeAnnotation" class="button" style="width:20px; height:20px; margin:8 2 0 0" title="remove annotation" alt="remove annotation" src="/img/minus-square.svg"/>
-                            </div>
-
-                            <!-- Tab Content 3: MRIs -->
-                            <h2 class="selection-header">MRI Files</h2>
-                            <table id="MRIFiles" class="tabContent" style="padding:10px">
-                                <thead>
-                                    <tr>
-                                        <th>URL</th>
-                                        <th>Name</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                </tbody>
-                            </table>
-                            <div style="text-align:right">
-                                <img id="importFiles" class="button" style="width:20px; height:20px; margin:8 2 0 0" src="/img/upload-square.svg" title="upload csv" alt="upload csv"/>
-                                <img id="exportFiles" class="button" style="width:20px; height:20px; margin:8 2 0 0" src="/img/download-square.svg" title="download csv" alt="download csv"/>
-                                <img id="addFile" class="button" style="width:20px; height:20px; margin:8 2 0 0" src="/img/plus-square.svg" title="add new url entry" alt="add new url entry"/>
-                                <img id="removeFile" class="button" style="width:20px; height:20px; margin:8 2 0 0" src="/img/minus-square.svg" title="remove url entry" alt="remove url entry"/>
-                            </div>
+                <!-- Tab Content 2: Annotations -->
+                <h2 class="selection-header">Annotations</h2>
+                <table id="annotations" class="tabContent" style="padding:10px">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Value</th>
+                            <th align="center">Display</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="val in projectInfo.annotations.list">
+                            <td>
+                                <editable :content="val.name" @update="val.name=$event" class="noEmptyWithPlaceholder" placeholder="Enter annotation name"></editable>
+                            </td>
+                            <td>
+                                <select class='mui-select' v-model="val.type">
+                                    <option v-for="opt in annotationType">[[opt]]</option>
+                                </select>
+                            </td>
+                            <td>
+                                <select v-if="val.type==='volume'" class="mui-select" v-model="val.values">
+                                    <option v-for="opt in labelSets" :value=opt.source>[[opt.name]]</option>
+                                </select>
+                                <editable v-if="val.type==='survey'" :content="val.values" @update="val.values=$event" class="noEmptyWithPlaceholder" placeholder="Enter annotation name"></editable>
+                                <editable v-if="val.type==='multiple choices'" :content="val.values" @update="val.values=$event" class="noEmptyWithPlaceholder" placeholder="Enter annotation name"></editable>
+                            </td>
+                            <td align="center" style="vertical-align:middle">
+                                <div class="display" @input="handleCheck($event,val,'display')" :data-check="val.display"></div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div style="text-align:right">
+                    <img id="addAnnotation" class="button" style="width:20px; height:20px; margin:8 2 0 0" title="add annotation" alt="add annotation" src="/img/plus-square.svg"/>
+                    <img id="removeAnnotation" class="button" style="width:20px; height:20px; margin:8 2 0 0" title="remove annotation" alt="remove annotation" src="/img/minus-square.svg"/>
                 </div>
+
+                <!-- Tab Content 3: MRIs -->
+                <h2 class="selection-header">MRI Files</h2>
+                <table id="files" class="tabContent" style="padding:10px">
+                    <thead>
+                        <tr>
+                            <th>URL</th>
+                            <th>Name</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="val in projectInfo.files.list">
+                            <td>
+                                <editable :content="val.source" @update="val.source=$event" class='noEmptyWithPlaceholder' placeholder="Enter data file URL"></editable>
+                            </td>
+                            <td>
+                                <editable :content="val.name" @update="val.name=$event" class='noEmptyWithPlaceholder' placeholder="Enter data file name"></editable>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div style="text-align:right">
+                    <img id="importFiles" class="button" style="width:20px; height:20px; margin:8 2 0 0" src="/img/upload-square.svg" title="upload csv" alt="upload csv"/>
+                    <img id="exportFiles" class="button" style="width:20px; height:20px; margin:8 2 0 0" src="/img/download-square.svg" title="download csv" alt="download csv"/>
+                    <img id="addFile" class="button" style="width:20px; height:20px; margin:8 2 0 0" src="/img/plus-square.svg" title="add new url entry" alt="add new url entry"/>
+                    <img id="removeFile" class="button" style="width:20px; height:20px; margin:8 2 0 0" src="/img/minus-square.svg" title="remove url entry" alt="remove url entry"/>
+                </div>
+            </div>
         </div>
         <!-- end of centering div -->
-
     </div>
     <!-- End Content -->
     
@@ -174,13 +259,90 @@
     
 </div>
 
-<script src="/lib/atlasmaker.js"></script>
-<script src="/lib/brainbox.js"></script>
 <script>
 var projectInfo={{{projectInfo}}};
 var projectShortname = "{{{projectShortname}}}";
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@^2.0.0/dist/vue.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.css" />
+
+<style>
+    input, textarea {
+        background: none;
+        border: none;
+        width: 100%;
+    }
+    .awesomplete > ul {
+        background: #222
+    }
+    .awesomplete > ul:before {
+        background: none;
+        border: none;
+    }
+    .awesomplete mark,
+    .awesomplete li[aria-selected="true"] mark {
+        background: #555;
+    }
+</style>
+<script>
+// thank you https://codepen.io/supraniti/pen/Lypobx !
+Vue.component('editable',{
+  template:'<div contenteditable="true" @input="update"></div>',
+  props:['content'],
+  mounted:function(){
+    this.$el.innerText = this.content;
+  },
+  methods:{
+    update:function(event){
+      this.$emit('update',event.target.innerText);
+    }
+  }
+});
+</script>
+
+<script>
+Vue.component('autocomplete', {
+  data () { return { list: [] } },
+  props: ['value'],
+  mounted () {
+    let self = this;
+    this.$nextTick(() => {
+        const input = self.$refs.awesomplete;
+        const aw = new Awesomplete(input, { minChars: 3, list: this.list });
+        input.addEventListener('input', (e) => {
+            if(input.value.length >= 3) {
+                fetch(`/api/userNameQuery?q=${input.value}`)
+                .then((res) => {return res.json()})
+                .then((list) => {
+                    const inputClass = input.classList.contains("userID")?"userID":"userName";
+                    const userIDs = list.map((v) => {
+                        return {
+                            label: (inputClass === "userID"?v.nickname:v.name),
+                            value: v.nickname
+                        };
+                    });
+                    aw.list = userIDs;
+                    aw.evaluate();
+                });
+            }
+        });
+        input.addEventListener('awesomplete-select', (e) => {
+            const self = this;
+            input.value = e.text.value;
+            self.$emit('change', e);
+        })
+    })
+  },
+  template: `<input ref="awesomplete" v-bind:value="value" v-on:input="$emit('input',$event.target.value)"/>`
+});
+</script>
+
 <script src="/js/project-settings-page.js"></script>
+
+<script src="/lib/atlasmaker.js"></script>
+<script src="/lib/brainbox.js"></script>
 <script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
     (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),

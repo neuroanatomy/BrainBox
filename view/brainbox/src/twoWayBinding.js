@@ -6,7 +6,7 @@ import DOMPurify from 'dompurify';
  */
 
 export const date_format = function(e, d) {
-    e.get(0).textContent = new Date(d).toLocaleDateString()
+  e.get(0).textContent = new Date(d).toLocaleDateString();
 };
 
 /*
@@ -33,35 +33,35 @@ export const date_format = function(e, d) {
  * @returns {object} Bound object
  */
 export function bind2(proxy, original, path, el, format, parse) {
-    var i;
-    var k=path.split(".");
-    var o=original;
-    for(i=0; i<k.length-1; i++) { o=o[k[i]]; }
-    Object.defineProperty(proxy, path, {
-        get: function() {
-            var v;
-            if(parse) {
-                v=parse(el, o[k[i]]);
-            } else {
-                v=el.get(0).textContent;
-            }
-            o[k[i]]=JSON.parse(DOMPurify.sanitize(JSON.stringify(v))||'""');
+  var i;
+  var k=path.split(".");
+  var o=original;
+  for(i=0; i<k.length-1; i++) { o=o[k[i]]; }
+  Object.defineProperty(proxy, path, {
+    get: function() {
+      var v;
+      if(parse) {
+        v=parse(el, o[k[i]]);
+      } else {
+        v=el.get(0).textContent;
+      }
+      o[k[i]]=JSON.parse(DOMPurify.sanitize(JSON.stringify(v))||'""');
 
-            return o[k[i]];
-        },
-        set: function(v) {
-            v=JSON.parse(DOMPurify.sanitize(JSON.stringify(v))||'""');
-            o[k[i]]=v;
-            if(format) {
-                format(el, v);
-            } else {
-                el.get(0).textContent = v;
-            }
-        },
-        configurable: true,
-        enumerable: true
-    });
-    proxy[path]=o[k[i]];
+      return o[k[i]];
+    },
+    set: function(v) {
+      v=JSON.parse(DOMPurify.sanitize(JSON.stringify(v))||'""');
+      o[k[i]]=v;
+      if(format) {
+        format(el, v);
+      } else {
+        el.get(0).textContent = v;
+      }
+    },
+    configurable: true,
+    enumerable: true
+  });
+  proxy[path]=o[k[i]];
 }
 
 /**
@@ -75,27 +75,27 @@ export function bind2(proxy, original, path, el, format, parse) {
  * @returns {object} Sanitised result
  */
 export function bind1(proxy, original, path, el, format) {
-    var i;
-    var k=path.split(".");
-    var o=original;
-    for(i=0; i<k.length-1; i++) { o=o[k[i]]; }
-    Object.defineProperty(proxy, path, {
-        get: function() {
-            return DOMPurify.sanitize(o[k[i]]);
-        },
-        set: function(v) {
-            v=DOMPurify.sanitize(v);
-            o[k[i]]=v;
-            if(format) {
-                format(el, v);
-            } else {
-                el.get(0).textContent = v;
-            }
-        },
-        configurable: true,
-        enumerable: true
-    });
-    proxy[path]=o[k[i]];
+  var i;
+  var k=path.split(".");
+  var o=original;
+  for(i=0; i<k.length-1; i++) { o=o[k[i]]; }
+  Object.defineProperty(proxy, path, {
+    get: function() {
+      return DOMPurify.sanitize(o[k[i]]);
+    },
+    set: function(v) {
+      v=DOMPurify.sanitize(v);
+      o[k[i]]=v;
+      if(format) {
+        format(el, v);
+      } else {
+        el.get(0).textContent = v;
+      }
+    },
+    configurable: true,
+    enumerable: true
+  });
+  proxy[path]=o[k[i]];
 }
 
 /**
@@ -106,7 +106,7 @@ export function bind1(proxy, original, path, el, format) {
  * @returns {void}
  */
 export function unbind2(proxy, path) {
-    delete proxy[path];
+  delete proxy[path];
 }
 
 /**
@@ -120,30 +120,30 @@ export function unbind2(proxy, path) {
  * @returns {void}
  */
 export function resetBindingProxy(param, stored) {
-    var i, j;
-    var k = 0;
-    var flag = true;
-    var o;
-    var ot = param.objTemplate;
+  var i, j;
+  var k = 0;
+  var flag = true;
+  var o;
+  var ot = param.objTemplate;
 
-    while(flag) {
-        for(i=0; i<ot.length; i++) {
-            var path = ot[i].path;
-            var keys = path.split(".");
-            o = stored;
-            for(j=0; j<keys.length; j++) {
-                if(keys[j] === '#') {
-                    o=o[k];
-                    if(typeof o === 'undefined') {
-                        return;
-                    }
-                } else {
-                    o=o[keys[j]];
-                }
-            }
-            param.info_proxy[path.replace('#', k)] = o;
+  while(flag) {
+    for(i=0; i<ot.length; i++) {
+      var path = ot[i].path;
+      var keys = path.split(".");
+      o = stored;
+      for(j=0; j<keys.length; j++) {
+        if(keys[j] === '#') {
+          o=o[k];
+          if(typeof o === 'undefined') {
+            return;
+          }
+        } else {
+          o=o[keys[j]];
         }
-        k++;
+      }
+      param.infoProxy[path.replace('#', k)] = o;
     }
+    k++;
+  }
 }
 

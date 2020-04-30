@@ -15,31 +15,55 @@ tr.selected{
 }
 td {
     word-break: break-word;
+    vertical-align: top;
 }
-#MRIFiles, #annotations, #access {
+#files, #annotations, #access {
     color:white;
     text-align:left;
     width:100%;
     border-collapse:collapse;
 }
-#MRIFiles tr, #annotations tr, #access tr {
+#files tr, #annotations tr, #access tr {
     margin:0px 4px;
 }
-#MRIFiles, #annotations, #access,
-#MRIFiles th, #annotations th, #access th {
+#files, #annotations, #access,
+#files th, #annotations th, #access th {
     border-bottom:thin solid white;
 }
-#MRIFiles a, #annotations a, #access a {
+#files a, #annotations a, #access a {
     text-decoration:none;
 }
 
 /************************************ checkbox for display ******************************/ 
-[data-check="0"] .check:before {
-    background-image: url("/img/check.svg");
+/* .display[data-check="false"]:before {
+    background-image: url("../img/check.svg");
 }
 
-[data-check="1"] .check:before {
-    background-image: url("/img/checked.svg");
+.display[data-check="true"]:before {
+    background-image: url("../img/checked.svg");
+} */
+.display {
+    text-decoration:none;
+    width:9px;
+    height:9px;
+    border-radius:50%;
+    position:relative;
+}
+.display[data-check="false"] {
+    background: none;
+}
+.display[data-check="true"] {
+    background: white;
+}
+.display:before {
+    content: "";
+    position: absolute;
+    width:11px;
+    height:11px;
+    top:-2px;
+    left:-2px;
+    border: 1px solid white;
+    border-radius:50%;
 }
 
 /******************************** resizable layout ******************************/
