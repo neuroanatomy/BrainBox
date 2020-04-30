@@ -1,5 +1,5 @@
 window.say_hi = (cmd) => {
-    if(cmd === "help") { return "Greets you"; }
+  if(cmd === "help") { return "Greets you"; }
 
-    console.log("hi!");
-}
+  console.log("hi!");
+};

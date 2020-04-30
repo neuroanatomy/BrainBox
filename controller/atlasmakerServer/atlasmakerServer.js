@@ -703,7 +703,7 @@ const atlasmakerServer = (function() {
         }
         left = n.x;
         right = n.x;
-        y = n.y;
+        ({y} = n);
         while (left-1>=0 && vol[me._sliceXYZ2index(left-1, y, z, User)] === bval) {
           left--;
         }
@@ -956,6 +956,7 @@ const atlasmakerServer = (function() {
         //var sizeof_hdr = h.sizeof_hdr;
         mri.dim = [h.dim[1], h.dim[2], h.dim[3]];
         mri.pixdim = [h.pixdim[1], h.pixdim[2], h.pixdim[3]];
+        // eslint-disable-next-line camelcase
         mri.vox_offset = h.vox_offset;
 
         // nrrd-compatible header, computes space directions and space origin
@@ -1344,6 +1345,7 @@ const atlasmakerServer = (function() {
       mri.hdr = niihdr;
       mri.hdr.writeUInt16LE(datatype, 70, 2); // set datatype to 2:unsigned char (8 bits/voxel)
       mri.hdr.writeFloatLE(vox_offset, 108, 4); // set voxel_offset to 352 (minimum size of a nii header)
+      // eslint-disable-next-line camelcase
       mri.hdrSz = vox_offset;
 
       // zero the data
@@ -2053,7 +2055,7 @@ const atlasmakerServer = (function() {
         User = data.user;
         User.uid = data.uid;
       } else {
-        User = sourceUS.User;
+        ({User} = sourceUS);
         if(data.description === "sendAtlas") {
           // receive an atlas from the user
           // 1. Check if the atlas the user is requesting has not been loaded
@@ -2187,6 +2189,7 @@ const atlasmakerServer = (function() {
           // tracer.log(ch, key);
           if(key.name === 'c' && key.ctrl) {
             tracer.log("Exit.");
+            // eslint-disable-next-line no-process-exit
             process.exit();
           }
           if(key.name === 'escape') {
