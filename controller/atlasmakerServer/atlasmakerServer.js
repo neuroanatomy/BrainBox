@@ -18,7 +18,8 @@ const whitelist = JSON.parse(fs.readFileSync(path.join(__dirname, "whitelist.jso
 const blacklist = JSON.parse(fs.readFileSync(path.join(__dirname, "blacklist.json")));
 
 // var http = require('http');
-const WebSocketServer = require('ws').Server;
+const WebSocket = require('ws');
+const WebSocketServer = WebSocket.Server;
 var websocketserver;
 
 const createDOMPurify = require('dompurify');
@@ -47,7 +48,7 @@ const atlasmakerServer = (function() {
     Atlases: [],
     Brains: [],
     US: [],
-    uidcounter: 1,
+    uidcounter: 0,
     backupInterval: 15*60*1000, // 15 minutes in milliseconds
     timeMarkInterval: 60*60*1000, // 60 minutes in milliseconds
     enterCommands: false,
@@ -134,7 +135,7 @@ const atlasmakerServer = (function() {
       for(const i in me.US) {
         if({}.hasOwnProperty.call(me.US, i)) {
           if(typeof me.US[i].User === 'undefined') {
-            tracer.log(`WARNING: When counting the number of users connected to the atlas, user uid ${i} was not defined`);
+            tracer.log(`WARNING: When counting the number of users connected to the atlas, user ${me.US[i].uid} was not defined`);
           } else if(typeof me.US[i].User.dirname === 'undefined') {
             tracer.log(`WARNING: For user uid ${i} dirname is unknown`);
           } else if(typeof me.US[i].User.atlasFilename === 'undefined') {
@@ -157,7 +158,7 @@ const atlasmakerServer = (function() {
       for(const i in me.US) {
         if({}.hasOwnProperty.call(me.US, i)) {
           if(typeof me.US[i].User === 'undefined') {
-            tracer.log(`WARNING: When counting the number of users connected to MRI, user uid ${i} was not defined`);
+            tracer.log(`WARNING: When counting the number of users connected to MRI, user ${me.US[i].uid} was not defined`);
             continue;
           }
           if(typeof me.US[i].User.dirname === 'undefined') {
@@ -356,9 +357,13 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       const atlas = me.Atlases[iAtlas];
       try {
         await me._saveAtlasVoxelData(atlas);
+      } catch (err) {
+        throw new Error("Can't save atlas voxel data", err);
+      }
+      try {
         await me._saveAtlasVectorialData(atlas);
       } catch (err) {
-        throw new Error(err);
+        throw new Error("Can't save atlas vectorial data", err);
       }
     },
 
@@ -374,8 +379,23 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       // if it hasn't return
       // if the atlas is not present, it may have been deleted by the user.
       // remove it from the Atlases array and return
-      const mri = await db.get('mri').findOne({source: atlas.source, backup: { $exists: 0 }}, { _id: 0 });
-      delete mri._id;
+      let mri;
+      try {
+        mri = await db.get('mri').findOne({source: atlas.source, backup: { $exists: 0 }}, { _id: 0 });
+      } catch (err) {
+        throw new Error("Can't find entry for atlas voxel data in DB", err);
+      }
+
+      if(mri === null) {
+        tracer.log(`WARNING: There's not DB entry for MRI with source ${atlas.source}`);
+
+        return;
+      }
+
+      if({}.hasOwnProperty.call(mri, "_id")) {
+        delete mri._id;
+      }
+
       let index = -1;
       for(let i=0; i<mri.mri.atlas.length; i++) {
         if(mri.mri.atlas[i].filename === atlas.filename) {
@@ -383,6 +403,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           break;
         }
       }
+
       if(index === -1) {
         // atlas was removed from MRI object, return
         // const iAtlas = me.indexOfAtlasAtPath(atlas.dirname, atlas.filename);
@@ -394,7 +415,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       if(typeof mri.mri.atlas[index].vectorial !== "undefined") {
         const patch = jsonpatch.compare(mri.mri.atlas[index].vectorial, vectorial);
         if (patch.length === 0) {
-          console.log("No vectorial atlas change, no save");
+          console.log("INFO: No vectorial atlas change, no save");
 
           return;
         }
@@ -402,9 +423,12 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
 
       // if has changed: update it and save to DB
       mri.mri.atlas[index].vectorial = vectorial;
-      await db.get('mri').update({ source: atlas.source }, { $set: { backup: true }}, { multi: true });
-      await db.get('mri').insert(mri);
-      console.log("Vectorial atlas updated");
+      try {
+        await db.get('mri').update({ source: atlas.source }, { $set: { backup: true }}, { multi: true });
+        await db.get('mri').insert(mri);
+      } catch (err) {
+        throw new Error("Can't log update and save to DB");
+      }
     },
 
     /**
@@ -430,7 +454,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         sum += atlas.data[i];
       }
       if(sum === atlas.sum) {
-        console.log("No voxel atlas change, no save");
+        console.log("INFO: No voxel atlas change, no save");
 
         return;
       }
@@ -493,8 +517,6 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       } catch (err) {
         throw new Error("Logging atlas backup in DB failed");
       }
-
-      console.log("Atlas saved successfully");
     },
 
     broadcastPaintVolumeMessage: function (msg, User) {
@@ -1801,21 +1823,21 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         });
     },
     broadcastMessage: function (msg, uid) {
-      try {
-        let n = 0;
-        for(const i in me.US) {
-          if({}.hasOwnProperty.call(me.US, i)) {
-            if(me.US[i].uid !== uid ) {
+      let n = 0;
+      for(const i in me.US) {
+        if({}.hasOwnProperty.call(me.US, i)) {
+          if(me.US[i].uid !== uid && me.US[i].socket.readyState === WebSocket.OPEN) {
+            try {
               me.US[i].socket.send(JSON.stringify(msg));
               n += 1;
+            } catch (ex) {
+              tracer.log(`WARNING: Unable to broadcast message from ${uid} to ${me.US[i].uid}`, ex, msg);
             }
           }
         }
-        if(me.debug) {
-          tracer.log("    message broadcasted to " + n + " users", msg);
-        }
-      } catch (ex) {
-        tracer.log("ERROR: Unable to broadcast message", ex, msg);
+      }
+      if(me.debug) {
+        tracer.log("    message broadcasted to " + n + " users", msg);
       }
     },
     receiveSaveMessage: async function (data) {
@@ -1945,15 +1967,21 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         }
       }
     },
-    unloadUnusedAtlases: function () {
+    unloadUnusedAtlases: async function () {
+      const results = [];
       for(const i in me.Atlases) {
         if({}.hasOwnProperty.call(me.Atlases, i)) {
           const sum = me.numberOfUsersConnectedToAtlas(me.Atlases[i].dirname, me.Atlases[i].filename);
           if(sum === 0) {
-            tracer.log("    No user connected to Atlas " + me.Atlases[i].dirname + me.Atlases[i].filename + ": unloading it");
-            me.unloadAtlas(me.Atlases[i].dirname, me.Atlases[i].filename);
+            tracer.log("No user connected to Atlas " + me.Atlases[i].dirname + me.Atlases[i].filename + ": unloading it");
+            results.push(me.unloadAtlas(me.Atlases[i].dirname, me.Atlases[i].filename));
           }
         }
+      }
+      try {
+        await Promise.all(results);
+      } catch(err) {
+        throw new Error("Can't unload atlases", err);
       }
     },
     _sendAtlasVoxelDataToUser: function (atlasdata, userSocket, flagCompress) {
@@ -1961,6 +1989,12 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         zlib.gzip(atlasdata, function (err, atlasdatagz) {
           if(err) {
             console.error("ERROR:", err);
+
+            return;
+          }
+          if(userSocket.readyState !== WebSocket.OPEN) {
+            const targetUS = me.getUserFromSocket(userSocket);
+            tracer.log(`WARNING: Not broadcastinig to user ${targetUS.uid} because it's disconnecting`);
 
             return;
           }
@@ -2112,6 +2146,21 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       return pr;
     },
 
+    _validateUserAtlas: function (atlas) {
+      let validationOK = false;
+      if(typeof atlas.name === "undefined") {
+        tracer.log("WARNING: atlas does not have a filename");
+      } else if(typeof atlas.dirname === "undefined") {
+        tracer.log("WARNING: atlas does not have a directory name");
+      } else if(typeof atlas.source === "undefined") {
+        tracer.log("WARNING: atlas does not have a source URL");
+      } else {
+        validationOK = true;
+      }
+
+      return validationOK;
+    },
+
     /**
          * @func addAtlas
          * @description An atlas is obtained, and added to the me.Atlases[] array if it
@@ -2127,7 +2176,10 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         dim: User.dim,
         source: User.source
       };
-      tracer.log("    User requests atlas " + atlas.filename + " from " + atlas.dirname, atlas.specimen);
+      if(me._validateUserAtlas(atlas) === false) {
+        tracer.log("WARNING: insufficient information provided for adding atlas", atlas);
+      }
+      tracer.log("User requests atlas " + atlas.filename + " from " + atlas.dirname, atlas.specimen);
 
       const pr = new Promise(function (resolve, reject) {
         me.loadAtlas(User)
@@ -2197,6 +2249,12 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
             }
           }
 
+          if(typeof User === "undefined") {
+            tracer.log(`WARNING: 'User' structure is not defined for ${data.uid}`);
+
+            return;
+          }
+
           const {iAtlas, atlasLoadedFlag} = me._findAtlas({dirname: User.dirname, atlasFilename: User.atlasFilename});
           User.iAtlas = iAtlas; // value i if it was found, or last available if it wasn't
 
@@ -2234,9 +2292,9 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       // display the name in the log
       if({}.hasOwnProperty.call(User, 'username')) {
         if(typeof sourceUS.User === 'undefined') {
-          tracer.log("    No User yet for id " + data.uid);
+          tracer.log(`No "User" data yet received for id ${data.uid}`);
         } else if(!{}.hasOwnProperty.call(sourceUS.User, 'username')) {
-          tracer.log("    User " + User.username + ", id " + data.uid + " logged in");
+          tracer.log(`User ${User.username} (${data.uid}) logged in`);
         }
       }
       if({}.hasOwnProperty.call(sourceUS, 'User') === false) {
@@ -2419,7 +2477,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         me.receiveAtlasFromUserMessage(data, ws); // sender);
         break;
       case "echo":
-        tracer.log("ECHO: '" + data.msg + "' from user " + data.username);
+        tracer.log(`ECHO: "${data.msg}" from user ${data.username} (${data.uid})`);
         break;
       case "userNameQuery":
         me.queryUserName(data)
@@ -2552,7 +2610,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       // handle broadcast of messages
       me._handleBroadcastWebSocketMessage({data, sourceUS});
     },
-    _handleWebSocketClose: function ({ws}) {
+    _disconnectUser: async function ({ws}) {
       let sum;
       let nconnected = me.US.filter(function(o) { return typeof o !== 'undefined'; }).length;
       const sourceUS = me.getUserFromSocket(ws);
@@ -2570,9 +2628,9 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         // count how many users remain connected to the MRI after user leaves, remove current user
         sum = me.numberOfUsersConnectedToMRI(sourceUS.User.dirname + sourceUS.User.mri) - 1;
         if(sum) {
-          tracer.log("    There remain " + sum + " users connected to that MRI");
+          tracer.log("There remain " + sum + " users connected to that MRI");
         } else {
-          tracer.log("    No user connected to MRI "
+          tracer.log("No user connected to MRI "
                                 + sourceUS.User.dirname
                                 + sourceUS.User.mri + ": unloading it", sourceUS.specimenName);
           me.unloadMRI(sourceUS.User.dirname + sourceUS.User.mri);
@@ -2581,18 +2639,22 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         // count how many users remain connected to the atlas after user leaves, remove current user
         sum = me.numberOfUsersConnectedToAtlas(sourceUS.User.dirname, sourceUS.User.atlasFilename) - 1;
         if(sum) {
-          tracer.log("    There remain " + sum + " users connected to that atlas");
+          tracer.log("There remain " + sum + " users connected to that atlas");
         } else {
-          tracer.log("    No user connected to atlas "
+          tracer.log("No user connected to atlas "
                                 + sourceUS.User.dirname
                                 + sourceUS.User.atlasFilename + ": unloading it", sourceUS.specimenName);
-          me.unloadAtlas(sourceUS.User.dirname, sourceUS.User.atlasFilename, sourceUS.specimenName);
+          try {
+            await me.unloadAtlas(sourceUS.User.dirname, sourceUS.User.atlasFilename, sourceUS.specimenName);
+          } catch (err) {
+            throw new Error("Can't unload atlas", err);
+          }
         }
       } else {
-        tracer.log("<ERROR: dirname was not defined>", sourceUS.User);
+        tracer.log("WARNING: dirname was not defined", sourceUS.User);
       }
 
-      // send user disconnect message to remaining users
+      // inform about the disconnect to the remaining users
       me.sendDisconnectMessage(sourceUS.uid);
 
       // remove the user from the list
@@ -2602,7 +2664,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       nconnected = me.US.filter(function(o) { return typeof o !== 'undefined'; }).length;
       tracer.log(`${nconnected} users remain connected`);
     },
-    _pushNewUser: function ({ws}) {
+    _connectNewUser: function ({ws}) {
       me.uidcounter += 1;
 
       const newUS = { "uid": "u" + me.uidcounter, "socket": ws };
@@ -2629,12 +2691,16 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
 
         return;
       }
-      me._pushNewUser({ws});
+      me._connectNewUser({ws});
       ws.on('message', function (msg) {
         me._handleWebSocketMessage({msg, ws});
       });
-      ws.on('close', function () {
-        me._handleWebSocketClose({ws});
+      ws.on('close', async function () {
+        try {
+          await me._disconnectUser({ws});
+        } catch (err) {
+          throw new Error("Can't disconnect user", err);
+        }
       });
     },
     initSocketConnection: function () {
