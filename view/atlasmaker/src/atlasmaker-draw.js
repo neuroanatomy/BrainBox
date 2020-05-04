@@ -45,7 +45,7 @@ export var AtlasMakerDraw = {
     me.canvas.height = me.brainH*me.brainHdim/me.brainWdim;
     me.brainOffcn.width = me.brainW;
     me.brainOffcn.height = me.brainH;
-    me.brainPix = me.brainOfftx.getImageData(0, 0, me.brainOffcn.width, me.brainOffcn.height);
+    // me.brainPix = me.brainOfftx.getImageData(0, 0, me.brainOffcn.width, me.brainOffcn.height); UNUSED!!
 
     if(me.User.slice === null || me.User.slice >= me.brainD-1) { me.User.slice = parseInt(me.brainD/2); }
 
@@ -101,56 +101,40 @@ export var AtlasMakerDraw = {
   },
 
   /**
-     * @function displayInformation
-     * @desc Overlays text and vectorial information on top of the annotation volume slice. Text information is added from the AtlasMakerWidget.info object. Vectorial information is displayed using svg format
-     * @returns {void}
-     */
+   * @function displayInformation
+   * @desc Overlays text and vectorial information on top of the annotation volume slice. Text information is added from the AtlasMakerWidget.info object. Vectorial information is displayed using svg format
+   * @returns {void}
+   */
   displayInformation: function () {
     var me = AtlasMakerWidget;
     var text = me.container.find("#text-layer");
     var vector = me.container.find("#vector-layer");
-    let i = 0;
-    let k, str;
+    let txtStr;
+    let svgStr;
 
     me.info.slice = me.User.slice;
 
-    str = "";
-    for(k in me.info) {
+    txtStr = "";
+    for(const k in me.info) {
       if (Object.prototype.hasOwnProperty.call(me.info, k)) {
-        str += "<span>" + k + ": " + me.info[k] + "</span><br/>";
+        txtStr += "<span>" + k + ": " + me.info[k] + "</span><br/>";
       }
     }
-    text.html(str);
-
-    str = "";
-    if(me.User.measureLength) {
-      var W = parseFloat($('#atlasmaker canvas').css('width'));
-      var w = parseFloat($('#atlasmaker canvas').attr('width'));
-      var zx = W/w;
-      var zy = zx*me.brainHdim/me.brainWdim;
-      var p = me.User.measureLength;
-      var str1 = "M" + zx*p[0].x + ", " + zy*p[0].y;
-      for(i = 1; i<p.length; i++) {
-        str1 += "L" + zx*p[i].x + ", " + zy*p[i].y;
-      }
-      str += [
-        "<circle fill='#00ff00' cx=" + zx*p[0].x + " cy=" + zy*p[0].y + " r=3 />",
-        "<path stroke='#00ff00' fill='none' d='" + str1 + "'/>",
-        (i>0)?"<circle fill='#00ff00' cx=" + zx*p[i-1].x + " cy=" + zy*p[i-1].y + " r=3 />":""
-      ].join("\n");
-    }
-    vector.html(str);
+    text.html(txtStr);
 
     // call registered displayInformation functions
+    svgStr = "";
     for(const func of me.displayInformationFunctions) {
-      func();
+      svgStr = func(svgStr);
     }
+    vector.html(svgStr);
   },
 
   /**
-     * @function drawImages
-     * @returns {void}
-     */
+   * Draw the current brain image, atlas image and information overlay
+   * @function drawImages
+   * @returns {void}
+   */
   drawImages: function () {
     var me = AtlasMakerWidget;
     if(me.brainImg.img
@@ -159,7 +143,7 @@ export var AtlasMakerDraw = {
       me.context.clearRect(0, 0, me.context.canvas.width, me.canvas.height);
       me.displayInformation();
 
-      me.nearestNeighbour(me.context);
+      // me.nearestNeighbour(me.context);
 
       me.context.drawImage(me.brainImg.img, 0, 0, me.brainW, me.brainH*me.brainHdim/me.brainWdim);
       me.drawAtlasImage(me.flagLoadingImg.view, me.flagLoadingImg.slice);

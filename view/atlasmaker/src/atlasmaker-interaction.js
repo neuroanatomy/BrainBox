@@ -41,7 +41,7 @@ export var AtlasMakerInteraction = {
   },
 
   //========================================================================================
-  // Local user interaction
+  // Generic UI functionalities
   //========================================================================================
   /**
      * @function changeToolbarDisplay
@@ -261,6 +261,7 @@ export var AtlasMakerInteraction = {
         .detach()
         .appendTo('body');
       me.resizeWindow();
+      me.drawImages();
 
       // configure toolbar for edit mode
       me.fullscreen = true;
@@ -278,14 +279,492 @@ export var AtlasMakerInteraction = {
         .detach()
         .appendTo('#stereotaxic');
       me.resizeWindow();
+      me.drawImages();
       me.fullscreen = false;
     }
   },
 
   /**
-     * @function render3D
+     * @function ontologyValueToColor
+     * @param {number} val Numerical value used for painting with the selected label
+     * @returns {array} Red, green and blue colors
+     */
+  ontologyValueToColor: function (val) {
+    var me = AtlasMakerWidget;
+    var c = [0, 0, 0];
+    var i;
+    if(val in me.ontology.valueToIndex) { i = me.ontology.valueToIndex[val]; }
+    if(typeof i !== "undefined") {
+      c = me.ontology.labels[i].color;
+    } else if(val) {
+      c = [255, 0, 0]; // unavailable labels are set to pure red
+    }
+
+    return c;
+  },
+  _voxelCoord2ScreenCoord: function (position) {
+    const me = AtlasMakerWidget;
+    const {view} = me.User;
+    let x, y;
+    let newSlice;
+    var {sdim} = me.User.s2v;
+    if(view === 'sag') {
+      x = position[1];
+      y = sdim[2] - 1 - position[2];
+      newSlice = position[0];
+    } else if(view === 'cor') {
+      x = position[0];
+      y = sdim[2] - 1 - position[2];
+      newSlice = position[1];
+    } else if (view === 'axi' ) {
+      x = position[0];
+      y = sdim[1] - 1 - position[1];
+      newSlice = position[2];
+    }
+
+    return [x, y, newSlice];
+  },
+
+  /**
+     * @function initCursor
      * @returns {void}
      */
+  initCursor: function () {
+    var me = AtlasMakerWidget;
+    var W = parseFloat($('#atlasmaker canvas').css('width'));
+    var H = parseFloat($('#atlasmaker canvas').css('height'));
+    var w = parseFloat($('#atlasmaker canvas').attr('width'));
+    var h = parseFloat($('#atlasmaker canvas').attr('height'));
+
+    me.Crsr.x = parseInt(w/2);
+    me.Crsr.y = parseInt(h/2);
+
+    me.Crsr.fx = parseInt(w/2)*(W/w);
+    me.Crsr.fy = parseInt(h/2)*(H/h);
+    $("#cursor").css({ left:(me.Crsr.x*(W/w)) + "px", top:(me.Crsr.y*(H/h)) + "px", width:me.User.penSize*(W/w), height:me.User.penSize*(H/h) });
+
+    if(me.flagUsePreciseCursor) {
+      if($("#finger").length === 0) {
+        me.container.append("<div id = 'finger'></div>");
+        $("#finger").addClass("touchDevice");
+
+        // configure touch events for tablets
+        $("#finger").on("touchstart", function(e) { me.touchstart(e); });
+        $("#finger").on("touchend", function(e) { me.touchend(e); });
+        $("#finger").on("touchmove", function(e) { me.touchmove(e); });
+
+        // turn off eventual touch events handled by canvas
+        me.canvas.ontouchstart = null;
+        me.canvas.ontouchmove = null;
+        me.canvas.ontouchend = null;
+      }
+      me.updateCursor();
+
+      $("#finger").css({ left:me.Crsr.fx + "px", top:me.Crsr.fy + "px" });
+    } else {
+      // remove precise cursor
+      $("#finger").remove();
+
+      // configure touch events for tablets
+      me.canvas.ontouchstart = me.touchstart;
+      me.canvas.ontouchmove = me.touchmove;
+      me.canvas.ontouchend = me.touchend;
+    }
+  },
+
+  /**
+     * @function updateCursor
+     * @returns {void}
+     */
+  updateCursor: function () {
+    var me = AtlasMakerWidget;
+    $("#finger").removeClass("move draw configure");
+    switch(me.Crsr.state) {
+    case "move": $("#finger").addClass("move"); break;
+    case "draw": $("#finger").addClass("draw"); break;
+    case "configure": $("#finger").addClass("configure"); break;
+    }
+  },
+  _eventCoords2ImageCoords: function(ex, ey) {
+    var W = parseFloat($('#atlasmaker canvas').css('width'));
+    var H = parseFloat($('#atlasmaker canvas').css('height'));
+    var w = parseFloat($('#atlasmaker canvas').attr('width'));
+    var h = parseFloat($('#atlasmaker canvas').attr('height'));
+    var o = $('#atlasmaker canvas').offset();
+    const wratio = w/W;
+    const hratio = h/H;
+    var x = parseInt((ex-o.left)*wratio);
+    var y = parseInt((ey-o.top)*hratio);
+
+    return {x, y, wratio, hratio};
+  },
+
+  // ====================================
+  //   Mouse, touch and keyboard events
+  // ====================================
+  /**
+     * @function mousedown
+     * @param {object} e Event object
+     * @returns {void}
+     */
+  mousedown: function (e) {
+    var me = AtlasMakerWidget;
+    e.preventDefault();
+    const {x, y} = me._eventCoords2ImageCoords(e.pageX, e.pageY);
+    // compensation for rectangular pixels: f(brainWdim, brainHdim)
+    me.down(x, Math.round(y*me.brainWdim/me.brainHdim));
+  },
+
+  /**
+     * @function mousemove
+     * @desc Handles a mouse move event. The x and y slice screens are computed from the pageX and pageY screen coordinates and dispatched to the generic move handler. The position and size of the cursor are adjusted.
+     * @param {object} e Event object
+     * @returns {void}
+     */
+  mousemove: function (e) {
+    var me = AtlasMakerWidget;
+    e.preventDefault();
+    const {x, y, wratio, hratio} = me._eventCoords2ImageCoords(e.pageX, e.pageY);
+
+    $("#cursor").css({
+      left: (x/wratio) + 'px',
+      top: (y/hratio) + 'px',
+      width: me.User.penSize/wratio,
+      height: me.User.penSize/hratio
+    });
+    // compensation for rectangular pixels: f(brainWdim, brainHdim)
+    me.move(x, Math.round(y*me.brainWdim/me.brainHdim));
+  },
+
+  /**
+     * @function mouseup
+     * @param {object} e Event object
+     * @returns {void}
+     */
+  mouseup: function (e) {
+    var me = AtlasMakerWidget;
+    e.preventDefault();
+    const {x, y} = me._eventCoords2ImageCoords(e.pageX, e.pageY);
+    // compensation for rectangular pixels: f(brainWdim, brainHdim)
+    me.up(x, Math.round(y*me.brainWdim/me.brainHdim));
+  },
+
+  longpress: function (e) {
+    const me = AtlasMakerWidget;
+    e.preventDefault();
+    const {tool} = me.User;
+    const {pageXOffset, pageYOffset} = window;
+    const {x, y} = me._eventCoords2ImageCoords(
+      e.detail.clientX + pageXOffset,
+      e.detail.clientY + pageYOffset
+    );
+
+    if({}.hasOwnProperty.call(me.longPressTools, tool)) {
+      me.longPressTools[tool](x, y);
+    }
+  },
+
+  /**
+     * @function touchstart
+     * @param {object} e Event object
+     * @returns {void}
+     */
+  touchstart: function (e) {
+    var me = AtlasMakerWidget;
+    e.preventDefault();
+
+    var W = parseFloat($('#atlasmaker canvas').css('width'));
+    var H = parseFloat($('#atlasmaker canvas').css('height'));
+    var w = parseFloat($('#atlasmaker canvas').attr('width'));
+    var h = parseFloat($('#atlasmaker canvas').attr('height'));
+    var o = $('#atlasmaker canvas').offset();
+    var touchEvent;
+    if(e.originalEvent) {
+      [touchEvent] = e.originalEvent;
+    } else {
+      [touchEvent] = e.changedTouches;
+    }
+    var x = parseInt((touchEvent.pageX-o.left)*(w/W));
+    var y = parseInt((touchEvent.pageY-o.top)*(h/H));
+
+    if(me.flagUsePreciseCursor) {
+      // Precision cursor
+      me.Crsr.x0 = x;
+      me.Crsr.cachedX = x;
+      me.Crsr.y0 = y;
+      me.Crsr.cachedY = y;
+      me.Crsr.fx = $("#finger").offset().left;
+      me.Crsr.fy = $("#finger").offset().top;
+      me.Crsr.touchStarted = true;
+      setTimeout(function() {
+        if( me.Crsr.cachedX === me.Crsr.x0 && me.Crsr.cachedY === me.Crsr.y0 && !me.Crsr.touchStarted) {
+          // short tap: change mode
+          me.Crsr.state = (me.Crsr.state === "move")?"draw":"move";
+          me.updateCursor();
+        }
+      }, 200);
+      setTimeout(function() {
+        if (me.Crsr.cachedX === me.Crsr.x0 && me.Crsr.cachedY === me.Crsr.y0 && me.Crsr.touchStarted) {
+          // long tap: change to configure mode
+          me.Crsr.prevState = me.Crsr.state;
+          me.Crsr.state = "configure";
+          me.updateCursor();
+        }
+      }, 1000);
+      me.down(me.Crsr.x, Math.round(me.Crsr.y*me.brainWdim/me.brainHdim));
+    } else { me.down(x, Math.round(y*me.brainWdim/me.brainHdim)); }
+  },
+
+  /**
+     * @function touchmove
+     * @param {object} e Event object
+     * @returns {void}
+     */
+  touchmove: function (e) {
+    var me = AtlasMakerWidget;
+    if(me.Crsr.touchStarted === false && me.debug) {
+      console.log("WARNING: touch can move without having started");
+    }
+
+    e.preventDefault();
+
+    var W = parseFloat($('#atlasmaker canvas').css('width'));
+    var H = parseFloat($('#atlasmaker canvas').css('height'));
+    var w = parseFloat($('#atlasmaker canvas').attr('width'));
+    var h = parseFloat($('#atlasmaker canvas').attr('height'));
+    var o = $('#atlasmaker canvas').offset();
+    var touchEvent;
+    if(e.originalEvent) {
+      [touchEvent] = e.originalEvent.changedTouches;
+    } else {
+      [touchEvent] = e.changedTouches;
+    }
+    var x = parseInt((touchEvent.pageX-o.left)*(w/W));
+    var y = parseInt((touchEvent.pageY-o.top)*(h/H));
+
+    if(me.flagUsePreciseCursor) {
+      // Precision cursor
+      var dx = x-me.Crsr.x0;
+      var dy = y-me.Crsr.y0;
+      if(me.Crsr.state === "move"||me.Crsr.state === "draw") {
+        me.Crsr.x += dx;
+        me.Crsr.y += dy;
+        $("#cursor").css({ left:me.Crsr.x*(W/w), top:me.Crsr.y*(H/h), width:me.User.penSize*(W/w), height:me.User.penSize*(H/h) });
+        if(me.Crsr.state === "draw") { me.move(me.Crsr.x, Math.round(me.Crsr.y*me.brainWdim/me.brainHdim)); }
+      }
+      me.Crsr.fx += dx*(W/w);
+      me.Crsr.fy += dy*(H/h);
+      $("#finger").offset({ left:me.Crsr.fx, top:me.Crsr.fy });
+
+      me.Crsr.x0 = x;
+      me.Crsr.y0 = y;
+    } else {
+      $("#cursor").css({
+        left:(x*(W/w)) + 'px',
+        top:(y*(H/h)) + 'px',
+        width:me.User.penSize*(W/w),
+        height:me.User.penSize*(H/h)
+      });
+      me.move(x, Math.round(y*me.brainWdim/me.brainHdim));
+    }
+  },
+
+  /**
+     * @function touchend
+     * @param {object} e Event object
+     * @returns {void}
+     */
+  touchend: function (e) {
+    var me = AtlasMakerWidget;
+    e.preventDefault();
+
+    if(me.flagUsePreciseCursor) {
+      // Precision cursor
+      me.Crsr.touchStarted = false;
+      if(me.Crsr.state === "configure") {
+        me.Crsr.state = me.Crsr.prevState;
+        me.updateCursor();
+      }
+    }
+    me.up(e);
+  },
+
+  /**
+   * @function down
+   * @desc Generic pointer down event: Deals with down events generated by mouse clicks or touch events. The effect of the down event is determined by the current User.tool
+   * @param { integer } x X coordinate in slice space
+   * @param { integer } y Y coordinate in slice space
+   * @returns {void}
+   */
+  down: function (x, y) {
+    const me = AtlasMakerWidget;
+    const {tool} = me.User;
+    if({}.hasOwnProperty.call(me.clickDownTools, tool)) {
+      me.clickDownTools[tool](x, y);
+    }
+
+    // init annotation length counter
+    me.annotationLength = 0;
+  },
+
+  /**
+   * @function move
+   * @desc Generic pointer move event: Deals with move events generated by mouse clicks or touch events. The effect of the move event is determined by the current User.tool
+   * @param {number} x X coordinate in slice space
+   * @param {number} y Y coordinate in slice space
+   * @returns {void}
+   */
+  move: function (x, y) {
+    var me = AtlasMakerWidget;
+    if(!me.User.mouseIsDown) { return; }
+
+    switch(me.User.tool) {
+    case 'show':
+      me.showxy(-1, 'm', x, y, me.User);
+      break;
+    case 'paint':
+      me.paintxy(-1, 'lf', x, y, me.User);
+      break;
+    case 'erase':
+      me.paintxy(-1, 'le', x, y, me.User);
+      break;
+    case 'adjust':
+      me.info.x = x/me.brainW;
+      me.info.y = 1-y/me.brainH;
+      me.drawImages();
+      break;
+    }
+  },
+
+  /**
+   * @function up
+   * @desc Generic pointer up event: Deals with up events generated by mouse clicks or touch events.
+   * @param {number} x Coordinate
+   * @param {number} y Coordinate
+   * @returns {void}
+   */
+  up: function (x, y) {
+    var me = AtlasMakerWidget;
+
+    const {tool} = me.User;
+    if({}.hasOwnProperty.call(me.clickUpTools, tool)) {
+      me.clickUpTools[tool](x, y);
+    }
+
+    // Send mouse up (touch ended) message
+    me.User.mouseIsDown = false;
+    me.User.x0 = -1;
+
+    me.sendUserDataMessage(JSON.stringify({ 'mouseIsDown':false }));
+
+    var msg;
+
+    switch(tool) {
+    case 'show':
+      msg = { "c":"u" };
+      me.sendShowMessage(msg);
+      break;
+    case 'paint':
+    case 'erase':
+      msg = { c:"mu" };
+      me.sendPaintMessage(msg);
+
+      // add annotated length to User.annotation length and post to DB
+      me.logToDatabase("annotationLength", {
+        source:me.User.source,
+        atlas:me.User.atlasFilename,
+        length:me.annotationLength
+      })
+        .then(function(response) {
+          var length = parseInt(response.length);
+          me.info.length = length + " mm";
+          me.displayInformation();
+        });
+
+      me.annotationLength = 0;
+
+      // compute total segmented volume
+      var vol = me.computeSegmentedVolume();
+      me.info.volume = parseInt(vol) + " mm3";
+      break;
+    case 'eyedrop':
+      me.displayInformation();
+
+      msg = { "c":"mu" };
+      me.sendPaintMessage(msg);
+      break;
+    default:
+      msg = { "c":"mu" };
+      me.sendPaintMessage(msg);
+    }
+
+    /*
+      TEST
+    */
+    //me.sendRequestSliceMessage();
+  },
+
+  /**
+   * @function keyDown
+   * @param {object} e Event object
+   * @returns {void}
+   */
+  keyDown: function (e) {
+    var me = AtlasMakerWidget;
+    // console.log("key:", e.which);
+
+    if(e.which === 13 && $(e.target).attr('contenteditable')) {
+      e.preventDefault();
+
+      return;
+    }
+
+    if(e.target.tagName !== "BODY") { return; }
+
+    switch(e.which) {
+    case 13: // return
+      if(me.User.measureLength) {
+        var length = 0;
+        var p = me.User.measureLength;
+        var wdim = me.brainWdim;
+        var hdim = me.brainHdim;
+        var i;
+        for(i = 1; i<p.length; i++) { length += Math.sqrt(Math.pow(wdim*(p[i].x-p[i-1].x), 2) + Math.pow(hdim*(p[i].y-p[i-1].y), 2)); }
+        $("#logChat .text").append("Length: " + length + "<br/>");
+        me.User.measureLength = null;
+        me.displayInformation();
+      }
+      break;
+    case 37: // left arrow
+      me.prevSlice();
+      e.preventDefault();
+      break;
+    case 39: // right arrow
+      me.nextSlice(this);
+      e.preventDefault();
+      break;
+    }
+  },
+
+  /**
+   * @function onkey
+   * @param {object} e Event object
+   * @returns {void}
+   */
+  onkey: function (e) {
+    var me = AtlasMakerWidget;
+    if (e.keyCode === 13) {
+      me.sendChatMessage();
+    }
+  },
+
+  // ==============
+  //      Tools
+  // ==============
+  /**
+   * @function render3D
+   * @returns {void}
+   */
   render3D: function () {
     var me = AtlasMakerWidget;
     // puts a fresh version of the segmentation in localStorage
@@ -326,7 +805,7 @@ export var AtlasMakerInteraction = {
       var name = this.files[0];
       var reader = new FileReader();
       reader.onload = function (e) {
-        var result = e.target.result;
+        var {result} = e.target;
         var nii;
         if(name.name.split('.').pop() === "gz") {
           var inflate = new pako.Inflate();
@@ -410,92 +889,6 @@ export var AtlasMakerInteraction = {
   },
 
   /**
-     * @function ontologyValueToColor
-     * @param {number} val Numerical value used for painting with the selected label
-     * @returns {array} Red, green and blue colors
-     */
-  ontologyValueToColor: function (val) {
-    var me = AtlasMakerWidget;
-    var c = [0, 0, 0];
-    var i;
-    if(val in me.ontology.valueToIndex) { i = me.ontology.valueToIndex[val]; }
-    if(typeof i !== "undefined") {
-      c = me.ontology.labels[i].color;
-    } else if(val) {
-      c = [255, 0, 0]; // unavailable labels are set to pure red
-    }
-
-    return c;
-  },
-  landmarkClick: function (x, y) {
-    const me = AtlasMakerWidget;
-    const type = "text";
-    const position = me.slice2xyzi(x, y, me.User.slice, me.User.view);
-    const text = prompt("Name");
-    if(typeof me.User.vectorial === "undefined") {
-      me.User.vectorial = [];
-    }
-    me.User.vectorial.push({type, position, text});
-    me.displayInformation();
-  },
-  landmarkDisplay: function () {
-    const me = AtlasMakerWidget;
-    const {view, slice} = me.User;
-    var W = parseFloat($('#atlasmaker canvas').css('width'));
-    var w = parseFloat($('#atlasmaker canvas').attr('width'));
-    var zx = W/w;
-    var zy = zx*me.brainHdim/me.brainWdim;
-    var vector = me.container.find("#vector-layer");
-    var {sdim} = me.User.s2v;
-    let str = vector.html();
-    if(typeof me.User.vectorial !== "undefined") {
-      for(const a of me.User.vectorial.filter((o) => o.type === "text")) {
-        const {text, position} = a;
-        let onSlice = false;
-        let x, y;
-
-        if(view === 'sag' && slice === position[0]) {
-          x = position[1];
-          y = sdim[2] - 1 - position[2];
-          onSlice = true;
-        } else if(view === 'cor' && slice === position[1]) {
-          x = position[0];
-          y = sdim[2] - 1 - position[2];
-          onSlice = true;
-        } else if (view === 'axi' && slice === position[2]) {
-          x = position[0];
-          y = sdim[1] - 1 - position[1];
-          onSlice = true;
-        }
-
-        if(onSlice) {
-          str +=
-            `
-            <circle fill='#00ff00' cx=${zx*x} cy=${zy*y} r=3 />
-            <text fill='white' x=${zx*x+3} y=${zy*y}>${text}</text>
-            `;
-        }
-      }
-    }
-    vector.html(str);
-  },
-
-  /**
-     * @function eyedrop
-     * @param {number} x X or horizontal coordinate
-     * @param {number} y Y or vertical coordinate
-     * @param {object} usr User structure for the current user
-     * @returns {number} The value at the given location
-     */
-  eyedrop : function ( x, y, usr) {
-    var me = AtlasMakerWidget;
-    var z = usr.slice;
-    var i = me.slice2index( x, y, z, usr.view );
-
-    return me.atlas.data[i];
-  },
-
-  /**
      * @function togglePreciseCursor
      * @returns {void}
      */
@@ -505,246 +898,13 @@ export var AtlasMakerInteraction = {
     me.initCursor();
   },
 
-  /**
-     * @function initCursor
-     * @returns {void}
-     */
-  initCursor: function () {
-    var me = AtlasMakerWidget;
-    var W = parseFloat($('#atlasmaker canvas').css('width'));
-    var H = parseFloat($('#atlasmaker canvas').css('height'));
-    var w = parseFloat($('#atlasmaker canvas').attr('width'));
-    var h = parseFloat($('#atlasmaker canvas').attr('height'));
-
-    me.Crsr.x = parseInt(w/2);
-    me.Crsr.y = parseInt(h/2);
-
-    me.Crsr.fx = parseInt(w/2)*(W/w);
-    me.Crsr.fy = parseInt(h/2)*(H/h);
-    $("#cursor").css({ left:(me.Crsr.x*(W/w)) + "px", top:(me.Crsr.y*(H/h)) + "px", width:me.User.penSize*(W/w), height:me.User.penSize*(H/h) });
-
-    if(me.flagUsePreciseCursor) {
-      if($("#finger").length === 0) {
-        me.container.append("<div id = 'finger'></div>");
-        $("#finger").addClass("touchDevice");
-
-        // configure touch events for tablets
-        $("#finger").on("touchstart", function(e) { me.touchstart(e); });
-        $("#finger").on("touchend", function(e) { me.touchend(e); });
-        $("#finger").on("touchmove", function(e) { me.touchmove(e); });
-
-        // turn off eventual touch events handled by canvas
-        me.canvas.ontouchstart = null;
-        me.canvas.ontouchmove = null;
-        me.canvas.ontouchend = null;
-      }
-      me.updateCursor();
-
-      $("#finger").css({ left:me.Crsr.fx + "px", top:me.Crsr.fy + "px" });
-    } else {
-      // remove precise cursor
-      $("#finger").remove();
-
-      // configure touch events for tablets
-      me.canvas.ontouchstart = me.touchstart;
-      me.canvas.ontouchmove = me.touchmove;
-      me.canvas.ontouchend = me.touchend;
-    }
-  },
-
-  /**
-     * @function updateCursor
-     * @returns {void}
-     */
-  updateCursor: function () {
-    var me = AtlasMakerWidget;
-    $("#finger").removeClass("move draw configure");
-    switch(me.Crsr.state) {
-    case "move": $("#finger").addClass("move"); break;
-    case "draw": $("#finger").addClass("draw"); break;
-    case "configure": $("#finger").addClass("configure"); break;
-    }
-  },
-
-  /**
-     * @function mousedown
-     * @param {object} e Event object
-     * @returns {void}
-     */
-  mousedown: function (e) {
-    var me = AtlasMakerWidget;
-    e.preventDefault();
-
-    var W = parseFloat($('#atlasmaker canvas').css('width'));
-    var H = parseFloat($('#atlasmaker canvas').css('height'));
-    var w = parseFloat($('#atlasmaker canvas').attr('width'));
-    var h = parseFloat($('#atlasmaker canvas').attr('height'));
-    var o = $('#atlasmaker canvas').offset();
-    var x = parseInt((e.pageX-o.left)*(w/W));
-    // i have to add here the compensation for rectangular pixels: f(brainWdim, brainHdim)
-    var y = parseInt((e.pageY-o.top)*(h/H));
-    me.down(x, Math.round(y*me.brainWdim/me.brainHdim));
-  },
-
-  /**
-     * @function mousemove
-     * @desc Handles a mouse move event. The x and y slice screens are computed from the pageX and pageY screen coordinates and dispatched to the generic move handler. The position and size of the cursor are adjusted.
-     * @param {object} e Event object
-     * @returns {void}
-     */
-  mousemove: function (e) {
-    var me = AtlasMakerWidget;
-    e.preventDefault();
-    var W = parseFloat($('#atlasmaker canvas').css('width'));
-    var H = parseFloat($('#atlasmaker canvas').css('height'));
-    var w = parseFloat($('#atlasmaker canvas').attr('width'));
-    var h = parseFloat($('#atlasmaker canvas').attr('height'));
-    var o = $('#atlasmaker canvas').offset();
-    var x = parseInt((e.pageX-o.left)*(w/W));
-    var y = parseInt((e.pageY-o.top)*(h/H));
-
-    $("#cursor").css({
-      left:(x*(W/w)) + 'px',
-      top:(y*(H/h)) + 'px',
-      width:me.User.penSize*(W/w),
-      height:me.User.penSize*(H/h)
-    });
-    me.move(x, Math.round(y*me.brainWdim/me.brainHdim));
-  },
-
-  /**
-     * @function mouseup
-     * @param {object} e Event object
-     * @returns {void}
-     */
-  mouseup: function (e) {
-    var me = AtlasMakerWidget;
-    me.up(e);
-  },
-
-  /**
-     * @function touchstart
-     * @param {object} e Event object
-     * @returns {void}
-     */
-  touchstart: function (e) {
-    var me = AtlasMakerWidget;
-    e.preventDefault();
-
-    var W = parseFloat($('#atlasmaker canvas').css('width'));
-    var H = parseFloat($('#atlasmaker canvas').css('height'));
-    var w = parseFloat($('#atlasmaker canvas').attr('width'));
-    var h = parseFloat($('#atlasmaker canvas').attr('height'));
-    var o = $('#atlasmaker canvas').offset();
-    var touchEvent;
-    if(e.originalEvent) { touchEvent = e.originalEvent.changedTouches[0]; } else { touchEvent = e.changedTouches[0]; }
-    var x = parseInt((touchEvent.pageX-o.left)*(w/W));
-    var y = parseInt((touchEvent.pageY-o.top)*(h/H));
-
-    if(me.flagUsePreciseCursor) {
-      // Precision cursor
-      me.Crsr.x0 = x;
-      me.Crsr.cachedX = x;
-      me.Crsr.y0 = y;
-      me.Crsr.cachedY = y;
-      me.Crsr.fx = $("#finger").offset().left;
-      me.Crsr.fy = $("#finger").offset().top;
-      me.Crsr.touchStarted = true;
-      setTimeout(function() {
-        if( me.Crsr.cachedX === me.Crsr.x0 && me.Crsr.cachedY === me.Crsr.y0 && !me.Crsr.touchStarted) {
-          // short tap: change mode
-          me.Crsr.state = (me.Crsr.state === "move")?"draw":"move";
-          me.updateCursor();
-        }
-      }, 200);
-      setTimeout(function() {
-        if (me.Crsr.cachedX === me.Crsr.x0 && me.Crsr.cachedY === me.Crsr.y0 && me.Crsr.touchStarted) {
-          // long tap: change to configure mode
-          me.Crsr.prevState = me.Crsr.state;
-          me.Crsr.state = "configure";
-          me.updateCursor();
-        }
-      }, 1000);
-      me.down(me.Crsr.x, Math.round(me.Crsr.y*me.brainWdim/me.brainHdim));
-    } else { me.down(x, Math.round(y*me.brainWdim/me.brainHdim)); }
-  },
-
-  /**
-     * @function touchmove
-     * @param {object} e Event object
-     * @returns {void}
-     */
-  touchmove: function (e) {
-    var me = AtlasMakerWidget;
-    if(me.Crsr.touchStarted === false && me.debug) {
-      console.log("WARNING: touch can move without having started");
-    }
-
-    e.preventDefault();
-
-    var W = parseFloat($('#atlasmaker canvas').css('width'));
-    var H = parseFloat($('#atlasmaker canvas').css('height'));
-    var w = parseFloat($('#atlasmaker canvas').attr('width'));
-    var h = parseFloat($('#atlasmaker canvas').attr('height'));
-    var o = $('#atlasmaker canvas').offset();
-    var touchEvent;
-    if(e.originalEvent) { touchEvent = e.originalEvent.changedTouches[0]; } else { touchEvent = e.changedTouches[0]; }
-    var x = parseInt((touchEvent.pageX-o.left)*(w/W));
-    var y = parseInt((touchEvent.pageY-o.top)*(h/H));
-
-    if(me.flagUsePreciseCursor) {
-      // Precision cursor
-      var dx = x-me.Crsr.x0;
-      var dy = y-me.Crsr.y0;
-      if(me.Crsr.state === "move"||me.Crsr.state === "draw") {
-        me.Crsr.x += dx;
-        me.Crsr.y += dy;
-        $("#cursor").css({ left:me.Crsr.x*(W/w), top:me.Crsr.y*(H/h), width:me.User.penSize*(W/w), height:me.User.penSize*(H/h) });
-        if(me.Crsr.state === "draw") { me.move(me.Crsr.x, Math.round(me.Crsr.y*me.brainWdim/me.brainHdim)); }
-      }
-      me.Crsr.fx += dx*(W/w);
-      me.Crsr.fy += dy*(H/h);
-      $("#finger").offset({ left:me.Crsr.fx, top:me.Crsr.fy });
-
-      me.Crsr.x0 = x;
-      me.Crsr.y0 = y;
-    } else {
-      $("#cursor").css({
-        left:(x*(W/w)) + 'px',
-        top:(y*(H/h)) + 'px',
-        width:me.User.penSize*(W/w),
-        height:me.User.penSize*(H/h)
-      });
-      me.move(x, Math.round(y*me.brainWdim/me.brainHdim));
-    }
-  },
-
-  /**
-     * @function touchend
-     * @param {object} e Event object
-     * @returns {void}
-     */
-  touchend: function (e) {
-    var me = AtlasMakerWidget;
-    e.preventDefault();
-
-    if(me.flagUsePreciseCursor) {
-      // Precision cursor
-      me.Crsr.touchStarted = false;
-      if(me.Crsr.state === "configure") {
-        me.Crsr.state = me.Crsr.prevState;
-        me.updateCursor();
-      }
-    }
-    me.up(e);
-  },
-
   _showToolHandler: function (x, y) {
     const me = AtlasMakerWidget;
     me.User.mouseIsDown = true;
     me.sendUserDataMessage(JSON.stringify({ 'mouseIsDown':true }));
     me.showxy(-1, 'm', x, y, me.User);
   },
+
   _paintToolHandler: function (x, y) {
     const me = AtlasMakerWidget;
     if(me.editMode === 0) {
@@ -761,6 +921,7 @@ export var AtlasMakerInteraction = {
       me.paintxy(-1, 'mf', x, y, me.User);
     }
   },
+
   _eraseToolHandler: function (x, y) {
     const me = AtlasMakerWidget;
     if(me.editMode === 0) {
@@ -777,25 +938,21 @@ export var AtlasMakerInteraction = {
       me.paintxy(-1, 'me', x, y, me.User);
     }
   },
-  _landmarkToolHandler: function (x, y) {
-    const me = AtlasMakerWidget;
-    me.landmarkClick(x, y);
-  },
-  _measureToolHandler: function (x, y) {
-    const me = AtlasMakerWidget;
-    if(me.User.measureLength === null) {
-      me.User.measureLength = [{ x:x, y:y }];
-    } else {
-      me.User.measureLength.push({ x:x, y:y });
-    }
-    me.displayInformation();
-  },
+
   _adjustToolHandler: function (x, y) {
     const me = AtlasMakerWidget;
     me.User.mouseIsDown = true;
     me.info.x = x/me.brainW;
     me.info.y = 1-y/me.brainH;
   },
+
+  /**
+   * @function eyedrop
+   * @param {number} x X or horizontal coordinate
+   * @param {number} y Y or vertical coordinate
+   * @param {object} usr User structure for the current user
+   * @returns {number} The value at the given location
+   */
   _eyedropToolHandler: function (x, y) {
     const me = AtlasMakerWidget;
     const value = me.eyedrop( x, y, me.User );
@@ -806,168 +963,191 @@ export var AtlasMakerInteraction = {
       me.changePenColor( index );
     }
   },
+  eyedrop : function ( x, y, usr) {
+    var me = AtlasMakerWidget;
+    var z = usr.slice;
+    var i = me.slice2index( x, y, z, usr.view );
 
-  /**
-     * @function down
-     * @desc Generic pointer down event: Deals with down events generated by mouse clicks or touch events. The effect of the down event is determined by the current User.tool
-     * @param { integer } x X coordinate in slice space
-     * @param { integer } y Y coordinate in slice space
-     * @returns {void}
-     */
-  down: function (x, y) {
+    return me.atlas.data[i];
+  },
+
+  // Landmark tool
+  _landmarkToolDownHandler: function () {
     const me = AtlasMakerWidget;
-    const {tool} = me.User;
-
-    if({}.hasOwnProperty.call(me.clickTools, tool)) {
-      me.clickTools[tool](x, y);
-    }
-
-    // init annotation length counter
-    me.annotationLength = 0;
+    me.User.mouseIsDown = true;
   },
-
-  /**
-     * @function move
-     * @desc Generic pointer move event: Deals with move events generated by mouse clicks or touch events. The effect of the move event is determined by the current User.tool
-     * @param {number} x X coordinate in slice space
-     * @param {number} y Y coordinate in slice space
-     * @returns {void}
-     */
-  move: function (x, y) {
-    var me = AtlasMakerWidget;
-    if(!me.User.mouseIsDown) { return; }
-
-    switch(me.User.tool) {
-    case 'show':
-      me.showxy(-1, 'm', x, y, me.User);
-      break;
-    case 'paint':
-      me.paintxy(-1, 'lf', x, y, me.User);
-      break;
-    case 'erase':
-      me.paintxy(-1, 'le', x, y, me.User);
-      break;
-    case 'adjust':
-      me.info.x = x/me.brainW;
-      me.info.y = 1-y/me.brainH;
-      me.drawImages();
-      break;
-    }
-  },
-
-  /**
-     * @function up
-     * @desc Generic pointer up event: Deals with up events generated by mouse clicks or touch events.
-     * @param {object} e Event object
-     * @returns {void}
-     */
-  up: function (e) {
-    var me = AtlasMakerWidget;
-
-    // Send mouse up (touch ended) message
+  _landmarkToolLongHandler: function () {
+    const me = AtlasMakerWidget;
     me.User.mouseIsDown = false;
-    me.User.x0 = -1;
-
-    me.sendUserDataMessage(JSON.stringify({ 'mouseIsDown':false }));
-
-    var msg;
-
-    switch(me.User.tool) {
-    case 'show':
-      msg = { "c":"u" };
-      me.sendShowMessage(msg);
-      break;
-    case 'paint':
-    case 'erase':
-      msg = { c:"mu" };
-      me.sendPaintMessage(msg);
-
-      // add annotated length to User.annotation length and post to DB
-      me.logToDatabase("annotationLength", {
-        source:me.User.source,
-        atlas:me.User.atlasFilename,
-        length:me.annotationLength
-      })
-        .then(function(response) {
-          var length = parseInt(response.length);
-          me.info.length = length + " mm";
-          me.displayInformation();
-        });
-
-      me.annotationLength = 0;
-
-      // compute total segmented volume
-      var vol = me.computeSegmentedVolume();
-      me.info.volume = parseInt(vol) + " mm3";
-      break;
-    case 'eyedrop':
+    me.landmarkClick();
+  },
+  _landmarkToolUpHandler: function (x, y) {
+    const me = AtlasMakerWidget;
+    const type = "text";
+    const position = me.slice2xyzi(x, y, me.User.slice, me.User.view);
+    if(typeof me.User.vectorial === "undefined") {
+      me.User.vectorial = [];
+    }
+    if(me.User.mouseIsDown) {
+      const text = prompt("Landmark label");
+      me.User.vectorial.push({type, position, text});
+      me.sendVectorialAnnotationMessage(me.User.vectorial);
       me.displayInformation();
-
-      msg = { "c":"mu" };
-      me.sendPaintMessage(msg);
-      break;
-    default:
-      msg = { "c":"mu" };
-      me.sendPaintMessage(msg);
     }
-
-    /*
-            TEST
-        */
-    //me.sendRequestSliceMessage();
   },
-
-  /**
-     * @function keyDown
-     * @param {object} e Event object
-     * @returns {void}
-     */
-  keyDown: function (e) {
-    var me = AtlasMakerWidget;
-    // console.log("key:", e.which);
-
-    if(e.which === 13 && $(e.target).attr('contenteditable')) {
-      e.preventDefault();
-
-      return;
+  landmarkClick: function () {
+    const me = AtlasMakerWidget;
+    if(typeof me.User.vectorial === "undefined") {
+      me.User.vectorial = [];
     }
+    const vectorial = JSON.parse(JSON.stringify(me.User.vectorial));
+    const dialog = document.querySelector("#landmarksDialog");
 
-    if(e.target.tagName !== "BODY") { return; }
-
-    switch(e.which) {
-    case 13: // return
-      if(me.User.measureLength) {
-        var length = 0;
-        var p = me.User.measureLength;
-        var wdim = me.brainWdim;
-        var hdim = me.brainHdim;
-        var i;
-        for(i = 1; i<p.length; i++) { length += Math.sqrt(Math.pow(wdim*(p[i].x-p[i-1].x), 2) + Math.pow(hdim*(p[i].y-p[i-1].y), 2)); }
-        $("#logChat .text").append("Length: " + length + "<br/>");
-        me.User.measureLength = null;
-        me.displayInformation();
+    const displayTable = () => {
+      const html = [];
+      for(let i=0; i<vectorial.length; i++) {
+        const ann = vectorial[i];
+        if(ann.type !== "text") { continue; }
+        const worldCoords = me.mulMatVec(me.User.v2w, ann.position).map((v) => parseInt(v*10)/10.0);
+        html.push(`
+          <tr data-row=${i}>
+            <td contentEditable class="noEmptyWithPlaceholder" placeholder="Enter landmark label"
+            >${ann.text}</td>
+            <td contentEditable class="noEmpty"
+            >${ann.position.slice(0, 3).join(", ")}</td>
+            <td contentEditable class="noEmpty"
+            >${worldCoords.join(", ")}</td>
+          </tr>`);
       }
-      break;
-    case 37: // left arrow
-      me.prevSlice();
-      e.preventDefault();
-      break;
-    case 39: // right arrow
-      me.nextSlice(this);
-      e.preventDefault();
-      break;
+      dialog.querySelector("tbody").innerHTML = html.join("\n");
+      dialog.querySelector("tbody tr").classList.add("selected");
+      dialog.style.display = 'inline-block';
+    };
+    const exit = () => {
+      for(const l of listeners) {
+        dialog.querySelector(l.sel).removeEventListener("click", l.func);
+        dialog.style.display = 'none';
+      }
+    };
+    const listeners = [
+      {
+        sel: "#landmarksDialogOk",
+        func: () => {
+          me.User.vectorial = vectorial;
+          me.sendVectorialAnnotationMessage(me.User.vectorial);
+          me.displayInformation();
+          exit();
+        }
+      },
+      { sel: "#landmarksDialogCancel", func: exit },
+      // { sel: "#importLandmarks", func: () => { console.log("import"); }},
+      {
+        sel: "#exportLandmarks",
+        func: () => {
+          const csv = [
+            "Label, i, j, k, x, y, z",
+            ...vectorial.filter((ann) => ann.type === "text").map((ann) => {
+              const worldCoords = me.mulMatVec(me.User.v2w, ann.position).map((v) => parseInt(v*10)/10.0);
+
+              return `${ann.text}, ${ann.position.slice(0, 3)}, ${worldCoords}`;
+            })
+          ].join("\n");
+          const csvData = 'data:text/ascii;charset=utf-8,'+encodeURIComponent(csv);
+          const a = document.createElement('a');
+          a.href = csvData;
+          a.download = 'landmarks.csv';
+          document.body.appendChild(a);
+          a.click();
+        }
+      },
+      // {sel: "#addLandmark",func: () => {vectorial.push({type, text: "", position: [0, 0, 0]}); displayTable();}},
+      {
+        sel: "#removeLandmark",
+        func: () => {
+          const i = dialog.querySelector("tr.selected").dataset.row;
+          vectorial.splice(i, 1);
+          displayTable();
+        }
+      },
+      {
+        sel: "tbody",
+        ev: "click",
+        func: (ev) => {
+          const tr = ev.target.closest('tr');
+          for(const row of tr.closest("tbody").rows) {
+            row.classList.remove("selected");
+          }
+          tr.classList.add("selected");
+        }
+      }
+    ];
+    for(const l of listeners) {
+      dialog.querySelector(l.sel).addEventListener("click", l.func);
     }
+    displayTable();
+    // for(const ann of me.User.vectorial.filter((o) => o.type === "text")) {
+    //   const [sx, sy, sz] = me._voxelCoord2ScreenCoord(ann.position);
+    //   if (me.User.slice === sz && (x-sx)**2 + (y-sy)**2 < 2**2) console.log(`Long press on ${ann.text}`);
+    // }
+  },
+  landmarkDisplay: function (svgStr) {
+    const me = AtlasMakerWidget;
+    const {slice} = me.User;
+    var W = parseFloat($('#atlasmaker canvas').css('width'));
+    var w = parseFloat($('#atlasmaker canvas').attr('width'));
+    var zx = W/w;
+    var zy = zx*me.brainHdim/me.brainWdim;
+    if(typeof me.User.vectorial !== "undefined") {
+      for(const a of me.User.vectorial.filter((o) => o.type === "text")) {
+        const {text, position} = a;
+        const [x, y, z] = me._voxelCoord2ScreenCoord(position);
+        const onSlice = (z === slice);
+        if(onSlice) {
+          svgStr +=
+`
+<g transform='translate(${zx*x},${zy*y}) scale(0.85)'>
+<path class='landmark' fill='#ffffff' stroke='#00000080' d="m 0,0 c 0,0 6,-6 9,-11 3,-5 0,-15 -9,-15 -9,0 -12,10 -9,15 3,5 9,11 9,11 z" />
+<text fill='white' x=10 y='-10'>${text}</text>
+</g>
+`;
+//   <circle class='landmark' fill='#00ff00' cx=${zx*x} cy=${zy*y} r=3 />
+        }
+      }
+    }
+
+    return svgStr;
   },
 
-  /**
-     * @function onkey
-     * @param {object} e Event object
-     * @returns {void}
-     */
-  onkey: function (e) {
-    var me = AtlasMakerWidget;
-    if (e.keyCode === 13) {
-      me.sendChatMessage();
+  // Measure tool
+  _measureToolHandler: function (x, y) {
+    const me = AtlasMakerWidget;
+    if(me.User.measureLength === null) {
+      me.User.measureLength = [{ x:x, y:y }];
+    } else {
+      me.User.measureLength.push({ x:x, y:y });
     }
+    me.displayInformation();
+  },
+  measureDisplay: function (svgStr) {
+    const me = AtlasMakerWidget;
+    if(me.User.measureLength) {
+      var W = parseFloat($('#atlasmaker canvas').css('width'));
+      var w = parseFloat($('#atlasmaker canvas').attr('width'));
+      var zx = W/w;
+      var zy = zx*me.brainHdim/me.brainWdim;
+      var p = me.User.measureLength;
+      var str1 = "M" + zx*p[0].x + ", " + zy*p[0].y;
+      let i;
+      for(i = 1; i<p.length; i++) {
+        str1 += "L" + zx*p[i].x + ", " + zy*p[i].y;
+      }
+      svgStr += [
+        "<circle fill='#00ff00' cx=" + zx*p[0].x + " cy=" + zy*p[0].y + " r=3 />",
+        "<path stroke='#00ff00' fill='none' d='" + str1 + "'/>",
+        (i>0)?"<circle fill='#00ff00' cx=" + zx*p[i-1].x + " cy=" + zy*p[i-1].y + " r=3 />":""
+      ].join("\n");
+    }
+
+    return svgStr;
   }
 };
