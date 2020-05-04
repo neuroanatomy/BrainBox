@@ -1,6 +1,5 @@
 'use strict';
 
-const fs = require('fs');
 const chai = require('chai');
 const assert = chai.assert;
 const chaiHttp = require('chai-http');
@@ -9,13 +8,13 @@ const WebSocket = require('ws');
 const U = require('../utils.js');
 
 let u1, u2;
-const msg1 = JSON.stringify({type:"echo", msg:"hi bruh"});
-const msg2 = {
+const msgEcho = JSON.stringify({type:"echo", msg:"hi bruh"});
+const msgAllUserData = {
   type: "userData",
   user: U.userFooB, // version B has username instead of nickname...
   description: "allUserData"
 };
-const msg3 = {
+const msgSendAtlas = {
   type: "userData",
   description: "sendAtlas"
 };
@@ -40,7 +39,7 @@ describe('TESTING WEBSOCKET WORKFLOW', function () {
     });
 
     it('Can send little data', (done) => {
-      u1.send(msg1);
+      u1.send(msgEcho);
       done();
     });
 
@@ -65,27 +64,32 @@ describe('TESTING WEBSOCKET WORKFLOW', function () {
     }).timeout(U.mediumTimeout);
 
     it('Can send larger data', (done) => {
-      msg2.user.dirname = mri.url;
-      msg2.user.mri = mri.mri.brain;
-      msg2.user.atlasFilename = mri.mri.atlas[0].filename;
-      u1.send(JSON.stringify(msg2));
+      msgAllUserData.user.dirname = mri.url;
+      msgAllUserData.user.mri = mri.mri.brain;
+      msgAllUserData.user.atlasFilename = mri.mri.atlas[0].filename;
+      msgAllUserData.user.source = mri.source;
+      u1.send(JSON.stringify(msgAllUserData));
       done();
     });
 
     it('Can request data', (done) => {
-      u1.send(JSON.stringify(msg3));
+      u1.send(JSON.stringify(msgSendAtlas));
       done();
     });
 
     it('Can receive data', (done) => {
       u1.on('message', (data) => {
-        assert(Buffer.isBuffer(data));
+        if(Buffer.isBuffer(data)) {
+          assert(true);
+        } else {
+          data = JSON.parse(data);
+          assert(data.type === "vectorial");
+        }
         done();
       });
-    });
+    }).timeout(U.longTimeout);
 
     it('Remove test MRI from db and disk', async function () {
-      // remove the MRI
       const res = await chai.request(U.serverURL).get('/mri/json')
         .query({
           url: U.localBertURL
