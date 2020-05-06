@@ -49,6 +49,7 @@ const atlasmakerServer = (function() {
     Brains: [],
     US: [],
     uidcounter: 0,
+    atlascounter: 0,
     backupInterval: 15*60*1000, // 15 minutes in milliseconds
     timeMarkInterval: 60*60*1000, // 60 minutes in milliseconds
     enterCommands: false,
@@ -299,10 +300,10 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       }
     },
     indexOfAtlasAtPath: function(dirname, atlasFilename) {
-      for(const i in me.Atlases) {
-        if({}.hasOwnProperty.call(me.Atlases, i)) {
-          if(me.Atlases[i].dirname === dirname && me.Atlases[i].filename === atlasFilename) {
-            return i;
+      for(const key in me.Atlases) {
+        if({}.hasOwnProperty.call(me.Atlases, key)) {
+          if(me.Atlases[key].dirname === dirname && me.Atlases[key].filename === atlasFilename) {
+            return key;
           }
         }
       }
@@ -2184,9 +2185,10 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       const pr = new Promise(function (resolve, reject) {
         me.loadAtlas(User)
           .then(function (theAtlas) {
-            me.Atlases.push(theAtlas);
-            User.iAtlas = String(me.Atlases.indexOf(theAtlas));
-            atlas.timer = setInterval(function () {
+            const {iAtlas} = me._findAtlas(theAtlas);
+            me.Atlases[iAtlas] = theAtlas;
+            User.iAtlas = iAtlas; // `a${me.Atlases.indexOf(theAtlas)}`;
+            theAtlas.timer = setInterval(function () {
               me.saveAtlasAtIndex(User.iAtlas);
             }, me.backupInterval);
 
@@ -2218,7 +2220,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       if(typeof iAtlas !== "undefined") {
         atlasLoadedFlag = true;
       } else {
-        iAtlas = String(me.Atlases.length);
+        iAtlas = `a${++me.atlascounter}`;
       }
 
       return {iAtlas, atlasLoadedFlag};
@@ -2784,7 +2786,7 @@ module.exports = atlasmakerServer;
         .username:      string, for example, roberto
         .specimenName:  string, for example, Crab-eating_macaque
         .atlasFilename: string, atlas filename, for example, Cerebellum.nii.gz
-        .iAtlas:        String(index) of atlas in Atlases[]
+        .iAtlas:        string, the `a${i}` where i is an integer points to an element in Atlases
         .dim:           array, size of the mri the user is editing, for example, [160, 224, 160]
 
     undoBuffer
