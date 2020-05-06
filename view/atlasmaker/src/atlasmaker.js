@@ -9,11 +9,11 @@ import {AtlasMakerInteraction} from './atlasmaker-interaction.js';
 import {AtlasMakerPaint} from './atlasmaker-paint.js';
 import {AtlasMakerUI} from './atlasmaker-ui.js';
 import {AtlasMakerWS} from './atlasmaker-ws.js';
-import Config from './../../../cfg.json';
 
+import $ from 'jquery';
+import Config from './../../../cfg.json';
 import toolsFull from './html/toolsFull.html';
 import toolsLight from './html/toolsLight.html';
-import $ from 'jquery';
 
 window.$ = $;
 
@@ -126,6 +126,7 @@ var me = {
   isMRILoaded: false, // is the currently requested MRI already loaded in the server?
 
   clickDownTools: [], // array, functions handling clicks made by different tools: show, paint, erase, ...
+  moveTools: [], // array, functions handling click or touch moves
   clickUpTools: [], // array, functions handling clicks made by different tools: show, paint, erase, ...
   longPressTools: [], // array, functions handling long clicks
   displayInformationFunctions: [], // array, functions handling data display: landmarks, length measurement
@@ -178,9 +179,14 @@ var me = {
   _removeVariablesFromURL: function (url) {
     return url.split("&")[0];
   },
+
   _registerClickDownTool: function(tool) {
     const {name, func} = tool;
     me.clickDownTools[name] = func;
+  },
+  _registerMoveTool: function(tool) {
+    const {name, func} = tool;
+    me.moveTools[name] = func;
   },
   _registerClickUpTool: function(tool) {
     const {name, func} = tool;
@@ -202,6 +208,12 @@ var me = {
     ];
     for(const tool of arr) {
       me._registerClickDownTool(tool);
+    }
+  },
+  _registerMoveTools: function () {
+    const arr = [{name: 'landmark', func: me._landmarkToolMoveHandler}];
+    for(const tool of arr) {
+      me._registerMoveTool(tool);
     }
   },
   _registerClickUpTools: function () {
@@ -363,6 +375,7 @@ var me = {
 
     // event connect: register click tools
     me._registerClickDownTools();
+    me._registerMoveTools();
     me._registerClickUpTools();
     me._registerLongPressTools();
 

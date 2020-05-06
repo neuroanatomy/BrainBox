@@ -626,7 +626,12 @@ export var AtlasMakerInteraction = {
     const me = AtlasMakerWidget;
     if(!me.User.mouseIsDown) { return; }
 
-    switch(me.User.tool) {
+    const {tool} = me.User;
+    if({}.hasOwnProperty.call(me.moveTools, tool)) {
+      me.moveTools[tool](x, y);
+    }
+
+    switch(tool) {
     case 'show':
       me.showxy(-1, 'm', x, y, me.User);
       break;
@@ -980,9 +985,33 @@ export var AtlasMakerInteraction = {
   },
 
   // Landmark tool
-  _landmarkToolDownHandler: function () {
+  _landmarkToolDownHandler: function (x, y) {
     const me = AtlasMakerWidget;
     me.User.mouseIsDown = true;
+    for(let i=0; i<me.User.vectorial.length; i++) {
+      const ann = me.User.vectorial[i];
+      if(ann.type !== "text") {
+        continue;
+      }
+      const [sx, sy, sz] = me._voxelCoord2ScreenCoord(ann.position);
+      if (me.User.slice === sz && (x-sx)**2 + (y-sy)**2 < 2**2) {
+        me.User.x0 = x;
+        me.User.y0 = y;
+        me.User.indexOfMovingLandmark = i;
+
+        return;
+      }
+    }
+  },
+  _landmarkToolMoveHandler: function (x, y) {
+    const me = AtlasMakerWidget;
+    const index = me.User.indexOfMovingLandmark;
+    if(typeof index === "undefined") {
+      return;
+    }
+    const position = me.slice2xyzi(x, y, me.User.slice, me.User.view);
+    me.User.vectorial[index].position = position;
+    me.displayInformation();
   },
   _landmarkToolLongHandler: function () {
     const me = AtlasMakerWidget;
@@ -996,12 +1025,16 @@ export var AtlasMakerInteraction = {
     if(typeof me.User.vectorial === "undefined") {
       me.User.vectorial = [];
     }
-    if(me.User.mouseIsDown) {
+    if(me.User.mouseIsDown && typeof me.User.indexOfMovingLandmark === "undefined") {
       const text = prompt("Landmark label");
+      if(text === null) {
+        return;
+      }
       me.User.vectorial.push({type, position, text});
       me.sendVectorialAnnotationMessage(me.User.vectorial);
       me.displayInformation();
     }
+    delete me.User.indexOfMovingLandmark;
   },
   landmarkClick: function () {
     const me = AtlasMakerWidget;
@@ -1093,10 +1126,6 @@ export var AtlasMakerInteraction = {
       dialog.querySelector(l.sel).addEventListener("click", l.func);
     }
     displayTable();
-    // for(const ann of me.User.vectorial.filter((o) => o.type === "text")) {
-    //   const [sx, sy, sz] = me._voxelCoord2ScreenCoord(ann.position);
-    //   if (me.User.slice === sz && (x-sx)**2 + (y-sy)**2 < 2**2) console.log(`Long press on ${ann.text}`);
-    // }
   },
   landmarkDisplay: function (svgStr) {
     const me = AtlasMakerWidget;
