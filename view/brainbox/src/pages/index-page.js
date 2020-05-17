@@ -49,7 +49,7 @@ testWebSockets()
       alert(m);
   });
 
-for(const slide of document.getElementsByClassName("slide")) {
+for(const slide of Array.from(document.getElementsByClassName("slide"))) {
     slide.style.height = window.innerHeight + 'px';
 }
 
