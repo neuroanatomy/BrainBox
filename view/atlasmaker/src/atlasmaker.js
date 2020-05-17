@@ -3,6 +3,8 @@
 import 'structjs';
 import './css/atlasmaker.css';
 
+import $ from 'jquery';
+
 import {AtlasMakerDraw} from './atlasmaker-draw.js';
 import {AtlasMakerIO} from './atlasmaker-io.js';
 import {AtlasMakerInteraction} from './atlasmaker-interaction.js';
@@ -10,7 +12,6 @@ import {AtlasMakerPaint} from './atlasmaker-paint.js';
 import {AtlasMakerUI} from './atlasmaker-ui.js';
 import {AtlasMakerWS} from './atlasmaker-ws.js';
 
-import $ from 'jquery';
 import Config from './../../../cfg.json';
 import toolsFull from './html/toolsFull.html';
 import toolsLight from './html/toolsLight.html';
@@ -31,7 +32,7 @@ var me = {
   // connection
   hostname: Config.hostname, // string, host url
   wshostname: Config.wshostname, // string, websocket url
-  secure: true, // wss used?
+  secure: Config.secure, // wss used?
 
   // canvas and drawing
   container: null, // [DOM element] where atlasmaker lives
@@ -261,7 +262,7 @@ var me = {
     }
     // Init drawing canvas
     me.container.append('<div id="resizable"><canvas id="canvas" data-long-press-delay="500"></canvas></div>');
-    me.canvas = me.container.find('canvas')[0];
+    me.canvas = me.container.find('canvas').get(0);
     me.context = me.canvas.getContext('2d');
 
     // Add a div to display the slice number
@@ -277,7 +278,7 @@ var me = {
 
     // Add precise cursor
     var isTouchArr = [];//["iPad","iPod"];
-    var curDevice = navigator.userAgent.split(/[(;]/)[1];
+    var [, curDevice] = navigator.userAgent.split(/[(;]/);
     if($.inArray(curDevice, isTouchArr)>=0) {
       me.flagUsePreciseCursor=true;
       me.initCursor();

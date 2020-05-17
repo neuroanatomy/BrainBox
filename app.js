@@ -73,7 +73,7 @@ app.set('views', path.join(dirname, 'templates'));
 app.set('view engine', 'mustache');
 app.use(favicon(dirname + '/public/favicon.png'));
 app.set('trust proxy', 'loopback');
-if (app.get('env') == 'development') {
+if (app.get('env') === 'development') {
   app.use(logger(':remote-addr :method :url :status :response-time ms - :res[content-length]'));//app.use(logger('dev'));
 }
 app.use(bodyParser.json({limit: '50mb'}));
@@ -102,23 +102,32 @@ app.use((req, res, next) => {
 //========================================================================================
 const https = require('https');
 const http = require('http');
-const options = {
-  key: fs.readFileSync(Config.ssl_key),
-  cert: fs.readFileSync(Config.ssl_cert)
-};
-if(Config.ssl_chain) {
-  options.ca = fs.readFileSync(Config.ssl_chain);
-}
 
 http.createServer(app).listen(3001, () => { console.log("Listening http on port 3001"); });
 const atlasmakerServer = require('./controller/atlasmakerServer/atlasmakerServer.js');
 atlasmakerServer.dataDirectory = dirname + '/public';
 
-atlasmakerServer.server = https.createServer(options, app)
-  .listen(8080, () => {
+if (Config.secure) {
+  const options = {
+    key: fs.readFileSync(Config.ssl_key),
+    cert: fs.readFileSync(Config.ssl_cert)
+  };
+  if(Config.ssl_chain) {
+    options.ca = fs.readFileSync(Config.ssl_chain);
+  }
+  atlasmakerServer.server = https.createServer(options, app);
+} else {
+  atlasmakerServer.server = http.createServer(app);
+}
+
+atlasmakerServer.server.listen(8080, () => {
+  if (Config.secure) {
     console.log('Listening wss on port 8080');
-    atlasmakerServer.initSocketConnection();
-  });
+  } else {
+    console.log('Listening ws on port 8080');
+  }
+  atlasmakerServer.initSocketConnection();
+});
 
 //========================================================================================
 // Check that the 'anyone' user exists. Insert it otherwise
@@ -352,7 +361,7 @@ app.get('/api/getAtlasBackups', (req, res) => {
     .then( (obj) => {
       // get all filenames that have ever been associated with this atlas
       let {url: dataDir} = obj;
-      dataDir = dataDir.split("/")[2];
+      [,, dataDir] = dataDir.split("/");
       db.get('mri').aggregate([
         { $match:{ source: source, "mri.atlas":{$elemMatch: {project: atlasProject, name: atlasName}}}},
         { $unwind: "$mri.atlas" },
@@ -375,7 +384,7 @@ app.get('/api/getAtlasBackups', (req, res) => {
           }
           Promise.all(promiseArray)
             .then((values) => {
-              let result = [].concat.apply([], values);
+              let result = [].concat(...values);
               result = result.concat(obj2);
               res.send(result);
             })
@@ -473,7 +482,7 @@ app.use(function (req, res, next) {
 // development error handler
 // will print stacktrace
 if (app.get('env') === 'development') {
-  app.use(function (err, req, res, next) {
+  app.use(function (err, req, res) {
     res.status(err.status || 500);
     res.render('error', {
       message: err.message,
@@ -483,7 +492,7 @@ if (app.get('env') === 'development') {
 }
 // production error handler
 // no stacktraces leaked to user
-app.use(function (err, req, res, next) {
+app.use(function (err, req, res) {
   res.status(err.status || 500);
   res.render('error', {
     message: err.message,
