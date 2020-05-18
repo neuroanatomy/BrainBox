@@ -1,4 +1,5 @@
 const fs = require('fs');
+const path = require('path');
 var assert = require("assert");
 const AMS = require('../../controller/atlasmakerServer/atlasmakerServer.js');
 const datadir = './test/data/';
@@ -52,7 +53,7 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
   });
 
   describe('Painting', function () {
-    it('Convert screen coordinates to volume index', async function () {
+    it('Convert screen coordinates to volume index', function () {
       const s = [10, 20, 30];
       const mri = {
         s2v: { X:99, dx:-1, x:0, Y:0, dy:1, y:2, Z:299, dz:-1, z:1},
@@ -85,10 +86,10 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
     it('Find similar project names', async function () {
       const data = {
         type: "similarProjectNamesQuery",
-        metadata: {projectName: U.projectTest.shortname.slice(0,3)}
+        metadata: {projectName: U.projectTest.shortname.slice(0, 3)}
       };
       const result = await AMS.querySimilarProjectNames(data);
-      assert.equal(result[0].name, U.projectTest.name);
+      assert.ok(result.filter((e) => e.name === U.projectTest.name).length);
     });
   });
 
@@ -105,6 +106,7 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
       const jpg = await AMS.drawSlice(mri, view, slice);
       const newPath = "./test/images/slice-bert-cor-50.jpg";
       const refPath = "./test/data/reference-images/slice-bert-cor-50.jpg";
+      await fs.promises.mkdir(path.dirname(newPath), { recursive: true });
       fs.writeFileSync(newPath, jpg.data);
       const diff = U.compareImages(newPath, refPath);
       assert(diff<10);

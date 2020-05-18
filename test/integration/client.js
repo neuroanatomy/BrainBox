@@ -1,10 +1,10 @@
 'use strict';
 
-const { test } = require('../browser');
+require('../browser');
 const fs = require('fs');
 const puppeteer = require('puppeteer');
 const chai = require('chai');
-const assert = chai.assert;
+const { assert } = chai;
 const chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 const U = require('../utils.js');
@@ -26,18 +26,26 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
     let browser;
     let page;
 
+    const pageWidth = 1600;
+    const pageHeight = 1200;
+    const npixels1pct = pageWidth*pageHeight*0.01;
+    const npixels2pct = pageWidth*pageHeight*0.02;
+
+    // Remove screenshot directory
+    fs.rmdirSync('./test/screenshots/', { recursive: true });
+
     it('Browser opens', async function () {
-      browser = await puppeteer.launch({headless: true, ignoreHTTPSErrors: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+      browser = await puppeteer.launch({ headless: true, ignoreHTTPSErrors: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     });
 
     it('Can access index page', async function () {
       page = await browser.newPage();
-      await page.setViewport({width: 1600, height: 1200});
+      await page.setViewport({ width: pageWidth, height: pageHeight });
       await page.goto(U.serverURL);
       await page.waitFor('h2');
       const headerText = await page.evaluate(() => document.querySelector('h2').innerText, 'h2');
       assert.equal(headerText, 'Real-time collaboration in neuroimaging');
-    });
+    }).timeout(U.longTimeout);
 
     // OPEN HOMEPAGE
     it('Home page renders as expected', async function () {
@@ -46,7 +54,7 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
         U.serverURL,
         '01.home.png'
       );
-      assert(diff<1000, `${diff} pixels were different`);
+      assert(diff < npixels1pct, `${diff} pixels were different`);
     }).timeout(U.noTimeout);
 
     // OPEN MRI PAGE
@@ -56,25 +64,17 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
         U.serverURL + '/mri?url=' + U.localBertURL,
         '02.mri.png'
       );
-      assert(diff<1000, `${diff} pixels were different`);
+      assert(diff < npixels2pct, `${diff} pixels were different`);
     }).timeout(U.noTimeout);
 
     // ASK FOR AUTHENTICATION IF CREATING A PROJECT
     it('"Ask for login" renders as expected', async function () {
-      let diff;
-      try {
-        diff = await U.comparePageScreenshots(
-          page,
-          U.serverURL + '/project/new',
-          '03.ask-for-login.png'
-        );
-      } catch(err) {
-        console.log("========================");
-        console.log(err);
-        console.log("========================");
-        return assert(false);
-      }
-      assert(diff<1000, `${diff} pixels were different`);
+      const diff = await U.comparePageScreenshots(
+        page,
+        U.serverURL + '/project/new',
+        '03.ask-for-login.png'
+      );
+      assert(diff < npixels1pct, `${diff} pixels were different`);
     }).timeout(U.noTimeout);
 
     // OPEN PROJECT PAGE
@@ -84,7 +84,7 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
         U.serverURL + '/project/' + U.projectTest.shortname,
         '04.project.png'
       );
-      assert(diff<1000, `${diff} pixels were different`);
+      assert(diff < npixels1pct, `${diff} pixels were different`);
     }).timeout(U.noTimeout); // OPEN PROJECT SETTINGS PAGE FOR EXISTING PROJECT
     it('Project Settings page for an existing project renders as expected', async function () {
       const diff = await U.comparePageScreenshots(
@@ -92,7 +92,7 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
         `${U.serverURL}/project/${U.projectTest.shortname}/settings`,
         '05.project-settings-existing.png'
       );
-      assert(diff<1000, `${diff} pixels were different`);
+      assert(diff < npixels2pct, `${diff} pixels were different`);
     }).timeout(U.noTimeout);
 
     // OPEN PROJECT SETTINGS PAGE FOR EMPTY PROJECT
@@ -102,7 +102,7 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
         U.serverURL + '/project/nonexisting/settings',
         '06.project-settings-nonexisting.png'
       );
-      assert(diff<1000, `${diff} pixels were different`);
+      assert(diff < npixels1pct, `${diff} pixels were different`);
     }).timeout(U.noTimeout);
 
     // OPEN USER PAGE
@@ -112,7 +112,7 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
         U.serverURL + '/user/' + U.userFoo.nickname,
         '07.user.png'
       );
-      assert(diff<1000, `${diff} pixels were different`);
+      assert(diff < npixels1pct, `${diff} pixels were different`);
     }).timeout(U.noTimeout);
 
     // CLOSE
@@ -126,9 +126,9 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
         .query({
           url: U.localBertURL
         });
-      const {body} = res;
+      const { body } = res;
       const dirPath = "./public" + body.url;
-      await U.removeMRI({dirPath, srcURL: U.localBertURL});
+      await U.removeMRI({ dirPath, srcURL: U.localBertURL });
     });
   });
 });
