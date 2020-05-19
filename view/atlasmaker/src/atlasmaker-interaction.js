@@ -480,9 +480,9 @@ export var AtlasMakerInteraction = {
     // var o = $('#atlasmaker canvas').offset();
     let touchEvent;
     if(e.originalEvent) {
-      [touchEvent] = e.originalEvent;
+      [touchEvent] = Array.from(e.originalEvent);
     } else {
-      [touchEvent] = e.changedTouches;
+      [touchEvent] = Array.from(e.changedTouches);
     }
     // var x = parseInt((touchEvent.pageX-o.left)*(w/W));
     // var y = parseInt((touchEvent.pageY-o.top)*(h/H));
@@ -535,9 +535,9 @@ export var AtlasMakerInteraction = {
     // var o = $('#atlasmaker canvas').offset();
     let touchEvent;
     if(e.originalEvent) {
-      [touchEvent] = e.originalEvent.changedTouches;
+      [touchEvent] = Array.from(e.originalEvent.changedTouches);
     } else {
-      [touchEvent] = e.changedTouches;
+      [touchEvent] = Array.from(e.changedTouches);
     }
     // var x = parseInt((touchEvent.pageX-o.left)*(w/W));
     // var y = parseInt((touchEvent.pageY-o.top)*(h/H));
@@ -580,9 +580,9 @@ export var AtlasMakerInteraction = {
     e.preventDefault();
     let touchEvent;
     if(e.originalEvent) {
-      [touchEvent] = e.originalEvent;
+      [touchEvent] = Array.from(e.originalEvent);
     } else {
-      [touchEvent] = e.changedTouches;
+      [touchEvent] = Array.from(e.changedTouches);
     }
     const {x, y} = me._eventCoords2ImageCoords(touchEvent.pageX, touchEvent.pageY);
 
