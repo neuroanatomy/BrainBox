@@ -12,104 +12,104 @@ var dot=0; // dot for "wait" animation
 import work from 'webworkify-webpack';
 const snw = work(require.resolve('./surfacenets.worker.js'));
 snw.addEventListener('message', (event) => {
-    const [vertices, faces] = event.data;
-    createMesh(vertices, faces);
-    $("#splash").remove();
-    animate();
+  const [vertices, faces] = event.data;
+  createMesh(vertices, faces);
+  $("#splash").remove();
+  animate();
 });
 
 function onWindowResize() {
-    const W = window.innerWidth;
-    const H = window.innerHeight;
-    renderer.setSize( W, H );
-    camera.aspect = W/H;
-    camera.updateProjectionMatrix();
+  const W = window.innerWidth;
+  const H = window.innerHeight;
+  renderer.setSize( W, H );
+  camera.aspect = W/H;
+  camera.updateProjectionMatrix();
 }
 
 function createMesh(vertices, faces) {
-    // console.log("creating mesh");
-    renderer = new THREE.WebGLRenderer( { antialias: true } );
-    renderer.setPixelRatio( window.devicePixelRatio );
-    renderer.setClearColor(0x000000);
-    const W=window.innerWidth;
-    const H=window.innerHeight;
-    renderer.setSize(W, H);
-    document.body.appendChild(renderer.domElement);
+  // console.log("creating mesh");
+  renderer = new THREE.WebGLRenderer( { antialias: true } );
+  renderer.setPixelRatio( window.devicePixelRatio );
+  renderer.setClearColor(0x000000);
+  const W=window.innerWidth;
+  const H=window.innerHeight;
+  renderer.setSize(W, H);
+  document.body.appendChild(renderer.domElement);
 
-    camera = new THREE.PerspectiveCamera(50, W/H, 1, 2000 );
-    camera.position.z = 200;
-    scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(50, W/H, 1, 2000 );
+  camera.position.z = 200;
+  scene = new THREE.Scene();
 
-    trackball = new TrackballControls(camera, renderer.domElement);
+  trackball = new TrackballControls(camera, renderer.domElement);
 
-    window.addEventListener( 'resize', onWindowResize, false );
+  window.addEventListener( 'resize', onWindowResize, false );
 
-    const geometry = new THREE.BufferGeometry();
-    const verts = new Float32Array(vertices.flat());
-    geometry.setAttribute( 'position', new THREE.BufferAttribute( verts, 3 ) );
-    geometry.setIndex(faces.flat());
-    geometry.center();
+  const geometry = new THREE.BufferGeometry();
+  const verts = new Float32Array(vertices.flat());
+  geometry.setAttribute( 'position', new THREE.BufferAttribute( verts, 3 ) );
+  geometry.setIndex(faces.flat());
+  geometry.center();
 
-    geometry.computeFaceNormals();
-    geometry.computeVertexNormals();
-    const material = new THREE.MeshNormalMaterial();
-    const mesh = new THREE.Mesh(geometry, material);
-    scene.add(mesh);
+  geometry.computeFaceNormals();
+  geometry.computeVertexNormals();
+  const material = new THREE.MeshNormalMaterial();
+  const mesh = new THREE.Mesh(geometry, material);
+  scene.add(mesh);
 
-    console.log("mesh done.");
+  console.log("mesh done.");
 }
 
 function render() {
-    renderer.render( scene, camera );
-    trackball.update();
+  renderer.render( scene, camera );
+  trackball.update();
 }
 
 function animate() {
-    requestAnimationFrame( animate );
-    render();
+  requestAnimationFrame( animate );
+  render();
 }
 
 function configureNifti(niigz) {
-    const inflate = new pako.Inflate();
-    try {
-        inflate.push(new Uint8Array(niigz), true);
-    } catch(ex) {
-        // self.postMessage({msg:"ERROR: cannot decompress segmentation data"});
-        self.close();
-    }
-    const data = inflate.result.buffer;
-    const dv=new DataView(data);
-    const brain = {};
-    brain.dim=[];
-    brain.dim[0]=dv.getInt16(42, true);
-    brain.dim[1]=dv.getInt16(44, true);
-    brain.dim[2]=dv.getInt16(46, true);
-    brain.datatype=dv.getInt16(72, true);
-    brain.pixdim=[];
-    brain.pixdim[0]=dv.getFloat32(80, true);
-    brain.pixdim[1]=dv.getFloat32(84, true);
-    brain.pixdim[2]=dv.getFloat32(88, true);
-    var voxOffset=dv.getFloat32(108, true);
+  const inflate = new pako.Inflate();
+  try {
+    inflate.push(new Uint8Array(niigz), true);
+  } catch(ex) {
+    // self.postMessage({msg:"ERROR: cannot decompress segmentation data"});
+    self.close();
+  }
+  const data = inflate.result.buffer;
+  const dv=new DataView(data);
+  const brain = {};
+  brain.dim=[];
+  brain.dim[0]=dv.getInt16(42, true);
+  brain.dim[1]=dv.getInt16(44, true);
+  brain.dim[2]=dv.getInt16(46, true);
+  brain.datatype=dv.getInt16(72, true);
+  brain.pixdim=[];
+  brain.pixdim[0]=dv.getFloat32(80, true);
+  brain.pixdim[1]=dv.getFloat32(84, true);
+  brain.pixdim[2]=dv.getFloat32(88, true);
+  var voxOffset=dv.getFloat32(108, true);
 
-    switch(brain.datatype) {
-        case 2:
-        case 8:
-            brain.data=new Uint8Array(data, voxOffset);
-            break;
-        case 16:
-            brain.data=new Int16Array(data, voxOffset);
-            break;
-        case 32:
-            brain.data=new Float32Array(data, voxOffset);
-            break;
-    }
+  switch(brain.datatype) {
+  case 2:
+  case 8:
+    brain.data=new Uint8Array(data, voxOffset);
+    break;
+  case 16:
+    brain.data=new Int16Array(data, voxOffset);
+    break;
+  case 32:
+    brain.data=new Float32Array(data, voxOffset);
+    break;
+  }
 
-    console.log("dim", brain.dim[0], brain.dim[1], brain.dim[2]);
-    console.log("datatype", brain.datatype);
-    console.log("pixdim", brain.pixdim[0], brain.pixdim[1], brain.pixdim[2]);
-    console.log("voxOffset", voxOffset);
+  console.log("dim", brain.dim[0], brain.dim[1], brain.dim[2]);
+  console.log("datatype", brain.datatype);
+  console.log("pixdim", brain.pixdim[0], brain.pixdim[1], brain.pixdim[2]);
+  console.log("voxOffset", voxOffset);
 
-    return brain;
+  return brain;
 }
 
 // function loadNifti(path, callback) {
@@ -124,59 +124,59 @@ function configureNifti(niigz) {
 // }
 
 function startWaitingAnimation() {
-    setInterval(function() {
-        if($("#dot")) {
-            $("#dot").css({
-                marginLeft:50*(1+Math.sin(dot))+"%"
-            });
-        }
-        dot += 0.1;
-    }, 33);
+  setInterval(function() {
+    if($("#dot")) {
+      $("#dot").css({
+        marginLeft:50*(1+Math.sin(dot))+"%"
+      });
+    }
+    dot += 0.1;
+  }, 33);
 }
 
 function startRender3D() {
-    const pr = new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open('GET', localStorage.brainbox, true);
-        xhr.responseType = 'blob';
-        xhr.onload = function() {
-            var blob = this.response;
-            var reader = new FileReader();
-            reader.addEventListener("loadend", function() {
-                const niigz = this.result;
-                const brain = configureNifti(niigz);
-                brain.level = level;
-                // mesh = me.loadNifti(path, me.computeMesh);
+  const pr = new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', localStorage.brainbox, true);
+    xhr.responseType = 'blob';
+    xhr.onload = function() {
+      var blob = this.response;
+      var reader = new FileReader();
+      reader.addEventListener("loadend", function() {
+        const niigz = this.result;
+        const brain = configureNifti(niigz);
+        brain.level = level;
+        // mesh = me.loadNifti(path, me.computeMesh);
 
-                snw.postMessage([
-                    brain.dim,
-                    brain.datatype,
-                    brain.pixdim,
-                    brain.level,
-                    brain.data
-                ]);
-                resolve();
-            });
-            reader.readAsArrayBuffer(blob);
-        };
-        xhr.onerror = function(e) {
-            console.log("load from localStorage failed. Try to load from server");
-            reject(e);
-        };
-        xhr.send();
-    });
+        snw.postMessage([
+          brain.dim,
+          brain.datatype,
+          brain.pixdim,
+          brain.level,
+          brain.data
+        ]);
+        resolve();
+      });
+      reader.readAsArrayBuffer(blob);
+    };
+    xhr.onerror = function(e) {
+      console.log("load from localStorage failed. Try to load from server");
+      reject(e);
+    };
+    xhr.send();
+  });
 
-    return pr;
+  return pr;
 }
 
 function loadHTML() {
-    document.body.innerHTML = html;
+  document.body.innerHTML = html;
 }
 
 function init() {
-    loadHTML();
-    startWaitingAnimation();
-    startRender3D();
+  loadHTML();
+  startWaitingAnimation();
+  startRender3D();
 }
 
 init();

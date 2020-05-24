@@ -68,6 +68,8 @@ export var AtlasMakerWS = {
         me.receiveFunctions.paintvol = me.receivePaintVolumeMessage;
         me.receiveFunctions.disconnect = me.receiveDisconnectMessage;
         me.receiveFunctions.serverMessage = me.receiveServerMessage;
+        me.receiveFunctions.serverMessage = me.receiveServerMessage;
+        me.receiveFunctions.vectorial = me.receiveVectorialAnnotationMessage;
 
         me.receiveFunctions.requestSlice = function (data) { console.log("requestSlice", data); };
         me.receiveFunctions.requestSlice2 = function (data) { console.log("requestSlice2", data); };
@@ -306,6 +308,7 @@ export var AtlasMakerWS = {
       }
     }
 
+    // update number of connected users
     let v;
     let nusers = 1;
     for (v in me.Collab) {
@@ -360,7 +363,7 @@ export var AtlasMakerWS = {
     * @returns {void}
     */
   sendPaintMessage: function (msg) {
-    var me=AtlasMakerWidget;
+    const me = AtlasMakerWidget;
     if(me.flagConnected === 0) { return; }
     try {
       me.socket.send(JSON.stringify({type:"paint", data:msg}));
@@ -369,12 +372,25 @@ export var AtlasMakerWS = {
     }
   },
 
+  sendVectorialAnnotationMessage: function (msg) {
+    const me = AtlasMakerWidget;
+    if(me.flagConnected === 0) { return; }
+    try {
+      me.socket.send(JSON.stringify({
+        type: "vectorial",
+        data: msg
+      }));
+    } catch (ex) {
+      console.log("ERROR: Unable to sendVectorialAnnotationMessage", ex);
+    }
+  },
+
   /**
    * @param {array} atlasData Atlas data
    * @returns {void}
    */
   sendAtlasDataMessage: function (atlasData) {
-    var me=AtlasMakerWidget;
+    const me = AtlasMakerWidget;
     me.socket.binaryType = "arraybuffer";
     me.socket.send(pako.deflate(atlasData));
     me.socket.binaryType = "blob";
@@ -386,7 +402,7 @@ export var AtlasMakerWS = {
    * @returns {void}
    */
   receivePaintMessage: function (data) {
-    var me=AtlasMakerWidget;
+    const me = AtlasMakerWidget;
     var {uid:u, data:msg}=data; // user
 
     if(me.Collab[u]) { me.paintxy(u, msg.c, msg.x, msg.y, me.Collab[u]); }
@@ -400,7 +416,7 @@ export var AtlasMakerWS = {
    * @returns {void}
    */
   sendShowMessage: function (msg) {
-    var me=AtlasMakerWidget;
+    const me = AtlasMakerWidget;
     if(me.flagConnected === 0) { return; }
     try {
       me.socket.send(JSON.stringify({type:"show", data:msg}));
@@ -416,7 +432,7 @@ export var AtlasMakerWS = {
    * @returns {void}
    */
   receiveShowMessage: function (data) {
-    var me=AtlasMakerWidget;
+    const me = AtlasMakerWidget;
     var {uid:u, data:msg} = data; // user
 
     if(me.Collab[u]) { me.showxy(u, msg.c, msg.x, msg.y, me.Collab[u]); }
@@ -427,23 +443,31 @@ export var AtlasMakerWS = {
    * @returns {void}
    */
   receivePaintVolumeMessage: function (data) {
-    var me=AtlasMakerWidget;
+    const me = AtlasMakerWidget;
     var voxels;
 
     voxels=data.data;
     me.paintvol(voxels.data);
 
-    /*
-            TEST
-    */
+    // TEST
     me.sendRequestSliceMessage();
+  },
+
+  /**
+   * @param {object} data Object with vectorial annotations
+   * @returns {void}
+   */
+  receiveVectorialAnnotationMessage: function (data) {
+    const me = AtlasMakerWidget;
+    ({data: me.User.vectorial} = data);
+    me.displayInformation();
   },
 
   /**
    * @returns {void}
    */
   sendUndoMessage: function () {
-    var me=AtlasMakerWidget;
+    const me = AtlasMakerWidget;
     if(me.flagConnected === 0) { return; }
     try {
       me.socket.send(JSON.stringify({type:"paint", data:{c:"u"}}));
@@ -456,7 +480,7 @@ export var AtlasMakerWS = {
    * @returns {void}
    */
   sendSaveMessage: function () {
-    var me=AtlasMakerWidget;
+    const me = AtlasMakerWidget;
     if(me.flagConnected === 0) { return; }
     try {
       me.socket.send(JSON.stringify({type:"save"}));
@@ -469,7 +493,7 @@ export var AtlasMakerWS = {
    * @returns {void}
    */
   sendRequestMRIMessage: function () {
-    var me=AtlasMakerWidget;
+    const me = AtlasMakerWidget;
     if(me.flagConnected === 0) { return; }
 
     try {
@@ -486,7 +510,7 @@ export var AtlasMakerWS = {
    * @returns {void}
    */
   sendRequestSliceMessage: function () {
-    var me=AtlasMakerWidget;
+    const me = AtlasMakerWidget;
     if(me.flagConnected === 0) { return; }
     if(me.flagLoadingImg.loading === true) { return; }
     try {
@@ -525,13 +549,59 @@ export var AtlasMakerWS = {
   },
 
   /**
-   * @param {object} info Metadata
+   * Sends metadata to the server for saving. Can work in "patch" mode, where
+   * only a difference object is send, or "append" mode, where the complete
+   * metadata object is sent. The metadata object corresponds to an MRI entry
+   * in the database, and has the following structure:
+   * {
+   *  filename: string, a filename like "mri.nii.gz"
+   *  success: boolean, true if the mri was successfuly downloaded
+   *  source: string, url like "https://..."
+   *  url: "string", a server path with the pattern "/data/${hash}/"
+   *  dim: [3 integers]
+   *  pixdim: [3 reals]
+   *  voxel2world: [3x3 reals]
+   *  worldOrigin: [3 reals]
+   *  owner: string, a GitHub username
+   *  included: string, a date string
+   *  modified: string, a date string
+   *  modifiedBy: string, a GitHub username
+   *  mri: {
+   *    brain: string, a filename like "mri.nii.gz", same as the root filename
+   *    atlas: [
+   *      {
+   *        created: string, date string
+   *        modified: string, date string
+   *        access: string, either none, view, edit, add or remove
+   *        type: string, only "volume", for the moment
+   *        name: string, a name like "Cerebrum"
+   *        filename: string, a filename like "cerebrum.nii.gz"
+   *        labels: string, a labelset name from among the available ones
+   *        project: string, a project shortname like "testproject"
+   *      }
+   *    ],
+   *    annotations: {
+   *      "projectname": {
+   *        "ann1": {
+   *          access: string, among none, view, edit, add, remove
+   *          created: string, a date
+   *          modified: string, a date
+   *          owner: string, GitHub username
+   *          type: string, a textual data type among "text", "multiple choices" or "hidden text"
+   *          data: string, the annotation proper
+   *        },
+   *        "ann2": ...
+   *      }
+   *    }
+   *  }
+   * }
+   * @param {object} info Metadata object, as generated by brainbox
    * @param {string} method Method "patch" or "append"
    * @param {object} patch Path object used in case method is "patch"
    * @returns {void}
    */
   sendSaveMetadataMessage: function (info, method, patch) {
-    var me=AtlasMakerWidget;
+    const me = AtlasMakerWidget;
 
     return new Promise(function(resolve, reject) {
       if(me.flagConnected === 0) {
@@ -578,7 +648,7 @@ export var AtlasMakerWS = {
    * @returns {void}
    */
   receiveDisconnectMessage: function (data) {
-    var me=AtlasMakerWidget;
+    const me = AtlasMakerWidget;
     var {uid} = data; // user
     let msg;
     if(me.Collab[uid]) {
@@ -604,6 +674,7 @@ export var AtlasMakerWS = {
   },
 
   /**
+   * Receives notifications from the server
    * @param {object} data Message data
    * @returns {void}
    */
@@ -620,7 +691,7 @@ export var AtlasMakerWS = {
    * @returns {void}
    */
   replayWSTraffic: function (recorded) {
-    var me=AtlasMakerWidget;
+    const me = AtlasMakerWidget;
     var i;
     for(i=0; i<recorded.length; i++) {
       me.socket.send(JSON.stringify(recorded[i]));
@@ -639,7 +710,7 @@ export var AtlasMakerWS = {
    */
   logToDatabase: function (key, value) {
     return new Promise(function(resolve, reject) {
-      var me=AtlasMakerWidget;
+      const me = AtlasMakerWidget;
       $.ajax({
         url: me.hostname + "/api/log",
         type: "POST",

@@ -42,6 +42,63 @@ function receiveMetadata(data) {
   // }
 }
 
+/**
+ * @function saveAnnotationsChange
+ */
+function saveAnnotationsChange(info) {
+  var i, j;
+
+  // update content of projectInfo object from proxy by calling all getters
+  JSON.stringify(infoProxy);
+
+  // check the info object for duplicate volume annotations
+  for(i=0; i<info.mri.atlas.length-1; i++) {
+    for(j=i+1; j<info.mri.atlas.length; j++) {
+      if( info.mri.atlas[i].name === info.mri.atlas[j].name
+                && info.mri.atlas[i].project === info.mri.atlas[j].project) {
+        $("#annotationMessage").text("There is already an annotation with that name and project");
+        setTimeout(function() { $("#annotationMessage").text(""); }, 2000);
+        //$.extend(true, info.mri, mriInfoOrig.mri);
+        tw.resetBindingProxy(volAnnParam, mriInfoOrig);
+
+        return;
+      }
+    }
+  }
+
+  // check the info object for duplicate text annotations
+  for(i=0; i<textAnnotationsArray.length-1; i++) {
+    for(j=i+1; j<textAnnotationsArray.length; j++) {
+      if( textAnnotationsArray[i].name === textAnnotationsArray[j].name
+                && textAnnotationsArray[i].project === textAnnotationsArray[j].project) {
+        $("#textAnnotationMessage").text("There is already an annotation with that name and project");
+        setTimeout(function() { $("#textAnnotationMessage").text(""); }, 2000);
+        //$.extend(true, textAnnotationsArray, BrainBox.annotationsObjectToArray(mriInfoOrig.mri.annotations));
+        tw.resetBindingProxy(textAnnParam, BrainBox.annotationsObjectToArray(mriInfoOrig.mri.annotations));
+
+        return;
+      }
+    }
+  }
+
+  // convert the text annotations array into an object
+  info.mri.annotations = BrainBox.annotationsArrayToObject(textAnnotationsArray);
+
+  // compute a diff patch between the new and old versions of the info object
+  var patch = jsonpatch.compare(mriInfoOrig, info);
+  if(patch.length === 0) {
+    console.log("Nothing changed");
+
+    return;
+  }
+
+  // send the patch to the server and update the stored version
+  AtlasMakerWidget.sendSaveMetadataMessage(info, "patch", patch)
+    .then(function() {
+      mriInfoOrig = JSON.parse(JSON.stringify(info));
+    });
+}
+
 // Prevent zoom on double tap
 $('body').on('touchstart', function preventZoom(e) {
   const t2 = e.timeStamp;
@@ -393,6 +450,8 @@ function addAnnotation(param) {
 
 /**
  * @function removeAnnotation
+ * @param {object} param An MRI object
+ * @returns {void}
  */
 function removeAnnotation(param) {
   // find row index
@@ -400,9 +459,9 @@ function removeAnnotation(param) {
     .index();
 
   // prevent removal of a last projet-less annotation
-  if(BrainBox.info.mri.atlas[index].project == "") {
-    var nPublicAnnotations = BrainBox.info.mri.atlas.map(function(o) { return (o.project==""); }).length;
-    if(nPublicAnnotations == 1) {
+  if(BrainBox.info.mri.atlas[index].project === "") {
+    var nPublicAnnotations = BrainBox.info.mri.atlas.map(function(o) { return (o.project===""); }).length;
+    if(nPublicAnnotations === 1) {
       $("#annotationMessage").text("There has to be at least 1 public volume annotation");
       setTimeout(function() { $("#annotationMessage").text(""); }, 2000);
 
@@ -439,7 +498,8 @@ function addTextAnnotation(param) {
   var i;
 
   // check that there is no other empty annotation already created
-  if(BrainBox.info.mri.annotations[""] && BrainBox.info.mri.annotations[""][""]) {
+  if(typeof BrainBox.info.mri.annotations[""] !== "undefined"
+    && typeof BrainBox.info.mri.annotations[""][""] !== "undefined") {
     $("#textAnnotationMessage").text("An empty annotation already exists");
     setTimeout(function() { $("#textAnnotationMessage").text(""); }, 2000);
 
@@ -504,61 +564,4 @@ function selectTextAnnotationTableRow(index, param) {
     $(table).find('tbody tr:eq('+index+')')
       .addClass("selected");
   }
-}
-
-/**
- * @function saveAnnotationsChange
- */
-function saveAnnotationsChange(info) {
-  var i, j;
-
-  // update content of projectInfo object from proxy by calling all getters
-  JSON.stringify(infoProxy);
-
-  // check the info object for duplicate volume annotations
-  for(i=0; i<info.mri.atlas.length-1; i++) {
-    for(j=i+1; j<info.mri.atlas.length; j++) {
-      if( info.mri.atlas[i].name === info.mri.atlas[j].name
-                && info.mri.atlas[i].project === info.mri.atlas[j].project) {
-        $("#annotationMessage").text("There is already an annotation with that name and project");
-        setTimeout(function() { $("#annotationMessage").text(""); }, 2000);
-        //$.extend(true, info.mri, mriInfoOrig.mri);
-        tw.resetBindingProxy(volAnnParam, mriInfoOrig);
-
-        return;
-      }
-    }
-  }
-
-  // check the info object for duplicate text annotations
-  for(i=0; i<textAnnotationsArray.length-1; i++) {
-    for(j=i+1; j<textAnnotationsArray.length; j++) {
-      if( textAnnotationsArray[i].name === textAnnotationsArray[j].name
-                && textAnnotationsArray[i].project === textAnnotationsArray[j].project) {
-        $("#textAnnotationMessage").text("There is already an annotation with that name and project");
-        setTimeout(function() { $("#textAnnotationMessage").text(""); }, 2000);
-        //$.extend(true, textAnnotationsArray, BrainBox.annotationsObjectToArray(mriInfoOrig.mri.annotations));
-        tw.resetBindingProxy(textAnnParam, BrainBox.annotationsObjectToArray(mriInfoOrig.mri.annotations));
-
-        return;
-      }
-    }
-  }
-
-  // convert the text annotations array into an object
-  info.mri.annotations = BrainBox.annotationsArrayToObject(textAnnotationsArray);
-
-  // compute a diff patch between the new and old versions of the info object
-  var patch = jsonpatch.compare(mriInfoOrig, info);
-  if(patch.length === 0) {
-    console.log("Nothing changed");
-
-    return;
-  }
-
-  // send the patch to the server and update the stored version
-  AtlasMakerWidget.sendSaveMetadataMessage(info, "patch", patch)
-    .then(function() {
-      mriInfoOrig = JSON.parse(JSON.stringify(info));
-    });
 }

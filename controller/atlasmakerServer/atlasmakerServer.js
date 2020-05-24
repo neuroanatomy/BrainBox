@@ -4,7 +4,6 @@ const zlib = require('zlib');
 const tracer = require('tracer').console({format: '[{{file}}:{{line}}]  {{message}}'});
 const jpeg = require('jpeg-js'); // jpeg-js library: https://github.com/eugeneware/jpeg-js
 const Struct = require('struct');
-const childProcess = require('child_process');
 const merge = require('merge');
 const path = require('path');
 const monk = require('monk');
@@ -18,7 +17,8 @@ const whitelist = JSON.parse(fs.readFileSync(path.join(__dirname, "whitelist.jso
 const blacklist = JSON.parse(fs.readFileSync(path.join(__dirname, "blacklist.json")));
 
 // var http = require('http');
-const WebSocketServer = require('ws').Server;
+const WebSocket = require('ws');
+const WebSocketServer = WebSocket.Server;
 var websocketserver;
 
 const createDOMPurify = require('dompurify');
@@ -47,7 +47,8 @@ const atlasmakerServer = (function() {
     Atlases: [],
     Brains: [],
     US: [],
-    uidcounter: 1,
+    uidcounter: 0,
+    atlascounter: 0,
     backupInterval: 15*60*1000, // 15 minutes in milliseconds
     timeMarkInterval: 60*60*1000, // 60 minutes in milliseconds
     enterCommands: false,
@@ -125,7 +126,7 @@ const atlasmakerServer = (function() {
     jpgTag: bufferTag("jpg", 8),
 
     numberOfUsersConnectedToAtlas: function (dirname, atlasFilename) {
-      var sum = 0;
+      let sum = 0;
 
       if(typeof dirname === 'undefined' || typeof atlasFilename === 'undefined') {
         return sum;
@@ -134,11 +135,11 @@ const atlasmakerServer = (function() {
       for(const i in me.US) {
         if({}.hasOwnProperty.call(me.US, i)) {
           if(typeof me.US[i].User === 'undefined') {
-            tracer.log("ERROR: When counting the number of users connected to the atlas, user uid " + i + " was not defined");
+            tracer.log(`WARNING: When counting the number of users connected to the atlas, user ${me.US[i].uid} was not defined`);
           } else if(typeof me.US[i].User.dirname === 'undefined') {
-            tracer.log("ERROR: For user uid " + i + " dirname is unknown");
+            tracer.log(`WARNING: For user uid ${i} dirname is unknown`);
           } else if(typeof me.US[i].User.atlasFilename === 'undefined') {
-            tracer.log("ERROR: For user uid " + i + " atlasFilename is unknown");
+            tracer.log(`WARNING: For user uid ${i} atlasFilename is unknown`);
           } else if(me.US[i].User.dirname === dirname && me.US[i].User.atlasFilename === atlasFilename) {
             sum += 1;
           }
@@ -148,7 +149,7 @@ const atlasmakerServer = (function() {
       return sum;
     },
     numberOfUsersConnectedToMRI: function (mriPath) {
-      var sum = 0;
+      let sum = 0;
 
       if(typeof mriPath === 'undefined') {
         return sum;
@@ -157,15 +158,15 @@ const atlasmakerServer = (function() {
       for(const i in me.US) {
         if({}.hasOwnProperty.call(me.US, i)) {
           if(typeof me.US[i].User === 'undefined') {
-            tracer.log("ERROR: When counting the number of users connected to MRI, user uid " + i + " was not defined");
+            tracer.log(`WARNING: When counting the number of users connected to MRI, user ${me.US[i].uid} was not defined`);
             continue;
           }
           if(typeof me.US[i].User.dirname === 'undefined') {
-            tracer.log("ERROR: A user uid " + i + " dirname is unknown");
+            tracer.log(`WARNING: A user uid ${i} dirname is unknown`);
             continue;
           }
           if(typeof me.US[i].User.mri === 'undefined') {
-            tracer.log("ERROR: A user uid " + i + " MRI is unknown");
+            tracer.log(`WARNING: A user uid ${i} MRI is unknown`);
             continue;
           }
           if(me.US[i].User.dirname + me.US[i].User.mri === mriPath) {
@@ -180,8 +181,8 @@ const atlasmakerServer = (function() {
       tracer.log("\n" + me.Atlases.filter( function(o) { return typeof o !== 'undefined'; } ).length + " Atlases:");
       for(const i in me.Atlases) {
         if({}.hasOwnProperty.call(me.Atlases, i)) {
-          var sum = me.numberOfUsersConnectedToAtlas(me.Atlases[i].dirname, me.Atlases[i].name);
-          tracer.log("Atlases[" + i + "] path:" + me.Atlases[i].dirname + me.Atlases[i].name + ", " + sum + " users connected");
+          const sum = me.numberOfUsersConnectedToAtlas(me.Atlases[i].dirname, me.Atlases[i].filename);
+          tracer.log("Atlases[" + i + "] path:" + me.Atlases[i].dirname + me.Atlases[i].filename + ", " + sum + " users connected");
         }
       }
       for(const i in me.Atlases) {
@@ -194,24 +195,26 @@ const atlasmakerServer = (function() {
       tracer.log("\n" + me.Brains.filter(function(o) { return typeof o !== 'undefined'; }).length + " Brains:");
       for(const i in me.Brains) {
         if({}.hasOwnProperty.call(me.Brains, i)) {
-          var sum = me.numberOfUsersConnectedToMRI(me.Brains[i].path);
-          tracer.log("Brains[" + i + "].path=" + me.Brains[i].path + ", " + sum + " users connected");
+          const sum = me.numberOfUsersConnectedToMRI(me.Brains[i].path);
+          tracer.log(`Brains[${i}].path=${me.Brains[i].path}, ${sum} users connected`);
         }
       }
       for(const i in me.Brains) {
         if({}.hasOwnProperty.call(me.Brains, i)) {
-          tracer.log("Brains[" + i + "]");
-          tracer.log("           path:", me.Brains[i].path);
-          tracer.log("       data.dim:", me.Brains[i].data.dim);
-          tracer.log("    data.pixdim:", me.Brains[i].data.pixdim);
-          tracer.log("data.vox_offset:", me.Brains[i].data.vox_offset);
-          tracer.log("       data.dir:", me.Brains[i].data.dir);
-          tracer.log("       data.ori:", me.Brains[i].data.ori);
-          tracer.log("       data.s2v:", me.Brains[i].data.s2v);
-          tracer.log("       data.v2w:", me.Brains[i].data.v2w);
-          tracer.log("      data.wori:", me.Brains[i].data.wori);
-          tracer.log("  data.datatype:", me.Brains[i].data.datatype);
-          tracer.log("       data.sum:", me.Brains[i].data.sum);
+          tracer.log(`
+Brains[${i}]:
+           path: ${me.Brains[i].path}
+       data.dim: ${me.Brains[i].data.dim}
+    data.pixdim: ${me.Brains[i].data.pixdim}
+data.vox_offset: ${me.Brains[i].data.vox_offset}
+       data.dir: ${me.Brains[i].data.dir}
+       data.ori: ${me.Brains[i].data.ori}
+       data.s2v: ${me.Brains[i].data.s2v}
+       data.v2w: ${me.Brains[i].data.v2w}
+      data.wori: ${me.Brains[i].data.wori}
+  data.datatype: ${me.Brains[i].data.datatype}
+       data.sum: ${me.Brains[i].data.sum}
+`);
         }
       }
     },
@@ -239,10 +242,16 @@ const atlasmakerServer = (function() {
     // Web socket
     //========================================================================================
     getUserFromSocket: function (socket) {
-      for(const i in me.US) {
-        if({}.hasOwnProperty.call(me.US, i)) {
-          if(socket === me.US[i].socket) {
-            return me.US[i];
+      for(const key in me.US) {
+        if({}.hasOwnProperty.call(me.US, key)) {
+          const user = me.US[key];
+          if(typeof user === "undefined") {
+            console.log("WARNING: trying to get socket of undefined user. Deleting it.");
+            delete me.US[key];
+            continue;
+          }
+          if(socket === user.socket) {
+            return user;
           }
         }
       }
@@ -250,9 +259,17 @@ const atlasmakerServer = (function() {
       return -1;
     },
     getUserFromUserId: function (uid) {
-      for(const i in me.US) {
-        if(uid === me.US[i].uid) {
-          return me.US[i];
+      for(const key in me.US) {
+        if({}.hasOwnProperty.call(me.US, key)) {
+          const user = me.US[key];
+          if(typeof user === "undefined") {
+            console.log("WARNING: trying to get uid of undefined user. Deleting it.");
+            delete me.US[key];
+            continue;
+          }
+          if(uid === user.uid) {
+            return user;
+          }
         }
       }
 
@@ -281,130 +298,231 @@ const atlasmakerServer = (function() {
         }
       }
     },
+    indexOfAtlasAtPath: function(dirname, atlasFilename) {
+      for(const key in me.Atlases) {
+        if({}.hasOwnProperty.call(me.Atlases, key)) {
+          if(me.Atlases[key].dirname === dirname && me.Atlases[key].filename === atlasFilename) {
+            return key;
+          }
+        }
+      }
+    },
+    removeAtlasAtIndex: function(iAtlas) {
+      console.log(`INFO: Removing atlas ${me.Atlases[iAtlas].filename}`);
+      clearInterval(me.Atlases[iAtlas].timer);
+      delete me.Atlases[iAtlas];
+    },
     unloadMRI: function (mriPath) {
       for(const i in me.Brains) {
         if({}.hasOwnProperty.call(me.Brains, i)) {
           if(me.Brains[i].path === mriPath) {
             delete me.Brains[i];
-            tracer.log("    free memory", os.freemem());
+            tracer.log("Free memory", os.freemem());
             break;
           }
         }
       }
     },
-    saveAtlas: function (atlas) {
 
-      /*
-                saveAtlas
-                input: an mri structure
-                process: a .nii.gz or .mgz file is saved at the position indicated in the mri structure
-                output: success message
-            */
-      var pr;
-      if(atlas && atlas.dim ) {
-        if(typeof atlas.data === 'undefined') {
-          tracer.log("ERROR: [saveAtlas] atlas in Atlas array has no data");
-          if(me.debug) {
-            tracer.log("atlas:", atlas);
-          }
+    /**
+     * Unloading the atlas involves saving its file and removing it
+     * from the Atlases array.
+     * @param {string} dirname Local directory where the atlas file is saved
+     * @param {string} atlasFilename Name of the atlas file
+     * @returns {void}
+     */
+    unloadAtlas: async function (dirname, atlasFilename) {
+      const iAtlas = me.indexOfAtlasAtPath(dirname, atlasFilename);
+      if(typeof iAtlas === "undefined") {
+        return;
+      }
 
-          return Promise.reject(new Error("ERROR: [saveAtlas] atlas in Atlas array has no data"));
+      try {
+        await me.saveAtlasAtIndex(iAtlas);
+      } catch(err) {
+        throw new Error("Saving atlas failed");
+      }
+
+      me.removeAtlasAtIndex(iAtlas);
+      tracer.log("Atlas saved, unloading it. Free memory", os.freemem());
+    },
+
+    /**
+     * A .nii.gz or .mgz file is saved at the position indicated in the mri structure
+     * @function saveAtlasAtIndex
+     * @param {integer} iAtlas index of the atlas in the Atlases to save
+     * @returns {promise} success message
+     */
+    saveAtlasAtIndex: async function (iAtlas) {
+      const atlas = me.Atlases[iAtlas];
+      try {
+        await me._saveAtlasVoxelData(atlas);
+      } catch (err) {
+        throw new Error("Can't save atlas voxel data", err);
+      }
+      try {
+        await me._saveAtlasVectorialData(atlas);
+      } catch (err) {
+        throw new Error("Can't save atlas vectorial data", err);
+      }
+    },
+
+    _saveAtlasVectorialData: async function (atlas) {
+      if(typeof atlas === "undefined"
+      || typeof atlas.vectorial === "undefined") {
+
+        throw new Error("No vectorial atlas to save");
+      }
+      const {vectorial} = atlas;
+
+      // check if atlas has changed since the last time and
+      // if it hasn't return
+      // if the atlas is not present, it may have been deleted by the user.
+      // remove it from the Atlases array and return
+      let mri;
+      try {
+        mri = await db.get('mri').findOne({source: atlas.source, backup: { $exists: 0 }}, { _id: 0 });
+      } catch (err) {
+        throw new Error("Can't find entry for atlas voxel data in DB", err);
+      }
+
+      if(mri === null) {
+        tracer.log(`WARNING: There's not DB entry for MRI with source ${atlas.source}`);
+
+        return;
+      }
+
+      if({}.hasOwnProperty.call(mri, "_id")) {
+        delete mri._id;
+      }
+
+      let index = -1;
+      for(let i=0; i<mri.mri.atlas.length; i++) {
+        if(mri.mri.atlas[i].filename === atlas.filename) {
+          index = i;
+          break;
         }
+      }
 
-        // check if atlas has changed since the last time...
-        let sum = 0;
-        for(let i = 0; i<atlas.dim[0]*atlas.dim[1]*atlas.dim[2]; i += 1) {
-          sum+=atlas.data[i];
+      if(index === -1) {
+        // atlas was removed from MRI object, return
+        // const iAtlas = me.indexOfAtlasAtPath(atlas.dirname, atlas.filename);
+        // me.removeAtlasAtIndex(iAtlas);
+
+        return;
+      }
+
+      if(typeof mri.mri.atlas[index].vectorial !== "undefined") {
+        const patch = jsonpatch.compare(mri.mri.atlas[index].vectorial, vectorial);
+        if (patch.length === 0) {
+          console.log("INFO: No vectorial atlas change, no save");
+
+          return;
         }
+      }
 
-        // ...if it has not, return,
-        if(sum === atlas.sum) {
-          tracer.log("    Atlas", atlas.dirname, atlas.name,
-            "no change, no save, freemem", os.freemem());
+      // if has changed: update it and save to DB
+      mri.mri.atlas[index].vectorial = vectorial;
+      try {
+        await db.get('mri').update({ source: atlas.source }, { $set: { backup: true }}, { multi: true });
+        await db.get('mri').insert(mri);
+      } catch (err) {
+        throw new Error("Can't log update and save to DB");
+      }
+    },
 
-          return Promise.resolve("Done. No save required");
-        }
+    /**
+     * @function _saveAtlasVoxelData
+     * @param {object} atlas An mri object structure
+     * @returns {promise} success message
+     */
+    _saveAtlasVoxelData: async function (atlas) {
+      if(typeof atlas === "undefined"
+      || typeof atlas.dim === "undefined") {
 
-        // ...if it has, save a backup copy.
-        atlas.sum = sum;
-        var {hdrSz} = atlas;
-        var dataSz = atlas.data.length;
-        var ftrSz;
-        var mri;
+        throw new Error("No voxel atlas to save");
+      }
 
-        if(atlas.ftr) {
-          ftrSz = atlas.ftr.length;
-        } else {
-          ftrSz = 0;
-        }
-        mri = Buffer.alloc(atlas.dim[0]*atlas.dim[1]*atlas.dim[2] + hdrSz + ftrSz);
-        tracer.log("        sum:", sum);
-        tracer.log("header size:", hdrSz);
-        tracer.log("  data size:", atlas.dim[0]*atlas.dim[1]*atlas.dim[2]);
-        tracer.log("footer size:", ftrSz);
-        tracer.log("        dim:", atlas.dim);
-        tracer.log(" Atlas", atlas.dirname, atlas.name,
-          "hdr+data+ftr length", atlas.data.length + hdrSz + ftrSz,
-          "buff length", mri.length);
-        atlas.hdr.copy(mri);
-        atlas.data.copy(mri, hdrSz);
-        if(ftrSz) {
-          atlas.ftr.copy(mri, hdrSz + dataSz);
-        }
-        pr = new Promise(function (resolve, reject) {
-          zlib.gzip(mri, function (err, mrigz) {
+      if(typeof atlas.data === "undefined") {
+        throw new Error("atlas entry in Atlas array has no voxel data");
+      }
+
+      // check if atlas has changed since the last time and
+      // if it has not, return.
+      let sum = 0;
+      for(let i = 0; i<atlas.dim[0]*atlas.dim[1]*atlas.dim[2]; i += 1) {
+        sum += atlas.data[i];
+      }
+      if(sum === atlas.sum) {
+        console.log("INFO: No voxel atlas change, no save");
+
+        return;
+      }
+
+      // atlas changed: save a backup copy.
+      atlas.sum = sum;
+      const {hdrSz} = atlas;
+      const dataSz = atlas.data.length;
+      let ftrSz;
+      if(atlas.ftr) {
+        ftrSz = atlas.ftr.length;
+      } else {
+        ftrSz = 0;
+      }
+      const mri = Buffer.alloc(atlas.dim[0]*atlas.dim[1]*atlas.dim[2] + hdrSz + ftrSz);
+      atlas.hdr.copy(mri);
+      atlas.data.copy(mri, hdrSz);
+      if(ftrSz) {
+        atlas.ftr.copy(mri, hdrSz + dataSz);
+      }
+
+      // compress it
+      let mrigz;
+      try {
+        mrigz = await new Promise(function (resolve, reject) {
+          zlib.gzip(mri, function (err, result) {
             if(err) {
-              reject(err);
-
-              return;
+              return reject(err);
             }
-            var ms=Number(new Date());
-            var path1 = me.dataDirectory + atlas.dirname + atlas.name;
-            var path2 = me.dataDirectory + atlas.dirname + ms + "_" + atlas.name;
-            fs.rename(path1, path2, function () {
-              fs.writeFileSync(path1, mrigz);
-              // log backup creation
-              db.get('log').insert({
-                key: "saveAtlasBackup",
-                value: {
-                  atlasDirectory: atlas.dirname,
-                  atlasFilename: atlas.name,
-                  timestamp: ms
-                },
-                date: (new Date()).toJSON()
-              })
-                .then(() => tracer.log("backup insertion logged"));
-              resolve("Atlas saved");
-            });
+            resolve(result);
           });
         });
-      } else {
-
-        return Promise.reject(new Error("ERROR: No atlas to save"));
+      } catch (err) {
+        throw new Error("Atlas compression failed");
       }
 
-      return pr;
-    },
-    unloadAtlas: function (dirname, atlasFilename) {
-      for(const i in me.Atlases) {
-        if({}.hasOwnProperty.call(me.Atlases, i)) {
-          if(me.Atlases[i].dirname === dirname && me.Atlases[i].name === atlasFilename) {
-            me.saveAtlas(me.Atlases[i])
-              .then(function () {
-                tracer.log("    Atlas saved. Unloading it");
-                clearInterval(me.Atlases[i].timer);
-                delete me.Atlases[i];
-                tracer.log("    free memory", os.freemem());
-              });
-            break;
-          }
-        }
+      const path1 = me.dataDirectory + atlas.dirname + atlas.filename;
+      const ms = Number(new Date()); // timestamp
+
+      // if there's a previous version, keep if for backup
+      if(fs.existsSync(path1)) {
+        const path2 = me.dataDirectory + atlas.dirname + ms + "_" + atlas.filename;
+        fs.renameSync(path1, path2);
+      }
+
+      // save the new version
+      fs.writeFileSync(path1, mrigz);
+
+      // log the saving
+      try {
+        await db.get('log').insert({
+          key: "saveAtlasBackup",
+          value: {
+            atlasDirectory: atlas.dirname,
+            atlasFilename: atlas.filename,
+            timestamp: ms
+          },
+          date: (new Date()).toJSON()
+        });
+      } catch (err) {
+        throw new Error("Logging atlas backup in DB failed");
       }
     },
+
     broadcastPaintVolumeMessage: function (msg, User) {
       try {
-        var n = 0;
-        var msg2 = JSON.stringify({ "type": "paintvol", "data": msg });
+        let n = 0;
+        const msg2 = JSON.stringify({ "type": "paintvol", "data": msg });
         for(const i in me.US) {
           if({}.hasOwnProperty.call(me.US, i)) {
             if( typeof me.US[i].User !== 'undefined' &&
@@ -416,11 +534,11 @@ const atlasmakerServer = (function() {
           }
         }
         if(me.debug) {
-          tracer.log("    paintVolume message broadcasted to " + n + " users");
+          tracer.log(`paintVolume message broadcasted to ${n} users`);
         }
 
       } catch (ex) {
-        tracer.log("ERROR: Unable to broadcastPaintVolumeMessage", ex);
+        tracer.log("WARNING: Unable to broadcastPaintVolumeMessage", ex);
       }
     },
 
@@ -428,16 +546,13 @@ const atlasmakerServer = (function() {
     // Black list
     //========================================================================================
     verifyClient: function (info) {
-      var ip;
+      let ip;
 
       if(info.req.connection.remoteAddress) {
         ip = info.req.connection.remoteAddress;
-        tracer.log("connection");
       } else if(info.req.socket._peername) {
         ip = info.req.socket._peername.address;
-        tracer.log("_peername");
       } else {
-        tracer.log("DEJANDO PASAR UN PASTEL...");
 
         return true;
       }
@@ -445,18 +560,16 @@ const atlasmakerServer = (function() {
       ip = ip.split(":").pop();
 
       if(useWhitelist && !whitelist[ip]) {
-        tracer.log("==========> REJECT ip not in whitelist ", ip);
+        tracer.log("REJECTING ip not in whitelist ", ip);
 
         return false;
       }
 
       if(useBlacklist && blacklist[ip]) {
-        tracer.log("==========> REJECT ip in blacklist", ip);
+        tracer.log("REJECTING ip in blacklist", ip);
 
         return false;
       }
-
-      tracer.log("==========> ACCEPT ip ", ip);
 
       return true;
     },
@@ -465,27 +578,30 @@ const atlasmakerServer = (function() {
     // Undo
     //========================================================================================
 
-    /* @todo
-         *
-         * UndoStacks should be stored separately for each user, in that way
-         * when a user leaves, its undo stack is disposed. With the current
-         * implementation, we'll be storing undo stacks for long gone users...
-        */
+    /**
+     * @function pushUndoLayer
+     * @param {object} User User object
+     * @returns {void}
+     * @todo
+     * UndoStacks should be stored separately for each user, in that way
+     * when a user leaves, its undo stack is disposed. With the current
+     * implementation, we'll be storing undo stacks for long gone users...
+     */
     pushUndoLayer: function (User) {
-      var undoLayer = { User: User, actions: [] };
+      const undoLayer = { User: User, actions: [] };
       me.UndoStack.push(undoLayer);
 
       if(me.debug) {
-        tracer.log("    Number of layers: " + me.UndoStack.length);
+        tracer.log(`Number of layers: ${me.UndoStack.length}`);
       }
 
       return undoLayer;
     },
     getCurrentUndoLayer: function (User) {
-      var i, undoLayer;
-      var found = false;
+      let undoLayer;
+      let found = false;
 
-      for(i = me.UndoStack.length-1; i>=0; i -= 1) {
+      for(let i = me.UndoStack.length-1; i>=0; i -= 1) {
         undoLayer = me.UndoStack[i];
         if(typeof undoLayer === 'undefined') {
           break;
@@ -500,31 +616,30 @@ const atlasmakerServer = (function() {
       if(!found) {
         // There was no undoLayer for this user. This may be the
         // first user's action. Create an appropriate undoLayer for it.
-        tracer.log("    No previous undo layer for " + User.username + ", " + User.atlasFilename + ", " + User.specimenName + ": Create and push one");
+        tracer.log(`No previous undo layer for ${User.username}, ${User.atlasFilename}: Create and push one`);
         undoLayer = me.pushUndoLayer(User);
       }
 
       return undoLayer;
     },
     undo: function (User) {
-      var undoLayer;
-      var i;
-      var found = false;
+      let undoLayer;
+      let found = false;
 
       // find latest undo layer for user
-      for(i = me.UndoStack.length-1; i>=0; i -= 1) {
+      for(let i = me.UndoStack.length-1; i>=0; i -= 1) {
         undoLayer = me.UndoStack[i];
         if(typeof undoLayer === 'undefined') {
           break;
         }
         if( undoLayer.User.username === User.username
-                    && undoLayer.User.atlasFilename === User.atlasFilename
-                    && undoLayer.User.specimenName === User.specimenName
-                    && Object.keys(undoLayer.actions).length>0) {
+            && undoLayer.User.atlasFilename === User.atlasFilename
+            && undoLayer.User.specimenName === User.specimenName
+            && Object.keys(undoLayer.actions).length>0) {
           found = true;
           me.UndoStack.splice(i, 1); // remove layer from me.UndoStack
           if(me.debug) {
-            tracer.log("    Found undo layer for " + User.username + ", " + User.specimenName + ", " + User.atlasFilename + ", with " + Object.keys(undoLayer.actions).length + " actions");
+            tracer.log(`Found undo layer for ${User.username}, ${User.atlasFilename}, with ${Object.keys(undoLayer.actions).length} actions`);
           }
           break;
         }
@@ -532,7 +647,7 @@ const atlasmakerServer = (function() {
       if(!found) {
         // There was no undoLayer for this user.
         if(me.debug) {
-          tracer.log("    No undo layers for user " + User.username + " in " + User.specimenName + ", " + User.atlasFilename);
+          tracer.log(`No undo layer for user ${User.username}, ${User.atlasFilename}`);
         }
 
         return;
@@ -540,19 +655,18 @@ const atlasmakerServer = (function() {
 
       // undo latest actions
       /*
-                undoLayer.actions is a sparse array, with many undefined values.
-                Here I take each of the values in actions, and add them to arr.
-                Each element of arr is an array of 2 elements, index and value.
-            */
-      var arr = [];
-      var msg;
-      var atlas = me.Atlases[User.iAtlas];
-      var vol = atlas.data;
-      var val;
+        undoLayer.actions is a sparse array, with many undefined values.
+        Here I take each of the values in actions, and add them to arr.
+        Each element of arr is an array of 2 elements, index and value.
+      */
+      const arr = [];
+      const atlas = me.Atlases[User.iAtlas];
+      const vol = atlas.data;
+      let val;
 
       for(const j in undoLayer.actions) {
         if({}.hasOwnProperty.call(undoLayer.actions, j)) {
-          i = parseInt(j, 10);
+          const i = parseInt(j);
           val = undoLayer.actions[i];
           arr.push([i, val]);
 
@@ -560,15 +674,15 @@ const atlasmakerServer = (function() {
           vol[i] = val;
 
           if(me.debug>=3) {
-            tracer.log("    Undo:", i%User.dim[0], parseInt(i/User.dim[0], 10)%User.dim[1], parseInt(i/User.dim[0]/User.dim[1], 10)%User.dim[2]);
+            tracer.log(`Undo: ${i%User.dim[0]}, ${parseInt(i/User.dim[0])%User.dim[1]}, ${parseInt(i/User.dim[0]/User.dim[1])%User.dim[2]}`);
           }
         }
       }
-      msg = { "data": arr };
+      const msg = { data: arr };
       me.broadcastPaintVolumeMessage(msg, User);
 
       if(me.debug) {
-        tracer.log("    " + me.UndoStack.length + " undo layers remaining (all users)");
+        tracer.log(`${me.UndoStack.length} undo layers remaining`);
       }
     },
 
@@ -576,16 +690,16 @@ const atlasmakerServer = (function() {
     // Painting
     //========================================================================================
     _screen2index: function (s, mri) {
-      var {s2v} = mri;
-      var v = [s2v.X + s2v.dx*s[s2v.x], s2v.Y + s2v.dy*s[s2v.y], s2v.Z + s2v.dz*s[s2v.z]];
-      var index = v[0] + v[1]*mri.dim[0] + v[2]*mri.dim[0]*mri.dim[1];
+      const {s2v} = mri;
+      const v = [s2v.X + s2v.dx*s[s2v.x], s2v.Y + s2v.dy*s[s2v.y], s2v.Z + s2v.dz*s[s2v.z]];
+      const index = v[0] + v[1]*mri.dim[0] + v[2]*mri.dim[0]*mri.dim[1];
 
       return index;
     },
     paintVoxel: function (mx, my, mz, User, vol, val, undoLayer) {
-      var {view} = User;
-      var i, s, x, y, z;
-      var {sdim} = User.s2v;
+      const {view} = User;
+      let x, y, z;
+      const {sdim} = User.s2v;
 
       switch(view) {
       case 'sag': x = mz; y = mx; z = sdim[2]-1-my; break; // sagital
@@ -593,8 +707,8 @@ const atlasmakerServer = (function() {
       case 'axi': x = mx; y = sdim[1]-1-my; z = mz; break; // axial
       }
 
-      s = [x, y, z];
-      i = me._screen2index(s, User);
+      const s = [x, y, z];
+      const i = me._screen2index(s, User);
       if(vol[i] !== val) {
         undoLayer.actions[i] = vol[i];
         vol[i] = val;
@@ -636,7 +750,7 @@ const atlasmakerServer = (function() {
       }
 
       while (!((x1 === x2) && (y1 === y2))) {
-        var e2 = err << 1;
+        const e2 = err << 1;
         if (e2 > -dy) {
           err -= dy;
           x1 += sx;
@@ -653,24 +767,20 @@ const atlasmakerServer = (function() {
       }
     },
     _sliceXYZ2index: function (mx, my, mz, User) {
-      var {view} = User;
-      var x, y, z;
-      var i = -1;
-      var {sdim} = User.s2v;
+      const {view} = User;
+      let x, y, z;
+      const {sdim} = User.s2v;
 
       switch(view) {
       case 'sag': x = mz; y = mx; z = sdim[2]-1-my; break; // sagital
       case 'cor': x = mx; y = mz; z = sdim[2]-1-my; break; // coronal
       case 'axi': x = mx; y = sdim[1]-1-my; z = mz; break; // axial
       }
-      var s;
-      s = [x, y, z];
-      i = me._screen2index(s, User);
 
-      return i;
+      return me._screen2index([x, y, z], User);
     },
     fill: function (x, y, z, val, User, undoLayer) {
-      var {view} = User;
+      const {view} = User;
       const vol = me.Atlases[User.iAtlas].data;
       let brainWidth;
       let brainHeight;
@@ -681,11 +791,11 @@ const atlasmakerServer = (function() {
       case 'axi': [brainWidth, brainHeight] = [sdim[0], sdim[1]]; break; // axial
       }
 
-      var Q = [];
-      var left, right;
-      var n;
-      var max = 0;
-      var bval = vol[me._sliceXYZ2index(x, y, z, User)]; // background-value: value of the voxel where the click occurred
+      const Q = [];
+      let left, right;
+      let n;
+      let max = 0;
+      const bval = vol[me._sliceXYZ2index(x, y, z, User)]; // background-value: value of the voxel where the click occurred
 
       if(bval === val) { // nothing to do
 
@@ -703,7 +813,7 @@ const atlasmakerServer = (function() {
         }
         left = n.x;
         right = n.x;
-        y = n.y;
+        ({y} = n);
         while (left-1>=0 && vol[me._sliceXYZ2index(left-1, y, z, User)] === bval) {
           left--;
         }
@@ -720,22 +830,33 @@ const atlasmakerServer = (function() {
           }
         }
       }
-      tracer.log("Max array size for fill:", max);
+      tracer.log(`Max array size for fill: ${max}`);
+    },
+
+    /**
+     *
+     * @param {object} data Vectorial annotations
+     * @param {object} User User object
+     * @returns {void}
+     */
+    updateVectorialAnnotations: function (data, User) {
+      const atlas = me.Atlases[User.iAtlas];
+      atlas.vectorial = data;
     },
 
     /*
-            From 'User' we know slice, atlas, vol, view, dim.
-            [issue: undoLayer also has a User field. Maybe only undoLayer should be kept?]
-        */
+      From 'User' we know slice, atlas, vol, view, dim.
+      [issue: undoLayer also has a User field. Maybe only undoLayer should be kept?]
+    */
     paintxy: function (u, c, x, y, User, undoLayer) {
-      var atlas = me.Atlases[User.iAtlas];
+      const atlas = me.Atlases[User.iAtlas];
       if(typeof atlas.data === 'undefined') {
         tracer.log("ERROR: No atlas to draw into");
 
         return;
       }
 
-      var coord = { "x": x, "y": y, "z": User.slice };
+      const coord = { "x": x, "y": y, "z": User.slice };
       if(User.x0<0) {
         User.x0 = coord.x;
         User.y0 = coord.y;
@@ -787,10 +908,8 @@ const atlasmakerServer = (function() {
       ];
     },
     invMat: function (m) {
-      var det;
-      var w = [[], [], []];
-
-      det = m[0][1]*m[1][2]*m[2][0] + m[0][2]*m[1][0]*m[2][1] + m[0][0]*m[1][1]*m[2][2] - m[0][2]*m[1][1]*m[2][0] - m[0][0]*m[1][2]*m[2][1] - m[0][1]*m[1][0]*m[2][2];
+      const w = [[], [], []];
+      const det = m[0][1]*m[1][2]*m[2][0] + m[0][2]*m[1][0]*m[2][1] + m[0][0]*m[1][1]*m[2][2] - m[0][2]*m[1][1]*m[2][0] - m[0][0]*m[1][2]*m[2][1] - m[0][1]*m[1][0]*m[2][2];
 
       w[0][0] = (m[1][1]*m[2][2] - m[1][2]*m[2][1])/det;
       w[0][1] = (m[0][2]*m[2][1] - m[0][1]*m[2][2])/det;
@@ -829,9 +948,9 @@ const atlasmakerServer = (function() {
                 w refers to world coordinates
                 s refers screen pixel coordinates
             */
-      var wori = mri.ori;
+      const wori = mri.ori;
       // space directions are transposed!
-      var v2w = [[], [], []];
+      const v2w = [[], [], []];
       //for(b in mri.dir) for(a in mri.dir[b]) v2w[a][b] = mri.dir[b][a]; // transpose
       for(const b in mri.dir) {
         if({}.hasOwnProperty.call(mri.dir, b)) {
@@ -842,20 +961,20 @@ const atlasmakerServer = (function() {
           }
         }
       }
-      var wpixdim = me.subVecVec(me.mulMatVec(v2w, [1, 1, 1]), me.mulMatVec(v2w, [0, 0, 0]));
+      const wpixdim = me.subVecVec(me.mulMatVec(v2w, [1, 1, 1]), me.mulMatVec(v2w, [0, 0, 0]));
       // min and max world coordinates
-      var wvmax = me.addVecVec(me.mulMatVec(v2w, [mri.dim[0]-1, mri.dim[1]-1, mri.dim[2]-1]), wori);
-      var wvmin = me.addVecVec(me.mulMatVec(v2w, [0, 0, 0]), wori);
-      var wmin = [Math.min(wvmin[0], wvmax[0]), Math.min(wvmin[1], wvmax[1]), Math.min(wvmin[2], wvmax[2])];
+      const wvmax = me.addVecVec(me.mulMatVec(v2w, [mri.dim[0]-1, mri.dim[1]-1, mri.dim[2]-1]), wori);
+      const wvmin = me.addVecVec(me.mulMatVec(v2w, [0, 0, 0]), wori);
+      const wmin = [Math.min(wvmin[0], wvmax[0]), Math.min(wvmin[1], wvmax[1]), Math.min(wvmin[2], wvmax[2])];
       //        var wmax = [Math.max(wvmin[0], wvmax[0]), Math.max(wvmin[1], wvmax[1]), Math.max(wvmin[2], wvmax[2])];
-      var w2s = [[1/Math.abs(wpixdim[0]), 0, 0], [0, 1/Math.abs(wpixdim[1]), 0], [0, 0, 1/Math.abs(wpixdim[2])]];
+      const w2s = [[1/Math.abs(wpixdim[0]), 0, 0], [0, 1/Math.abs(wpixdim[1]), 0], [0, 0, 1/Math.abs(wpixdim[2])]];
 
       // tracer.log(["v2w", v2w, "wori", wori, "wpixdim", wpixdim, "wvmax", wvmax, "wvmin", wvmin, "wmin", wmin, "wmax", wmax, "w2s", w2s]);
 
-      var [i, j, k] = v2w;
-      var mi = { i: 0, v: 0 }; i.forEach(function(o, n) { if(Math.abs(o)>Math.abs(mi.v)) { mi = { i: n, v: o }; } });
-      var mj = { i: 0, v: 0 }; j.forEach(function(o, n) { if(Math.abs(o)>Math.abs(mj.v)) { mj = { i: n, v: o }; } });
-      var mk = { i: 0, v: 0 }; k.forEach(function(o, n) { if(Math.abs(o)>Math.abs(mk.v)) { mk = { i: n, v: o }; } });
+      const [i, j, k] = v2w;
+      let mi = { i: 0, v: 0 }; i.forEach(function(o, n) { if(Math.abs(o)>Math.abs(mi.v)) { mi = { i: n, v: o }; } });
+      let mj = { i: 0, v: 0 }; j.forEach(function(o, n) { if(Math.abs(o)>Math.abs(mj.v)) { mj = { i: n, v: o }; } });
+      let mk = { i: 0, v: 0 }; k.forEach(function(o, n) { if(Math.abs(o)>Math.abs(mk.v)) { mk = { i: n, v: o }; } });
 
       mri.s2v = {
         // old s2v fields
@@ -951,11 +1070,12 @@ const atlasmakerServer = (function() {
       try {
         me.NiiHdr.allocate();
         me.NiiHdr._setBuff(nii);
-        var h = JSON.parse(JSON.stringify(me.NiiHdr.fields));
+        const h = JSON.parse(JSON.stringify(me.NiiHdr.fields));
 
         //var sizeof_hdr = h.sizeof_hdr;
         mri.dim = [h.dim[1], h.dim[2], h.dim[3]];
         mri.pixdim = [h.pixdim[1], h.pixdim[2], h.pixdim[3]];
+        // eslint-disable-next-line camelcase
         mri.vox_offset = h.vox_offset;
 
         // nrrd-compatible header, computes space directions and space origin
@@ -1052,7 +1172,7 @@ const atlasmakerServer = (function() {
                 output: an mri structure
             */
 
-      var pr = new Promise(function (resolve, reject) {
+      const pr = new Promise(function (resolve, reject) {
         let niigz;
 
         try {
@@ -1069,7 +1189,7 @@ const atlasmakerServer = (function() {
               return;
             }
 
-            var mri = {};
+            const mri = {};
 
             // read header
             if(!me._readNiftiHeader({nii, mri})) {
@@ -1211,21 +1331,27 @@ const atlasmakerServer = (function() {
             output: an mri structure
         */
     readMGZ: function (mriPath) {
-      var pr = new Promise(function (resolve, reject) {
+      const pr = new Promise(function (resolve, reject) {
         try {
 
-          /*
-            MGZ data sometimes has an error which makes gunzip throw
-            a "invalid compressed data--crc error" message. However,
-            the data is correctly uncompressed. We will ignore errors.
-          */
-          // eslint-disable-next-line handle-callback-err
-          childProcess.execFile("gunzip", ["-c", mriPath], { encoding: 'binary', maxBuffer: 200*1024*1024 }, function(err, stdout) {
-            // if(err) {
-            //   reject(err);
-            // }
+        /*
+          MGZ data sometimes has an error which makes gunzip throw
+          a "invalid compressed data--crc error" message. However,
+          the data is correctly uncompressed. We will ignore errors.
+        */
 
-            const mgh = Buffer.from(stdout, 'binary');
+          var bufs = [];
+          const readable = fs.createReadStream(mriPath).pipe(zlib.createGunzip());
+          readable.on('data', function(d) { bufs.push(d); });
+          readable.on('error', function (err) {
+            if (err.code === "Z_DATA_ERROR") {
+              readable.emit("end");
+            } else {
+              reject(err);
+            }
+          });
+          readable.on('end', function() {
+            const mgh = Buffer.concat(bufs);
             const mri = {};
             const hdr = {};
 
@@ -1270,12 +1396,12 @@ const atlasmakerServer = (function() {
     createNifti: function (templateMRI) {
 
       /*eslint-disable camelcase*/
-      var mri = {};
-      var props = ["dim", "pixdim", "hdr"];
-      var datatype = 2;
-      var vox_offset = 352;
-      var i, niihdr, sz;
-      var newHdr = {
+      const mri = {};
+      const props = ["dim", "pixdim", "hdr"];
+      const datatype = 2;
+      const vox_offset = 352;
+      let i;
+      const newHdr = {
         sizeof_hdr: 348,
         data_type: '',
         db_name: '',
@@ -1323,7 +1449,7 @@ const atlasmakerServer = (function() {
       /*eslint-enable camelcase*/
 
       me.NiiHdr.allocate();
-      niihdr = me.NiiHdr.buffer();
+      const niihdr = me.NiiHdr.buffer();
       for(i in newHdr) {
         if({}.hasOwnProperty.call(newHdr, i)) {
           me.NiiHdr.fields[i] = newHdr[i];
@@ -1338,12 +1464,13 @@ const atlasmakerServer = (function() {
       }
 
       // get volume size
-      sz = mri.dim[0]*mri.dim[1]*mri.dim[2];
+      const sz = mri.dim[0]*mri.dim[1]*mri.dim[2];
 
       // update the header
       mri.hdr = niihdr;
       mri.hdr.writeUInt16LE(datatype, 70, 2); // set datatype to 2:unsigned char (8 bits/voxel)
       mri.hdr.writeFloatLE(vox_offset, 108, 4); // set voxel_offset to 352 (minimum size of a nii header)
+      // eslint-disable-next-line camelcase
       mri.hdrSz = vox_offset;
 
       // zero the data
@@ -1366,7 +1493,7 @@ const atlasmakerServer = (function() {
                 input: path to an mri file, .nii.gz and .mgz formats are recognised
                 output: an mri structure
             */
-      var pr = new Promise(function (resolve, reject) {
+      const pr = new Promise(function (resolve, reject) {
         switch(me._filetypeFromFilename(mriPath)) {
         case "nii.gz":
           tracer.log("reading nii");
@@ -1483,10 +1610,10 @@ const atlasmakerServer = (function() {
         }
       }
 
-      var pr = new Promise(function (resolve, reject) {
+      const pr = new Promise(function (resolve, reject) {
         me.loadMRI(me.dataDirectory + brainPath)
           .then(function (mri) {
-            var brain = { path: brainPath, data: mri };
+            const brain = { path: brainPath, data: mri };
             me.Brains.push(brain);
             resolve(mri); // callback: sendSliceToUser
           })
@@ -1503,14 +1630,14 @@ const atlasmakerServer = (function() {
     // Volume slice server
     //========================================================================================
     drawSlice: function (brain, view, slice) {
-      var x, y;
-      var i, j;
-      var brainWidth;
-      var brainHeight; //, brainD;
-      var ya, yc, ys;
-      var val;
-      var s;
-      var {s2v} = brain;
+      let x, y;
+      let i, j;
+      let brainWidth;
+      let brainHeight; //, brainD;
+      let ya, yc, ys;
+      let val;
+      let s;
+      const {s2v} = brain;
 
       switch(view) {
       case 'sag': [brainWidth, brainHeight] = [s2v.sdim[1], s2v.sdim[2]]; break; //brainD = s2v.sdim[0]; break; // sagital
@@ -1518,7 +1645,7 @@ const atlasmakerServer = (function() {
       case 'axi': [brainWidth, brainHeight] = [s2v.sdim[0], s2v.sdim[1]]; break; //brainD = s2v.sdim[2]; break; // axial
       }
 
-      var frameData = Buffer.alloc(brainWidth * brainHeight * 4);
+      const frameData = Buffer.alloc(brainWidth * brainHeight * 4);
 
       j = 0;
       switch(view) {
@@ -1544,7 +1671,7 @@ const atlasmakerServer = (function() {
           j += 1;
         }
       }
-      var rawImageData = {
+      const rawImageData = {
         data: frameData,
         width: brainWidth,
         height: brainHeight
@@ -1553,18 +1680,18 @@ const atlasmakerServer = (function() {
       return jpeg.encode(rawImageData, 99);
     },
     drawSlice2: function (brain, atlas, view, slice) {
-      var x, y;
-      var i, j;
-      var brainWidth;
-      var brainHeight; //, brainD;
-      var ys;
-      var ya;
-      var yc;
-      var val;
-      var rgb;
-      var s;
-      var {s2v} = brain;
-      var t = 0.5;
+      let x, y;
+      let i, j;
+      let brainWidth;
+      let brainHeight; //, brainD;
+      let ys;
+      let ya;
+      let yc;
+      let val;
+      let rgb;
+      let s;
+      const {s2v} = brain;
+      const t = 0.5;
 
       switch(view) {
       case 'sag': [brainWidth, brainHeight] = [s2v.sdim[1], s2v.sdim[2]]; break; //brainD = s2v.sdim[0]; break; // sagital
@@ -1572,7 +1699,7 @@ const atlasmakerServer = (function() {
       case 'axi': [brainWidth, brainHeight] = [s2v.sdim[0], s2v.sdim[1]]; break; //brainD = s2v.sdim[2]; break; // axial
       }
 
-      var frameData = Buffer.alloc(brainWidth * brainHeight * 4);
+      const frameData = Buffer.alloc(brainWidth * brainHeight * 4);
 
       j = 0;
       switch(view) {
@@ -1615,7 +1742,7 @@ const atlasmakerServer = (function() {
         }
       }
 
-      var rawImageData = {
+      const rawImageData = {
         data: frameData,
         width: brainWidth,
         height: brainHeight
@@ -1624,18 +1751,23 @@ const atlasmakerServer = (function() {
       return jpeg.encode(rawImageData, 99);
     },
     receivePaintMessage: function (data) {
-      var msg = data.data;
-      var sourceUS = me.getUserFromUserId(data.uid); // user data
-      var {c, x, y} = msg; // command, x coordinate, y coordinate
-      var undoLayer = me.getCurrentUndoLayer(sourceUS.User); // current undoLayer for user
+      const msg = data.data;
+      const sourceUS = me.getUserFromUserId(data.uid); // user data
+      const {c, x, y} = msg; // command, x coordinate, y coordinate
+      const undoLayer = me.getCurrentUndoLayer(sourceUS.User); // current undoLayer for user
 
       me.paintxy(sourceUS.uid, c, x, y, sourceUS.User, undoLayer);
     },
+    receiveVectorialAnnotationMessage: function (message) {
+      const {data} = message;
+      const sourceUS = me.getUserFromUserId(message.uid); // source user data
+      me.updateVectorialAnnotations(data, sourceUS.User);
+    },
     sendSliceToUser: function (brain, view, slice, userSocket) {
       try {
-        var jpegImageData = me.drawSlice(brain, view, slice);
-        var length = jpegImageData.data.length + me.jpgTag.length;
-        var bin = Buffer.concat([jpegImageData.data, me.jpgTag], length);
+        const jpegImageData = me.drawSlice(brain, view, slice);
+        const length = jpegImageData.data.length + me.jpgTag.length;
+        const bin = Buffer.concat([jpegImageData.data, me.jpgTag], length);
         userSocket.send(bin, { binary: true, mask: false });
       } catch(e) {
         tracer.log("ERROR: Cannot send slice to user");
@@ -1643,14 +1775,14 @@ const atlasmakerServer = (function() {
     },
     receiveRequestSliceMessage: function (data, userSocket) {
       // get slice information from message
-      var {view} = data; // user view
-      var slice = parseInt(data.slice, 10); // user slice
+      const {view} = data; // user view
+      const slice = parseInt(data.slice, 10); // user slice
 
       // get User object
-      var sourceUS = me.getUserFromUserId(data.uid);
+      const sourceUS = me.getUserFromUserId(data.uid);
 
       // get brainPath from User object
-      var brainPath = sourceUS.User.dirname + sourceUS.User.mri;
+      const brainPath = sourceUS.User.dirname + sourceUS.User.mri;
 
       // update User object
       sourceUS.User.view = view;
@@ -1666,12 +1798,12 @@ const atlasmakerServer = (function() {
         });
     },
     receiveRequestSlice2Message: function (data, userSocket) {
-      var {view} = data; // user view
-      var slice = parseInt(data.slice, 10); // user slice
-      var sourceUS = me.getUserFromUserId(data.uid);
-      var brainPath = sourceUS.User.dirname + sourceUS.User.mri;
-      var atlasPath = sourceUS.User.dirname + sourceUS.User.atlasFilename;
-      var atlas;
+      const {view} = data; // user view
+      const slice = parseInt(data.slice, 10); // user slice
+      const sourceUS = me.getUserFromUserId(data.uid);
+      const brainPath = sourceUS.User.dirname + sourceUS.User.mri;
+      const {dirname, atlasFilename} = sourceUS.User;
+      let atlas;
 
       sourceUS.User.view = view;
       sourceUS.User.slice = slice;
@@ -1681,19 +1813,15 @@ const atlasmakerServer = (function() {
 
       me.getBrainAtPath(brainPath)
         .then(function (brain) {
-          for(const i in me.Atlases) {
-            if({}.hasOwnProperty.call(me.Atlases, i)) {
-              if(me.Atlases[i].dirname + me.Atlases[i].name === atlasPath) {
-                atlas = me.Atlases[i];
-                break;
-              }
-            }
+          const iAtlas = me.indexOfAtlasAtPath(dirname, atlasFilename);
+          if(typeof iAtlas !== "undefined") {
+            atlas = me.Atlases[iAtlas];
           }
 
           try {
-            var jpegImageData = me.drawSlice2(brain, atlas, view, slice); // TEST: to draw the server version of the atlas together with the anatomy
-            var length = jpegImageData.data.length + me.jpgTag.length;
-            var bin = Buffer.concat([jpegImageData.data, me.jpgTag], length);
+            const jpegImageData = me.drawSlice2(brain, atlas, view, slice); // TEST: to draw the server version of the atlas together with the anatomy
+            const length = jpegImageData.data.length + me.jpgTag.length;
+            const bin = Buffer.concat([jpegImageData.data, me.jpgTag], length);
             userSocket.send(bin, { binary: true, mask: false });
           } catch(e) {
             tracer.log("ERROR: Cannot send slice to user", e);
@@ -1701,54 +1829,50 @@ const atlasmakerServer = (function() {
         });
     },
     broadcastMessage: function (msg, uid) {
-      try {
-        var n = 0;
-        for(const i in me.US) {
-          if({}.hasOwnProperty.call(me.US, i)) {
-            if(me.US[i].uid !== uid ) {
+      let n = 0;
+      for(const i in me.US) {
+        if({}.hasOwnProperty.call(me.US, i)) {
+          if(me.US[i].uid !== uid && me.US[i].socket.readyState === WebSocket.OPEN) {
+            try {
               me.US[i].socket.send(JSON.stringify(msg));
               n += 1;
+            } catch (ex) {
+              tracer.log(`WARNING: Unable to broadcast message from ${uid} to ${me.US[i].uid}`, ex, msg);
             }
           }
         }
-        if(me.debug) {
-          tracer.log("    message broadcasted to " + n + " users", msg);
-        }
-      } catch (ex) {
-        tracer.log("ERROR: Unable to broadcast message", ex, msg);
+      }
+      if(me.debug) {
+        tracer.log("    message broadcasted to " + n + " users", msg);
       }
     },
-    receiveSaveMessage: function (data /*, userSocket*/) {
-      var sourceUS = me.getUserFromUserId(data.uid);
-      //        var brainPath = sourceUS.User.dirname + sourceUS.User.mri;
-      var atlasPath = sourceUS.User.dirname + sourceUS.User.atlasFilename;
+    receiveSaveMessage: async function (data) {
+      const sourceUS = me.getUserFromUserId(data.uid);
+      const {dirname, atlasFilename} = sourceUS.User;
+      const time = new Date();
 
-      var time = new Date();
-      //        var modified = time.toJSON();
-      //        var modifiedBy = (sourceUS.User && sourceUS.User.username) ? sourceUS.User.username : "anonymous";
-
-      for(const i in me.Atlases) {
-        if({}.hasOwnProperty.call(me.Atlases, i)) {
-          if(me.Atlases[i].dirname + me.Atlases[i].name === atlasPath) {
-            me.saveAtlas(me.Atlases[i])
-              .then(function () {
-                tracer.log("    Atlas saved");
-                clearInterval(me.Atlases[i].timer);
-                me.broadcastMessage({
-                  type: 'serverMessage',
-                  msg: "Atlas saved " + time
-                });
-              });
-            break;
-          }
-        }
+      const iAtlas = me.indexOfAtlasAtPath(dirname, atlasFilename);
+      if(typeof iAtlas === "undefined") {
+        throw new Error("Trying to save an atlas that does not exist");
       }
 
-      /**
-             * @todo Log the save
-             */
+      try {
+        await me.saveAtlasAtIndex(iAtlas);
+      } catch (err) {
+        throw new Error("Atlas saving failed");
+      }
+      tracer.log("Atlas saved");
+
+      // clearInterval(me.Atlases[iAtlas].timer);
+
+      me.broadcastMessage({
+        type: "serverMessage",
+        msg: "Atlas saved " + time
+      });
+
+      /** @todo Log the save */
     },
-    receiveSaveMetadataMessage: function (data/*, userSocket*/) {
+    receiveSaveMetadataMessage: function (data) {
       if(me.debug>1) {
         tracer.log("metadata type: " + data.type);
         tracer.log("rnd: " + data.rnd);
@@ -1757,13 +1881,13 @@ const atlasmakerServer = (function() {
       }
 
       /**
-             * @todo Currently metadata is a complete object, but it is also possible to
-             *       send a patch computed using jsonpatch. In the future, only the patch
-             *       method will be used
-             */
+       * @todo Currently metadata is a complete object, but it is also possible to
+       *       send a patch computed using jsonpatch. In the future, only the patch
+       *       method will be used
+       */
 
-      var sourceUS = me.getUserFromUserId(data.uid);
-      var json = data.metadata;
+      const sourceUS = me.getUserFromUserId(data.uid);
+      let json = data.metadata;
       json.modified = (new Date()).toJSON();
       json.modifiedBy = (sourceUS.User && sourceUS.User.username) ? sourceUS.User.username : "anonymous";
 
@@ -1814,28 +1938,33 @@ const atlasmakerServer = (function() {
           });
       }
     },
-    receiveAtlasFromUserMessage: function (data/*, userSocket*/) {
-      zlib.inflate(data.data, function (err, atlasData) {
-        if(err) {
-          console.error("ERROR:", err);
-
-          return;
-        }
-        // Save current atlas
-        var sourceUS = me.getUserFromUserId(data.uid);
-        var {iAtlas} = sourceUS.User;
-        var atlas = me.Atlases[iAtlas];
-        me.saveAtlas(atlas)
-          .then(function () {
-            tracer.log("    Replace current atlas with new atlas");
-            atlas.data = atlasData;
-          });
+    receiveAtlasFromUserMessage: async function (data) {
+      const atlasData = await new Promise((resolve, reject) => {
+        zlib.inflate(data.data, function (err, result) {
+          if(err) {
+            return reject(new Error(err));
+          }
+          resolve(result);
+        });
       });
+
+      // Save current atlas
+      const sourceUS = me.getUserFromUserId(data.uid);
+      const {iAtlas} = sourceUS.User;
+      const atlas = me.Atlases[iAtlas];
+      try {
+        await me.saveAtlasAtIndex(iAtlas);
+      } catch (err) {
+        throw new Error("Save atlas failed");
+      }
+
+      tracer.log("    Replace current atlas with new atlas");
+      atlas.data = atlasData;
     },
     unloadUnusedBrains: function () {
       for(const i in me.Brains) {
         if({}.hasOwnProperty.call(me.Brains, i)) {
-          var sum = me.numberOfUsersConnectedToMRI(me.Brains[i].path);
+          const sum = me.numberOfUsersConnectedToMRI(me.Brains[i].path);
 
           if(sum === 0) {
             tracer.log("    No user connected to MRI " + me.Brains[i].path + ": unloading it");
@@ -1844,27 +1973,37 @@ const atlasmakerServer = (function() {
         }
       }
     },
-    unloadUnusedAtlases: function () {
+    unloadUnusedAtlases: async function () {
+      const results = [];
       for(const i in me.Atlases) {
         if({}.hasOwnProperty.call(me.Atlases, i)) {
-          var sum = me.numberOfUsersConnectedToAtlas(me.Atlases[i].dirname, me.Atlases[i].name);
+          const sum = me.numberOfUsersConnectedToAtlas(me.Atlases[i].dirname, me.Atlases[i].filename);
           if(sum === 0) {
-            tracer.log("    No user connected to Atlas " + me.Atlases[i].dirname + me.Atlases[i].name + ": unloading it");
-            me.unloadAtlas(me.Atlases[i].dirname, me.Atlases[i].name);
+            tracer.log("No user connected to Atlas " + me.Atlases[i].dirname + me.Atlases[i].filename + ": unloading it");
+            results.push(me.unloadAtlas(me.Atlases[i].dirname, me.Atlases[i].filename));
           }
         }
       }
+      try {
+        await Promise.all(results);
+      } catch(err) {
+        throw new Error("Can't unload atlases", err);
+      }
     },
-    sendAtlasToUser: function (atlasdata, userSocket, flagCompress) {
+    _sendAtlasVoxelDataToUser: function (atlasdata, userSocket, flagCompress) {
       if(flagCompress) {
-        tracer.log("atlasdata", atlasdata.length);
         zlib.gzip(atlasdata, function (err, atlasdatagz) {
           if(err) {
             console.error("ERROR:", err);
 
             return;
           }
-          tracer.log("atlasdatagz", atlasdatagz.length);
+          if(userSocket.readyState !== WebSocket.OPEN) {
+            const targetUS = me.getUserFromSocket(userSocket);
+            tracer.log(`WARNING: Not broadcastinig to user ${targetUS.uid} because it's disconnecting`);
+
+            return;
+          }
           try {
             userSocket.send(Buffer.concat([atlasdatagz, me.niiTag]), { binary: true, mask: false });
           } catch(e) {
@@ -1879,21 +2018,36 @@ const atlasmakerServer = (function() {
         }
       }
     },
+    _sendAtlasVectorialDataToUser: function (data, userSocket) {
+      try {
+        const cleanData = DOMPurify.sanitize(JSON.stringify({type: "vectorial", data}));
+        userSocket.send(cleanData);
+      } catch(e) {
+        console.error("<WARNING: Cannot send atlas data to user. Maybe already disconnected? (1)>", e);
+      }
+    },
+    sendAtlasToUser: function (atlas, userSocket, flagCompress) {
+      me._sendAtlasVoxelDataToUser(atlas.data, userSocket, flagCompress);
+      if(typeof atlas.vectorial === "undefined") {
+        atlas.vectorial = [];
+      }
+      me._sendAtlasVectorialDataToUser(atlas.vectorial, userSocket);
+    },
 
     //========================================================================================
     // Load & Save
     //========================================================================================
     /**
-         * @function loadAtlas
-         * @description The requested atlas is sent if it was already loaded, loaded from disk
-         *       if it was already downloaded but not yet loaded, or created if it's a
-         *       new atlas.
-         * @param {Object} User A User object providing information about the requested atlas
-         * @returns {Object} An atlas (mri structure)
-         */
+     * @function loadAtlas
+     * @description The requested atlas is sent if it was already loaded, loaded from disk
+     *       if it was already downloaded but not yet loaded, or created if it's a
+     *       new atlas.
+     * @param {Object} User A User object providing information about the requested atlas
+     * @returns {Object} An atlas (mri structure)
+     */
     loadAtlas: function loadAtlas(User) {
-      var pr = new Promise(function (resolve, reject) {
-        var mriPath = me.dataDirectory + User.dirname + User.atlasFilename;
+      const pr = new Promise(function (resolve, reject) {
+        const mriPath = me.dataDirectory + User.dirname + User.atlasFilename;
 
         if(typeof User.dirname === 'undefined') {
           tracer.log("ERROR: Rejecting loadAtlas from undefined User.dirname:", User);
@@ -1911,13 +2065,14 @@ const atlasmakerServer = (function() {
         if(!fs.existsSync(mriPath)) {
           // Create new empty atlas
           tracer.log("    Atlas " + mriPath + " does not exists. Create a new one");
-          var brainPath = User.dirname + User.mri;
+          const brainPath = User.dirname + User.mri;
           me.getBrainAtPath(brainPath)
             .then(function (mri) {
               me.createNifti(mri)
                 .then(function (newAtlas) {
-                  newAtlas.name = User.atlasFilename;
+                  newAtlas.filename = User.atlasFilename;
                   newAtlas.dirname = User.dirname;
+                  newAtlas.source = User.source;
 
                   // log atlas creation
                   db.get('log').insert({
@@ -1942,17 +2097,34 @@ const atlasmakerServer = (function() {
           // Load existing atlas
           tracer.log("    Atlas found. Loading it");
           me.loadMRI(mriPath)
-            .then(function (loadedAtlas) {
-              loadedAtlas.name = User.atlasFilename;
+            .then(async function (loadedAtlas) {
+              loadedAtlas.filename = User.atlasFilename;
               loadedAtlas.dirname = User.dirname;
+              loadedAtlas.source = User.source;
+
+              const mri = await db.get('mri').findOne({source: loadedAtlas.source, backup:{$exists:0}}, {_id:0});
+              let index = -1;
+              for(let i=0; i<mri.mri.atlas.length; i++) {
+                if(mri.mri.atlas[i].filename === loadedAtlas.filename) {
+                  index = i;
+                  break;
+                }
+              }
+              if(index === -1) {
+                throw new Error("Can't find atlas in mri");
+              }
+              if(typeof mri.mri.atlas[index].vectorial === "undefined") {
+                loadedAtlas.vectorial = [];
+              } else {
+                loadedAtlas.vectorial = mri.mri.atlas[index].vectorial;
+              }
 
               // cast atlas data to 8bits
               switch(me._filetypeFromFilename(User.atlasFilename)) {
               case "nii.gz":
                 me.createNifti(loadedAtlas)
                   .then(function(atlas8bit) {
-                    var i;
-                    for(i = 0; i<loadedAtlas.dim[0]*loadedAtlas.dim[1]*loadedAtlas.dim[2]; i += 1) {
+                    for(let i = 0; i<loadedAtlas.dim[0]*loadedAtlas.dim[1]*loadedAtlas.dim[2]; i += 1) {
                       atlas8bit.data[i] = loadedAtlas.data[i];
                     }
                     loadedAtlas.data = atlas8bit.data;
@@ -1980,6 +2152,21 @@ const atlasmakerServer = (function() {
       return pr;
     },
 
+    _validateUserAtlas: function (atlas) {
+      let validationOK = false;
+      if(typeof atlas.name === "undefined") {
+        tracer.log("WARNING: atlas does not have a filename");
+      } else if(typeof atlas.dirname === "undefined") {
+        tracer.log("WARNING: atlas does not have a directory name");
+      } else if(typeof atlas.source === "undefined") {
+        tracer.log("WARNING: atlas does not have a source URL");
+      } else {
+        validationOK = true;
+      }
+
+      return validationOK;
+    },
+
     /**
          * @func addAtlas
          * @description An atlas is obtained, and added to the me.Atlases[] array if it
@@ -1988,20 +2175,27 @@ const atlasmakerServer = (function() {
          * @returns {Object} An atlas (mri structure)
          */
     addAtlas: function (User) {
-      var atlas = {
+      const atlas = {
         name: User.atlasFilename,
         specimen: User.specimenName,
         dirname: User.dirname,
-        dim: User.dim
+        dim: User.dim,
+        source: User.source
       };
-      tracer.log("    User requests atlas " + atlas.name + " from " + atlas.dirname, atlas.specimen);
+      if(me._validateUserAtlas(atlas) === false) {
+        tracer.log("WARNING: insufficient information provided for adding atlas", atlas);
+      }
+      tracer.log("User requests atlas " + atlas.filename + " from " + atlas.dirname, atlas.specimen);
 
-      var pr = new Promise(function (resolve, reject) {
+      const pr = new Promise(function (resolve, reject) {
         me.loadAtlas(User)
           .then(function (theAtlas) {
-            me.Atlases.push(theAtlas);
-            User.iAtlas = String(me.Atlases.indexOf(theAtlas));
-            atlas.timer = setInterval(function () { me.saveAtlas(theAtlas); }, me.backupInterval);
+            const {iAtlas} = me._findAtlas(theAtlas);
+            me.Atlases[iAtlas] = theAtlas;
+            User.iAtlas = iAtlas; // `a${me.Atlases.indexOf(theAtlas)}`;
+            theAtlas.timer = setInterval(function () {
+              me.saveAtlasAtIndex(User.iAtlas);
+            }, me.backupInterval);
 
             resolve(theAtlas);
           })
@@ -2026,26 +2220,22 @@ const atlasmakerServer = (function() {
       return firstConnectionFlag;
     },
     _findAtlas: function ({dirname, atlasFilename}) {
-      let iAtlas = String(me.Atlases.length);
       let atlasLoadedFlag = false;
-      for(const i in me.Atlases) {
-        if({}.hasOwnProperty.call(me.Atlases, i)) {
-          if(me.Atlases[i].dirname === dirname && me.Atlases[i].name === atlasFilename) {
-            atlasLoadedFlag = true;
-            iAtlas = i;
-            break;
-          }
-        }
+      let iAtlas = me.indexOfAtlasAtPath(dirname, atlasFilename);
+      if(typeof iAtlas !== "undefined") {
+        atlasLoadedFlag = true;
+      } else {
+        iAtlas = `a${++me.atlascounter}`;
       }
 
       return {iAtlas, atlasLoadedFlag};
     },
     receiveUserDataMessage: function (data, userSocket) {
-      var sourceUS = me.getUserFromUserId(data.uid);
+      const sourceUS = me.getUserFromUserId(data.uid);
 
-      var User;
-      var firstConnectionFlag = me._isUserFirstConnection(sourceUS.User);
-      var switchingAtlasFlag = false;
+      let User;
+      const firstConnectionFlag = me._isUserFirstConnection(sourceUS.User);
+      let switchingAtlasFlag = false;
 
 
       if(data.description === "allUserData" ) {
@@ -2053,7 +2243,7 @@ const atlasmakerServer = (function() {
         User = data.user;
         User.uid = data.uid;
       } else {
-        User = sourceUS.User;
+        ({User} = sourceUS);
         if(data.description === "sendAtlas") {
           // receive an atlas from the user
           // 1. Check if the atlas the user is requesting has not been loaded
@@ -2066,6 +2256,12 @@ const atlasmakerServer = (function() {
             }
           }
 
+          if(typeof User === "undefined") {
+            tracer.log(`WARNING: 'User' structure is not defined for ${data.uid}`);
+
+            return;
+          }
+
           const {iAtlas, atlasLoadedFlag} = me._findAtlas({dirname: User.dirname, atlasFilename: User.atlasFilename});
           User.iAtlas = iAtlas; // value i if it was found, or last available if it wasn't
 
@@ -2073,25 +2269,23 @@ const atlasmakerServer = (function() {
           if(atlasLoadedFlag) {
             if(firstConnectionFlag || switchingAtlasFlag) {
               // send the new user our data
-              me.sendAtlasToUser(me.Atlases[iAtlas].data, userSocket, true);
+              me.sendAtlasToUser(me.Atlases[iAtlas], userSocket, true);
               sourceUS.User.isMRILoaded = true;
             }
           } else {
             // The atlas requested has not been loaded before:
-            // Load the atlas s/he's requesting
+            // Load the atlas they requesting
             me.addAtlas(User)
               .then(function(atlas) {
-                me.sendAtlasToUser(atlas.data, userSocket, true);
+                me.sendAtlasToUser(atlas, userSocket, true);
                 sourceUS.User.isMRILoaded = true;
               })
               .catch((err) => console.log(new Error("ERROR: Unable to load atlas", err)));
           }
         } else {
           // receive a specific field of the User data object from the user
-          /**
-                     * @todo If the atlas/mri for the client failed to be sent, `User` is undefined
-                     */
-          var changes = JSON.parse(data.description);
+          /** @todo If the atlas/mri for the client failed to be sent, `User` is undefined */
+          const changes = JSON.parse(data.description);
           for(const i in changes) {
             if({}.hasOwnProperty.call(changes, i)) {
               User[i] = changes[i];
@@ -2105,9 +2299,9 @@ const atlasmakerServer = (function() {
       // display the name in the log
       if({}.hasOwnProperty.call(User, 'username')) {
         if(typeof sourceUS.User === 'undefined') {
-          tracer.log("    No User yet for id " + data.uid);
+          tracer.log(`No "User" data yet received for id ${data.uid}`);
         } else if(!{}.hasOwnProperty.call(sourceUS.User, 'username')) {
-          tracer.log("    User " + User.username + ", id " + data.uid + " logged in");
+          tracer.log(`User ${User.username} (${data.uid}) logged in`);
         }
       }
       if({}.hasOwnProperty.call(sourceUS, 'User') === false) {
@@ -2146,7 +2340,7 @@ const atlasmakerServer = (function() {
       }
     },
     declareAutocompleteClient: function (data/*, userSocket*/) {
-      var sourceUS = me.getUserFromUserId(data.uid);
+      const sourceUS = me.getUserFromUserId(data.uid);
 
       sourceUS.User = {
         autocompleteClient: true,
@@ -2159,13 +2353,13 @@ const atlasmakerServer = (function() {
          and old users information to new user.
         */
     sendPreviousUserDataMessage: function (newUS) {
-      var n = 0;
+      let n = 0;
       for(const i in me.US) {
         if({}.hasOwnProperty.call(me.US, i)) {
           if(me.US[i].socket === newUS.socket) {
             continue;
           }
-          var msg = JSON.stringify({ type: "userData", user: me.US[i].User, uid: me.US[i].uid, description: "allUserData" });
+          const msg = JSON.stringify({ type: "userData", user: me.US[i].User, uid: me.US[i].uid, description: "allUserData" });
           newUS.socket.send(msg);
           n += 1;
         }
@@ -2187,6 +2381,7 @@ const atlasmakerServer = (function() {
           // tracer.log(ch, key);
           if(key.name === 'c' && key.ctrl) {
             tracer.log("Exit.");
+            // eslint-disable-next-line no-process-exit
             process.exit();
           }
           if(key.name === 'escape') {
@@ -2270,6 +2465,9 @@ const atlasmakerServer = (function() {
       case "paint":
         me.receivePaintMessage(data);
         break;
+      case "vectorial":
+        me.receiveVectorialAnnotationMessage(data);
+        break;
       case "requestSlice":
         me.receiveRequestSliceMessage(data, ws); // sender);
         break;
@@ -2286,7 +2484,7 @@ const atlasmakerServer = (function() {
         me.receiveAtlasFromUserMessage(data, ws); // sender);
         break;
       case "echo":
-        tracer.log("ECHO: '" + data.msg + "' from user " + data.username);
+        tracer.log(`ECHO: "${data.msg}" from user ${data.username} (${data.uid})`);
         break;
       case "userNameQuery":
         me.queryUserName(data)
@@ -2378,7 +2576,7 @@ const atlasmakerServer = (function() {
 
         // do broadcast
         if(data.type === "atlas") {
-          me.sendAtlasToUser(data.data, client, false);
+          me.sendAtlasToUser(data, client, false);
         } else {
           // sanitise data
           const cleanData = DOMPurify.sanitize(JSON.stringify(data));
@@ -2392,8 +2590,8 @@ const atlasmakerServer = (function() {
     },
     _handleWebSocketMessage: function ({msg, ws}) {
       // var sender = ws;
-      var sourceUS = me.getUserFromSocket(ws);
-      var data = {};
+      const sourceUS = me.getUserFromSocket(ws);
+      let data = {};
 
       // Handle binary data: a user uploaded an atlas file
       if(msg instanceof Buffer) {
@@ -2419,7 +2617,7 @@ const atlasmakerServer = (function() {
       // handle broadcast of messages
       me._handleBroadcastWebSocketMessage({data, sourceUS});
     },
-    _handleWebSocketClose: function ({ws}) {
+    _disconnectUser: async function ({ws}) {
       let sum;
       let nconnected = me.US.filter(function(o) { return typeof o !== 'undefined'; }).length;
       const sourceUS = me.getUserFromSocket(ws);
@@ -2437,9 +2635,9 @@ const atlasmakerServer = (function() {
         // count how many users remain connected to the MRI after user leaves, remove current user
         sum = me.numberOfUsersConnectedToMRI(sourceUS.User.dirname + sourceUS.User.mri) - 1;
         if(sum) {
-          tracer.log("    There remain " + sum + " users connected to that MRI");
+          tracer.log("There remain " + sum + " users connected to that MRI");
         } else {
-          tracer.log("    No user connected to MRI "
+          tracer.log("No user connected to MRI "
                                 + sourceUS.User.dirname
                                 + sourceUS.User.mri + ": unloading it", sourceUS.specimenName);
           me.unloadMRI(sourceUS.User.dirname + sourceUS.User.mri);
@@ -2448,18 +2646,22 @@ const atlasmakerServer = (function() {
         // count how many users remain connected to the atlas after user leaves, remove current user
         sum = me.numberOfUsersConnectedToAtlas(sourceUS.User.dirname, sourceUS.User.atlasFilename) - 1;
         if(sum) {
-          tracer.log("    There remain " + sum + " users connected to that atlas");
+          tracer.log("There remain " + sum + " users connected to that atlas");
         } else {
-          tracer.log("    No user connected to atlas "
+          tracer.log("No user connected to atlas "
                                 + sourceUS.User.dirname
                                 + sourceUS.User.atlasFilename + ": unloading it", sourceUS.specimenName);
-          me.unloadAtlas(sourceUS.User.dirname, sourceUS.User.atlasFilename, sourceUS.specimenName);
+          try {
+            await me.unloadAtlas(sourceUS.User.dirname, sourceUS.User.atlasFilename, sourceUS.specimenName);
+          } catch (err) {
+            throw new Error("Can't unload atlas", err);
+          }
         }
       } else {
-        tracer.log("<ERROR: dirname was not defined>", sourceUS.User);
+        tracer.log("WARNING: dirname was not defined", sourceUS.User);
       }
 
-      // send user disconnect message to remaining users
+      // inform about the disconnect to the remaining users
       me.sendDisconnectMessage(sourceUS.uid);
 
       // remove the user from the list
@@ -2469,7 +2671,7 @@ const atlasmakerServer = (function() {
       nconnected = me.US.filter(function(o) { return typeof o !== 'undefined'; }).length;
       tracer.log(`${nconnected} users remain connected`);
     },
-    _pushNewUser: function ({ws}) {
+    _connectNewUser: function ({ws}) {
       me.uidcounter += 1;
 
       const newUS = { "uid": "u" + me.uidcounter, "socket": ws };
@@ -2496,12 +2698,16 @@ const atlasmakerServer = (function() {
 
         return;
       }
-      me._pushNewUser({ws});
+      me._connectNewUser({ws});
       ws.on('message', function (msg) {
         me._handleWebSocketMessage({msg, ws});
       });
-      ws.on('close', function () {
-        me._handleWebSocketClose({ws});
+      ws.on('close', async function () {
+        try {
+          await me._disconnectUser({ws});
+        } catch (err) {
+          throw new Error("Can't disconnect user", err);
+        }
       });
     },
     initSocketConnection: function () {
@@ -2519,7 +2725,7 @@ free memory: ${os.freemem()}
       me._initColorMap();
 
       me.server.on("upgrade", function(req, socket) {
-        var ip = req.ip
+        let ip = req.ip
                     || req.connection.remoteAddress
                     || req.socket.remoteAddress
                     || req.connection.socket.remoteAddress;
@@ -2560,35 +2766,35 @@ module.exports = atlasmakerServer;
 
 /*
     Atlases
-        .name:        string
-        .dirname:    string
-        .hdr:        Analyze hdr
-        .dim[3]:    3 uint16s
-        .data:        Analyze img
-        .sum:        value sum
+      .filename:    string, like 'atlas.nii.gz'
+      .dirname: string, like '/data/[hash]/'
+      .hdr:     Analyze hdr
+      .dim[3]:  3 uint16s
+      .data:    Analyze img
+      .sum:     value sum
 
     US
-        .uid
-        .socket
-        .User
-            .view:        string, either 'sag', 'axi' or 'cor'
-            .tool:        string, either 'paint' or 'erase'
-            .slice:        slice which the user is editing
-            .penSize:    integer, for example, 5
-            .penValue:    integer, value used to paint, for example, 1
-            .doFill:    boolean, indicates whether 'paint' or 'erase' fill their target
-            .mouseIsDown:    boolean, indicates whether the user's mouse button is down
-            .x0:        previous x coordinate for painting, -1 if no previous
-            .y0:        previous y coordinate for painting, -1 if no previous
-            .mri:        normally, MRI-n4.nii.gz
-            .dirname:    string, atlas file directory, for example, /data/Gorilla/
-            .username:    string, for example, roberto
-            .specimenName: string, for example, Crab-eating_macaque
-            .atlasFilename:    string, atlas filename, for example, Cerebellum.nii.gz
-            .iAtlas:    String(index) of atlas in Atlases[]
-            .dim:        array, size of the mri the user is editing, for example, [160, 224, 160]
+      .uid
+      .socket
+      .User
+        .view:          string, either 'sag', 'axi' or 'cor'
+        .tool:          string, either 'paint' or 'erase'
+        .slice:         slice which the user is editing
+        .penSize:       integer, for example, 5
+        .penValue:      integer, value used to paint, for example, 1
+        .doFill:        boolean, indicates whether 'paint' or 'erase' fill their target
+        .mouseIsDown:   boolean, indicates whether the user's mouse button is down
+        .x0:            previous x coordinate for painting, -1 if no previous
+        .y0:            previous y coordinate for painting, -1 if no previous
+        .mri:           normally, MRI-n4.nii.gz
+        .dirname:       string, atlas file directory, for example, /data/Gorilla/
+        .username:      string, for example, roberto
+        .specimenName:  string, for example, Crab-eating_macaque
+        .atlasFilename: string, atlas filename, for example, Cerebellum.nii.gz
+        .iAtlas:        string, the `a${i}` where i is an integer points to an element in Atlases
+        .dim:           array, size of the mri the user is editing, for example, [160, 224, 160]
 
     undoBuffer
-        .type:    line, slice, volume
-        .data:
+      .type: line, slice, volume
+      .data:
 */

@@ -7,18 +7,18 @@ page.viewportSize = { width: 1024, height: 768 };
 page.clipRect = { top: 0, left: 0, width: 1024, height: 768 };
 
 page.open('http://localhost:3001', function(status) {
-    if (status !== 'success') {
-        console.log('Unable to access network');
-    } else {
-        // a screenshot of the home page
-        page.render('index.jpg');
- 
-        // log the title
-        var title = page.evaluate(function() {
-            return document.title;
-        });
-        console.log(title);
-    }
+  if (status !== 'success') {
+    console.log('Unable to access network');
+  } else {
+    // a screenshot of the home page
+    page.render('index.jpg');
 
-    phantom.exit();
+    // log the title
+    var title = page.evaluate(function() {
+      return document.title;
+    });
+    console.log(title);
+  }
+
+  phantom.exit();
 });
