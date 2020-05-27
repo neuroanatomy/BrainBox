@@ -254,27 +254,34 @@ var me = {
   _createOnscreenCanvases: function (elem) {
     // Set widget div (create one if none)
     if(typeof elem === 'undefined') {
-      me.container = $("<div class='atlasmaker'");
-      $(document.body).append(me.container);
+      me.container = document.getElementById("atlasmaker");
+      document.body.appendChild(me.container);
     } else {
       me.container = elem;
       if(me.debug) { console.log("Container: ", me.container); }
     }
     // Init drawing canvas
-    me.container.append('<div id="resizable"><canvas id="canvas" data-long-press-delay="500"></canvas></div>');
-    me.canvas = me.container.find('canvas').get(0);
+    me.container.innerHTML = '<div id="resizable"><canvas id="canvas" data-long-press-delay="500"></canvas></div>';
+    me.canvas = me.container.querySelector('canvas');
     me.context = me.canvas.getContext('2d');
+    var resizable = me.container.querySelector('#resizable');
 
     // Add a div to display the slice number
-    me.container.find("#resizable").append("<div id='text-layer'></div>");
+    var textLayer = document.createElement("div");
+    textLayer.id = 'text-layer';
+    resizable.appendChild(textLayer);
 
     // Add a div to display the vector layer
-    me.container.find("#resizable").append("<svg id='vector-layer'></svg>");
+    var vectorLayer = document.createElement("svg");
+    vectorLayer.id = 'vector-layer';
+    resizable.appendChild(vectorLayer);
 
     // Add the cursor (a small div)
-    me.container.find("#resizable").append("<div id='cursor'></div>");
+    var cursor = document.createElement("div");
+    cursor.id = 'cursor';
+    resizable.appendChild(cursor);
 
-    $('body').attr('data-toolbarDisplay', 'right');
+    document.body.setAttribute('data-toolbarDisplay', 'right');
 
     // Add precise cursor
     var isTouchArr = [];//["iPad","iPod"];
@@ -318,7 +325,7 @@ var me = {
     me.canvas.onmousedown = me.mousedown;
     me.canvas.onmousemove = me.mousemove;
     me.canvas.onmouseup = me.mouseup;
-    me.container.get(0).addEventListener('long-press', me.longpress);
+    me.container.addEventListener('long-press', me.longpress);
 
     // event connect: Connect event to respond to window resizing
     $(window).resize(function() {
@@ -338,7 +345,7 @@ var me = {
     } else {
       tools = toolsLight;
     }
-    me.container.append(tools);
+    me.container.insertAdjacentHTML("beforeend", tools);
 
     // event connect: get keyboard events
     $(document).keydown(function(e) { me.keyDown(e); });

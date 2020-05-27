@@ -309,17 +309,11 @@ export var AtlasMakerInteraction = {
     let newSlice;
     var {sdim} = me.User.s2v;
     if(view === 'sag') {
-      x = position[1];
-      y = sdim[2] - 1 - position[2];
-      newSlice = position[0];
+      [x, y, newSlice] = [position[1], sdim[2] - 1 - position[2], position[0]];
     } else if(view === 'cor') {
-      x = position[0];
-      y = sdim[2] - 1 - position[2];
-      newSlice = position[1];
+      [x, y, newSlice] = [position[0], sdim[2] - 1 - position[2], position[1]];
     } else if (view === 'axi' ) {
-      x = position[0];
-      y = sdim[1] - 1 - position[1];
-      newSlice = position[2];
+      [x, y, newSlice] = [position[0], sdim[1] - 1 - position[1], position[2]];
     }
 
     return [x, y, newSlice];
@@ -344,14 +338,21 @@ export var AtlasMakerInteraction = {
     $("#cursor").css({ left:(me.Crsr.x*(W/w)) + "px", top:(me.Crsr.y*(H/h)) + "px", width:me.User.penSize*(W/w), height:me.User.penSize*(H/h) });
 
     if(me.flagUsePreciseCursor) {
-      if($("#finger").length === 0) {
-        me.container.append("<div id = 'finger'></div>");
-        $("#finger").addClass("touchDevice");
+      var finger = document.getElementById("finger");
+      if(!finger) {
+        finger = document.createElement("div");
+        finger.id = "finger";
+        finger.className = "touchDevice";
+        me.container.appendChild(finger);
 
         // configure touch events for tablets
-        $("#finger").on("touchstart", function(e) { me.touchstart(e); });
-        $("#finger").on("touchend", function(e) { me.touchend(e); });
-        $("#finger").on("touchmove", function(e) { me.touchmove(e); });
+
+        // finger.ontouchstart = function(e) { me.touchstart(e); };
+        // finger.ontouchend = function(e) { me.touchend(e); };
+        // finger.ontouchmove = function(e) { me.touchmove(e); };
+        finger.ontouchstart = me.touchstart;
+        finger.ontouchend = me.touchend;
+        finger.ontouchmove = me.touchmove;
 
         // turn off eventual touch events handled by canvas
         me.canvas.ontouchstart = null;
@@ -360,7 +361,8 @@ export var AtlasMakerInteraction = {
       }
       me.updateCursor();
 
-      $("#finger").css({ left:me.Crsr.fx + "px", top:me.Crsr.fy + "px" });
+      finger.style.left = me.Crsr.fx + "px";
+      finger.style.top = me.Crsr.fy + "px";
     } else {
       // remove precise cursor
       $("#finger").remove();
@@ -815,7 +817,7 @@ export var AtlasMakerInteraction = {
     var input = inp.get(0);
     input.type = "file";
     input.onchange = function () {
-      var name = this.files[0];
+      var [name] = this.files;
       var reader = new FileReader();
       reader.onload = function (e) {
         var {result} = e.target;
@@ -872,32 +874,29 @@ export var AtlasMakerInteraction = {
      */
   color: function () {
     const me = AtlasMakerWidget;
-    $("#labelset").appendTo(me.container);
-    $("#labelset").show();
+    var labelset = document.getElementById("labelset");
+    me.container.appendChild(labelset);
+    labelset.style.display = "block";
 
-    var obj = $("#labelset");
-    $(obj)
-      .find("span#labels-name")
-      .text(me.ontology.name);
-    $(obj)
-      .find("#label-list")
-      .html("");
+    labelset.querySelector("span#labels-name").textContent = me.ontology.name;
+    labelset.querySelector("#label-list").innerHTML = "";
     for(var i = 0; i<me.ontology.labels.length; i++) {
       var l = me.ontology.labels[i];
-      var la = $(obj)
-        .find("#label-template")
-        .clone();
-      la.attr({ "data-index":i });
-      la.find(".label-color").css({ backgroundColor:"rgb(" + l.color[0] + ", " + l.color[1] + ", " + l.color[2] + ")" });
-      la.find(".label-name").text(l.name);
-      la.click(function() {
-        me.changePenColor($(this).attr("data-index"));
-        $(obj).hide();
-      });
-      $(obj)
-        .find("#label-list")
-        .append(la);
-      la.show();
+      var la = labelset
+        .querySelector("#label-template")
+        .cloneNode(true);
+      la.removeAttribute("id");
+      la.setAttribute("data-index", i);
+      la.querySelector(".label-color").style.backgroundColor = "rgb(" + l.color[0] + ", " + l.color[1] + ", " + l.color[2] + ")";
+      la.querySelector(".label-name").textContent = l.name;
+      la.onclick = function() {
+        me.changePenColor(this.getAttribute("data-index"));
+        labelset.style.display = "none";
+      };
+      labelset
+        .querySelector("#label-list")
+        .appendChild(la);
+      la.style.display = "block";
     }
   },
 

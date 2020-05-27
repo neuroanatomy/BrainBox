@@ -219,12 +219,14 @@ export var AtlasMakerWS = {
         me.info.volume=parseInt(vol)+" mm3";
 
         // setup download link
-        var link = me.container.find("span#download_atlas");
-        link.html([
-          "<a class='download' href='" + me.User.dirname + me.User.atlasFilename + "'>",
-          "<img src='" + me.hostname + "/img/download.svg' style='vertical-align:middle'/>",
-          "</a>" + atlas.name
-        ].join(''));
+        var link = me.container.querySelector("span#download_atlas");
+        if (link) {
+          link.innerHTML = [
+            "<a class='download' href='" + me.User.dirname + me.User.atlasFilename + "'>",
+            "<img src='" + me.hostname + "/img/download.svg' style='vertical-align:middle'/>",
+            "</a>" + atlas.name
+          ].join('');
+        }
 
         break;
       }
