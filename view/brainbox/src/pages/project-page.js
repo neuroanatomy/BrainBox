@@ -27,7 +27,7 @@ let file;
 let trTemplate;
 let objTemplate;
 let aParam;
-let hashOld;
+// let hashOld;
 
 function appendFilesToProject(list) {
   const i0 = projectInfo.files.list.length;
@@ -90,7 +90,7 @@ function queryFiles() {
 function saveAnnotations(param) {
   JSON.stringify(param.infoProxy); // update BrainBox.info from infoProxy
   AtlasMakerWidget.sendSaveMetadataMessage(BrainBox.info);
-  hashOld = BrainBox.hash(JSON.stringify(BrainBox.info));
+  // hashOld = BrainBox.hash(JSON.stringify(BrainBox.info));
 }
 
 /**
@@ -197,8 +197,8 @@ function loadProjectFile(index) {
           resolve();
         });
     } else {
-      var msg=AtlasMakerWidget.container.find("#text-layer");
-      msg.html("<text x='5' y='15' fill='white'>ERROR: File is unreadable</text>");
+      var msg=AtlasMakerWidget.container.querySelector("#text-layer");
+      msg.innerHTML = "<text x='5' y='15' fill='white'>ERROR: File is unreadable</text>";
       reject(new Error("ERROR: Cannot read data. The file is maybe corrupt?"));
     }
   });

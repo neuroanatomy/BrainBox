@@ -14,8 +14,8 @@ export var AtlasMakerDraw = {
      */
   resizeWindow: function () {
     const me = AtlasMakerWidget;
-    const wH = me.container.height();
-    const wW = me.container.width();
+    const wH = me.container.clientHeight;
+    const wW = me.container.clientWidth;
     const wAspect = wW/wH;
     const bAspect = me.brainW*me.brainWdim/(me.brainH*me.brainHdim);
 
@@ -107,8 +107,8 @@ export var AtlasMakerDraw = {
    */
   displayInformation: function () {
     var me = AtlasMakerWidget;
-    var text = me.container.find("#text-layer");
-    var vector = me.container.find("#vector-layer");
+    var text = me.container.querySelector("#text-layer");
+    var vector = me.container.querySelector("#vector-layer");
     let txtStr;
     let svgStr;
 
@@ -120,14 +120,14 @@ export var AtlasMakerDraw = {
         txtStr += "<span>" + k + ": " + me.info[k] + "</span><br/>";
       }
     }
-    text.html(txtStr);
+    text.innerHTML = txtStr;
 
     // call registered displayInformation functions
     svgStr = "";
     for(const func of me.displayInformationFunctions) {
       svgStr = func(svgStr);
     }
-    vector.html(svgStr);
+    vector.innerHTML = svgStr;
   },
 
   /**
@@ -177,10 +177,9 @@ export var AtlasMakerDraw = {
         var c = me.ontologyValueToColor(data[i]);
         var alpha = (data[i]>0)?255:0;
         i = (y*me.atlasOffcn.width + x)*4;
-        me.atlasPix.data[i] = c[0];
-        me.atlasPix.data[i + 1] = c[1];
-        me.atlasPix.data[i + 2] = c[2];
-        me.atlasPix.data[i + 3] = alpha*me.alphaLevel;
+        if (i <= me.atlasPix.data.length - 4) {
+          me.atlasPix.data.set([...c, alpha*me.alphaLevel], i);
+        }
       }
     }
     me.atlasOfftx.putImageData(me.atlasPix, 0, 0);

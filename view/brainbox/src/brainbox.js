@@ -91,10 +91,14 @@ export var BrainBox={
   initBrainBox: function initBrainBox() {
     var pr = new Promise(function(resolve, reject) {
       // Add AtlasMaker and friends
-      $("#stereotaxic").html('<div id="atlasmaker"></div>');
-      $("#atlasmaker").addClass('edit-mode');
+      var stereotaxic = document.getElementById("stereotaxic");
+      stereotaxic.innerHTML = '';
+      var atlasmaker = document.createElement("div");
+      atlasmaker.id = "atlasmaker";
+      atlasmaker.className = "edit-mode";
+      stereotaxic.appendChild(atlasmaker);
 
-      AtlasMakerWidget.initAtlasMaker($("#atlasmaker"))
+      AtlasMakerWidget.initAtlasMaker(atlasmaker)
         .then(function() {
           resolve();
         })

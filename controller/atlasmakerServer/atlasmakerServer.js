@@ -4,7 +4,6 @@ const zlib = require('zlib');
 const tracer = require('tracer').console({format: '[{{file}}:{{line}}]  {{message}}'});
 const jpeg = require('jpeg-js'); // jpeg-js library: https://github.com/eugeneware/jpeg-js
 const Struct = require('struct');
-const childProcess = require('child_process');
 const merge = require('merge');
 const path = require('path');
 const monk = require('monk');
@@ -1335,18 +1334,24 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       const pr = new Promise(function (resolve, reject) {
         try {
 
-          /*
-            MGZ data sometimes has an error which makes gunzip throw
-            a "invalid compressed data--crc error" message. However,
-            the data is correctly uncompressed. We will ignore errors.
-          */
-          // eslint-disable-next-line handle-callback-err
-          childProcess.execFile("gunzip", ["-c", mriPath], { encoding: 'binary', maxBuffer: 200*1024*1024 }, function(err, stdout) {
-            // if(err) {
-            //   reject(err);
-            // }
+        /*
+          MGZ data sometimes has an error which makes gunzip throw
+          a "invalid compressed data--crc error" message. However,
+          the data is correctly uncompressed. We will ignore errors.
+        */
 
-            const mgh = Buffer.from(stdout, 'binary');
+          var bufs = [];
+          const readable = fs.createReadStream(mriPath).pipe(zlib.createGunzip());
+          readable.on('data', function(d) { bufs.push(d); });
+          readable.on('error', function (err) {
+            if (err.code === "Z_DATA_ERROR") {
+              readable.emit("end");
+            } else {
+              reject(err);
+            }
+          });
+          readable.on('end', function() {
+            const mgh = Buffer.concat(bufs);
             const mri = {};
             const hdr = {};
 
