@@ -175,65 +175,73 @@ var me = {
 
     return pr;
   },
-
   _removeVariablesFromURL: function (url) {
     return url.split("&")[0];
   },
-
-  _registerClickDownTool: function(tool) {
+  _registerToolDown: function(tool) {
     const {name, func} = tool;
     me.clickDownTools[name] = func;
   },
-  _registerMoveTool: function(tool) {
+  _registerToolMove: function(tool) {
     const {name, func} = tool;
     me.moveTools[name] = func;
   },
-  _registerClickUpTool: function(tool) {
+  _registerToolUp: function(tool) {
     const {name, func} = tool;
     me.clickUpTools[name] = func;
   },
-  _registerLongPressTool: function(tool) {
+  _registerToolLongPress: function(tool) {
     const {name, func} = tool;
     me.longPressTools[name] = func;
   },
-  _registerClickDownTools: function () {
-    const arr = [
-      {name: 'show', func: me._showToolHandler},
-      {name: 'paint', func: me._paintToolHandler},
-      {name: 'erase', func: me._eraseToolHandler},
-      {name: 'measure', func: me._measureToolHandler},
-      {name: 'landmark', func: me._landmarkToolDownHandler},
-      {name: 'adjust', func: me._adjustToolHandler},
-      {name: 'eyedrop', func: me._eyedropToolHandler}
-    ];
-    for(const tool of arr) {
-      me._registerClickDownTool(tool);
-    }
-  },
-  _registerMoveTools: function () {
-    const arr = [{name: 'landmark', func: me._landmarkToolMoveHandler}];
-    for(const tool of arr) {
-      me._registerMoveTool(tool);
-    }
-  },
-  _registerClickUpTools: function () {
-    const arr = [{name: 'landmark', func: me._landmarkToolUpHandler}];
-    for(const tool of arr) {
-      me._registerClickUpTool(tool);
-    }
-  },
-  _registerLongPressTools: function () {
-    const arr = [{name: 'landmark', func: me._landmarkToolLongHandler}];
-    for(const tool of arr) {
-      me._registerLongPressTool(tool);
-    }
-  },
-  _registerDisplayInformationFunction: function (func) {
+  _registerToolDisplayInformation: function (func) {
     me.displayInformationFunctions.push(func);
   },
-  _registerDisplayInformationFunctions: function () {
-    me._registerDisplayInformationFunction(me.landmarkDisplay);
-    me._registerDisplayInformationFunction(me.measureDisplay);
+  _registerAllToolsDown: function () {
+    const arr = [
+      {name: 'show', func: me._showToolDown},
+      {name: 'paint', func: me._paintToolDown},
+      {name: 'erase', func: me._eraseToolDown},
+      {name: 'measure', func: me._measureToolDownHandler},
+      {name: 'landmark', func: me._landmarkToolDown},
+      {name: 'adjust', func: me._adjustToolDown},
+      {name: 'eyedrop', func: me._eyedropToolDown}
+    ];
+    for(const tool of arr) {
+      me._registerToolDown(tool);
+    }
+  },
+  _registerAllToolsMove: function () {
+    const arr = [
+      {name: 'landmark', func: me._landmarkToolMove},
+      {name: 'paint', func: me._paintToolMove},
+      {name: 'show', func: me._showToolMove}
+    ];
+    for(const tool of arr) {
+      me._registerToolMove(tool);
+    }
+  },
+  _registerAllToolsUp: function () {
+    const arr = [
+      {name: 'show', func: me._showToolUp},
+      {name: 'eyedrop', func: me._eyedropToolUp},
+      {name: 'landmark', func: me._landmarkToolUp},
+      {name: 'paint', func: me.paintToolUpHandler}, // same up function for paint and erase
+      {name: 'erase', func: me._paintToolUp} // same up function for paint and erase
+    ];
+    for(const tool of arr) {
+      me._registerToolUp(tool);
+    }
+  },
+  _registerAllToolsLongPress: function () {
+    const arr = [{name: 'landmark', func: me._landmarkToolLong}];
+    for(const tool of arr) {
+      me._registerToolLongPress(tool);
+    }
+  },
+  _registerAllToolsDisplayInformation: function () {
+    me._registerToolDisplayInformation(me.landmarkToolDisplayInformation);
+    me._registerToolDisplayInformation(me.measureToolDisplayInformation);
   },
   _addAtlasMakerComponents: function () {
     $.extend(me, AtlasMakerDraw);
@@ -374,13 +382,13 @@ var me = {
     me.loadTools();
 
     // event connect: register click tools
-    me._registerClickDownTools();
-    me._registerMoveTools();
-    me._registerClickUpTools();
-    me._registerLongPressTools();
+    me._registerAllToolsDown();
+    me._registerAllToolsMove();
+    me._registerAllToolsUp();
+    me._registerAllToolsLongPress();
 
     // register functions displaying information
-    me._registerDisplayInformationFunctions();
+    me._registerAllToolsDisplayInformation();
 
     // start websocket
     const pr = new Promise(function(resolve, reject) {
