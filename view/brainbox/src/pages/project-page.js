@@ -160,7 +160,7 @@ function loadProjectFile(index) {
 
           // bind volume annotations to table#volAnnotations
           const annvolProxy={};
-          aParam = {
+          const aParamVolAnnot = {
             table: $("table#volAnnotations"),
             infoProxy: annvolProxy,
             info: BrainBox.info,
@@ -182,10 +182,10 @@ function loadProjectFile(index) {
 
           // add and bind new table row
           for(let irow=0; irow<annotations.volume.length; irow++) {
-            BrainBox.appendAnnotationTableRow2(irow, annotations.volume[irow].annotationItemIndex, aParam);
+            BrainBox.appendAnnotationTableRow2(irow, annotations.volume[irow].annotationItemIndex, aParamVolAnnot);
           }
           // update in server
-          saveAnnotations(aParam);
+          saveAnnotations(aParamVolAnnot);
 
           // select the first annotation by default
           // (should be read from project settings)
