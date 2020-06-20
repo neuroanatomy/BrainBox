@@ -248,12 +248,16 @@ if( $.isEmptyObject(mriInfo)) {
         }
       });
       // volume annotation table: select row
-      $(document).on('click touchstart', "#annotations tr", () => { BrainBox.selectAnnotationTableRow($(this).index(), volAnnParam); });
+      $(document).on('click touchstart', "#annotations tr", (e) => {
+        const targetRow = $(e.target).closest('tr');
+        const targetIndex = targetRow.index();
+        BrainBox.selectAnnotationTableRow(targetIndex, volAnnParam);
+      });
       // volume annotations table: add, remove and save annotations
       $(document).on('click touchstart', "#addAnnotation", () => { addAnnotation(volAnnParam); });
       $(document).on('click touchstart', "#removeAnnotation", () => { removeAnnotation(volAnnParam); });
       // volume annotations table: select the first row by default
-      $("table#annotations tr").removeClass("selected");
+      $("table#annotationsg").removeClass("selected");
       $("table#annotations tr").eq(1)
         .addClass("selected");
 
@@ -322,11 +326,12 @@ if( $.isEmptyObject(mriInfo)) {
         BrainBox.appendAnnotationTableRow(i, textAnnParam);
       }
 
-      $(document).on('click touchstart', "#textAnnotations tr", () => {
-        var table=$(this).closest("tbody");
+      $(document).on('click touchstart', "#textAnnotations tr", (e) => {
+        const table=$(e.target).closest("tbody");
+        const targetRow = $(e.target).closest('tr');
         $(table).find("tr")
           .removeClass("selected");
-        $(this).addClass("selected");
+        targetRow.addClass("selected");
       });
       $(document).on('click touchstart', "#addTextAnnotation", () => { addTextAnnotation(textAnnParam); });
       $(document).on('click touchstart', "#removeTextAnnotation", () => { removeTextAnnotation(textAnnParam); });
@@ -349,7 +354,7 @@ if( $.isEmptyObject(mriInfo)) {
       });
       // blur when [enter] is clicked, to trigger data sending
       $(document).on('keydown', "[contenteditable]", (e) => {
-        if(e.which==13 && $(e.target).attr('contenteditable')) {
+        if(e.which===13 && $(e.target).attr('contenteditable')) {
           e.preventDefault();
           $(e.target).blur();
         }

@@ -66,6 +66,7 @@ function appendFilesToProject(list) {
     BrainBox.appendAnnotationTableRow(i0+i, aParam);
   }
 }
+
 function queryFiles() {
   $.getJSON("/project/json/"+projectInfo.shortname+"/files", {
     start: projectInfo.files.list.length,
@@ -247,6 +248,7 @@ for(const k of projectInfo.annotations.list) {
     annotations.text.push(k);
   }
 }
+
 // collect the project's volume annotations
 for(const k of projectInfo.annotations.list) {
   if (k.type === "volume") {
@@ -286,11 +288,12 @@ function receiveMetadata(data) {
 // Init BrainBox
 //---------------
 BrainBox.initBrainBox()
+  // load label sets
   .then(function () {
     return BrainBox.loadLabelsets();
   })
+  // subscribe to metadata changes received by AtlasMaker
   .then(function () {
-    // Subscribe to metadata changes received by AtlasMaker
     AtlasMakerWidget._metadataChangeSubscribers.push(receiveMetadata);
 
     // Bind the project's files to the table within #projectFiles
@@ -363,8 +366,9 @@ BrainBox.initBrainBox()
       objTemplate: objTemplate
     };
   })
+  // get list of project files
   .then(function() {
-    // Append the project files progressively. Start with the 1st #numFilesQuery files, load and
+    // Start with the 1st #numFilesQuery files, load and
     // display the 1st file, configure the tools position, and keep querying for the
     // rest of the files
     return $.getJSON("/project/json/"+projectInfo.shortname+"/files", {
@@ -372,19 +376,24 @@ BrainBox.initBrainBox()
       length: numFilesQuery
     });
   })
+  // append files progressively
   .then(function(list) {
     appendFilesToProject(list);
 
     // mark first row as selected
     $("#projectFiles tbody tr:eq(0)").addClass("selected");
   })
-  .then(function () { return loadProjectFile(0); })
+  // load the 1st file
+  .then(function () {
+    return loadProjectFile(0);
+  })
+  // configure the UI
   .then(function () {
     $("#tools-side").detach()
       .appendTo('#tools');
-    // connect colours close button
     $(document).on('click touchstart', "#labels-close", function() { $("#labelset").hide(); });
   })
+  // query all files
   .then(function() {
     queryFiles();
   })
@@ -467,20 +476,20 @@ $(document).on('keydown', function(e) {
 
 // listen to changes in selected volume annotation
 $(document).on('click touchstart', "#volAnnotations tbody tr", function (e) {
-  var table=$(e.target).closest("tbody");
-  var currentIndex=$(table).find("tr.selected")
-    .index();
-  var index=$(e.target).index();
+  const table=$(e.target).closest("tbody");
+  const targetRow = $(e.target).closest('tr');
+  const targetIndex = targetRow.index();
+  const currentIndex = $(table).find("tr.selected").index();
 
-  if(index>=0 && currentIndex!==index) {
+  if(targetIndex>=0 && currentIndex!==targetIndex) {
     $(table).find("tr")
       .removeClass("selected");
-    $(e.target).addClass("selected");
+    targetRow.addClass("selected");
 
     let iarr;
     let found=false;
     for(iarr=0; iarr<BrainBox.info.mri.atlas.length; iarr++) {
-      if(BrainBox.info.mri.atlas[iarr].name===annotations.volume[index].name
+      if(BrainBox.info.mri.atlas[iarr].name===annotations.volume[targetIndex].name
                     && BrainBox.info.mri.atlas[iarr].project===projectInfo.shortname) {
         found=true;
         break;
