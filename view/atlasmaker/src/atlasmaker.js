@@ -216,6 +216,7 @@ var me = {
     const arr = [
       {name: 'landmark', func: me._landmarkToolMove},
       {name: 'paint', func: me._paintToolMove},
+      {name: 'erase', func: me._eraseToolMove},
       {name: 'show', func: me._showToolMove}
     ];
     for(const tool of arr) {
