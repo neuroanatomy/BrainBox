@@ -227,7 +227,7 @@ var me = {
       {name: 'show', func: me._showToolUp},
       {name: 'eyedrop', func: me._eyedropToolUp},
       {name: 'landmark', func: me._landmarkToolUp},
-      {name: 'paint', func: me.paintToolUpHandler}, // same up function for paint and erase
+      {name: 'paint', func: me._paintToolUp}, // same up function for paint and erase
       {name: 'erase', func: me._paintToolUp} // same up function for paint and erase
     ];
     for(const tool of arr) {
