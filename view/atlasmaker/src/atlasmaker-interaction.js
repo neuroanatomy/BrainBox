@@ -1135,7 +1135,7 @@ export var AtlasMakerInteraction = {
           svgStr +=
 `
 <g transform='translate(${zx*x},${zy*y}) scale(0.85)'>
-<path class='landmark' fill='#ffffff' stroke='#00000080' d="m 0,0 c 0,0 6,-6 9,-11 3,-5 0,-15 -9,-15 -9,0 -12,10 -9,15 3,5 9,11 9,11 z" />
+<path class='landmark' fill='#ffffff' stroke='#00000080' d="m 0,0 c 0,0 6,-6 9,-11 3,-5 0,-15 -9,-15 -9,0 -12,10 -9,15 3,5 9,11 9,11 z"></path>
 <text fill='white' x=10 y='-10'>${text}</text>
 </g>
 `;

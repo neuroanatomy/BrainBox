@@ -281,7 +281,7 @@ var me = {
     resizable.appendChild(textLayer);
 
     // Add a div to display the vector layer
-    var vectorLayer = document.createElement("svg");
+    const vectorLayer = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     vectorLayer.id = 'vector-layer';
     resizable.appendChild(vectorLayer);
 
