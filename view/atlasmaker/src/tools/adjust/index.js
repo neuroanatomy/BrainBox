@@ -2,7 +2,16 @@
 import html from './index.html';
 
 // append HTML
-AtlasMakerWidget.container.querySelector("#resizable").innerHTML += html;
+const el = document.createElement("div");
+el.id = "adjust";
+el.style.width = "calc(100% - 20px )";
+el.style.position ="absolute";
+el.style.bottom = 0;
+el.style.left = 0;
+el.style.padding = "10px";
+
+el.innerHTML = html;
+AtlasMakerWidget.container.querySelector("#resizable").appendChild(el);
 
 // Transparency
 AtlasMakerWidget.slider($('.slider#alphaLevel'), function (x) {
