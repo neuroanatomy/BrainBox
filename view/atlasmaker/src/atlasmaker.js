@@ -334,7 +334,17 @@ var me = {
     me.canvas.onmousedown = me.mousedown;
     me.canvas.onmousemove = me.mousemove;
     me.canvas.onmouseup = me.mouseup;
-    me.container.addEventListener('long-press', me.longpress);
+
+
+    // text input
+    me.loadScript("https://unpkg.com/codeflask/build/codeflask.min.js");
+    me.loadScript("https://cdn.jsdelivr.net/gh/r03ert0/consolita.js@v0.1.1/consolita.js");
+
+    // long-press event
+    me.loadScript("https://cdn.jsdelivr.net/gh/john-doherty/long-press-event@2.1.0/dist/long-press-event.min.js")
+      .then(() => {
+        me.container.addEventListener('long-press', me.longpress);
+      });
 
     // event connect: Connect event to respond to window resizing
     $(window).resize(function() {
@@ -400,6 +410,11 @@ var me = {
     me._registerAllToolsDisplayInformation();
 
     // start websocket
+    // try {
+    //   await me.initSocketConnection();
+    // } catch(err) {
+    //   throw new Error(err);
+    // }
     const pr = new Promise(function(resolve, reject) {
       me.initSocketConnection()
         .then( () => {
