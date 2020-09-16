@@ -81,12 +81,7 @@ describe('TESTING WEBSOCKET WORKFLOW', function () {
       done();
     });
 
-    it('Can request data', (done) => {
-      u1.send(JSON.stringify(msgSendAtlas));
-      done();
-    });
-
-    it('Can receive data', (done) => {
+    it('Can request data and receive', (done) => {
       u1.on('message', (data) => {
         if(Buffer.isBuffer(data)) {
           assert(true);
@@ -96,6 +91,9 @@ describe('TESTING WEBSOCKET WORKFLOW', function () {
         }
         done();
       });
+
+      u1.send(JSON.stringify(msgSendAtlas));
+
     }).timeout(U.longTimeout);
 
     it('Remove test MRI from db and disk', async function () {

@@ -10,9 +10,14 @@ const U = require('../utils.js');
 describe('TESTING AN MRI UPLOAD/DOWNLOAD WORKFLOW', function (done) {
   describe('Fail soon', function () {
     it('Returns 404', async function () {
-      const res = await chai.request(U.serverURL).post('/upload');
+      let res;
+      try {
+        res = await chai.request(U.serverURL).post('/upload');
+      } catch(err) {
+        throw new Error(err);
+      }
       assert.equal(res.statusCode, 404);
-    });
+    }).timeout(20000);
   });
 
   describe('Create a test token', function () {
