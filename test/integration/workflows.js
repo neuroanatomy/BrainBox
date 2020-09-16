@@ -17,7 +17,7 @@ describe('TESTING AN MRI UPLOAD/DOWNLOAD WORKFLOW', function (done) {
         throw new Error(err);
       }
       assert.equal(res.statusCode, 404);
-    }).timeout(20000);
+    }).timeout(U.noTimeout);
   });
 
   describe('Create a test token', function () {
