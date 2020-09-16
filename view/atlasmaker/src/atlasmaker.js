@@ -337,8 +337,14 @@ var me = {
 
 
     // text input
-    me.loadScript("https://unpkg.com/codeflask/build/codeflask.min.js");
-    me.loadScript("https://cdn.jsdelivr.net/gh/r03ert0/consolita.js@v0.1.1/consolita.js");
+    Promise.all([
+      me.loadScript("https://unpkg.com/codeflask/build/codeflask.min.js"),
+      me.loadScript("https://cdn.jsdelivr.net/gh/r03ert0/consolita.js@v0.1.1/consolita.js")
+    ]).then(() => {
+      window.onload = () => {
+        Consolita.init("#logScript");
+      };
+    });
 
     // long-press event
     me.loadScript("https://cdn.jsdelivr.net/gh/john-doherty/long-press-event@2.1.0/dist/long-press-event.min.js")
