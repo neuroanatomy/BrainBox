@@ -92,7 +92,7 @@
 
 BrainBox is a web platform to share, visualise and annotate MRI brain data collaboratively. BrainBox will provide the means to create a layer of collaborative annotation over all the available MRI data without having to rely on a centralised data repository or the necessity of having to install software.
 
-Go to [http://brainbox.pasteur.fr](http://brainbox.pasteur.fr),
+Go to [https://brainbox.pasteur.fr](https://brainbox.pasteur.fr),
 login with a github account,
 click on your username and you will see your user information. 
 
@@ -142,7 +142,7 @@ BrainBox provides a toggleable chat window where you can talk to your collaborat
 <br>
 </p>
 ###Projects
-BrainBox is a web application for real-time collaborative curation, quality control & annotation of huge MRI data sets. Once you enter a link to an online available MRI file, BrainBox will index it and keep the link. This way, a catalogue of online MRI data will be generated and make dormant data visible and accessible to a broader public. The MRI file will be visible in the MRI list on the user page of the user who first loaded the MRI in. Further, you can create projects in BrainBox and link MRIs & annotations inside of a project. You can build & share your own project collections either with a restricted set of collaborators or with the world. While some sensitive MRI data may not be openly shared, all annotations shall eventually be freely available.
+BrainBox is a web application for real-time collaborative curation, quality control & annotation of huge MRI data sets. Once you enter a link to an online available MRI file, BrainBox will index it and keep the link. This way, a catalogue of online MRI data will be generated and make dormant data visible and accessible to a broader public. The MRI file will be visible in the MRI list on the user page of the user who first loaded the MRI in. Further, you can create projects in BrainBox and link MRIs & annotations inside of a project. [This video](https://www.youtube.com/watch?v=nu83U3QY4pA&t=10s) shows you, how to create a BrainBox project using MetaSearch. You can build & share your own project collections either with a restricted set of collaborators or with the world. While some sensitive MRI data may not be openly shared, all annotations shall eventually be freely available.
 
 
 *** short illustration and user guide will soon follow below *** & also check out our [video on YouTube](! ***
