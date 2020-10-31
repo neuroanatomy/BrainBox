@@ -7,7 +7,7 @@
  In our [GitHub issue #42](https://github.com/neuroanatomy/BrainBox/issues/177) you find
  detailed information on how to participate and get credit for your work. Currently, we
  are trying to complete the dolphin brain!! Join our team of
- [BrainMappers](https://github.com/neuroanatomy/BrainBox/blob/master/BrainMappers.md)
+ [BrainMappers](https://github.com/katjaq/BrainBoxTutorials/wiki)
  We will be happy to work with anyone who would love to join our effort.
  While you can see in real-time what your collaborators are writing or drawing on a given
  data set, you can also chat with them, and ask for help or approval of your work. We want
@@ -25,7 +25,7 @@ You can also e-mail us to get in touch at openneurobrainbox at gmail dot com!
 
 
 **Launch your own collaborative project!**
- on [BrainBox](http://brainbox.pasteur.fr/project/new)
+ on [BrainBox](https://brainbox.pasteur.fr/project/new)
 
 
 **We are looking forward to meeting you!**
