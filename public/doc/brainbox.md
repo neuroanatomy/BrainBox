@@ -120,7 +120,7 @@ View and annotate your data in fullscreen mode and view a 3D rendering of your d
 <br>
 </p>
 ###Segmentation & annotations
-With BrainBox you can easily modify pre-computed segmentations or create new annotations. You can edit available annotations by paint & fill, (try 'precise cursor' on iPad!), or erase & fill.   
+With BrainBox you can easily modify pre-computed segmentations or create new annotations. You can edit available annotations by paint & fill, (try 'precise cursor' on iPad!), or erase & fill. You can check out our videos on how to collaboratively [create a mask](https://www.youtube.com/watch?v=mN0vGpy5kFg&t=13s) and how to collaboratively [edit masks] (https://www.youtube.com/watch?v=bFHXS-lya5M&t=17s) with BrainBox.     
 You will love the undo button :D! You can also upload annotation files & view them overlaid with your MRI data and adjust their opacity for optimally working, or create a new annotation layer or delete one, respectively.   
 While the MRIs stay stored on the web, your changes & annotations will be saved to the BrainBox database. To save changes you made in the annotation table, just click the 
 tab key. Changes in the atlas-files will be automatically saved every ten minutes or when you leave the page and current changes will be stored in the RAM in the meantime. We encourage you, however, to click the save button to feel sure your segmentation has been saved to our server. To get back to your annotation once you left the page, there are two options: you will either find a link on the home page – if you were the person who added the MRI – or you will find it among the atlases on your user page.  
