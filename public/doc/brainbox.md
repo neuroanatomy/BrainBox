@@ -153,7 +153,7 @@ BrainBox wants to facilitate data discovery. On the home page, you will find the
 
 In the top menu, the ![](/img/plus.svg =13x13) icon is used to add a new project. Projects are collections of MRIs and annotations, and are discussed more deeply in the project page section below. The ![](/img/settings.svg =13x13) icon allows you to configure your existing projects, for example, to restrict access to a list of collaborators. In addition to that, BrainBox allows you to search for MRIs via their filename using the ![](/img/search.svg =13x13) icon, for a user or for a project.
 
-In case you find a bug or would like to suggest a new feature we could add, open a [![](/img/bug.svg =13x13)Github issue](https://github.com/neuroanatomy/BrainBox/issues/new). And if you'd like to join our team of developers, head over to our [![](/img/github.svg =15x15)Gihub repo](https://github.com/neuroanatomy).
+In case you find a bug or would like to suggest a new feature we could add, open a [![](/img/bug.svg =13x13)Github issue](https://github.com/neuroanatomy/BrainBox/issues/new). And if you'd like to join our team of developers, head over to our [![](/img/github.svg =15x15)Gihub repo](https://github.com/neuroanatomy/BrainBox).
 
 To be able to use full BrainBox functionalities, you need to login. BrainBox asks you to login with your GitHub account so that annotations can benefit from GitHub’s versioning system and be saved to your user account as well as easily be shared with the BrainBox GitHub repository. Once logged in, a click on your username will take you to your user page.
 
