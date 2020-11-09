@@ -1,7 +1,7 @@
 {
     "hostname": "http://localhost:3001",
     "wshostname": "localhost:8080",
-    "secure": true,
+    "secure": false,
     "ssl_key": "./key.pem",
     "ssl_cert": "./cert.pem",
     "ssl_chain": null

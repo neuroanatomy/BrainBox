@@ -13,6 +13,7 @@ const cheetahURL = "https://zenodo.org/record/44846/files/MRI.nii.gz?download=1"
 const serverURL = "http://localhost:3001";
 const testToken = "qwertyuiopasdfghjklzxcvbnm";
 const testTokenDuration = 2 * (1000 * 3600); // 2h
+const noTimeout = 0; // disable timeout
 const longTimeout = 10 * 1000; // 30 sec
 const mediumTimeout = 5 * 1000; // 10 sec
 const shortTimeout = 3 * 1000; // 5 sec
@@ -138,8 +139,8 @@ async function removeTestTokenForUser(nickname) {
   await db.get("log").remove({token: testToken + nickname});
 }
 
-function delay(delayTimeout) {
-  return new Promise((resolve) => {
+async function delay(delayTimeout) {
+  await new Promise((resolve) => {
     setTimeout(resolve, delayTimeout);
   });
 }
@@ -170,25 +171,47 @@ function compareImages(pathImg1, pathImg2) {
   return pixdiff;
 }
 
-function comparePageScreenshots(testPage, url, filename) {
-  const pr = new Promise((resolve, reject) => {
-    const newPath = './test/screenshots/' + filename;
-    const refPath = './test/data/reference-screenshots/' + filename;
-    // console.log("go to page:", url);
-    testPage.goto(url, {waitUntil: 'domcontentloaded'});
-    delay(5000)
-      .then(() => testPage.screenshot({path:'./test/screenshots/' + filename}))
-      .then(() => {
-        const pixdiff = compareImages(newPath, refPath);
-        // console.log("  pixdiff:", pixdiff);
-        resolve(pixdiff);
-      })
-      .catch( (err) => {
-        reject(err);
-      });
-  });
+async function waitUntilHTMLRendered(page, timeout = 30000) {
+  const checkDurationMsecs = 1000;
+  const maxChecks = timeout / checkDurationMsecs;
+  let lastHTMLSize = 0;
+  let checkCounts = 1;
+  let countStableSizeIterations = 0;
+  const minStableSizeIterations = 3;
 
-  return pr;
+  while(checkCounts++ <= maxChecks) {
+    const html = await page.content();
+    const currentHTMLSize = html.length;
+
+    const bodyHTMLSize = await page.evaluate(() => document.body.innerHTML.length);
+
+    // console.log('last: ', lastHTMLSize, ' <> curr: ', currentHTMLSize, " body html size: ", bodyHTMLSize);
+
+    if(lastHTMLSize !== 0 && currentHTMLSize === lastHTMLSize) {
+      countStableSizeIterations++;
+    } else {
+      countStableSizeIterations = 0; //reset the counter
+    }
+
+    if(countStableSizeIterations >= minStableSizeIterations) {
+      // console.log("Page rendered fully..");
+      break;
+    }
+
+    lastHTMLSize = currentHTMLSize;
+    await page.waitFor(checkDurationMsecs);
+  }
+}
+
+async function comparePageScreenshots(testPage, url, filename) {
+  const newPath = './test/screenshots/' + filename;
+  const refPath = './test/data/reference-screenshots/' + filename;
+  await testPage.goto(url, {waitUntil: 'networkidle0'});
+  await waitUntilHTMLRendered(testPage);
+  await testPage.screenshot({path:'./test/screenshots/' + filename});
+  const pixdiff = compareImages(newPath, refPath);
+
+  return pixdiff;
 }
 
 module.exports = {
@@ -213,6 +236,8 @@ module.exports = {
   delay,
   compareImages,
   comparePageScreenshots,
+  waitUntilHTMLRendered,
+  noTimeout,
   longTimeout,
   mediumTimeout,
   shortTimeout

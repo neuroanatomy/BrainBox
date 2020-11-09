@@ -15,7 +15,7 @@ BrainBox is a Web application for the collaborative curation of neuroimaging dat
  be sound and accurate.
  **Join us! Your contribution is invaluable!**
 
-You can try BrainBox at http://brainbox.pasteur.fr. Log in with your github
+You can try BrainBox at https://brainbox.pasteur.fr. Log in with your github
 account and enter the URL to an MRI file you want to visualise, annotate
 and edit. You can also click one of the examples.
 
@@ -106,3 +106,4 @@ For Docker users first start the containers with `docker-compose up -d`, then ru
 
 For non-Docker users you will need to ensure puppeteer can run correctly on your local system (please refer to the [documentation](https://github.com/GoogleChrome/puppeteer) for information). Then run the command `npm mocha-test`.
 
+Depending on your local developing settings, if you develop using secure web sockets, you may need to indicate Node the location of your Certification Authority using `export NODE_EXTRA_CA_CERTS="/path/to/rootCA.pem"`

@@ -92,7 +92,7 @@
 
 BrainBox is a web platform to share, visualise and annotate MRI brain data collaboratively. BrainBox will provide the means to create a layer of collaborative annotation over all the available MRI data without having to rely on a centralised data repository or the necessity of having to install software.
 
-Go to [http://brainbox.pasteur.fr](http://brainbox.pasteur.fr),
+Go to [https://brainbox.pasteur.fr](https://brainbox.pasteur.fr),
 login with a github account,
 click on your username and you will see your user information. 
 
@@ -120,7 +120,7 @@ View and annotate your data in fullscreen mode and view a 3D rendering of your d
 <br>
 </p>
 ###Segmentation & annotations
-With BrainBox you can easily modify pre-computed segmentations or create new annotations. You can edit available annotations by paint & fill, (try 'precise cursor' on iPad!), or erase & fill.   
+With BrainBox you can easily modify pre-computed segmentations or create new annotations. You can edit available annotations by paint & fill, (try 'precise cursor' on iPad!), or erase & fill. You can check out our videos on how to collaboratively [create a mask](https://www.youtube.com/watch?v=mN0vGpy5kFg&t=13s) and how to collaboratively [edit masks] (https://www.youtube.com/watch?v=bFHXS-lya5M&t=17s) with BrainBox.     
 You will love the undo button :D! You can also upload annotation files & view them overlaid with your MRI data and adjust their opacity for optimally working, or create a new annotation layer or delete one, respectively.   
 While the MRIs stay stored on the web, your changes & annotations will be saved to the BrainBox database. To save changes you made in the annotation table, just click the 
 tab key. Changes in the atlas-files will be automatically saved every ten minutes or when you leave the page and current changes will be stored in the RAM in the meantime. We encourage you, however, to click the save button to feel sure your segmentation has been saved to our server. To get back to your annotation once you left the page, there are two options: you will either find a link on the home page – if you were the person who added the MRI – or you will find it among the atlases on your user page.  
@@ -142,7 +142,7 @@ BrainBox provides a toggleable chat window where you can talk to your collaborat
 <br>
 </p>
 ###Projects
-BrainBox is a web application for real-time collaborative curation, quality control & annotation of huge MRI data sets. Once you enter a link to an online available MRI file, BrainBox will index it and keep the link. This way, a catalogue of online MRI data will be generated and make dormant data visible and accessible to a broader public. The MRI file will be visible in the MRI list on the user page of the user who first loaded the MRI in. Further, you can create projects in BrainBox and link MRIs & annotations inside of a project. You can build & share your own project collections either with a restricted set of collaborators or with the world. While some sensitive MRI data may not be openly shared, all annotations shall eventually be freely available.
+BrainBox is a web application for real-time collaborative curation, quality control & annotation of huge MRI data sets. Once you enter a link to an online available MRI file, BrainBox will index it and keep the link. This way, a catalogue of online MRI data will be generated and make dormant data visible and accessible to a broader public. The MRI file will be visible in the MRI list on the user page of the user who first loaded the MRI in. Further, you can create projects in BrainBox and link MRIs & annotations inside of a project. [This video](https://www.youtube.com/watch?v=nu83U3QY4pA&t=10s) shows you, how to create a BrainBox project using MetaSearch. You can build & share your own project collections either with a restricted set of collaborators or with the world. While some sensitive MRI data may not be openly shared, all annotations shall eventually be freely available.
 
 
 *** short illustration and user guide will soon follow below *** & also check out our [video on YouTube](! ***

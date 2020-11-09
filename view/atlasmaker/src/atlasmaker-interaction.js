@@ -309,17 +309,11 @@ export var AtlasMakerInteraction = {
     let newSlice;
     var {sdim} = me.User.s2v;
     if(view === 'sag') {
-      x = position[1];
-      y = sdim[2] - 1 - position[2];
-      newSlice = position[0];
+      [x, y, newSlice] = [position[1], sdim[2] - 1 - position[2], position[0]];
     } else if(view === 'cor') {
-      x = position[0];
-      y = sdim[2] - 1 - position[2];
-      newSlice = position[1];
+      [x, y, newSlice] = [position[0], sdim[2] - 1 - position[2], position[1]];
     } else if (view === 'axi' ) {
-      x = position[0];
-      y = sdim[1] - 1 - position[1];
-      newSlice = position[2];
+      [x, y, newSlice] = [position[0], sdim[1] - 1 - position[1], position[2]];
     }
 
     return [x, y, newSlice];
@@ -344,14 +338,21 @@ export var AtlasMakerInteraction = {
     $("#cursor").css({ left:(me.Crsr.x*(W/w)) + "px", top:(me.Crsr.y*(H/h)) + "px", width:me.User.penSize*(W/w), height:me.User.penSize*(H/h) });
 
     if(me.flagUsePreciseCursor) {
-      if($("#finger").length === 0) {
-        me.container.append("<div id = 'finger'></div>");
-        $("#finger").addClass("touchDevice");
+      var finger = document.getElementById("finger");
+      if(!finger) {
+        finger = document.createElement("div");
+        finger.id = "finger";
+        finger.className = "touchDevice";
+        me.container.appendChild(finger);
 
         // configure touch events for tablets
-        $("#finger").on("touchstart", function(e) { me.touchstart(e); });
-        $("#finger").on("touchend", function(e) { me.touchend(e); });
-        $("#finger").on("touchmove", function(e) { me.touchmove(e); });
+
+        // finger.ontouchstart = function(e) { me.touchstart(e); };
+        // finger.ontouchend = function(e) { me.touchend(e); };
+        // finger.ontouchmove = function(e) { me.touchmove(e); };
+        finger.ontouchstart = me.touchstart;
+        finger.ontouchend = me.touchend;
+        finger.ontouchmove = me.touchmove;
 
         // turn off eventual touch events handled by canvas
         me.canvas.ontouchstart = null;
@@ -360,7 +361,8 @@ export var AtlasMakerInteraction = {
       }
       me.updateCursor();
 
-      $("#finger").css({ left:me.Crsr.fx + "px", top:me.Crsr.fy + "px" });
+      finger.style.left = me.Crsr.fx + "px";
+      finger.style.top = me.Crsr.fy + "px";
     } else {
       // remove precise cursor
       $("#finger").remove();
@@ -625,27 +627,9 @@ export var AtlasMakerInteraction = {
   move: function (x, y) {
     const me = AtlasMakerWidget;
     if(!me.User.mouseIsDown) { return; }
-
     const {tool} = me.User;
     if({}.hasOwnProperty.call(me.moveTools, tool)) {
       me.moveTools[tool](x, y);
-    }
-
-    switch(tool) {
-    case 'show':
-      me.showxy(-1, 'm', x, y, me.User);
-      break;
-    case 'paint':
-      me.paintxy(-1, 'lf', x, y, me.User);
-      break;
-    case 'erase':
-      me.paintxy(-1, 'le', x, y, me.User);
-      break;
-    case 'adjust':
-      me.info.x = x/me.brainW;
-      me.info.y = 1-y/me.brainH;
-      me.drawImages();
-      break;
     }
   },
 
@@ -664,57 +648,15 @@ export var AtlasMakerInteraction = {
       me.clickUpTools[tool](x, y);
     }
 
-    // Send mouse up (touch ended) message
+    // Send mouse/touch ended message
     me.User.mouseIsDown = false;
     me.User.x0 = -1;
+    me.sendUserDataMessage(JSON.stringify({ 'mouseIsDown': false }));
 
-    me.sendUserDataMessage(JSON.stringify({ 'mouseIsDown':false }));
-
-    var msg;
-
-    switch(tool) {
-    case 'show':
-      msg = { "c":"u" };
-      me.sendShowMessage(msg);
-      break;
-    case 'paint':
-    case 'erase':
-      msg = { c:"mu" };
-      me.sendPaintMessage(msg);
-
-      // add annotated length to User.annotation length and post to DB
-      me.logToDatabase("annotationLength", {
-        source:me.User.source,
-        atlas:me.User.atlasFilename,
-        length:me.annotationLength
-      })
-        .then(function(response) {
-          var length = parseInt(response.length);
-          me.info.length = length + " mm";
-          me.displayInformation();
-        });
-
-      me.annotationLength = 0;
-
-      // compute total segmented volume
-      var vol = me.computeSegmentedVolume();
-      me.info.volume = parseInt(vol) + " mm3";
-      break;
-    case 'eyedrop':
-      me.displayInformation();
-
-      msg = { "c":"mu" };
-      me.sendPaintMessage(msg);
-      break;
-    default:
-      msg = { "c":"mu" };
-      me.sendPaintMessage(msg);
-    }
-
-    /*
-      TEST
-    */
-    //me.sendRequestSliceMessage();
+    // const msg = { "c": "mu" };
+    // me.sendPaintMessage(msg)
+    // TEST
+    // me.sendRequestSliceMessage();
   },
 
   /**
@@ -815,7 +757,7 @@ export var AtlasMakerInteraction = {
     var input = inp.get(0);
     input.type = "file";
     input.onchange = function () {
-      var name = this.files[0];
+      var [name] = this.files;
       var reader = new FileReader();
       reader.onload = function (e) {
         var {result} = e.target;
@@ -872,32 +814,29 @@ export var AtlasMakerInteraction = {
      */
   color: function () {
     const me = AtlasMakerWidget;
-    $("#labelset").appendTo(me.container);
-    $("#labelset").show();
+    var labelset = document.getElementById("labelset");
+    me.container.appendChild(labelset);
+    labelset.style.display = "block";
 
-    var obj = $("#labelset");
-    $(obj)
-      .find("span#labels-name")
-      .text(me.ontology.name);
-    $(obj)
-      .find("#label-list")
-      .html("");
+    labelset.querySelector("span#labels-name").textContent = me.ontology.name;
+    labelset.querySelector("#label-list").innerHTML = "";
     for(var i = 0; i<me.ontology.labels.length; i++) {
       var l = me.ontology.labels[i];
-      var la = $(obj)
-        .find("#label-template")
-        .clone();
-      la.attr({ "data-index":i });
-      la.find(".label-color").css({ backgroundColor:"rgb(" + l.color[0] + ", " + l.color[1] + ", " + l.color[2] + ")" });
-      la.find(".label-name").text(l.name);
-      la.click(function() {
-        me.changePenColor($(this).attr("data-index"));
-        $(obj).hide();
-      });
-      $(obj)
-        .find("#label-list")
-        .append(la);
-      la.show();
+      var la = labelset
+        .querySelector("#label-template")
+        .cloneNode(true);
+      la.removeAttribute("id");
+      la.setAttribute("data-index", i);
+      la.querySelector(".label-color").style.backgroundColor = "rgb(" + l.color[0] + ", " + l.color[1] + ", " + l.color[2] + ")";
+      la.querySelector(".label-name").textContent = l.name;
+      la.onclick = function() {
+        me.changePenColor(this.getAttribute("data-index"));
+        labelset.style.display = "none";
+      };
+      labelset
+        .querySelector("#label-list")
+        .appendChild(la);
+      la.style.display = "block";
     }
   },
 
@@ -911,14 +850,23 @@ export var AtlasMakerInteraction = {
     me.initCursor();
   },
 
-  _showToolHandler: function (x, y) {
+  _showToolDown: function (x, y) {
     const me = AtlasMakerWidget;
     me.User.mouseIsDown = true;
     me.sendUserDataMessage(JSON.stringify({ 'mouseIsDown':true }));
     me.showxy(-1, 'm', x, y, me.User);
   },
+  _showToolMove: function (x, y) {
+    const me = AtlasMakerWidget;
+    me.showxy(-1, 'm', x, y, me.User);
+  },
+  _showToolUp: function () {
+    const me = AtlasMakerWidget;
+    const msg = { "c": "u" };
+    me.sendShowMessage(msg);
+  },
 
-  _paintToolHandler: function (x, y) {
+  _paintToolDown: function (x, y) {
     const me = AtlasMakerWidget;
     if(me.editMode === 0) {
       // check for 'edit' access
@@ -934,8 +882,35 @@ export var AtlasMakerInteraction = {
       me.paintxy(-1, 'mf', x, y, me.User);
     }
   },
+  _paintToolMove: function (x, y) {
+    const me = AtlasMakerWidget;
+    me.paintxy(-1, 'lf', x, y, me.User);
+  },
+  _paintToolUp: function () {
+    const me = AtlasMakerWidget;
+    const msg = { c: "mu" };
+    me.sendPaintMessage(msg);
 
-  _eraseToolHandler: function (x, y) {
+    // add annotated length to User.annotation length and post to DB
+    me.logToDatabase("annotationLength", {
+      source:me.User.source,
+      atlas:me.User.atlasFilename,
+      length:me.annotationLength
+    })
+      .then(function(response) {
+        var length = parseInt(response.length);
+        me.info.length = length + " mm";
+        me.displayInformation();
+      });
+
+    me.annotationLength = 0;
+
+    // compute total segmented volume
+    const vol = me.computeSegmentedVolume();
+    me.info.volume = parseInt(vol) + " mm3";
+  },
+
+  _eraseToolDown: function (x, y) {
     const me = AtlasMakerWidget;
     if(me.editMode === 0) {
       // check for 'edit' access
@@ -951,12 +926,22 @@ export var AtlasMakerInteraction = {
       me.paintxy(-1, 'me', x, y, me.User);
     }
   },
+  _eraseToolMove: function (x, y) {
+    const me = AtlasMakerWidget;
+    me.paintxy(-1, 'le', x, y, me.User);
+  },
 
-  _adjustToolHandler: function (x, y) {
+  _adjustToolDown: function (x, y) {
     const me = AtlasMakerWidget;
     me.User.mouseIsDown = true;
     me.info.x = x/me.brainW;
     me.info.y = 1-y/me.brainH;
+  },
+  _adjustToolMove: function (x, y) {
+    const me = AtlasMakerWidget;
+    me.info.x = x/me.brainW;
+    me.info.y = 1-y/me.brainH;
+    me.drawImages();
   },
 
   /**
@@ -966,7 +951,7 @@ export var AtlasMakerInteraction = {
    * @param {object} usr User structure for the current user
    * @returns {number} The value at the given location
    */
-  _eyedropToolHandler: function (x, y) {
+  _eyedropToolDown: function (x, y) {
     const me = AtlasMakerWidget;
     const value = me.eyedrop( x, y, me.User );
     if (value) {
@@ -975,6 +960,13 @@ export var AtlasMakerInteraction = {
       me.info.region = selRegionName;
       me.changePenColor( index );
     }
+  },
+  _eyedropToolUp: function () {
+    const me = AtlasMakerWidget;
+    me.displayInformation();
+
+    const msg = { "c":"mu" };
+    me.sendPaintMessage(msg);
   },
   eyedrop : function ( x, y, usr) {
     const me = AtlasMakerWidget;
@@ -985,7 +977,7 @@ export var AtlasMakerInteraction = {
   },
 
   // Landmark tool
-  _landmarkToolDownHandler: function (x, y) {
+  _landmarkToolDown: function (x, y) {
     const me = AtlasMakerWidget;
     me.User.mouseIsDown = true;
     for(let i=0; i<me.User.vectorial.length; i++) {
@@ -1003,7 +995,7 @@ export var AtlasMakerInteraction = {
       }
     }
   },
-  _landmarkToolMoveHandler: function (x, y) {
+  _landmarkToolMove: function (x, y) {
     const me = AtlasMakerWidget;
     const index = me.User.indexOfMovingLandmark;
     if(typeof index === "undefined") {
@@ -1013,12 +1005,12 @@ export var AtlasMakerInteraction = {
     me.User.vectorial[index].position = position;
     me.displayInformation();
   },
-  _landmarkToolLongHandler: function () {
+  _landmarkToolLong: function () {
     const me = AtlasMakerWidget;
     me.User.mouseIsDown = false;
     me.landmarkClick();
   },
-  _landmarkToolUpHandler: function (x, y) {
+  _landmarkToolUp: function (x, y) {
     const me = AtlasMakerWidget;
     const type = "text";
     const position = me.slice2xyzi(x, y, me.User.slice, me.User.view);
@@ -1127,7 +1119,7 @@ export var AtlasMakerInteraction = {
     }
     displayTable();
   },
-  landmarkDisplay: function (svgStr) {
+  landmarkToolDisplayInformation: function (svgStr) {
     const me = AtlasMakerWidget;
     const {slice} = me.User;
     var W = parseFloat($('#atlasmaker canvas').css('width'));
@@ -1143,7 +1135,7 @@ export var AtlasMakerInteraction = {
           svgStr +=
 `
 <g transform='translate(${zx*x},${zy*y}) scale(0.85)'>
-<path class='landmark' fill='#ffffff' stroke='#00000080' d="m 0,0 c 0,0 6,-6 9,-11 3,-5 0,-15 -9,-15 -9,0 -12,10 -9,15 3,5 9,11 9,11 z" />
+<path class='landmark' fill='#ffffff' stroke='#00000080' d="m 0,0 c 0,0 6,-6 9,-11 3,-5 0,-15 -9,-15 -9,0 -12,10 -9,15 3,5 9,11 9,11 z"></path>
 <text fill='white' x=10 y='-10'>${text}</text>
 </g>
 `;
@@ -1156,7 +1148,7 @@ export var AtlasMakerInteraction = {
   },
 
   // Measure tool
-  _measureToolHandler: function (x, y) {
+  _measureToolDownHandler: function (x, y) {
     const me = AtlasMakerWidget;
     if(me.User.measureLength === null) {
       me.User.measureLength = [{ x:x, y:y }];
@@ -1165,7 +1157,7 @@ export var AtlasMakerInteraction = {
     }
     me.displayInformation();
   },
-  measureDisplay: function (svgStr) {
+  measureToolDisplayInformation: function (svgStr) {
     const me = AtlasMakerWidget;
     if(me.User.measureLength) {
       var W = parseFloat($('#atlasmaker canvas').css('width'));

@@ -1,6 +1,6 @@
 {
     "name":"10 regions",
-    "source":"http://brainbox.pasteur.fr/labels/freestyle.json",
+    "source":"https://brainbox.pasteur.fr/labels/freestyle.json",
     "labels":[
         {"name":"Region 1","value":1,"color":[205,62,78],"url":""},
         {"name":"Region 2","value":2,"color":[255,165,0],"url":""},
@@ -14,4 +14,3 @@
         {"name":"Region 10","value":10,"color":[0,118,14],"url":""}
         ]
 }
-

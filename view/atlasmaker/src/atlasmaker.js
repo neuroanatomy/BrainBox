@@ -3,6 +3,8 @@
 import 'structjs';
 import './css/atlasmaker.css';
 
+import $ from 'jquery';
+
 import {AtlasMakerDraw} from './atlasmaker-draw.js';
 import {AtlasMakerIO} from './atlasmaker-io.js';
 import {AtlasMakerInteraction} from './atlasmaker-interaction.js';
@@ -10,7 +12,6 @@ import {AtlasMakerPaint} from './atlasmaker-paint.js';
 import {AtlasMakerUI} from './atlasmaker-ui.js';
 import {AtlasMakerWS} from './atlasmaker-ws.js';
 
-import $ from 'jquery';
 import Config from './../../../cfg.json';
 import toolsFull from './html/toolsFull.html';
 import toolsLight from './html/toolsLight.html';
@@ -31,7 +32,7 @@ var me = {
   // connection
   hostname: Config.hostname, // string, host url
   wshostname: Config.wshostname, // string, websocket url
-  secure: true, // wss used?
+  secure: Config.secure, // wss used?
 
   // canvas and drawing
   container: null, // [DOM element] where atlasmaker lives
@@ -175,65 +176,74 @@ var me = {
 
     return pr;
   },
-
   _removeVariablesFromURL: function (url) {
     return url.split("&")[0];
   },
-
-  _registerClickDownTool: function(tool) {
+  _registerToolDown: function(tool) {
     const {name, func} = tool;
     me.clickDownTools[name] = func;
   },
-  _registerMoveTool: function(tool) {
+  _registerToolMove: function(tool) {
     const {name, func} = tool;
     me.moveTools[name] = func;
   },
-  _registerClickUpTool: function(tool) {
+  _registerToolUp: function(tool) {
     const {name, func} = tool;
     me.clickUpTools[name] = func;
   },
-  _registerLongPressTool: function(tool) {
+  _registerToolLongPress: function(tool) {
     const {name, func} = tool;
     me.longPressTools[name] = func;
   },
-  _registerClickDownTools: function () {
-    const arr = [
-      {name: 'show', func: me._showToolHandler},
-      {name: 'paint', func: me._paintToolHandler},
-      {name: 'erase', func: me._eraseToolHandler},
-      {name: 'measure', func: me._measureToolHandler},
-      {name: 'landmark', func: me._landmarkToolDownHandler},
-      {name: 'adjust', func: me._adjustToolHandler},
-      {name: 'eyedrop', func: me._eyedropToolHandler}
-    ];
-    for(const tool of arr) {
-      me._registerClickDownTool(tool);
-    }
-  },
-  _registerMoveTools: function () {
-    const arr = [{name: 'landmark', func: me._landmarkToolMoveHandler}];
-    for(const tool of arr) {
-      me._registerMoveTool(tool);
-    }
-  },
-  _registerClickUpTools: function () {
-    const arr = [{name: 'landmark', func: me._landmarkToolUpHandler}];
-    for(const tool of arr) {
-      me._registerClickUpTool(tool);
-    }
-  },
-  _registerLongPressTools: function () {
-    const arr = [{name: 'landmark', func: me._landmarkToolLongHandler}];
-    for(const tool of arr) {
-      me._registerLongPressTool(tool);
-    }
-  },
-  _registerDisplayInformationFunction: function (func) {
+  _registerToolDisplayInformation: function (func) {
     me.displayInformationFunctions.push(func);
   },
-  _registerDisplayInformationFunctions: function () {
-    me._registerDisplayInformationFunction(me.landmarkDisplay);
-    me._registerDisplayInformationFunction(me.measureDisplay);
+  _registerAllToolsDown: function () {
+    const arr = [
+      {name: 'show', func: me._showToolDown},
+      {name: 'paint', func: me._paintToolDown},
+      {name: 'erase', func: me._eraseToolDown},
+      {name: 'measure', func: me._measureToolDownHandler},
+      {name: 'landmark', func: me._landmarkToolDown},
+      {name: 'adjust', func: me._adjustToolDown},
+      {name: 'eyedrop', func: me._eyedropToolDown}
+    ];
+    for(const tool of arr) {
+      me._registerToolDown(tool);
+    }
+  },
+  _registerAllToolsMove: function () {
+    const arr = [
+      {name: 'landmark', func: me._landmarkToolMove},
+      {name: 'paint', func: me._paintToolMove},
+      {name: 'erase', func: me._eraseToolMove},
+      {name: 'show', func: me._showToolMove}
+    ];
+    for(const tool of arr) {
+      me._registerToolMove(tool);
+    }
+  },
+  _registerAllToolsUp: function () {
+    const arr = [
+      {name: 'show', func: me._showToolUp},
+      {name: 'eyedrop', func: me._eyedropToolUp},
+      {name: 'landmark', func: me._landmarkToolUp},
+      {name: 'paint', func: me._paintToolUp}, // same up function for paint and erase
+      {name: 'erase', func: me._paintToolUp} // same up function for paint and erase
+    ];
+    for(const tool of arr) {
+      me._registerToolUp(tool);
+    }
+  },
+  _registerAllToolsLongPress: function () {
+    const arr = [{name: 'landmark', func: me._landmarkToolLong}];
+    for(const tool of arr) {
+      me._registerToolLongPress(tool);
+    }
+  },
+  _registerAllToolsDisplayInformation: function () {
+    me._registerToolDisplayInformation(me.landmarkToolDisplayInformation);
+    me._registerToolDisplayInformation(me.measureToolDisplayInformation);
   },
   _addAtlasMakerComponents: function () {
     $.extend(me, AtlasMakerDraw);
@@ -253,31 +263,38 @@ var me = {
   _createOnscreenCanvases: function (elem) {
     // Set widget div (create one if none)
     if(typeof elem === 'undefined') {
-      me.container = $("<div class='atlasmaker'");
-      $(document.body).append(me.container);
+      me.container = document.getElementById("atlasmaker");
+      document.body.appendChild(me.container);
     } else {
       me.container = elem;
       if(me.debug) { console.log("Container: ", me.container); }
     }
     // Init drawing canvas
-    me.container.append('<div id="resizable"><canvas id="canvas" data-long-press-delay="500"></canvas></div>');
-    me.canvas = me.container.find('canvas')[0];
+    me.container.innerHTML = '<div id="resizable"><canvas id="canvas" data-long-press-delay="500"></canvas></div>';
+    me.canvas = me.container.querySelector('canvas');
     me.context = me.canvas.getContext('2d');
+    var resizable = me.container.querySelector('#resizable');
 
     // Add a div to display the slice number
-    me.container.find("#resizable").append("<div id='text-layer'></div>");
+    var textLayer = document.createElement("div");
+    textLayer.id = 'text-layer';
+    resizable.appendChild(textLayer);
 
     // Add a div to display the vector layer
-    me.container.find("#resizable").append("<svg id='vector-layer'></svg>");
+    const vectorLayer = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    vectorLayer.id = 'vector-layer';
+    resizable.appendChild(vectorLayer);
 
     // Add the cursor (a small div)
-    me.container.find("#resizable").append("<div id='cursor'></div>");
+    var cursor = document.createElement("div");
+    cursor.id = 'cursor';
+    resizable.appendChild(cursor);
 
-    $('body').attr('data-toolbarDisplay', 'right');
+    document.body.setAttribute('data-toolbarDisplay', 'right');
 
     // Add precise cursor
     var isTouchArr = [];//["iPad","iPod"];
-    var curDevice = navigator.userAgent.split(/[(;]/)[1];
+    var [, curDevice] = navigator.userAgent.split(/[(;]/);
     if($.inArray(curDevice, isTouchArr)>=0) {
       me.flagUsePreciseCursor=true;
       me.initCursor();
@@ -317,7 +334,23 @@ var me = {
     me.canvas.onmousedown = me.mousedown;
     me.canvas.onmousemove = me.mousemove;
     me.canvas.onmouseup = me.mouseup;
-    me.container.get(0).addEventListener('long-press', me.longpress);
+
+
+    // text input
+    Promise.all([
+      me.loadScript("https://unpkg.com/codeflask/build/codeflask.min.js"),
+      me.loadScript("https://cdn.jsdelivr.net/gh/r03ert0/consolita.js@v0.1.1/consolita.js")
+    ]).then(() => {
+      window.onload = () => {
+        Consolita.init("#logScript");
+      };
+    });
+
+    // long-press event
+    me.loadScript("https://cdn.jsdelivr.net/gh/john-doherty/long-press-event@2.1.0/dist/long-press-event.min.js")
+      .then(() => {
+        me.container.addEventListener('long-press', me.longpress);
+      });
 
     // event connect: Connect event to respond to window resizing
     $(window).resize(function() {
@@ -337,7 +370,7 @@ var me = {
     } else {
       tools = toolsLight;
     }
-    me.container.append(tools);
+    me.container.insertAdjacentHTML("beforeend", tools);
 
     // event connect: get keyboard events
     $(document).keydown(function(e) { me.keyDown(e); });
@@ -374,15 +407,20 @@ var me = {
     me.loadTools();
 
     // event connect: register click tools
-    me._registerClickDownTools();
-    me._registerMoveTools();
-    me._registerClickUpTools();
-    me._registerLongPressTools();
+    me._registerAllToolsDown();
+    me._registerAllToolsMove();
+    me._registerAllToolsUp();
+    me._registerAllToolsLongPress();
 
     // register functions displaying information
-    me._registerDisplayInformationFunctions();
+    me._registerAllToolsDisplayInformation();
 
     // start websocket
+    // try {
+    //   await me.initSocketConnection();
+    // } catch(err) {
+    //   throw new Error(err);
+    // }
     const pr = new Promise(function(resolve, reject) {
       me.initSocketConnection()
         .then( () => {

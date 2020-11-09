@@ -56,7 +56,8 @@ class Browser {
   test(promise) {
     return (done) => {
       promise(this.browser, browserOpts)
-        .then(() => done()).catch(done);
+        .then(() => done())
+        .catch(done);
     };
   }
 }

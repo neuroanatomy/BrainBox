@@ -1,11 +1,13 @@
 'use strict';
 
+const fs = require('fs');
 const chai = require('chai');
-const assert = chai.assert;
+const {assert} = chai;
 const chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 const WebSocket = require('ws');
 const U = require('../utils.js');
+const Config = JSON.parse(fs.readFileSync('./cfg.json'));
 
 let u1, u2;
 const msgEcho = JSON.stringify({type:"echo", msg:"hi bruh"});
@@ -20,10 +22,17 @@ const msgSendAtlas = {
 };
 let mri;
 
+let wshost;
+if(Config.secure) {
+  wshost = "wss://localhost:8080";
+} else {
+  wshost = "ws://localhost:8080";
+}
+
 describe('TESTING WEBSOCKET WORKFLOW', function () {
   before( function () {
-    u1 = new WebSocket('wss://localhost:8080');
-    u2 = new WebSocket('wss://localhost:8080');
+    u1 = new WebSocket(wshost);
+    u2 = new WebSocket(wshost);
   });
 
   after( function () {
@@ -72,12 +81,7 @@ describe('TESTING WEBSOCKET WORKFLOW', function () {
       done();
     });
 
-    it('Can request data', (done) => {
-      u1.send(JSON.stringify(msgSendAtlas));
-      done();
-    });
-
-    it('Can receive data', (done) => {
+    it('Can request data and receive', (done) => {
       u1.on('message', (data) => {
         if(Buffer.isBuffer(data)) {
           assert(true);
@@ -87,6 +91,9 @@ describe('TESTING WEBSOCKET WORKFLOW', function () {
         }
         done();
       });
+
+      u1.send(JSON.stringify(msgSendAtlas));
+
     }).timeout(U.longTimeout);
 
     it('Remove test MRI from db and disk', async function () {

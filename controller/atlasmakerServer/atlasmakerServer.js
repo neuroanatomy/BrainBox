@@ -2751,7 +2751,10 @@ free memory: ${os.freemem()}
 
       // Init WS connection
       try {
-        websocketserver = new WebSocketServer({ server: me.server, verifyClient: me.verifyClient });
+        websocketserver = new WebSocketServer({
+          server: me.server,
+          verifyClient: me.verifyClient
+        });
         websocketserver.on("connection", me._handleWebSocketConnection);
       } catch (ex) {
         tracer.log("ERROR: Unable to create a Web socket server", ex);
