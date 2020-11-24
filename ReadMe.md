@@ -15,7 +15,7 @@ BrainBox is a Web application for the collaborative curation of neuroimaging dat
  be sound and accurate.
  **Join us! Your contribution is invaluable!**
 
-You can try BrainBox at http://brainbox.pasteur.fr. Log in with your github
+You can try BrainBox at https://brainbox.pasteur.fr. Log in with your github
 account and enter the URL to an MRI file you want to visualise, annotate
 and edit. You can also click one of the examples.
 
