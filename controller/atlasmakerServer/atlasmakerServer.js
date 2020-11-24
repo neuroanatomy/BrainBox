@@ -1127,6 +1127,13 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           mri.data[j] = tmp.readFloatLE(j*4);
         }
         break;
+      case 64: // FLOAT64
+        tmp = nii.slice(mri.vox_offset);
+        mri.data = new Float64Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);
+        for(j = 0; j<mri.dim[0]*mri.dim[1]*mri.dim[2]; j += 1) {
+          mri.data[j] = tmp.readDoubleLE(j*8);
+        }
+        break;
       case 256: // INT8
         tmp = nii.slice(mri.vox_offset);
         mri.data = new Int8Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);

@@ -207,7 +207,7 @@ function downloadMRI(myurl, req, res, callback) {
             })
             .catch((err) => {
               console.log('ERROR Cannot get brain at path /data/' + hash + '/' + filename + ': ', err);
-              callback({error: 'Can\'t get brain'});
+              callback({error: 'Can\'t get brain', err});
             });
         });
     });
