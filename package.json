@@ -27,7 +27,7 @@
     "crypto": "1.0.1",
     "dateformat": "^3.0.3",
     "debug": "~3.1.0",
-    "dompurify": "^2.0.10",
+    "dompurify": "^2.0.17",
     "express": "^4.16.4",
     "express-session": "^1.17.1",
     "express-validator": "^5.3.1",
