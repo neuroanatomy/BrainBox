@@ -565,7 +565,8 @@ var post_project = function(req, res) {
     return;
   }
 
-  const clean = DOMPurify.sanitize(req.body.data);
+  const payload = JSON.stringify(req.body.data);
+  const clean = DOMPurify.sanitize(payload);
   let obj;
   try {
     obj = JSON.parse(clean);

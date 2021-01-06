@@ -171,22 +171,29 @@ function importFiles() {
 }
 async function saveChanges() {
   const url = `/project/json/${app.projectInfo.shortname}`;
+  const payload = JSON.stringify({data: app.projectInfo});
   let res;
+  const unableToSaveFeedback = (msg) => {
+    document.querySelector("#saveFeedback").textContent = `Unable to save: ${msg}`;
+    setTimeout(function() {
+      document.querySelector("#saveFeedback").textContent = "";
+    }, 3000);
+  };
 
   try {
     res = await fetch(url, {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(app.projectInfo)
+      body: payload
     });
-    const txt = await res.text();
-    console.log("server response:", txt);
   } catch(err) {
-    document.querySelector("#saveFeedback").textContent = `Unable to save: ${xhr.responseText}`;
-    setTimeout(function() {
-      document.querySelector("#saveFeedback").textContent = "";
-    }, 3000);
+    unableToSaveFeedback(err);
     throw new Error(err);
+  }
+
+  if (res.status !== 200) {
+    unableToSaveFeedback(`Error ${res.status}: ${res.statusText}`);
+    throw new Error(`Server status: ${res.status}, ${res.statusText}`);
   }
 
   document.querySelector("#saveFeedback").textContent = "Successfully saved";
