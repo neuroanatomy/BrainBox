@@ -558,14 +558,22 @@ var post_project = function(req, res) {
     loggedUser = req.tokenUsername;
   }
 
-  if (loggedUser == "anonymous") {
+  if (loggedUser === "anonymous") {
     console.log("ERROR not Authenticated");
     res.status(403).json({error:"error", message:"User not authenticated"});
 
     return;
   }
 
-  var obj = JSON.parse(DOMPurify.sanitize(req.body.data));
+  const clean = DOMPurify.sanitize(req.body.data);
+  let obj;
+  try {
+    obj = JSON.parse(clean);
+  } catch(err) {
+    console.log("ERROR");
+    console.log({clean, obj});
+    throw new Error(err);
+  }
   var k;
 
   /**

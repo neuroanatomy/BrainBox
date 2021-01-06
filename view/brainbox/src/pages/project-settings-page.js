@@ -179,8 +179,8 @@ async function saveChanges() {
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify(app.projectInfo)
     });
-    const txt = res.text();
-    console.log(txt);
+    const txt = await res.text();
+    console.log("server response:", txt);
   } catch(err) {
     document.querySelector("#saveFeedback").textContent = `Unable to save: ${xhr.responseText}`;
     setTimeout(function() {
