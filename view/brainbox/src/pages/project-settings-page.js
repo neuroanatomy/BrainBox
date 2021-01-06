@@ -169,29 +169,32 @@ function importFiles() {
   };
   input.click();
 }
-function saveChanges() {
-  const xhr = new XMLHttpRequest();
-  xhr.onload = function () {
-    if (xhr.status >= 200 && xhr.status < 300) {
-      const res = JSON.parse(xhr.responseText);
-      if(res.success) {
-        document.querySelector("#saveFeedback").textContent = "Successfully saved";
-        setTimeout(function() {
-          document.querySelector("#saveFeedback").textContent = "";
-        }, 2000);
-      }
-    } else {
-      document.querySelector("#saveFeedback").textContent = `Unable to save: ${xhr.responseText}`;
-      setTimeout(function() {
-        document.querySelector("#saveFeedback").textContent = "";
-      }, 3000);
-    }
-  };
+async function saveChanges() {
   const url = `/project/json/${app.projectInfo.shortname}`;
-  xhr.open('POST', url);
-  xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-  xhr.send(`data=${JSON.stringify(app.projectInfo)}`);
+  let res;
+
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(app.projectInfo)
+    });
+    const txt = res.text();
+    console.log(txt);
+  } catch(err) {
+    document.querySelector("#saveFeedback").textContent = `Unable to save: ${xhr.responseText}`;
+    setTimeout(function() {
+      document.querySelector("#saveFeedback").textContent = "";
+    }, 3000);
+    throw new Error(err);
+  }
+
+  document.querySelector("#saveFeedback").textContent = "Successfully saved";
+  setTimeout(function() {
+    document.querySelector("#saveFeedback").textContent = "";
+  }, 2000);
 }
+
 function deleteProject() {
   const res = confirm(
     "Are you sure you want to delete project "
