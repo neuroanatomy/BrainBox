@@ -29,7 +29,7 @@ function queryFiles() {
     });
 }
 function onAccessClicked( e, l ) {
-  const al = e.target.closest("div").getAttribute("data-level");
+  const al = Number(e.target.closest("div").getAttribute("data-level"));
   const parent = e.target.closest("div");
   parent.setAttribute("data-level", l+(al !== (l+1)));
   const newEvent = new Event('input', {bubbles: false, cancelable: true});
