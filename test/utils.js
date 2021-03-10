@@ -207,7 +207,7 @@ async function comparePageScreenshots(testPage, url, filename) {
   const newPath = './test/screenshots/' + filename;
   const refPath = './test/data/reference-screenshots/' + filename;
   await testPage.goto(url, {waitUntil: 'networkidle0', timeout: 60000});
-  // await waitUntilHTMLRendered(testPage);
+  await waitUntilHTMLRendered(testPage);
   fs.mkdirSync(path.dirname(newPath), { recursive: true });
   await testPage.screenshot({path:'./test/screenshots/' + filename});
   const pixdiff = compareImages(newPath, refPath);
