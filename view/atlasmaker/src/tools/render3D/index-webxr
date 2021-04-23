@@ -1,0 +1,126 @@
+/* global THREE */
+
+import './style.css';
+import $ from 'jquery';
+import html from './index.html';
+import pako from 'pako';
+
+var level = 1;
+var dot = 0;
+
+import work from 'webworkify-webpack';
+const snw = work(require.resolve('./surfacenets.worker.js'));
+
+function createMesh(vertices, faces) {
+  const geometry = new THREE.BufferGeometry();
+  const verts = new Float32Array(vertices.flat());
+  geometry.setAttribute( 'position', new THREE.BufferAttribute( verts, 3 ) );
+  geometry.setIndex(faces.flat());
+  geometry.center();
+  geometry.computeFaceNormals();
+  geometry.computeVertexNormals();
+  const material = new THREE.MeshNormalMaterial();
+  const mesh = new THREE.Mesh(geometry, material);
+  const group = new THREE.Group();
+  group.add(mesh);
+  group.position.set(0, 2, -5);
+  var entity = document.createElement('a-entity');
+  entity.object3D = group;
+  entity.id = "mesh";
+  entity.setAttribute("scale", "0.1 0.1 0.1");
+  const scene = document.querySelector('a-scene');
+  scene.appendChild(entity);
+}
+
+function configureNifti(niigz) {
+  const inflate = new pako.Inflate();
+  try {
+    inflate.push(new Uint8Array(niigz), true);
+  } catch(ex) {
+    self.close();
+  }
+  const data = inflate.result.buffer;
+  const dv=new DataView(data);
+  const brain = {
+    dim: [dv.getInt16(42, true), dv.getInt16(44, true), dv.getInt16(46, true)],
+    datatype: dv.getInt16(72, true),
+    pixdim: [dv.getFloat32(80, true), dv.getFloat32(84, true), dv.getFloat32(88, true)]
+  };
+  const voxOffset=dv.getFloat32(108, true);
+
+  switch(brain.datatype) {
+  case 2:
+  case 8:
+    brain.data=new Uint8Array(data, voxOffset);
+    break;
+  case 16:
+    brain.data=new Int16Array(data, voxOffset);
+    break;
+  case 32:
+    brain.data=new Float32Array(data, voxOffset);
+    break;
+  }
+
+  return brain;
+}
+
+function startWaitingAnimation() {
+  setInterval(function() {
+    if($("#dot")) {
+      $("#dot").css({marginLeft: 50*(1+Math.sin(dot))+"%"});
+    }
+    dot += 0.1;
+  }, 33);
+}
+
+function startRender3D() {
+  const pr = new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', localStorage.brainbox, true);
+    xhr.responseType = 'blob';
+    xhr.onload = function() {
+      var blob = this.response;
+      var reader = new FileReader();
+      reader.addEventListener("loadend", function() {
+        const niigz = this.result;
+        const brain = configureNifti(niigz);
+        brain.level = level;
+
+        snw.postMessage([
+          brain.dim,
+          brain.datatype,
+          brain.pixdim,
+          brain.level,
+          brain.data
+        ]);
+        resolve();
+      });
+      reader.readAsArrayBuffer(blob);
+    };
+    xhr.onerror = function(e) {
+      console.log("load from localStorage failed. Try to load from server");
+      reject(e);
+    };
+    xhr.send();
+  });
+
+  return pr;
+}
+
+function loadHTML() {
+  document.body.innerHTML += html;
+}
+
+snw.addEventListener('message', (event) => {
+  const [vertices, faces] = event.data;
+  createMesh(vertices, faces);
+  $("#splash").remove();
+});
+
+function init() {
+  loadHTML();
+  startWaitingAnimation();
+  startRender3D();
+}
+
+init();
