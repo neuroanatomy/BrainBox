@@ -1,3 +1,14 @@
+/* eslint-disable eqeqeq */
+/* eslint-disable no-unused-vars */
+/* eslint-disable prefer-destructuring */
+/* eslint-disable no-shadow */
+/* eslint-disable require-await */
+/* eslint-disable no-prototype-builtins */
+/* eslint-disable prefer-const */
+/* eslint-disable new-cap */
+/* eslint-disable no-invalid-this */
+/* eslint-disable max-depth */
+/* eslint-disable linebreak-style */
 /* eslint-disable no-sync */
 'use strict';
 

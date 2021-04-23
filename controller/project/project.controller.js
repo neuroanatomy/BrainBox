@@ -1,8 +1,23 @@
+/* eslint-disable no-tabs */
+/* eslint-disable eqeqeq */
+/* eslint-disable no-redeclare */
+/* eslint-disable block-scoped-var */
+/* eslint-disable no-shadow */
+/* eslint-disable new-cap */
+/* eslint-disable handle-callback-err */
+/* eslint-disable no-invalid-this */
+/* eslint-disable no-unused-vars */
+/* eslint-disable sort-vars */
+/* eslint-disable camelcase */
+/* eslint-disable guard-for-in */
+/* eslint-disable prefer-promise-reject-errors */
+/* eslint-disable valid-jsdoc */
+/* eslint-disable prefer-destructuring */
 const url = require('url');
 const crypto = require('crypto');
 const dateFormat = require('dateformat');
 const validatorNPM = require('validator');
-var async = require('async');
+//var async = require('async');
 const checkAccess = require('../checkAccess/checkAccess.js');
 const dataSlices = require('../dataSlices/dataSlices.js');
 
@@ -45,6 +60,7 @@ var isProjectObject = function(req, res, object) {
   var goodOwner = false;
   var goodCollaborators = false;
 
+  // eslint-disable-next-line complexity
   var pr = new Promise(function(resolve, reject) {
     var arr, flag, i, k;
     var allowed="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,_- '–:;".split("");
@@ -55,6 +71,7 @@ var isProjectObject = function(req, res, object) {
 
     // files
     if (object.files) {
+      // eslint-disable-next-line guard-for-in
       for (k in object.files.list) {
         if (!validatorNPM.isURL(object.files.list[k].source)) {
           reject({success:false, error:"Invalid file URL"});
@@ -72,6 +89,7 @@ var isProjectObject = function(req, res, object) {
 
     // description
     if (object.description && !validatorNPM.isWhitelisted(object.description, allowed)) {
+      // eslint-disable-next-line prefer-promise-reject-errors
       reject({success:false, error:"Invalid project description"});
 
       return;
@@ -81,6 +99,7 @@ var isProjectObject = function(req, res, object) {
 
     // name
     if (object.name && !validatorNPM.isWhitelisted(object.name, allowed)) {
+      // eslint-disable-next-line prefer-promise-reject-errors
       reject({success:false, error:"Invalid name"});
 
       return;
@@ -90,6 +109,7 @@ var isProjectObject = function(req, res, object) {
 
     // check that owner and shortname are present
     if (!object.owner || !object.shortname) {
+      // eslint-disable-next-line prefer-promise-reject-errors
       reject({success:false, error:"Invalid owner or project shortname, not present"});
 
       return;
@@ -98,6 +118,7 @@ var isProjectObject = function(req, res, object) {
 
     // check that shortname is alphanumeric
     if(!validatorNPM.isWhitelisted(object.owner, allowedAlphanumericHyphen) || !validatorNPM.isWhitelisted(object.shortname, allowedAlphanumericHyphen)) {
+      // eslint-disable-next-line prefer-promise-reject-errors
       reject({success:false, error:"Invalid owner or project shortname, not alphanumeric"});
 
       return;
@@ -116,6 +137,7 @@ var isProjectObject = function(req, res, object) {
       }
     }
     if(flag === false) {
+      // eslint-disable-next-line prefer-promise-reject-errors
       reject({success:false, error:"User 'anynone' is not present"});
 
       return;
@@ -141,6 +163,7 @@ var isProjectObject = function(req, res, object) {
       }
     }
     if(flag === false) {
+      // eslint-disable-next-line prefer-promise-reject-errors
       reject({success:false, error:"Access values are invalid"});
 
       return;
@@ -425,7 +448,7 @@ var settings = function(req, res) {
             if(obj[j]) { // name found
               json.collaborators.list[j].name=obj[j].name;
             } else { // name not found: set to empty
-              json.collaborators.list[i].name="";
+              json.collaborators.list[j].name="";
             }
           }
           var context = {
@@ -697,6 +720,7 @@ var delete_project = function(req, res) {
       }
 
     })
+    // eslint-disable-next-line handle-callback-err
     .catch(function(err) {
       console.log("ERROR: unable to query the db");
       res.json({success:false, message:"Unable to delete. Try again later"});

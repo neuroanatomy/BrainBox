@@ -5,7 +5,7 @@ import html from './index.html';
 const el = document.createElement("div");
 el.id = "adjust";
 el.style.width = "calc(100% - 20px )";
-el.style.position ="absolute";
+el.style.position = "absolute";
 el.style.bottom = 0;
 el.style.left = 0;
 el.style.padding = "10px";

@@ -1,5 +1,5 @@
 db:
-  image: mongo
+  image: mongo:4.0
   volumes:
     - ./data:/data/db
   ports:
