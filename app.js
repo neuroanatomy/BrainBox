@@ -43,9 +43,7 @@ if (DOCKER_DEVELOP === '1') {
   // Create a livereload server
   const hotServer = livereload.createServer({
     // Reload on changes to these file extensions.
-    exts: ['json', 'mustache'],
-    // Print debug info
-    debug: true
+    exts: ['json', 'mustache'], debug: true
   });
 
   // Specify the folder to watch for file-changes.
