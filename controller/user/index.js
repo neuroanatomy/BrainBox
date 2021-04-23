@@ -1,6 +1,7 @@
 var express = require('express');
 var controller = require('./user.controller');
 
+// eslint-disable-next-line new-cap
 var router = express.Router();
 
 router.get('/json', controller.apiUserAll);

@@ -1,3 +1,10 @@
+/* eslint-disable no-redeclare */
+/* eslint-disable no-shadow */
+/* eslint-disable eqeqeq */
+/* eslint-disable new-cap */
+/* eslint-disable no-invalid-this */
+/* eslint-disable valid-jsdoc */
+/* eslint-disable max-depth */
 var accessLevels=["none", "view", "edit", "add", "remove"];
 var debug = 1;
 
@@ -390,8 +397,8 @@ var toProject = function toProject(project, user, access) {
   traceLog(toProject);
 
   console.log("project:", project.shortname);
-  var p,
-    requestedLevel = accessLevels.indexOf(access);
+  //var p,
+  var requestedLevel = accessLevels.indexOf(access);
 
   // find 'anyone' user
   var anyone,

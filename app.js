@@ -1,3 +1,4 @@
+/* eslint-disable global-require */
 /* eslint-disable no-sync */
 "use strict";
 
@@ -12,7 +13,7 @@ var compression = require('compression');
 const path = require('path');
 const favicon = require('serve-favicon');
 const logger = require('morgan');
-const tracer = require('tracer').console({format: '[{{file}}:{{line}}]  {{message}}'});
+const tracer = require('tracer').console({ format: '[{{file}}:{{line}}]  {{message}}' });
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const mustacheExpress = require('mustache-express');
@@ -47,7 +48,7 @@ if (DOCKER_DEVELOP === '1') {
     debug: true
   });
 
-    // Specify the folder to watch for file-changes.
+  // Specify the folder to watch for file-changes.
   hotServer.watch(__dirname);
   tracer.log(`Watching: ${__dirname}`);
 }
@@ -57,7 +58,7 @@ const app = express();
 //========================================================================================
 // Allow CORS
 //========================================================================================
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
@@ -76,8 +77,8 @@ app.set('trust proxy', 'loopback');
 if (app.get('env') === 'development') {
   app.use(logger(':remote-addr :method :url :status :response-time ms - :res[content-length]'));//app.use(logger('dev'));
 }
-app.use(bodyParser.json({limit: '50mb'}));
-app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(expressValidator());
 app.use(cookieParser());
 app.use(express.static(path.join(dirname, 'public')));
@@ -112,7 +113,7 @@ if (Config.secure) {
     key: fs.readFileSync(Config.ssl_key),
     cert: fs.readFileSync(Config.ssl_cert)
   };
-  if(Config.ssl_chain) {
+  if (Config.ssl_chain) {
     options.ca = fs.readFileSync(Config.ssl_chain);
   }
   atlasmakerServer.server = https.createServer(options, app);
@@ -132,8 +133,8 @@ atlasmakerServer.server.listen(8080, () => {
 //========================================================================================
 // Check that the 'anyone' user exists. Insert it otherwise
 //========================================================================================
-db.get('user').findOne({nickname: 'anyone'})
-  .then( (obj) => {
+db.get('user').findOne({ nickname: 'anyone' })
+  .then((obj) => {
     if (!obj) {
       const anyone = {
         name: 'Any BrainBox User',
@@ -188,9 +189,9 @@ app.get('/logout', function (req, res) {
 });
 app.get('/loggedIn', function (req, res) {
   if (req.isAuthenticated()) {
-    res.send({loggedIn: true, username: req.user.username});
+    res.send({ loggedIn: true, username: req.user.username });
   } else {
-    res.send({loggedIn: false});
+    res.send({ loggedIn: false });
   }
 });
 
@@ -221,8 +222,8 @@ function updateUser(user) {
 }
 function upsertUser(req, res) {
   // Check if user is new
-  db.get('user').findOne({nickname: req.user.username}, '-_id')
-    .then( (json) => {
+  db.get('user').findOne({ nickname: req.user.username }, '-_id')
+    .then((json) => {
       if (!json) {
         insertUser(req.user);
       } else {
@@ -236,7 +237,7 @@ function upsertUser(req, res) {
 // GitHub Login process
 app.get('/auth/github', passport.authenticate('github'));
 app.get('/auth/github/callback',
-  passport.authenticate('github', {failureRedirect: '/'}),
+  passport.authenticate('github', { failureRedirect: '/' }),
   upsertUser
 );
 
@@ -246,11 +247,14 @@ app.get('/auth/github/callback',
 global.tokenAuthentication = function (req, res, next) {
   tracer.log('>> Check token');
   let token;
-  if(typeof req.params.token !== "undefined") {
+  if (typeof req.params.token !== "undefined") {
+    // eslint-disable-next-line prefer-destructuring
     token = req.params.token;
-  } else if(typeof req.query.token !== "undefined") {
+  } else if (typeof req.query.token !== "undefined") {
+    // eslint-disable-next-line prefer-destructuring
     token = req.query.token;
-  } else if(typeof req.body.token !== "undefined") {
+  } else if (typeof req.body.token !== "undefined") {
+    // eslint-disable-next-line prefer-destructuring
     token = req.body.token;
   }
 
@@ -262,8 +266,8 @@ global.tokenAuthentication = function (req, res, next) {
   console.log('>> Token prrovided. Checking if good');
 
 
-  req.db.get('log').findOne({token})
-    .then( (obj) => {
+  req.db.get('log').findOne({ token })
+    .then((obj) => {
       if (obj) {
         // Check token expiry date
         const now = new Date();
@@ -279,7 +283,7 @@ global.tokenAuthentication = function (req, res, next) {
       }
       next();
     })
-    .catch( (err) => {
+    .catch((err) => {
       tracer.log('ERROR:', err);
       next();
     });
@@ -293,7 +297,7 @@ app.get('/', (req, res) => {
     ('<a href=\'/user/' + req.user.username + '\'>' + req.user.username + '</a> (<a href=\'/logout\'>Log Out</a>)') :
     ('<a href=\'/auth/github\'>Log in with GitHub</a>');
 
-    // store return path in case of login
+  // store return path in case of login
   req.session.returnTo = req.originalUrl;
 
   res.render('index', {
@@ -323,13 +327,15 @@ app.get('/api/getLabelsets', (req, res) => {
 });
 
 app.get('/api/userNameQuery', (req, res) => {
-  const {query} = req;
+  const { query } = req;
   db.get('user')
     .find(
-      { $or: [
-        {nickname: {$regex:query.q}},
-        {name: {$regex:query.q}}
-      ]},
+      {
+        $or: [
+          { nickname: { $regex: query.q } },
+          { name: { $regex: query.q } }
+        ]
+      },
       { fields: ['name', 'nickname'], limit: 10 }
     )
     .then((list) => {
@@ -341,9 +347,9 @@ app.get('/api/userNameQuery', (req, res) => {
 app.get('/api/getAtlasBackups', (req, res) => {
   const { source, atlasProject, atlasName } = req.query;
 
-  if(typeof source === "undefined"
-        || typeof atlasProject === "undefined"
-        || atlasName === "undefined") {
+  if (typeof source === "undefined"
+    || typeof atlasProject === "undefined"
+    || atlasName === "undefined") {
     res.status(400);
     res.render('error', {
       message: "Missing source, atlasProject or atlasName"
@@ -355,30 +361,30 @@ app.get('/api/getAtlasBackups', (req, res) => {
   // get the mri object to which this atlas belongs
   db.get('mri').findOne({
     source: source,
-    "mri.atlas": {$elemMatch:{name: atlasName, project: atlasProject}},
-    backup: {$exists: 0}
-  }, {url: 1, "mri.atlas.$": 1})
-    .then( (obj) => {
+    "mri.atlas": { $elemMatch: { name: atlasName, project: atlasProject } },
+    backup: { $exists: 0 }
+  }, { url: 1, "mri.atlas.$": 1 })
+    .then((obj) => {
       // get all filenames that have ever been associated with this atlas
-      let {url: dataDir} = obj;
-      [,, dataDir] = dataDir.split("/");
+      let { url: dataDir } = obj;
+      [, , dataDir] = dataDir.split("/");
       db.get('mri').aggregate([
-        { $match:{ source: source, "mri.atlas":{$elemMatch: {project: atlasProject, name: atlasName}}}},
+        { $match: { source: source, "mri.atlas": { $elemMatch: { project: atlasProject, name: atlasName } } } },
         { $unwind: "$mri.atlas" },
-        { $match: { "mri.atlas.project":atlasProject, "mri.atlas.name": atlasName}},
-        { $group: {_id:{filename: "$mri.atlas.filename"}}},
-        { $project: {_id:0, filename:"$_id.filename"}}
+        { $match: { "mri.atlas.project": atlasProject, "mri.atlas.name": atlasName } },
+        { $group: { _id: { filename: "$mri.atlas.filename" } } },
+        { $project: { _id: 0, filename: "$_id.filename" } }
       ])
-        .then( (obj2) => {
+        .then((obj2) => {
           // get all backups for those files...
           let i;
           const promiseArray = [];
           // ...from backup logs
-          for(i=0; i<obj2.length; i++) {
+          for (i = 0; i < obj2.length; i++) {
             promiseArray.push(
               db.get('log').aggregate([
-                { $match: {key:"saveAtlasBackup", "value.atlasDirectory": dataDir, "value.atlasFilename": obj2[i].filename}},
-                { $project: {_id:0, filename:"$value.atlasFilename", timestamp:"$value.timestamp"}}
+                { $match: { key: "saveAtlasBackup", "value.atlasDirectory": dataDir, "value.atlasFilename": obj2[i].filename } },
+                { $project: { _id: 0, filename: "$value.atlasFilename", timestamp: "$value.timestamp" } }
               ])
             );
           }
@@ -388,7 +394,7 @@ app.get('/api/getAtlasBackups', (req, res) => {
               result = result.concat(obj2);
               res.send(result);
             })
-            .catch( (err) => {
+            .catch((err) => {
               res.status(500);
               res.render('error', {
                 message: "Can't query backup file logs",
@@ -396,7 +402,7 @@ app.get('/api/getAtlasBackups', (req, res) => {
               });
             });
         })
-        .catch( (err) => {
+        .catch((err) => {
           res.status(500);
           res.render('error', {
             message: "Can't query backup files",
@@ -404,7 +410,7 @@ app.get('/api/getAtlasBackups', (req, res) => {
           });
         });
     })
-    .catch( (err) => {
+    .catch((err) => {
       res.status(400);
       res.render('error', {
         message: "Can't find atlas",
@@ -427,21 +433,23 @@ app.post('/api/log', (req, res) => {
       "value.atlas": json.value.atlas
     };
     req.db.get('log').findOne(obj)
-      .then( (result) => {
+      .then((result) => {
         let length = 0;
         if (result) {
           length = parseFloat(result.value.length);
         }
         var sum = parseFloat(json.value.length) + length;
-        req.db.get('log').update(obj, {$set:{
-          "value.length":sum,
-          date: (new Date()).toJSON()
-        }}, {upsert: true});
-        res.send({length: sum});
+        req.db.get('log').update(obj, {
+          $set: {
+            "value.length": sum,
+            date: (new Date()).toJSON()
+          }
+        }, { upsert: true });
+        res.send({ length: sum });
       })
-      .catch( (err) => {
+      .catch((err) => {
         tracer.log('ERROR', err);
-        res.send({error: JSON.stringify(err)});
+        res.send({ error: JSON.stringify(err) });
       });
     break;
   default:
@@ -451,16 +459,16 @@ app.post('/api/log', (req, res) => {
       username: loggedUser,
       date: (new Date()).toJSON(),
       ip: req.headers['x-forwarded-for'] ||
-                    req.connection.remoteAddress ||
-                    req.socket.remoteAddress ||
-                    req.connection.socket.remoteAddress
+          req.connection.remoteAddress ||
+          req.socket.remoteAddress ||
+          req.connection.socket.remoteAddress
     });
     res.send();
   }
 
   req.db.get('mri').update({
     source: json.value.source,
-    "mri.atlas":{$elemMatch:{filename:json.value.atlas}}
+    "mri.atlas": { $elemMatch: { filename: json.value.atlas } }
   }, {
     $set: {
       "mri.atlas.$.modified": (new Date()).toJSON(),
@@ -499,5 +507,10 @@ app.use(function (err, req, res) {
     error: {}
   });
 });
+
+//========================================================================================
+//FUNCTIONS
+//========================================================================================
+
 
 module.exports = app;
