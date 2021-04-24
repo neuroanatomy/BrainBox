@@ -22,6 +22,13 @@ jobs:
       - name: Run server
         run: timeout 3 npm start || code=$?; if [[ $code -ne 124 && $code -ne 0 ]]; then exit $code; fi
       - name: Run mocha tests
-        uses: GabrielBB/xvfb-action@v1
+        # uses: GabrielBB/xvfb-action@v1
+        # with:
+        run: |
+          npm start &
+          npm run mocha-test
+      - name: Archive screenshots
+        uses: actions/upload-artifact@v2
         with:
-          run: npm start & npm run mocha-test
+          name: screenshots
+          path: test/screenshots/
