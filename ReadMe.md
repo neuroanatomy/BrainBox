@@ -74,11 +74,10 @@ If you want to work on BrainBox's code, you'll need a local installation:
 1. install and start `mongo` database
 2. clone the repo and `cd` to the brainbox directory
 4. [create a new OAuth application](https://github.com/settings/applications/new) for your local brainbox url (http://localhost:3000 by default)
-5. paste the keys into the github-keys.json.example file, and drop the .example
+5. drop the `.example` from `github-keys.json.example` and paste the keys you created into
 6. drop the `.example` from `controller/atlasmakerServer/blacklist.json.example`
 7. drop the `.example` from `controller/atlasmakerServer/whitelist.json.example`
-8. drop the `.example` from `blacklist.json.example`
-9. drop the `.example` from `whitelist.json.example`
+8. drop the `.example` from `cfg.json.example`
 10. `npm install`
 11. `npm run build`
 12. `npm start`
@@ -92,9 +91,10 @@ These installation instructions may need to be updated.
 2. `mv BrainBox brainbox` to rename the directory
 3. `cd` to brainbox
 4. [create a new OAuth application](https://github.com/settings/applications/new) for your local brainbox url (http://localhost:3000 by default)
-5. paste the keys into the github-keys.json.example file, change the `callbackURL` to `"http://localhost:3000/auth/github/callback"` and drop the .example
+5. drop the `.example` from `github-keys.json.example` and paste the keys you created into
 6. drop the `.example` from `controller/atlasmakerServer/blacklist.json.example`
 7. drop the `.example` from `controller/atlasmakerServer/whitelist.json.example`
+8. drop the `.example` from `cfg.json.example`
 7. make sure Docker is installed
 8. `docker-compose up`
 9. Then open `http://localhost:3000` in your browser.
@@ -104,6 +104,9 @@ These installation instructions may need to be updated.
 
 For Docker users first start the containers with `docker-compose up -d`, then run `npm test`.
 
-For non-Docker users you will need to ensure puppeteer can run correctly on your local system (please refer to the [documentation](https://github.com/GoogleChrome/puppeteer) for information). Then run the command `npm mocha-test`.
+For non-Docker users you will need to ensure puppeteer can run correctly on your local system (please refer to the [documentation](https://github.com/GoogleChrome/puppeteer) for information).
+
+Ensure that you are using mongodb<=4.2 (due to an incompatibility between monk and mongodb 4.4 which prevents to exclude a field in a find request) and node>=12.10(to enable the recursive option to rmdir).
+Ensure that BrainBox is running (or do `npm start` in a separate terminal) and then run the command `npm mocha-test`.
 
 Depending on your local developing settings, if you develop using secure web sockets, you may need to indicate Node the location of your Certification Authority using `export NODE_EXTRA_CA_CERTS="/path/to/rootCA.pem"`
