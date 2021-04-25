@@ -31,7 +31,7 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
     const npixels1pct = pageWidth*pageHeight*0.01;
     const npixels2pct = pageWidth*pageHeight*0.02;
 
-    // Remove screenshot directory
+    // Remove screenshot directory (require node v14+ to work)
     fs.rmdirSync('./test/screenshots/', { recursive: true });
 
     it('Browser opens', async function () {
@@ -49,70 +49,77 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
 
     // OPEN HOMEPAGE
     it('Home page renders as expected', async function () {
+      const filename = '01.home.png';
       const diff = await U.comparePageScreenshots(
         page,
         U.serverURL,
-        '01.home.png'
+        filename
       );
-      assert(diff < npixels1pct, `${diff} pixels were different`);
+      assert(diff < npixels1pct, `${diff} pixels were different in ${filename}`);
     }).timeout(U.noTimeout);
 
     // OPEN MRI PAGE
     it('MRI page renders as expected', async function () {
+      const filename = '02.mri.png';
       const diff = await U.comparePageScreenshots(
         page,
         U.serverURL + '/mri?url=' + U.localBertURL,
-        '02.mri.png'
+        filename
       );
-      assert(diff < npixels2pct, `${diff} pixels were different`);
+      assert(diff < npixels1pct, `${diff} pixels were different in ${filename}`);
     }).timeout(U.noTimeout);
 
     // ASK FOR AUTHENTICATION IF CREATING A PROJECT
     it('"Ask for login" renders as expected', async function () {
+      const filename = '03.ask-for-login.png';
       const diff = await U.comparePageScreenshots(
         page,
         U.serverURL + '/project/new',
-        '03.ask-for-login.png'
+        filename
       );
-      assert(diff < npixels1pct, `${diff} pixels were different`);
+      assert(diff < npixels1pct, `${diff} pixels were different in ${filename}`);
     }).timeout(U.noTimeout);
 
     // OPEN PROJECT PAGE
     it('Project page renders as expected', async function () {
+      const filename = '04.project.png';
       const diff = await U.comparePageScreenshots(
         page,
         U.serverURL + '/project/' + U.projectTest.shortname,
-        '04.project.png'
+        filename
       );
-      assert(diff < npixels1pct, `${diff} pixels were different`);
+      assert(diff < npixels1pct, `${diff} pixels were different in ${filename}`);
     }).timeout(U.noTimeout); // OPEN PROJECT SETTINGS PAGE FOR EXISTING PROJECT
     it('Project Settings page for an existing project renders as expected', async function () {
+      const filename = '05.project-settings-existing.png';
       const diff = await U.comparePageScreenshots(
         page,
         `${U.serverURL}/project/${U.projectTest.shortname}/settings`,
-        '05.project-settings-existing.png'
+        filename
       );
-      assert(diff < npixels2pct, `${diff} pixels were different`);
+      assert(diff < npixels2pct, `${diff} pixels were different in ${filename}`);
     }).timeout(U.noTimeout);
 
     // OPEN PROJECT SETTINGS PAGE FOR EMPTY PROJECT
     it('Project Settings page for an empty project renders as expected', async function () {
+      const filename = '06.project-settings-nonexisting.png';
       const diff = await U.comparePageScreenshots(
         page,
         U.serverURL + '/project/nonexisting/settings',
-        '06.project-settings-nonexisting.png'
+        filename
       );
-      assert(diff < npixels1pct, `${diff} pixels were different`);
+      assert(diff < npixels1pct, `${diff} pixels were different in ${filename}`);
     }).timeout(U.noTimeout);
 
     // OPEN USER PAGE
     it('User page renders as expected', async function () {
+      const filename = '07.user.png';
       const diff = await U.comparePageScreenshots(
         page,
         U.serverURL + '/user/' + U.userFoo.nickname,
-        '07.user.png'
+        filename
       );
-      assert(diff < npixels1pct, `${diff} pixels were different`);
+      assert(diff < npixels1pct, `${diff} pixels were different in ${filename}`);
     }).timeout(U.noTimeout);
 
     // CLOSE
