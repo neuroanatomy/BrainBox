@@ -207,13 +207,9 @@ async function waitUntilHTMLRendered(page, timeout = 30000) {
 async function comparePageScreenshots(testPage, url, filename) {
   const newPath = './test/screenshots/' + filename;
   const refPath = './test/data/reference-screenshots/' + filename;
-  await delay(1000);
-  await testPage.goto(url, {waitUntil: 'networkidle0', timeout: 60000});
-  await delay(1000);
-  await testPage.goto(url, {waitUntil: 'networkidle2', timeout: 60000});
-  await delay(1000);
+  await testPage.goto(url, {waitUntil: 'networkidle0', timeout: 30000});
+  await testPage.goto(url, {waitUntil: 'networkidle2', timeout: 30000});
   await waitUntilHTMLRendered(testPage);
-  await delay(1000);
   fs.mkdirSync(path.dirname(newPath), { recursive: true });
   await testPage.screenshot({path:'./test/screenshots/' + filename});
   const pixdiff = compareImages(newPath, refPath);
