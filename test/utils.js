@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 var fs = require('fs');
 const path = require('path');
 const monk = require('monk');
@@ -184,7 +185,7 @@ async function waitUntilHTMLRendered(page, timeout = 30000) {
     const html = await page.content();
     const currentHTMLSize = html.length;
 
-    const bodyHTMLSize = await page.evaluate(() => document.body.innerHTML.length);
+    // const bodyHTMLSize = await page.evaluate(() => document.body.innerHTML.length);
 
     // console.log('last: ', lastHTMLSize, ' <> curr: ', currentHTMLSize, " body html size: ", bodyHTMLSize);
 
@@ -206,7 +207,8 @@ async function waitUntilHTMLRendered(page, timeout = 30000) {
 async function comparePageScreenshots(testPage, url, filename) {
   const newPath = './test/screenshots/' + filename;
   const refPath = './test/data/reference-screenshots/' + filename;
-  await testPage.goto(url, {waitUntil: 'networkidle0', timeout: 60000});
+  await testPage.goto(url, {waitUntil: 'networkidle0', timeout: 30000});
+  await testPage.goto(url, {waitUntil: 'networkidle2', timeout: 30000});
   await waitUntilHTMLRendered(testPage);
   fs.mkdirSync(path.dirname(newPath), { recursive: true });
   await testPage.screenshot({path:'./test/screenshots/' + filename});
