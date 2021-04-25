@@ -40,6 +40,9 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
 
     it('Can access index page', async function () {
       page = await browser.newPage();
+      page.on('console', (msg) => {
+        console.log(`PAGE ${msg.type().toUpperCase()}: ${msg.text()}`);
+      });
       await page.setViewport({ width: pageWidth, height: pageHeight });
       await page.goto(U.serverURL);
       await page.waitFor('h2');
@@ -124,6 +127,8 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
 
     // CLOSE
     it('Browser closes successfully', async function () {
+      const pages = await browser.pages();
+      await Promise.all(pages.map((p) => p.close()));
       await browser.close();
     }).timeout(U.noTimeout);
 
