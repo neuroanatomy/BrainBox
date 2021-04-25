@@ -19,7 +19,7 @@ jobs:
       - name: Instantiate whitelist
         run: echo "{}" > controller/atlasmakerServer/whitelist.json
       - name: Instantiate websocket configuration file
-        run: 'echo "{\"secure\":false,\"port\":8080,\"ssl_key\": \"\",\"ssl_cert\": \"\",\"ssl_chain\":\"\"}" > cfg.json'
+        run: cp cfg.json.example cfg.json
       - run: npm run build
       - name: Run server
         run: timeout 3 npm start || code=$?; if [[ $code -ne 124 && $code -ne 0 ]]; then exit $code; fi

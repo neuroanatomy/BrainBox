@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 var fs = require('fs');
 const path = require('path');
 const monk = require('monk');
