@@ -1,5 +1,5 @@
 
-![CI workflow](https://github.com/neuroanatomy/BrainBox/actions/workflows/main.yml/badge.svg) [![CircleCI](https://circleci.com/gh/neuroanatomy/BrainBox/tree/master.svg?style=shield)](https://circleci.com/gh/neuroanatomy/BrainBox/tree/master) [![Join the chat at https://gitter.im/OpenNeuroLab-Brainbox/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/OpenNeuroLab-Brainbox/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![CI workflow](https://github.com/neuroanatomy/BrainBox/actions/workflows/main.yml/badge.svg)](https://github.com/neuroanatomy/BrainBox/actions/workflows/main.yml) [![CircleCI](https://circleci.com/gh/neuroanatomy/BrainBox/tree/master.svg?style=shield)](https://circleci.com/gh/neuroanatomy/BrainBox/tree/master) [![Join the chat at https://gitter.im/OpenNeuroLab-Brainbox/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/OpenNeuroLab-Brainbox/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 # BrainBox - A platform for real-time collaboration in neuroimaging
 
@@ -106,7 +106,7 @@ For Docker users first start the containers with `docker-compose up -d`, then ru
 
 For non-Docker users you will need to ensure puppeteer can run correctly on your local system (please refer to the [documentation](https://github.com/GoogleChrome/puppeteer) for information).
 
-Ensure that you are using mongodb<=4.2 (due to an incompatibility between monk and mongodb 4.4 which prevents to exclude a field in a find request) and node>=12.10(to enable the recursive option to rmdir).
+Ensure that you are using mongodb<=4.2 (due to an incompatibility between monk and mongodb 4.4 which prevents to exclude a field in a find request) and node>=12.10 (to enable the recursive option to rmdir).
 Ensure that BrainBox is running (or do `npm start` in a separate terminal) and then run the command `npm mocha-test`.
 
 Depending on your local developing settings, if you develop using secure web sockets, you may need to indicate Node the location of your Certification Authority using `export NODE_EXTRA_CA_CERTS="/path/to/rootCA.pem"`
