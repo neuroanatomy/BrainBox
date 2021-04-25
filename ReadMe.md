@@ -1,5 +1,5 @@
 
-[![CircleCI](https://circleci.com/gh/neuroanatomy/BrainBox/tree/master.svg?style=shield)](https://circleci.com/gh/neuroanatomy/BrainBox/tree/master) [![Join the chat at https://gitter.im/OpenNeuroLab-Brainbox/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/OpenNeuroLab-Brainbox/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+![CI workflow](https://github.com/neuroanatomy/BrainBox/actions/workflows/main.yml/badge.svg) [![CircleCI](https://circleci.com/gh/neuroanatomy/BrainBox/tree/master.svg?style=shield)](https://circleci.com/gh/neuroanatomy/BrainBox/tree/master) [![Join the chat at https://gitter.im/OpenNeuroLab-Brainbox/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/OpenNeuroLab-Brainbox/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 # BrainBox - A platform for real-time collaboration in neuroimaging
 
