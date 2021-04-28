@@ -1,3 +1,9 @@
+/* eslint-disable new-cap */
+/* eslint-disable no-invalid-this */
+/* eslint-disable sort-vars */
+/* eslint-disable callback-return */
+/* eslint-disable prefer-destructuring */
+/* eslint-disable camelcase */
 "use strict";
 
 const fs = require('fs');
@@ -63,8 +69,8 @@ var other_validations = function(req, res, next) {
                 };
                 next();
               } else {
-                var err = new Array();
-                if (req.files.length == 0 || !req.files) { err.push({error:"there is no File"}); }
+                var err = [];
+                if (req.files.length === 0 || !req.files) { err.push({error:"there is no File"}); }
                 if (!json) { err.push({error:"Unkown URL"}); }
                 console.log("err", err);
 
@@ -170,7 +176,7 @@ var upload = function(req, res) {
         access: "edit",
         created: date.toJSON(),
         modified: date.toJSON(),
-        filename: filename,	// automatically generated filename
+        filename: filename, // automatically generated filename
         originalname: files[0].originalname,
         labels: atlasLabelSet,
         owner: username,
@@ -183,7 +189,7 @@ var upload = function(req, res) {
       // remove previous atlases with the same atlasName and atlasProject
       var i;
       for(i=mri.mri.atlas.length-1; i>=0; i--) {
-        if(mri.mri.atlas[i].name == atlasName && mri.mri.atlas[i].project == atlasProject) {
+        if(mri.mri.atlas[i].name === atlasName && mri.mri.atlas[i].project === atlasProject) {
           mri.mri.atlas.splice(i, 1);
         }
       }
@@ -216,7 +222,7 @@ var token = function token(req, res) {
         .slice(2),
       b = Math.random().toString(36)
         .slice(2),
-      token, now, expiryDate;
+      now;
     // token duration is set to 1 h in milliseconds
     // generate a random token
     obj.token = a + b;

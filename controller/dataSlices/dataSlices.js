@@ -1,3 +1,15 @@
+/* eslint-disable max-lines */
+/* eslint-disable no-invalid-this */
+/* eslint-disable new-cap */
+/* eslint-disable sort-vars */
+/* eslint-disable guard-for-in */
+/* eslint-disable prefer-promise-reject-errors */
+/* eslint-disable array-callback-return */
+/* eslint-disable no-undef */
+/* eslint-disable prefer-destructuring */
+/* eslint-disable valid-jsdoc */
+/* eslint-disable no-path-concat */
+/* eslint-disable max-lines */
 console.log('dataSlices.js');
 const dateFormat = require('dateformat');
 

@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 const fs = require('fs');
 const os = require('os');
 const zlib = require('zlib');

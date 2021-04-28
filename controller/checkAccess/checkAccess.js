@@ -1,3 +1,11 @@
+/* eslint-disable max-lines */
+/* eslint-disable no-invalid-this */
+/* eslint-disable new-cap */
+/* eslint-disable no-shadow */
+/* eslint-disable no-redeclare */
+/* eslint-disable valid-jsdoc */
+/* eslint-disable max-depth */
+/* eslint-disable max-lines */
 var accessLevels=["none", "view", "edit", "add", "remove"];
 var debug = 1;
 
@@ -359,14 +367,14 @@ var toAnnotationByProject = function toAnnotationByProject(project, user) {
 
   // owner?
   //console.log(user,project.owner);
-  if(user == project.owner) {
+  if(user === project.owner) {
     return "remove";
   }
 
   for(k=0; k<project.collaborators.list.length; k++) {
     // collaborator? anyone?
-    if( project.collaborators.list[k].userID == user ||
-            project.collaborators.list[k].userID == "anyone" ) {
+    if( project.collaborators.list[k].userID === user ||
+            project.collaborators.list[k].userID === "anyone" ) {
       var level = accessLevels.indexOf(project.collaborators.list[k].access.annotations);
       if(maxAccess < level) {
         maxAccess = level;
@@ -390,8 +398,7 @@ var toProject = function toProject(project, user, access) {
   traceLog(toProject);
 
   console.log("project:", project.shortname);
-  var p,
-    requestedLevel = accessLevels.indexOf(access);
+  var requestedLevel = accessLevels.indexOf(access);
 
   // find 'anyone' user
   var anyone,
@@ -458,7 +465,7 @@ var filterAnnotationsByProjects = function filterAnnotationsByProjects(mri, proj
   if(!projects) { return; }
   for(i=mri.mri.atlas.length-1; i>=0; i--) {
     for(j=0; j<projects.length; j++) {
-      if(projects[j] && projects[j].shortname == mri.mri.atlas[i].project) {
+      if(projects[j] && projects[j].shortname === mri.mri.atlas[i].project) {
         var access = toAnnotationByProject(projects[j], user);
         var level = accessStringToLevel(access);
         // check for 'view' access (level > 0)
