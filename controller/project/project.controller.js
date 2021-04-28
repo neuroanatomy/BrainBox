@@ -425,7 +425,7 @@ var settings = function(req, res) {
             if(obj[j]) { // name found
               json.collaborators.list[j].name=obj[j].name;
             } else { // name not found: set to empty
-              json.collaborators.list[i].name="";
+              json.collaborators.list[j].name="";
             }
           }
           var context = {
