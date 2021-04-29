@@ -200,15 +200,14 @@ async function waitUntilHTMLRendered(page, timeout = 30000) {
       break;
     }
     lastHTMLSize = currentHTMLSize;
-    await page.waitFor(checkDurationMsecs);
+    await page.waitForTimeout(checkDurationMsecs);
   }
 }
 
 async function comparePageScreenshots(testPage, url, filename) {
   const newPath = './test/screenshots/' + filename;
   const refPath = './test/data/reference-screenshots/' + filename;
-  await testPage.goto(url, {waitUntil: 'networkidle0', timeout: 30000});
-  await testPage.goto(url, {waitUntil: 'networkidle2', timeout: 30000});
+  await testPage.goto(url, {waitUntil: 'networkidle2', timeout: 90000});
   await waitUntilHTMLRendered(testPage);
   fs.mkdirSync(path.dirname(newPath), { recursive: true });
   await testPage.screenshot({path:'./test/screenshots/' + filename});

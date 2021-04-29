@@ -45,7 +45,7 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
       });
       await page.setViewport({ width: pageWidth, height: pageHeight });
       await page.goto(U.serverURL);
-      await page.waitFor('h2');
+      await page.waitForSelector('h2');
       const headerText = await page.evaluate(() => document.querySelector('h2').innerText, 'h2');
       assert.equal(headerText, 'Real-time collaboration in neuroimaging');
     }).timeout(U.longTimeout);
@@ -69,7 +69,7 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
         U.serverURL + '/mri?url=' + U.localBertURL,
         filename
       );
-      assert(diff < npixels1pct, `${diff} pixels were different in ${filename}`);
+      assert(diff < npixels2pct, `${diff} pixels were different in ${filename}`);
     }).timeout(U.noTimeout);
 
     // ASK FOR AUTHENTICATION IF CREATING A PROJECT
