@@ -187,15 +187,15 @@ var isProjectObject = function(req, res, object) {
          *       should change to if(val[i])
          */
     arr=[];
-    arr.push(req.db.get('user').find({nickname:object.owner}));
+    arr.push(req.db.get('user').findOne({nickname:object.owner}));
     for(i in object.collaborators.list) {
-      arr.push(req.db.get('user').find({nickname:object.collaborators.list[i].userID}));
+      arr.push(req.db.get('user').findOne({nickname:object.collaborators.list[i].userID}));
     }
     Promise.all(arr).then(function(val) {
       var i,
         notFound=false;
       for(i=0; i<val.length; i++) {
-        if(val[i].length === 0) {
+        if(val[i]) {
           notFound=true;
           break;
         }
