@@ -182,10 +182,6 @@ var isProjectObject = function(req, res, object) {
     // 2. Asynchronous checks
     //-----------------------
 
-    /**
-         * @todo Replace the .find calls by .findOne. The check if(val[i].length === 0)
-         *       should change to if(val[i])
-         */
     arr=[];
     arr.push(req.db.get('user').findOne({nickname:object.owner}));
     for(i in object.collaborators.list) {
