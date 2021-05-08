@@ -590,10 +590,6 @@ var post_project = function(req, res) {
   }
   var k;
 
-  /**
-     * @todo Replace .find call by .findOne. if(result.length) should change
-     *       to if(result)
-     */
 
   isProjectObject(req, res, obj)
     .then(function(obj) {
