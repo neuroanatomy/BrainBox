@@ -7,18 +7,19 @@ var glob = require("glob");
 const uilist = glob.sync("./view/atlasmaker/src/tools/*/index.js");
 const uientries = {};
 for(const item of uilist) {
-    const arr = item.split('/');
-    const key = arr[arr.length-2]; // module name is directory's name
-    uientries[key] = item;
+  const arr = item.split('/');
+  const key = arr[arr.length-2]; // module name is directory's name
+  uientries[key] = item;
 }
 
 // list tools without user interface
 const cmdlist = glob.sync("./view/atlasmaker/src/tools/*.js");
 const cmdentries = {};
 for(const item of cmdlist) {
-    const arr = item.split('/');
-    const key = arr[arr.length-1].split(".").slice(0,-1).join("."); // module name is script's name
-    cmdentries[key] = item;
+  const arr = item.split('/');
+  const key = arr[arr.length-1].split(".").slice(0, -1)
+    .join("."); // module name is script's name
+  cmdentries[key] = item;
 }
 
 // write
@@ -29,15 +30,15 @@ if(!fs.existsSync(dir)) {
 fs.writeFileSync(
   path.resolve(__dirname, 'view/atlasmaker/dist/atlasmaker-tools/tools.json'),
   JSON.stringify([
-    ...Object.keys(uientries).map((name) => { return {name, type: "ui"}; }),
-    ...Object.keys(cmdentries).map((name) => { return {name, type: "cmd"}; })
+    ...Object.keys(uientries).map((name) => ({name, type: "ui"})),
+    ...Object.keys(cmdentries).map((name) => ({name, type: "cmd"}))
   ])
 );
 
 // combine both lists
 const entries = {};
-Object.keys(uientries).forEach((k)=>{entries[k] = uientries[k];});
-Object.keys(cmdentries).forEach((k)=>{entries[k] = cmdentries[k];});
+Object.keys(uientries).forEach((k) => { entries[k] = uientries[k]; });
+Object.keys(cmdentries).forEach((k) => { entries[k] = cmdentries[k]; });
 console.log("entries:", entries);
 
 module.exports = {
@@ -61,9 +62,9 @@ module.exports = {
       {
         test: /\.(svg)$/,
         use: {
-            loader: 'url-loader',
-            options: {
-              noquotes: true
+          loader: 'url-loader',
+          options: {
+            noquotes: true
           }
         }
       },
