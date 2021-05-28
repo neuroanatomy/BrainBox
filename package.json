@@ -59,7 +59,7 @@
     "url": "^0.11.0",
     "validator": "^9.4.1",
     "webpage": "^0.3.0",
-    "ws": "^5.2.2"
+    "ws": "^7.4.5"
   },
   "devDependencies": {
     "chai": "^4.2.0",
