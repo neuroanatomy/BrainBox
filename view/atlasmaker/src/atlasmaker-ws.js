@@ -68,7 +68,6 @@ export var AtlasMakerWS = {
         me.receiveFunctions.paintvol = me.receivePaintVolumeMessage;
         me.receiveFunctions.disconnect = me.receiveDisconnectMessage;
         me.receiveFunctions.serverMessage = me.receiveServerMessage;
-        me.receiveFunctions.serverMessage = me.receiveServerMessage;
         me.receiveFunctions.vectorial = me.receiveVectorialAnnotationMessage;
 
         me.receiveFunctions.requestSlice = function (data) { console.log("requestSlice", data); };
@@ -675,16 +674,52 @@ export var AtlasMakerWS = {
     $("#logChat .text").scrollTop($("#logChat .text")[0].scrollHeight);
   },
 
+  _displayServerModal: async ({type, msg}) => {
+
+    /*
+      Use like this:
+      const date = new Date();
+      const time = `${date.getHours()}:${('00' + date.getMinutes()).slice(-2)}`;
+      AtlasMakerWidget._displayServerModal({
+        type:"alert",
+        msg:`<p>⚠️ Server is going to restart at ${time}`
+      });
+    */
+
+    const me = AtlasMakerWidget;
+    const el = document.createElement("div");
+    el.style = `
+      display: none;
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translate(-50%,0);
+      background-color: #333;
+      color: white;
+      text-align: center;
+      border: thin solid lightgrey;
+      z-index: 20;
+      line-height: 20px;
+      padding: 20px;
+      `;
+    document.body.appendChild(el);
+    await me.dialog({ el, message: msg, modal: true, delay: 0, doFadeOut: false });
+    document.body.removeChild(el);
+  },
+
   /**
    * Receives notifications from the server
    * @param {object} data Message data
    * @returns {void}
    */
   receiveServerMessage: function (data) {
-    var {msg}=data;
-    var prevMsg=$("#notifications").text();
-    $("#notifications").text(msg);
-    setTimeout(function() { $("#notifications").text(prevMsg); }, 5000);
+    const me = AtlasMakerWidget;
+    const {msg} = data;
+
+    me._displayServerMessageDialog({
+      type: "alert",
+      msg: msg
+    });
   },
 
   /**
