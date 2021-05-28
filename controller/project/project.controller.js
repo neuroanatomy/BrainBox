@@ -191,7 +191,7 @@ var isProjectObject = function(req, res, object) {
       var i,
         notFound=false;
       for(i=0; i<val.length; i++) {
-        if(val[i]) {
+        if(val[i] === null) {
           notFound=true;
           break;
         }
