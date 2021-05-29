@@ -126,6 +126,9 @@ const atlasmakerServer = (function() {
     // const mghTag = bufferTag("mgh", 8);
     jpgTag: bufferTag("jpg", 8),
 
+    //========================================================================================
+    // Admin
+    //========================================================================================
     numberOfUsersConnectedToAtlas: function (dirname, atlasFilename) {
       let sum = 0;
 
@@ -237,6 +240,23 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         tracer.log("finished recording WebSocket traffic");
         me.recordedWSTraffic = [];
       }
+    },
+    saveAllAtlases: async () => {
+      for(const iAtlas in me.Atlases) {
+        if({}.hasOwnProperty.call(me.Atlases, iAtlas)) {
+          console.log(`me.saveAtlasAtIndex(${iAtlas})`);
+          await me.saveAtlasAtIndex(iAtlas);
+        }
+      }
+      await new Promise((resolve) => { setTimeout(() => resolve(), 10000); });
+    },
+    broadcastServerMessage: ({msg, dialogType}) => {
+      console.log(`Ready to broadcast [${msg}]`);
+      me.broadcastMessage({
+        type: "serverMessage",
+        dialogType: dialogType,
+        msg: `Server message: ${msg}`
+      });
     },
 
     //========================================================================================
@@ -351,7 +371,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
     /**
      * A .nii.gz or .mgz file is saved at the position indicated in the mri structure
      * @function saveAtlasAtIndex
-     * @param {integer} iAtlas index of the atlas in the Atlases to save
+     * @param {string} iAtlas index of the atlas in the Atlases to save
      * @returns {promise} success message
      */
     saveAtlasAtIndex: async function (iAtlas) {
@@ -1875,6 +1895,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
 
       me.broadcastMessage({
         type: "serverMessage",
+        dialogType: "notification",
         msg: "Atlas saved " + time
       });
 
@@ -2773,7 +2794,31 @@ free memory: ${os.freemem()}
   return me;
 }());
 
+// Notifications
+const notifier = require("../../notifier");
+notifier.on("saveAllAtlases", () => {
+  atlasmakerServer.saveAllAtlases();
+});
+notifier.on("broadcastMessage", (msg) => {
+  atlasmakerServer.broadcastServerMessage({msg, dialogType: "modal"});
+});
 module.exports = atlasmakerServer;
+
+// Exit handler
+//catches ctrl+c event
+const quit = async () => {
+  console.log("Will quit in 10 seconds");
+  atlasmakerServer.broadcastServerMessage({
+    msg: "Server will restart in 10 seconds",
+    dialogType: "modal"
+  });
+  await new Promise((resolve) => { setTimeout(() => resolve(), 10000); });
+  await atlasmakerServer.saveAllAtlases();
+  console.log("Will quit now");
+  process.exit();
+};
+
+process.on('SIGINT', () => { quit(); });
 
 /*
     Atlases

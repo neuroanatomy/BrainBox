@@ -184,7 +184,7 @@ export const AtlasMakerUI = {
 
     if(modal) {
       const back = document.createElement("div");
-      back.style = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); pointer-events:none`;
+      back.style = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); pointer-events:all; z-index:19`;
       document.body.append(back);
 
       const okButton = document.createElement("button");

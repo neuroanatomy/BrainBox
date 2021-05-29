@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 /* global AtlasMakerWidget MozWebSocket $*/
 /*! AtlasMaker: WebSockets */
 import * as DOMPurify from 'dompurify';
@@ -674,7 +675,7 @@ export var AtlasMakerWS = {
     $("#logChat .text").scrollTop($("#logChat .text")[0].scrollHeight);
   },
 
-  _displayServerModal: async ({type, msg}) => {
+  displayDialog: async ({msg, modal, delay, doFadeOut}) => {
 
     /*
       Use like this:
@@ -703,7 +704,7 @@ export var AtlasMakerWS = {
       padding: 20px;
       `;
     document.body.appendChild(el);
-    await me.dialog({ el, message: msg, modal: true, delay: 0, doFadeOut: false });
+    await me.dialog({ el, message: msg, modal, delay, doFadeOut });
     document.body.removeChild(el);
   },
 
@@ -714,12 +715,23 @@ export var AtlasMakerWS = {
    */
   receiveServerMessage: function (data) {
     const me = AtlasMakerWidget;
-    const {msg} = data;
+    const {msg, dialogType} = data;
 
-    me._displayServerMessageDialog({
-      type: "alert",
-      msg: msg
-    });
+    if (dialogType === "modal") {
+      me.displayDialog({
+        msg: `<p>${msg}</p>`,
+        modal: true,
+        delay: 0,
+        doFadeOut: 0
+      });
+    } else {
+      me.displayDialog({
+        msg: `<p>${msg}</p>`,
+        modal: false,
+        delay: 2000,
+        doFadeOut: true
+      });
+    }
   },
 
   /**
