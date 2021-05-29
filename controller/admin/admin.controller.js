@@ -31,6 +31,13 @@ const saveAllAtlases = (req, res) => {
   res.send({msg: "Will save all atlases", success: true});
 };
 
+/**
+ * Broadcast a server message to all connected users. Message is
+ * in req.body.msg
+ * @param {object} req Request object
+ * @param {object} res Response object
+ * @returns {void}
+ */
 const broadcastMessage = (req, res) => {
   console.log("broadcastMessage");
 
