@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 var assert = require("assert");
+const la = require('../../controller/atlasmakerServer/atlasmaker-linalg.js');
+const amri = require('../../controller/atlasmakerServer/atlasmaker-mri.js');
 const AMS = require('../../controller/atlasmakerServer/atlasmakerServer.js');
 const datadir = './test/data/';
 const U = require('../utils.js');
@@ -16,7 +18,7 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
     let mri1, mri2;
 
     it('Should load a nii.gz file', async function () {
-      mri1 = await AMS.readNifti(datadir + 'bert_brain.nii.gz');
+      mri1 = await amri.readNifti(datadir + 'bert_brain.nii.gz');
     });
 
     it('Should get the dimensions right', function () {
@@ -24,7 +26,7 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
     });
 
     it('Should load a mgz file', async function () {
-      mri2 = await AMS.readMGZ(datadir + 'bert_brain.mgz');
+      mri2 = await amri.readMGZ(datadir + 'bert_brain.mgz');
     });
 
     it('Should get the dimensions right', function () {
@@ -32,22 +34,22 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
     });
 
     it('Should recognize nii.gz from a filename', function () {
-      const ext = AMS._filetypeFromFilename("/path/to/mri.nii.gz");
-      assert.equal(ext, "nii.gz");
+      const ext = amri.filetypeFromFilename("/path/to/mri.nii.gz");
+      assert.strictEqual(ext, "nii.gz");
     });
 
     it('Should recognize mgz from a filename', function () {
-      const ext = AMS._filetypeFromFilename("/path/to/mri.mgz");
-      assert.equal(ext, "mgz");
+      const ext = amri.filetypeFromFilename("/path/to/mri.mgz");
+      assert.strictEqual(ext, "mgz");
     });
 
     it('Should return undefined if filename is not nii.gz nor mgz', function () {
-      const ext = AMS._filetypeFromFilename("/path/to/mri.foo");
+      const ext = amri.filetypeFromFilename("/path/to/mri.foo");
       assert(typeof ext === "undefined");
     });
 
     it('Subtract vectors correctly', function () {
-      const res = AMS.subVecVec([1, 2, 3], [2, 3, 4]);
+      const res = la.subVecVec([1, 2, 3], [2, 3, 4]);
       assert(res[0] === -1 && res[1] === -1 && res[2] === -1);
     });
   });
@@ -60,7 +62,7 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
         dim: [100, 200, 300]
       };
       const i = AMS._screen2index(s, mri);
-      assert.equal(i, 5583089);
+      assert.strictEqual(i, 5583089);
     });
   });
 
@@ -68,19 +70,19 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
     it('Find user name given their nickname', async function () {
       const data = {type: "userNameQuery", metadata: {nickname: U.userFoo.nickname}};
       const result = await AMS.queryUserName(data);
-      assert.equal(result[0].name, U.userFoo.name);
+      assert.strictEqual(result[0].name, U.userFoo.name);
     });
 
     it('Find user nickname given their name', async function () {
       const data = {type: "userNameQuery", metadata: {name: U.userFoo.name}};
       const result = await AMS.queryUserName(data);
-      assert.equal(result[0].nickname, U.userFoo.nickname);
+      assert.strictEqual(result[0].nickname, U.userFoo.nickname);
     });
 
     it('Find project', async function () {
       const data = {type: "projectNameQuery", metadata: {name: U.projectTest.shortname}};
       const result = await AMS.queryProjectName(data);
-      assert.equal(result.name, U.projectTest.name);
+      assert.strictEqual(result.name, U.projectTest.name);
     });
 
     it('Find similar project names', async function () {
@@ -97,7 +99,7 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
     let mri;
 
     it('Should load a nii.gz file', async function () {
-      mri = await AMS.readNifti(datadir + 'bert_brain.nii.gz');
+      mri = await amri.readNifti(datadir + 'bert_brain.nii.gz');
     });
 
     it('Serve one slice', async function () {
