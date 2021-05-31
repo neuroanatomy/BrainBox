@@ -724,6 +724,12 @@ export var AtlasMakerWS = {
         delay: 0,
         doFadeOut: 0
       });
+    } else if (dialogType === "info") {
+      const prevMsg = document.querySelector("#notifications").textContent;
+      document.querySelector("#notifications").textContent = msg;
+      setTimeout(function() {
+        document.querySelector("#notifications").textContent = prevMsg;
+      }, 2000);
     } else {
       me.displayDialog({
         msg: `<p>${msg}</p>`,

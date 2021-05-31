@@ -197,7 +197,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       me.broadcastMessage({
         type: "serverMessage",
         dialogType: dialogType,
-        msg: `Server message: ${msg}`
+        msg
       });
     },
 
@@ -1202,7 +1202,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
 
       me.broadcastMessage({
         type: "serverMessage",
-        dialogType: "notification",
+        dialogType: "info",
         msg: "Atlas saved " + time
       });
 
