@@ -190,7 +190,6 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           await me.saveAtlasAtIndex(iAtlas);
         }
       }
-      await new Promise((resolve) => { setTimeout(() => resolve(), 10000); });
     },
     broadcastServerMessage: ({msg, dialogType}) => {
       console.log(`Ready to broadcast [${msg}]`);
@@ -2114,14 +2113,15 @@ module.exports = atlasmakerServer;
 // Exit handler
 //catches ctrl+c event
 const quit = async () => {
-  console.log("Will quit in 10 seconds");
+  // atlasmakerServer.broadcastServerMessage({
+  //   msg: "Server will restart in 10 seconds",
+  //   dialogType: "modal"
+  // });
   atlasmakerServer.broadcastServerMessage({
-    msg: "Server will restart in 10 seconds",
-    dialogType: "modal"
+    msg: "Server will restart. Saving changes...",
+    dialogType: "info"
   });
-  await new Promise((resolve) => { setTimeout(() => resolve(), 10000); });
   await atlasmakerServer.saveAllAtlases();
-  console.log("Will quit now");
   process.exit();
 };
 
