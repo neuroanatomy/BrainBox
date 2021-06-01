@@ -152,6 +152,7 @@ db.get('user').findOne({nickname: 'anyone'})
 // Passport: OAuth2 authentication
 //========================================================================================
 const session = require('express-session');
+const MongoStore = require('connect-mongo');
 const passport = require('passport');
 const GithubStrategy = require('passport-github').Strategy;
 
@@ -162,7 +163,11 @@ passport.use(new GithubStrategy(
 app.use(session({
   secret: "a mi no me gusta la sémola",
   resave: false,
-  saveUninitialized: false
+  saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: `mongodb://${MONGO_DB}`,
+    touchAfter: 24 * 3600 // time period in seconds
+  })
 }));
 app.use(passport.initialize());
 app.use(passport.session());
