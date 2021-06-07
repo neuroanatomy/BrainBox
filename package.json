@@ -15,7 +15,7 @@
     "dev-brainbox": "webpack --mode production --config webpack.brainbox.config.js && cp view/brainbox/dist/brainbox.js public/lib/brainbox.js",
     "dev-pages": "webpack --mode production --config webpack.pages.config.js && cp view/brainbox/dist/*-page.js public/js/",
     "dev": "npm run dev-atlasmaker && npm run dev-atlasmaker-tools && npm run dev-brainbox && npm run dev-pages",
-    "mocha-test": "mocha --exit ./test/runner.js test/unit/*.js test/integration/*.js",
+    "mocha-test": "nyc mocha --exit ./test/runner.js test/unit/*.js test/integration/*.js --all",
     "lint": "eslint .",
     "test": "docker exec brainbox_web_1 /bin/bash -c 'cd /brainbox && npm run mocha-test'"
   },
@@ -78,6 +78,7 @@
     "mocha": "^7.1.2",
     "monk": "^7.2.0",
     "nodemon": "^2.0.7",
+    "nyc": "^15.1.0",
     "pixelmatch": "^4.0.2",
     "pngjs": "^3.4.0",
     "puppeteer": "^8.0.0",
