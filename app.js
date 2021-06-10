@@ -1,3 +1,5 @@
+/* eslint-disable prefer-exponentiation-operator */
+/* eslint-disable prefer-destructuring */
 /* eslint-disable no-sync */
 "use strict";
 
@@ -38,6 +40,7 @@ const dirname = __dirname; // Local directory
 /* jslint nomen: false */
 
 if (DOCKER_DEVELOP === '1') {
+  // eslint-disable-next-line global-require
   const livereload = require('livereload');
   // Create a livereload server
   const hotServer = livereload.createServer({
@@ -83,6 +86,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(dirname, 'public')));
 
 if (DOCKER_DEVELOP === '1') {
+  // eslint-disable-next-line global-require
   app.use(require('connect-livereload')());
 }
 
@@ -179,12 +183,12 @@ passport.deserializeUser((user, done) => {
   done(null, user);
 });
 // simple authentication middleware. Add to routes that need to be protected.
-function ensureAuthenticated(req, res, next) {
+var ensureAuthenticated = function(req, res, next) {
   if (req.isAuthenticated()) {
     return next();
   }
   res.redirect('/');
-}
+};
 app.get('/secure-route-example', ensureAuthenticated, function (req, res) { res.send("access granted"); });
 app.get('/logout', function (req, res) {
   req.logout();
@@ -199,7 +203,7 @@ app.get('/loggedIn', function (req, res) {
   }
 });
 
-function insertUser(user) {
+var insertUser = function(user) {
   // insert new user
   const userObj = {
     name: user.displayName,
@@ -210,8 +214,8 @@ function insertUser(user) {
     joined: (new Date()).toJSON()
   };
   db.get('user').insert(userObj);
-}
-function updateUser(user) {
+};
+var updateUser = function(user) {
   db.get('user').update(
     {
       nickname: user.username
@@ -223,8 +227,8 @@ function updateUser(user) {
       }
     }
   );
-}
-function upsertUser(req, res) {
+};
+var upsertUser = function(req, res) {
   // Check if user is new
   db.get('user').findOne({nickname: req.user.username}, '-_id')
     .then( (json) => {
@@ -236,7 +240,7 @@ function upsertUser(req, res) {
     });
   res.redirect(req.session.returnTo || '/');
   delete req.session.returnTo;
-}
+};
 
 // GitHub Login process
 app.get('/auth/github', passport.authenticate('github'));
