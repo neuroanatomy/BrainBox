@@ -23,7 +23,7 @@ const checkAccess = require(__dirname + '/../checkAccess/checkAccess.js');
  * @param {integer} start Start index of the file slice
  * @param {integer} length Number of files to include in the slice
  */
-var getUserFilesSlice = function getUserFilesSlice(req, requestedUser, start, length) {
+const getUserFilesSlice = function getUserFilesSlice(req, requestedUser, start, length) {
   console.log('getUserFilesSlice. Start, end:', start, length);
   var loggedUser = "anonymous";
   if(req.isAuthenticated()) {
@@ -87,7 +87,7 @@ var getUserFilesSlice = function getUserFilesSlice(req, requestedUser, start, le
  * @param {integer} start Start index of the file slice
  * @param {integer} length Number of files to include in the slice
  */
-var getUserAtlasSlice = function getUserAtlasSlice(req, requestedUser, start, length) {
+const getUserAtlasSlice = function getUserAtlasSlice(req, requestedUser, start, length) {
   let loggedUser = "anonymous";
   if(req.isAuthenticated()) {
     loggedUser = req.user.username;
@@ -150,7 +150,7 @@ var getUserAtlasSlice = function getUserAtlasSlice(req, requestedUser, start, le
  * @param {integer} start Start index of the file slice
  * @param {integer} length Number of files to include in the slice
  */
-var getUserProjectsSlice = function getUserProjectsSlice(req, requestedUser, start, length) {
+const getUserProjectsSlice = function getUserProjectsSlice(req, requestedUser, start, length) {
   var loggedUser = "anonymous";
   if(req.isAuthenticated()) {
     loggedUser = req.user.username;
@@ -203,7 +203,7 @@ var getUserProjectsSlice = function getUserProjectsSlice(req, requestedUser, sta
  * @param {boolean} namesFlag Whether to append only the name of each MRI or the complete structure
  */
 // eslint-disable-next-line max-statements
-var getProjectFilesSlice = async (req, projShortname, start, length, namesFlag) => {
+const getProjectFilesSlice = async (req, projShortname, start, length, namesFlag) => {
   var loggedUser = "anonymous";
   if(req.isAuthenticated()) {
     loggedUser = req.user.username;
@@ -282,7 +282,7 @@ var getProjectFilesSlice = async (req, projShortname, start, length, namesFlag) 
  * @param {integer} start Start index of the file slice
  * @param {integer} length Number of files to include in the slice
  */
-var getFilesSlice = function getFilesSlice(req, start, length) {
+const getFilesSlice = function getFilesSlice(req, start, length) {
   var loggedUser = "anonymous";
   if(req.isAuthenticated()) {
     loggedUser = req.user.username;
@@ -331,7 +331,7 @@ var getFilesSlice = function getFilesSlice(req, start, length) {
  * @param {integer} start Start index of the file slice
  * @param {integer} length Number of files to include in the slice
  */
-var getProjectsSlice = function getProjectsSlice(req, start, length) {
+const getProjectsSlice = function getProjectsSlice(req, start, length) {
   var loggedUser = "anonymous";
   if(req.isAuthenticated()) {
     loggedUser = req.user.username;
@@ -374,7 +374,7 @@ var getProjectsSlice = function getProjectsSlice(req, start, length) {
   });
 };
 
-var dataSlices = function () {
+const dataSlices = function () {
   this.getUserFilesSlice = getUserFilesSlice;
   this.getUserAtlasSlice = getUserAtlasSlice;
   this.getUserProjectsSlice = getUserProjectsSlice;

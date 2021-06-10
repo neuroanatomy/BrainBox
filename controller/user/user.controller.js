@@ -3,7 +3,7 @@
 const dateFormat = require('dateformat');
 const dataSlices = require('../dataSlices/dataSlices.js');
 
-var validator = function(req, res, next) {
+const validator = function(req, res, next) {
 
   // userName can be an ip address (for anonymous users)
 
@@ -20,7 +20,7 @@ var validator = function(req, res, next) {
   next();
 };
 
-var user = function(req, res) {
+const user = function(req, res) {
   var login = (req.isAuthenticated()) ?
     ("<a href='/user/" + req.user.username + "'>" + req.user.username + "</a> (<a href='/logout'>Log Out</a>)")
     : ("<a href='/auth/github'>Log in with GitHub</a>");
@@ -53,7 +53,7 @@ var user = function(req, res) {
     });
 };
 
-var apiUser = function(req, res) {
+const apiUser = function(req, res) {
   req.db.get('user').findOne({nickname: req.params.userName, backup: {$exists: false}}, "-_id")
     .then(function (json) {
       if (json) {
@@ -72,7 +72,7 @@ var apiUser = function(req, res) {
     });
 };
 
-var apiUserAll = function(req, res) {
+const apiUserAll = function(req, res) {
   if(!req.query.page) {
     res.json({error:"Provide the parameter 'page'"});
 
@@ -98,7 +98,7 @@ var apiUserAll = function(req, res) {
  * @param {Object} res Response object
  * @returns {Object} Object with a list of user mri files
  */
-var apiUserFiles = function(req, res) {
+const apiUserFiles = function(req, res) {
   // @todo Check access rights for this route
   const {userName} = req.params;
   let {start, length} = req.query;
@@ -135,7 +135,7 @@ var apiUserFiles = function(req, res) {
  * @param {Object} res Response object
  * @returns {Object} Object with a list of user atlases
  */
-var apiUserAtlas = function(req, res) {
+const apiUserAtlas = function(req, res) {
   // @todo Check access rights for this route
   var {userName} = req.params;
   let {start, length} = req.query;
@@ -170,7 +170,7 @@ var apiUserAtlas = function(req, res) {
  * @param {Object} res Response object
  * @returns {Object} Object with a list of user projects
  */
-var apiUserProjects = function(req, res) {
+const apiUserProjects = function(req, res) {
   // @todo Check access rights for this route
   var {userName} = req.params;
   let {start, length} = req.query;
@@ -199,7 +199,7 @@ var apiUserProjects = function(req, res) {
     });
 };
 
-var UserController = function() {
+const UserController = function() {
   this.validator = validator;
   this.apiUser = apiUser;
   this.apiUserAll = apiUserAll;

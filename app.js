@@ -183,7 +183,7 @@ passport.deserializeUser((user, done) => {
   done(null, user);
 });
 // simple authentication middleware. Add to routes that need to be protected.
-var ensureAuthenticated = function(req, res, next) {
+const ensureAuthenticated = function(req, res, next) {
   if (req.isAuthenticated()) {
     return next();
   }
@@ -203,7 +203,7 @@ app.get('/loggedIn', function (req, res) {
   }
 });
 
-var insertUser = function(user) {
+const insertUser = function(user) {
   // insert new user
   const userObj = {
     name: user.displayName,
@@ -215,7 +215,7 @@ var insertUser = function(user) {
   };
   db.get('user').insert(userObj);
 };
-var updateUser = function(user) {
+const updateUser = function(user) {
   db.get('user').update(
     {
       nickname: user.username
@@ -228,7 +228,7 @@ var updateUser = function(user) {
     }
   );
 };
-var upsertUser = function(req, res) {
+const upsertUser = function(req, res) {
   // Check if user is new
   db.get('user').findOne({nickname: req.user.username}, '-_id')
     .then( (json) => {

@@ -13,7 +13,7 @@ const fs = require('fs');
 const atlasmakerServer = require('../atlasmakerServer/atlasmakerServer');
 // ExpressValidator = require('express-validator')
 
-var validator = function (req, res, next) {
+const validator = function (req, res, next) {
   console.log("upload.controller body", req.body);
   console.log("upload.controller query", req.query);
   console.log("upload.controller params", req.params);
@@ -54,7 +54,7 @@ var validator = function (req, res, next) {
 
 };
 
-var other_validations = function(req, res, next) {
+const other_validations = function(req, res, next) {
 
   var token = req.body.token;
   req.db.get("log").findOne({"token":token})
@@ -97,7 +97,7 @@ var other_validations = function(req, res, next) {
     });
 };
 
-var upload = function(req, res) {
+const upload = function(req, res) {
   var username = req.atlasUpload.username;
   var {url, atlasName, atlasProject, atlasLabelSet} = req.body;
   var {mri} = req.atlasUpload;
@@ -218,7 +218,7 @@ var upload = function(req, res) {
     });
 };
 
-var token = function token(req, res) {
+const token = function token(req, res) {
   if (req.isAuthenticated()) {
     var obj = {},
       a = Math.random().toString(36)
@@ -250,7 +250,7 @@ var token = function token(req, res) {
   }
 };
 
-var uploadController = function () {
+const uploadController = function () {
   this.validator = validator;
   this.other_validations = other_validations;
   this.upload = upload;

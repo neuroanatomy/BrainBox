@@ -34,7 +34,7 @@ const window = (new JSDOM('', {
 })).window;
 const DOMPurify = createDOMPurify(window);
 
-var validator = function(req, res, next) {
+const validator = function(req, res, next) {
 
   req.checkParams('projectName', 'incorrect project name').isAlphanumeric();
   // req.checkQuery('url', 'please enter a valid URL')
@@ -59,7 +59,7 @@ var validator = function(req, res, next) {
  * @param {Object} object Project definition object
  * @todo object.annotations??
  */
-var isProjectObject = function(req, res, object) {
+const isProjectObject = function(req, res, object) {
   var goodOwner = false;
   var goodCollaborators = false;
 
@@ -218,7 +218,7 @@ var isProjectObject = function(req, res, object) {
  * @param {Object} req Req object from express
  * @param {Object} res Res object from express
  */
-var project = function(req, res) {
+const project = function(req, res) {
   var login=	(req.isAuthenticated())?
     ("<a href='/user/"+req.user.username+"'>"+req.user.username+"</a> (<a href='/logout'>Log Out</a>)")
     :("<a href='/auth/github'>Log in with GitHub</a>");
@@ -263,7 +263,7 @@ var project = function(req, res) {
  * @param {Object} res Res object from express
  * @result A json object with project data
  */
-var api_project = function(req, res) {
+const api_project = function(req, res) {
   var loggedUser = "anonymous";
   if(req.isAuthenticated()) {
     loggedUser = req.user.username;
@@ -301,7 +301,7 @@ var api_project = function(req, res) {
  * @param {Object} res Res object from express
  * @result A json object with project data
  */
-var api_projectAll = function(req, res) {
+const api_projectAll = function(req, res) {
   var i, nItemsPerPage, page;
   var loggedUser = "anonymous";
   if(req.isAuthenticated()) {
@@ -334,7 +334,7 @@ var api_projectAll = function(req, res) {
  * @param {Object} res Res object from express
  * @result A json object with project data
  */
-var api_projectFiles = function(req, res) {
+const api_projectFiles = function(req, res) {
   const projShortname = req.params.projectName;
   let {start, length, names: namesFlag} = req.query;
   console.log("projShortname:", projShortname, "start:", start, "length:", length, "namesFlag:", namesFlag);
@@ -372,7 +372,7 @@ var api_projectFiles = function(req, res) {
  * @param {Object} req Req object from express
  * @param {Object} res Res object from express
  */
-var settings = function(req, res) {
+const settings = function(req, res) {
   var login = (req.isAuthenticated()) ?
     ("<a href='/user/" + req.user.username + "'>" + req.user.username + "</a> (<a href='/logout'>Log Out</a>)")
     : ("<a href='/auth/github'>Log in with GitHub</a>");
@@ -462,7 +462,7 @@ var settings = function(req, res) {
  * @param {Object} req Req object from express
  * @param {Object} res Res object from express
  */
-var newProject = function(req, res) {
+const newProject = function(req, res) {
   var login = (req.isAuthenticated()) ?
     ("<a href='/user/" + req.user.username + "'>" + req.user.username + "</a> (<a href='/logout'>Log Out</a>)")
     : ("<a href='/auth/github'>Log in with GitHub</a>");
@@ -492,7 +492,7 @@ var newProject = function(req, res) {
   }
 };
 
-var insertMRInames = function(req, res, list) {
+const insertMRInames = function(req, res, list) {
   // insert MRI names, but only if they don't exist
   for(var i=0; i<list.length; i++) {
     var name=list[i].name;
@@ -567,7 +567,7 @@ var insertMRInames = function(req, res, list) {
  * @param {Object} res Res object from express
  */
 // eslint-disable-next-line max-statements
-var post_project = function(req, res) {
+const post_project = function(req, res) {
   var loggedUser = "anonymous";
   if(req.isAuthenticated()) {
     loggedUser = req.user.username;
@@ -657,7 +657,7 @@ var post_project = function(req, res) {
  * @param {Object} req Req object from express
  * @param {Object} res Res object from express
  */
-var delete_project = function(req, res) {
+const delete_project = function(req, res) {
   var shortname;
   var loggedUser = "anonymous";
   if(req.isAuthenticated()) {
@@ -719,7 +719,7 @@ var delete_project = function(req, res) {
 };
 
 
-var projectController = function() {
+const projectController = function() {
   this.validator = validator;
   this.api_projectAll = api_projectAll;
   this.api_project = api_project;
