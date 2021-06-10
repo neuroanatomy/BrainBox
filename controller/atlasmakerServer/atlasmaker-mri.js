@@ -1,4 +1,6 @@
-/* eslint-disable max-lines */
+/* eslint-disable prefer-exponentiation-operator */
+/* eslint-disable max-statements */
+
 
 //========================================================================================
 // MRI I/O
@@ -72,15 +74,12 @@ const MghHdr = new Struct()
 const computeS2VTransformation = (mri) => {
 
   /*
-            The basic transformation is
-            w = v2w * v + wori
-
+            The basic transformation is w = v2w * v + wori
             Where:
             w: world coordinates
             wori: origin of the world coordinates
             v: voxel coordinates
             v2w: rotation matrix from v to w
-
             In what follows:
             v refers to native voxel coordinates
             w refers to world coordinates
@@ -327,6 +326,7 @@ const readNifti = (mriPath) => {
     let niigz;
 
     try {
+      // eslint-disable-next-line no-sync
       niigz = fs.readFileSync(mriPath);
     } catch(e) {
       reject(e);
