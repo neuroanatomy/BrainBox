@@ -1,3 +1,6 @@
+/* eslint-disable prefer-exponentiation-operator */
+/* eslint-disable no-sync */
+/* eslint-disable max-statements */
 /* eslint-disable new-cap */
 /* eslint-disable no-invalid-this */
 /* eslint-disable sort-vars */
