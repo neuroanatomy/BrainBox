@@ -1,3 +1,4 @@
+/* eslint-disable prefer-exponentiation-operator */
 module.exports = [
   {
     name: 'brainbox',
