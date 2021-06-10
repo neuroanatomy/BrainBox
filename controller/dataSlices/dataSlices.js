@@ -1,3 +1,4 @@
+/* eslint-disable prefer-exponentiation-operator */
 /* eslint-disable max-lines */
 /* eslint-disable no-invalid-this */
 /* eslint-disable new-cap */
@@ -201,6 +202,7 @@ var getUserProjectsSlice = function getUserProjectsSlice(req, requestedUser, sta
  * @param {integer} length Number of files to include in the slice
  * @param {boolean} namesFlag Whether to append only the name of each MRI or the complete structure
  */
+// eslint-disable-next-line max-statements
 var getProjectFilesSlice = async (req, projShortname, start, length, namesFlag) => {
   var loggedUser = "anonymous";
   if(req.isAuthenticated()) {
