@@ -1,3 +1,4 @@
+/* eslint-disable prefer-exponentiation-operator */
 /* eslint-disable max-lines */
 /* eslint-disable no-tabs */
 /* eslint-disable eqeqeq */
@@ -33,7 +34,7 @@ const window = (new JSDOM('', {
 })).window;
 const DOMPurify = createDOMPurify(window);
 
-var validator = function(req, res, next) {
+const validator = function(req, res, next) {
 
   req.checkParams('projectName', 'incorrect project name').isAlphanumeric();
   // req.checkQuery('url', 'please enter a valid URL')
@@ -58,10 +59,11 @@ var validator = function(req, res, next) {
  * @param {Object} object Project definition object
  * @todo object.annotations??
  */
-var isProjectObject = function(req, res, object) {
+const isProjectObject = function(req, res, object) {
   var goodOwner = false;
   var goodCollaborators = false;
 
+  // eslint-disable-next-line max-statements
   var pr = new Promise(function(resolve, reject) {
     var arr, flag, i, k;
     var allowed="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,_- '–:;".split("");
@@ -69,7 +71,6 @@ var isProjectObject = function(req, res, object) {
 
     // 1. Synchronous checks
     //----------------------
-
     // files
     if (object.files) {
       for (k in object.files.list) {
@@ -217,7 +218,7 @@ var isProjectObject = function(req, res, object) {
  * @param {Object} req Req object from express
  * @param {Object} res Res object from express
  */
-var project = function(req, res) {
+const project = function(req, res) {
   var login=	(req.isAuthenticated())?
     ("<a href='/user/"+req.user.username+"'>"+req.user.username+"</a> (<a href='/logout'>Log Out</a>)")
     :("<a href='/auth/github'>Log in with GitHub</a>");
@@ -262,7 +263,7 @@ var project = function(req, res) {
  * @param {Object} res Res object from express
  * @result A json object with project data
  */
-var api_project = function(req, res) {
+const api_project = function(req, res) {
   var loggedUser = "anonymous";
   if(req.isAuthenticated()) {
     loggedUser = req.user.username;
@@ -300,7 +301,7 @@ var api_project = function(req, res) {
  * @param {Object} res Res object from express
  * @result A json object with project data
  */
-var api_projectAll = function(req, res) {
+const api_projectAll = function(req, res) {
   var i, nItemsPerPage, page;
   var loggedUser = "anonymous";
   if(req.isAuthenticated()) {
@@ -316,6 +317,7 @@ var api_projectAll = function(req, res) {
     return;
   }
 
+  // eslint-disable-next-line radix
   page = Math.max(0, parseInt(req.query.page));
   nItemsPerPage = 20;
 
@@ -332,7 +334,7 @@ var api_projectAll = function(req, res) {
  * @param {Object} res Res object from express
  * @result A json object with project data
  */
-var api_projectFiles = function(req, res) {
+const api_projectFiles = function(req, res) {
   const projShortname = req.params.projectName;
   let {start, length, names: namesFlag} = req.query;
   console.log("projShortname:", projShortname, "start:", start, "length:", length, "namesFlag:", namesFlag);
@@ -348,7 +350,9 @@ var api_projectFiles = function(req, res) {
     return;
   }
 
+  // eslint-disable-next-line radix
   start = parseInt(start);
+  // eslint-disable-next-line radix
   length = parseInt(length);
   namesFlag = (namesFlag === "true");
 
@@ -368,7 +372,7 @@ var api_projectFiles = function(req, res) {
  * @param {Object} req Req object from express
  * @param {Object} res Res object from express
  */
-var settings = function(req, res) {
+const settings = function(req, res) {
   var login = (req.isAuthenticated()) ?
     ("<a href='/user/" + req.user.username + "'>" + req.user.username + "</a> (<a href='/logout'>Log Out</a>)")
     : ("<a href='/auth/github'>Log in with GitHub</a>");
@@ -458,7 +462,7 @@ var settings = function(req, res) {
  * @param {Object} req Req object from express
  * @param {Object} res Res object from express
  */
-var newProject = function(req, res) {
+const newProject = function(req, res) {
   var login = (req.isAuthenticated()) ?
     ("<a href='/user/" + req.user.username + "'>" + req.user.username + "</a> (<a href='/logout'>Log Out</a>)")
     : ("<a href='/auth/github'>Log in with GitHub</a>");
@@ -488,7 +492,7 @@ var newProject = function(req, res) {
   }
 };
 
-function insertMRInames(req, res, list) {
+const insertMRInames = function(req, res, list) {
   // insert MRI names, but only if they don't exist
   for(var i=0; i<list.length; i++) {
     var name=list[i].name;
@@ -554,7 +558,7 @@ function insertMRInames(req, res, list) {
         });
     }(name, source, filename));
   }
-}
+};
 
 /**
  * @function post_project
@@ -562,7 +566,8 @@ function insertMRInames(req, res, list) {
  * @param {Object} req Req object from express
  * @param {Object} res Res object from express
  */
-var post_project = function(req, res) {
+// eslint-disable-next-line max-statements
+const post_project = function(req, res) {
   var loggedUser = "anonymous";
   if(req.isAuthenticated()) {
     loggedUser = req.user.username;
@@ -594,6 +599,7 @@ var post_project = function(req, res) {
   isProjectObject(req, res, obj)
     .then(function(obj) {
       req.db.get('project').findOne({shortname:obj.shortname, backup:{$exists:false}})
+        // eslint-disable-next-line max-statements
         .then(function (project) {
           // update/insert project
           if(project) {
@@ -651,7 +657,7 @@ var post_project = function(req, res) {
  * @param {Object} req Req object from express
  * @param {Object} res Res object from express
  */
-var delete_project = function(req, res) {
+const delete_project = function(req, res) {
   var shortname;
   var loggedUser = "anonymous";
   if(req.isAuthenticated()) {
@@ -713,7 +719,7 @@ var delete_project = function(req, res) {
 };
 
 
-var projectController = function() {
+const projectController = function() {
   this.validator = validator;
   this.api_projectAll = api_projectAll;
   this.api_project = api_project;

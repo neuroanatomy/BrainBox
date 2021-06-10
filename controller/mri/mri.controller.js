@@ -1,3 +1,6 @@
+/* eslint-disable prefer-exponentiation-operator */
+/* eslint-disable max-statements */
+/* eslint-disable prefer-exponentiation-operator */
 /* eslint-disable max-lines */
 /* eslint-disable eqeqeq */
 /* eslint-disable no-unused-vars */
@@ -88,19 +91,19 @@ const validatorPost = function (req, res, next) {
   }
 };
 
-function isIterable(obj) {
+const isIterable = function(obj) {
   // checks for null and undefined
   if (obj === null) {
     return false;
   }
 
   return typeof obj[Symbol.iterator] === 'function';
-}
+};
 
 /* Download MRI file
 --------------------- */
 // @todo Change this function callback into a promise
-function downloadMRI(myurl, req, res, callback) {
+const downloadMRI = function(myurl, req, res, callback) {
   console.log('downloadMRI');
   const hash = crypto
     .createHash('md5')
@@ -223,7 +226,7 @@ function downloadMRI(myurl, req, res, callback) {
             });
         });
     });
-}
+};
 // eslint-disable-next-line func-style
 const mri = function (req, res) {
   const login = (req.isAuthenticated()) ?
@@ -311,9 +314,9 @@ const mri = function (req, res) {
     });
 };
 
-function removeVariablesFromURL(url) {
+const removeVariablesFromURL = function(url) {
   return url.split("&")[0];
-}
+};
 
 // eslint-disable-next-line func-style
 const apiMriPost = async function (req, res) {
@@ -454,6 +457,7 @@ const apiMriGet = function (req, res) {
     }
 
     // Display access-filtered list of mris
+    // eslint-disable-next-line radix
     page = Math.max(0, parseInt(page));
     const nItemsPerPage = 20;
 

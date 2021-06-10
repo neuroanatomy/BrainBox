@@ -1,3 +1,4 @@
+/* eslint-disable prefer-exponentiation-operator */
 /* eslint-disable max-lines */
 /* eslint-disable no-invalid-this */
 /* eslint-disable new-cap */
@@ -9,9 +10,9 @@
 var accessLevels=["none", "view", "edit", "add", "remove"];
 var debug = 1;
 
-function traceLog(f, l) {
+const traceLog = function(f, l) {
   if(typeof l === "undefined" || debug>l) { console.log("ca> "+(f.name)+" "+(f.caller?(f.caller.name||"annonymous"):"root")); }
-}
+};
 
 var accessStringToLevel = function accessStringToLevel(string) {
   var level = accessLevels.indexOf(string);
@@ -20,6 +21,7 @@ var accessStringToLevel = function accessStringToLevel(string) {
   return level;
 };
 var accessLevelToString = function accessLevelToString(level) {
+  // eslint-disable-next-line radix
   level = parseInt(level);
   if(level<0) { level = 0; }
   if(level>=accessLevels.length) { level = accessLevels.length - 1; }
@@ -36,6 +38,7 @@ var accessLevelToString = function accessLevelToString(level) {
  * @param {Object} access The access level requested
  * @returns {boolean} True if the user does have access to the MRI
  */
+// eslint-disable-next-line max-statements
 var toFileByAllProjects = function toFileByAllProjects(mri, projects, user, access) {
   traceLog(toFileByAllProjects, 1);
 
@@ -112,6 +115,7 @@ var toFileByAllProjects = function toFileByAllProjects(mri, projects, user, acce
  * @param {Object} user The user whose access is being decided
  * @param {Object} access The access level requested
  */
+// eslint-disable-next-line max-statements
 var toFileByOneProject = function toFileByOneProject(mri, projects, user, access) {
   traceLog(toFileByOneProject);
 
@@ -183,6 +187,7 @@ var toFileByOneProject = function toFileByOneProject(mri, projects, user, access
  * @param {Array} projects Array of project objects relevant to the access level computation
  * @param {Object} user The user whose access is being decided
  */
+// eslint-disable-next-line max-statements
 var maxAccessToFileByProjects = function maxAccessToFileByProjects(mri, projects, user) {
   traceLog(maxAccessToFileByProjects);
 
@@ -245,6 +250,7 @@ var maxAccessToFileByProjects = function maxAccessToFileByProjects(mri, projects
  * @param {Array} projects Array of project objects relevant to the access level computation
  * @param {Object} user The user whose access is being decided
  */
+// eslint-disable-next-line max-statements
 var minAccessToFileByProjects = function minAccessToFileByProjects(mri, projects, user) {
   traceLog(minAccessToFileByProjects);
 
@@ -305,6 +311,7 @@ var minAccessToFileByProjects = function minAccessToFileByProjects(mri, projects
  * @param {Array} projects Array of project objects relevant to the access level computation
  * @param {Object} user The user whose access is being decided
  */
+// eslint-disable-next-line max-statements
 var maxAccessToFileByProjects = function maxAccessToFileByProjects(mri, projects, user) {
   traceLog(maxAccessToFileByProjects);
 
@@ -394,6 +401,7 @@ var toAnnotationByProject = function toAnnotationByProject(project, user) {
  * @todo Instead of toProject this function should be called toProjectFiles, and there
  *       should be toProjectCollaborators and toProjectAnnotations
  */
+// eslint-disable-next-line max-statements
 var toProject = function toProject(project, user, access) {
   traceLog(toProject);
 

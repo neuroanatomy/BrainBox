@@ -1,3 +1,4 @@
+/* eslint-disable prefer-exponentiation-operator */
 /* eslint-disable new-cap */
 /* eslint-disable no-undef */
 var express = require('express');
@@ -5,7 +6,6 @@ var controller = require('./project.controller');
 
 var router = express.Router();
 
-//
 router.get('/new', controller.newProject);
 
 router.get('/json', tokenAuthentication, controller.api_projectAll);

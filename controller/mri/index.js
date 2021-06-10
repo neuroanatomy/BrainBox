@@ -1,3 +1,4 @@
+/* eslint-disable prefer-exponentiation-operator */
 /* eslint-disable new-cap */
 /* eslint-disable no-undef */
 /* eslint-disable camelcase */

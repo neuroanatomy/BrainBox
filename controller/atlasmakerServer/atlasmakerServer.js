@@ -1,3 +1,4 @@
+/* eslint-disable prefer-exponentiation-operator */
 /* eslint-disable max-lines */
 const fs = require('fs');
 const os = require('os');
@@ -35,12 +36,12 @@ const DOMPurify = createDOMPurify(window);
 
 const jsonpatch = require('fast-json-patch');
 
-function bufferTag(str, sz) {
+const bufferTag = function(str, sz) {
   const buf = Buffer.alloc(sz).fill(32);
   buf.write(str);
 
   return buf;
-}
+};
 
 const atlasmakerServer = (function() {
   const me = {
@@ -94,6 +95,7 @@ const atlasmakerServer = (function() {
 
       return sum;
     },
+    // eslint-disable-next-line max-statements
     numberOfUsersConnectedToMRI: function (mriPath) {
       let sum = 0;
 
@@ -187,6 +189,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       for(const iAtlas in me.Atlases) {
         if({}.hasOwnProperty.call(me.Atlases, iAtlas)) {
           console.log(`me.saveAtlasAtIndex(${iAtlas})`);
+          // eslint-disable-next-line no-await-in-loop
           await me.saveAtlasAtIndex(iAtlas);
         }
       }
@@ -329,6 +332,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       }
     },
 
+    // eslint-disable-next-line max-statements
     _saveAtlasVectorialData: async function (atlas) {
       if(typeof atlas === "undefined"
       || typeof atlas.vectorial === "undefined") {
@@ -398,6 +402,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
      * @param {object} atlas An mri object structure
      * @returns {promise} success message
      */
+    // eslint-disable-next-line max-statements
     _saveAtlasVoxelData: async function (atlas) {
       if(typeof atlas === "undefined"
       || typeof atlas.dim === "undefined") {
@@ -457,12 +462,15 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       const ms = Number(new Date()); // timestamp
 
       // if there's a previous version, keep if for backup
+      // eslint-disable-next-line no-sync
       if(fs.existsSync(path1)) {
         const path2 = me.dataDirectory + atlas.dirname + ms + "_" + atlas.filename;
+        // eslint-disable-next-line no-sync
         fs.renameSync(path1, path2);
       }
 
       // save the new version
+      // eslint-disable-next-line no-sync
       fs.writeFileSync(path1, mrigz);
 
       // log the saving
@@ -584,6 +592,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
 
       return undoLayer;
     },
+    // eslint-disable-next-line max-statements
     undo: function (User) {
       let undoLayer;
       let found = false;
@@ -628,6 +637,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
 
       for(const j in undoLayer.actions) {
         if({}.hasOwnProperty.call(undoLayer.actions, j)) {
+          // eslint-disable-next-line radix
           const i = parseInt(j);
           val = undoLayer.actions[i];
           arr.push([i, val]);
@@ -636,6 +646,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           vol[i] = val;
 
           if(me.debug>=3) {
+            // eslint-disable-next-line radix
             tracer.log(`Undo: ${i%User.dim[0]}, ${parseInt(i/User.dim[0])%User.dim[1]}, ${parseInt(i/User.dim[0]/User.dim[1])%User.dim[2]}`);
           }
         }
@@ -676,6 +687,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         vol[i] = val;
       }
     },
+    // eslint-disable-next-line max-statements
     line: function (x, y, val, User, undoLayer) {
       // Bresenham's line algorithm adapted from
       // http://stackoverflow.com/questions/4672279/bresenham-algorithm-in-javascript
@@ -741,6 +753,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
 
       return me._screen2index([x, y, z], User);
     },
+    // eslint-disable-next-line max-statements
     fill: function (x, y, z, val, User, undoLayer) {
       const {view} = User;
       const vol = me.Atlases[User.iAtlas].data;
@@ -963,6 +976,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
     //========================================================================================
     // Volume slice server
     //========================================================================================
+    // eslint-disable-next-line max-statements
     drawSlice: function (brain, view, slice) {
       let x, y;
       let i, j;
@@ -1013,6 +1027,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
 
       return jpeg.encode(rawImageData, 99);
     },
+    // eslint-disable-next-line max-statements
     drawSlice2: function (brain, atlas, view, slice) {
       let x, y;
       let i, j;
@@ -1397,6 +1412,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           return;
         }
 
+        // eslint-disable-next-line no-sync
         if(!fs.existsSync(mriPath)) {
           // Create new empty atlas
           tracer.log("    Atlas " + mriPath + " does not exists. Create a new one");
@@ -1565,6 +1581,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
 
       return {iAtlas, atlasLoadedFlag};
     },
+    // eslint-disable-next-line max-statements
     receiveUserDataMessage: function (data, userSocket) {
       const sourceUS = me.getUserFromUserId(data.uid);
 
@@ -1711,6 +1728,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
     },
     _initKeyPressHandler: function () {
       keypress(process.stdin);
+      // eslint-disable-next-line max-statements
       process.stdin.on('keypress', function (ch, key) {
         if(key) {
           // tracer.log(ch, key);
@@ -1952,6 +1970,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       // handle broadcast of messages
       me._handleBroadcastWebSocketMessage({data, sourceUS});
     },
+    // eslint-disable-next-line max-statements
     _disconnectUser: async function ({ws}) {
       let sum;
       let nconnected = me.US.filter(function(o) { return typeof o !== 'undefined'; }).length;
@@ -2122,6 +2141,7 @@ const quit = async () => {
     dialogType: "info"
   });
   await atlasmakerServer.saveAllAtlases();
+  // eslint-disable-next-line no-process-exit
   process.exit();
 };
 
