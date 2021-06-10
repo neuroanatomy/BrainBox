@@ -1,3 +1,4 @@
+/* eslint-disable prefer-exponentiation-operator */
 /* eslint-disable max-lines */
 /* eslint-disable no-tabs */
 /* eslint-disable eqeqeq */
@@ -62,6 +63,7 @@ var isProjectObject = function(req, res, object) {
   var goodOwner = false;
   var goodCollaborators = false;
 
+  // eslint-disable-next-line max-statements
   var pr = new Promise(function(resolve, reject) {
     var arr, flag, i, k;
     var allowed="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,_- '–:;".split("");
@@ -69,7 +71,6 @@ var isProjectObject = function(req, res, object) {
 
     // 1. Synchronous checks
     //----------------------
-
     // files
     if (object.files) {
       for (k in object.files.list) {
@@ -316,6 +317,7 @@ var api_projectAll = function(req, res) {
     return;
   }
 
+  // eslint-disable-next-line radix
   page = Math.max(0, parseInt(req.query.page));
   nItemsPerPage = 20;
 
@@ -348,7 +350,9 @@ var api_projectFiles = function(req, res) {
     return;
   }
 
+  // eslint-disable-next-line radix
   start = parseInt(start);
+  // eslint-disable-next-line radix
   length = parseInt(length);
   namesFlag = (namesFlag === "true");
 
@@ -488,7 +492,7 @@ var newProject = function(req, res) {
   }
 };
 
-function insertMRInames(req, res, list) {
+var insertMRInames = function(req, res, list) {
   // insert MRI names, but only if they don't exist
   for(var i=0; i<list.length; i++) {
     var name=list[i].name;
@@ -554,7 +558,7 @@ function insertMRInames(req, res, list) {
         });
     }(name, source, filename));
   }
-}
+};
 
 /**
  * @function post_project
@@ -562,6 +566,7 @@ function insertMRInames(req, res, list) {
  * @param {Object} req Req object from express
  * @param {Object} res Res object from express
  */
+// eslint-disable-next-line max-statements
 var post_project = function(req, res) {
   var loggedUser = "anonymous";
   if(req.isAuthenticated()) {
@@ -594,6 +599,7 @@ var post_project = function(req, res) {
   isProjectObject(req, res, obj)
     .then(function(obj) {
       req.db.get('project').findOne({shortname:obj.shortname, backup:{$exists:false}})
+        // eslint-disable-next-line max-statements
         .then(function (project) {
           // update/insert project
           if(project) {
