@@ -1,3 +1,5 @@
+/* eslint-disable prefer-exponentiation-operator */
+/* eslint-disable radix */
 const dateFormat = require('dateformat');
 const dataSlices = require('../dataSlices/dataSlices.js');
 
@@ -77,6 +79,7 @@ var apiUserAll = function(req, res) {
     return;
   }
 
+  // eslint-disable-next-line radix
   var page = parseInt(req.query.page);
   var nItemsPerPage = 20;
 
