@@ -15,7 +15,7 @@
     "dev-brainbox": "webpack --mode production --config webpack.brainbox.config.js && cp view/brainbox/dist/brainbox.js public/lib/brainbox.js",
     "dev-pages": "webpack --mode production --config webpack.pages.config.js && cp view/brainbox/dist/*-page.js public/js/",
     "dev": "npm run dev-atlasmaker && npm run dev-atlasmaker-tools && npm run dev-brainbox && npm run dev-pages",
-    "mocha-test": "mocha --exit ./test/runner.js test/unit/*.js test/integration/*.js",
+    "mocha-test": "nyc mocha --exit ./test/runner.js test/unit/*.js test/integration/*.js --all",
     "lint": "eslint .",
     "test": "docker exec brainbox_web_1 /bin/bash -c 'cd /brainbox && npm run mocha-test'"
   },
@@ -23,6 +23,7 @@
     "async": "^2.6.3",
     "body-parser": "~1.18.2",
     "compression": "^1.7.4",
+    "connect-mongo": "^4.4.1",
     "cookie-parser": "^1.4.5",
     "crypto": "1.0.1",
     "dateformat": "^3.0.3",
@@ -59,7 +60,7 @@
     "url": "^0.11.0",
     "validator": "^9.4.1",
     "webpage": "^0.3.0",
-    "ws": "^5.2.2"
+    "ws": "^6.2.2"
   },
   "devDependencies": {
     "chai": "^4.2.0",
@@ -69,7 +70,7 @@
     "copy-webpack-plugin": "^6.1.0",
     "css-loader": "^1.0.1",
     "del": "^3.0.0",
-    "eslint": "^4.9.0",
+    "eslint": "^4.19.1",
     "file-loader": "^2.0.0",
     "html-loader": "^0.5.5",
     "html-webpack-plugin": "^3.2.0",
@@ -77,6 +78,7 @@
     "mocha": "^7.1.2",
     "monk": "^7.2.0",
     "nodemon": "^2.0.7",
+    "nyc": "^15.1.0",
     "pixelmatch": "^4.0.2",
     "pngjs": "^3.4.0",
     "puppeteer": "^8.0.0",

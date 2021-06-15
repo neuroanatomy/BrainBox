@@ -1,3 +1,4 @@
+/* eslint-disable prefer-exponentiation-operator */
 /* eslint-disable new-cap */
 var express = require('express');
 var controller = require('./admin.controller');

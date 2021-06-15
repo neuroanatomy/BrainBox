@@ -1,3 +1,5 @@
+/* eslint-disable prefer-exponentiation-operator */
+/* eslint-disable prefer-destructuring */
 /* eslint-disable no-sync */
 "use strict";
 
@@ -38,6 +40,7 @@ const dirname = __dirname; // Local directory
 /* jslint nomen: false */
 
 if (DOCKER_DEVELOP === '1') {
+  // eslint-disable-next-line global-require
   const livereload = require('livereload');
   // Create a livereload server
   const hotServer = livereload.createServer({
@@ -83,6 +86,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(dirname, 'public')));
 
 if (DOCKER_DEVELOP === '1') {
+  // eslint-disable-next-line global-require
   app.use(require('connect-livereload')());
 }
 
@@ -152,6 +156,7 @@ db.get('user').findOne({nickname: 'anyone'})
 // Passport: OAuth2 authentication
 //========================================================================================
 const session = require('express-session');
+const MongoStore = require('connect-mongo');
 const passport = require('passport');
 const GithubStrategy = require('passport-github').Strategy;
 
@@ -162,7 +167,11 @@ passport.use(new GithubStrategy(
 app.use(session({
   secret: "a mi no me gusta la sémola",
   resave: false,
-  saveUninitialized: false
+  saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: `mongodb://${MONGO_DB}`,
+    touchAfter: 24 * 3600 // time period in seconds
+  })
 }));
 app.use(passport.initialize());
 app.use(passport.session());
@@ -174,12 +183,12 @@ passport.deserializeUser((user, done) => {
   done(null, user);
 });
 // simple authentication middleware. Add to routes that need to be protected.
-function ensureAuthenticated(req, res, next) {
+const ensureAuthenticated = function(req, res, next) {
   if (req.isAuthenticated()) {
     return next();
   }
   res.redirect('/');
-}
+};
 app.get('/secure-route-example', ensureAuthenticated, function (req, res) { res.send("access granted"); });
 app.get('/logout', function (req, res) {
   req.logout();
@@ -194,7 +203,7 @@ app.get('/loggedIn', function (req, res) {
   }
 });
 
-function insertUser(user) {
+const insertUser = function(user) {
   // insert new user
   const userObj = {
     name: user.displayName,
@@ -205,8 +214,8 @@ function insertUser(user) {
     joined: (new Date()).toJSON()
   };
   db.get('user').insert(userObj);
-}
-function updateUser(user) {
+};
+const updateUser = function(user) {
   db.get('user').update(
     {
       nickname: user.username
@@ -218,8 +227,8 @@ function updateUser(user) {
       }
     }
   );
-}
-function upsertUser(req, res) {
+};
+const upsertUser = function(req, res) {
   // Check if user is new
   db.get('user').findOne({nickname: req.user.username}, '-_id')
     .then( (json) => {
@@ -231,7 +240,7 @@ function upsertUser(req, res) {
     });
   res.redirect(req.session.returnTo || '/');
   delete req.session.returnTo;
-}
+};
 
 // GitHub Login process
 app.get('/auth/github', passport.authenticate('github'));
