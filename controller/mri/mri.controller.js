@@ -1,3 +1,18 @@
+/* eslint-disable prefer-exponentiation-operator */
+/* eslint-disable max-statements */
+/* eslint-disable prefer-exponentiation-operator */
+/* eslint-disable max-lines */
+/* eslint-disable eqeqeq */
+/* eslint-disable no-unused-vars */
+/* eslint-disable prefer-destructuring */
+/* eslint-disable no-shadow */
+/* eslint-disable require-await */
+/* eslint-disable no-prototype-builtins */
+/* eslint-disable prefer-const */
+/* eslint-disable new-cap */
+/* eslint-disable no-invalid-this */
+/* eslint-disable max-depth */
+/* eslint-disable linebreak-style */
 /* eslint-disable no-sync */
 'use strict';
 
@@ -76,19 +91,19 @@ const validatorPost = function (req, res, next) {
   }
 };
 
-function isIterable(obj) {
+const isIterable = function(obj) {
   // checks for null and undefined
   if (obj === null) {
     return false;
   }
 
   return typeof obj[Symbol.iterator] === 'function';
-}
+};
 
 /* Download MRI file
 --------------------- */
 // @todo Change this function callback into a promise
-function downloadMRI(myurl, req, res, callback) {
+const downloadMRI = function(myurl, req, res, callback) {
   console.log('downloadMRI');
   const hash = crypto
     .createHash('md5')
@@ -207,11 +222,11 @@ function downloadMRI(myurl, req, res, callback) {
             })
             .catch((err) => {
               console.log('ERROR Cannot get brain at path /data/' + hash + '/' + filename + ': ', err);
-              callback({error: 'Can\'t get brain'});
+              callback({error: 'Can\'t get brain', err});
             });
         });
     });
-}
+};
 // eslint-disable-next-line func-style
 const mri = function (req, res) {
   const login = (req.isAuthenticated()) ?
@@ -299,9 +314,9 @@ const mri = function (req, res) {
     });
 };
 
-function removeVariablesFromURL(url) {
+const removeVariablesFromURL = function(url) {
   return url.split("&")[0];
-}
+};
 
 // eslint-disable-next-line func-style
 const apiMriPost = async function (req, res) {
@@ -442,6 +457,7 @@ const apiMriGet = function (req, res) {
     }
 
     // Display access-filtered list of mris
+    // eslint-disable-next-line radix
     page = Math.max(0, parseInt(page));
     const nItemsPerPage = 20;
 

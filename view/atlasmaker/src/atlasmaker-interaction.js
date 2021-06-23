@@ -726,11 +726,25 @@ export var AtlasMakerInteraction = {
     localStorage.brainbox = URL.createObjectURL(new Blob([me.encodeNifti()]));
 
     const newWindow = window.open('', 'Render 3D', "width=800,height=600");
+    const webxr = `
+      <html>
+      <head>
+      <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
+      <script src="http://localhost/libs/three.js/r111/examples/js/loaders/PLYLoader.js"></script>
+      </head>
+      <body>
+        <a-scene>
+          <a-sky color="#ECECEC"></a-sky>
+        </a-scene>
+        <script>const path = "${me.User.dirname}${me.User.atlasFilename}";</script>
+        <script src="/lib/atlasmaker-tools/render3D.js"></script>
+        </body>
+      </html>`;
     newWindow.document.write(`
         <html>
         <body>
-            <script>const path = "${me.User.dirname}${me.User.atlasFilename}";</script>
-            <script src="/lib/atlasmaker-tools/render3D.js"></script>
+          <script>const path = "${me.User.dirname}${me.User.atlasFilename}";</script>
+          <script src="/lib/atlasmaker-tools/render3D.js"></script>
         </body>
         </html>`
     );

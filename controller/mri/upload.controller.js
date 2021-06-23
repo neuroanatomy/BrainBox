@@ -1,10 +1,20 @@
+/* eslint-disable prefer-exponentiation-operator */
+/* eslint-disable no-sync */
+/* eslint-disable max-statements */
+/* eslint-disable new-cap */
+/* eslint-disable no-invalid-this */
+/* eslint-disable sort-vars */
+/* eslint-disable callback-return */
+/* eslint-disable prefer-destructuring */
+/* eslint-disable camelcase */
 "use strict";
 
 const fs = require('fs');
-const atlasmakerServer = require('../atlasmakerServer/atlasmakerServer');
+const amri = require("../atlasmakerServer/atlasmaker-mri");
+
 // ExpressValidator = require('express-validator')
 
-var validator = function (req, res, next) {
+const validator = function (req, res, next) {
   console.log("upload.controller body", req.body);
   console.log("upload.controller query", req.query);
   console.log("upload.controller params", req.params);
@@ -45,7 +55,7 @@ var validator = function (req, res, next) {
 
 };
 
-var other_validations = function(req, res, next) {
+const other_validations = function(req, res, next) {
 
   var token = req.body.token;
   req.db.get("log").findOne({"token":token})
@@ -63,8 +73,8 @@ var other_validations = function(req, res, next) {
                 };
                 next();
               } else {
-                var err = new Array();
-                if (req.files.length == 0 || !req.files) { err.push({error:"there is no File"}); }
+                var err = [];
+                if (req.files.length === 0 || !req.files) { err.push({error:"there is no File"}); }
                 if (!json) { err.push({error:"Unkown URL"}); }
                 console.log("err", err);
 
@@ -88,7 +98,7 @@ var other_validations = function(req, res, next) {
     });
 };
 
-var upload = function(req, res) {
+const upload = function(req, res) {
   var username = req.atlasUpload.username;
   var {url, atlasName, atlasProject, atlasLabelSet} = req.body;
   var {mri} = req.atlasUpload;
@@ -144,7 +154,7 @@ var upload = function(req, res) {
 
   // Check that the dimensions of the atlas are the same as its parent mri
   console.log("> load parent mri");
-  atlasmakerServer.loadMRI(path)
+  amri.loadMRI(path)
     .then(function(atlas) {
       console.log("atlas.dim: ", atlas.dim);
       console.log("mri.dim: ", mri.dim);
@@ -170,7 +180,7 @@ var upload = function(req, res) {
         access: "edit",
         created: date.toJSON(),
         modified: date.toJSON(),
-        filename: filename,	// automatically generated filename
+        filename: filename, // automatically generated filename
         originalname: files[0].originalname,
         labels: atlasLabelSet,
         owner: username,
@@ -183,7 +193,7 @@ var upload = function(req, res) {
       // remove previous atlases with the same atlasName and atlasProject
       var i;
       for(i=mri.mri.atlas.length-1; i>=0; i--) {
-        if(mri.mri.atlas[i].name == atlasName && mri.mri.atlas[i].project == atlasProject) {
+        if(mri.mri.atlas[i].name === atlasName && mri.mri.atlas[i].project === atlasProject) {
           mri.mri.atlas.splice(i, 1);
         }
       }
@@ -209,14 +219,14 @@ var upload = function(req, res) {
     });
 };
 
-var token = function token(req, res) {
+const token = function token(req, res) {
   if (req.isAuthenticated()) {
     var obj = {},
       a = Math.random().toString(36)
         .slice(2),
       b = Math.random().toString(36)
         .slice(2),
-      token, now, expiryDate;
+      now;
     // token duration is set to 1 h in milliseconds
     // generate a random token
     obj.token = a + b;
@@ -241,7 +251,7 @@ var token = function token(req, res) {
   }
 };
 
-var uploadController = function () {
+const uploadController = function () {
   this.validator = validator;
   this.other_validations = other_validations;
   this.upload = upload;

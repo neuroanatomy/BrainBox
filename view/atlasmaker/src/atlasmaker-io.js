@@ -240,6 +240,16 @@ export var AtlasMakerIO = {
     return arr;
   },
 
+  swapFloat64: function (arr) {
+    var i;
+    const dv = new DataView(arr.buffer);
+    for(i = 0; i<arr.length; i++) {
+      arr[i]= dv.getFloat64(8*i, false);
+    }
+
+    return arr;
+  },
+
   /**
      * @function loadNifti
      * @param {object} nii Nifti structure
@@ -284,6 +294,13 @@ export var AtlasMakerIO = {
         mri.data = new Float32Array(nii, vox_offset);
       } else {
         mri.data = me.swapFloat32(new Float32Array(nii, vox_offset));
+      }
+      break;
+    case 64: // FLOAT64
+      if(endianness === 'le') {
+        mri.data = new Float64Array(nii, vox_offset);
+      } else {
+        mri.data = me.swapFloat64(new Float64Array(nii, vox_offset));
       }
       break;
     case 256: // INT8

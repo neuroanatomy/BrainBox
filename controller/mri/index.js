@@ -1,3 +1,7 @@
+/* eslint-disable prefer-exponentiation-operator */
+/* eslint-disable new-cap */
+/* eslint-disable no-undef */
+/* eslint-disable camelcase */
 var express = require('express');
 var controller = require('./mri.controller');
 var upload_controller = require('./upload.controller');

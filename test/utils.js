@@ -1,29 +1,32 @@
+/* eslint-disable no-await-in-loop */
 var fs = require('fs');
+const path = require('path');
 const monk = require('monk');
 const db = monk('localhost:27017/brainbox');
 const rimraf = require("rimraf");
 const {PNG} = require('pngjs');
 var jpeg = require('jpeg-js');
 const pixelmatch = require('pixelmatch');
+const { exec } = require("child_process");
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
-const localBertURL = "http://127.0.0.1:3001/test_data/bert_brain.nii.gz";
+const serverURL = "http://127.0.0.1:3001";
+const localBertURL = serverURL + "/test_data/bert_brain.nii.gz";
 const cheetahURL = "https://zenodo.org/record/44846/files/MRI.nii.gz?download=1";
-const serverURL = "http://localhost:3001";
 const testToken = "qwertyuiopasdfghjklzxcvbnm";
 const testTokenDuration = 2 * (1000 * 3600); // 2h
 const noTimeout = 0; // disable timeout
-const longTimeout = 10 * 1000; // 30 sec
-const mediumTimeout = 5 * 1000; // 10 sec
-const shortTimeout = 3 * 1000; // 5 sec
+const longTimeout = 10 * 1000; // 10 sec
+const mediumTimeout = 5 * 1000; // 5 sec
+const shortTimeout = 3 * 1000; // 3 sec
 
 const userFoo = {
   name: "Founibald Barr",
   nickname: "foo",
   url: "https://foo.bar",
   brainboxURL: "/user/foo",
-  avatarURL: "http://127.0.0.1:3001/test_data/foo.png",
+  avatarURL: serverURL + "/test_data/foo.png",
   joined: (new Date()).toJSON()
 };
 const userBar = {
@@ -31,7 +34,7 @@ const userBar = {
   nickname: "bar",
   url: "https://bar.foo",
   brainboxURL: "/user/foo",
-  avatarURL: "http://127.0.0.1:3001/test_data/bar.png",
+  avatarURL: serverURL + "/test_data/bar.png",
   joined: (new Date()).toJSON()
 };
 const userFooB = {
@@ -39,7 +42,7 @@ const userFooB = {
   username: "foo",
   url: "https://foo.bar",
   brainboxURL: "/user/foo",
-  avatarURL: "http://127.0.0.1:3001/test_data/foo.png",
+  avatarURL: serverURL + "/test_data/foo.png",
   joined: (new Date()).toJSON()
 };
 const userBarB = {
@@ -47,7 +50,7 @@ const userBarB = {
   username: "bar",
   url: "https://bar.foo",
   brainboxURL: "/user/foo",
-  avatarURL: "http://127.0.0.1:3001/test_data/bar.png",
+  avatarURL: serverURL + "/test_data/bar.png",
   joined: (new Date()).toJSON()
 };
 const projectTest = {
@@ -73,7 +76,7 @@ const projectTest = {
   },
   files: {
     list: [
-      "http://127.0.0.1:3001/test_data/bert_brain.nii.gz",
+      serverURL + "/test_data/bert_brain.nii.gz",
       "https://zenodo.org/record/44855/files/MRI-n4.nii.gz",
       "http://files.figshare.com/2284784/MRI_n4.nii.gz",
       "https://dl.dropbox.com/s/cny5b3so267bv94/p32-f18-uchar.nii.gz",
@@ -97,8 +100,7 @@ const projectTest = {
 
 function currentDirectory() {
   console.log("Current directory:", __dirname);
-  const { exec } = require("child_process");
-  exec('ls -l', (error, stdout, stderr) => {
+  exec('ls -l', (error, stdout) => {
     console.log(stdout);
   });
 }
@@ -183,7 +185,7 @@ async function waitUntilHTMLRendered(page, timeout = 30000) {
     const html = await page.content();
     const currentHTMLSize = html.length;
 
-    const bodyHTMLSize = await page.evaluate(() => document.body.innerHTML.length);
+    // const bodyHTMLSize = await page.evaluate(() => document.body.innerHTML.length);
 
     // console.log('last: ', lastHTMLSize, ' <> curr: ', currentHTMLSize, " body html size: ", bodyHTMLSize);
 
@@ -197,17 +199,17 @@ async function waitUntilHTMLRendered(page, timeout = 30000) {
       // console.log("Page rendered fully..");
       break;
     }
-
     lastHTMLSize = currentHTMLSize;
-    await page.waitFor(checkDurationMsecs);
+    await page.waitForTimeout(checkDurationMsecs);
   }
 }
 
 async function comparePageScreenshots(testPage, url, filename) {
   const newPath = './test/screenshots/' + filename;
   const refPath = './test/data/reference-screenshots/' + filename;
-  await testPage.goto(url, {waitUntil: 'networkidle0'});
+  await testPage.goto(url, {waitUntil: 'networkidle2', timeout: 90000});
   await waitUntilHTMLRendered(testPage);
+  fs.mkdirSync(path.dirname(newPath), { recursive: true });
   await testPage.screenshot({path:'./test/screenshots/' + filename});
   const pixdiff = compareImages(newPath, refPath);
 

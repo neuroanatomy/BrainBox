@@ -29,7 +29,7 @@ function queryFiles() {
     });
 }
 function onAccessClicked( e, l ) {
-  const al = e.target.closest("div").getAttribute("data-level");
+  const al = Number(e.target.closest("div").getAttribute("data-level"));
   const parent = e.target.closest("div");
   parent.setAttribute("data-level", l+(al !== (l+1)));
   const newEvent = new Event('input', {bubbles: false, cancelable: true});
@@ -169,29 +169,39 @@ function importFiles() {
   };
   input.click();
 }
-function saveChanges() {
-  const xhr = new XMLHttpRequest();
-  xhr.onload = function () {
-    if (xhr.status >= 200 && xhr.status < 300) {
-      const res = JSON.parse(xhr.responseText);
-      if(res.success) {
-        document.querySelector("#saveFeedback").textContent = "Successfully saved";
-        setTimeout(function() {
-          document.querySelector("#saveFeedback").textContent = "";
-        }, 2000);
-      }
-    } else {
-      document.querySelector("#saveFeedback").textContent = `Unable to save: ${xhr.responseText}`;
-      setTimeout(function() {
-        document.querySelector("#saveFeedback").textContent = "";
-      }, 3000);
-    }
-  };
+async function saveChanges() {
   const url = `/project/json/${app.projectInfo.shortname}`;
-  xhr.open('POST', url);
-  xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-  xhr.send(`data=${JSON.stringify(app.projectInfo)}`);
+  const payload = JSON.stringify({data: app.projectInfo});
+  let res;
+  const unableToSaveFeedback = (msg) => {
+    document.querySelector("#saveFeedback").textContent = `Unable to save: ${msg}`;
+    setTimeout(function() {
+      document.querySelector("#saveFeedback").textContent = "";
+    }, 3000);
+  };
+
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: payload
+    });
+  } catch(err) {
+    unableToSaveFeedback(err);
+    throw new Error(err);
+  }
+
+  if (res.status !== 200) {
+    unableToSaveFeedback(`Error ${res.status}: ${res.statusText}`);
+    throw new Error(`Server status: ${res.status}, ${res.statusText}`);
+  }
+
+  document.querySelector("#saveFeedback").textContent = "Successfully saved";
+  setTimeout(function() {
+    document.querySelector("#saveFeedback").textContent = "";
+  }, 2000);
 }
+
 function deleteProject() {
   const res = confirm(
     "Are you sure you want to delete project "

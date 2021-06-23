@@ -1,0 +1,18 @@
+{
+    "name":"Axolotl: 12 structures",
+    "source":"https://brainbox.pasteur.fr/labels/axolotl_structures.json",
+    "labels":[
+        {"name":"Olfactory bulb (OB)","value":1,"color":[255, 0, 0],"url":""},
+        {"name":"Telencephalon","value":2,"color":[255, 128, 0],"url":""},
+        {"name":"Diencephalon","value":3,"color":[255, 191, 0],"url":""},
+        {"name":"Mesencephalon","value":4,"color":[255, 255, 0],"url":""},
+        {"name":"Endocrine","value":5,"color":[191, 255, 0],"url":""},
+        {"name":"Romboemcephalon","value":6,"color":[0, 255, 64],"url":""},
+        {"name":"Olfactory bulb (OB)","value":7,"color":[0, 255, 255],"url":""},
+        {"name":"Telencephalon","value":8,"color":[0, 191, 255],"url":""},
+        {"name":"Diencephalon","value":9,"color":[0, 0, 255],"url":""},
+        {"name":"Mesencephalon","value":10,"color":[128, 0, 255],"url":""},
+        {"name":"Endocrine","value":11,"color":[191, 0, 255],"url":""},
+        {"name":"Romboemcephalon","value":12,"color":[255, 0, 191],"url":""}
+        ]
+}

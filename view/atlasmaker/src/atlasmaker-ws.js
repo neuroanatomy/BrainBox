@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 /* global AtlasMakerWidget MozWebSocket $*/
 /*! AtlasMaker: WebSockets */
 import * as DOMPurify from 'dompurify';
@@ -67,7 +68,6 @@ export var AtlasMakerWS = {
         me.receiveFunctions.paint = me.receivePaintMessage;
         me.receiveFunctions.paintvol = me.receivePaintVolumeMessage;
         me.receiveFunctions.disconnect = me.receiveDisconnectMessage;
-        me.receiveFunctions.serverMessage = me.receiveServerMessage;
         me.receiveFunctions.serverMessage = me.receiveServerMessage;
         me.receiveFunctions.vectorial = me.receiveVectorialAnnotationMessage;
 
@@ -675,16 +675,69 @@ export var AtlasMakerWS = {
     $("#logChat .text").scrollTop($("#logChat .text")[0].scrollHeight);
   },
 
+  displayDialog: async ({msg, modal, delay, doFadeOut}) => {
+
+    /*
+      Use like this:
+      const date = new Date();
+      const time = `${date.getHours()}:${('00' + date.getMinutes()).slice(-2)}`;
+      AtlasMakerWidget._displayServerModal({
+        type:"alert",
+        msg:`<p>⚠️ Server is going to restart at ${time}`
+      });
+    */
+
+    const me = AtlasMakerWidget;
+    const el = document.createElement("div");
+    el.style = `
+      display: none;
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translate(-50%,0);
+      background-color: #333;
+      color: white;
+      text-align: center;
+      border: thin solid lightgrey;
+      z-index: 20;
+      line-height: 20px;
+      padding: 20px;
+      `;
+    document.body.appendChild(el);
+    await me.dialog({ el, message: msg, modal, delay, doFadeOut });
+    document.body.removeChild(el);
+  },
+
   /**
    * Receives notifications from the server
    * @param {object} data Message data
    * @returns {void}
    */
   receiveServerMessage: function (data) {
-    var {msg}=data;
-    var prevMsg=$("#notifications").text();
-    $("#notifications").text(msg);
-    setTimeout(function() { $("#notifications").text(prevMsg); }, 5000);
+    const me = AtlasMakerWidget;
+    const {msg, dialogType} = data;
+
+    if (dialogType === "modal") {
+      me.displayDialog({
+        msg: `<p>${msg}</p>`,
+        modal: true,
+        delay: 0,
+        doFadeOut: 0
+      });
+    } else if (dialogType === "info") {
+      const prevMsg = document.querySelector("#notifications").textContent;
+      document.querySelector("#notifications").textContent = msg;
+      setTimeout(function() {
+        document.querySelector("#notifications").textContent = prevMsg;
+      }, 2000);
+    } else {
+      me.displayDialog({
+        msg: `<p>${msg}</p>`,
+        modal: false,
+        delay: 2000,
+        doFadeOut: true
+      });
+    }
   },
 
   /**
