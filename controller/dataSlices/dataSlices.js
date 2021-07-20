@@ -340,37 +340,35 @@ const getProjectsSlice = function getProjectsSlice(req, start, length) {
     loggedUser = req.tokenUsername;
   }
 
-  return new Promise(function (resolve, reject) {
-    req.db.get('project')
+  return new Promise(async function (resolve, reject) {
+    const unfilteredProjects = await req.db.get('project')
       .find({backup: {$exists: false}}, {skip:start, limit:length})
-      .then(function(unfilteredProjects) {
-        var projects = [];
-
-        // filter for view access
-        for(i in unfilteredProjects) { if(checkAccess.toProject(unfilteredProjects[i], loggedUser, "view")) { projects.push(unfilteredProjects[i]); } }
-
-        // constrain start and length to available data
-        start = Math.min(start, projects.length);
-        length = Math.min(length, projects.length-start);
-
-        projects = projects.slice(start, start+length);
-
-        projects = projects.map(function (o) {
-          return {
-            project: o.shortname,
-            projectName: o.name,
-            numFiles: o.files.list.length,
-            numCollaborators: o.collaborators.list.length,
-            owner: o.owner
-          };
-        });
-
-        resolve(projects);
-      })
       .catch(function(err) {
         console.log("ERROR:", err);
         reject();
       });
+    var projects = [];
+
+    // filter for view access
+    for(i in unfilteredProjects) { if(checkAccess.toProject(unfilteredProjects[i], loggedUser, "view")) { projects.push(unfilteredProjects[i]); } }
+
+    // constrain start and length to available data
+    start = Math.min(start, projects.length);
+    length = Math.min(length, projects.length-start);
+
+    projects = projects.slice(start, start+length);
+
+    projects = projects.map(function (o) {
+      return {
+        project: o.shortname,
+        projectName: o.name,
+        numFiles: o.files.list.length,
+        numCollaborators: o.collaborators.list.length,
+        owner: o.owner
+      };
+    });
+
+    resolve(projects);
   });
 };
 

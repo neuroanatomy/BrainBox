@@ -34,7 +34,7 @@ const window = (new JSDOM('', {
 })).window;
 const DOMPurify = createDOMPurify(window);
 
-const validator = function(req, res, next) {
+const validator = function (req, res, next) {
 
   req.checkParams('projectName', 'incorrect project name').isAlphanumeric();
   // req.checkQuery('url', 'please enter a valid URL')
@@ -59,15 +59,15 @@ const validator = function(req, res, next) {
  * @param {Object} object Project definition object
  * @todo object.annotations??
  */
-const isProjectObject = function(req, res, object) {
+const isProjectObject = function (req, res, object) {
   var goodOwner = false;
   var goodCollaborators = false;
 
   // eslint-disable-next-line max-statements
-  var pr = new Promise(function(resolve, reject) {
+  var pr = new Promise(async function (resolve, reject) {
     var arr, flag, i, k;
-    var allowed="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,_- '–:;".split("");
-    var allowedAlphanumericHyphen="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-".split("");
+    var allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,_- '–:;".split("");
+    var allowedAlphanumericHyphen = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-".split("");
 
     // 1. Synchronous checks
     //----------------------
@@ -75,12 +75,12 @@ const isProjectObject = function(req, res, object) {
     if (object.files) {
       for (k in object.files.list) {
         if (!validatorNPM.isURL(object.files.list[k].source)) {
-          reject({success:false, error:"Invalid file URL"});
+          reject({ success: false, error: "Invalid file URL" });
 
           return;
         }
-        if(!validatorNPM.isWhitelisted(object.files.list[k].name, allowed)) {
-          reject({success:false, error:"Invalid file name"});
+        if (!validatorNPM.isWhitelisted(object.files.list[k].name, allowed)) {
+          reject({ success: false, error: "Invalid file name" });
 
           return;
         }
@@ -90,7 +90,7 @@ const isProjectObject = function(req, res, object) {
 
     // description
     if (object.description && !validatorNPM.isWhitelisted(object.description, allowed)) {
-      reject({success:false, error:"Invalid project description"});
+      reject({ success: false, error: "Invalid project description" });
 
       return;
       // delete object.description;
@@ -99,7 +99,7 @@ const isProjectObject = function(req, res, object) {
 
     // name
     if (object.name && !validatorNPM.isWhitelisted(object.name, allowed)) {
-      reject({success:false, error:"Invalid name"});
+      reject({ success: false, error: "Invalid name" });
 
       return;
       //delete object.name;
@@ -108,58 +108,57 @@ const isProjectObject = function(req, res, object) {
 
     // check that owner and shortname are present
     if (!object.owner || !object.shortname) {
-      reject({success:false, error:"Invalid owner or project shortname, not present"});
+      reject({ success: false, error: "Invalid owner or project shortname, not present" });
 
       return;
     }
     console.log("> owner and project shortname present");
 
     // check that shortname is alphanumeric
-    if(!validatorNPM.isWhitelisted(object.owner, allowedAlphanumericHyphen) || !validatorNPM.isWhitelisted(object.shortname, allowedAlphanumericHyphen)) {
-      reject({success:false, error:"Invalid owner or project shortname, not alphanumeric"});
+    if (!validatorNPM.isWhitelisted(object.owner, allowedAlphanumericHyphen) || !validatorNPM.isWhitelisted(object.shortname, allowedAlphanumericHyphen)) {
+      reject({ success: false, error: "Invalid owner or project shortname, not alphanumeric" });
 
       return;
     }
     console.log("> owner and project shortname present");
 
     // convenience array for collaborator checks
-    arr=object.collaborators.list;
-
+    arr = object.collaborators.list;
     // check that the 'anyone' user is present
-    flag=false;
-    for(i=0; i<arr.length; i++) {
-      if(arr[i].userID === 'anyone') {
+    flag = false;
+    for (i = 0; i < arr.length; i++) {
+      if (arr[i].userID === 'anyone') {
         flag = true;
         break;
       }
     }
-    if(flag === false) {
-      reject({success:false, error:"User 'anynone' is not present"});
+    if (flag === false) {
+      reject({ success: false, error: "User 'anynone' is not present" });
 
       return;
     }
 
     // check that collaborator's access values are valid
-    flag=true;
-    for(i=0; i<arr.length; i++) {
-      if (validatorNPM.matches(arr[i].access.collaborators, "none|view|edit|add|remove") === false ) {
+    flag = true;
+    for (i = 0; i < arr.length; i++) {
+      if (validatorNPM.matches(arr[i].access.collaborators, "none|view|edit|add|remove") === false) {
         // console.log("collaborators",arr[i]);
         flag = false;
         break;
       }
-      if (validatorNPM.matches(arr[i].access.annotations, "none|view|edit|add|remove") === false ) {
+      if (validatorNPM.matches(arr[i].access.annotations, "none|view|edit|add|remove") === false) {
         // console.log("annotations",arr[i]);
         flag = false;
         break;
       }
-      if (validatorNPM.matches(arr[i].access.files, "none|view|edit|add|remove") === false ) {
+      if (validatorNPM.matches(arr[i].access.files, "none|view|edit|add|remove") === false) {
         // console.log("files",arr[i]);
         flag = false;
         break;
       }
     }
-    if(flag === false) {
-      reject({success:false, error:"Access values are invalid"});
+    if (flag === false) {
+      reject({ success: false, error: "Access values are invalid" });
 
       return;
     }
@@ -167,14 +166,14 @@ const isProjectObject = function(req, res, object) {
 
     // check that the list of annotations contains at least 1 volume-type entry
     flag = false;
-    for(i=0; i<object.annotations.list.length; i++) {
-      if(object.annotations.list[i].type == "volume") {
+    for (i = 0; i < object.annotations.list.length; i++) {
+      if (object.annotations.list[i].type == "volume") {
         flag = true;
         break;
       }
     }
-    if(flag == false) {
-      reject({success:false, error:"Annotations must contain at least 1 volume-type entry"});
+    if (flag == false) {
+      reject({ success: false, error: "Annotations must contain at least 1 volume-type entry" });
 
       return;
     }
@@ -183,30 +182,43 @@ const isProjectObject = function(req, res, object) {
     // 2. Asynchronous checks
     //-----------------------
 
-    arr=[];
-    arr.push(req.db.get('user').findOne({nickname:object.owner}));
-    for(i in object.collaborators.list) {
-      arr.push(req.db.get('user').findOne({nickname:object.collaborators.list[i].userID}));
+    arr = [];
+    arr.push(new Promise(async function(resolve, reject) {
+      const obj = await req.db.get('user').findOne({ nickname: object.owner })
+        .catch((err) => {
+          if(err) { reject(err); }
+        });
+      resolve(obj);
+    }));
+    for (i in object.collaborators.list) {
+      // arr.push(req.db.get('user').findOne({ nickname: object.collaborators.list[i].userID }));
+      // eslint-disable-next-line no-loop-func
+      arr.push(new Promise(async function(resolve, reject) {
+        const obj = await req.db.get('user').findOne({ nickname: object.collaborators.list[i].userID })
+          .catch((err) => {
+            if(err) { reject(err); }
+          });
+        resolve(obj);
+      }));
     }
-    Promise.all(arr).then(function(val) {
-      var i,
-        notFound=false;
-      for(i=0; i<val.length; i++) {
-        if(val[i] === null) {
-          notFound=true;
-          break;
-        }
+    const val = await Promise.all(arr);
+    var i,
+      notFound = false;
+    for (i = 0; i < val.length; i++) {
+      if (val[i] === null) {
+        notFound = true;
+        break;
       }
-      if(notFound === true) {
-        reject({success:false, error:"Users are invalid, one or more do not exist"});
+    }
+    if (notFound === true) {
+      reject({ success: false, error: "Users are invalid, one or more do not exist" });
 
-        return;
-      }
+      return;
+    }
 
-      // All checks are successful, resolve the promisse
-      // console.log({success:true,message:"All checks ok. Project object looks valid"});
-      resolve(object);
-    });
+    // All checks are successful, resolve the promisse
+    // console.log({success:true,message:"All checks ok. Project object looks valid"});
+    resolve(object);
   });
 
   return pr;
@@ -218,42 +230,40 @@ const isProjectObject = function(req, res, object) {
  * @param {Object} req Req object from express
  * @param {Object} res Res object from express
  */
-const project = function(req, res) {
-  var login=	(req.isAuthenticated())?
-    ("<a href='/user/"+req.user.username+"'>"+req.user.username+"</a> (<a href='/logout'>Log Out</a>)")
-    :("<a href='/auth/github'>Log in with GitHub</a>");
+const project = async function (req, res) {
+  var login = (req.isAuthenticated()) ?
+    ("<a href='/user/" + req.user.username + "'>" + req.user.username + "</a> (<a href='/logout'>Log Out</a>)")
+    : ("<a href='/auth/github'>Log in with GitHub</a>");
   var loggedUser = "anonymous";
-  if(req.isAuthenticated()) {
+  if (req.isAuthenticated()) {
     loggedUser = req.user.username;
   } else
-  if(req.isTokenAuthenticated) {
+  if (req.isTokenAuthenticated) {
     loggedUser = req.tokenUsername;
   }
 
   // store return path in case of login
   req.session.returnTo = req.originalUrl;
 
-  req.db.get('project').findOne({shortname:req.params.projectName, backup:{$exists:0}}, "-_id")
-    .then(function(json) {
-      if (json) {
-        // check that the logged user has access to view this project
-        if(checkAccess.toProject(json, loggedUser, "view") === false) {
-          res.status(401).send("Authorization required");
+  const json = await req.db.get('project').findOne({ shortname: req.params.projectName, backup: { $exists: 1 } });
+  if (json) {
+    // check that the logged user has access to view this project
+    if (checkAccess.toProject(json, loggedUser, "view") === false) {
+      res.status(401).send("Authorization required");
 
-          return;
-        }
+      return;
+    }
 
-        json.files.list = [];
-        res.render('project', {
-          title: json.name,
-          projectInfo: JSON.stringify(json),
-          projectName: json.name,
-          login: login
-        });
-      } else {
-        res.status(404).send("Project Not Found");
-      }
+    json.files.list = [];
+    res.render('project', {
+      title: json.name,
+      projectInfo: JSON.stringify(json),
+      projectName: json.name,
+      login: login
     });
+  } else {
+    res.status(404).send("Project Not Found");
+  }
 };
 
 /**
@@ -263,35 +273,33 @@ const project = function(req, res) {
  * @param {Object} res Res object from express
  * @result A json object with project data
  */
-const api_project = function(req, res) {
+const api_project = async function (req, res) {
   var loggedUser = "anonymous";
-  if(req.isAuthenticated()) {
+  if (req.isAuthenticated()) {
     loggedUser = req.user.username;
   } else
-  if(req.isTokenAuthenticated) {
+  if (req.isTokenAuthenticated) {
     loggedUser = req.tokenUsername;
   }
 
-  req.db.get('project').findOne({shortname:req.params.projectName, backup:{$exists:0}}, "-_id")
-    .then(function(json) {
-      if(json) {
-        // check that the logged user has access to view this project
-        if(checkAccess.toProject(json, loggedUser, "view") === false) {
-          res.status(401).send({error:"Authorization required"});
+  let json = await req.db.get('project').findOne({ shortname: req.params.projectName, backup: { $exists: 0 } }, "-_id");
+  if (json) {
+    // check that the logged user has access to view this project
+    if (checkAccess.toProject(json, loggedUser, "view") === false) {
+      res.status(401).send({ error: "Authorization required" });
 
-          return;
-        }
+      return;
+    }
 
-        if(req.query.var) {
-          var i,
-            arr=req.query.var.split("/");
-          for(i in arr) { json=json[arr[i]]; }
-        }
-        res.send(json);
-      } else {
-        res.send();
-      }
-    });
+    if (req.query.var) {
+      var i,
+        arr = req.query.var.split("/");
+      for (i in arr) { json = json[arr[i]]; }
+    }
+    res.send(json);
+  } else {
+    res.send();
+  }
 };
 
 /**
@@ -301,18 +309,18 @@ const api_project = function(req, res) {
  * @param {Object} res Res object from express
  * @result A json object with project data
  */
-const api_projectAll = function(req, res) {
+const api_projectAll = async function (req, res) {
   var i, nItemsPerPage, page;
   var loggedUser = "anonymous";
-  if(req.isAuthenticated()) {
+  if (req.isAuthenticated()) {
     loggedUser = req.user.username;
   } else
-  if(req.isTokenAuthenticated) {
+  if (req.isTokenAuthenticated) {
     loggedUser = req.tokenUsername;
   }
 
-  if(!req.query.page) {
-    res.send({error:"Provide the parameter 'page'"});
+  if (!req.query.page) {
+    res.send({ error: "Provide the parameter 'page'" });
 
     return;
   }
@@ -321,10 +329,8 @@ const api_projectAll = function(req, res) {
   page = Math.max(0, parseInt(req.query.page));
   nItemsPerPage = 20;
 
-  dataSlices.getProjectsSlice(req, page*nItemsPerPage, nItemsPerPage)
-    .then(function (values) {
-      res.json(values);
-    });
+  const values = await dataSlices.getProjectsSlice(req, page * nItemsPerPage, nItemsPerPage);
+  res.json(values);
 };
 
 /**
@@ -334,18 +340,18 @@ const api_projectAll = function(req, res) {
  * @param {Object} res Res object from express
  * @result A json object with project data
  */
-const api_projectFiles = function(req, res) {
+const api_projectFiles = async function (req, res) {
   const projShortname = req.params.projectName;
-  let {start, length, names: namesFlag} = req.query;
+  let { start, length, names: namesFlag } = req.query;
   console.log("projShortname:", projShortname, "start:", start, "length:", length, "namesFlag:", namesFlag);
 
-  if(typeof start === "undefined") {
-    res.send({error: "Provide 'start'"});
+  if (typeof start === "undefined") {
+    res.send({ error: "Provide 'start'" });
 
     return;
   }
-  if(typeof length === "undefined") {
-    res.send({error: "Provide 'length'"});
+  if (typeof length === "undefined") {
+    res.send({ error: "Provide 'length'" });
 
     return;
   }
@@ -356,14 +362,12 @@ const api_projectFiles = function(req, res) {
   length = parseInt(length);
   namesFlag = (namesFlag === "true");
 
-  dataSlices.getProjectFilesSlice(req, projShortname, start, length, namesFlag)
-    .then(function(list) {
-      res.send(list);
-    })
-    .catch(function(err) {
+  const list = await dataSlices.getProjectFilesSlice(req, projShortname, start, length, namesFlag)
+    .catch(function (err) {
       console.log("ERROR:", err);
       res.send();
     });
+  res.send(list);
 };
 
 /**
@@ -372,88 +376,85 @@ const api_projectFiles = function(req, res) {
  * @param {Object} req Req object from express
  * @param {Object} res Res object from express
  */
-const settings = function(req, res) {
+// eslint-disable-next-line max-statements
+const settings = async function (req, res) {
   var login = (req.isAuthenticated()) ?
     ("<a href='/user/" + req.user.username + "'>" + req.user.username + "</a> (<a href='/logout'>Log Out</a>)")
     : ("<a href='/auth/github'>Log in with GitHub</a>");
   var loggedUser = "anonymous";
-  if(req.isAuthenticated()) {
+  if (req.isAuthenticated()) {
     loggedUser = req.user.username;
   } else
-  if(req.isTokenAuthenticated) {
+  if (req.isTokenAuthenticated) {
     loggedUser = req.tokenUsername;
   }
 
   // store return path in case of login
   req.session.returnTo = req.originalUrl;
+  let json = await req.db.get('project').findOne({ shortname: req.params.projectName, backup: { $exists: 0 } });
+  if (json) {
+    // check that the logged user has access to view this project
+    if (checkAccess.toProject(json, loggedUser, "view") === false) {
+      console.log('Hello');
+      res.status(401).send("Authorization required");
 
-  req.db.get('project').findOne({shortname:req.params.projectName, backup:{$exists:0}}, "-_id")
-    .then(function(json) {
-      if(json) {
-        // check that the logged user has access to view this project
-        if(checkAccess.toProject(json, loggedUser, "view") === false) {
-          res.status(401).send("Authorization required");
-
-          return;
-        }
-      } else {
-        json = {
-          name: "",
-          shortname: req.params.projectName,
-          url: "",
-          brainboxURL: "/project/"+req.params.projectName,
-          created: (new Date()).toJSON(),
-          owner: loggedUser,
-          collaborators: {
-            list: [
-              {
-                userID: 'anyone',
-                access: {
-                  collaborators: 'view',
-                  annotations: 'edit',
-                  files: 'view'
-                }
-              }
-            ]
-          },
-          files: {
-            list: []
-          },
-          annotations: {
-            list: []
-          }
-        };
-      }
-
-      // empty the files.list: it will be filled progressively from the client
-      json.files.list = [];
-
-      // find username and name for each of the collaborators in the project
-      var j,
-        arr1 = [];
-      for(j=0; j<json.collaborators.list.length; j++) {
-        arr1.push(req.db.get('user').findOne({nickname:json.collaborators.list[j].userID, backup:{$exists:0}}, {name:1, _id:0}));
-      }
-      Promise.all(arr1)
-        .then(function(obj) {
-          var j;
-          for(j=0; j<obj.length; j++) {
-            json.collaborators.list[j].username=json.collaborators.list[j].userID;
-            if(obj[j]) { // name found
-              json.collaborators.list[j].name=obj[j].name;
-            } else { // name not found: set to empty
-              json.collaborators.list[j].name="";
+      return;
+    }
+  } else {
+    json = {
+      name: "",
+      shortname: req.params.projectName,
+      url: "",
+      brainboxURL: "/project/" + req.params.projectName,
+      created: (new Date()).toJSON(),
+      owner: loggedUser,
+      collaborators: {
+        list: [
+          {
+            userID: 'anyone',
+            access: {
+              collaborators: 'view',
+              annotations: 'edit',
+              files: 'view'
             }
           }
-          var context = {
-            projectShortname: json.shortname,
-            owner: json.owner,
-            projectInfo: JSON.stringify(json),
-            login: login
-          };
-          res.render('projectSettings', context);
-        });
-    });
+        ]
+      },
+      files: {
+        list: []
+      },
+      annotations: {
+        list: []
+      }
+    };
+  }
+
+  // empty the files.list: it will be filled progressively from the client
+  json.files.list = [];
+
+  // find username and name for each of the collaborators in the project
+  var j,
+    arr1 = [];
+  for (j = 0; j < json.collaborators.list.length; j++) {
+    arr1.push(req.db.get('user').findOne({ nickname: json.collaborators.list[j].userID, backup: { $exists: 0 } }, { name: 1, _id: 0 }));
+  }
+  const obj = await Promise.all(arr1);
+  var j;
+  for (j = 0; j < obj.length; j++) {
+    json.collaborators.list[j].username = json.collaborators.list[j].userID;
+    if (obj[j]) { // name found
+      json.collaborators.list[j].name = obj[j].name;
+    } else { // name not found: set to empty
+      json.collaborators.list[j].name = "";
+    }
+  }
+  var context = {
+    projectShortname: json.shortname,
+    owner: json.owner,
+    projectInfo: JSON.stringify(json),
+    login: login
+  };
+  res.render('projectSettings', context);
 };
 
 /**
@@ -462,21 +463,21 @@ const settings = function(req, res) {
  * @param {Object} req Req object from express
  * @param {Object} res Res object from express
  */
-const newProject = function(req, res) {
+const newProject = function (req, res) {
   var login = (req.isAuthenticated()) ?
     ("<a href='/user/" + req.user.username + "'>" + req.user.username + "</a> (<a href='/logout'>Log Out</a>)")
     : ("<a href='/auth/github'>Log in with GitHub</a>");
   var loggedUser = "anonymous";
-  if(req.isAuthenticated()) {
+  if (req.isAuthenticated()) {
     loggedUser = req.user.username;
-  } else if(req.isTokenAuthenticated) {
+  } else if (req.isTokenAuthenticated) {
     loggedUser = req.tokenUsername;
   }
 
   // store return path in case of login
   req.session.returnTo = req.originalUrl;
 
-  if(loggedUser === "anonymous" ) {
+  if (loggedUser === "anonymous") {
     var context = {
       title: "BrainBox: New Project",
       functionality: "create a new project",
@@ -492,70 +493,66 @@ const newProject = function(req, res) {
   }
 };
 
-const insertMRInames = function(req, res, list) {
+const insertMRInames = function (req, res, list) {
   // insert MRI names, but only if they don't exist
-  for(var i=0; i<list.length; i++) {
-    var name=list[i].name;
-    var source=list[i].source;
+  for (var i = 0; i < list.length; i++) {
+    var name = list[i].name;
+    var source = list[i].source;
     var filename = url.parse(source).pathname.split("/").pop();
 
     // it there's no name, continue to the next mri
-    if(!name) { continue; }
+    if (!name) { continue; }
 
     // check if the mri entry already exists
-    (function(na, so, fi) { // without a closure, only the last name in the list is used and repeated
-      req.db.get('mri').findOne({source:so, backup:{$exists:0}})
-        .then(function (mri) {
-          var hash = crypto.createHash('md5').update(so)
-            .digest('hex');
+    (async function (na, so, fi) { // without a closure, only the last name in the list is used and repeated
+      let mri = await req.db.get('mri').findOne({ source: so, backup: { $exists: 0 } });
+      var hash = crypto.createHash('md5').update(so)
+        .digest('hex');
 
-          // if mri exists, and has no name, insert the name
-          if(!mri) {
-            mri = {
-              filename: fi,
-              source: so,
-              url: "/data/" + hash + "/",
-              included: (new Date()).toJSON(),
-              owner: req.user.username,
-              mri: {
-                brain: fi,
-                atlas: [
-                  {
-                    owner: req.user.username,
-                    created: (new Date()).toJSON(),
-                    modified: (new Date()).toJSON(),
-                    type: 'volume',
-                    filename: 'Atlas.nii.gz',
-                    labels: 'foreground.json'
-                  }
-                ]
+      // if mri exists, and has no name, insert the name
+      if (!mri) {
+        mri = {
+          filename: fi,
+          source: so,
+          url: "/data/" + hash + "/",
+          included: (new Date()).toJSON(),
+          owner: req.user.username,
+          mri: {
+            brain: fi,
+            atlas: [
+              {
+                owner: req.user.username,
+                created: (new Date()).toJSON(),
+                modified: (new Date()).toJSON(),
+                type: 'volume',
+                filename: 'Atlas.nii.gz',
+                labels: 'foreground.json'
               }
-            };
-          } else {
-            delete mri._id;
+            ]
           }
-          mri.modified=(new Date()).toJSON();
-          mri.modifiedBy = req.user.username;
+        };
+      } else {
+        delete mri._id;
+      }
+      mri.modified = (new Date()).toJSON();
+      mri.modifiedBy = req.user.username;
 
-          /* Use this if you want imported names to overwrite existing ones */
-          mri.name = na;
+      /* Use this if you want imported names to overwrite existing ones */
+      mri.name = na;
 
-          /* Use this if you want imported names to be used only if no previous name exists */
-          /*
-                if(!mri.name) {
-                    mri.name=na;
-                }
-                */
+      /* Use this if you want imported names to be used only if no previous name exists */
+      /*
+          if(!mri.name) {
+              mri.name=na;
+          }
+          */
 
-          // sanitise json
-          mri=JSON.parse(DOMPurify.sanitize(JSON.stringify(mri))); // sanitize works on strings, not objects
+      // sanitise json
+      mri = JSON.parse(DOMPurify.sanitize(JSON.stringify(mri))); // sanitize works on strings, not objects
 
-          // update and insert
-          req.db.get('mri').update({source:mri.source}, {$set:{backup:true}}, {multi:true})
-            .then(function () {
-              req.db.get('mri').insert(mri);
-            });
-        });
+      // update and insert
+      await req.db.get('mri').update({ source: mri.source }, { $set: { backup: true } }, { multi: true });
+      await req.db.get('mri').insert(mri);
     }(name, source, filename));
   }
 };
@@ -567,18 +564,18 @@ const insertMRInames = function(req, res, list) {
  * @param {Object} res Res object from express
  */
 // eslint-disable-next-line max-statements
-const post_project = function(req, res) {
+const post_project = async function (req, res) {
   var loggedUser = "anonymous";
-  if(req.isAuthenticated()) {
+  if (req.isAuthenticated()) {
     loggedUser = req.user.username;
   } else
-  if(req.isTokenAuthenticated) {
+  if (req.isTokenAuthenticated) {
     loggedUser = req.tokenUsername;
   }
 
   if (loggedUser === "anonymous") {
     console.log("ERROR not Authenticated");
-    res.status(403).json({error:"error", message:"User not authenticated"});
+    res.status(403).json({ error: "error", message: "User not authenticated" });
 
     return;
   }
@@ -588,67 +585,60 @@ const post_project = function(req, res) {
   let obj;
   try {
     obj = JSON.parse(clean);
-  } catch(err) {
+  } catch (err) {
     console.log("ERROR");
-    console.log({clean, obj});
+    console.log({ clean, obj });
     throw new Error(err);
   }
   var k;
 
-
-  isProjectObject(req, res, obj)
-    .then(function(obj) {
-      req.db.get('project').findOne({shortname:obj.shortname, backup:{$exists:false}})
-        // eslint-disable-next-line max-statements
-        .then(function (project) {
-          // update/insert project
-          if(project) {
-            // project exists, save update
-            if(checkAccess.toProject(project, loggedUser, "edit") == false ) {
-              console.log("User does not have edit rights");
-              res.status(403).json({error:"error", message:"User does not have edit rights"});
-
-              return;
-            }
-            console.log("updating...");
-            req.db.get('project').update({shortname:obj.shortname}, {$set:{backup:true}}, {multi:true})
-              .then(function () {
-                obj.modified=(new Date()).toJSON();
-                obj.modifiedBy = req.user.username;
-                req.db.get('project').insert(obj);
-
-                // insert MRI names if provided
-                console.log("insert mri names");
-                insertMRInames(req, res, obj.files.list);
-
-                // reformat file list
-                console.log("reformat file list");
-                for(k=0; k<obj.files.list.length; k++) { obj.files.list[k]=obj.files.list[k].source; }
-
-                console.log("success: true");
-                res.json({success:true, message:"Project settings updated"});
-              });
-          } else {
-            // new project, insert
-            console.log("inserting...");
-            req.db.get('project').insert(obj);
-
-            console.log("insert mri names");
-            insertMRInames(req, res, obj.files.list);
-
-            // reformat file list
-            console.log("reformat file list");
-            for(k=0; k<obj.files.list.length; k++) { obj.files.list[k]=obj.files.list[k].source; }
-
-            console.log("success: true");
-            res.json({success:true, message:"New project inserted"});
-          }
-        });
-    })
-    .catch(function(error) {
+  const object = await isProjectObject(req, res, obj);
+  const project = await req.db.get('project').findOne({ shortname: object.shortname, backup: { $exists: false } })
+    // eslint-disable-next-line max-statements
+    .catch(function (error) {
       console.log("ERROR", error);
-      res.status(300).json({"error":error});
+      res.status(300).json({ "error": error });
     });
+  // update/insert project
+  if (project) {
+    // project exists, save update
+    if (checkAccess.toProject(project, loggedUser, "edit") == false) {
+      console.log("User does not have edit rights");
+      res.status(403).json({ error: "error", message: "User does not have edit rights" });
+
+      return;
+    }
+    console.log("updating...");
+    await req.db.get('project').update({ shortname: object.shortname }, { $set: { backup: true } }, { multi: true });
+    object.modified = (new Date()).toJSON();
+    object.modifiedBy = req.user.username;
+    await req.db.get('project').insert(object);
+
+    // insert MRI names if provided
+    console.log("insert mri names");
+    await insertMRInames(req, res, object.files.list);
+
+    // reformat file list
+    console.log("reformat file list");
+    for (k = 0; k < object.files.list.length; k++) { object.files.list[k] = object.files.list[k].source; }
+
+    console.log("success: true");
+    res.json({ success: true, message: "Project settings updated" });
+  } else {
+    // new project, insert
+    console.log("inserting...");
+    await req.db.get('project').insert(obj);
+
+    console.log("insert mri names");
+    await insertMRInames(req, res, obj.files.list);
+
+    // reformat file list
+    console.log("reformat file list");
+    for (k = 0; k < obj.files.list.length; k++) { obj.files.list[k] = obj.files.list[k].source; }
+
+    console.log("success: true");
+    res.json({ success: true, message: "New project inserted" });
+  }
 };
 
 /**
@@ -657,78 +647,78 @@ const post_project = function(req, res) {
  * @param {Object} req Req object from express
  * @param {Object} res Res object from express
  */
-const delete_project = function(req, res) {
+// eslint-disable-next-line max-statements
+const delete_project = async function (req, res) {
   var shortname;
   var loggedUser = "anonymous";
-  if(req.isAuthenticated()) {
+  if (req.isAuthenticated()) {
     loggedUser = req.user.username;
   } else
-  if(req.isTokenAuthenticated) {
+  if (req.isTokenAuthenticated) {
     loggedUser = req.tokenUsername;
   }
 
   if (loggedUser == "anonymous") {
     console.log("The user is not logged in");
-    res.json({success:false, message:"User not authenticated"});
+    res.json({ success: false, message: "User not authenticated" });
 
     return;
   }
 
   shortname = req.params.projectName;
-  req.db.get('project').findOne({shortname: shortname, backup: {$exists: 0}})
-    .then(function(project) {
-      if(project) {
-        console.log(">> project does exist");
-        if(checkAccess.toProject(project, loggedUser, "remove") == true ) {
-          console.log(">> user does have remove rights");
-
-          var query = {},
-            update = {};
-          query["mri.annotations."+shortname] = {$exists:1};
-          query.backup = {$exists:0};
-          update.$unset = {};
-          update.$unset["mri.annotations."+shortname] = "";
-
-          Promise.all([
-            req.db.get('project').remove({_id:project._id, backup:{$exists:false}}),
-            req.db.get('mri').update(query, update, {multi: true}),
-            req.db.get('mri').update({"mri.atlas":{$elemMatch:{project:shortname}}}, {$pull:{"mri.atlas":{project:shortname}}}, {multi: true})
-          ])
-            .then(function () {
-              console.log(">> project and project-related annotations removed");
-              res.json({success:true, message:"Project deleted"});
-            })
-            .catch(function(err) {
-              console.log("ERROR: cannot remove project or project-related annotations");
-              res.json({success:false, message:"Unable to delete. Try again later"});
-            });
-        } else {
-          console.log("WARNING: user does not have remove rights");
-          res.json({success:false, message:"The user is not allowed to delete this project"});
-        }
-      } else {
-        console.log("WARNING: project does not exist");
-        res.json({success:false, message:"Unable to delete. Project does not exist in the database"});
-      }
-
-    })
-    .catch(function(err) {
+  const project = await req.db.get('project').findOne({ shortname: shortname, backup: { $exists: 0 } })
+    .catch(function (err) {
       console.log("ERROR: unable to query the db");
-      res.json({success:false, message:"Unable to delete. Try again later"});
+      res.json({ success: false, message: "Unable to delete. Try again later" });
     });
+
+
+  if (project) {
+    console.log(">> project does exist");
+    if (checkAccess.toProject(project, loggedUser, "remove") == true) {
+      console.log(">> user does have remove rights");
+
+      var query = {},
+        update = {};
+      query["mri.annotations." + shortname] = { $exists: 1 };
+      query.backup = { $exists: 0 };
+      update.$unset = {};
+      update.$unset["mri.annotations." + shortname] = "";
+
+      await Promise.all([
+        req.db.get('project').remove({ _id: project._id, backup: { $exists: false } }),
+        req.db.get('mri').update(query, update, { multi: true }),
+        req.db.get('mri').update({ "mri.atlas": { $elemMatch: { project: shortname } } }, { $pull: { "mri.atlas": { project: shortname } } }, { multi: true })
+      ])
+        .catch(function (err) {
+          console.log("ERROR: cannot remove project or project-related annotations");
+          res.json({ success: false, message: "Unable to delete. Try again later" });
+        });
+      console.log(">> project and project-related annotations removed");
+      res.json({ success: true, message: "Project deleted" });
+
+    } else {
+      console.log("WARNING: user does not have remove rights");
+      res.json({ success: false, message: "The user is not allowed to delete this project" });
+    }
+  } else {
+    console.log("WARNING: project does not exist");
+    res.json({ success: false, message: "Unable to delete. Project does not exist in the database" });
+  }
+
 };
 
 
-const projectController = function() {
-  this.validator = validator;
+const projectController = function () {
+  this.validator = validator;//
   this.api_projectAll = api_projectAll;
-  this.api_project = api_project;
-  this.api_projectFiles = api_projectFiles;
-  this.project = project;
-  this.settings = settings;
-  this.newProject = newProject;
-  this.post_project = post_project;
-  this.delete_project = delete_project;
+  this.api_project = api_project;//
+  this.api_projectFiles = api_projectFiles;//
+  this.project = project;//
+  this.settings = settings;//
+  this.newProject = newProject;//
+  this.post_project = post_project;//
+  this.delete_project = delete_project;//
 };
 
 module.exports = new projectController();
