@@ -55,50 +55,46 @@ const validator = function (req, res, next) {
 
 };
 
-const other_validations = function(req, res, next) {
+const other_validations = async function(req, res, next) {
 
   var token = req.body.token;
-  req.db.get("log").findOne({"token":token})
-    .then(function (obj) {
-      if(obj) {
-        // Check token expiry date
-        var now = new Date();
-        if(obj.expiryDate.getTime()-now.getTime() < req.tokenDuration) {
-          req.db.get('mri').findOne({source:req.body.url, backup: {$exists: false}})
-            .then(function (json) {
-              if (json && req.files.length > 0) {
-                req.atlasUpload = {
-                  mri: json,
-                  username: obj.username
-                };
-                next();
-              } else {
-                var err = [];
-                if (req.files.length === 0 || !req.files) { err.push({error:"there is no File"}); }
-                if (!json) { err.push({error:"Unkown URL"}); }
-                console.log("err", err);
-
-                return res.status(403).json(err)
-                  .end();
-              }
-            });
-        } else {
-          return res.status(403).send("ERROR: Token expired")
-            .end();
-        }
-      } else {
-        return res.status(403).send("ERROR: Cannot find token")
-          .end();
-      }
-    })
+  const obj = await req.db.get("log").findOne({"token":token})
     .catch(function (err) {
       console.log("ERROR:", err);
       res.status(403).send()
         .end();
     });
+  if(obj) {
+    // Check token expiry date
+    var now = new Date();
+    if(obj.expiryDate.getTime()-now.getTime() < req.tokenDuration) {
+      const json = await req.db.get('mri').findOne({source:req.body.url, backup: {$exists: false}});
+      if (json && req.files.length > 0) {
+        req.atlasUpload = {
+          mri: json,
+          username: obj.username
+        };
+        next();
+      } else {
+        var err = [];
+        if (req.files.length === 0 || !req.files) { err.push({error:"there is no File"}); }
+        if (!json) { err.push({error:"Unkown URL"}); }
+        console.log("err", err);
+
+        return res.status(403).json(err)
+          .end();
+      }
+    } else {
+      return res.status(403).send("ERROR: Token expired")
+        .end();
+    }
+  } else {
+    return res.status(403).send("ERROR: Cannot find token")
+      .end();
+  }
 };
 
-const upload = function(req, res) {
+const upload = async function(req, res) {
   var username = req.atlasUpload.username;
   var {url, atlasName, atlasProject, atlasLabelSet} = req.body;
   var {mri} = req.atlasUpload;
@@ -154,16 +150,21 @@ const upload = function(req, res) {
 
   // Check that the dimensions of the atlas are the same as its parent mri
   console.log("> load parent mri");
-  amri.loadMRI(path)
-    .then(function(atlas) {
-      console.log("atlas.dim: ", atlas.dim);
-      console.log("mri.dim: ", mri.dim);
+  const atlas = await amri.loadMRI(path)
+    .catch(function (err) {
+      console.log("ERROR: mri file is not valid: ", err);
 
-      /**
+      return res.status(400).json({error:"mri file is not valid: "+err})
+        .end();
+    });
+  console.log("atlas.dim: ", atlas.dim);
+  console.log("mri.dim: ", mri.dim);
+
+  /**
          * @todo How do we check for volume dimensions now?
          */
 
-      /*
+  /*
         // check volume dimensions
         if (atlas.dim[0] != mri.dim[0] ||
             atlas.dim[1] != mri.dim[1] ||
@@ -172,54 +173,45 @@ const upload = function(req, res) {
         }
         */
 
-      // create the atlas object
-      var date = new Date();
-      var atlasMetadata = {
-        name: atlasName,
-        project: atlasProject,
-        access: "edit",
-        created: date.toJSON(),
-        modified: date.toJSON(),
-        filename: filename, // automatically generated filename
-        originalname: files[0].originalname,
-        labels: atlasLabelSet,
-        owner: username,
-        type: "volume"
-      };
+  // create the atlas object
+  var date = new Date();
+  var atlasMetadata = {
+    name: atlasName,
+    project: atlasProject,
+    access: "edit",
+    created: date.toJSON(),
+    modified: date.toJSON(),
+    filename: filename, // automatically generated filename
+    originalname: files[0].originalname,
+    labels: atlasLabelSet,
+    owner: username,
+    type: "volume"
+  };
 
-      console.log("final volume annotation entry:");
-      console.log("atlasMetadata:", atlasMetadata);
+  console.log("final volume annotation entry:");
+  console.log("atlasMetadata:", atlasMetadata);
 
-      // remove previous atlases with the same atlasName and atlasProject
-      var i;
-      for(i=mri.mri.atlas.length-1; i>=0; i--) {
-        if(mri.mri.atlas[i].name === atlasName && mri.mri.atlas[i].project === atlasProject) {
-          mri.mri.atlas.splice(i, 1);
-        }
-      }
+  // remove previous atlases with the same atlasName and atlasProject
+  var i;
+  for(i=mri.mri.atlas.length-1; i>=0; i--) {
+    if(mri.mri.atlas[i].name === atlasName && mri.mri.atlas[i].project === atlasProject) {
+      mri.mri.atlas.splice(i, 1);
+    }
+  }
 
-      // update the database
-      mri.mri.atlas.push(atlasMetadata);
-      // mark previous version as backup
-      req.db.get('mri').update({source:req.body.url, backup:{$exists:false}}, {$set:{backup:true}}, {multi:true})
-        .then(function() {
-          // insert new version
-          req.db.get('mri').insert(mri);
-        });
+  // update the database
+  mri.mri.atlas.push(atlasMetadata);
+  // mark previous version as backup
+  await req.db.get('mri').update({source:req.body.url, backup:{$exists:false}}, {$set:{backup:true}}, {multi:true});
+  // insert new version
+  await req.db.get('mri').insert(mri);
 
-      // return the full mri object ???
-      return res.status(200).json(mri)
-        .end();
-    })
-    .catch(function (err) {
-      console.log("ERROR: mri file is not valid: ", err);
-
-      return res.status(400).json({error:"mri file is not valid: "+err})
-        .end();
-    });
+  // return the full mri object ???
+  return res.status(200).json(mri)
+    .end();
 };
 
-const token = function token(req, res) {
+const token = async function token(req, res) {
   if (req.isAuthenticated()) {
     var obj = {},
       a = Math.random().toString(36)
@@ -236,7 +228,7 @@ const token = function token(req, res) {
     // record the username
     obj.username = req.user.username;
     // store it in the database for the user
-    req.db.get("log").insert(obj);
+    await req.db.get("log").insert(obj);
 
     /*
             // schedule its removal or log them forever?
