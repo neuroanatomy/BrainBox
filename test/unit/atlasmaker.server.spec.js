@@ -1,3 +1,7 @@
+/* eslint-disable require-await */
+/* eslint-disable max-statements */
+/* eslint-disable no-shadow */
+/* eslint-disable no-unused-vars */
 const fs = require('fs');
 const path = require('path');
 const WebSocket = require('ws').Server;
@@ -161,7 +165,7 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
       const newPath = "./test/images/slice-bert-cor-50.jpg";
       const refPath = "./test/data/reference-images/slice-bert-cor-50.jpg";
       await fs.promises.mkdir(path.dirname(newPath), { recursive: true });
-      fs.writeFileSync(newPath, jpg.data);
+      await fs.promises.writeFile(newPath, jpg.data);
       const diff = U.compareImages(newPath, refPath);
       assert(diff < 10);
     });
@@ -176,7 +180,7 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
       });
 
       it('should return correct value if the mri path is valid and not being used', async function () {
-        let ws = new WebSocket({ port: 8081 });
+        const ws = new WebSocket({ port: 8081 });
         await AMS._connectNewUser({ ws: ws });
         const path = datadir + '001.mgz';
         await amri.loadMRI(path);
@@ -193,20 +197,18 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
         let cnt = 0;
         await AMS.displayUsers();
         for (var x = 0; x < AMS.US.length; x++) {
-          if (AMS.US[x])
-            cnt++;
+          if (AMS.US[x]) { cnt++; }
         }
         assert.strictEqual(cnt, 0);
       });
 
       it('should return the correct number of users if some users are connected', async function () {
-        let ws = new WebSocket({ port: 8081 });
+        const ws = new WebSocket({ port: 8081 });
         await AMS._connectNewUser({ ws: ws });
         await AMS.displayUsers();
         let cnt = 0;
         for (var x = 0; x < AMS.US.length; x++) {
-          if (AMS.US[x])
-            cnt++;
+          if (AMS.US[x]) { cnt++; }
         }
         await AMS._disconnectUser({ ws: ws });
         ws.close();
@@ -220,24 +222,22 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
         await AMS.displayBrains();
         let cnt = 0;
         for (var x = 0; x < AMS.Brains.length; x++) {
-          if (AMS.Brains[x])
-            cnt++;
+          if (AMS.Brains[x]) { cnt++; }
         }
         assert.strictEqual(cnt, 0);
       });
 
       it('should display the brains when there are some brains loaded', async function () {
-        let path = datadir + '001.mgz';
-        let brain = await AMS.getBrainAtPath(path);
+        const path = '/test_data/bert_brain.nii.gz';
+        const brain = await AMS.getBrainAtPath(path);
         await AMS.displayBrains();
         let cnt = 0;
         for (var x = 0; x < AMS.Brains.length; x++) {
-          if (AMS.Brains[x])
-            cnt++;
+          if (AMS.Brains[x]) { cnt++; }
         }
         await AMS.unloadMRI(path);
         assert.strictEqual(cnt, 1);
-      }).timeout(U.mediumTimeout);;
+      }).timeout(U.mediumTimeout);
     });
 
     describe('getBrainAtPath function() ', function () {
@@ -248,7 +248,7 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
       });
 
       it('should load the brain if the path is valid', function (done) {
-        const path = datadir + '001.mgz';
+        const path = '/test_data/bert_brain.nii.gz';
         AMS.getBrainAtPath(path).then((res) => {
           console.log(res);
           expect(res).to.not.eql(null);
@@ -273,12 +273,11 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
 
     describe('_connectNewUser() function ', function () {
       it('should connect the user when the web socket is passed', async function () {
-        let ws = new WebSocket({ port: 8081 });
+        const ws = new WebSocket({ port: 8081 });
         await AMS._connectNewUser({ ws: ws });
         let cnt = 0;
         for (var x = 0; x < AMS.US.length; x++) {
-          if (AMS.US[x])
-            cnt++;
+          if (AMS.US[x]) { cnt++; }
         }
         await AMS._disconnectUser({ ws: ws });
         ws.close();
@@ -287,13 +286,12 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
     });
     describe('removeUser() function ', function () {
       it('should remove the user with the provided websocket', async function () {
-        let ws = new WebSocket({ port: 8081 });
+        const ws = new WebSocket({ port: 8081 });
         await AMS._connectNewUser({ ws: ws });
         await AMS.removeUser(ws);
         let cnt = 0;
         for (var x = 0; x < AMS.US.length; x++) {
-          if (AMS.US[x])
-            cnt++;
+          if (AMS.US[x]) { cnt++; }
         }
         ws.close();
         assert.strictEqual(cnt, 0);
