@@ -1,9 +1,13 @@
+/* eslint-disable no-await-in-loop */
+/* eslint-disable no-invalid-this */
+/* eslint-disable prefer-destructuring */
+/* eslint-disable no-unused-vars */
 'use strict';
 
 const fs = require('fs');
 const chai = require('chai');
 var assert = chai.assert;
-const chaiHttp = require('chai-http')
+const chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 const U = require('../utils.js');
 
@@ -15,14 +19,15 @@ describe('TESTING THE /user ROUTE', function () {
       await chai.request(U.serverURL).get('/----1');
       let shouldContinue = true;
       while(shouldContinue) {
-        const res = await chai.request(U.serverURL).post('/mri/json').send({
-          url: U.localBertURL,
-          token: U.testToken + U.userFoo.nickname
-        });
+        const res = await chai.request(U.serverURL).post('/mri/json')
+          .send({
+            url: U.localBertURL,
+            token: U.testToken + U.userFoo.nickname
+          });
         const {body} = res;
         // console.log(body);
         shouldContinue = (body.success !== true);
-  
+
         await U.delay(U.shortTimeout);
       }
       await chai.request(U.serverURL).get('/----1_end');
@@ -53,7 +58,8 @@ describe('TESTING THE /user ROUTE', function () {
     });
 
     it('get("/user/json/foo/files") should return an object with an array of files', async function () {
-      const res = await chai.request(U.serverURL).get(`/user/json/${U.userFoo.nickname}/files`).query({start:0, length:100});
+      const res = await chai.request(U.serverURL).get(`/user/json/${U.userFoo.nickname}/files`)
+        .query({start:0, length:100});
       const {body} = res;
       assert.isObject(body);
       assert.equal(body.success, true);
@@ -61,7 +67,8 @@ describe('TESTING THE /user ROUTE', function () {
     });
 
     it('get("/user/json/foo/atlas") should return an object with an array of atlas', async function () {
-      const res = await chai.request(U.serverURL).get(`/user/json/${U.userFoo.nickname}/atlas`).query({start:0, length:100});
+      const res = await chai.request(U.serverURL).get(`/user/json/${U.userFoo.nickname}/atlas`)
+        .query({start:0, length:100});
       const {body} = res;
       assert.isObject(body);
       assert.equal(body.success, true);
@@ -69,7 +76,8 @@ describe('TESTING THE /user ROUTE', function () {
     });
 
     it('get("/user/json/foo/projects") should return an object with an array of projects', async function () {
-      const res = await chai.request(U.serverURL).get(`/user/json/${U.userFoo.nickname}/projects`).query({start:0, length:100});
+      const res = await chai.request(U.serverURL).get(`/user/json/${U.userFoo.nickname}/projects`)
+        .query({start:0, length:100});
       const {body} = res;
       assert.isObject(body);
       assert.equal(body.success, true);
@@ -93,9 +101,10 @@ describe('TESTING THE /user ROUTE', function () {
 
     it('Remove test MRI from db and disk', async function () {
       // remove the MRI
-      const res = await chai.request(U.serverURL).get('/mri/json').query({
-        url: U.localBertURL
-      });
+      const res = await chai.request(U.serverURL).get('/mri/json')
+        .query({
+          url: U.localBertURL
+        });
       const {body} = res;
       const dirPath = "./public" + body.url;
       await U.removeMRI({dirPath, srcURL: U.localBertURL});
