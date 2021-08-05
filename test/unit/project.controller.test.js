@@ -222,7 +222,7 @@ describe('Project Controller: ', function () {
                 send: resSpy
             };
             await projectController.api_projectFiles(req, res);
-            assert.strictEqual(resSpy.args.length, 0);
+            assert.strictEqual(resSpy.callCount, 1);
             sinon.restore();
         });
 
