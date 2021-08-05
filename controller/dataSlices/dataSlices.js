@@ -215,7 +215,7 @@ const getProjectFilesSlice = async (req, projShortname, start, length, namesFlag
   // query project
   let project;
   try {
-    project = await req.db.get('project').findOne({shortname:projShortname, backup:{$exists:0}}, "-_id");
+    project = await req.db.get('project').findOne({shortname:projShortname, backup:{$exists:0}});
   } catch (err) {
     throw new Error(err);
   }
@@ -235,7 +235,8 @@ const getProjectFilesSlice = async (req, projShortname, start, length, namesFlag
   }
 
   // query mri info for project files
-  const {list} = project.files;
+  let list;
+  if(project && project.files) { list = project.files.list; }
   const arr = [];
 
   start = Math.min(start, list.length);
