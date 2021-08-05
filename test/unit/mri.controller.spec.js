@@ -195,8 +195,8 @@ describe('MRI Controller: ', function () {
             assert.notStrictEqual(values[0][0].source, undefined);
             sinon.restore();
         });
-    
-        it('should throw an error when the URL is invalid', async function() {
+
+        it('should return the default entries in case of empty url', async function() {
             let req = {
                 db: db,
                 query: {
@@ -214,16 +214,45 @@ describe('MRI Controller: ', function () {
                 isTokenAuthenticated: false
             };
             let resSpy = sinon.spy();
+            let statusSpy = sinon.spy();
             let jsonSpy = sinon.spy();
             let res = {
                 send: resSpy,
-                status: sinon.stub().returns({ json: jsonSpy}),
+                status: sinon.stub().returns({ json: statusSpy}),
                 json: jsonSpy
             };
             await mriController.apiMriGet(req, res);
-            assert.strictEqual(resSpy.callCount, 0);
             assert.strictEqual(jsonSpy.callCount, 1);
-            assert.strictEqual(jsonSpy.args[0][0].length, 0);
+            sinon.restore();
+        });
+    
+        it('should throw an error when the URL is not in DB and downloads set to false', async function() {
+            let req = {
+                db: db,
+                query: {
+                    url: 'xyz',
+                    download: 'false',
+                    backups: 'true',
+                    page: 1
+                },
+                user: {
+                    username: ''
+                },
+                isAuthenticated: function() {
+                    return this.user.username ? true : false;
+                },
+                isTokenAuthenticated: false
+            };
+            let resSpy = sinon.spy();
+            let statusSpy = sinon.spy();
+            let jsonSpy = sinon.spy();
+            let res = {
+                send: resSpy,
+                status: sinon.stub().returns({ json: statusSpy}),
+                json: jsonSpy
+            };
+            await mriController.apiMriGet(req, res);
+            assert.strictEqual(statusSpy.callCount, 1);
             sinon.restore();
         });    
 
