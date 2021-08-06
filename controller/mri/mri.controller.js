@@ -253,7 +253,7 @@ const mri = function (req, res) {
         });
       } else {
         // If the json object exists, and has annotations, configure the access to them
-        if (!json.mri.atlas) {
+        if (json.mri && !json.mri.atlas) {
           json.mri.atlas = [];
         }
         let i, j, k;
@@ -483,7 +483,7 @@ const apiMriGet = function (req, res) {
       } else {
         // If the json object exists, and has annotations, configure the access to them
         console.log('check access rights');
-        if (!json.mri.atlas) {
+        if (json.mri && !json.mri.atlas) {
           json.mri.atlas = [];
         }
         let i, j;
