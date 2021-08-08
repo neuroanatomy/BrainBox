@@ -219,36 +219,13 @@ const upload = function(req, res) {
     });
 };
 
-const token = function token(req, res) {
-  if (req.isAuthenticated()) {
-    var obj = {},
-      a = Math.random().toString(36)
-        .slice(2),
-      b = Math.random().toString(36)
-        .slice(2),
-      now;
-    // token duration is set to 1 h in milliseconds
-    // generate a random token
-    obj.token = a + b;
-    // expiration date: now plus tokenDuration milliseconds
-    now = new Date();
-    obj.expiryDate = new Date(now.getTime() + req.tokenDuration);
-    // record the username
-    obj.username = req.user.username;
-    // store it in the database for the user
-    req.db.get("log").insert(obj);
+/** 'token' was used by the /mri/upload route, which is now
+ * replaced by /token.
+ * @deprecated since version 2.0
+ */
 
-    /*
-            // schedule its removal or log them forever?
-            setTimer(function () {
-                req.db.get("log").remove(obj);
-            }, req.tokenDuration);
-        */
-
-    res.json(obj);
-  } else {
-    res.redirect('/');
-  }
+const token = (req, res) => {
+  res.send("This route is deprecated. Please use /token instead");
 };
 
 const uploadController = function () {

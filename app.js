@@ -70,6 +70,7 @@ nwl.init({
   usersCollection: "user",
   projectsCollection: "project"
 });
+global.authTokenMiddleware = nwl.authTokenMiddleware;
 const db = app.db.mongoDB();
 
 //========================================================================================
@@ -147,51 +148,6 @@ atlasmakerServer.server.listen(8080, () => {
   }
   atlasmakerServer.initSocketConnection();
 });
-
-//========================================================================================
-// Token authentication
-//========================================================================================
-global.tokenAuthentication = function (req, res, next) {
-  tracer.log('>> Check token');
-  let token;
-  if(typeof req.params.token !== "undefined") {
-    token = req.params.token;
-  } else if(typeof req.query.token !== "undefined") {
-    token = req.query.token;
-  } else if(typeof req.body.token !== "undefined") {
-    token = req.body.token;
-  }
-
-  if (typeof token === "undefined") {
-    tracer.log('>> No token');
-
-    return next();
-  }
-  console.log('>> Token prrovided. Checking if good');
-
-
-  req.db.get('log').findOne({token})
-    .then( (obj) => {
-      if (obj) {
-        // Check token expiry date
-        const now = new Date();
-        if (now.getTime() - obj.expiryDate.getTime() < 0) {
-          tracer.log('>> Authenticated by token');
-          req.isTokenAuthenticated = true;
-          req.tokenUsername = obj.username;
-        } else {
-          tracer.log('>> Token expired');
-          req.isTokenAuthenticated = false;
-          req.tokenUsername = obj.username;
-        }
-      }
-      next();
-    })
-    .catch( (err) => {
-      tracer.log('ERROR:', err);
-      next();
-    });
-};
 
 //========================================================================================
 // Admin route
