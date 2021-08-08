@@ -70,7 +70,7 @@ const projectTest = {
           files: "view"
         },
         username: "anyone",
-        name: "Any BrainBox User"
+        name: "Any User"
       }
     ]
   },

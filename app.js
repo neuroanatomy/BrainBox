@@ -7,7 +7,7 @@
     Atlas Maker Server
     Roberto Toro, 25 July 2014
 */
-
+const nwl = require('neuroweblab');
 const fs = require('fs');
 const express = require('express');
 var compression = require('compression');
@@ -32,7 +32,7 @@ if (DOCKER_DB) {
 }
 
 /** @todo Handle the case when MongoDB is not installed */
-var db = monk(MONGO_DB);
+// var db = monk(MONGO_DB);
 var expressValidator = require('express-validator');
 
 /* jslint nomen: true */
@@ -50,12 +50,21 @@ if (DOCKER_DEVELOP === '1') {
     debug: true
   });
 
-    // Specify the folder to watch for file-changes.
+  // Specify the folder to watch for file-changes.
   hotServer.watch(__dirname);
   tracer.log(`Watching: ${__dirname}`);
 }
 
 const app = express();
+nwl.init({
+  app,
+  MONGO_DB,
+  dirname,
+  usernameField: "nickname",
+  usersCollection: "user",
+  projectsCollection: "project"
+});
+const db = app.db.mongoDB();
 
 //========================================================================================
 // Allow CORS
@@ -134,122 +143,6 @@ atlasmakerServer.server.listen(8080, () => {
 });
 
 //========================================================================================
-// Check that the 'anyone' user exists. Insert it otherwise
-//========================================================================================
-db.get('user').findOne({nickname: 'anyone'})
-  .then( (obj) => {
-    if (!obj) {
-      const anyone = {
-        name: 'Any BrainBox User',
-        nickname: 'anyone',
-        brainboxURL: '/user/anyone',
-        joined: (new Date()).toJSON()
-      };
-      tracer.log('WARNING: \'anyone\' user absent: inserting it');
-      db.get('user').insert(anyone);
-    } else {
-      tracer.log('\'anyone\' user correctly configured.');
-    }
-  });
-
-//========================================================================================
-// Passport: OAuth2 authentication
-//========================================================================================
-const session = require('express-session');
-const MongoStore = require('connect-mongo');
-const passport = require('passport');
-const GithubStrategy = require('passport-github').Strategy;
-
-passport.use(new GithubStrategy(
-  JSON.parse(fs.readFileSync(dirname + "/github-keys.json")),
-  function (accessToken, refreshToken, profile, done) { return done(null, profile); }
-));
-app.use(session({
-  secret: "a mi no me gusta la sémola",
-  resave: false,
-  saveUninitialized: false,
-  store: MongoStore.create({
-    mongoUrl: `mongodb://${MONGO_DB}`,
-    touchAfter: 24 * 3600 // time period in seconds
-  })
-}));
-app.use(passport.initialize());
-app.use(passport.session());
-// add custom serialization/deserialization here (get user from mongo?) null is for errors
-passport.serializeUser((user, done) => {
-  done(null, user);
-});
-passport.deserializeUser((user, done) => {
-  done(null, user);
-});
-// simple authentication middleware. Add to routes that need to be protected.
-const ensureAuthenticated = function(req, res, next) {
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  res.redirect('/');
-};
-app.get('/secure-route-example', ensureAuthenticated, function (req, res) { res.send("access granted"); });
-app.get('/logout', function (req, res) {
-  req.logout();
-  res.redirect(req.session.returnTo || '/');
-  delete req.session.returnTo;
-});
-app.get('/loggedIn', function (req, res) {
-  if (req.isAuthenticated()) {
-    res.send({loggedIn: true, username: req.user.username});
-  } else {
-    res.send({loggedIn: false});
-  }
-});
-
-const insertUser = function(user) {
-  // insert new user
-  const userObj = {
-    name: user.displayName,
-    nickname: user.username,
-    url: user._json.blog,
-    brainboxURL: "/user/" + user.username,
-    avatarURL: user._json.avatar_url,
-    joined: (new Date()).toJSON()
-  };
-  db.get('user').insert(userObj);
-};
-const updateUser = function(user) {
-  db.get('user').update(
-    {
-      nickname: user.username
-    }, {
-      $set: {
-        name: user.displayName,
-        url: user._json.blog,
-        avatarURL: user._json.avatar_url
-      }
-    }
-  );
-};
-const upsertUser = function(req, res) {
-  // Check if user is new
-  db.get('user').findOne({nickname: req.user.username}, '-_id')
-    .then( (json) => {
-      if (!json) {
-        insertUser(req.user);
-      } else {
-        updateUser(req.user);
-      }
-    });
-  res.redirect(req.session.returnTo || '/');
-  delete req.session.returnTo;
-};
-
-// GitHub Login process
-app.get('/auth/github', passport.authenticate('github'));
-app.get('/auth/github/callback',
-  passport.authenticate('github', {failureRedirect: '/'}),
-  upsertUser
-);
-
-//========================================================================================
 // Token authentication
 //========================================================================================
 global.tokenAuthentication = function (req, res, next) {
@@ -307,7 +200,7 @@ app.get('/', (req, res) => {
     ('<a href=\'/user/' + req.user.username + '\'>' + req.user.username + '</a> (<a href=\'/logout\'>Log Out</a>)') :
     ('<a href=\'/auth/github\'>Log in with GitHub</a>');
 
-    // store return path in case of login
+  // store return path in case of login
   req.session.returnTo = req.originalUrl;
 
   res.render('index', {
