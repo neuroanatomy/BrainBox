@@ -18,7 +18,6 @@ const tracer = require('tracer').console({format: '[{{file}}:{{line}}]  {{messag
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const mustacheExpress = require('mustache-express');
-const monk = require('monk');
 const Config = JSON.parse(fs.readFileSync('./cfg.json'));
 
 let MONGO_DB;
@@ -56,6 +55,13 @@ if (DOCKER_DEVELOP === '1') {
 }
 
 const app = express();
+
+/*
+Use the NeuroWebLab (NWL) module for authentication.
+NWL will also create the DB. In the future, a series
+of functions common to BrainBox and MicroDraw will be
+moved to NWL.
+*/
 nwl.init({
   app,
   MONGO_DB,
