@@ -481,7 +481,7 @@ const apiMriGet = async function (req, res) {
   }
 
   try {
-    myurl = new URL(myurl);
+    const tmp = new URL(myurl);
   } catch (err) {
     res.send('Invalid Url!');
 
