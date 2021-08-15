@@ -104,129 +104,132 @@ const isIterable = function (obj) {
 /* Download MRI file
 --------------------- */
 // @todo Change this function callback into a promise
-const downloadMRI = function (myurl, req, res, callback) {
+const downloadMRI = async function (myurl, req, res, callback) {
   console.log('downloadMRI');
   const hash = crypto
     .createHash('md5')
     .update(myurl)
     .digest('hex');
 
-  req.db.get('mri').findOne({ source: myurl, backup: { $exists: 0 } })
-    .then((mridb) => {
-      console.log('mridb:', mridb);
-      let filename;
-      if (!mridb || !mridb.filename) {
-        filename = url.parse(myurl).pathname.split('/').pop();
-      } else {
-        filename = mridb.filename;
-      }
-      let dest = req.dirname + '/public/data/' + hash + '/' + filename;
-      console.log('   source:', myurl);
-      console.log('     hash:', hash);
-      console.log(' filename:', filename);
-      console.log('     dest:', dest);
+  let mridb = await req.db.get('mri').findOne({ source: myurl, backup: { $exists: 0 } });
+  console.log('mridb:', mridb);
+  let filename;
+  if (!mridb || !mridb.filename) {
+    filename = url.parse(myurl).pathname.split('/').pop();
+  } else {
+    filename = mridb.filename;
+  }
+  let dest = req.dirname + '/public/data/' + hash + '/' + filename;
+  console.log('   source:', myurl);
+  console.log('     hash:', hash);
+  console.log(' filename:', filename);
+  console.log('     dest:', dest);
 
-      if (!fs.existsSync(req.dirname + '/public/data/' + hash)) {
-        fs.mkdirSync(req.dirname + '/public/data/' + hash, '0777');
-      }
-      let len, newDest, newFilename;
-      let cur = 0;
+  if (!fs.existsSync(req.dirname + '/public/data/' + hash)) {
+    fs.mkdirSync(req.dirname + '/public/data/' + hash, '0777');
+  }
+  let len, newDest, newFilename;
+  let cur = 0;
 
-      request({ uri: myurl, followAllRedirects: true, rejectUnauthorized: false })
-        .on('error', (err) => {
-          console.log('ERROR in downloadMRI', err);
-          callback({ error: err });
-        })
-        .on('response', (res) => {
-          const { href } = res.request.uri;
-          const contentDisp = res.headers['content-disposition'];
-          if (contentDisp && (/^attachment/).test(contentDisp)) {
-            newFilename = contentDisp.split('filename=')[1].split(';')[0].replace(/"/g, '');
-          } else {
-            newFilename = path.basename(url.parse(href).path);
-          }
-          console.log('filename:', newFilename);
-          const arr = dest.split('/');
-          arr.pop();
-          arr.push(newFilename);
-          newDest = arr.join('/');
-          console.log('new dest:', newDest);
-          len = parseInt(res.headers['content-length'], 10);
-          console.log('file length:', len);
-        })
-        .on('data', (chunk) => {
-          cur += chunk.length;
-          console.log('downloaded:', cur, '/', len, newFilename);
-          downloadQueue[myurl].cur = cur;
-          downloadQueue[myurl].len = len;
-        })
-        .pipe(fs.createWriteStream(dest))
-        .on('close', () => {
-          console.log('new:', newFilename, newDest);
+  let mriObj = new Promise(async (resolve, reject) => {
+    request({ uri: myurl, followAllRedirects: true, rejectUnauthorized: false })
+      .on('error', (err) => {
+        console.log('ERROR in downloadMRI', err);
+        // eslint-disable-next-line prefer-promise-reject-errors
+        reject({ error: err });
+      })
+      .on('response', (res) => {
+        const { href } = res.request.uri;
+        const contentDisp = res.headers['content-disposition'];
+        if (contentDisp && (/^attachment/).test(contentDisp)) {
+          newFilename = contentDisp.split('filename=')[1].split(';')[0].replace(/"/g, '');
+        } else {
+          newFilename = path.basename(url.parse(href).path);
+        }
+        console.log('filename:', newFilename);
+        const arr = dest.split('/');
+        arr.pop();
+        arr.push(newFilename);
+        newDest = arr.join('/');
+        console.log('new dest:', newDest);
+        len = parseInt(res.headers['content-length'], 10);
+        console.log('file length:', len);
+      })
+      .on('data', (chunk) => {
+        cur += chunk.length;
+        console.log('downloaded:', cur, '/', len, newFilename);
+        downloadQueue[myurl].cur = cur;
+        downloadQueue[myurl].len = len;
+      })
+      .pipe(fs.createWriteStream(dest))
+      .on('close', () => {
+        console.log('new:', newFilename, newDest);
+        fs.renameSync(dest, newDest);
+        filename = newFilename;
+        dest = newDest;
 
-          fs.renameSync(dest, newDest);
-          filename = newFilename;
-          dest = newDest;
+        // NOTE: getBrainAtPath has to be called with a client-side path like "/data/[md5hash]/..."
+        atlasmakerServer.getBrainAtPath('/data/' + hash + '/' + filename)
+          .then((mri) => {
+            // Create json file for new dataset
+            let ip = "";
+            if (typeof req.headers !== "undefined" && typeof req.headers['x-forwarded-for'] !== "undefined") {
+              ip = req.headers['x-forwarded-for'];
+            } else if (typeof req.connection !== "undefined" && req.connection.remoteAddress !== "undefined") {
+              ip = req.connection.remoteAddress;
+            } else if (typeof req.socket !== "undefined" && req.socket.remoteAddress !== "undefined") {
+              ip = req.socket.remoteAddress;
+            } else if (typeof req.connection !== "undefined" && typeof req.connection.socket !== "undefined" && req.connection.socket.remoteAddress !== "undefined") {
+              ip = req.connection.socket.remoteAddress;
+            }
 
-          // NOTE: getBrainAtPath has to be called with a client-side path like "/data/[md5hash]/..."
-          atlasmakerServer.getBrainAtPath('/data/' + hash + '/' + filename)
-            .then((mri) => {
-              // Create json file for new dataset
-              let ip = "";
-              if (typeof req.headers['x-forwarded-for'] !== "undefined") {
-                ip = req.headers['x-forwarded-for'];
-              } else if (req.connection.remoteAddress !== "undefined") {
-                ip = req.connection.remoteAddress;
-              } else if (req.socket.remoteAddress !== "undefined") {
-                ip = req.socket.remoteAddress;
-              } else if (req.connection.socket.remoteAddress !== "undefined") {
-                ip = req.connection.socket.remoteAddress;
+            let username = ip;
+            if (req.isAuthenticated()) {
+              username = req.user.username;
+            } else if (req.isTokenAuthenticated) {
+              username = req.tokenUsername;
+            }
+
+            const json = {
+              filename,
+              success: true,
+              source: myurl,
+              url: '/data/' + hash + '/',
+              included: (new Date()).toJSON(),
+              dim: mri.dim,
+              pixdim: mri.pixdim,
+              voxel2world: mri.v2w,
+              worldOrigin: mri.wori,
+              owner: username,
+              name: "",
+              modified: (new Date()).toJSON(),
+              modifiedBy: username,
+              mri: {
+                brain: filename,
+                atlas: [
+                  {
+                    created: (new Date()).toJSON(),
+                    modified: (new Date()).toJSON(),
+                    access: 'edit',
+                    type: 'volume',
+                    name: 'Default',
+                    filename: 'Atlas.nii.gz',
+                    labels: 'foreground.json'
+                  }
+                ]
               }
+            };
+            resolve(json);
+          })
+          .catch((err) => {
+            console.log('ERROR Cannot get brain at path /data/' + hash + '/' + filename + ': ', err);
+            // eslint-disable-next-line prefer-promise-reject-errors
+            reject({ error: 'Can\'t get brain', err });
+          });
+      });
+  });
 
-              let username = ip;
-              if (req.isAuthenticated()) {
-                username = req.user.username;
-              } else if (req.isTokenAuthenticated) {
-                username = req.tokenUsername;
-              }
-
-              const json = {
-                filename,
-                success: true,
-                source: myurl,
-                url: '/data/' + hash + '/',
-                included: (new Date()).toJSON(),
-                dim: mri.dim,
-                pixdim: mri.pixdim,
-                voxel2world: mri.v2w,
-                worldOrigin: mri.wori,
-                owner: username,
-                name: "",
-                modified: (new Date()).toJSON(),
-                modifiedBy: username,
-                mri: {
-                  brain: filename,
-                  atlas: [
-                    {
-                      created: (new Date()).toJSON(),
-                      modified: (new Date()).toJSON(),
-                      access: 'edit',
-                      type: 'volume',
-                      name: 'Default',
-                      filename: 'Atlas.nii.gz',
-                      labels: 'foreground.json'
-                    }
-                  ]
-                }
-              };
-              callback(json);
-            })
-            .catch((err) => {
-              console.log('ERROR Cannot get brain at path /data/' + hash + '/' + filename + ': ', err);
-              callback({ error: 'Can\'t get brain', err });
-            });
-        });
-    });
+  return mriObj;
 };
 // eslint-disable-next-line func-style
 const mri = async function (req, res) {
@@ -332,6 +335,16 @@ const apiMriPost = async function (req, res) {
   } else if (typeof req.query.url !== "undefined") {
     myurl = req.query.url;
   }
+
+  try {
+    let myUrl = new URL(myurl);
+  } catch(err) {
+    res.send('Invalid URL!');
+
+    return;
+  }
+
+
   myurl = removeVariablesFromURL(myurl);
   console.log("url:", myurl);
 
@@ -402,20 +415,18 @@ const apiMriPost = async function (req, res) {
     } else {
       console.log('Start download:');
       downloadQueue[myurl] = { success: 'downloading', cur: 0, len: 1 };
-      downloadMRI(myurl, req, res, (obj) => {
-        console.log("downloadMRI obj:", obj);
-        if (typeof obj.error === "undefined") {
-          console.log('Download succeeded. Insert in DB, remove from queue');
-          obj.success = true;
-          req.db.get('mri').insert(obj);
-          // downloadQueue[myurl] = obj;
-          delete downloadQueue[myurl];
-        } else {
-          console.log('Download failed:', obj);
-          downloadQueue[myurl] = { success: false, error: `${JSON.stringify(obj.error)}` };
-        }
-      });
-
+      const obj = await downloadMRI(myurl, req, res);
+      console.log("downloadMRI obj:", obj);
+      if (typeof obj.error === "undefined") {
+        console.log('Download succeeded. Insert in DB, remove from queue');
+        obj.success = true;
+        await req.db.get('mri').insert(obj);
+        // downloadQueue[myurl] = obj;
+        delete downloadQueue[myurl];
+      } else {
+        console.log('Download failed:', obj);
+        downloadQueue[myurl] = { success: false, error: `${JSON.stringify(obj.error)}` };
+      }
       res.json(downloadQueue[myurl]);
     }
   } else {
@@ -466,6 +477,14 @@ const apiMriGet = async function (req, res) {
 
     const values = await dataSlices.getFilesSlice(req, page * nItemsPerPage, nItemsPerPage);
     res.json(values);
+
+    return;
+  }
+
+  try {
+    myurl = new URL(myurl);
+  } catch (err) {
+    res.send('Invalid Url!');
 
     return;
   }
@@ -571,7 +590,7 @@ const reset = async function reset(req, res) {
     });
   console.log(mridb);
   let filename;
-  if(mridb) { filename = mridb.filename; }
+  if (mridb) { filename = mridb.filename; }
   const mrires = await atlasmakerServer.getBrainAtPath('/data/' + hash + '/' + filename)
     .catch((err) => {
       console.log('ERROR:', err);

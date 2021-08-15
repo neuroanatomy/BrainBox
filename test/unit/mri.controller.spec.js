@@ -1,9 +1,11 @@
 var assert = require("assert");
 const mriController = require('../../controller/mri/mri.controller');
+const atlasMakerServer = require('../../controller/atlasmakerServer/atlasmakerServer');
 const monk = require('monk');
 require('mocha-sinon');
 const sinon = require('sinon');
 var db = monk('localhost:27017/brainbox');
+const U = require('../utils');
 
 describe('MRI Controller: ', function () {
     
@@ -129,7 +131,7 @@ describe('MRI Controller: ', function () {
             let req = {
                 db: db,
                 query: {
-                    url: 'https://brainbox.pasteur.fr/mri?url=https://s3.amazonaws.com/fcp-indi/data/Projects/ABIDE_Initiative/Outputs/freesurfer/5.1/CMU_a_0050642/mri/T1.mgz'
+                    url: 'https://s3.amazonaws.com/fcp-indi/data/Projects/ABIDE_Initiative/Outputs/freesurfer/5.1/CMU_a_0050642/mri/T1.mgz'
                 },
                 dirname: __dirname.split('/test')[0],
                 headers: {},
@@ -166,7 +168,7 @@ describe('MRI Controller: ', function () {
             let req = {
                 db: db,
                 query: {
-                    url: 'https://brainbox.pasteur.fr/mri?url=https://s3.amazonaws.com/fcp-indi/data/Projects/ABIDE_Initiative/Outputs/freesurfer/5.1/CMU_a_0050642/mri/T1.mgz',
+                    url: 'https://s3.amazonaws.com/fcp-indi/data/Projects/ABIDE_Initiative/Outputs/freesurfer/5.1/CMU_a_0050642/mri/T1.mgz',
                     download: 'true',
                     backups: 'true',
                     page: 1
@@ -196,7 +198,7 @@ describe('MRI Controller: ', function () {
             sinon.restore();
         });
 
-        it('should return the default entries in case of empty url', async function() {
+        it('should return a paginated list of files if url is empty', async function() {
             let req = {
                 db: db,
                 query: {
@@ -225,12 +227,45 @@ describe('MRI Controller: ', function () {
             assert.strictEqual(jsonSpy.callCount, 1);
             sinon.restore();
         });
+
+        it('should throw an error when the url is invalid', async function() {
+            let req = {
+                db: db,
+                query: {
+                    url: 'inValidUrl',
+                    download: 'true',
+                    backups: 'true',
+                    page: 1
+                },
+                user: {
+                    username: ''
+                },
+                isAuthenticated: function() {
+                    return this.user.username ? true : false;
+                },
+                isTokenAuthenticated: false
+            };
+            let resSpy = sinon.spy();
+            let statusSpy = sinon.spy();
+            let jsonSpy = sinon.spy();
+            let res = {
+                send: resSpy,
+                status: sinon.stub().returns({ json: statusSpy }),
+                json: jsonSpy
+            };
+            await mriController.apiMriGet(req, res);
+            assert.strictEqual(jsonSpy.callCount, 0);
+            assert.strictEqual(statusSpy.callCount, 0);
+            assert.strictEqual(resSpy.callCount, 1);
+            assert.strictEqual(resSpy.args[0][0], 'Invalid Url!');
+            sinon.restore();
+        });
     
         it('should throw an error when the URL is not in DB and downloads set to false', async function() {
             let req = {
                 db: db,
                 query: {
-                    url: 'xyz',
+                    url: 'https://s3.amazonaws.com/fcp-indi/data/1234assccdf',
                     download: 'false',
                     backups: 'true',
                     page: 1
@@ -287,15 +322,23 @@ describe('MRI Controller: ', function () {
     });
     
     describe('apiMriPost function() ', function() {
+
+        after(function(done) {
+            db.get('mri').remove({ filename: 'T1.mgz', source: 'https://s3.amazonaws.com/fcp-indi/data/Projects/ABIDE_Initiative/Outputs/freesurfer/5.1/CMU_a_0050642/mri/T1.mgz'});
+            done();
+        });
         it('should work correctly and make the right calls when input is correct', async function() {
             let req = {
                 db: db,
                 body: {},
                 query: {
-                    url: 'https://brainbox.pasteur.fr/mri?url=https://s3.amazonaws.com/fcp-indi/data/Projects/ABIDE_Initiative/Outputs/freesurfer/5.1/CMU_a_0050642/mri/T1.mgz',
+                    url: 'https://s3.amazonaws.com/fcp-indi/data/Projects/ABIDE_Initiative/Outputs/freesurfer/5.1/CMU_a_0050642/mri/T1.mgz',
                 },
                 user: {
                     username: ''
+                },
+                headers: {
+                    'x-forwarded-for' : 'anyone'
                 },
                 dirname: __dirname.split('/test')[0],
                 isAuthenticated: function() {
@@ -303,6 +346,7 @@ describe('MRI Controller: ', function () {
                 },
                 isTokenAuthenticated: false
             };
+            console.log(req.dirname);
             let resSpy = sinon.spy();
             let jsonSpy = sinon.spy();
             let res = {
@@ -310,19 +354,21 @@ describe('MRI Controller: ', function () {
                 status: sinon.stub().returns({ json: jsonSpy}),
                 json: jsonSpy
             };
+            atlasMakerServer.dataDirectory = __dirname.split('/test')[0] + '/public';
             await mriController.apiMriPost(req, res);
+            atlasMakerServer.dataDirectory = '';
             assert.strictEqual(resSpy.callCount, 0);
             assert.strictEqual(jsonSpy.callCount, 1);
-            assert.notStrictEqual(jsonSpy.args, [[{ success: 'downloading', cur: 0, len: 1 }]]);
+            assert.strictEqual(jsonSpy.args[0][0], undefined);
             sinon.restore();
-        });
+        }).timeout(U.longTimeout);
     
         it('should throw an error when input is incorrect', async function() {
             let req = {
                 db: db,
                 body: {},
                 query: {
-                    url: ''
+                    url: 'invalidUrl'
                 },
                 user: {
                 },
@@ -341,7 +387,9 @@ describe('MRI Controller: ', function () {
                 json: jsonSpy
             };
             await mriController.apiMriPost(req, res);
-            assert.strictEqual(jsonSpy.callCount, 1);
+            assert.strictEqual(resSpy.callCount, 1);
+            assert.strictEqual(resSpy.args[0][0], 'Invalid URL!');
+            assert.strictEqual(jsonSpy.callCount, 0);
             assert.strictEqual(statusSpy.callCount, 0);
             sinon.restore();
         });
