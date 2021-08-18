@@ -22,6 +22,7 @@ const url = require('url');
 const fs = require('fs');
 const request = require('request');
 const path = require('path');
+const sanitize = require("sanitize-filename");
 const atlasmakerServer = require('../atlasmakerServer/atlasmakerServer');
 const checkAccess = require('../checkAccess/checkAccess.js');
 const dataSlices = require('../dataSlices/dataSlices.js');
@@ -376,7 +377,7 @@ const apiMriPost = async function (req, res) {
     } else {
       // If the json object exists, but there's no file, download
       const filename = json.filename || url.parse(myurl).pathname.split('/').pop();
-      const filepath = req.dirname + '/public/data/' + hash + '/' + filename;
+      const filepath = req.dirname + '/public/data/' + hash + '/' + sanitize(filename);
       if (fs.existsSync(filepath) === false) {
         console.log('No MRI file in server: download');
         doDownload = true;

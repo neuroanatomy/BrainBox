@@ -57,6 +57,7 @@
     "passport-github": "^1.1.0",
     "passport-local": "^1.0.0",
     "request": "^2.88.2",
+    "sanitize-filename": "^1.6.3",
     "serve-favicon": "~2.4.5",
     "sinon": "^11.1.1",
     "struct": "0.0.12",
