@@ -1,4 +1,6 @@
+/* eslint-disable prefer-exponentiation-operator */
 var chai = require("chai");
+// eslint-disable-next-line prefer-destructuring
 var assert = chai.assert;
 const monk = require('monk');
 const db = monk('localhost:27017/brainbox');
