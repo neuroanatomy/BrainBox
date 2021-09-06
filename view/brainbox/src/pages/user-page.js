@@ -10,25 +10,11 @@ import '../style/style.css';
 import '../style/ui.css';
 import '../style/user-style.css';
 
-var cursorFiles = 0;
-var cursorAtlas = 0;
 var cursorProjects = 0;
 
 userInfo = JSON.parse(userInfo);
-userInfo.MRIFiles = [];
-userInfo.atlasFiles = [];
 userInfo.projects = [];
 
-// switch tabs
-$("a.tab").click(function() {
-  $("a.tab").removeClass("selected");
-  $(this).addClass("selected");
-  $(".tabContent").hide();
-  selectTab($(this).attr('value'));
-});
-
-queryFiles();
-queryAtlas();
 queryProjects();
 
 $("#addProject").click(function() { location="/project/new"; });
@@ -37,83 +23,9 @@ $("#settings").click(function() {
   if(pathname.slice(-1)=="/") { location=pathname+"settings"; } else { location=pathname+"/settings"; }
 });
 
-selectTab(tab);
+$(".tab:eq(0)").addClass("selected");
+$("#projects").show();
 
-function selectTab(tab) {
-  $(".tab").removeClass("selected");
-  switch(tab) {
-  case "mri":
-    $(".tab:eq(0)").addClass("selected");
-    $("#files").show();
-    break;
-  case "atlas":
-    $(".tab:eq(1)").addClass("selected");
-    $("#atlasFiles").show();
-    break;
-  case "projects":
-    $(".tab:eq(2)").addClass("selected");
-    $("#projects").show();
-    break;
-  }
-}
-function queryFiles() {
-  $.getJSON(`/user/json/${nickname}/files`, {start:cursorFiles, length:100})
-    .then(function(res) {
-      if(res.success && res.list.length > 0) {
-        appendFiles(res.list);
-        cursorFiles += 100;
-        queryFiles();
-      }
-    });
-}
-function appendFiles(list) {
-  userInfo.MRIFiles.push.apply(userInfo.MRIFiles, list);
-  for(var i=0; i<list.length; i++) {
-    $('#files tbody').append([
-      '<tr><td><a href="/mri?url=',
-      list[i].url,
-      '">',
-      (list[i].name?list[i].name:list[i].url),
-      '</a></td><td>',
-      list[i].volDimensions,
-      '</td><td>',
-      list[i].included,
-      '</td></tr>'
-    ].join(""));
-  }
-  $("#numMRI").text(userInfo.MRIFiles.length);
-}
-function queryAtlas(list) {
-  $.getJSON(`/user/json/${nickname}/atlas`, {start:userInfo.atlasFiles.length, length:100})
-    .then(function(res) {
-      if(res.success && res.list.length > 0) {
-        appendAtlas(res.list);
-        cursorAtlas += 100;
-        queryAtlas();
-      }
-    });
-}
-function appendAtlas(list) {
-  userInfo.atlasFiles.push.apply(userInfo.atlasFiles, list);
-  for(var i=0; i<list.length; i++) {
-    $('#atlasFiles tbody').append([
-      '<tr><td><a href="/mri?url=',
-      list[i].url,
-      '">',
-      (list[i].parentName?list[i].parentName:list[i].url),
-      '</a></td><td class="noEmpty">',
-      list[i].name,
-      '</td><td><a href="',
-      list[i].projectURL,
-      '" class="noEmpty">',
-      list[i].project,
-      '</a></td><td>',
-      list[i].modified,
-      '</td></tr>'
-    ].join(""));
-  }
-  $("#numAtlas").text(userInfo.atlasFiles.length);
-}
 function queryProjects() {
   $.getJSON(`/user/json/${nickname}/projects`, {start:userInfo.projects.length, length:100})
     .then(function(res) {
