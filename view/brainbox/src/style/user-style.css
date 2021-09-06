@@ -11,23 +11,24 @@
 td {
     word-break: break-word;
 }
-#files, #atlasFiles, #projects {
+#projects {
     color:white;
     text-align:left;
     width:100%;
     border-collapse:collapse;
 }
-#files td, #atlasFiles td, #projects td,
-#files th, #atlasFiles th, #projects th {
+#projects td,
+#projects th {
     padding:0px 4px;
 }
-#files, #atlasFiles, #projects,
-#files th, #atlasFiles th, #projects th {
+#projects,
+#projects th {
     border-bottom:thin solid white;
 }
-#files a, #atlasFiles a, #projects a {
+#projects a {
     text-decoration:none;
 }
+
 
 /************************* link to project settings  ********************/
 /* when hovering over project name */
