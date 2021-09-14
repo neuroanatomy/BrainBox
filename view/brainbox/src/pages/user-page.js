@@ -1,43 +1,23 @@
-import $ from 'jquery';
+/* globals userInfo, nickname */
+
 import 'jquery-ui/themes/base/core.css';
 import 'jquery-ui/themes/base/theme.css';
 import 'jquery-ui/themes/base/autocomplete.css';
 import 'jquery-ui/ui/core';
 import 'jquery-ui/ui/widgets/autocomplete';
-import * as tw from '../twoWayBinding.js';
 
 import '../style/style.css';
 import '../style/ui.css';
 import '../style/user-style.css';
 
+import $ from 'jquery';
+// import * as tw from '../twoWayBinding.js';
+
+// eslint-disable-next-line no-unused-vars
 var cursorProjects = 0;
 
-userInfo = JSON.parse(userInfo);
-userInfo.projects = [];
-
-queryProjects();
-
-$("#addProject").click(function() { location="/project/new"; });
-$("#settings").click(function() {
-  var pathname=location.pathname;
-  if(pathname.slice(-1)=="/") { location=pathname+"settings"; } else { location=pathname+"/settings"; }
-});
-
-$(".tab:eq(0)").addClass("selected");
-$("#projects").show();
-
-function queryProjects() {
-  $.getJSON(`/user/json/${nickname}/projects`, {start:userInfo.projects.length, length:100})
-    .then(function(res) {
-      if(res.success & res.list.length > 0) {
-        appendProjects(res.list);
-        cursorProjects += 100;
-        queryProjects();
-      }
-    });
-}
-function appendProjects(list) {
-  userInfo.projects.push.apply(userInfo.projects, list);
+const appendProjects = (list) => {
+  userInfo.projects.push(...list);
   for(var i=0; i<list.length; i++) {
     $('#projects tbody').append([
       '<tr><td><div style="position:relative"><a style="margin-left:15px" class="projectName" href="',
@@ -60,4 +40,30 @@ function appendProjects(list) {
     ].join(""));
   }
   $("#numProjects").text(userInfo.projects.length);
-}
+};
+
+const queryProjects = () => {
+  $.getJSON(`/user/json/${nickname}/projects`, {start:userInfo.projects.length, length:100})
+    .then(function(res) {
+      if(res.success & res.list.length > 0) {
+        appendProjects(res.list);
+        cursorProjects += 100;
+        queryProjects();
+      }
+    });
+};
+
+// eslint-disable-next-line no-global-assign, no-native-reassign
+userInfo = JSON.parse(userInfo);
+userInfo.projects = [];
+
+$("#addProject").click(function() { location="/project/new"; });
+$("#settings").click(function() {
+  var {pathname}=location;
+  if(pathname.slice(-1)==="/") { location=pathname+"settings"; } else { location=pathname+"/settings"; }
+});
+
+queryProjects();
+
+$(".tab:eq(0)").addClass("selected");
+$("#projects").show();
