@@ -53,8 +53,6 @@
                 <h1>{{username}}</h1>
                 <h2>{{nickname}}</h2>
                 <p>{{joined}}</p>
-                <p><span id="numMRI"></span> MRI Files</p>
-                <p><span id="numAtlas"></span> Atlas Files</p>
                 <p><span id="numProjects"></span> Projects</p>
             </div>
             <!-- end of #userDescription -->
@@ -62,40 +60,12 @@
             <div id="userTable">
                 <!-- Tab heads -->
                 <div>
-                    <a class="tab" value="mri">MRI Files</a>
-                    <a class="tab" value="atlas">Atlas Files</a>
                     <a class="tab" value="projects">Projects</a>
                 </div>
         
                 <!-- Tab contents -->
                 <div style="width:calc(100% - 40px);min-height:400px;background:#333;padding:20px">
         
-                    <!-- Tab Content 1: MRI Files -->
-                    <table id="files" class="tabContent" style="padding:10px;display:none">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Volume Dimensions</th>
-                                <th>Included</th>
-                            <tr>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
-            
-                    <!-- Tab Content 2: Atlas Files -->
-                    <table id="atlasFiles" class="tabContent" style="padding:10px;display:none">
-                        <thead>
-                            <tr>
-                                <th>Parent MRI</th>
-                                <th>Name</th>
-                                <th>Project</th>
-                                <th>Last modified</th>
-                            <tr>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
             
                     <!-- Tab Content 3: Projects -->
                     <table id="projects" class="tabContent" style="padding:10px;display:none">
