@@ -1,12 +1,3 @@
-public/lib/*
-public/js/*
-test/*
-view/atlasmaker/*
-view/brainbox/dist/*
-view/brainbox/src/img/*
-view/brainbox/src/style/*
-view/brainbox/src/tools/*
-view/brainbox/src/brainbox-intro.js
-view/brainbox/src/brainbox.js
-view/brainbox/src/twoWayBinding.js
-
+/public/lib/
+/public/js/
+dist/
