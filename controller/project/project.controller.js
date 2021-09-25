@@ -64,7 +64,7 @@ const isProjectObject = function (req, res, object) {
   var goodCollaborators = false;
 
   // eslint-disable-next-line max-statements
-  var pr = new Promise(async function (resolve, reject) {
+  var pr = new Promise(function (resolve, reject) {
     var arr, flag, i, k;
     var allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,_- '–:;".split("");
     var allowedAlphanumericHyphen = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-".split("");
@@ -183,42 +183,29 @@ const isProjectObject = function (req, res, object) {
     //-----------------------
 
     arr = [];
-    arr.push(new Promise(async function(resolve, reject) {
-      const obj = await req.db.get('user').findOne({ nickname: object.owner })
-        .catch((err) => {
-          if(err) { reject(err); }
-        });
-      resolve(obj);
-    }));
+    arr.push(req.db.get('user').findOne({ nickname: object.owner }));
     for (i in object.collaborators.list) {
-      // arr.push(req.db.get('user').findOne({ nickname: object.collaborators.list[i].userID }));
-      // eslint-disable-next-line no-loop-func
-      arr.push(new Promise(async function(resolve, reject) {
-        const obj = await req.db.get('user').findOne({ nickname: object.collaborators.list[i].userID })
-          .catch((err) => {
-            if(err) { reject(err); }
-          });
-        resolve(obj);
-      }));
+      arr.push(req.db.get('user').findOne({ nickname: object.collaborators.list[i].userID }));
     }
-    const val = await Promise.all(arr);
-    var i,
-      notFound = false;
-    for (i = 0; i < val.length; i++) {
-      if (val[i] === null) {
-        notFound = true;
-        break;
+    Promise.all(arr).then(function (val) {
+      var i,
+        notFound = false;
+      for (i = 0; i < val.length; i++) {
+        if (val[i] === null) {
+          notFound = true;
+          break;
+        }
       }
-    }
-    if (notFound === true) {
-      reject({ success: false, error: "Users are invalid, one or more do not exist" });
+      if (notFound === true) {
+        reject({ success: false, error: "Users are invalid, one or more do not exist" });
 
-      return;
-    }
+        return;
+      }
 
-    // All checks are successful, resolve the promisse
-    // console.log({success:true,message:"All checks ok. Project object looks valid"});
-    resolve(object);
+      // All checks are successful, resolve the promisse
+      // console.log({success:true,message:"All checks ok. Project object looks valid"});
+      resolve(object);
+    });
   });
 
   return pr;
@@ -245,7 +232,7 @@ const project = async function (req, res) {
   // store return path in case of login
   req.session.returnTo = req.originalUrl;
 
-  const json = await req.db.get('project').findOne({ shortname: req.params.projectName, backup: { $exists: 1 } });
+  const json = await req.db.get('project').findOne({ shortname: req.params.projectName, backup: { $exists: 0 } });
   if (json) {
     // check that the logged user has access to view this project
     if (checkAccess.toProject(json, loggedUser, "view") === false) {
