@@ -1,4 +1,3 @@
-/* eslint-disable prefer-exponentiation-operator */
 /* eslint-disable require-await */
 /* eslint-disable max-statements */
 /* eslint-disable no-shadow */

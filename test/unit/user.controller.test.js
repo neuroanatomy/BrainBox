@@ -1,9 +1,11 @@
-/* eslint-disable prefer-exponentiation-operator */
+/* eslint-disable no-empty-function */
 var assert = require("assert");
 const userController = require('../../controller/user/user.controller');
 const monk = require('monk');
 require('mocha-sinon');
 const sinon = require('sinon');
+// const { expect, use } = require("chai");
+// const { doesNotMatch, fail } = require("assert");
 const db = monk('localhost:27017/brainbox');
 
 describe('User Controller: ', function () {
@@ -13,7 +15,6 @@ describe('User Controller: ', function () {
       const res = {
         send: sinon.spy()
       };
-      // eslint-disable-next-line no-empty-function
       await userController.validator(req, res, () => { });
       assert.strictEqual(res.send.callCount, 0);
       sinon.restore();

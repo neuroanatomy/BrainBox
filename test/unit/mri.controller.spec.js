@@ -1,11 +1,13 @@
-/* eslint-disable prefer-exponentiation-operator */
 /* eslint-disable no-empty-function */
 var assert = require("assert");
 const mriController = require('../../controller/mri/mri.controller');
+// const atlasMakerServer = require('../../controller/atlasmakerServer/atlasmakerServer');
 const monk = require('monk');
 require('mocha-sinon');
 const sinon = require('sinon');
 var db = monk('localhost:27017/brainbox');
+// const U = require('../utils');
+const dirname = require('path').resolve(__dirname, '../..');
 
 describe('MRI Controller: ', function () {
 
@@ -131,7 +133,7 @@ describe('MRI Controller: ', function () {
         query: {
           url: 'https://s3.amazonaws.com/fcp-indi/data/Projects/ABIDE_Initiative/Outputs/freesurfer/5.1/CMU_a_0050642/mri/T1.mgz'
         },
-        dirname: __dirname.split('/test')[0],
+        dirname,
         headers: {},
         user: {
           username: ''
@@ -191,8 +193,7 @@ describe('MRI Controller: ', function () {
       assert.strictEqual(statusSpy.callCount, 0);
       assert.strictEqual(jsonSpy.callCount, 1);
       const values = jsonSpy.args;
-      // eslint-disable-next-line no-undefined
-      assert.notStrictEqual(values[0][0].source, undefined);
+      assert.ok(values[0][0].source);
       sinon.restore();
     });
 

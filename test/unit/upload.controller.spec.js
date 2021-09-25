@@ -1,4 +1,3 @@
-/* eslint-disable prefer-exponentiation-operator */
 /* eslint-disable no-empty-function */
 var assert = require("assert");
 const uploadController = require('../../controller/mri/upload.controller');

@@ -11,7 +11,10 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}/bin/www"
+            "program": "${workspaceFolder}/bin/www",
+            "env": {
+                "NODE_ENV": "production"
+            }
         },
         {
             "type": "node",
@@ -22,7 +25,13 @@
             ],
             "cwd": "${workspaceFolder}",
             "program": "${workspaceFolder}/node_modules/mocha/bin/mocha",
-            "args": ["--exit", "./test/runner.js", "test/unit/*.js", "test/integration/*.js", "--no-timeout"]
+            "args": [
+                "--exit",
+                "./test/runner.js",
+                "test/unit/*.js",
+                "test/integration/*.js",
+                "--no-timeout"
+            ]
         }
     ]
 }
