@@ -1,12 +1,10 @@
-/* eslint-disable prefer-exponentiation-operator */
-/* eslint-disable no-invalid-this */
-/* eslint-disable no-empty-function */
 var assert = require("assert");
 const projectController = require('../../controller/project/project.controller');
 const monk = require('monk');
 require('mocha-sinon');
 const sinon = require('sinon');
 const projectObject = require('../data/model_objects/project');
+const { expect } = require("chai");
 const db = monk('localhost:27017/brainbox');
 
 describe('Project Controller: ', function () {
@@ -35,7 +33,7 @@ describe('Project Controller: ', function () {
       const res = {
         status: sinon.stub().returns({ send: sinon.stub().returns({ end: resSpy }) })
       };
-      await projectController.validator(req, res, () => { });
+      await projectController.validator(req, res, () => { /* do nothing */ });
       assert.strictEqual(resSpy.callCount, 0);
       assert.strictEqual(reqSpy.callCount, 1);
       sinon.restore();
@@ -63,7 +61,7 @@ describe('Project Controller: ', function () {
       const res = {
         status: sinon.stub().returns({ send: sinon.stub().returns({ end: resSpy }) })
       };
-      await projectController.validator(req, res, () => { });
+      await projectController.validator(req, res, () => { /* do nothing */ });
       assert.strictEqual(resSpy.callCount, 1);
       assert.strictEqual(reqSpy.callCount, 1);
       sinon.restore();
@@ -71,18 +69,15 @@ describe('Project Controller: ', function () {
   });
 
   describe('project function() ', function () {
-    this.beforeAll(function(done) {
+    before(function(done) {
       const testProject = projectObject;
-      testProject.backup = true;
       db.get('project').insert(testProject)
-        .then(() => {});
-      done();
+        .then(() => done());
     });
 
-    this.afterAll(function(done) {
+    after(function(done) {
       db.get('project').remove({ shortname: 'testing' })
-        .then(() => {});
-      done();
+        .then(() => done());
     });
 
     it('should return the project information correctly with valid input', async function () {
@@ -109,6 +104,16 @@ describe('Project Controller: ', function () {
       await projectController.project(req, res);
       assert.strictEqual(success.callCount, 1);
       assert.strictEqual(failure.callCount, 0);
+      assert.strictEqual(success.args[0].length, 2);
+      assert.strictEqual(success.args[0][0], 'project');
+      expect(success.args[0][1]).to.have.keys(['login', 'projectInfo', 'projectName', 'title']);
+      expect(success.args[0][1].title).to.equal('Unit Test');
+      const projectInfo = JSON.parse(success.args[0][1].projectInfo);
+      expect(projectInfo).to.deep.include({
+        name: 'Unit Test',
+        shortname: 'testing',
+        owner: 'foo'
+      });
       sinon.restore();
     });
 
@@ -144,16 +149,14 @@ describe('Project Controller: ', function () {
 
     before(function (done) {
       db.get('project').insert(projectObject)
-        .then(() => { });
-      done();
+        .then(() => done());
     });
     after(function(done) {
       db.get('project').remove({ shortname: 'testing' })
-        .then(() => {});
-      done();
+        .then(() => done());
     });
 
-    it('should return the project information correctly with valid input', async function () {
+    it('should return the requested project information with valid input', async function () {
       const req = {
         params: {
           projectName: 'testing'
@@ -161,24 +164,27 @@ describe('Project Controller: ', function () {
         user: {
           username: 'anyone'
         },
-        session: {},
-        originalUrl: 'some url',
+        query: {
+          var: 'collaborators/list/0'
+        },
         isAuthenticated: function () {
           return Boolean(this.user.username);
         },
         db: db
       };
-      const resSpy = sinon.spy();
+      const success = sinon.spy();
+      const failure = sinon.spy();
       const res = {
-        status: sinon.stub().returns({ send: resSpy }),
-        send: resSpy
+        status: sinon.stub().returns({ send: failure }),
+        send: success
       };
       await projectController.api_project(req, res);
-      assert.strictEqual(resSpy.callCount, 1);
-      assert.notStrictEqual(resSpy.args, { error: "Authorization required" });
+      assert.strictEqual(success.callCount, 1);
+      assert.strictEqual(failure.callCount, 0);
+      expect(success.args[0][0].username).to.equal('anyone');
       sinon.restore();
     });
-    it('should throw errors with invalid input', async function () {
+    it('should return nothing with invalid input', async function () {
       const req = {
         params: {
           projectName: ''
@@ -195,11 +201,11 @@ describe('Project Controller: ', function () {
       };
       const resSpy = sinon.spy();
       const res = {
-        status: sinon.stub().returns({ send: resSpy }),
         send: resSpy
       };
       await projectController.api_project(req, res);
       assert.strictEqual(resSpy.callCount, 1);
+      expect(resSpy.args[0]).to.have.lengthOf(0);
       sinon.restore();
     });
   });
@@ -229,6 +235,8 @@ describe('Project Controller: ', function () {
       };
       await projectController.api_projectFiles(req, res);
       assert.strictEqual(resSpy.callCount, 1);
+      expect(resSpy.args[0][0]).to.have.lengthOf(3);
+      resSpy.args[0][0].forEach((i) => expect(i).to.have.keys('source', 'name'));
       sinon.restore();
     });
 
@@ -254,8 +262,8 @@ describe('Project Controller: ', function () {
         send: resSpy
       };
       await projectController.api_projectFiles(req, res);
-      assert.notStrictEqual(resSpy.args, [[{ error: "Provide 'start'" }]]);
-      assert.strictEqual(resSpy.args.length, 1);
+      assert.strictEqual(resSpy.callCount, 1);
+      assert.deepStrictEqual(resSpy.args, [[{ error: "Provide 'start'" }]]);
       sinon.restore();
     });
 
@@ -281,8 +289,8 @@ describe('Project Controller: ', function () {
         send: resSpy
       };
       await projectController.api_projectFiles(req, res);
-      assert.notStrictEqual(resSpy.args, [[{ error: "Provide 'length'" }]]);
-      assert.strictEqual(resSpy.args.length, 1);
+      assert.strictEqual(resSpy.callCount, 1);
+      assert.deepStrictEqual(resSpy.args, [[{ error: "Provide 'length'" }]]);
       sinon.restore();
     });
   });
@@ -304,13 +312,13 @@ describe('Project Controller: ', function () {
         render: resSpy
       };
       await projectController.newProject(req, res);
-      assert.notStrictEqual(resSpy.args, [
+      assert.deepStrictEqual(resSpy.args, [
         [
           'askForLogin',
           {
-            title: 'BrainBox: New Project',
             functionality: 'create a new project',
-            login: "<a href='/auth/github'>Log in with GitHub</a>"
+            login: "<a href='/auth/github'>Log in with GitHub</a>",
+            title: 'BrainBox: New Project'
           }
         ]
       ]);
@@ -335,12 +343,12 @@ describe('Project Controller: ', function () {
         render: resSpy
       };
       await projectController.newProject(req, res);
-      assert.notStrictEqual(resSpy.args, [
+      assert.deepStrictEqual(resSpy.args, [
         [
-          'askForLogin',
+          'projectNew',
           {
-            title: 'BrainBox: New Project',
-            login: "<a href='/auth/github'>Log in with GitHub</a>"
+            login: "<a href='/user/anyone'>anyone</a> (<a href='/logout'>Log Out</a>)",
+            title: 'BrainBox: New Project'
           }
         ]
       ]);
@@ -360,8 +368,7 @@ describe('Project Controller: ', function () {
         "avatarURL": "",
         "joined": "2020-05-01T08:26:35.348Z"
       })
-        .then(() => {});
-      done();
+        .then(() => done());
     });
 
     after(function (done) {
@@ -369,9 +376,11 @@ describe('Project Controller: ', function () {
         nickname: 'anyone'
       })
         .then(() => {
-        // db.get('project').remove({shortname: 'testing'}).then(() => {});
+          db.get('project').remove({
+            shortname: 'testing'
+          })
+            .then(() => done());
         });
-      done();
     });
     it('should throw error if user is not authenticated', async function () {
       const req = {
@@ -394,13 +403,8 @@ describe('Project Controller: ', function () {
         status: sinon.stub().returns({ json: json })
       };
       await projectController.post_project(req, res);
-      assert.notStrictEqual(json.args, [
-        {
-          error: "error",
-          message: "User does not have edit rights"
-        }
-      ]);
-      assert.strictEqual(json.args.length, 1);
+      assert.strictEqual(json.callCount, 1);
+      expect(json.args[0][0]).to.include.key('error');
       sinon.restore();
     });
 
@@ -427,7 +431,7 @@ describe('Project Controller: ', function () {
       };
       await projectController.post_project(req, res);
       assert.strictEqual(res.json.callCount, 1);
-      assert.notStrictEqual(res.json.args, [[{ success: true, message: 'New project inserted' }]]);
+      assert.deepStrictEqual(res.json.args, [[{ success: true, message: 'New project inserted' }]]);
       sinon.restore();
     });
   });
@@ -435,13 +439,11 @@ describe('Project Controller: ', function () {
   describe('delete_project function() ', function () {
     before(function (done) {
       db.get('project').insert(projectObject)
-        .then(() => { });
-      done();
+        .then(() => done());
     });
     after(function(done) {
       db.get('project').remove({ shortname: 'testing' })
-        .then(() => {});
-      done();
+        .then(() => done());
     });
 
     it('should throw error if the user is not authenticated', async function () {
@@ -458,7 +460,7 @@ describe('Project Controller: ', function () {
       };
       await projectController.delete_project(req, res);
       assert.strictEqual(jsonSpy.callCount, 1);
-      assert.notStrictEqual(jsonSpy.args, [[{ success: false, message: "User not authenticated" }]]);
+      assert.deepStrictEqual(jsonSpy.args, [[{ success: false, message: "User not authenticated" }]]);
       sinon.restore();
     });
 
@@ -480,7 +482,7 @@ describe('Project Controller: ', function () {
       };
       await projectController.delete_project(req, res);
       assert.strictEqual(res.json.callCount, 1);
-      assert.notStrictEqual(res.json.args, [[{ success: false, message: "Unable to delete. Project does not exist in the database" }]]);
+      assert.deepStrictEqual(res.json.args, [[{ success: false, message: "Unable to delete. Project does not exist in the database" }]]);
       sinon.restore();
     });
 
@@ -502,7 +504,7 @@ describe('Project Controller: ', function () {
       };
       await projectController.delete_project(req, res);
       assert.strictEqual(res.json.callCount, 1);
-      assert.notStrictEqual(res.json.args, [[{ success: true, message: 'Project deleted' }]]);
+      assert.deepStrictEqual(res.json.args, [[{ success: true, message: 'Project deleted' }]]);
       sinon.restore();
     });
   });
@@ -511,13 +513,11 @@ describe('Project Controller: ', function () {
     before(function (done) {
       delete projectObject._id;
       db.get('project').insert(projectObject)
-        .then(() => { });
-      done();
+        .then(() => done());
     });
     after(function (done) {
       db.get('project').remove({ shortname: 'testing' })
-        .then(() => { });
-      done();
+        .then(() => done());
     });
 
     it('should work correctly with valid input', async function () {
@@ -576,7 +576,7 @@ describe('Project Controller: ', function () {
       await projectController.api_projectAll(req, res);
       assert.strictEqual(sendSpy.callCount, 1);
       assert.strictEqual(jsonSpy.callCount, 0);
-      assert.notStrictEqual(sendSpy.args, [[{ error: "Provide the parameter 'page'" }]]);
+      assert.deepStrictEqual(sendSpy.args, [[{ error: "Provide the parameter 'page'" }]]);
       sinon.restore();
     });
 
