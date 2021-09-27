@@ -16,7 +16,7 @@
     "dev-pages": "webpack --mode production --config webpack.pages.config.js && cp view/brainbox/dist/*-page.js public/js/",
     "dev": "npm run dev-atlasmaker && npm run dev-atlasmaker-tools && npm run dev-brainbox && npm run dev-pages",
     "mocha-test-unit": "nyc mocha ./test/runner.js --exit test/unit/*.js",
-    "mocha-test": "nyc mocha --exit ./test/runner.js test/unit/*.js test/integration/*.js",
+    "mocha-test": "nyc mocha --exit --timeout 5000 ./test/runner.js test/unit/*.js test/integration/*.js",
     "lint": "eslint .",
     "test": "docker exec brainbox_web_1 /bin/bash -c 'cd /brainbox && npm run mocha-test'"
   },
