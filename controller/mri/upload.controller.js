@@ -116,9 +116,9 @@ const upload = async function (req, res) {
   var filename;
   var dir, path;
 
-  if (/.nii.gz$/.test(files[0].originalname)) {
+  if ((/.nii.gz$/).test(files[0].originalname)) {
     ext = ".nii.gz";
-  } else if (/.mgz$/.test(files[0].originalname)) {
+  } else if ((/.mgz$/).test(files[0].originalname)) {
     ext = ".mgz";
   } else {
     return res.status(400).json({ error: "Atlas encoding neither .nii.gz nor .mgz" })

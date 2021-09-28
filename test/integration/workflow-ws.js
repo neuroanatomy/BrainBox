@@ -30,9 +30,22 @@ if(Config.secure) {
 }
 
 describe('TESTING WEBSOCKET WORKFLOW', function () {
-  before( function () {
+  before( function (done) {
+    // the second websocket is for testing user interaction issues
+    // (still need to be implemented)
     u1 = new WebSocket(wshost);
     u2 = new WebSocket(wshost);
+
+    u1.on('open', function () {
+      if (u2.readyState === WebSocket.OPEN) {
+        done();
+      }
+    });
+    u2.on('open', function () {
+      if (u1.readyState === WebSocket.OPEN) {
+        done();
+      }
+    });
   });
 
   after( function () {
@@ -41,12 +54,6 @@ describe('TESTING WEBSOCKET WORKFLOW', function () {
   });
 
   describe('WS connection', function () {
-    it('Can create a WS connection', (done) => {
-      u1.on('open', function () {
-        done();
-      });
-    });
-
     it('Can send little data', (done) => {
       u1.send(msgEcho);
       done();
