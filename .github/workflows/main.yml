@@ -31,6 +31,8 @@ jobs:
         with:
           name: screenshots
           path: test/screenshots/
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
   deploy:
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
