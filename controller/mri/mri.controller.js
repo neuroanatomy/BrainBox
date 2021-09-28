@@ -117,7 +117,7 @@ const downloadMRI = function(myurl, req, res, callback) {
       console.log('mridb:', mridb);
       let filename;
       if (!mridb || !mridb.filename) {
-        filename = url.parse(myurl).pathname.split('/').pop();
+        filename = sanitize(url.parse(myurl).pathname.split('/').pop());
       } else {
         filename = mridb.filename;
       }
@@ -142,9 +142,9 @@ const downloadMRI = function(myurl, req, res, callback) {
           const {href} = res.request.uri;
           const contentDisp = res.headers['content-disposition'];
           if (contentDisp && (/^attachment/).test(contentDisp)) {
-            newFilename = contentDisp.split('filename=')[1].split(';')[0].replace(/"/g, '');
+            newFilename = sanitize(contentDisp.split('filename=')[1].split(';')[0].replace(/"/g, ''));
           } else {
-            newFilename = path.basename(url.parse(href).path);
+            newFilename = filename;
           }
           console.log('filename:', newFilename);
           const arr = dest.split('/');
