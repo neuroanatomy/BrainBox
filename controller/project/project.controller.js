@@ -597,9 +597,6 @@ const post_project = async function (req, res) {
     }
     console.log("updating...");
     await req.db.get('project').update({ shortname: object.shortname }, { $set: { backup: true } }, { multi: true });
-    object.modified = (new Date()).toJSON();
-    object.modifiedBy = req.user.username;
-    await req.db.get('project').insert(object);
 
     // insert MRI names if provided
     console.log("insert mri names");
@@ -609,19 +606,23 @@ const post_project = async function (req, res) {
     console.log("reformat file list");
     for (k = 0; k < object.files.list.length; k++) { object.files.list[k] = object.files.list[k].source; }
 
+    object.modified = (new Date()).toJSON();
+    object.modifiedBy = req.user.username;
+    await req.db.get('project').insert(object);
+
     console.log("success: true");
     res.json({ success: true, message: "Project settings updated" });
   } else {
     // new project, insert
     console.log("inserting...");
-    await req.db.get('project').insert(obj);
-
     console.log("insert mri names");
     await insertMRInames(req, res, obj.files.list);
 
     // reformat file list
     console.log("reformat file list");
     for (k = 0; k < obj.files.list.length; k++) { obj.files.list[k] = obj.files.list[k].source; }
+
+    await req.db.get('project').insert(obj);
 
     console.log("success: true");
     res.json({ success: true, message: "New project inserted" });
