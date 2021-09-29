@@ -595,9 +595,6 @@ const post_project = async function (req, res) {
 
       return;
     }
-    console.log("updating...");
-    await req.db.get('project').update({ shortname: object.shortname }, { $set: { backup: true } }, { multi: true });
-
     // insert MRI names if provided
     console.log("insert mri names");
     await insertMRInames(req, res, object.files.list);
@@ -608,6 +605,10 @@ const post_project = async function (req, res) {
 
     object.modified = (new Date()).toJSON();
     object.modifiedBy = req.user.username;
+    delete object._id;
+
+    console.log("updating...");
+    await req.db.get('project').update({ shortname: object.shortname }, { $set: { backup: true } }, { multi: true });
     await req.db.get('project').insert(object);
 
     console.log("success: true");
