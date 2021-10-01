@@ -54,9 +54,8 @@ describe('TESTING WEBSOCKET WORKFLOW', function () {
   });
 
   describe('WS connection', function () {
-    it('Can send little data', (done) => {
+    it('Can send little data', () => {
       u1.send(msgEcho);
-      done();
     });
 
     it('Can trigger a data download', async function () {
@@ -79,13 +78,12 @@ describe('TESTING WEBSOCKET WORKFLOW', function () {
       assert(mri.success === true, "Unexpected MRI structure");
     }).timeout(U.mediumTimeout);
 
-    it('Can send larger data', (done) => {
+    it('Can send larger data', () => {
       msgAllUserData.user.dirname = mri.url;
       msgAllUserData.user.mri = mri.mri.brain;
       msgAllUserData.user.atlasFilename = mri.mri.atlas[0].filename;
       msgAllUserData.user.source = mri.source;
       u1.send(JSON.stringify(msgAllUserData));
-      done();
     });
 
     it('Can request data and receive', (done) => {

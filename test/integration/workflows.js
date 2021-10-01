@@ -6,7 +6,7 @@ const chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 const U = require('../utils.js');
 
-describe('TESTING AN MRI UPLOAD/DOWNLOAD WORKFLOW', function (done) {
+describe('TESTING AN MRI UPLOAD/DOWNLOAD WORKFLOW', function () {
   describe('Fail soon', function () {
     it('Returns 404', async function () {
       let res;

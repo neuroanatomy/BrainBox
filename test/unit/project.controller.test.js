@@ -184,6 +184,7 @@ describe('Project Controller: ', function () {
       expect(success.args[0][0].username).to.equal('anyone');
       sinon.restore();
     });
+
     it('should return nothing with invalid input', async function () {
       const req = {
         params: {

@@ -1,3 +1,6 @@
+/* eslint-disable */
+/* this file doesn't seem to be used in tests */
+
 var page = require('webpage').create();
 
 //viewportSize being the actual size of the headless browser

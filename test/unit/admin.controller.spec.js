@@ -1,4 +1,3 @@
-/* eslint-disable prefer-exponentiation-operator */
 var assert = require("assert");
 const adminController = require('../../controller/admin/admin.controller');
 require('mocha-sinon');

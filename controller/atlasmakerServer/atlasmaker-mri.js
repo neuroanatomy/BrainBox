@@ -487,11 +487,11 @@ const readMGZ = (mriPath) => {
   const pr = new Promise(function (resolve, reject) {
     try {
 
-    /*
-      MGZ data sometimes has an error which makes gunzip throw
-      a "invalid compressed data--crc error" message. However,
-      the data is correctly uncompressed. We will ignore errors.
-    */
+      /*
+        MGZ data sometimes has an error which makes gunzip throw
+        a "invalid compressed data--crc error" message. However,
+        the data is correctly uncompressed. We will ignore errors.
+      */
 
       var bufs = [];
       const readable = fs.createReadStream(mriPath).pipe(zlib.createGunzip());

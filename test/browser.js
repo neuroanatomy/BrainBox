@@ -1,3 +1,5 @@
+// doesn't seem to be used during tests
+
 const puppeteer = require('puppeteer');
 
 // Options for headless browser
@@ -10,28 +12,30 @@ const browserOpts = {
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 /**
- * Headless browser singleton 
+ * Headless browser singleton
  * (ref: https://medium.com/@ivanmontiel/using-that-headless-chrome-youve-been-hearing-about-543a8cc07af5)
- * 
+ *
  * @class Browser
  */
 class Browser {
+
   /**
    * Initialise the browser class
-   * 
-   * @param {any} done Callback function from mocha
+   *
+   * @returns {Promise} resolves when puppeteer has been launched
    * @memberof Browser
    */
   init() {
-    return puppeteer.launch(browserOpts).then(async (browser) => {
+    return puppeteer.launch(browserOpts).then((browser) => {
       this.setBrowser(browser);
     });
   }
 
   /**
    * Set up the browser instance
-   * 
+   *
    * @param {any} browser Browser instance
+   * @return {void}
    * @memberof Browser
    */
   setBrowser(browser) {
@@ -48,9 +52,11 @@ class Browser {
 
   /**
    * Wrapper for writing tests in the browser context
-   * 
+   * probably never used
+   *
+   * @callback testCallback
    * @param {Promise} promise Promise that resolves to browser actions
-   * @returns 
+   * @returns {testCallback} function which has to be called with a callback as argument
    * @memberof Browser
    */
   test(promise) {

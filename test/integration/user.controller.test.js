@@ -1,17 +1,13 @@
-/* eslint-disable no-await-in-loop */
-/* eslint-disable no-invalid-this */
-/* eslint-disable prefer-destructuring */
-/* eslint-disable no-unused-vars */
 'use strict';
 
-const fs = require('fs');
 const chai = require('chai');
-var assert = chai.assert;
+var {assert} = chai;
 const chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 const U = require('../utils.js');
 
 describe('TESTING THE /user ROUTE', function () {
+  // eslint-disable-next-line no-invalid-this
   this.timeout(U.mediumTimeout);
 
   describe('Obtaining user information', function () {
@@ -19,6 +15,7 @@ describe('TESTING THE /user ROUTE', function () {
       await chai.request(U.serverURL).get('/----1');
       let shouldContinue = true;
       while(shouldContinue) {
+        // eslint-disable-next-line no-await-in-loop
         const res = await chai.request(U.serverURL).post('/mri/json')
           .send({
             url: U.localBertURL,
@@ -28,6 +25,7 @@ describe('TESTING THE /user ROUTE', function () {
         // console.log(body);
         shouldContinue = (body.success !== true);
 
+        // eslint-disable-next-line no-await-in-loop
         await U.delay(U.shortTimeout);
       }
       await chai.request(U.serverURL).get('/----1_end');

@@ -1,4 +1,3 @@
-/* eslint-disable prefer-exponentiation-operator */
 var assert = require("assert");
 const dataSlices = require('../../controller/dataSlices/dataSlices');
 const monk = require('monk');
@@ -59,6 +58,7 @@ describe('Data Slices ', function() {
       assert.strictEqual(files.success, true);
       assert.notEqual(files.list.length, 0);
     });
+
     it('should not return files with invalid input', async function() {
       const req = {
         user: {

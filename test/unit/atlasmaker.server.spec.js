@@ -1,12 +1,8 @@
-/* eslint-disable require-await */
-/* eslint-disable max-statements */
-/* eslint-disable no-shadow */
-/* eslint-disable no-unused-vars */
 const fs = require('fs');
 const path = require('path');
 const WebSocket = require('ws').Server;
 var assert = require("assert");
-const tracer = require('tracer').console({ format: '[{{file}}:{{line}}]  {{message}}' });
+// const tracer = require('tracer').console({ format: '[{{file}}:{{line}}]  {{message}}' });
 const la = require('../../controller/atlasmakerServer/atlasmaker-linalg.js');
 const amri = require('../../controller/atlasmakerServer/atlasmaker-mri.js');
 const AMS = require('../../controller/atlasmakerServer/atlasmakerServer.js');
@@ -29,7 +25,7 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
 
     it('Should load a mgz file', async function () {
       mri2 = await amri.readMGZ(datadir + 'bert_brain.mgz');
-    });
+    }).timeout(U.mediumTimeout);
 
     it('Should get the dimensions right', function () {
       assert(mri2.dim[0] === 256 && mri2.dim[1] === 256 && mri2.dim[2] === 256);
@@ -58,50 +54,24 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
 
   // Function to test loadMRI function on different inputs
   describe('loadMRI function ', function () {
-    it('should load the contents of .nii.gz file when a valid path is passed', async function (done) {
-      const path = datadir + 'bert_brain.nii.gz';
-      amri.loadMRI(path).then((res) => {
-        expect(res).to.not.eql(null);
-        expect(res).to.haveOwnProperty('dim');
-        expect(res).to.haveOwnProperty('pixdim');
-        expect(res).to.haveOwnProperty('vox_offset');
-        expect(res).to.haveOwnProperty('dir');
-        expect(res).to.haveOwnProperty('ori');
-        expect(res).to.haveOwnProperty('s2v');
-        expect(res).to.haveOwnProperty('v2w');
-        expect(res).to.haveOwnProperty('wori');
-        expect(res).to.haveOwnProperty('hdr');
-        expect(res).to.haveOwnProperty('hdrSz');
-        expect(res).to.haveOwnProperty('datatype');
-        expect(res).to.haveOwnProperty('data');
-        expect(res).to.haveOwnProperty('sum');
-        expect(res).to.haveOwnProperty('min');
-        expect(res).to.haveOwnProperty('max');
-      });
-      done();
+    it('should load the contents of .nii.gz file when a valid path is passed', async function () {
+      const mriPath = datadir + 'bert_brain.nii.gz';
+      // eslint-disable-next-line max-statements
+      const res = await amri.loadMRI(mriPath);
+      expect(res).to.have.keys([
+        'dim', 'pixdim', 'vox_offset', 'dir', 'ori', 's2v', 'v2w', 'wori',
+        'hdr', 'hdrSz', 'datatype', 'data', 'sum', 'min', 'max'
+      ]);
     });
 
-    it('should load the contents of .mgz file when a valid path is passed', async function (done) {
-      const path = datadir + '001.mgz';
-      amri.loadMRI(path).then((res) => {
-        expect(res).to.not.eql(null);
-        expect(res).to.haveOwnProperty('dim');
-        expect(res).to.haveOwnProperty('pixdim');
-        expect(res).to.haveOwnProperty('dir');
-        expect(res).to.haveOwnProperty('ori');
-        expect(res).to.haveOwnProperty('s2v');
-        expect(res).to.haveOwnProperty('v2w');
-        expect(res).to.haveOwnProperty('wori');
-        expect(res).to.haveOwnProperty('hdr');
-        expect(res).to.haveOwnProperty('hdrSz');
-        expect(res).to.haveOwnProperty('ftr');
-        expect(res).to.haveOwnProperty('data');
-        expect(res).to.haveOwnProperty('sum');
-        expect(res).to.haveOwnProperty('min');
-        expect(res).to.haveOwnProperty('max');
-      });
-      done();
-    });
+    it('should load the contents of .mgz file when a valid path is passed', async function () {
+      const mriPath = datadir + '001.mgz';
+      const res = await amri.loadMRI(mriPath);
+      expect(res).to.have.keys([
+        'dim', 'pixdim', 'dir', 'ori', 's2v', 'v2w', 'wori',
+        'hdr', 'hdrSz', 'ftr', 'data', 'sum', 'min', 'max'
+      ]);
+    }).timeout(U.mediumTimeout);
 
     it('should throw an error when a path to invalid file is passed', async function () {
       await amri.loadMRI('').catch((err) => {
@@ -166,7 +136,7 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
       const refPath = "./test/data/reference-images/slice-bert-cor-50.jpg";
       await fs.promises.mkdir(path.dirname(newPath), { recursive: true });
       await fs.promises.writeFile(newPath, jpg.data);
-      const diff = U.compareImages(newPath, refPath);
+      const diff = await U.compareImages(newPath, refPath);
       assert(diff < 10);
     });
   });
@@ -182,9 +152,9 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
       it('should return correct value if the mri path is valid and not being used', async function () {
         const ws = new WebSocket({ port: 8081 });
         await AMS._connectNewUser({ ws: ws });
-        const path = datadir + '001.mgz';
-        await amri.loadMRI(path);
-        const users = await AMS.numberOfUsersConnectedToMRI(path);
+        const mriPath = datadir + '001.mgz';
+        await amri.loadMRI(mriPath);
+        const users = await AMS.numberOfUsersConnectedToMRI(mriPath);
         await AMS._disconnectUser({ ws: ws });
         ws.close();
         assert.strictEqual(users, 0);
@@ -228,14 +198,14 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
       });
 
       it('should display the brains when there are some brains loaded', async function () {
-        const path = '/test_data/bert_brain.nii.gz';
-        const brain = await AMS.getBrainAtPath(path);
+        const mriPath = '/test_data/bert_brain.nii.gz';
+        await AMS.getBrainAtPath(mriPath);
         await AMS.displayBrains();
         let cnt = 0;
         for (var x = 0; x < AMS.Brains.length; x++) {
           if (AMS.Brains[x]) { cnt++; }
         }
-        await AMS.unloadMRI(path);
+        await AMS.unloadMRI(mriPath);
         assert.strictEqual(cnt, 1);
       }).timeout(U.mediumTimeout);
     });
@@ -247,27 +217,13 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
         });
       });
 
-      it('should load the brain if the path is valid', function (done) {
-        const path = '/test_data/bert_brain.nii.gz';
-        AMS.getBrainAtPath(path).then((res) => {
-          console.log(res);
-          expect(res).to.not.eql(null);
-          expect(res).to.haveOwnProperty('dim');
-          expect(res).to.haveOwnProperty('pixdim');
-          expect(res).to.haveOwnProperty('dir');
-          expect(res).to.haveOwnProperty('ori');
-          expect(res).to.haveOwnProperty('s2v');
-          expect(res).to.haveOwnProperty('v2w');
-          expect(res).to.haveOwnProperty('wori');
-          expect(res).to.haveOwnProperty('hdr');
-          expect(res).to.haveOwnProperty('hdrSz');
-          expect(res).to.haveOwnProperty('ftr');
-          expect(res).to.haveOwnProperty('data');
-          expect(res).to.haveOwnProperty('sum');
-          expect(res).to.haveOwnProperty('min');
-          expect(res).to.haveOwnProperty('max');
-        });
-        done();
+      it('should load the brain if the path is valid', async function () {
+        const mriPath = '/test_data/bert_brain.nii.gz';
+        const res = await AMS.getBrainAtPath(mriPath);
+        expect(res).to.have.keys([
+          'dim', 'pixdim', 'vox_offset', 'dir', 'ori', 's2v', 'v2w', 'wori',
+          'hdr', 'hdrSz', 'datatype', 'data', 'sum', 'min', 'max'
+        ]);
       });
     });
 

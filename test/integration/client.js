@@ -1,7 +1,7 @@
 /* eslint-disable max-statements */
 'use strict';
 
-require('../browser');
+// require('../browser');
 const fs = require('fs');
 const puppeteer = require('puppeteer');
 const chai = require('chai');
@@ -23,7 +23,7 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
   //     await chai.request(U.serverURL).get('/--------------------')
   // });
 
-  describe('Test website rendering', async function () {
+  describe('Test website rendering', function () {
     let browser;
     let page;
 
@@ -32,8 +32,10 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
     const npixels1pct = pageWidth*pageHeight*0.01;
     const npixels2pct = pageWidth*pageHeight*0.02;
 
-    // Remove screenshot directory (require node v14+ to work)
-    await fs.promises.rmdir('./test/screenshots/', { recursive: true });
+    before(async function () {
+      // Remove screenshot directory (require node v14+ to work)
+      await fs.promises.rmdir('./test/screenshots/', { recursive: true });
+    });
 
     it('Browser opens', async function () {
       browser = await puppeteer.launch({ headless: true, ignoreHTTPSErrors: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });

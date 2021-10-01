@@ -1,4 +1,3 @@
-/* eslint-disable no-await-in-loop */
 var fs = require('fs');
 const path = require('path');
 const monk = require('monk');
@@ -8,6 +7,7 @@ const {PNG} = require('pngjs');
 var jpeg = require('jpeg-js');
 const pixelmatch = require('pixelmatch');
 const { exec } = require("child_process");
+// const { constants } = require('buffer');
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
@@ -17,9 +17,9 @@ const cheetahURL = "https://zenodo.org/record/44846/files/MRI.nii.gz?download=1"
 const testToken = "qwertyuiopasdfghjklzxcvbnm";
 const testTokenDuration = 2 * (1000 * 3600); // 2h
 const noTimeout = 0; // disable timeout
-const longTimeout = 10 * 1000; // 10 sec
-const mediumTimeout = 5 * 1000; // 5 sec
-const shortTimeout = 3 * 1000; // 3 sec
+const longTimeout = 20 * 1000; // 20 sec
+const mediumTimeout = 10 * 1000; // 10 sec
+const shortTimeout = 6 * 1000; // 6 sec
 
 const userFoo = {
   name: "Founibald Barr",
@@ -98,33 +98,34 @@ const projectTest = {
   modifiedBy: "foo"
 };
 
-function currentDirectory() {
+const currentDirectory = function () {
   console.log("Current directory:", __dirname);
   exec('ls -l', (error, stdout) => {
     console.log(stdout);
   });
-}
+};
 
-function queryUser(nickname) {
+const queryUser = function (nickname) {
   return db.get('user').findOne({nickname});
-}
+};
 
-function insertUser(user) {
+const insertUser = function (user) {
   return db.get('user').insert(user);
-}
+};
 
-function removeUser(nickname) {
+const removeUser = function (nickname) {
   return db.get('user').remove({nickname});
-}
+};
 
-function insertProject(project) {
+const insertProject = function (project) {
   return db.get('project').insert(project);
-}
+};
 
-function removeProject(shortname) {
+const removeProject = function (shortname) {
   return db.get('project').remove({shortname});
-}
-async function insertTestTokenForUser(nickname) {
+};
+
+const insertTestTokenForUser =async function (nickname) {
   const now = new Date();
   const obj = {
     token: testToken + nickname,
@@ -135,28 +136,28 @@ async function insertTestTokenForUser(nickname) {
   const res = await db.get("log").insert(obj);
 
   return res;
-}
+};
 
-async function removeTestTokenForUser(nickname) {
+const removeTestTokenForUser =async function (nickname) {
   await db.get("log").remove({token: testToken + nickname});
-}
+};
 
-async function delay(delayTimeout) {
+const delay=async function (delayTimeout) {
   await new Promise((resolve) => {
     setTimeout(resolve, delayTimeout);
   });
-}
+};
 
-async function removeMRI({dirPath, srcURL}) {
+const removeMRI=async function ({dirPath, srcURL}) {
   rimraf.sync(dirPath, {}, (err) => console.log(new Error(err)));
   const res = await db.get('mri').remove({source: srcURL});
 
   return res;
-}
+};
 
-function compareImages(pathImg1, pathImg2) {
-  const data1 = fs.readFileSync(pathImg1);
-  const data2 = fs.readFileSync(pathImg2);
+const compareImages = async function (pathImg1, pathImg2) {
+  const data1 = await fs.promises.readFile(pathImg1);
+  const data2 = await fs.promises.readFile(pathImg2);
   let img1, img2;
   if(pathImg1.split(".").pop() === "png") {
     img1 = PNG.sync.read(data1);
@@ -171,9 +172,10 @@ function compareImages(pathImg1, pathImg2) {
   const pixdiff = pixelmatch(img1.data, img2.data, null, img1.width, img1.height);
 
   return pixdiff;
-}
+};
 
-async function waitUntilHTMLRendered(page, timeout = 30000) {
+// eslint-disable-next-line max-statements
+const waitUntilHTMLRendered=async function (page, timeout = 30000) {
   const checkDurationMsecs = 1000;
   const maxChecks = timeout / checkDurationMsecs;
   let lastHTMLSize = 0;
@@ -182,6 +184,7 @@ async function waitUntilHTMLRendered(page, timeout = 30000) {
   const minStableSizeIterations = 3;
 
   while(checkCounts++ <= maxChecks) {
+    // eslint-disable-next-line no-await-in-loop
     const html = await page.content();
     const currentHTMLSize = html.length;
 
@@ -200,21 +203,22 @@ async function waitUntilHTMLRendered(page, timeout = 30000) {
       break;
     }
     lastHTMLSize = currentHTMLSize;
+    // eslint-disable-next-line no-await-in-loop
     await page.waitForTimeout(checkDurationMsecs);
   }
-}
+};
 
-async function comparePageScreenshots(testPage, url, filename) {
+const comparePageScreenshots=async function (testPage, url, filename) {
   const newPath = './test/screenshots/' + filename;
   const refPath = './test/data/reference-screenshots/' + filename;
   await testPage.goto(url, {waitUntil: 'networkidle2', timeout: 90000});
   await waitUntilHTMLRendered(testPage);
-  fs.mkdirSync(path.dirname(newPath), { recursive: true });
+  fs.promises.mkdir(path.dirname(newPath), { recursive: true });
   await testPage.screenshot({path:'./test/screenshots/' + filename});
-  const pixdiff = compareImages(newPath, refPath);
+  const pixdiff = await compareImages(newPath, refPath);
 
   return pixdiff;
-}
+};
 
 module.exports = {
   serverURL,

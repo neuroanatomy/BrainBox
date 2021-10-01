@@ -1,4 +1,3 @@
-/* eslint-disable no-empty-function */
 var assert = require("assert");
 const mriController = require('../../controller/mri/mri.controller');
 // const atlasMakerServer = require('../../controller/atlasmakerServer/atlasmakerServer');
@@ -32,7 +31,7 @@ describe('MRI Controller: ', function () {
       const res = {
         status: sinon.stub().returns({ send: resSpy })
       };
-      await mriController.validator(req, res, () => {});
+      await mriController.validator(req, res, () => { /* do nothing */ });
       assert.strictEqual(resSpy.callCount, 0);
       sinon.restore();
     });
@@ -56,7 +55,7 @@ describe('MRI Controller: ', function () {
       const res = {
         status: sinon.stub().returns({ send: sinon.stub().returns({ end: resSpy })})
       };
-      await mriController.validator(req, res, () => {});
+      await mriController.validator(req, res, () => { /* do nothing */ });
       assert.strictEqual(resSpy.callCount, 1);
       sinon.restore();
     });
@@ -88,7 +87,7 @@ describe('MRI Controller: ', function () {
       const res = {
         status: sinon.stub().returns({ send: sinon.stub().returns({ end: resSpy })})
       };
-      await mriController.validatorPost(req, res, () => {});
+      await mriController.validatorPost(req, res, () => { /* do nothing */ });
       assert.strictEqual(reqSpy.callCount, 1);
       assert.strictEqual(urlSpy.callCount, 1);
       assert.strictEqual(resSpy.callCount, 0);
@@ -118,7 +117,7 @@ describe('MRI Controller: ', function () {
       const res = {
         status: sinon.stub().returns({ send: sinon.stub().returns({ end: resSpy })})
       };
-      await mriController.validatorPost(req, res, () => {});
+      await mriController.validatorPost(req, res, () => { /* do nothing */ });
       assert.strictEqual(reqSpy.callCount, 1);
       assert.strictEqual(urlSpy.callCount, 1);
       assert.strictEqual(resSpy.callCount, 1);
