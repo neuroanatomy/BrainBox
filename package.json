@@ -15,10 +15,12 @@
     "dev-brainbox": "webpack --mode production --config webpack.brainbox.config.js && cp view/brainbox/dist/brainbox.js public/lib/brainbox.js",
     "dev-pages": "webpack --mode production --config webpack.pages.config.js && cp view/brainbox/dist/*-page.js public/js/",
     "dev": "npm run dev-atlasmaker && npm run dev-atlasmaker-tools && npm run dev-brainbox && npm run dev-pages",
-    "mocha-test-unit": "nyc mocha ./test/runner.js --exit test/unit/*.js",
+    "test-unit": "nyc --report-dir test/unit/coverage mocha --exit --timeout 5000 ./test/runner.js test/unit/*.js",
+    "test-integration": "nyc --report-dir test/integration/coverage mocha --exit --timeout 5000 ./test/runner.js test/integration/*.js",
     "mocha-test": "nyc mocha --exit --timeout 5000 ./test/runner.js test/unit/*.js test/integration/*.js",
     "lint": "eslint .",
     "test": "docker exec brainbox_web_1 /bin/bash -c 'cd /brainbox && npm run mocha-test'",
+    "coverage": "nyc mocha --exit ./test/runner.js test/unit/*.js test/integration/*.js",
     "prepare": "husky install"
   },
   "dependencies": {

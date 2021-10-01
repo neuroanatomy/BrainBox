@@ -23,11 +23,22 @@ jobs:
       - run: npm run build
       - name: Run server
         run: timeout 3 npm start || code=$?; if [[ $code -ne 124 && $code -ne 0 ]]; then exit $code; fi
-      - name: Run mocha tests
-        run: npm run mocha-test
+      - name: Run unit tests
+        run: npm run test-unit
+      - name: Upload unit tests coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          directory: ./test/unit/coverage
+          flags: unittests
+      - name: Run integration tests
+        run: npm run test-integration
+      - name: Upload integration tests coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          directory: ./test/integration/coverage
+          flags: integration
       - name: Archive screenshots
         uses: actions/upload-artifact@v2
-        if: always()
         with:
           name: screenshots
           path: test/screenshots/
