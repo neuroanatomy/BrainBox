@@ -79,9 +79,10 @@ If you want to work on BrainBox's code, you'll need a local installation:
 7. drop the `.example` from `controller/atlasmakerServer/whitelist.json.example`
 8. drop the `.example` from `cfg.json.example`
 10. `npm install`
-11. `npm run build`
-12. `npm start`
-13. To check that your code style is like the one we use,  enter `npm run lint`, or you can type `eslint` before committing, to do that install `eslint` globally using `npm i -g eslint` (our code style rules are in the file `.eslintrc`).
+11. `npm run prepare`
+12. `npm run build`
+13. `npm start`
+14. To check that your code style is like the one we use,  enter `npm run lint`, or you can type `eslint` before committing, to do that install `eslint` globally using `npm i -g eslint` (our code style rules are in the file `.eslintrc`).
 
 
 ## Using Docker to install and run BrainBox
