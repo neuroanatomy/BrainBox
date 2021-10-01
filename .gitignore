@@ -51,3 +51,4 @@ view/atlasmaker/src/tools/and_label.js
 view/brainbox/_resources/
 /.nyc_output
 coverage
+.eslintcache
