@@ -469,8 +469,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       }
 
       // save the new version
-      // eslint-disable-next-line no-sync
-      fs.writeFileSync(path1, mrigz);
+      await fs.promises.writeFile(path1, mrigz);
 
       // log the saving
       try {
@@ -1394,112 +1393,98 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
      * @param {Object} User A User object providing information about the requested atlas
      * @returns {Object} An atlas (mri structure)
      */
-    loadAtlas: function loadAtlas (User) {
-      const pr = new Promise(function (resolve, reject) {
-        const mriPath = me.dataDirectory + User.dirname + User.atlasFilename;
+    // eslint-disable-next-line max-statements
+    loadAtlas: async function loadAtlas (User) {
+      const mriPath = me.dataDirectory + User.dirname + User.atlasFilename;
 
-        if (typeof User.dirname === 'undefined') {
-          tracer.log("ERROR: Rejecting loadAtlas from undefined User.dirname:", User);
-          reject(new Error("ERROR: Rejecting loadAtlas from undefined User"));
+      if (typeof User.dirname === 'undefined') {
+        tracer.log("ERROR: Rejecting loadAtlas from undefined User.dirname:", User);
+        throw(new Error("ERROR: Rejecting loadAtlas from undefined User"));
+      }
+      if (typeof User.atlasFilename === 'undefined') {
+        tracer.log("ERROR: Rejecting loadAtlas from undefined User.atlasFilename:", User);
+        throw(new Error("ERROR: Rejecting loadAtlas from undefined User"));
+      }
 
-          return;
+      // eslint-disable-next-line no-sync
+      if (!fs.existsSync(mriPath)) {
+        // Create new empty atlas
+        tracer.log("    Atlas " + mriPath + " does not exists. Create a new one");
+        const brainPath = User.dirname + User.mri;
+        let mri;
+        try {
+          mri = await me.getBrainAtPath(brainPath);
+        } catch(err) {
+          tracer.log("ERROR Cannot get template brain for new atlas", err);
+          throw(err);
         }
-        if (typeof User.atlasFilename === 'undefined') {
-          tracer.log("ERROR: Rejecting loadAtlas from undefined User.atlasFilename:", User);
-          reject(new Error("ERROR: Rejecting loadAtlas from undefined User"));
-
-          return;
+        var newAtlas;
+        try {
+          newAtlas = await amri.createNifti(mri);
+        } catch(err) {
+          tracer.log("ERROR Cannot create nifti", err);
+          throw(err);
         }
+        newAtlas.filename = User.atlasFilename;
+        newAtlas.dirname = User.dirname;
+        newAtlas.source = User.source;
 
-        // eslint-disable-next-line no-sync
-        if (!fs.existsSync(mriPath)) {
-          // Create new empty atlas
-          tracer.log("    Atlas " + mriPath + " does not exists. Create a new one");
-          const brainPath = User.dirname + User.mri;
-          me.getBrainAtPath(brainPath)
-            .then(function (mri) {
-              amri.createNifti(mri)
-                .then(function (newAtlas) {
-                  newAtlas.filename = User.atlasFilename;
-                  newAtlas.dirname = User.dirname;
-                  newAtlas.source = User.source;
+        // log atlas creation
+        await db.get('log').insert({
+          key: "createAtlas",
+          value: DOMPurify.sanitize(JSON.stringify({ atlasDirectory: User.dirname, atlasFilename: User.atlasFilename })),
+          username: User.username,
+          date: (new Date()).toJSON()
+        });
 
-                  // log atlas creation
-                  db.get('log').insert({
-                    key: "createAtlas",
-                    value: DOMPurify.sanitize(JSON.stringify({ atlasDirectory: User.dirname, atlasFilename: User.atlasFilename })),
-                    username: User.username,
-                    date: (new Date()).toJSON()
-                  });
+        return(newAtlas);
+      }
+      // Load existing atlas
+      tracer.log("    Atlas found. Loading it");
+      const loadedAtlas = await amri.loadMRI(mriPath);
+      loadedAtlas.filename = User.atlasFilename;
+      loadedAtlas.dirname = User.dirname;
+      loadedAtlas.source = User.source;
 
-                  resolve(newAtlas);
-                })
-                .catch(function (err) {
-                  tracer.log("ERROR Cannot create nifti", err);
-                  reject(err);
-                });
-            })
-            .catch(function (err) {
-              tracer.log("ERROR Cannot get template brain for new atlas", err);
-              reject(err);
-            });
-        } else {
-          // Load existing atlas
-          tracer.log("    Atlas found. Loading it");
-          amri.loadMRI(mriPath)
-            .then(async function (loadedAtlas) {
-              loadedAtlas.filename = User.atlasFilename;
-              loadedAtlas.dirname = User.dirname;
-              loadedAtlas.source = User.source;
-
-              const mri = await db.get('mri').findOne({ source: loadedAtlas.source, backup: { $exists: 0 } }, { _id: 0 });
-              let index = -1;
-              for (let i = 0; i < mri.mri.atlas.length; i++) {
-                if (mri.mri.atlas[i].filename === loadedAtlas.filename) {
-                  index = i;
-                  break;
-                }
-              }
-              if (index === -1) {
-                throw new Error("Can't find atlas in mri");
-              }
-              if (typeof mri.mri.atlas[index].vectorial === "undefined") {
-                loadedAtlas.vectorial = [];
-              } else {
-                loadedAtlas.vectorial = mri.mri.atlas[index].vectorial;
-              }
-
-              // cast atlas data to 8bits
-              switch (amri.filetypeFromFilename(User.atlasFilename)) {
-              case "nii.gz":
-                amri.createNifti(loadedAtlas)
-                  .then(function (atlas8bit) {
-                    for (let i = 0; i < loadedAtlas.dim[0] * loadedAtlas.dim[1] * loadedAtlas.dim[2]; i += 1) {
-                      atlas8bit.data[i] = loadedAtlas.data[i];
-                    }
-                    loadedAtlas.data = atlas8bit.data;
-                    loadedAtlas.hdr = atlas8bit.hdr;
-                    resolve(loadedAtlas);
-                  });
-                break;
-              case "mgz":
-                resolve(loadedAtlas);
-
-                /*
-                                createMGH(loadedAtlas)
-                                .then(function(atlas8bit) {
-                                });
-    */
-                break;
-              }
-            })
-            .catch(function (err) {
-              reject(err);
-            });
+      const mri = await db.get('mri').findOne({ source: loadedAtlas.source, backup: { $exists: 0 } }, { _id: 0 });
+      let index = -1;
+      for (let i = 0; i < mri.mri.atlas.length; i++) {
+        if (mri.mri.atlas[i].filename === loadedAtlas.filename) {
+          index = i;
+          break;
         }
-      });
+      }
+      if (index === -1) {
+        throw new Error("Can't find atlas in mri");
+      }
+      if (typeof mri.mri.atlas[index].vectorial === "undefined") {
+        loadedAtlas.vectorial = [];
+      } else {
+        loadedAtlas.vectorial = mri.mri.atlas[index].vectorial;
+      }
 
-      return pr;
+      // cast atlas data to 8bits
+      switch (amri.filetypeFromFilename(User.atlasFilename)) {
+      case "nii.gz": {
+        const atlas8bit = await amri.createNifti(loadedAtlas);
+        for (let i = 0; i < loadedAtlas.dim[0] * loadedAtlas.dim[1] * loadedAtlas.dim[2]; i += 1) {
+          atlas8bit.data[i] = loadedAtlas.data[i];
+        }
+        loadedAtlas.data = atlas8bit.data;
+        loadedAtlas.hdr = atlas8bit.hdr;
+      }
+        break;
+      case "mgz":
+
+        /*
+          createMGH(loadedAtlas)
+          .then(function(atlas8bit) {
+          });
+        */
+        break;
+      }
+
+      return loadedAtlas;
     },
 
     _validateUserAtlas: function (atlas) {

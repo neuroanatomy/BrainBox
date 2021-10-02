@@ -1,27 +1,9 @@
-/* eslint-disable prefer-exponentiation-operator */
-/* eslint-disable max-statements */
-/* eslint-disable prefer-exponentiation-operator */
-/* eslint-disable max-lines */
-/* eslint-disable eqeqeq */
-/* eslint-disable no-unused-vars */
-/* eslint-disable complexity */
-/* eslint-disable prefer-destructuring */
-/* eslint-disable no-shadow */
-/* eslint-disable require-await */
-/* eslint-disable no-prototype-builtins */
-/* eslint-disable prefer-const */
-/* eslint-disable new-cap */
-/* eslint-disable no-invalid-this */
-/* eslint-disable max-depth */
-/* eslint-disable linebreak-style */
-/* eslint-disable no-sync */
 'use strict';
 
 const crypto = require('crypto');
 const url = require('url');
 const fs = require('fs');
 const request = require('request');
-const path = require('path');
 const sanitize = require("sanitize-filename");
 const atlasmakerServer = require('../atlasmakerServer/atlasmakerServer');
 const checkAccess = require('../checkAccess/checkAccess.js');
@@ -31,7 +13,7 @@ const downloadQueue = [];
 
 // ExpressValidator = require('express-validator')
 
-// eslint-disable-next-line func-style
+// eslint-disable-next-line max-statements
 const validator = function (req, res, next) {
   console.log('Query validator');
   console.log('body:', req.body);
@@ -93,143 +75,148 @@ const validatorPost = function (req, res, next) {
   }
 };
 
-const isIterable = function (obj) {
-  // checks for null and undefined
-  if (obj === null) {
-    return false;
-  }
+// does not seem to be used
+// const isIterable = function (obj) {
+//   // checks for null and undefined
+//   if (obj === null) {
+//     return false;
+//   }
 
-  return typeof obj[Symbol.iterator] === 'function';
-};
+//   return typeof obj[Symbol.iterator] === 'function';
+// };
 
 /* Download MRI file
 --------------------- */
 // @todo Change this function callback into a promise
-const downloadMRI = function(myurl, req, res, callback) {
+// eslint-disable-next-line max-statements
+const downloadMRI = async function(myurl, req) {
   console.log('downloadMRI');
   const hash = crypto
     .createHash('md5')
     .update(myurl)
     .digest('hex');
 
-  req.db.get('mri').findOne({source: myurl, backup: {$exists: 0}})
-    .then((mridb) => {
-      console.log('mridb:', mridb);
-      let filename;
-      if (!mridb || !mridb.filename) {
-        filename = sanitize(url.parse(myurl).pathname.split('/').pop());
-      } else {
-        filename = mridb.filename;
-      }
-      let dest = req.dirname + '/public/data/' + hash + '/' + filename;
-      console.log('   source:', myurl);
-      console.log('     hash:', hash);
-      console.log(' filename:', filename);
-      console.log('     dest:', dest);
+  const mridb = await req.db.get('mri').findOne({source: myurl, backup: {$exists: 0}});
+  console.log('mridb:', mridb);
+  let filename;
+  if (!mridb || !mridb.filename) {
+    filename = sanitize(url.parse(myurl).pathname.split('/').pop());
+  } else {
+    ({filename} = mridb);
+  }
+  let dest = req.dirname + '/public/data/' + hash + '/' + filename;
+  console.log('   source:', myurl);
+  console.log('     hash:', hash);
+  console.log(' filename:', filename);
+  console.log('     dest:', dest);
 
-      if (!fs.existsSync(req.dirname + '/public/data/' + hash)) {
-        fs.mkdirSync(req.dirname + '/public/data/' + hash, '0777');
-      }
-      let len, newDest, newFilename;
-      let cur = 0;
+  // eslint-disable-next-line no-sync
+  if (!fs.existsSync(req.dirname + '/public/data/' + hash)) {
+    // eslint-disable-next-line no-sync
+    fs.mkdirSync(req.dirname + '/public/data/' + hash, '0777');
+  }
+  let len, newDest, newFilename;
+  let cur = 0;
 
-      request({uri: myurl, followAllRedirects: true, rejectUnauthorized : false})
-        .on('error', (err) => {
-          console.log('ERROR in downloadMRI', err);
-          callback({error: err});
-        })
-        .on('response', (res) => {
-          const {href} = res.request.uri;
-          const contentDisp = res.headers['content-disposition'];
-          if (contentDisp && (/^attachment/).test(contentDisp)) {
-            newFilename = sanitize(contentDisp.split('filename=')[1].split(';')[0].replace(/"/g, ''));
-          } else {
-            newFilename = filename;
-          }
-          console.log('filename:', newFilename);
-          const arr = dest.split('/');
-          arr.pop();
-          arr.push(newFilename);
-          newDest = arr.join('/');
-          console.log('new dest:', newDest);
-          len = parseInt(res.headers['content-length'], 10);
-          console.log('file length:', len);
-        })
-        .on('data', (chunk) => {
-          cur += chunk.length;
-          console.log('downloaded:', cur, '/', len, newFilename);
-          downloadQueue[myurl].cur = cur;
-          downloadQueue[myurl].len = len;
-        })
-        .pipe(fs.createWriteStream(dest))
-        .on('close', () => {
-          console.log('new:', newFilename, newDest);
+  return new Promise(function (resolve, reject) {
+    request({uri: myurl, followAllRedirects: true, rejectUnauthorized : false})
+      .on('error', (err) => {
+        console.log('ERROR in downloadMRI', err);
+        reject(err);
+      })
+      .on('response', (res) => {
+        const contentDisp = res.headers['content-disposition'];
+        if (contentDisp && (/^attachment/).test(contentDisp)) {
+          newFilename = sanitize(contentDisp.split('filename=')[1].split(';')[0].replace(/"/g, ''));
+        } else {
+          newFilename = filename;
+        }
+        console.log('filename:', newFilename);
+        const arr = dest.split('/');
+        arr.pop();
+        arr.push(newFilename);
+        newDest = arr.join('/');
+        console.log('new dest:', newDest);
+        len = parseInt(res.headers['content-length'], 10);
+        console.log('file length:', len);
+      })
+      .on('data', (chunk) => {
+        cur += chunk.length;
+        console.log('downloaded:', cur, '/', len, newFilename);
+        downloadQueue[myurl].cur = cur;
+        downloadQueue[myurl].len = len;
+      })
+      .pipe(fs.createWriteStream(dest))
+      .on('close', () => {
+        console.log('new:', newFilename, newDest);
+        // eslint-disable-next-line no-sync
+        fs.renameSync(dest, newDest);
+        filename = newFilename;
+        dest = newDest;
 
-          fs.renameSync(dest, newDest);
-          filename = newFilename;
-          dest = newDest;
+        // NOTE: getBrainAtPath has to be called with a client-side path like "/data/[md5hash]/..."
+        atlasmakerServer.getBrainAtPath('/data/' + hash + '/' + filename)
+          .then((mri) => {
+            // Create json file for new dataset
+            let ip = "";
+            if(typeof req.headers['x-forwarded-for'] !== "undefined") {
+              ip = req.headers['x-forwarded-for'];
+            } else if (req.connection.remoteAddress !== "undefined") {
+              ip = req.connection.remoteAddress;
+            } else if (req.socket.remoteAddress !== "undefined") {
+              ip = req.socket.remoteAddress;
+            } else if (req.connection.socket.remoteAddress !== "undefined") {
+              ip = req.connection.socket.remoteAddress;
+            }
 
-          // NOTE: getBrainAtPath has to be called with a client-side path like "/data/[md5hash]/..."
-          atlasmakerServer.getBrainAtPath('/data/' + hash + '/' + filename)
-            .then((mri) => {
-              // Create json file for new dataset
-              let ip = "";
-              if(typeof req.headers['x-forwarded-for'] !== "undefined") {
-                ip = req.headers['x-forwarded-for'];
-              } else if (req.connection.remoteAddress !== "undefined") {
-                ip = req.connection.remoteAddress;
-              } else if (req.socket.remoteAddress !== "undefined") {
-                ip = req.socket.remoteAddress;
-              } else if (req.connection.socket.remoteAddress !== "undefined") {
-                ip = req.connection.socket.remoteAddress;
+            let username;
+            if(req.isAuthenticated()) {
+              ({username} = req.user);
+            } else if(req.isTokenAuthenticated) {
+              username = req.tokenUsername;
+            } else {
+              username = ip;
+            }
+
+            const json = {
+              filename,
+              success: true,
+              source: myurl,
+              url: '/data/' + hash + '/',
+              included: (new Date()).toJSON(),
+              dim: mri.dim,
+              pixdim: mri.pixdim,
+              voxel2world: mri.v2w,
+              worldOrigin: mri.wori,
+              owner: username,
+              name: "",
+              modified: (new Date()).toJSON(),
+              modifiedBy: username,
+              mri: {
+                brain: filename,
+                atlas: [
+                  {
+                    created: (new Date()).toJSON(),
+                    modified: (new Date()).toJSON(),
+                    access: 'edit',
+                    type: 'volume',
+                    name: 'Default',
+                    filename: 'Atlas.nii.gz',
+                    labels: 'foreground.json'
+                  }
+                ]
               }
-
-              let username = ip;
-              if(req.isAuthenticated()) {
-                username = req.user.username;
-              } else if(req.isTokenAuthenticated) {
-                username = req.tokenUsername;
-              }
-
-              const json = {
-                filename,
-                success: true,
-                source: myurl,
-                url: '/data/' + hash + '/',
-                included: (new Date()).toJSON(),
-                dim: mri.dim,
-                pixdim: mri.pixdim,
-                voxel2world: mri.v2w,
-                worldOrigin: mri.wori,
-                owner: username,
-                name: "",
-                modified: (new Date()).toJSON(),
-                modifiedBy: username,
-                mri: {
-                  brain: filename,
-                  atlas: [
-                    {
-                      created: (new Date()).toJSON(),
-                      modified: (new Date()).toJSON(),
-                      access: 'edit',
-                      type: 'volume',
-                      name: 'Default',
-                      filename: 'Atlas.nii.gz',
-                      labels: 'foreground.json'
-                    }
-                  ]
-                }
-              };
-              callback(json);
-            })
-            .catch((err) => {
-              console.log('ERROR Cannot get brain at path /data/' + hash + '/' + filename + ': ', err);
-              callback({error: 'Can\'t get brain', err});
-            });
-        });
-    });
+            };
+            resolve(json);
+          })
+          .catch((err) => {
+            console.log('ERROR Cannot get brain at path /data/' + hash + '/' + filename + ': ', err);
+            reject(err);
+          });
+      });
+  });
 };
-// eslint-disable-next-line func-style
+// eslint-disable-next-line max-statements
 const mri = async function (req, res) {
   const login = (req.isAuthenticated()) ?
     ('<a href=\'/user/' + req.user.username + '\'>' + req.user.username + '</a> (<a href=\'/logout\'>Log Out</a>)') :
@@ -293,10 +280,13 @@ const mri = async function (req, res) {
     if (typeof json.mri.annotations !== "undefined") {
       for (const key of Object.keys(json.mri.annotations)) {
         for (j = 0; j < projects.length; j++) {
+          // eslint-disable-next-line max-depth
           if (projects[j] && projects[j].shortname === i) {
             const access = checkAccess.toAnnotationByProject(projects[j], loggedUser);
             const level = checkAccess.accessStringToLevel(access);
+            // eslint-disable-next-line max-depth
             if (level > 0) {
+              // eslint-disable-next-line max-depth
               for (k of json.mri.annotations[key]) {
                 json.mri.annotations[key][k].access = access;
               }
@@ -319,11 +309,12 @@ const mri = async function (req, res) {
   }
 };
 
-const removeVariablesFromURL = function (url) {
-  return url.split("&")[0];
+const removeVariablesFromURL = function (myurl) {
+  return myurl.split("&")[0];
 };
 
 // eslint-disable-next-line func-style
+// eslint-disable-next-line max-statements
 const apiMriPost = async function (req, res) {
   console.log("apiMriPost");
 
@@ -335,7 +326,8 @@ const apiMriPost = async function (req, res) {
   }
 
   try {
-    let myUrl = new URL(myurl);
+    // eslint-disable-next-line no-new
+    new URL(myurl);
   } catch(err) {
     res.send('Invalid URL!');
 
@@ -378,7 +370,8 @@ const apiMriPost = async function (req, res) {
       // If the json object exists, but there's no file, download
       const filename = json.filename || url.parse(myurl).pathname.split('/').pop();
       const filepath = req.dirname + '/public/data/' + hash + '/' + sanitize(filename);
-      if (fs.existsSync(filepath) === false) {
+      // eslint-disable-next-line no-sync
+      if (!fs.existsSync(filepath)) {
         console.log('No MRI file in server: download');
         doDownload = true;
       } else
@@ -391,7 +384,7 @@ const apiMriPost = async function (req, res) {
   }
 
   if (doDownload === true) {
-    const isInQueue = downloadQueue.hasOwnProperty(myurl);
+    const isInQueue = (myurl in downloadQueue);
     if (isInQueue) {
       console.log('>> Download queued, check status', downloadQueue[myurl], myurl);
       const { success } = downloadQueue[myurl];
@@ -413,19 +406,18 @@ const apiMriPost = async function (req, res) {
     } else {
       console.log('Start download:');
       downloadQueue[myurl] = { success: 'downloading', cur: 0, len: 1 };
-      downloadMRI(myurl, req, res, (obj) => {
+      downloadMRI(myurl, req).then((obj) => {
         console.log("downloadMRI obj:", obj);
-        if (typeof obj.error === "undefined") {
-          console.log('Download succeeded. Insert in DB, remove from queue');
-          obj.success = true;
-          req.db.get('mri').insert(obj);
-          // downloadQueue[myurl] = obj;
-          delete downloadQueue[myurl];
-        } else {
-          console.log('Download failed:', obj);
-          downloadQueue[myurl] = {success: false, error: `${JSON.stringify(obj.error)}`};
-        }
-      });
+        console.log('Download succeeded. Insert in DB, remove from queue');
+        obj.success = true;
+        req.db.get('mri').insert(obj);
+        // downloadQueue[myurl] = obj;
+        delete downloadQueue[myurl];
+      })
+        .catch((err) => {
+          console.log('Download failed:', err);
+          downloadQueue[myurl] = { success: false, error: `${JSON.stringify(err)}` };
+        });
 
       res.json(downloadQueue[myurl]);
     }
@@ -433,20 +425,19 @@ const apiMriPost = async function (req, res) {
     // Return a specific variable, or the complete json object
     if (doReturnAll === false) {
       console.log('Send only the requested variable to the client.');
-      let i;
       const arr = req.body.var.split('/');
-      for (i of arr) {
-        json = json[arr[i]];
+      for (const v of arr) {
+        json = json[v];
       }
     }
     res.json(json);
   }
 };
 
-// eslint-disable-next-line func-style
+// eslint-disable-next-line max-statements, complexity
 const apiMriGet = async function (req, res) {
-  let { url: myurl,
-    download,
+  const myurl = req.query.url;
+  let { download,
     page,
     backups
   } = req.query;
@@ -482,7 +473,8 @@ const apiMriGet = async function (req, res) {
   }
 
   try {
-    const tmp = new URL(myurl);
+    // eslint-disable-next-line no-new
+    new URL(myurl);
   } catch (err) {
     res.send('Invalid Url!');
 
@@ -526,7 +518,7 @@ const apiMriGet = async function (req, res) {
       }
     }
     arr = [...prj].map(async (o) => {
-      let obj = await req.db.get('project').findOne({
+      const obj = await req.db.get('project').findOne({
         shortname: o,
         backup: { $exists: 0 }
       });
@@ -558,10 +550,11 @@ const apiMriGet = async function (req, res) {
     if (typeof json.mri.annotations !== "undefined") {
       for (const key of Object.keys(json.mri.annotations)) {
         for (j = 0; j < projects.length; j++) {
-          if (projects[j] && projects[j].shortname == key) {
+          if (projects[j] && projects[j].shortname === key) {
             const access = checkAccess.toAnnotationByProject(projects[j], loggedUser);
             const level = checkAccess.accessStringToLevel(access);
             console.log('loggedUser,access,level:', loggedUser, access, level);
+            // eslint-disable-next-line max-depth
             if (level === 0) {
               delete json.mri.annotations[key];
             }
@@ -590,7 +583,7 @@ const reset = async function reset(req, res) {
     });
   console.log(mridb);
   let filename;
-  if (mridb) { filename = mridb.filename; }
+  if (mridb) { ({filename} = mridb); }
   const mrires = await atlasmakerServer.getBrainAtPath('/data/' + hash + '/' + filename)
     .catch((err) => {
       console.log('ERROR:', err);
@@ -622,8 +615,7 @@ const reset = async function reset(req, res) {
   });
 };
 
-// eslint-disable-next-line func-style
-const mriController = function () {
+const MriController = function () {
   this.validator = validator;
   this.validatorPost = validatorPost;
   this.apiMriGet = apiMriGet;
@@ -632,5 +624,4 @@ const mriController = function () {
   this.reset = reset;
 };
 
-module.exports = new mriController();
-
+module.exports = new MriController();

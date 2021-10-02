@@ -1,6 +1,3 @@
-/* eslint-disable prefer-exponentiation-operator */
-/* eslint-disable prefer-destructuring */
-/* eslint-disable no-sync */
 "use strict";
 
 /*

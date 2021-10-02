@@ -1,4 +1,3 @@
-/* eslint-disable prefer-exponentiation-operator */
 const notifier = require("../../notifier");
 
 const validator = (req, res, next) => {

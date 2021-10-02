@@ -1,7 +1,3 @@
-/* eslint-disable prefer-exponentiation-operator */
-/* eslint-disable max-statements */
-
-
 //========================================================================================
 // MRI I/O
 //========================================================================================
@@ -9,6 +5,8 @@
 const fs = require("fs");
 const Struct = require('struct');
 const zlib = require('zlib');
+const { promisify } = require('util');
+const gunzip = promisify(zlib.gunzip);
 const la = require("./atlasmaker-linalg");
 
 const NiiHdr = new Struct()
@@ -71,6 +69,7 @@ const MghHdr = new Struct()
   .array('Pxyz_c', 3, 'floatbe');
 // const MghFtr = Struct().array('mrparms', 4, 'floatbe');
 
+// eslint-disable-next-line max-statements
 const computeS2VTransformation = (mri) => {
 
   /*
@@ -204,6 +203,7 @@ const filetypeFromFilename = (mriPath) => {
   }
 };
 
+// eslint-disable-next-line max-statements
 const _readNiftiHeader = ({nii, mri}) => {
   // read standard nii header
   let success = true;
@@ -314,7 +314,7 @@ const _computeVolumeStats = ({mri}) => {
   [mri.sum, mri.min, mri.max] = [sum, min, max];
 };
 
-const readNifti = (mriPath) => {
+const readNifti = async (mriPath) => {
 
   /*
             readNifti
@@ -322,64 +322,38 @@ const readNifti = (mriPath) => {
             output: an mri structure
         */
 
-  const pr = new Promise(function (resolve, reject) {
-    let niigz;
+  const niigz = await fs.promises.readFile(mriPath);
+  const nii = await gunzip(niigz);
+  const mri = {};
 
-    try {
-      // eslint-disable-next-line no-sync
-      niigz = fs.readFileSync(mriPath);
-    } catch(e) {
-      reject(e);
-    }
+  // read header
+  if(!_readNiftiHeader({nii, mri})) {
+    throw(new Error("Cannot read nifti header"));
+  }
 
-    try {
-      zlib.gunzip(niigz, function (err, nii) {
-        if(err) {
-          reject(err);
+  // compute the transformation from voxel space to screen space
+  computeS2VTransformation(mri);
 
-          return;
-        }
+  // test if the transformation looks incorrect. Reset it if it does
+  //testS2VTransformation(mri);
 
-        const mri = {};
+  // manually parsed information
+  mri.hdr = nii.slice(0, 352);
+  mri.hdrSz = 352;
+  mri.datatype = nii.readUInt16LE(70);
 
-        // read header
-        if(!_readNiftiHeader({nii, mri})) {
-          reject(new Error("Cannot read nifti header"));
+  // read binary data
+  if(!_readNiftiData({nii, mri})) {
+    throw(new Error("Cannot read nifti binary data"));
+  }
 
-          return;
-        }
+  // compute stats: sum, min and max
+  _computeVolumeStats({mri});
 
-        // compute the transformation from voxel space to screen space
-        computeS2VTransformation(mri);
-
-        // test if the transformation looks incorrect. Reset it if it does
-        //testS2VTransformation(mri);
-
-        // manually parsed information
-        mri.hdr = nii.slice(0, 352);
-        mri.hdrSz = 352;
-        mri.datatype = nii.readUInt16LE(70);
-
-        // read binary data
-        if(!_readNiftiData({nii, mri})) {
-          reject(new Error("Cannot read nifti binary data"));
-
-          return;
-        }
-
-        // compute stats: sum, min and max
-        _computeVolumeStats({mri});
-
-        resolve(mri);
-      });
-    } catch(e) {
-      reject(e);
-    }
-  });
-
-  return pr;
+  return(mri);
 };
 
+// eslint-disable-next-line max-statements
 const _readMGZHeader = ({mgh, mri, hdr}) => {
   let success = true;
 
@@ -546,6 +520,7 @@ const readMGZ = (mriPath) => {
         input: a template mri structure
         output: a new empty mri structure, datatype = 2 (1 byte per voxel), same dimensions as template
     */
+// eslint-disable-next-line max-statements
 const createNifti = (templateMRI) => {
 
   /*eslint-disable camelcase*/

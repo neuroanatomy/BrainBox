@@ -79,7 +79,7 @@ describe('Upload Controller: ', function() {
   });
 
 
-  describe('other_validations function() ', function() {
+  describe('otherValidations function() ', function() {
     it('should perform the other validations successfully', async function() {
       const req = {
         body: {
@@ -99,7 +99,7 @@ describe('Upload Controller: ', function() {
       const res = {
         status: sinon.stub().returns({ send: sendStub, json: sinon.stub().returns({ end: jsonSpy })})
       };
-      await uploadController.other_validations(req, res, () => {});
+      await uploadController.otherValidations(req, res, () => {});
       assert.strictEqual(jsonSpy.callCount, 1);
       assert.strictEqual(resSpy.callCount, 0);
       sinon.restore();
@@ -124,7 +124,7 @@ describe('Upload Controller: ', function() {
       const res = {
         status: sinon.stub().returns({ send: sendStub, json: sinon.stub().returns({ end: jsonSpy })})
       };
-      await uploadController.other_validations(req, res, () => {});
+      await uploadController.otherValidations(req, res, () => {});
       assert.strictEqual(jsonSpy.callCount, 0);
       assert.strictEqual(resSpy.callCount, 1);
       assert.strictEqual(sendStub.args[0][0], 'ERROR: Token expired');
@@ -150,7 +150,7 @@ describe('Upload Controller: ', function() {
       const res = {
         status: sinon.stub().returns({ send: sendStub, json: sinon.stub().returns({ end: jsonSpy })})
       };
-      await uploadController.other_validations(req, res, () => {});
+      await uploadController.otherValidations(req, res, () => {});
       assert.strictEqual(jsonSpy.callCount, 0);
       assert.strictEqual(resSpy.callCount, 1);
       assert.strictEqual(sendStub.args[0][0], 'ERROR: Cannot find token');

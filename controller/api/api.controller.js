@@ -1,15 +1,13 @@
-/* eslint-disable no-sync */
-/* eslint-disable max-statements */
-
 const fs = require('fs');
 const path = require('path');
 const tracer = require('tracer').console({format: '[{{file}}:{{line}}]  {{message}}'});
 
-const getLabelsets = (req, res) => {
-  const arr = fs.readdirSync(path.join(__dirname, '../../public/labels/'));
+const getLabelsets = async (req, res) => {
+  const arr = await fs.promises.readdir(path.join(__dirname, '../../public/labels/'));
   const info = [];
   for (const label of arr) {
-    var json = JSON.parse(fs.readFileSync(path.join(__dirname, "../../public/labels/" + label)));
+    // eslint-disable-next-line no-await-in-loop
+    var json = JSON.parse(await fs.promises.readFile(path.join(__dirname, "../../public/labels/" + label)));
     info.push({
       name: json.name,
       source: label

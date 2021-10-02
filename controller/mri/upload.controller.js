@@ -1,12 +1,3 @@
-/* eslint-disable prefer-exponentiation-operator */
-/* eslint-disable no-sync */
-/* eslint-disable max-statements */
-/* eslint-disable new-cap */
-/* eslint-disable no-invalid-this */
-/* eslint-disable sort-vars */
-/* eslint-disable callback-return */
-/* eslint-disable prefer-destructuring */
-/* eslint-disable camelcase */
 "use strict";
 
 const fs = require('fs');
@@ -55,9 +46,10 @@ const validator = function (req, res, next) {
 
 };
 
-const other_validations = async function (req, res, next) {
+// eslint-disable-next-line max-statements
+const otherValidations = async function (req, res, next) {
 
-  var token = req.body.token;
+  const {token} = req.body;
   const obj = await req.db.get("log").findOne({ "token": token })
     .catch(function (err) {
       console.log("ERROR:", err);
@@ -66,7 +58,7 @@ const other_validations = async function (req, res, next) {
     });
   if (obj) {
     // Check token expiry date
-    var now = new Date();
+    const now = new Date();
     if (obj.expiryDate.getTime() - now.getTime() < req.tokenDuration) {
       const json = await req.db.get('mri').findOne({ source: req.body.url, backup: { $exists: false } });
       if (json && req.files.length > 0) {
@@ -75,30 +67,32 @@ const other_validations = async function (req, res, next) {
           username: obj.username
         };
         next();
-      } else {
-        var err = [];
-        if (req.files.length === 0 || !req.files) { err.push({ error: "there is no File" }); }
-        if (!json) { err.push({ error: "Unkown URL" }); }
-        console.log("err", err);
 
-        return res.status(403).json(err)
-          .end();
+        return;
       }
-    } else {
-      return res.status(403).send("ERROR: Token expired")
+      const err = [];
+      if (req.files.length === 0 || !req.files) { err.push({ error: "there is no File" }); }
+      if (!json) { err.push({ error: "Unkown URL" }); }
+      console.log("err", err);
+
+      return res.status(403).json(err)
         .end();
     }
-  } else {
-    return res.status(403).send("ERROR: Cannot find token")
+
+    return res.status(403).send("ERROR: Token expired")
       .end();
   }
+
+  return res.status(403).send("ERROR: Cannot find token")
+    .end();
 };
 
+// eslint-disable-next-line max-statements
 const upload = async function (req, res) {
-  var username = req.atlasUpload.username;
-  var { url, atlasName, atlasProject, atlasLabelSet } = req.body;
-  var { mri } = req.atlasUpload;
-  var files = req.files;
+  const {username} = req.atlasUpload;
+  const { url, atlasName, atlasProject, atlasLabelSet } = req.body;
+  const { mri } = req.atlasUpload;
+  const {files} = req;
 
   delete mri._id;
 
@@ -131,16 +125,17 @@ const upload = async function (req, res) {
   // check if directory exists (it may not exist if a volume annotation is being uploaded
   // for an mri that has only a db entry but has not yet been accessed)
   dir = req.dirname + "/public" + mri.url;
-  if (!fs.existsSync(dir)) {
+  // eslint-disable-next-line no-sync
+  if (!(fs.existsSync(dir))) {
     // directory does not exist, create it
     console.log("> mri directory did not exist, create it");
-    fs.mkdirSync(dir, '0777');
+    await fs.promises.mkdir(dir, '0777');
   }
 
   // move tmp atlas file to final location
   path = dir + filename;
   try {
-    fs.renameSync(req.dirname + "/" + files[0].path, path);
+    await fs.promises.rename(req.dirname + "/" + files[0].path, path);
   } catch (err) {
     console.log("ERROR rename failed:", err);
 
@@ -220,12 +215,12 @@ const token = (req, res) => {
   res.send("This route is deprecated. Please use /token instead");
 };
 
-const uploadController = function () {
+const UploadController = function () {
   this.validator = validator;
-  this.other_validations = other_validations;
+  this.otherValidations = otherValidations;
   this.upload = upload;
   this.token = token;
 };
 
-module.exports = new uploadController();
+module.exports = new UploadController();
 

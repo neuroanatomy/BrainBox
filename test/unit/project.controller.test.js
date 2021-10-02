@@ -145,7 +145,7 @@ describe('Project Controller: ', function () {
     });
   });
 
-  describe('api_project function() ', function () {
+  describe('apiProject function() ', function () {
 
     before(function (done) {
       db.get('project').insert(projectObject)
@@ -178,7 +178,7 @@ describe('Project Controller: ', function () {
         status: sinon.stub().returns({ send: failure }),
         send: success
       };
-      await projectController.api_project(req, res);
+      await projectController.apiProject(req, res);
       assert.strictEqual(success.callCount, 1);
       assert.strictEqual(failure.callCount, 0);
       expect(success.args[0][0].username).to.equal('anyone');
@@ -204,14 +204,14 @@ describe('Project Controller: ', function () {
       const res = {
         send: resSpy
       };
-      await projectController.api_project(req, res);
+      await projectController.apiProject(req, res);
       assert.strictEqual(resSpy.callCount, 1);
       expect(resSpy.args[0]).to.have.lengthOf(0);
       sinon.restore();
     });
   });
 
-  describe('api_projectFiles function() ', function () {
+  describe('apiProjectFiles function() ', function () {
     it('should return the files with valid input', async function () {
       const req = {
         query: {
@@ -234,7 +234,7 @@ describe('Project Controller: ', function () {
       const res = {
         send: resSpy
       };
-      await projectController.api_projectFiles(req, res);
+      await projectController.apiProjectFiles(req, res);
       assert.strictEqual(resSpy.callCount, 1);
       expect(resSpy.args[0][0]).to.have.lengthOf(3);
       resSpy.args[0][0].forEach((i) => expect(i).to.have.keys('source', 'name'));
@@ -262,7 +262,7 @@ describe('Project Controller: ', function () {
       const res = {
         send: resSpy
       };
-      await projectController.api_projectFiles(req, res);
+      await projectController.apiProjectFiles(req, res);
       assert.strictEqual(resSpy.callCount, 1);
       assert.deepStrictEqual(resSpy.args, [[{ error: "Provide 'start'" }]]);
       sinon.restore();
@@ -289,7 +289,7 @@ describe('Project Controller: ', function () {
       const res = {
         send: resSpy
       };
-      await projectController.api_projectFiles(req, res);
+      await projectController.apiProjectFiles(req, res);
       assert.strictEqual(resSpy.callCount, 1);
       assert.deepStrictEqual(resSpy.args, [[{ error: "Provide 'length'" }]]);
       sinon.restore();
@@ -358,7 +358,7 @@ describe('Project Controller: ', function () {
     });
   });
 
-  describe('post_project function() ', function () {
+  describe('postProject function() ', function () {
 
     before(function (done) {
       db.get('user').insert({
@@ -403,7 +403,7 @@ describe('Project Controller: ', function () {
       const res = {
         status: sinon.stub().returns({ json: json })
       };
-      await projectController.post_project(req, res);
+      await projectController.postProject(req, res);
       assert.strictEqual(json.callCount, 1);
       expect(json.args[0][0]).to.include.key('error');
       sinon.restore();
@@ -430,14 +430,14 @@ describe('Project Controller: ', function () {
         json: sinon.spy(),
         status: sinon.stub().returns({ json: jsonSpy })
       };
-      await projectController.post_project(req, res);
+      await projectController.postProject(req, res);
       assert.strictEqual(res.json.callCount, 1);
       assert.deepStrictEqual(res.json.args, [[{ success: true, message: 'New project inserted' }]]);
       sinon.restore();
     });
   });
 
-  describe('delete_project function() ', function () {
+  describe('deleteProject function() ', function () {
     before(function (done) {
       db.get('project').insert(projectObject)
         .then(() => done());
@@ -459,7 +459,7 @@ describe('Project Controller: ', function () {
       const res = {
         json: jsonSpy
       };
-      await projectController.delete_project(req, res);
+      await projectController.deleteProject(req, res);
       assert.strictEqual(jsonSpy.callCount, 1);
       assert.deepStrictEqual(jsonSpy.args, [[{ success: false, message: "User not authenticated" }]]);
       sinon.restore();
@@ -481,7 +481,7 @@ describe('Project Controller: ', function () {
       const res = {
         json: sinon.spy()
       };
-      await projectController.delete_project(req, res);
+      await projectController.deleteProject(req, res);
       assert.strictEqual(res.json.callCount, 1);
       assert.deepStrictEqual(res.json.args, [[{ success: false, message: "Unable to delete. Project does not exist in the database" }]]);
       sinon.restore();
@@ -503,7 +503,7 @@ describe('Project Controller: ', function () {
       const res = {
         json: sinon.spy()
       };
-      await projectController.delete_project(req, res);
+      await projectController.deleteProject(req, res);
       assert.strictEqual(res.json.callCount, 1);
       assert.deepStrictEqual(res.json.args, [[{ success: true, message: 'Project deleted' }]]);
       sinon.restore();
@@ -549,7 +549,7 @@ describe('Project Controller: ', function () {
     });
   });
 
-  describe('api_projectAll function() ', function() {
+  describe('apiProjectAll function() ', function() {
     it('should ask for page parameter if not provided', async function() {
       const req = {
         user: {
@@ -574,7 +574,7 @@ describe('Project Controller: ', function () {
         send: sendSpy,
         json: jsonSpy
       };
-      await projectController.api_projectAll(req, res);
+      await projectController.apiProjectAll(req, res);
       assert.strictEqual(sendSpy.callCount, 1);
       assert.strictEqual(jsonSpy.callCount, 0);
       assert.deepStrictEqual(sendSpy.args, [[{ error: "Provide the parameter 'page'" }]]);
@@ -605,7 +605,7 @@ describe('Project Controller: ', function () {
         send: sendSpy,
         json: jsonSpy
       };
-      await projectController.api_projectAll(req, res);
+      await projectController.apiProjectAll(req, res);
       assert.strictEqual(sendSpy.callCount, 0);
       assert.strictEqual(jsonSpy.callCount, 1);
       sinon.restore();
