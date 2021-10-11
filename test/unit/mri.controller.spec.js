@@ -318,4 +318,80 @@ describe('MRI Controller: ', function () {
       sinon.restore();
     });
   });
+
+  describe('apiMriPost function() ', function () {
+    // after(async function () {
+    //   await db.get('mri').remove({ source: U.localBertURL });
+    // });
+
+    it('should work correctly and make the right calls when input is correct');
+    // does not work since the test finishes before the mri is dowloaded so it cannot be removed at the end of the test
+    // does not seem to test much more than what is in the integration test suite mri.controller.test.js
+    // it('should work correctly and make the right calls when input is correct', async function () {
+    //   const req = {
+    //     db: db,
+    //     body: {},
+    //     query: {
+    //       url: U.localBertURL
+    //     },
+    //     user: {
+    //       username: ''
+    //     },
+    //     headers: {
+    //       'x-forwarded-for': 'anyone'
+    //     },
+    //     dirname,
+    //     isAuthenticated: function () {
+    //       return Boolean(this.user.username);
+    //     },
+    //     isTokenAuthenticated: false
+    //   };
+    //   console.log(req.dirname);
+    //   const resSpy = sinon.spy();
+    //   const jsonSpy = sinon.spy();
+    //   const res = {
+    //     send: resSpy,
+    //     status: sinon.stub().returns({ json: jsonSpy }),
+    //     json: jsonSpy
+    //   };
+    //   // atlasMakerServer.dataDirectory = __dirname.split('/test')[0] + '/public';
+    //   await mriController.apiMriPost(req, res);
+    //   // atlasMakerServer.dataDirectory = '';
+    //   assert.strictEqual(resSpy.callCount, 0);
+    //   assert.strictEqual(jsonSpy.callCount, 1);
+    //   assert.strictEqual(jsonSpy.args[0][0].success, 'downloading');
+    //   sinon.restore();
+    // });
+
+    it('should throw an error when input is incorrect', async function () {
+      const req = {
+        db: db,
+        body: {},
+        query: {
+          url: 'invalidUrl'
+        },
+        user: {
+        },
+        dirname: __dirname.split('/test')[0],
+        isAuthenticated: function () {
+          return Boolean(this.user.username);
+        },
+        isTokenAuthenticated: false
+      };
+      const resSpy = sinon.spy();
+      const statusSpy = sinon.spy();
+      const jsonSpy = sinon.spy();
+      const res = {
+        send: resSpy,
+        status: sinon.stub().returns({ json: statusSpy }),
+        json: jsonSpy
+      };
+      await mriController.apiMriPost(req, res);
+      assert.strictEqual(resSpy.callCount, 1);
+      assert.strictEqual(resSpy.args[0][0], 'Invalid URL!');
+      assert.strictEqual(jsonSpy.callCount, 0);
+      assert.strictEqual(statusSpy.callCount, 0);
+      sinon.restore();
+    });
+  });
 });
