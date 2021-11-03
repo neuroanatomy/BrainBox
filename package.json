@@ -67,7 +67,7 @@
     "structjs": "git+https://git@github.com/neuroanatomy/structjs.git",
     "tracer": "^0.8.15",
     "url": "^0.11.0",
-    "validator": "^9.4.1",
+    "validator": "^13.7.0",
     "webpage": "^0.3.0",
     "ws": "^6.2.2"
   },
