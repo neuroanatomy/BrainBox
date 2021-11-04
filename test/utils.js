@@ -98,6 +98,33 @@ const projectTest = {
   modifiedBy: "foo"
 };
 
+const privateProjectTest = {
+  name: "Private Test Project",
+  shortname: "privatetestproject",
+  url: "https://testproject.org",
+  brainboxURL: "/project/privatetestproject",
+  created: (new Date()).toJSON(),
+  owner: "foo",
+  collaborators: {
+    list: [
+      {
+        userID: "anyone",
+        access: {
+          collaborators: "none",
+          annotations: "none",
+          files: "none"
+        },
+        username: "anyone",
+        name: "Any User"
+      }
+    ]
+  },
+  description: "A private test project used for checking the authorization process.",
+  modified: (new Date()).toJSON(),
+  modifiedBy: "foo"
+};
+
+
 const currentDirectory = function () {
   console.log("Current directory:", __dirname);
   exec('ls -l', (error, stdout) => {
@@ -229,6 +256,7 @@ module.exports = {
   userFooB,
   userBarB,
   projectTest,
+  privateProjectTest,
   testToken,
   removeMRI,
   currentDirectory,
