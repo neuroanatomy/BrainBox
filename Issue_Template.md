@@ -1,6 +1,6 @@
 ## Thank you for your feedback.
 
-### Please tag your issue as a feature request or a bug report using the labels on the right. 
+Is it a [ ] bug report or a [ ] feature request?
 
 ### Current behaviour
 
@@ -13,6 +13,7 @@
     * Upload the browser error message if you are familiar with web developer tools.
 
 ### Expected behaviour
+
 
 ### Version information (for bug reports)
 
