@@ -125,7 +125,9 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
         U.serverURL + '/user/' + U.userFoo.nickname,
         filename
       );
+      const nbProjects = await page.evaluate(() => document.getElementById("projects").tBodies[0].rows.length);
       assert(diff < npixels1pct, `${diff} pixels were different in ${filename}`);
+      assert.strictEqual(nbProjects, 1);
     }).timeout(U.noTimeout);
 
     // CLOSE
