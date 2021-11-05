@@ -13,7 +13,6 @@ import '../style/user-style.css';
 import $ from 'jquery';
 // import * as tw from '../twoWayBinding.js';
 
-// eslint-disable-next-line no-unused-vars
 var cursorProjects = 0;
 
 const appendProjects = (list) => {
@@ -43,7 +42,7 @@ const appendProjects = (list) => {
 };
 
 const queryProjects = () => {
-  $.getJSON(`/user/json/${nickname}/projects`, {start:userInfo.projects.length, length:100})
+  $.getJSON(`/user/json/${nickname}/projects`, { start: cursorProjects, length: 100 })
     .then(function(res) {
       if(res.success & res.list.length > 0) {
         appendProjects(res.list);
