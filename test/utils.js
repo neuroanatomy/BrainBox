@@ -119,6 +119,12 @@ const privateProjectTest = {
       }
     ]
   },
+  files: {
+    list: []
+  },
+  annotations: {
+    list: []
+  },
   description: "A private test project used for checking the authorization process.",
   modified: (new Date()).toJSON(),
   modifiedBy: "foo"
