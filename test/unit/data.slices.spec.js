@@ -106,8 +106,8 @@ describe('Data Slices ', function() {
         },
         db: db
       };
-      const files = await dataSlices.getProjectsSlice(req, 0, 1);
-      assert.strictEqual(files.length, 1);
+      const files = await dataSlices.getProjectsSlice(req, 0, 10);
+      assert.notStrictEqual(files.length, 0);
     });
 
     it('should return the number of files based on length', async function() {
