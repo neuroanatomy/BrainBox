@@ -3,6 +3,8 @@ const crypto = require('crypto');
 const validatorNPM = require('validator');
 const checkAccess = require('../checkAccess/checkAccess.js');
 const dataSlices = require('../dataSlices/dataSlices.js');
+const AsyncLock = require('async-lock');
+const lock = new AsyncLock();
 
 const createDOMPurify = require('dompurify');
 const { JSDOM } = require('jsdom');
@@ -561,54 +563,63 @@ const postProject = async function (req, res) {
   }
   var k;
 
-  const object = await isProjectObject(req, res, obj);
-  const oldProject = await req.db.get('project').findOne({ shortname: object.shortname, backup: { $exists: false } })
-    .catch(function (error) {
-      console.log("ERROR", error);
-      res.status(300).json({ "error": error });
-    });
-  // update/insert project
-  if (oldProject) {
+  // eslint-disable-next-line max-statements
+  await lock.acquire(['project', 'mri'], async function() {
+    const object = await isProjectObject(req, res, obj);
+    const oldProject = await req.db.get('project').findOne({ shortname: object.shortname, backup: { $exists: false } })
+      .catch(function (error) {
+        console.log("ERROR", error);
+        res.status(300).json({ "error": error });
+      });
+    // update/insert project
+    if (oldProject) {
     // project exists, save update
-    if (checkAccess.toProject(oldProject, loggedUser, "edit") === false) {
-      console.log("User does not have edit rights");
-      res.status(403).json({ error: "error", message: "User does not have edit rights" });
+      if (checkAccess.toProject(oldProject, loggedUser, "edit") === false) {
+        console.log("User does not have edit rights");
+        res.status(403).json({ error: "error", message: "User does not have edit rights" });
 
-      return;
-    }
-    // insert MRI names if provided
-    console.log("insert mri names");
-    await insertMRInames(req, res, object.files.list);
+        return;
+      }
+      // insert MRI names if provided
+      console.log("insert mri names");
+      await insertMRInames(req, res, object.files.list);
 
-    // reformat file list
-    console.log("reformat file list");
-    for (k = 0; k < object.files.list.length; k++) { object.files.list[k] = object.files.list[k].source; }
+      // reformat file list
+      console.log("reformat file list");
+      for (k = 0; k < object.files.list.length; k++) {
+        object.files.list[k] = object.files.list[k].source;
+      }
 
-    object.modified = (new Date()).toJSON();
-    object.modifiedBy = req.user.username;
-    delete object._id;
+      object.modified = (new Date()).toJSON();
+      object.modifiedBy = req.user.username;
+      delete object._id;
 
-    console.log("updating...");
-    await req.db.get('project').update({ shortname: object.shortname }, { $set: { backup: true } }, { multi: true });
-    await req.db.get('project').insert(object);
+      console.log("updating...");
+      await req.db.get('project').update({ shortname: object.shortname }, { $set: { backup: true } }, { multi: true });
+      await req.db.get('project').insert(object);
 
-    console.log("success: true");
-    res.json({ success: true, message: "Project settings updated" });
-  } else {
+      console.log("success: true");
+      res.json({ success: true, message: "Project settings updated" });
+    } else {
     // new project, insert
-    console.log("inserting...");
-    console.log("insert mri names");
-    await insertMRInames(req, res, obj.files.list);
+      console.log("inserting...");
+      console.log("insert mri names");
+      await insertMRInames(req, res, obj.files.list);
 
-    // reformat file list
-    console.log("reformat file list");
-    for (k = 0; k < obj.files.list.length; k++) { obj.files.list[k] = obj.files.list[k].source; }
+      // reformat file list
+      console.log("reformat file list");
+      for (k = 0; k < obj.files.list.length; k++) {
+        obj.files.list[k] = obj.files.list[k].source;
+      }
 
-    await req.db.get('project').insert(obj);
+      delete object._id;
 
-    console.log("success: true");
-    res.json({ success: true, message: "New project inserted" });
-  }
+      await req.db.get('project').insert(obj);
+
+      console.log("success: true");
+      res.json({ success: true, message: "New project inserted" });
+    }
+  });
 };
 
 /**
@@ -635,17 +646,27 @@ const deleteProject = async function (req, res) {
     return;
   }
 
-  shortname = req.params.projectName;
-  const oldProject = await req.db.get('project').findOne({ shortname: shortname, backup: { $exists: 0 } })
-    .catch(function (err) {
-      console.log("ERROR: unable to query the db", err);
-      res.json({ success: false, message: "Unable to delete. Try again later" });
-    });
+  try {
+    // eslint-disable-next-line max-statements
+    await lock.acquire(['project', 'mri'], async function() {
 
+      shortname = req.params.projectName;
+      const oldProject = await req.db.get('project').findOne({ shortname: shortname, backup: { $exists: 0 } });
 
-  if (oldProject) {
-    console.log(">> project does exist");
-    if (checkAccess.toProject(oldProject, loggedUser, "remove") === true) {
+      if (!oldProject) {
+        console.log("WARNING: project does not exist");
+        res.json({ success: false, message: "Unable to delete. Project does not exist in the database" });
+
+        return;
+      }
+      console.log(">> project does exist");
+
+      if (!checkAccess.toProject(oldProject, loggedUser, "remove")) {
+        console.log("WARNING: user does not have remove rights");
+        res.json({ success: false, message: "The user is not allowed to delete this project" });
+
+        return;
+      }
       console.log(">> user does have remove rights");
 
       var query = {},
@@ -654,28 +675,18 @@ const deleteProject = async function (req, res) {
       query.backup = { $exists: 0 };
       update.$unset = {};
       update.$unset["mri.annotations." + shortname] = "";
-
       await Promise.all([
         req.db.get('project').remove({ _id: oldProject._id, backup: { $exists: false } }),
         req.db.get('mri').update(query, update, { multi: true }),
         req.db.get('mri').update({ "mri.atlas": { $elemMatch: { project: shortname } } }, { $pull: { "mri.atlas": { project: shortname } } }, { multi: true })
-      ])
-        .catch(function (err) {
-          console.log("ERROR: cannot remove project or project-related annotations", err);
-          res.json({ success: false, message: "Unable to delete. Try again later" });
-        });
+      ]);
       console.log(">> project and project-related annotations removed");
       res.json({ success: true, message: "Project deleted" });
-
-    } else {
-      console.log("WARNING: user does not have remove rights");
-      res.json({ success: false, message: "The user is not allowed to delete this project" });
-    }
-  } else {
-    console.log("WARNING: project does not exist");
-    res.json({ success: false, message: "Unable to delete. Project does not exist in the database" });
+    });
+  } catch (err) {
+    console.log("ERROR: cannot remove project or project-related annotations", err);
+    res.json({ success: false, message: "Unable to delete. Try again later" });
   }
-
 };
 
 

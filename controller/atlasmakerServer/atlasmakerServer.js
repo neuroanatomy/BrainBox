@@ -11,6 +11,8 @@ const db = monk('localhost:27017/brainbox');
 const keypress = require('keypress');
 
 const amri = require("./atlasmaker-mri");
+var AsyncLock = require('async-lock');
+var lock = new AsyncLock();
 
 // Get whitelist and blacklist
 const useWhitelist = false;
@@ -277,13 +279,11 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       delete me.Atlases[iAtlas];
     },
     unloadMRI: function (mriPath) {
-      for (const i in me.Brains) {
-        if ({}.hasOwnProperty.call(me.Brains, i)) {
-          if (me.Brains[i].path === mriPath) {
-            delete me.Brains[i];
-            tracer.log("Free memory", os.freemem());
-            break;
-          }
+      for (let i=0; i<me.Brains.length; i++) {
+        if (me.Brains[i].path === mriPath) {
+          me.Brains.splice(i, 1);
+          tracer.log("Free memory", os.freemem());
+          break;
         }
       }
     },
@@ -340,60 +340,64 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       }
       const { vectorial } = atlas;
 
-      // check if atlas has changed since the last time and
-      // if it hasn't return
-      // if the atlas is not present, it may have been deleted by the user.
-      // remove it from the Atlases array and return
-      let mri;
-      try {
-        mri = await db.get('mri').findOne({ source: atlas.source, backup: { $exists: 0 } }, { _id: 0 });
-      } catch (err) {
-        throw new Error("Can't find entry for atlas voxel data in DB", err);
-      }
+      // eslint-disable-next-line max-statements
+      await lock.acquire('mri', async function() {
 
-      if (mri === null) {
-        tracer.log(`WARNING: There's not DB entry for MRI with source ${atlas.source}`);
-
-        return;
-      }
-
-      if ({}.hasOwnProperty.call(mri, "_id")) {
-        delete mri._id;
-      }
-
-      let index = -1;
-      for (let i = 0; i < mri.mri.atlas.length; i++) {
-        if (mri.mri.atlas[i].filename === atlas.filename) {
-          index = i;
-          break;
+        // check if atlas has changed since the last time and
+        // if it hasn't return
+        // if the atlas is not present, it may have been deleted by the user.
+        // remove it from the Atlases array and return
+        let mri;
+        try {
+          mri = await db.get('mri').findOne({ source: atlas.source, backup: { $exists: 0 } }, { _id: 0 });
+        } catch (err) {
+          throw new Error("Can't find entry for atlas voxel data in DB", err);
         }
-      }
 
-      if (index === -1) {
+        if (mri === null) {
+          tracer.log(`WARNING: There's not DB entry for MRI with source ${atlas.source}`);
+
+          return;
+        }
+
+        if ({}.hasOwnProperty.call(mri, "_id")) {
+          delete mri._id;
+        }
+
+        let index = -1;
+        for (let i = 0; i < mri.mri.atlas.length; i++) {
+          if (mri.mri.atlas[i].filename === atlas.filename) {
+            index = i;
+            break;
+          }
+        }
+
+        if (index === -1) {
         // atlas was removed from MRI object, return
         // const iAtlas = me.indexOfAtlasAtPath(atlas.dirname, atlas.filename);
         // me.removeAtlasAtIndex(iAtlas);
 
-        return;
-      }
-
-      if (typeof mri.mri.atlas[index].vectorial !== "undefined") {
-        const patch = jsonpatch.compare(mri.mri.atlas[index].vectorial, vectorial);
-        if (patch.length === 0) {
-          console.log("INFO: No vectorial atlas change, no save");
-
           return;
         }
-      }
 
-      // if has changed: update it and save to DB
-      mri.mri.atlas[index].vectorial = vectorial;
-      try {
-        await db.get('mri').update({ source: atlas.source }, { $set: { backup: true } }, { multi: true });
-        await db.get('mri').insert(mri);
-      } catch (err) {
-        throw new Error("Can't log update and save to DB");
-      }
+        if (typeof mri.mri.atlas[index].vectorial !== "undefined") {
+          const patch = jsonpatch.compare(mri.mri.atlas[index].vectorial, vectorial);
+          if (patch.length === 0) {
+            console.log("INFO: No vectorial atlas change, no save");
+
+            return;
+          }
+        }
+
+        // if has changed: update it and save to DB
+        mri.mri.atlas[index].vectorial = vectorial;
+        try {
+          await db.get('mri').update({ source: atlas.source }, { $set: { backup: true } }, { multi: true });
+          await db.get('mri').insert(mri);
+        } catch (err) {
+          throw new Error("Can't log update and save to DB");
+        }
+      });
     },
 
     /**
@@ -934,41 +938,34 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         }
       });
     },
-    getBrainAtPath: function (brainPath) {
 
-      /*
-                getBrainAtPath
-                input: A client-side path identifying the requested brain
-                process: a brain is obtained, and added to the me.Brains[] array if it
-                        wasn't already loaded.
-                output: a brain (mri structure)
-            */
-      for (const i in me.Brains) {
-        if ({}.hasOwnProperty.call(me.Brains, i)) {
-          if (me.Brains[i].path === brainPath) {
-            if (me.debug > 1) {
-              tracer.log("brain already loaded");
-            }
-
-            return Promise.resolve(me.Brains[i].data);
+    /*
+      getBrainAtPath
+      input: A client-side path identifying the requested brain
+      process: a brain is obtained, and added to the me.Brains[] array if it
+              wasn't already loaded.
+      output: a brain (mri structure)
+    */
+    getBrainAtPath: async function (brainPath) {
+      for (const brain of me.Brains) {
+        if (brain.path === brainPath) {
+          if (me.debug > 1) {
+            tracer.log("brain already loaded");
           }
+
+          return brain.data;
         }
       }
+      try {
+        const mri = await amri.loadMRI(path.join(me.dataDirectory, brainPath));
+        const brain = { path: brainPath, data: mri };
+        me.Brains.push(brain);
 
-      const pr = new Promise(function (resolve, reject) {
-        amri.loadMRI(me.dataDirectory + brainPath)
-          .then(function (mri) {
-            const brain = { path: brainPath, data: mri };
-            me.Brains.push(brain);
-            resolve(mri); // callback: sendSliceToUser
-          })
-          .catch(function (err) {
-            tracer.log("ERROR: getBrainAtPath cannot load brain. Corrupted file?", err);
-            reject(err);
-          });
-      });
-
-      return pr;
+        return mri; // callback: sendSliceToUser
+      } catch (err) {
+        tracer.log("ERROR: getBrainAtPath cannot load brain. Corrupted file?", err);
+        throw err;
+      }
     },
 
     //========================================================================================
@@ -1220,7 +1217,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
 
       /** @todo Log the save */
     },
-    receiveSaveMetadataMessage: function (data) {
+    // eslint-disable-next-line max-statements
+    receiveSaveMetadataMessage: async function (data) {
       if (me.debug > 1) {
         tracer.log("metadata type: " + data.type);
         tracer.log("rnd: " + data.rnd);
@@ -1239,52 +1237,46 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       json.modified = (new Date()).toJSON();
       json.modifiedBy = (sourceUS.User && sourceUS.User.username) ? sourceUS.User.username : "anonymous";
 
-      if (data.method === "patch") {
+      // eslint-disable-next-line max-statements
+      await lock.acquire('mri', async function() {
+        if (data.method === "patch") {
         // deal with patches
 
-        // get original object from db
-        db.get('mri').findOne({ source: json.source, backup: { $exists: 0 } }, { _id: 0 })
-          .then(function (ret) {
-            delete ret._id;
-            // apply patch
-            jsonpatch.applyPatch(ret, data.patch);
-            // sanitise
-            ret = JSON.parse(DOMPurify.sanitize(JSON.stringify(ret))); // sanitize works on strings, not objects
-            // mark previous as backup
-            db.get('mri').update({ source: json.source }, { $set: { backup: true } }, { multi: true })
-              .then(function () {
-                // insert new
-                db.get('mri').insert(ret);
-              });
-          });
-      } else {
+          // get original object from db
+          let ret = await db.get('mri').findOne({ source: json.source, backup: { $exists: 0 } }, { _id: 0 });
+          delete ret._id;
+          // apply patch
+          jsonpatch.applyPatch(ret, data.patch);
+          // sanitise
+          ret = JSON.parse(DOMPurify.sanitize(JSON.stringify(ret))); // sanitize works on strings, not objects
+          // mark previous as backup
+          await db.get('mri').update({ source: json.source }, { $set: { backup: true } }, { multi: true });
+          // insert new
+          await db.get('mri').insert(ret);
+        } else {
         // deal with the complete object
 
-        // sanitise json
-        json = JSON.parse(DOMPurify.sanitize(JSON.stringify(json))); // sanitize works on strings, not objects
-        // DEBUG:
-        if (me.debug > 1) {
-          tracer.log("metadata:", JSON.stringify(json));
+          // sanitise json
+          json = JSON.parse(DOMPurify.sanitize(JSON.stringify(json))); // sanitize works on strings, not objects
+          // DEBUG:
+          if (me.debug > 1) {
+            tracer.log("metadata:", JSON.stringify(json));
+          }
+
+          // mark previous one as backup
+          const ret = await db.get('mri').findOne({ source: json.source, backup: { $exists: 0 } });
+          // DEBUG: tracer.log("original mri:", JSON.stringify(ret));
+
+          if (data.method === "overwrite") {
+            json = merge.recursive(ret, json);
+          }
+          delete json._id;
+
+          await db.get('mri').update({ source: json.source }, { $set: { backup: true } }, { multi: true });
+          await db.get('mri').insert(json);
+        // DEBUG: tracer.log("inserted mri:", JSON.stringify(json));
         }
-
-        // mark previous one as backup
-        db.get('mri').findOne({ source: json.source, backup: { $exists: 0 } })
-          .then(function (ret) {
-            // DEBUG: tracer.log("original mri:", JSON.stringify(ret));
-
-            db.get('mri').update({ source: json.source }, { $set: { backup: true } }, { multi: true })
-              .then(function () {
-                if (data.method === "overwrite") {
-                  db.get('mri').insert(json);
-                } else {
-                  json = merge.recursive(ret, json);
-                  delete json._id;
-                  db.get('mri').insert(json);
-                }
-                // DEBUG: tracer.log("inserted mri:", JSON.stringify(json));
-              });
-          });
-      }
+      });
     },
     receiveAtlasFromUserMessage: async function (data) {
       const atlasData = await new Promise((resolve, reject) => {
@@ -1395,7 +1387,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
      */
     // eslint-disable-next-line max-statements
     loadAtlas: async function loadAtlas (User) {
-      const mriPath = me.dataDirectory + User.dirname + User.atlasFilename;
+      const mriPath = path.join(me.dataDirectory, User.dirname, User.atlasFilename);
 
       if (typeof User.dirname === 'undefined') {
         tracer.log("ERROR: Rejecting loadAtlas from undefined User.dirname:", User);
