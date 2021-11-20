@@ -9,7 +9,7 @@ const atlasmakerServer = require('../atlasmakerServer/atlasmakerServer');
 const checkAccess = require('../checkAccess/checkAccess.js');
 const dataSlices = require('../dataSlices/dataSlices.js');
 
-const downloadQueue = [];
+const downloadQueue = {};
 
 // ExpressValidator = require('express-validator')
 
@@ -400,6 +400,11 @@ const apiMriPost = async function (req, res) {
         console.log('>> Still downloading. Wait');
         res.json(downloadQueue[myurl]);
       } else {
+
+        /*
+          returns 403 in case the download has already failed
+          consequently, it will not be possible to retry the download until the server is restarted
+        */
         console.log(">> Failed. Throw an error");
         res.status(403).json(downloadQueue[myurl]);
       }
@@ -410,10 +415,13 @@ const apiMriPost = async function (req, res) {
         console.log("downloadMRI obj:", obj);
         console.log('Download succeeded. Insert in DB, remove from queue');
         obj.success = true;
-        req.db.get('mri').insert(obj);
-        // downloadQueue[myurl] = obj;
-        delete downloadQueue[myurl];
+
+        return req.db.get('mri').insert(obj);
       })
+        .then(() => {
+          // downloadQueue[myurl] = obj;
+          delete downloadQueue[myurl];
+        })
         .catch((err) => {
           console.log('Download failed:', err);
           downloadQueue[myurl] = { success: false, error: `${JSON.stringify(err)}` };
@@ -462,8 +470,7 @@ const apiMriGet = async function (req, res) {
     }
 
     // Display access-filtered list of mris
-    // eslint-disable-next-line radix
-    page = Math.max(0, parseInt(page));
+    page = Math.max(0, parseInt(page, 10));
     const nItemsPerPage = 20;
 
     const values = await dataSlices.getFilesSlice(req, page * nItemsPerPage, nItemsPerPage);

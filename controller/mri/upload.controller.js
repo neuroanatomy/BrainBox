@@ -2,6 +2,8 @@
 
 const fs = require('fs');
 const amri = require("../atlasmakerServer/atlasmaker-mri");
+var AsyncLock = require('async-lock');
+var lock = new AsyncLock();
 
 // ExpressValidator = require('express-validator')
 
@@ -194,16 +196,18 @@ const upload = async function (req, res) {
     }
   }
 
+  await lock.acquire('mri', async function() {
   // update the database
-  mri.mri.atlas.push(atlasMetadata);
-  // mark previous version as backup
-  await req.db.get('mri').update({ source: req.body.url, backup: { $exists: false } }, { $set: { backup: true } }, { multi: true });
-  // insert new version
-  await req.db.get('mri').insert(mri);
+    mri.mri.atlas.push(atlasMetadata);
+    // mark previous version as backup
+    await req.db.get('mri').update({ source: req.body.url, backup: { $exists: false } }, { $set: { backup: true } }, { multi: true });
+    // insert new version
+    await req.db.get('mri').insert(mri);
 
-  // return the full mri object ???
-  return res.status(200).json(mri)
-    .end();
+    // return the full mri object ???
+    res.status(200).json(mri)
+      .end();
+  });
 };
 
 /** 'token' was used by the /mri/upload route, which is now
