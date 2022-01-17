@@ -1,5 +1,5 @@
 db:
-  image: mongo
+  image: mongo:4.2
   volumes:
     - ./data:/data/db
   ports:
@@ -12,11 +12,11 @@ web:
     # - /brainbox/node_modules
     # - ./public/data:/brainbox/public/data
   ports:
-    - "3000:3000"
+    - "3001:3001"
     - "8080:8080"
     #- "35729:35729"
   links:
     - db
   environment:
-    PORT: 3000
+    PORT: 3001
     DEVELOP: 0 # for livereload set to 1 and uncomment port 35729
