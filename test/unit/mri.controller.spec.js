@@ -1,11 +1,11 @@
-var assert = require("assert");
+var {assert} = require("chai");
 const mriController = require('../../controller/mri/mri.controller');
 // const atlasMakerServer = require('../../controller/atlasmakerServer/atlasmakerServer');
 const monk = require('monk');
 require('mocha-sinon');
 const sinon = require('sinon');
 var db = monk('localhost:27017/brainbox');
-// const U = require('../utils');
+const U = require('../utils');
 const dirname = require('path').resolve(__dirname, '../..');
 
 describe('MRI Controller: ', function () {
@@ -320,48 +320,58 @@ describe('MRI Controller: ', function () {
   });
 
   describe('apiMriPost function() ', function () {
-    // after(async function () {
-    //   await db.get('mri').remove({ source: U.localBertURL });
-    // });
+    after(async function () {
+      await db.get('mri').remove({ source: U.localBertURL });
+    });
 
-    it('should work correctly and make the right calls when input is correct');
-    // does not work since the test finishes before the mri is dowloaded so it cannot be removed at the end of the test
-    // does not seem to test much more than what is in the integration test suite mri.controller.test.js
-    // it('should work correctly and make the right calls when input is correct', async function () {
-    //   const req = {
-    //     db: db,
-    //     body: {},
-    //     query: {
-    //       url: U.localBertURL
-    //     },
-    //     user: {
-    //       username: ''
-    //     },
-    //     headers: {
-    //       'x-forwarded-for': 'anyone'
-    //     },
-    //     dirname,
-    //     isAuthenticated: function () {
-    //       return Boolean(this.user.username);
-    //     },
-    //     isTokenAuthenticated: false
-    //   };
-    //   console.log(req.dirname);
-    //   const resSpy = sinon.spy();
-    //   const jsonSpy = sinon.spy();
-    //   const res = {
-    //     send: resSpy,
-    //     status: sinon.stub().returns({ json: jsonSpy }),
-    //     json: jsonSpy
-    //   };
-    //   // atlasMakerServer.dataDirectory = __dirname.split('/test')[0] + '/public';
-    //   await mriController.apiMriPost(req, res);
-    //   // atlasMakerServer.dataDirectory = '';
-    //   assert.strictEqual(resSpy.callCount, 0);
-    //   assert.strictEqual(jsonSpy.callCount, 1);
-    //   assert.strictEqual(jsonSpy.args[0][0].success, 'downloading');
-    //   sinon.restore();
-    // });
+    // eslint-disable-next-line max-statements
+    it('should work correctly and make the right calls when input is correct', async function () {
+      const req = {
+        db: db,
+        body: {},
+        query: {
+          url: U.localBertURL
+        },
+        user: {
+          username: ''
+        },
+        headers: {
+          'x-forwarded-for': U.userFoo.nickname
+        },
+        dirname,
+        isAuthenticated: function () {
+          return Boolean(this.user.username);
+        },
+        isTokenAuthenticated: false
+      };
+      console.log(req.dirname);
+      const resSpy = sinon.spy();
+      const jsonSpy = sinon.spy();
+      const res = {
+        send: resSpy,
+        status: sinon.stub().returns({ json: jsonSpy }),
+        json: jsonSpy
+      };
+      // atlasMakerServer.dataDirectory = __dirname.split('/test')[0] + '/public';
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        // eslint-disable-next-line no-await-in-loop
+        await mriController.apiMriPost(req, res);
+
+        if (jsonSpy.args[jsonSpy.callCount-1][0].success !== 'downloading') {
+          break;
+        }
+
+        // eslint-disable-next-line no-await-in-loop
+        await U.delay(U.shortTimeout);
+      }
+      // atlasMakerServer.dataDirectory = '';
+      assert.strictEqual(resSpy.callCount, 0);
+      assert.isAtLeast(jsonSpy.callCount, 1);
+      assert.strictEqual(jsonSpy.args[jsonSpy.callCount - 1][0].success, true);
+      assert.strictEqual(jsonSpy.args[jsonSpy.callCount - 1][0].source, U.localBertURL);
+      sinon.restore();
+    }).timeout(U.longTimeout);
 
     it('should throw an error when input is incorrect', async function () {
       const req = {

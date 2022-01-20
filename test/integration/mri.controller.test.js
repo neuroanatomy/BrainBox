@@ -56,8 +56,15 @@ describe('TESTING THE /mri ROUTE', function () {
         });
       const { body } = res;
       // console.log(body);
-      assert.equal(body.success, true);
-      assert.equal(res.statusCode, 200);
+      const expectedKeys = [
+        "_id", "filename", "success", "source", "url", "included",
+        "dim", "pixdim", "voxel2world", "worldOrigin",
+        "owner", "mri", "modified", "modifiedBy", "name"
+      ];
+      assert.hasAllKeys(body, expectedKeys);
+      assert.strictEqual(body.success, true);
+      assert.strictEqual(body.source, U.localBertURL);
+      assert.strictEqual(res.statusCode, 200);
     }).timeout(U.mediumTimeout);
 
     it('GET /mri/json?page=0 should return an array with >=1 file', async function () {

@@ -50,7 +50,6 @@ const validator = function (req, res, next) {
   }
 };
 
-// eslint-disable-next-line func-style
 const validatorPost = function (req, res, next) {
 
   console.log("mri body", req.body);
@@ -313,7 +312,6 @@ const removeVariablesFromURL = function (myurl) {
   return myurl.split("&")[0];
 };
 
-// eslint-disable-next-line func-style
 // eslint-disable-next-line max-statements
 const apiMriPost = async function (req, res) {
   console.log("apiMriPost");
