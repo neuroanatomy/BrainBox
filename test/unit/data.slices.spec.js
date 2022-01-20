@@ -1,8 +1,8 @@
-var assert = require("assert");
+const { assert } = require('chai');
 const dataSlices = require('../../controller/dataSlices/dataSlices');
 const monk = require('monk');
 require('mocha-sinon');
-var db = monk('localhost:27017/brainbox');
+const db = monk('localhost:27017/brainbox');
 
 describe('Data Slices ', function() {
   describe('getUserFilesSlice function() ', function() {
@@ -24,6 +24,9 @@ describe('Data Slices ', function() {
   });
 
   describe('getUserAtlasSlice function() ', function() {
+
+    /* does not really test the function since like it is currently configured
+    the user does not have any atlas */
     it('should return the correct atlas slice with valid input', async function() {
       const req = {
         user: {
@@ -36,7 +39,7 @@ describe('Data Slices ', function() {
         db: db
       };
       const requestedUser = 'foo';
-      const files = await dataSlices.getUserAtlasSlice(req, requestedUser, 1, 2);
+      const files = await dataSlices.getUserAtlasSlice(req, requestedUser, 0, 10);
       assert.strictEqual(files.success, true);
     });
   });
@@ -56,7 +59,8 @@ describe('Data Slices ', function() {
       const requestedUser = 'foo';
       const files = await dataSlices.getUserProjectsSlice(req, requestedUser, 0, 4);
       assert.strictEqual(files.success, true);
-      assert.notEqual(files.list.length, 0);
+      assert.notStrictEqual(files.list.length, 0);
+      assert.containsAllKeys(files.list[0], ['project', 'owner']);
     });
 
     it('should not return files with invalid input', async function() {

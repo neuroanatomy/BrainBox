@@ -1,27 +1,17 @@
-/* eslint-disable prefer-exponentiation-operator */
-/* eslint-disable max-lines */
-/* eslint-disable no-invalid-this */
-/* eslint-disable new-cap */
-/* eslint-disable sort-vars */
-/* eslint-disable guard-for-in */
-/* eslint-disable prefer-promise-reject-errors */
-/* eslint-disable array-callback-return */
-/* eslint-disable no-undef */
-/* eslint-disable prefer-destructuring */
-/* eslint-disable valid-jsdoc */
-/* eslint-disable no-path-concat */
-/* eslint-disable max-lines */
 console.log('dataSlices.js');
 const dateFormat = require('dateformat');
 
-const checkAccess = require(__dirname + '/../checkAccess/checkAccess.js');
+const path = require('path');
+const checkAccess = require(path.join(__dirname, '/../checkAccess/checkAccess.js'));
 
 /**
  * @func getUserFilesSlice
  * @desc Get an access-filtered slice of the mri files from a user
+ * @param {Object} req Request object
  * @param {String} requestedUser Username of the user whose files are requested
  * @param {integer} start Start index of the file slice
  * @param {integer} length Number of files to include in the slice
+ * @returns {Object} user files slice
  */
 const getUserFilesSlice = function getUserFilesSlice(req, requestedUser, start, length) {
   console.log('getUserFilesSlice. Start, end:', start, length);
@@ -46,15 +36,18 @@ const getUserFilesSlice = function getUserFilesSlice(req, requestedUser, start, 
       })
     ])
       .then(function(values) {
-        const unfilteredMRI = values[0];
-        const unfilteredProjects = values[1];
+        const [unfilteredMRI, unfilteredProjects] = values;
         const mri = [];
         const mriFiles = [];
 
         // filter for view access
-        for(umri of unfilteredMRI) { if(checkAccess.toFileByAllProjects(umri, unfilteredProjects, loggedUser, "view")) { mri.push(umri); } }
+        for(const umri of unfilteredMRI) {
+          if(checkAccess.toFileByAllProjects(umri, unfilteredProjects, loggedUser, "view")) {
+            mri.push(umri);
+          }
+        }
 
-        mri.map(function (o) {
+        mri.forEach(function (o) {
           const obj = {
             url: o.source,
             name: o.name,
@@ -75,7 +68,7 @@ const getUserFilesSlice = function getUserFilesSlice(req, requestedUser, start, 
       })
       .catch(function(err) {
         console.log("ERROR:", err);
-        reject();
+        reject(err);
       });
   });
 };
@@ -83,9 +76,11 @@ const getUserFilesSlice = function getUserFilesSlice(req, requestedUser, start, 
 /**
  * @func getUserAtlasSlice
  * @desc Get an access-filtered slice of the atlas from a user
+ * @param {Object} req request object
  * @param {String} requestedUser Username of the user whose files are requested
  * @param {integer} start Start index of the file slice
  * @param {integer} length Number of files to include in the slice
+ * @returns {Object} user atlas slice
  */
 const getUserAtlasSlice = function getUserAtlasSlice(req, requestedUser, start, length) {
   let loggedUser = "anonymous";
@@ -109,21 +104,24 @@ const getUserAtlasSlice = function getUserAtlasSlice(req, requestedUser, start, 
       })
     ])
       .then(function(values) {
-        const unfilteredAtlas = values[0];
-        const unfilteredProjects = values[1];
+        const [unfilteredAtlas, unfilteredProjects] = values;
         const atlas = [];
         const atlasFiles = [];
 
         // filter for view access
-        for(ua of unfilteredAtlas) { if(checkAccess.toFileByAllProjects(ua, unfilteredProjects, loggedUser, "view")) { atlas.push(ua); } }
+        for(const ua of unfilteredAtlas) {
+          if(checkAccess.toFileByAllProjects(ua, unfilteredProjects, loggedUser, "view")) {
+            atlas.push(ua);
+          }
+        }
 
-        atlas.map(function (o) {
-          for (const a in o.mri.atlas) {
+        atlas.forEach(function (o) {
+          for (const a of o.mri.atlas) {
             atlasFiles.push({
               url: o.source,
               parentName: o.name,
               name: a.name||"",
-              project: o.mri.atlas[i].project||"",
+              project: a.project||"",
               projectURL: '/project/'+a.project||"",
               modified: dateFormat(a.modified, "d mmm yyyy, HH:MM")
             });
@@ -138,7 +136,7 @@ const getUserAtlasSlice = function getUserAtlasSlice(req, requestedUser, start, 
       })
       .catch(function(err) {
         console.log("ERROR:", err);
-        reject();
+        reject(err);
       });
   });
 };
@@ -146,9 +144,11 @@ const getUserAtlasSlice = function getUserAtlasSlice(req, requestedUser, start, 
 /**
  * @func getUserProjectsSlice
  * @desc Get a slice of the projects from a user
+ * @param {Object} req request object
  * @param {String} requestedUser Username of the user whose files are requested
  * @param {integer} start Start index of the file slice
  * @param {integer} length Number of files to include in the slice
+ * @returns {Object} user projects slice
  */
 const getUserProjectsSlice = function getUserProjectsSlice(req, requestedUser, start, length) {
   var loggedUser = "anonymous";
@@ -171,7 +171,11 @@ const getUserProjectsSlice = function getUserProjectsSlice(req, requestedUser, s
         var projects = [];
 
         // filter for view access
-        for(i in unfilteredProjects) { if(checkAccess.toProject(unfilteredProjects[i], loggedUser, "view")) { projects.push(unfilteredProjects[i]); } }
+        for(const i in unfilteredProjects) {
+          if(checkAccess.toProject(unfilteredProjects[i], loggedUser, "view")) {
+            projects.push(unfilteredProjects[i]);
+          }
+        }
 
         projects = projects.map(function (o) {
           return {
@@ -189,7 +193,7 @@ const getUserProjectsSlice = function getUserProjectsSlice(req, requestedUser, s
       })
       .catch(function(err) {
         console.log("ERROR:", err);
-        reject();
+        reject(err);
       });
   });
 };
@@ -236,7 +240,9 @@ const getProjectFilesSlice = async (req, projShortname, start, length, namesFlag
 
   // query mri info for project files
   let list;
-  if(project && project.files) { list = project.files.list; }
+  if(project && project.files) {
+    ({list} = project.files);
+  }
   const arr = [];
 
   start = Math.min(start, list.length);
@@ -280,8 +286,10 @@ const getProjectFilesSlice = async (req, projShortname, start, length, namesFlag
 /**
  * @func getFilesSlice
  * @desc Get an access-filtered slice of all mri files
+ * @param {Object} req request object
  * @param {integer} start Start index of the file slice
  * @param {integer} length Number of files to include in the slice
+ * @returns {Object} files slice
  */
 const getFilesSlice = function getFilesSlice(req, start, length) {
   var loggedUser = "anonymous";
@@ -295,20 +303,23 @@ const getFilesSlice = function getFilesSlice(req, start, length) {
   return new Promise(function (resolve, reject) {
     Promise.all([
       req.db.get('mri')
-        .find({backup: {$exists: false}}, {fields:{source:1, _id:0}}, {skip:start, limit:length}),
+        .find({backup: {$exists: false}}, {fields:{source:1, _id:0}, skip:start, limit:length}),
       req.db.get('project').find({backup: {$exists: false}})
     ])
       .then(function(values) {
-        var unfilteredMRI = values[0],
-          unfilteredProjects = values[1],
+        var [unfilteredMRI, unfilteredProjects] = values,
+          i,
           mri = [],
-          mriFiles = [],
-          i;
+          mriFiles = [];
 
         // filter for view access
-        for(i=0; i<unfilteredMRI.length; i++) { if(checkAccess.toFileByAllProjects(unfilteredMRI[i], unfilteredProjects, loggedUser, "view")) { mri.push(unfilteredMRI[i]); } }
+        for(i=0; i<unfilteredMRI.length; i++) {
+          if(checkAccess.toFileByAllProjects(unfilteredMRI[i], unfilteredProjects, loggedUser, "view")) {
+            mri.push(unfilteredMRI[i]);
+          }
+        }
 
-        mri.map(function (o) {
+        mri.forEach(function (o) {
           mriFiles.push(o.source);
         });
 
@@ -321,7 +332,7 @@ const getFilesSlice = function getFilesSlice(req, start, length) {
       })
       .catch(function(err) {
         console.log("ERROR:", err);
-        reject();
+        reject(err);
       });
   });
 };
@@ -329,10 +340,13 @@ const getFilesSlice = function getFilesSlice(req, start, length) {
 /**
  * @func getProjectsSlice
  * @desc Get an access-filtered slice of all projects
+ * @param {Object} req request object
  * @param {integer} start Start index of the file slice
  * @param {integer} length Number of files to include in the slice
+ * @returns {Object} project slice
  */
-const getProjectsSlice = function getProjectsSlice(req, start, length) {
+// eslint-disable-next-line max-statements
+const getProjectsSlice = async function getProjectsSlice(req, start, length) {
   var loggedUser = "anonymous";
   if(req.isAuthenticated()) {
     loggedUser = req.user.username;
@@ -341,17 +355,17 @@ const getProjectsSlice = function getProjectsSlice(req, start, length) {
     loggedUser = req.tokenUsername;
   }
 
-  return new Promise(async function (resolve, reject) {
+  try {
     const unfilteredProjects = await req.db.get('project')
-      .find({backup: {$exists: false}}, {skip:start, limit:length})
-      .catch(function(err) {
-        console.log("ERROR:", err);
-        reject();
-      });
+      .find({ backup: { $exists: false } }, { skip: start, limit: length });
     var projects = [];
 
     // filter for view access
-    for(i in unfilteredProjects) { if(checkAccess.toProject(unfilteredProjects[i], loggedUser, "view")) { projects.push(unfilteredProjects[i]); } }
+    for(const uproj of unfilteredProjects) {
+      if(checkAccess.toProject(uproj, loggedUser, "view")) {
+        projects.push(uproj);
+      }
+    }
 
     // constrain start and length to available data
     start = Math.min(start, projects.length);
@@ -369,11 +383,15 @@ const getProjectsSlice = function getProjectsSlice(req, start, length) {
       };
     });
 
-    resolve(projects);
-  });
+    return projects;
+
+  } catch (err) {
+    console.log("ERROR:", err);
+    throw err;
+  }
 };
 
-const dataSlices = function () {
+const DataSlices = function () {
   this.getUserFilesSlice = getUserFilesSlice;
   this.getUserAtlasSlice = getUserAtlasSlice;
   this.getUserProjectsSlice = getUserProjectsSlice;
@@ -382,4 +400,4 @@ const dataSlices = function () {
   this.getProjectsSlice = getProjectsSlice;
 };
 
-module.exports = new dataSlices();
+module.exports = new DataSlices();
