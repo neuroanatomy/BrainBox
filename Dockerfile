@@ -1,4 +1,4 @@
-FROM node
+FROM node:17
 
 # install many dependencies for headless chromium
 RUN apt-get update \

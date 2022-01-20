@@ -22,7 +22,7 @@ const DOCKER_DB = process.env.DB_PORT;
 const DOCKER_DEVELOP = process.env.DEVELOP;
 
 if (DOCKER_DB) {
-  MONGO_DB = DOCKER_DB.replace('tcp', 'mongodb') + '/brainbox';
+  MONGO_DB = DOCKER_DB.replace('tcp://', '') + '/brainbox';
 } else {
   MONGO_DB = 'localhost:27017/brainbox'; //process.env.MONGODB;
 }

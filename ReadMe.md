@@ -73,7 +73,7 @@ If you want to work on BrainBox's code, you'll need a local installation:
 
 1. install and start `mongo` database
 2. clone the repo and `cd` to the brainbox directory
-4. [create a new OAuth application](https://github.com/settings/applications/new) for your local brainbox url (http://localhost:3000 by default)
+4. [create a new OAuth application](https://github.com/settings/applications/new) for your local brainbox url (http://localhost:3001 by default). Authorization callback URL: http://localhost:3001/auth/github/callback (this may differ between your development/production instances)
 5. drop the `.example` from `github-keys.json.example` and paste the keys you created into
 6. drop the `.example` from `controller/atlasmakerServer/blacklist.json.example`
 7. drop the `.example` from `controller/atlasmakerServer/whitelist.json.example`
@@ -91,15 +91,16 @@ These installation instructions may need to be updated.
 1. `git clone` this repository or download it
 2. `mv BrainBox brainbox` to rename the directory
 3. `cd` to brainbox
-4. [create a new OAuth application](https://github.com/settings/applications/new) for your local brainbox url (http://localhost:3000 by default)
+4. [create a new OAuth application](https://github.com/settings/applications/new) for your local brainbox url (http://localhost:3001 by default). Authorization callback URL: http://localhost:3001/auth/github/callback (this may differ between your development/production instances)
 5. drop the `.example` from `github-keys.json.example` and paste the keys you created into
 6. drop the `.example` from `controller/atlasmakerServer/blacklist.json.example`
 7. drop the `.example` from `controller/atlasmakerServer/whitelist.json.example`
 8. drop the `.example` from `cfg.json.example`
 7. make sure Docker is installed
 8. `docker-compose up`
-9. Then open `http://localhost:3000` in your browser.
+9. Then open `http://localhost:3001` in your browser.
 
+If you wish to set up a development environment, make sure to set DEVELOP to "1" and uncomment the 35729 port mapping to have a livereload server running. 
 
 ## Tests
 
