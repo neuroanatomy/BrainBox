@@ -7,6 +7,9 @@
 /* eslint-disable valid-jsdoc */
 /* eslint-disable max-depth */
 /* eslint-disable max-lines */
+
+const _ = require('lodash');
+
 var accessLevels=["none", "view", "edit", "add", "remove"];
 var debug = 1;
 
@@ -488,6 +491,15 @@ var filterAnnotationsByProjects = function filterAnnotationsByProjects(mri, proj
   }
 };
 
+const userCanAddAnnotions = (project, username) => {
+  const collaborator = _.find(project.collaborators, (collaborator) => collaborator.name === username);
+  if (_.isNil(collaborator)) {
+    return false;
+  }
+
+  return accessStringToLevel(collaborator.access.annotations) >= accessStringToLevel("add");
+};
+
 
 var checkAccess = function () {
   this.accessStringToLevel = accessStringToLevel;
@@ -499,6 +511,7 @@ var checkAccess = function () {
   this.toAnnotationByProject = toAnnotationByProject;
   this.toProject = toProject;
   this.filterAnnotationsByProjects = filterAnnotationsByProjects;
+  this.userCanAddAnnotions = userCanAddAnnotions;
 };
 
 module.exports = new checkAccess();

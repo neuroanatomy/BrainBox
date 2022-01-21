@@ -8,6 +8,7 @@ const lock = new AsyncLock();
 
 const createDOMPurify = require('dompurify');
 const { JSDOM } = require('jsdom');
+const { ForbiddenAccessError } = require('../../errors.js');
 const {window} = (new JSDOM('', {
   features: {
     FetchExternalResources: false, // disables resource loading over HTTP / filesystem
@@ -103,7 +104,7 @@ const isProjectObject = function (req, res, object) {
 
       return;
     }
-    console.log("> owner and project shortname present");
+    console.log("> owner and project shortname valid");
 
     // convenience array for collaborator checks
     arr = object.collaborators.list;
@@ -116,7 +117,7 @@ const isProjectObject = function (req, res, object) {
       }
     }
     if (flag === false) {
-      reject(new Error("User 'anynone' is not present"));
+      reject(new Error("User 'anyone' is not present"));
 
       return;
     }
@@ -185,7 +186,7 @@ const isProjectObject = function (req, res, object) {
       }
 
       // All checks are successful, resolve the promisse
-      // console.log({success:true,message:"All checks ok. Project object looks valid"});
+      //console.log({success:true, message:"All checks ok. Project object looks valid"});
       resolve(object);
     });
   });
@@ -312,6 +313,7 @@ const apiProjectAll = async function (req, res) {
  * @returns {void}
  * @result A json object with project data
  */
+// eslint-disable-next-line max-statements
 const apiProjectFiles = async function (req, res) {
   const projShortname = req.params.projectName;
   let { start, length, names: namesFlag } = req.query;
@@ -334,12 +336,16 @@ const apiProjectFiles = async function (req, res) {
   length = parseInt(length);
   namesFlag = (namesFlag === "true");
 
-  const list = await dataSlices.getProjectFilesSlice(req, projShortname, start, length, namesFlag)
-    .catch(function (err) {
-      console.log("ERROR:", err);
-      res.send();
-    });
-  res.send(list);
+  try {
+    const list = await dataSlices.getProjectFilesSlice(req, projShortname, start, length, namesFlag);
+    res.send(list);
+  } catch(err) {
+    if(err instanceof ForbiddenAccessError) {
+      res.status(403).send({ error: err.message });
+    } else {
+      res.status(500).send({ error: err.message });
+    }
+  }
 };
 
 /**
@@ -559,13 +565,23 @@ const postProject = async function (req, res) {
   } catch (err) {
     console.log("ERROR");
     console.log({ clean, obj });
-    throw new Error(err);
+    res.status(500).send({error: err.message});
+
+    return;
   }
   var k;
 
   // eslint-disable-next-line max-statements
   await lock.acquire(['project', 'mri'], async function() {
-    const object = await isProjectObject(req, res, obj);
+    let object;
+    try {
+      object = await isProjectObject(req, res, obj);
+    } catch(err) {
+      console.error(err.message);
+      res.status(500).send({error: err.message});
+
+      return;
+    }
     const oldProject = await req.db.get('project').findOne({ shortname: object.shortname, backup: { $exists: false } })
       .catch(function (error) {
         console.log("ERROR", error);
@@ -588,6 +604,13 @@ const postProject = async function (req, res) {
       console.log("reformat file list");
       for (k = 0; k < object.files.list.length; k++) {
         object.files.list[k] = object.files.list[k].source;
+      }
+
+      if (object.annotations.list.length > oldProject.annotations.list.length &&
+        !checkAccess.userCanAddAnnotions(oldProject, loggedUser)) {
+        res.status(403).send({error: "Not authorized to add annotations"});
+
+        return;
       }
 
       object.modified = (new Date()).toJSON();
@@ -641,7 +664,7 @@ const deleteProject = async function (req, res) {
 
   if (loggedUser === "anonymous") {
     console.log("The user is not logged in");
-    res.json({ success: false, message: "User not authenticated" });
+    res.status(401).json({ success: false, message: "User not authenticated" });
 
     return;
   }
@@ -655,7 +678,7 @@ const deleteProject = async function (req, res) {
 
       if (!oldProject) {
         console.log("WARNING: project does not exist");
-        res.json({ success: false, message: "Unable to delete. Project does not exist in the database" });
+        res.status(500).json({ success: false, message: "Unable to delete. Project does not exist in the database" });
 
         return;
       }
@@ -663,7 +686,7 @@ const deleteProject = async function (req, res) {
 
       if (!checkAccess.toProject(oldProject, loggedUser, "remove")) {
         console.log("WARNING: user does not have remove rights");
-        res.json({ success: false, message: "The user is not allowed to delete this project" });
+        res.status(403).json({ success: false, message: "The user is not allowed to delete this project" });
 
         return;
       }

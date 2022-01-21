@@ -123,7 +123,13 @@ const privateProjectTest = {
     list: []
   },
   annotations: {
-    list: []
+    list: [
+      {
+        type: "volume",
+        name: "Annotation name",
+        values: null
+      }
+    ]
   },
   description: "A private test project used for checking the authorization process.",
   modified: (new Date()).toJSON(),
