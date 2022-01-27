@@ -59,7 +59,6 @@ describe('TESTING PERMISSIONS', function () {
   });
 
   after(function () {
-    agent.close();
     U.removeUser(U.testingCredentials.username);
     U.removeUser(U.userBar.nickname);
   });
