@@ -7,6 +7,9 @@
 /* eslint-disable valid-jsdoc */
 /* eslint-disable max-depth */
 /* eslint-disable max-lines */
+
+const _ = require('lodash');
+
 var accessLevels=["none", "view", "edit", "add", "remove"];
 var debug = 1;
 
@@ -488,6 +491,27 @@ var filterAnnotationsByProjects = function filterAnnotationsByProjects(mri, proj
   }
 };
 
+const _checkPermission = (accessType, permission, project, username) => {
+  if (_.isEmpty(project.collaborators.list)) {
+    return false;
+  }
+  const anyone = _.find(project.collaborators.list, (collaborator) => collaborator.userID === 'anyone');
+  const collaborator = _.find(project.collaborators.list, (collaborator) => collaborator.userID === username);
+  let user = collaborator;
+  if (_.isNil(collaborator)) {
+    if (_.isNil(anyone)) {
+      return false;
+    }
+    user = anyone;
+  }
+
+  return accessStringToLevel(user.access[accessType]) >= accessStringToLevel(permission);
+};
+
+const checkPermission = _.curry(_checkPermission);
+const checkCollaboratorsPermission = checkPermission('collaborators');
+const checkAnnotationsPermission = checkPermission('annotations');
+const checkFilesPermission = checkPermission('files');
 
 var checkAccess = function () {
   this.accessStringToLevel = accessStringToLevel;
@@ -499,6 +523,10 @@ var checkAccess = function () {
   this.toAnnotationByProject = toAnnotationByProject;
   this.toProject = toProject;
   this.filterAnnotationsByProjects = filterAnnotationsByProjects;
+  this.checkPermission = checkPermission;
+  this.checkCollaboratorsPermissions = checkCollaboratorsPermission;
+  this.checkAnnotationsPermissions = checkAnnotationsPermission;
+  this.checkFilesPermissions = checkFilesPermission;
 };
 
 module.exports = new checkAccess();

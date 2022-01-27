@@ -53,6 +53,9 @@ if (DOCKER_DEVELOP === '1') {
 
 const app = express();
 
+app.use(bodyParser.json({limit: '50mb'}));
+app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
+
 /*
 Use the NeuroWebLab (NWL) module for authentication.
 NWL will also create the DB. In the future, a series
@@ -93,8 +96,6 @@ app.set('trust proxy', 'loopback');
 if (app.get('env') === 'development') {
   app.use(logger(':remote-addr :method :url :status :response-time ms - :res[content-length]'));//app.use(logger('dev'));
 }
-app.use(bodyParser.json({limit: '50mb'}));
-app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 app.use(expressValidator());
 app.use(cookieParser());
 app.use(express.static(path.join(dirname, 'public')));
@@ -121,7 +122,7 @@ app.use((req, res, next) => {
 const https = require('https');
 const http = require('http');
 
-http.createServer(app).listen(3001, () => { console.log("Listening http on port 3001"); });
+const server = http.createServer(app).listen(3001, () => { console.log("Listening http on port 3001"); });
 const atlasmakerServer = require('./controller/atlasmakerServer/atlasmakerServer.js');
 atlasmakerServer.dataDirectory = dirname + '/public';
 
@@ -183,4 +184,4 @@ app.use(function (err, req, res) {
   });
 });
 
-module.exports = app;
+module.exports = {app, server};

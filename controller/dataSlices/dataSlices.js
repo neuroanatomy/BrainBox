@@ -2,6 +2,7 @@ console.log('dataSlices.js');
 const dateFormat = require('dateformat');
 
 const path = require('path');
+const { ForbiddenAccessError } = require('../../errors');
 const checkAccess = require(path.join(__dirname, '/../checkAccess/checkAccess.js'));
 
 /**
@@ -233,9 +234,9 @@ const getProjectFilesSlice = async (req, projShortname, start, length, namesFlag
 
   // check access
   if(checkAccess.toProject(project, loggedUser, "view") === false) {
-    const msg = `User  ${loggedUser} is not allowed to view project ${projShortname}`;
+    const error = new ForbiddenAccessError(`User  ${loggedUser} is not allowed to view project ${projShortname}`);
 
-    return Promise.reject(new Error(msg));
+    return Promise.reject(error);
   }
 
   // query mri info for project files
