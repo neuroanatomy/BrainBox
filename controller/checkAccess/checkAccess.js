@@ -491,15 +491,27 @@ var filterAnnotationsByProjects = function filterAnnotationsByProjects(mri, proj
   }
 };
 
-const userCanAddAnnotions = (project, username) => {
-  const collaborator = _.find(project.collaborators, (collaborator) => collaborator.name === username);
-  if (_.isNil(collaborator)) {
+const _checkPermission = (accessType, permission, project, username) => {
+  if (_.isEmpty(project.collaborators.list)) {
     return false;
   }
+  const anyone = _.find(project.collaborators.list, (collaborator) => collaborator.userID === 'anyone');
+  const collaborator = _.find(project.collaborators.list, (collaborator) => collaborator.userID === username);
+  let user = collaborator;
+  if (_.isNil(collaborator)) {
+    if (_.isNil(anyone)) {
+      return false;
+    }
+    user = anyone;
+  }
 
-  return accessStringToLevel(collaborator.access.annotations) >= accessStringToLevel("add");
+  return accessStringToLevel(user.access[accessType]) >= accessStringToLevel(permission);
 };
 
+const checkPermission = _.curry(_checkPermission);
+const checkCollaboratorsPermission = checkPermission('collaborators');
+const checkAnnotationsPermission = checkPermission('annotations');
+const checkFilesPermission = checkPermission('files');
 
 var checkAccess = function () {
   this.accessStringToLevel = accessStringToLevel;
@@ -511,7 +523,10 @@ var checkAccess = function () {
   this.toAnnotationByProject = toAnnotationByProject;
   this.toProject = toProject;
   this.filterAnnotationsByProjects = filterAnnotationsByProjects;
-  this.userCanAddAnnotions = userCanAddAnnotions;
+  this.checkPermission = checkPermission;
+  this.checkCollaboratorsPermissions = checkCollaboratorsPermission;
+  this.checkAnnotationsPermissions = checkAnnotationsPermission;
+  this.checkFilesPermissions = checkFilesPermission;
 };
 
 module.exports = new checkAccess();

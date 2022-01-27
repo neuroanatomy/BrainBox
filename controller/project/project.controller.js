@@ -245,6 +245,7 @@ const project = async function (req, res) {
  * @returns {void}
  * @result A json object with project data
  */
+// eslint-disable-next-line max-statements
 const apiProject = async function (req, res) {
   var loggedUser = "anonymous";
   if (req.isAuthenticated()) {
@@ -254,20 +255,31 @@ const apiProject = async function (req, res) {
     loggedUser = req.tokenUsername;
   }
 
-  let json = await req.db.get('project').findOne({ shortname: req.params.projectName, backup: { $exists: 0 } }, "-_id");
+  const json = await req.db.get('project').findOne({ shortname: req.params.projectName, backup: { $exists: 0 } }, "-_id");
   if (json) {
     // check that the logged user has access to view this project
     if (checkAccess.toProject(json, loggedUser, "view") === false) {
-      res.status(401).send({ error: "Authorization required" });
+      res.status(401).json({ error: "Authorization required" });
 
       return;
     }
 
+    let filteredJSON = Object.assign({}, json);
+    if (!checkAccess.checkPermission('collaborators', "view", json, loggedUser)) {
+      filteredJSON.collaborators.list = filteredJSON.collaborators.list.filter((collaborator) => collaborator.userID === 'anyone');
+    }
+    ['files', 'annotations'].forEach((type) => {
+      if (!checkAccess.checkPermission(type, "view", json, loggedUser)) {
+        filteredJSON[type].list = [];
+      }
+    });
+
     if (req.query.var) {
       const arr = req.query.var.split("/");
-      for (const v of arr) { json = json[v]; }
+      for (const v of arr) { filteredJSON = filteredJSON[v]; }
     }
-    res.send(json);
+    res.json(filteredJSON);
+
   } else {
     res.send();
   }
@@ -410,26 +422,38 @@ const settings = async function (req, res) {
   // empty the files.list: it will be filled progressively from the client
   json.files.list = [];
 
-  // find username and name for each of the collaborators in the project
-  const arr1 = [];
-  for (let j = 0; j < json.collaborators.list.length; j++) {
-    arr1.push(req.db.get('user').findOne({ nickname: json.collaborators.list[j].userID, backup: { $exists: 0 } }, { name: 1, _id: 0 }));
-  }
-  const obj = await Promise.all(arr1);
-  for (let j = 0; j < obj.length; j++) {
-    json.collaborators.list[j].username = json.collaborators.list[j].userID;
-    if (obj[j]) { // name found
-      json.collaborators.list[j].name = obj[j].name;
-    } else { // name not found: set to empty
-      json.collaborators.list[j].name = "";
+  // deep-copying initial object
+  const filteredJSON = JSON.parse(JSON.stringify(json));
+
+  if (checkAccess.checkPermission('collaborators', 'view', json, loggedUser)) {
+    const arr1 = [];
+    for (let j = 0; j < filteredJSON.collaborators.list.length; j++) {
+      arr1.push(req.db.get('user').findOne({ nickname: json.collaborators.list[j].userID, backup: { $exists: 0 } }, { name: 1, _id: 0 }));
     }
+    const obj = await Promise.all(arr1);
+    for (let j = 0; j < obj.length; j++) {
+      filteredJSON.collaborators.list[j].username = filteredJSON.collaborators.list[j].userID;
+      if (obj[j]) { // name found
+        filteredJSON.collaborators.list[j].name = obj[j].name;
+      } else { // name not found: set to empty
+        filteredJSON.collaborators.list[j].name = "";
+      }
+    }
+  } else {
+    filteredJSON.collaborators.list = json.collaborators.list.filter((collaborator) => collaborator.userID === 'anyone');
   }
+
+  if (!checkAccess.checkPermission('annotations', 'view', json, loggedUser)) {
+    filteredJSON.annotations.list = [];
+  }
+
   var context = {
-    projectShortname: json.shortname,
-    owner: json.owner,
-    projectInfo: JSON.stringify(json),
+    projectShortname: filteredJSON.shortname,
+    owner: filteredJSON.owner,
+    projectInfo: JSON.stringify(filteredJSON),
     login: login
   };
+
   res.render('projectSettings', context);
 };
 
@@ -606,12 +630,29 @@ const postProject = async function (req, res) {
         object.files.list[k] = object.files.list[k].source;
       }
 
-      if (object.annotations.list.length > oldProject.annotations.list.length &&
-        !checkAccess.userCanAddAnnotions(oldProject, loggedUser)) {
-        res.status(403).send({error: "Not authorized to add annotations"});
+      let shouldReturnEarly = false;
+      ['collaborators', 'files', 'annotations'].forEach((type) => {
+        const checkAccessType = checkAccess.checkPermission(type);
+        const canAdd = checkAccessType('add');
+        if (object[type].list.length > oldProject[type].list.length && !canAdd(oldProject, loggedUser)) {
+          res.status(403).send({error: `Not authorized to add ${type}`});
+          shouldReturnEarly = true;
 
+          return false;
+        }
+        const canRemove = checkAccessType('remove');
+        if (object[type].list.length < oldProject[type].list.length && !canRemove(oldProject, loggedUser)) {
+          res.status(403).send({error: `Not authorized to remove ${type}`});
+          shouldReturnEarly = true;
+
+          return false;
+        }
+      });
+
+      if(shouldReturnEarly) {
         return;
       }
+
 
       object.modified = (new Date()).toJSON();
       object.modifiedBy = req.user.username;

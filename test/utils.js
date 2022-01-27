@@ -259,6 +259,82 @@ const comparePageScreenshots=async function (testPage, url, filename) {
   return pixdiff;
 };
 
+const parseCookies = (str) => str
+  .split(';')
+  .map((v) => v.split('='))
+  .reduce((acc, v) => {
+    if (typeof v[0] === 'undefined' || typeof v[1] === 'undefined') {
+      return acc;
+    }
+    acc.push({
+      name: decodeURIComponent(v[0].trim()),
+      value: decodeURIComponent(v[1].trim()),
+      url: serverURL
+    });
+
+    return acc;
+  }, []);
+
+const testingCredentials = {
+  username: "testing-user",
+  password: "baz"
+};
+
+const createProjectWithPermission = function(name, accessProp) {
+  const access = Object.assign({}, {
+    collaborators: "view",
+    annotations: "none",
+    files: "none"
+  }, accessProp);
+
+  const project = {
+    name: name,
+    shortname: name,
+    url: "https://testproject.org",
+    brainboxURL: "/project/" + name,
+    created: (new Date()).toJSON(),
+    owner: "foo",
+    collaborators: { list: [
+      {
+        userID: "anyone",
+        access: {
+          collaborators: "none",
+          annotations: "none",
+          files: "view"
+        },
+        username: "anyone",
+        name: "Any User"
+      },
+      {
+        userID: "bar",
+        access: {
+          collaborators: "view",
+          annotations: "view",
+          files: "view"
+        },
+        username: "foo",
+        name: "Foo"
+      }
+    ] },
+    files: {
+      list: [{source: "https://zenodo.org/record/44855/files/MRI-n4.nii.gz", name: "MRI-n4.nii.gz"}]
+    },
+    annotations: {
+      list: [{"type":"volume", "name":"Test", "values":"axolotl_labels.json", "display":"true"}]
+    }
+  };
+
+  project.collaborators.list.push({
+    access,
+    userID: testingCredentials.username,
+    username: testingCredentials.username,
+    name: testingCredentials.username
+  });
+
+  return project;
+};
+
+
 module.exports = {
   serverURL,
   cheetahURL,
@@ -286,7 +362,10 @@ module.exports = {
   noTimeout,
   longTimeout,
   mediumTimeout,
-  shortTimeout
+  shortTimeout,
+  parseCookies,
+  testingCredentials,
+  createProjectWithPermission
 };
 
 
