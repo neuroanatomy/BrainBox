@@ -8,15 +8,10 @@ const U = require('../utils.js');
 const {server} = require('../../app');
 const puppeteer = require('puppeteer');
 
-// FIXME move me
-const testingCredentials = {
-  username: "testing-user",
-  password: "baz"
-};
-
 describe('TESTING PERMISSIONS', function () {
   const forbiddenStatusCodes = [403, 401];
   const agent = chai.request.agent(server);
+  let cookies = [];
   let token = '';
 
   const get = function(url, logged) {
@@ -44,16 +39,18 @@ describe('TESTING PERMISSIONS', function () {
   };
 
   before(async function () {
+    await U.insertUser(U.userBar);
     try {
       await agent.post('/localSignup')
-        .send(testingCredentials)
+        .send(U.testingCredentials)
         .timeout(1000); // FIXME: (in nwl)works but hangs indefinitely
     } catch(_e) {
       //
     }
     let res = await agent.post('/localLogin').redirects(0)
-      .send(testingCredentials);
+      .send(U.testingCredentials);
     expect(res).to.have.cookie('connect.sid');
+    cookies = U.parseCookies(res.headers['set-cookie'][0]);
 
     res = await agent.get('/token');
     assert.exists(res.body.token);
@@ -63,7 +60,8 @@ describe('TESTING PERMISSIONS', function () {
 
   after(function () {
     agent.close();
-    U.removeUser(testingCredentials.username);
+    U.removeUser(U.testingCredentials.username);
+    U.removeUser(U.userBar.nickname);
   });
 
   describe('Test basic unprivileged access', function() {
@@ -105,60 +103,12 @@ describe('TESTING PERMISSIONS', function () {
     });
   });
 
+  // eslint-disable-next-line max-statements
   describe('Test specific edit / add / remove permissions of logged users', function() {
-    const createProjectWithPermission = function(name, accessProp) {
-      const access = Object.assign({}, {
-        collaborators: "view",
-        annotations: "none",
-        files: "none"
-      }, accessProp);
-
-      const project = {
-        name: name,
-        shortname: name,
-        url: "https://testproject.org",
-        brainboxURL: "/project/" + name,
-        created: (new Date()).toJSON(),
-        owner: "foo",
-        collaborators: { list: [
-          {
-            userID: "anyone",
-            access: {
-              collaborators: "none",
-              annotations: "none",
-              files: "none"
-            },
-            username: "anyone",
-            name: "Any User"
-          }
-        ] },
-        files: {
-          list: [{source: "https://zenodo.org/record/44855/files/MRI-n4.nii.gz", name: "MRI-n4.nii.gz"}]
-        },
-        annotations: {
-          list: [
-            {
-              type: "volume",
-              name: "Annotation name",
-              values: null
-            }
-          ]
-        }
-      };
-
-      project.collaborators.list.push({
-        access,
-        userID: testingCredentials.username,
-        username: testingCredentials.username,
-        name: testingCredentials.username
-      });
-
-      return project;
-    };
 
     const projects = {};
     const setupProjectWithAccess = (access, name) => {
-      const project = createProjectWithPermission(name, access);
+      const project = U.createProjectWithPermission(name, access);
       projects[project.name] = project;
       U.insertProject(project);
     };
@@ -279,7 +229,7 @@ describe('TESTING PERMISSIONS', function () {
 
       let res = await post('/project/json/' + project.shortname, true)
         .send({data: project});
-      assert.oneOf(res.statusCode, forbiddenStatusCodes);
+      assert.equal(res.statusCode, 200);
 
       project = projects.collaboratorsremovefilesedit;
       project.collaborators.list.push({
@@ -294,7 +244,7 @@ describe('TESTING PERMISSIONS', function () {
       });
       res = await post('/project/json/' + project.shortname, true)
         .send({data: project});
-      assert.oneOf(res.statusCode, forbiddenStatusCodes);
+      assert.equal(res.statusCode, 200);
     });
 
 
@@ -320,7 +270,7 @@ describe('TESTING PERMISSIONS', function () {
       assert.oneOf(res.statusCode, forbiddenStatusCodes);
     });
 
-    it('Checks that collaborators cann add project annotations if set to add or remove', async function() {
+    it('Checks that collaborators can add project annotations if set to add or remove', async function() {
       let project = projects.collaboratorseditfileseditannotationsadd;
       project.annotations.list.push({
         type: "text",
@@ -329,7 +279,7 @@ describe('TESTING PERMISSIONS', function () {
       });
       let res = await post('/project/json/' + project.shortname, true)
         .send({data: project});
-      assert.oneOf(res.statusCode, forbiddenStatusCodes);
+      assert.equal(res.statusCode, 200);
 
       project = projects.collaboratorseditfileseditannotationsremove;
       project.annotations.list.push({
@@ -339,7 +289,7 @@ describe('TESTING PERMISSIONS', function () {
       });
       res = await post('/project/json/' + project.shortname, true)
         .send({data: project});
-      assert.oneOf(res.statusCode, forbiddenStatusCodes);
+      assert.equal(res.statusCode, 200);
     });
 
 
@@ -362,33 +312,55 @@ describe('TESTING PERMISSIONS', function () {
       project.files.list.push({source: "https://zenodo.org/record/44855/files/MRI-n4.nii.gz", name: "MRI-n4.nii.gz"});
       let res = await post('/project/json/' + project.shortname, true)
         .send({data: project});
-      assert.oneOf(res.statusCode, forbiddenStatusCodes);
+      assert.equal(res.statusCode, 200);
 
       project = projects.collaboratorseditfilesremove;
       project.files.list.push({source: "https://zenodo.org/record/44855/files/MRI-n4.nii.gz", name: "MRI-n4.nii.gz"});
       res = await post('/project/json/' + project.shortname, true)
         .send({data: project});
-      assert.oneOf(res.statusCode, forbiddenStatusCodes);
+      assert.equal(res.statusCode, 200);
+    });
+
+    describe('Test view permissions of logged users', function() {
+      let browser, page;
+
+      before(async function() {
+        browser = await puppeteer.launch({ headless: true, ignoreHTTPSErrors: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+        page = await browser.newPage();
+        page.setCookie(...cookies);
+      });
+
+      after(function() {
+        browser.close();
+      });
+
+      it('Check that collaborators cannot see other collaborators if not permitted', async function () {
+        const project = projects.collaboratorsnonefilesedit;
+        const response = await page.goto(U.serverURL + '/project/' + project.shortname + '/settings');
+        assert.equal(response.status(), 200);
+        await page.waitForSelector('#access tbody');
+        const contributorsTableLength = (await page.$$('#access tbody tr')).length;
+        assert.equal(contributorsTableLength, 1); // 'anyone' only
+      }).timeout(U.longTimeout);
+
+      it('Check that collaborators cannot see other collaborators if not permitted using JSON API', async function () {
+        const project = projects.collaboratorsnonefilesedit;
+        const res = await get('/project/json/' + project.shortname, true);
+        assert.equal(res.body.collaborators.list.length, 1);
+      });
+
+      it('Check that collaborators cannot see other annotations if not permitted', async function () {
+        const project = projects.collaboratorseditfileseditannotationsnone;
+        const response = await page.goto(U.serverURL + '/project/' + project.shortname + '/settings');
+        assert.equal(response.status(), 200);
+        await page.waitForSelector('#annotations tbody');
+        const annotationsTableLength = (await page.$$('#annotations tbody tr')).length;
+        assert.equal(annotationsTableLength, 1); // placeholder
+      }).timeout(U.longTimeout);
+
     });
 
   });
 
-  describe('Test view permissions of logged users', function() {
-    let page;
-
-    before(async function() {
-      const browser = await puppeteer.launch({ headless: true, ignoreHTTPSErrors: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
-      page = browser.newPage();
-    });
-
-    it('Can access index page', async function () {
-      await page.goto(U.serverURL);
-      await page.waitForSelector('h2');
-      const headerText = await page.evaluate(() => document.querySelector('h2').innerText, 'h2');
-      assert.equal(headerText, 'Real-time collaboration in neuroimaging');
-    }).timeout(U.longTimeout);
-
-
-  });
 
 });
