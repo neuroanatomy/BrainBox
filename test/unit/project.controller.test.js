@@ -176,7 +176,7 @@ describe('Project Controller: ', function () {
       const failure = sinon.spy();
       const res = {
         status: sinon.stub().returns({ send: failure }),
-        send: success
+        json: success
       };
       await projectController.apiProject(req, res);
       assert.strictEqual(success.callCount, 1);
@@ -457,6 +457,7 @@ describe('Project Controller: ', function () {
       };
       const jsonSpy = sinon.spy();
       const res = {
+        status: sinon.stub().returns({ json: jsonSpy }),
         json: jsonSpy
       };
       await projectController.deleteProject(req, res);
@@ -483,7 +484,7 @@ describe('Project Controller: ', function () {
       };
       await projectController.deleteProject(req, res);
       assert.strictEqual(res.json.callCount, 1);
-      assert.deepStrictEqual(res.json.args, [[{ success: false, message: "Unable to delete. Project does not exist in the database" }]]);
+      assert.deepStrictEqual(res.json.args, [[{ success: false, message: "Unable to delete. Try again later" }]]);
       sinon.restore();
     });
 
