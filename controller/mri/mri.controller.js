@@ -6,8 +6,9 @@ const fs = require('fs');
 const request = require('request');
 const sanitize = require("sanitize-filename");
 const atlasmakerServer = require('../atlasmakerServer/atlasmakerServer');
-const checkAccess = require('../checkAccess/checkAccess.js');
 const dataSlices = require('../dataSlices/dataSlices.js');
+const { AccessType, AccessLevel } = require('neuroweblab');
+const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 
 const downloadQueue = {};
 
@@ -273,7 +274,7 @@ const mri = async function (req, res) {
       .catch((err) => {
         console.log('ERROR Cannot get db information:', err);
       });
-    await checkAccess.filterAnnotationsByProjects(json.mri, projects, loggedUser);
+    BrainboxAccessControlService.setAnnotationsAccessByProjects(json.mri, projects, loggedUser);
 
     // Set access to text annotations
     if (typeof json.mri.annotations !== "undefined") {
@@ -281,10 +282,9 @@ const mri = async function (req, res) {
         for (j = 0; j < projects.length; j++) {
           // eslint-disable-next-line max-depth
           if (projects[j] && projects[j].shortname === i) {
-            const access = checkAccess.toAnnotationByProject(projects[j], loggedUser);
-            const level = checkAccess.accessStringToLevel(access);
+            const access = BrainboxAccessControlService.getUserOrPublicAccessLevel(projects[j], loggedUser, AccessType.ANNOTATIONS);
             // eslint-disable-next-line max-depth
-            if (level > 0) {
+            if (access.isGreaterThan(AccessLevel.NONE)) {
               // eslint-disable-next-line max-depth
               for (k of json.mri.annotations[key]) {
                 json.mri.annotations[key][k].access = access;
@@ -540,11 +540,9 @@ const apiMriGet = async function (req, res) {
     for (i = json.mri.atlas.length - 1; i >= 0; i--) {
       for (j = 0; j < projects.length; j++) {
         if (projects[j] && projects[j].shortname === json.mri.atlas[i].project) {
-          const access = checkAccess.toAnnotationByProject(projects[j], loggedUser);
-          const level = checkAccess.accessStringToLevel(access);
-          console.log('loggedUser,access,level:', loggedUser, access, level);
-          // Check for 'view' access (level > 0)
-          if (level === 0) {
+          const access = BrainboxAccessControlService.getUserOrPublicAccessLevel(projects[j], loggedUser, AccessType.ANNOTATIONS);
+          console.log('loggedUser,access:', loggedUser, access.toString());
+          if (access.isEqualTo(AccessLevel.NONE)) {
             json.mri.atlas.splice(i, 1);
           }
           break;
@@ -556,11 +554,10 @@ const apiMriGet = async function (req, res) {
       for (const key of Object.keys(json.mri.annotations)) {
         for (j = 0; j < projects.length; j++) {
           if (projects[j] && projects[j].shortname === key) {
-            const access = checkAccess.toAnnotationByProject(projects[j], loggedUser);
-            const level = checkAccess.accessStringToLevel(access);
-            console.log('loggedUser,access,level:', loggedUser, access, level);
+            const access = BrainboxAccessControlService.getUserOrPublicAccessLevel(projects[j], loggedUser, AccessType.ANNOTATIONS);
+            console.log('loggedUser,access,level:', loggedUser, access.toString());
             // eslint-disable-next-line max-depth
-            if (level === 0) {
+            if (access.isEqualTo(AccessLevel.NONE)) {
               delete json.mri.annotations[key];
             }
           }

@@ -1,10 +1,10 @@
 const url = require('url');
 const crypto = require('crypto');
 const validatorNPM = require('validator');
-const checkAccess = require('../checkAccess/checkAccess.js');
 const dataSlices = require('../dataSlices/dataSlices.js');
 const AsyncLock = require('async-lock');
 const lock = new AsyncLock();
+const { AccessType, AccessLevel, AccessControlService } = require('neuroweblab');
 
 const createDOMPurify = require('dompurify');
 const { JSDOM } = require('jsdom');
@@ -219,7 +219,7 @@ const project = async function (req, res) {
   const json = await req.db.get('project').findOne({ shortname: req.params.projectName, backup: { $exists: 0 } });
   if (json) {
     // check that the logged user has access to view this project
-    if (checkAccess.toProject(json, loggedUser, "view") === false) {
+    if (!AccessControlService.hasFilesAccess(AccessLevel.VIEW, json, loggedUser)) {
       res.status(401).send("Authorization required");
 
       return;
@@ -258,18 +258,18 @@ const apiProject = async function (req, res) {
   const json = await req.db.get('project').findOne({ shortname: req.params.projectName, backup: { $exists: 0 } }, "-_id");
   if (json) {
     // check that the logged user has access to view this project
-    if (checkAccess.toProject(json, loggedUser, "view") === false) {
+    if (!AccessControlService.hasFilesAccess(AccessLevel.VIEW, json, loggedUser)) {
       res.status(401).json({ error: "Authorization required" });
 
       return;
     }
 
     let filteredJSON = Object.assign({}, json);
-    if (!checkAccess.checkPermission('collaborators', "view", json, loggedUser)) {
+    if (!AccessControlService.canViewCollaborators(json, loggedUser)) {
       filteredJSON.collaborators.list = filteredJSON.collaborators.list.filter((collaborator) => collaborator.userID === 'anyone');
     }
-    ['files', 'annotations'].forEach((type) => {
-      if (!checkAccess.checkPermission(type, "view", json, loggedUser)) {
+    [AccessType.FILES, AccessType.ANNOTATIONS].forEach((type) => {
+      if (!AccessControlService.hasAccess(type, AccessLevel.VIEW, json, loggedUser)) {
         filteredJSON[type].list = [];
       }
     });
@@ -384,7 +384,7 @@ const settings = async function (req, res) {
   let json = await req.db.get('project').findOne({ shortname: req.params.projectName, backup: { $exists: 0 } });
   if (json) {
     // check that the logged user has access to view this project
-    if (checkAccess.toProject(json, loggedUser, "view") === false) {
+    if (!AccessControlService.hasFilesAccess(AccessLevel.VIEW, json, loggedUser)) {
       console.log('Hello');
       res.status(401).send("Authorization required");
 
@@ -425,7 +425,7 @@ const settings = async function (req, res) {
   // deep-copying initial object
   const filteredJSON = JSON.parse(JSON.stringify(json));
 
-  if (checkAccess.checkPermission('collaborators', 'view', json, loggedUser)) {
+  if (AccessControlService.canViewCollaborators(json, loggedUser)) {
     const arr1 = [];
     for (let j = 0; j < filteredJSON.collaborators.list.length; j++) {
       arr1.push(req.db.get('user').findOne({ nickname: json.collaborators.list[j].userID, backup: { $exists: 0 } }, { name: 1, _id: 0 }));
@@ -443,7 +443,7 @@ const settings = async function (req, res) {
     filteredJSON.collaborators.list = json.collaborators.list.filter((collaborator) => collaborator.userID === 'anyone');
   }
 
-  if (!checkAccess.checkPermission('annotations', 'view', json, loggedUser)) {
+  if (!AccessControlService.canViewAnnotations(json, loggedUser)) {
     filteredJSON.annotations.list = [];
   }
 
@@ -614,7 +614,7 @@ const postProject = async function (req, res) {
     // update/insert project
     if (oldProject) {
     // project exists, save update
-      if (checkAccess.toProject(oldProject, loggedUser, "edit") === false) {
+      if (!AccessControlService.hasFilesAccess(AccessLevel.EDIT, oldProject, loggedUser)) {
         console.log("User does not have edit rights");
         res.status(403).json({ error: "error", message: "User does not have edit rights" });
 
@@ -631,16 +631,16 @@ const postProject = async function (req, res) {
       }
 
       let shouldReturnEarly = false;
-      ['collaborators', 'files', 'annotations'].forEach((type) => {
-        const checkAccessType = checkAccess.checkPermission(type);
-        const canAdd = checkAccessType('add');
+      [AccessType.COLLABORATORS, AccessType.FILES, AccessType.ANNOTATIONS].forEach((type) => {
+        const checkAccessType = AccessControlService.hasAccess(type);
+        const canAdd = checkAccessType(AccessLevel.ADD);
         if (object[type].list.length > oldProject[type].list.length && !canAdd(oldProject, loggedUser)) {
           res.status(403).send({error: `Not authorized to add ${type}`});
           shouldReturnEarly = true;
 
           return false;
         }
-        const canRemove = checkAccessType('remove');
+        const canRemove = checkAccessType(AccessLevel.REOMVE);
         if (object[type].list.length < oldProject[type].list.length && !canRemove(oldProject, loggedUser)) {
           res.status(403).send({error: `Not authorized to remove ${type}`});
           shouldReturnEarly = true;
@@ -653,6 +653,9 @@ const postProject = async function (req, res) {
         return;
       }
 
+      // FIXME : compare with old project and populate annotations / files/ collaborarors
+      // that were eventually filtered in view
+      // + ADD TEST CASE
 
       object.modified = (new Date()).toJSON();
       object.modifiedBy = req.user.username;
@@ -725,7 +728,7 @@ const deleteProject = async function (req, res) {
       }
       console.log(">> project does exist");
 
-      if (!checkAccess.toProject(oldProject, loggedUser, "remove")) {
+      if (!AccessControlService.hasFilesAccess(AccessLevel.REMOVE, oldProject, loggedUser)) {
         console.log("WARNING: user does not have remove rights");
         res.status(403).json({ success: false, message: "The user is not allowed to delete this project" });
 
