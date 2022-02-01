@@ -640,7 +640,7 @@ const postProject = async function (req, res) {
 
           return false;
         }
-        const canRemove = checkAccessType(AccessLevel.REOMVE);
+        const canRemove = checkAccessType(AccessLevel.REMOVE);
         if (object[type].list.length < oldProject[type].list.length && !canRemove(oldProject, loggedUser)) {
           res.status(403).send({error: `Not authorized to remove ${type}`});
           shouldReturnEarly = true;
