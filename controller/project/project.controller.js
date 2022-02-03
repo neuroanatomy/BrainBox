@@ -5,7 +5,7 @@ const dataSlices = require('../dataSlices/dataSlices.js');
 const AsyncLock = require('async-lock');
 const lock = new AsyncLock();
 const { AccessType, AccessLevel, AccessControlService } = require('neuroweblab');
-
+const _ = require('lodash');
 const createDOMPurify = require('dompurify');
 const { JSDOM } = require('jsdom');
 const { ForbiddenAccessError } = require('../../errors.js');
@@ -423,7 +423,7 @@ const settings = async function (req, res) {
   json.files.list = [];
 
   // deep-copying initial object
-  const filteredJSON = JSON.parse(JSON.stringify(json));
+  const filteredJSON = _.cloneDeep(json);
 
   if (AccessControlService.canViewCollaborators(json, loggedUser)) {
     const arr1 = [];
