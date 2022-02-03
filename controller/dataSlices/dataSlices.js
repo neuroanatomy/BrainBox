@@ -1,9 +1,9 @@
 console.log('dataSlices.js');
 const dateFormat = require('dateformat');
 
-const path = require('path');
 const { ForbiddenAccessError } = require('../../errors');
-const checkAccess = require(path.join(__dirname, '/../checkAccess/checkAccess.js'));
+const { AccessLevel } = require('neuroweblab');
+const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 
 /**
  * @func getUserFilesSlice
@@ -43,7 +43,7 @@ const getUserFilesSlice = function getUserFilesSlice(req, requestedUser, start, 
 
         // filter for view access
         for(const umri of unfilteredMRI) {
-          if(checkAccess.toFileByAllProjects(umri, unfilteredProjects, loggedUser, "view")) {
+          if(BrainboxAccessControlService.hasAccesstoFileIfAllowedByAllProjects(umri, unfilteredProjects, loggedUser, AccessLevel.VIEW)) {
             mri.push(umri);
           }
         }
@@ -111,7 +111,7 @@ const getUserAtlasSlice = function getUserAtlasSlice(req, requestedUser, start, 
 
         // filter for view access
         for(const ua of unfilteredAtlas) {
-          if(checkAccess.toFileByAllProjects(ua, unfilteredProjects, loggedUser, "view")) {
+          if(BrainboxAccessControlService.hasAccesstoFileIfAllowedByAllProjects(ua, unfilteredProjects, loggedUser, AccessLevel.VIEW)) {
             atlas.push(ua);
           }
         }
@@ -173,7 +173,7 @@ const getUserProjectsSlice = function getUserProjectsSlice(req, requestedUser, s
 
         // filter for view access
         for(const i in unfilteredProjects) {
-          if(checkAccess.toProject(unfilteredProjects[i], loggedUser, "view")) {
+          if (BrainboxAccessControlService.hasFilesAccess(AccessLevel.VIEW, unfilteredProjects[i], loggedUser)) {
             projects.push(unfilteredProjects[i]);
           }
         }
@@ -233,7 +233,7 @@ const getProjectFilesSlice = async (req, projShortname, start, length, namesFlag
   }
 
   // check access
-  if(checkAccess.toProject(project, loggedUser, "view") === false) {
+  if (!BrainboxAccessControlService.hasFilesAccess(AccessLevel.VIEW, project, loggedUser)) {
     const error = new ForbiddenAccessError(`User  ${loggedUser} is not allowed to view project ${projShortname}`);
 
     return Promise.reject(error);
@@ -264,7 +264,7 @@ const getProjectFilesSlice = async (req, projShortname, start, length, namesFlag
     if(mris[j]) {
       // mri file present in DB
       // check j-th mri annotation access
-      checkAccess.filterAnnotationsByProjects(mris[j], [project], loggedUser);
+      BrainboxAccessControlService.setAnnotationsAccessByProjects(mris[j], [project], loggedUser);
 
       // append to list
       if(typeof namesFlag !== "undefined" && namesFlag === true) {
@@ -315,7 +315,7 @@ const getFilesSlice = function getFilesSlice(req, start, length) {
 
         // filter for view access
         for(i=0; i<unfilteredMRI.length; i++) {
-          if(checkAccess.toFileByAllProjects(unfilteredMRI[i], unfilteredProjects, loggedUser, "view")) {
+          if(BrainboxAccessControlService.hasAccesstoFileIfAllowedByAllProjects(unfilteredMRI[i], unfilteredProjects, loggedUser, AccessLevel.VIEW)) {
             mri.push(unfilteredMRI[i]);
           }
         }
@@ -363,7 +363,7 @@ const getProjectsSlice = async function getProjectsSlice(req, start, length) {
 
     // filter for view access
     for(const uproj of unfilteredProjects) {
-      if(checkAccess.toProject(uproj, loggedUser, "view")) {
+      if (BrainboxAccessControlService.hasFilesAccess(AccessLevel.VIEW, uproj, loggedUser)) {
         projects.push(uproj);
       }
     }

@@ -29,7 +29,7 @@ public/lib/atlasmaker.js
 public/lib/brainbox.js
 scripts/atlasmaker-resources.js
 test/images/
-test/screenshots/
+test/screenshots/*.png
 tmp
 view/atlasmaker/_resources/
 view/atlasmaker/dist/

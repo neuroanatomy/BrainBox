@@ -191,12 +191,19 @@ async function saveChanges() {
     throw new Error(err);
   }
 
+  console.log(res.body.message);
   if (res.status !== 200) {
-    unableToSaveFeedback(`Error ${res.status}: ${res.statusText}`);
+    const errorMessage = (await res.json()).error;
+    if (errorMessage) {
+      unableToSaveFeedback(`Error ${res.status}: ${errorMessage}`);
+    } else {
+      unableToSaveFeedback(`Error ${res.status}: ${res.statusText}`);
+    }
     throw new Error(`Server status: ${res.status}, ${res.statusText}`);
   }
 
-  document.querySelector("#saveFeedback").textContent = "Successfully saved";
+  const successMessage = (await res.json()).message;
+  document.querySelector("#saveFeedback").textContent = successMessage;
   setTimeout(function() {
     document.querySelector("#saveFeedback").textContent = "";
   }, 2000);
