@@ -244,7 +244,7 @@ describe('TESTING PERMISSIONS', function () {
 
     it('Checks that collaborators can add project collaborators if set to add or remove', async function() {
       let project = projects.collaboratorsaddfilesedit;
-      let deepCopiedProject = JSON.parse(JSON.stringify(project));
+      let deepCopiedProject = _.cloneDeep(project);
       project.collaborators.list.push({
         userID: "foo",
         access: {
@@ -264,7 +264,7 @@ describe('TESTING PERMISSIONS', function () {
       assert.isAbove(projectFromDB.collaborators.list.length, deepCopiedProject.collaborators.list.length);
 
       project = projects.collaboratorsremovefilesedit;
-      deepCopiedProject = JSON.parse(JSON.stringify(project));
+      deepCopiedProject = _.cloneDeep(project);
       project.collaborators.list.push({
         userID: "foo",
         access: {
@@ -284,7 +284,7 @@ describe('TESTING PERMISSIONS', function () {
 
     it('Checks that collaborators can remove project collaborators if set to remove', async function() {
       const project = _.cloneDeep(projects.collaboratorsremovefilesedit);
-      const deepCopiedProject = JSON.parse(JSON.stringify(project));
+      const deepCopiedProject = _.cloneDeep(project);
       project.collaborators.list.splice(1, 1);
 
       const res = await post('/project/json/' + project.shortname, true)
@@ -321,7 +321,7 @@ describe('TESTING PERMISSIONS', function () {
 
     it('Checks that collaborators can add project annotations if set to add or remove', async function() {
       let project = projects.collaboratorseditfileseditannotationsadd;
-      let deepCopiedProject = JSON.parse(JSON.stringify(project));
+      let deepCopiedProject = _.cloneDeep(project);
       project.annotations.list.push({
         type: "text",
         name: "Annotation name",
@@ -334,7 +334,7 @@ describe('TESTING PERMISSIONS', function () {
       assert.isAbove(projectFromDB.annotations.list.length, deepCopiedProject.annotations.list.length);
 
       project = projects.collaboratorseditfileseditannotationsremove;
-      deepCopiedProject = JSON.parse(JSON.stringify(project));
+      deepCopiedProject = _.cloneDeep(project);
       project.annotations.list.push({
         type: "text",
         name: "Annotation name",
@@ -391,7 +391,7 @@ describe('TESTING PERMISSIONS', function () {
 
     it('Checks that collaborators can add project files if set to add or remove', async function() {
       let project = _.cloneDeep(projects.collaboratorseditfilesadd);
-      let deepCopiedProject = JSON.parse(JSON.stringify(project));
+      let deepCopiedProject = _.cloneDeep(project);
       project.files.list.push({source: "https://zenodo.org/record/44855/files/MRI-n4.nii.gz", name: "MRI-n4.nii.gz"});
       let res = await post('/project/json/' + project.shortname, true)
         .send({data: project});
@@ -400,7 +400,7 @@ describe('TESTING PERMISSIONS', function () {
       assert.isAbove(projectFromDB.files.list.length, deepCopiedProject.files.list.length);
 
       project = _.cloneDeep(projects.collaboratorseditfilesremove);
-      deepCopiedProject = JSON.parse(JSON.stringify(project));
+      deepCopiedProject = _.cloneDeep(project);
       project.files.list.push({source: "https://zenodo.org/record/44855/files/MRI-n4.nii.gz", name: "MRI-n4.nii.gz"});
       res = await post('/project/json/' + project.shortname, true)
         .send({data: project});
