@@ -630,35 +630,19 @@ const postProject = async function (req, res) {
         object.files.list[k] = object.files.list[k].source;
       }
 
-      let shouldReturnEarly = false;
+      const ignoredChanges = [];
       [AccessType.COLLABORATORS, AccessType.FILES, AccessType.ANNOTATIONS].forEach((type) => {
         const checkAccessType = AccessControlService.hasAccess(type);
         const canAdd = checkAccessType(AccessLevel.ADD);
-        if (object[type].list.length > oldProject[type].list.length && !canAdd(oldProject, loggedUser)) {
-          res.status(403).send({error: `Not authorized to add ${type}`});
-          shouldReturnEarly = true;
-
-          return false;
-        }
         const canRemove = checkAccessType(AccessLevel.REMOVE);
-        if (object[type].list.length < oldProject[type].list.length && !canRemove(oldProject, loggedUser)) {
-          res.status(403).send({error: `Not authorized to remove ${type}`});
-          shouldReturnEarly = true;
-
-          return false;
-        }
-
-        const canView = checkAccessType(AccessLevel.VIEW);
-        if (!canView(oldProject, loggedUser)) {
-          // we add back contents that were eventually filtered
+        if (
+          (object[type].list.length > oldProject[type].list.length && !canAdd(oldProject, loggedUser)) ||
+          (object[type].list.length < oldProject[type].list.length && !canRemove(oldProject, loggedUser))
+        ) {
+          ignoredChanges.push(type);
           object[type].list = oldProject[type].list;
         }
-
       });
-
-      if(shouldReturnEarly) {
-        return;
-      }
 
       object.modified = (new Date()).toJSON();
       object.modifiedBy = req.user.username;
@@ -669,7 +653,12 @@ const postProject = async function (req, res) {
       await req.db.get('project').insert(object);
 
       console.log("success: true");
-      res.json({ success: true, message: "Project settings updated" });
+      let successMessage = "Project settings updated.";
+      if(ignoredChanges.length > 0) {
+        successMessage += ` Some changes (on ${ignoredChanges.join(', ')}) were ignored due to a lack of permissions.`;
+      }
+
+      res.json({ success: true, message: successMessage });
     } else {
     // new project, insert
       console.log("inserting...");
