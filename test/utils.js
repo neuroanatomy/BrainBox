@@ -164,6 +164,10 @@ const removeProject = function (shortname) {
   return db.get('project').remove({shortname});
 };
 
+const queryProject = function (shortname) {
+  return db.get('project').findOne({ shortname, backup: { $exists: 0 } });
+};
+
 const insertTestTokenForUser =async function (nickname) {
   const now = new Date();
   const obj = {
@@ -320,7 +324,10 @@ const createProjectWithPermission = function(name, accessProp) {
       list: [{source: "https://zenodo.org/record/44855/files/MRI-n4.nii.gz", name: "MRI-n4.nii.gz"}]
     },
     annotations: {
-      list: [{"type":"volume", "name":"Test", "values":"axolotl_labels.json", "display":"true"}]
+      list: [
+        {"type":"volume", "name":"Test", "values":"axolotl_labels.json", "display":"true"},
+        {"type":"volume", "name":"Test2", "values":"axolotl_labels.json", "display":"true"}
+      ]
     }
   };
 
@@ -350,6 +357,7 @@ module.exports = {
   currentDirectory,
   insertTestTokenForUser,
   removeTestTokenForUser,
+  queryProject,
   queryUser,
   insertUser,
   removeUser,

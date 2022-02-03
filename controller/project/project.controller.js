@@ -647,15 +647,18 @@ const postProject = async function (req, res) {
 
           return false;
         }
+
+        const canView = checkAccessType(AccessLevel.VIEW);
+        if (!canView(oldProject, loggedUser)) {
+          // we add back contents that were eventually filtered
+          object[type].list = oldProject[type].list;
+        }
+
       });
 
       if(shouldReturnEarly) {
         return;
       }
-
-      // FIXME : compare with old project and populate annotations / files/ collaborarors
-      // that were eventually filtered in view
-      // + ADD TEST CASE
 
       object.modified = (new Date()).toJSON();
       object.modifiedBy = req.user.username;

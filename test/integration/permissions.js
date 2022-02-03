@@ -7,6 +7,7 @@ chai.use(chaiHttp);
 const U = require('../utils.js');
 const {server} = require('../../app');
 const puppeteer = require('puppeteer');
+const _ = require('lodash');
 
 describe('TESTING PERMISSIONS', function () {
   const forbiddenStatusCodes = [403, 401];
@@ -154,34 +155,34 @@ describe('TESTING PERMISSIONS', function () {
     });
 
     it('Checks that collaborators cannot edit a project if files have a lower access value', async function() {
-      const project = projects.collaboratorseditfilesnone;
+      const project = _.cloneDeep(projects.collaboratorseditfilesnone);
       const res = await post('/project/json/' + project.shortname, true)
         .send({data: project});
       assert.oneOf(res.statusCode, forbiddenStatusCodes);
     });
 
     it('Checks that collaborators cannot remove a project if files have a lower access value', async function() {
-      const project = projects.collaboratorsremovefilesnone;
+      const project = _.cloneDeep(projects.collaboratorsremovefilesnone);
       const res = await del('/project/json/' + project.shortname, true);
       assert.oneOf(res.statusCode, forbiddenStatusCodes);
     });
 
     it('Checks that collaborators can edit a project if files have an equal access value', async function() {
-      const project = projects.collaboratorseditfilesedit;
+      const project = _.cloneDeep(projects.collaboratorseditfilesedit);
       const res = await post('/project/json/' + project.shortname, true)
         .send({data: project});
       assert.equal(res.statusCode, 200);
     });
 
     it('Checks that collaborators can edit a project if files have a superior access value', async function() {
-      const project = projects.collaboratorseditfilesremove;
+      const project = _.cloneDeep(projects.collaboratorseditfilesremove);
       const res = await post('/project/json/' + project.shortname, true)
         .send({data: project});
       assert.equal(res.statusCode, 200);
     });
 
     it('Checks that collaborators cannot add project collaborators if set to none or view', async function() {
-      let project = projects.collaboratorsnonefilesedit;
+      let project = _.cloneDeep(projects.collaboratorsnonefilesedit);
       project.collaborators.list.push({
         userID: "foo",
         access: {
@@ -197,7 +198,7 @@ describe('TESTING PERMISSIONS', function () {
         .send({data: project});
       assert.oneOf(res.statusCode, forbiddenStatusCodes);
 
-      project = projects.collaboratorsviewfilesedit;
+      project = _.cloneDeep(projects.collaboratorsviewfilesedit);
       project.collaborators.list.push({
         userID: "foo",
         access: {
@@ -209,12 +210,41 @@ describe('TESTING PERMISSIONS', function () {
         name: "Foo"
       });
       res = await post('/project/json/' + project.shortname, true)
+        .send({data: project});
+      assert.oneOf(res.statusCode, forbiddenStatusCodes);
+
+    });
+
+    it('Checks that collaborators cannot remove project collaborators if set to none', async function() {
+      const project = _.cloneDeep(projects.collaboratorsnonefilesedit);
+      project.collaborators.list.splice(1, 1);
+
+      const res = await post('/project/json/' + project.shortname, true)
+        .send({data: project});
+      assert.oneOf(res.statusCode, forbiddenStatusCodes);
+    });
+
+    it('Checks that collaborators cannot remove project collaborators if set to view', async function() {
+      const project = _.cloneDeep(projects.collaboratorsviewfilesedit);
+      project.collaborators.list.splice(1, 1);
+
+      const res = await post('/project/json/' + project.shortname, true)
+        .send({data: project});
+      assert.oneOf(res.statusCode, forbiddenStatusCodes);
+    });
+
+    it('Checks that collaborators cannot remove project collaborators if set to add', async function() {
+      const project = _.cloneDeep(projects.collaboratorsaddfilesedit);
+      project.collaborators.list.splice(1, 1);
+
+      const res = await post('/project/json/' + project.shortname, true)
         .send({data: project});
       assert.oneOf(res.statusCode, forbiddenStatusCodes);
     });
 
     it('Checks that collaborators can add project collaborators if set to add or remove', async function() {
       let project = projects.collaboratorsaddfilesedit;
+      let deepCopiedProject = JSON.parse(JSON.stringify(project));
       project.collaborators.list.push({
         userID: "foo",
         access: {
@@ -229,8 +259,12 @@ describe('TESTING PERMISSIONS', function () {
       let res = await post('/project/json/' + project.shortname, true)
         .send({data: project});
       assert.equal(res.statusCode, 200);
+      // check that collaborators got modified
+      let projectFromDB = await U.queryProject(project.shortname);
+      assert.isAbove(projectFromDB.collaborators.list.length, deepCopiedProject.collaborators.list.length);
 
       project = projects.collaboratorsremovefilesedit;
+      deepCopiedProject = JSON.parse(JSON.stringify(project));
       project.collaborators.list.push({
         userID: "foo",
         access: {
@@ -244,33 +278,50 @@ describe('TESTING PERMISSIONS', function () {
       res = await post('/project/json/' + project.shortname, true)
         .send({data: project});
       assert.equal(res.statusCode, 200);
+      projectFromDB = await U.queryProject(project.shortname);
+      assert.isAbove(projectFromDB.collaborators.list.length, deepCopiedProject.collaborators.list.length);
+    });
+
+    it('Checks that collaborators can remove project collaborators if set to remove', async function() {
+      const project = _.cloneDeep(projects.collaboratorsremovefilesedit);
+      const deepCopiedProject = JSON.parse(JSON.stringify(project));
+      project.collaborators.list.splice(1, 1);
+
+      const res = await post('/project/json/' + project.shortname, true)
+        .send({data: project});
+      assert.equal(res.statusCode, 200);
+      const projectFromDB = await U.queryProject(project.shortname);
+      assert.isBelow(projectFromDB.collaborators.list.length, deepCopiedProject.collaborators.list.length);
     });
 
 
-    it('Checks that collaborators cannot add project annotations if set to none or view', async function() {
-      let project = projects.collaboratorseditfileseditannotationsnone;
+    it('Checks that collaborators cannot add project annotations if set to none', async function() {
+      const project = _.cloneDeep(projects.collaboratorseditfileseditannotationsnone);
       project.annotations.list.push({
         type: "text",
         name: "Annotation name",
         values: null
       });
-      let res = await post('/project/json/' + project.shortname, true)
+      const res = await post('/project/json/' + project.shortname, true)
         .send({data: project});
       assert.oneOf(res.statusCode, forbiddenStatusCodes);
+    });
 
-      project = projects.collaboratorseditfileseditannotationsview;
+    it('Checks that collaborators cannot add project annotations if set to view', async function() {
+      const project = _.cloneDeep(projects.collaboratorseditfileseditannotationsview);
       project.annotations.list.push({
         type: "text",
         name: "Annotation name",
         values: null
       });
-      res = await post('/project/json/' + project.shortname, true)
+      const res = await post('/project/json/' + project.shortname, true)
         .send({data: project});
       assert.oneOf(res.statusCode, forbiddenStatusCodes);
     });
 
     it('Checks that collaborators can add project annotations if set to add or remove', async function() {
       let project = projects.collaboratorseditfileseditannotationsadd;
+      let deepCopiedProject = JSON.parse(JSON.stringify(project));
       project.annotations.list.push({
         type: "text",
         name: "Annotation name",
@@ -279,8 +330,11 @@ describe('TESTING PERMISSIONS', function () {
       let res = await post('/project/json/' + project.shortname, true)
         .send({data: project});
       assert.equal(res.statusCode, 200);
+      let projectFromDB = await U.queryProject(project.shortname);
+      assert.isAbove(projectFromDB.annotations.list.length, deepCopiedProject.annotations.list.length);
 
       project = projects.collaboratorseditfileseditannotationsremove;
+      deepCopiedProject = JSON.parse(JSON.stringify(project));
       project.annotations.list.push({
         type: "text",
         name: "Annotation name",
@@ -289,6 +343,35 @@ describe('TESTING PERMISSIONS', function () {
       res = await post('/project/json/' + project.shortname, true)
         .send({data: project});
       assert.equal(res.statusCode, 200);
+      projectFromDB = await U.queryProject(project.shortname);
+      assert.isAbove(projectFromDB.annotations.list.length, deepCopiedProject.annotations.list.length);
+    });
+
+    it('Checks that collaborators cannot remove project annotations if set to none', async function() {
+      const project = _.cloneDeep(projects.collaboratorseditfileseditannotationsnone);
+      project.annotations.list.splice(0, 1);
+
+      const res = await post('/project/json/' + project.shortname, true)
+        .send({data: project});
+      assert.oneOf(res.statusCode, forbiddenStatusCodes);
+    });
+
+    it('Checks that collaborators cannot remove project annotations if set to view', async function() {
+      const project = _.cloneDeep(projects.collaboratorseditfileseditannotationsview);
+      project.annotations.list.splice(0, 1);
+
+      const res = await post('/project/json/' + project.shortname, true)
+        .send({data: project});
+      assert.oneOf(res.statusCode, forbiddenStatusCodes);
+    });
+
+    it('Checks that collaborators cannot remove project annotations if set to add', async function() {
+      const project = _.cloneDeep(projects.collaboratorseditfileseditannotationsadd);
+      project.annotations.list.splice(0, 1);
+
+      const res = await post('/project/json/' + project.shortname, true)
+        .send({data: project});
+      assert.oneOf(res.statusCode, forbiddenStatusCodes);
     });
 
 
@@ -307,15 +390,57 @@ describe('TESTING PERMISSIONS', function () {
     });
 
     it('Checks that collaborators can add project files if set to add or remove', async function() {
-      let project = projects.collaboratorseditfilesadd;
+      let project = _.cloneDeep(projects.collaboratorseditfilesadd);
+      let deepCopiedProject = JSON.parse(JSON.stringify(project));
       project.files.list.push({source: "https://zenodo.org/record/44855/files/MRI-n4.nii.gz", name: "MRI-n4.nii.gz"});
       let res = await post('/project/json/' + project.shortname, true)
         .send({data: project});
       assert.equal(res.statusCode, 200);
+      let projectFromDB = await U.queryProject(project.shortname);
+      assert.isAbove(projectFromDB.files.list.length, deepCopiedProject.files.list.length);
 
-      project = projects.collaboratorseditfilesremove;
+      project = _.cloneDeep(projects.collaboratorseditfilesremove);
+      deepCopiedProject = JSON.parse(JSON.stringify(project));
       project.files.list.push({source: "https://zenodo.org/record/44855/files/MRI-n4.nii.gz", name: "MRI-n4.nii.gz"});
       res = await post('/project/json/' + project.shortname, true)
+        .send({data: project});
+      assert.equal(res.statusCode, 200);
+      projectFromDB = await U.queryProject(project.shortname);
+      assert.isAbove(projectFromDB.files.list.length, deepCopiedProject.files.list.length);
+    });
+
+    it('Checks that collaborators cannot remove project files if set to none', async function() {
+      const project = _.cloneDeep(projects.collaboratorseditfilesnone);
+      project.files.list.splice(0, 1);
+
+      const res = await post('/project/json/' + project.shortname, true)
+        .send({data: project});
+      assert.oneOf(res.statusCode, forbiddenStatusCodes);
+    });
+
+    it('Checks that collaborators cannot remove project files if set to view', async function() {
+      const project = _.cloneDeep(projects.collaboratorseditfilesview);
+      project.files.list.splice(0, 1);
+
+      const res = await post('/project/json/' + project.shortname, true)
+        .send({data: project});
+      assert.oneOf(res.statusCode, forbiddenStatusCodes);
+    });
+
+    it('Checks that collaborators cannot remove project files if set to add', async function() {
+      const project = _.cloneDeep(projects.collaboratorseditfilesadd);
+      project.files.list.splice(0, 1);
+
+      const res = await post('/project/json/' + project.shortname, true)
+        .send({data: project});
+      assert.oneOf(res.statusCode, forbiddenStatusCodes);
+    });
+
+    it('Checks that collaborators can remove project files if set to remove', async function() {
+      const project = _.cloneDeep(projects.collaboratorseditfilesremove);
+      project.files.list.splice(0, 1);
+
+      const res = await post('/project/json/' + project.shortname, true)
         .send({data: project});
       assert.equal(res.statusCode, 200);
     });
@@ -334,7 +459,7 @@ describe('TESTING PERMISSIONS', function () {
       });
 
       it('Check that collaborators cannot see other collaborators if not permitted', async function () {
-        const project = projects.collaboratorsnonefilesedit;
+        const project = _.cloneDeep(projects.collaboratorsnonefilesedit);
         const response = await page.goto(U.serverURL + '/project/' + project.shortname + '/settings');
         assert.equal(response.status(), 200);
         await page.waitForSelector('#access tbody');
@@ -343,13 +468,13 @@ describe('TESTING PERMISSIONS', function () {
       }).timeout(U.longTimeout);
 
       it('Check that collaborators cannot see other collaborators if not permitted using JSON API', async function () {
-        const project = projects.collaboratorsnonefilesedit;
+        const project = _.cloneDeep(projects.collaboratorsnonefilesedit);
         const res = await get('/project/json/' + project.shortname, true);
         assert.equal(res.body.collaborators.list.length, 1);
       });
 
       it('Check that collaborators cannot see other annotations if not permitted', async function () {
-        const project = projects.collaboratorseditfileseditannotationsnone;
+        const project = _.cloneDeep(projects.collaboratorseditfileseditannotationsnone);
         const response = await page.goto(U.serverURL + '/project/' + project.shortname + '/settings');
         assert.equal(response.status(), 200);
         await page.waitForSelector('#annotations tbody');
