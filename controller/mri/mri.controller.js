@@ -287,7 +287,7 @@ const mri = async function (req, res) {
             if (access.isGreaterThan(AccessLevel.NONE)) {
               // eslint-disable-next-line max-depth
               for (k of json.mri.annotations[key]) {
-                json.mri.annotations[key][k].access = access;
+                json.mri.annotations[key][k].access = access.toString();
               }
             } else {
               delete json.mri.annotations[key];
