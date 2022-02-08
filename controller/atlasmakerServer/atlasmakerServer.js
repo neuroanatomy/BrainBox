@@ -1242,6 +1242,16 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         if (data.method === "patch") {
         // deal with patches
 
+          const addingORremovingLayerOrAnnotations = data.patch.some((operation) => {
+            if (operation.path === null) { return false; }
+
+            return (operation.op === 'remove' || operation.op === 'add') &&
+                   (operation.path.startsWith('/mri/atlas/') || operation.path.startsWith('/mri/annotations/'));
+          });
+          if (addingORremovingLayerOrAnnotations) {
+            throw new Error('Refusing to apply patch - cannot directly remove or add annotation layers on MRI files');
+          }
+
           // get original object from db
           let ret = await db.get('mri').findOne({ source: json.source, backup: { $exists: 0 } }, { _id: 0 });
           delete ret._id;
