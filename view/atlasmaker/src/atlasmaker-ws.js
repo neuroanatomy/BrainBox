@@ -614,7 +614,7 @@ export var AtlasMakerWS = {
 
       try {
         const rnd = Math.random().toString(36)
-          .slice(20);
+          .slice(2);
         var met = method || "append";
         if(method === "patch") {
           me.socket.send(JSON.stringify({
