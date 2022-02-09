@@ -1522,7 +1522,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       if (me._validateUserAtlas(atlas) === false) {
         tracer.log("WARNING: insufficient information provided for adding atlas", atlas);
       }
-      tracer.log("User requests atlas " + atlas.filename + " from " + atlas.dirname, atlas.specimen);
+      tracer.log("User requests atlas " + atlas.name + " from " + atlas.dirname, atlas.specimen);
 
       const pr = new Promise(function (resolve, reject) {
         me.loadAtlas(User)
