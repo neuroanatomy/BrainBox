@@ -64,7 +64,7 @@ const isProjectObject = function (req, res, object) {
           return;
         }
         if (!validatorNPM.isWhitelisted(file.name, allowed)) {
-          reject(new Error("Invalid file name"));
+          reject(new Error(`Invalid file name "${file.name}"`));
 
           return;
         }
