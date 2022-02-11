@@ -5,7 +5,7 @@ module.exports = class BrainboxAccessControlService extends AccessControlService
 
   /**
      * Check the access a user has to an MRI file based on a list of projects. The MRI
-     * file is only accessible if all project allow it.
+     * file is only accessible if all projects allow it.
      * @param {Object} mri The file, which is an MRI object from the db
      * @param {Array} projects Array of project objects relevant to the access decision
      * @param {Object} user The user whose access is being decided
@@ -20,7 +20,7 @@ module.exports = class BrainboxAccessControlService extends AccessControlService
 
   /**
      * Check the access a user has to an MRI file based on a list of projects. The MRI
-     * file is only accessible if some project allow it.
+     * file is only accessible if some projects allow it.
      * @param {Object} mri The file, which is an MRI object from the db
      * @param {Array} projects Array of project objects relevant to the access decision
      * @param {Object} user The user whose access is being decided
