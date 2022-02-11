@@ -264,7 +264,7 @@ const getProjectFilesSlice = async (req, projShortname, start, length, namesFlag
     if(mris[j]) {
       // mri file present in DB
       // check j-th mri annotation access
-      BrainboxAccessControlService.setAnnotationsAccessByProjects(mris[j], [project], loggedUser);
+      BrainboxAccessControlService.setVolumeAnnotationsAccessByProjects(mris[j], [project], loggedUser);
 
       // append to list
       if(typeof namesFlag !== "undefined" && namesFlag === true) {
