@@ -43,13 +43,15 @@
     
     <!-- Content (variable height) -->
     <div style="flex:1 0 auto">
-            
         <!-- Data -->
         <div id="data">		
             <!-- Data Flex -->
             <div id="content" style="display:flex;justify-content:center">
                     <!-- Annotations -->
                     <div style="flex:0 1 auto">
+                        {{#hasPrivilegedAccess}}
+                            <div id="privilegedAccessInfo">You are seeing this private MRI because you were added as a collaborator with access to files. Share with caution.</div>
+                        {{/hasPrivilegedAccess}}
                         <div id="annotationsPane">
                             <table>
                                 <tr>

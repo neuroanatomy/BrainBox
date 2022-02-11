@@ -224,7 +224,6 @@ const project = async function (req, res) {
 
       return;
     }
-
     json.files.list = [];
     res.render('project', {
       title: json.name,

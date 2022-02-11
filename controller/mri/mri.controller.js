@@ -9,6 +9,7 @@ const atlasmakerServer = require('../atlasmakerServer/atlasmakerServer');
 const dataSlices = require('../dataSlices/dataSlices.js');
 const { AccessType, AccessLevel } = require('neuroweblab');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
+const _ = require('lodash');
 
 const downloadQueue = {};
 
@@ -247,21 +248,20 @@ const mri = async function (req, res) {
     if (json.mri && !json.mri.atlas) {
       json.mri.atlas = [];
     }
-    let i, j, k;
+
     const prj = new Set();
     let arr = [];
     // Check access to volume annotations
-    for (i = 0; i < json.mri.atlas.length; i++) {
-      if (json.mri.atlas[i].project) {
-        prj.add(json.mri.atlas[i].project);
-      }
-    }
+    json.mri.atlas
+      .map((a) => a.project)
+      .filter((p) => !_.isEmpty(p))
+      .forEach(prj.add, prj);
+
     // Check access to text annotations
-    if (typeof json.mri.annotations !== "undefined") {
-      for (const key of Object.keys(json.mri.annotations)) {
-        prj.add(key);
-      }
+    if (!_.isNil(json.mri.annotations)) {
+      Object.keys(json.mri.annotations).forEach(prj.add, prj);
     }
+
     arr = [...prj].map(async (o) => {
       const proj = await req.db.get('project').findOne({
         shortname: o,
@@ -274,35 +274,25 @@ const mri = async function (req, res) {
       .catch((err) => {
         console.log('ERROR Cannot get db information:', err);
       });
-    BrainboxAccessControlService.setAnnotationsAccessByProjects(json.mri, projects, loggedUser);
 
-    // Set access to text annotations
-    if (typeof json.mri.annotations !== "undefined") {
-      for (const key of Object.keys(json.mri.annotations)) {
-        for (j = 0; j < projects.length; j++) {
-          // eslint-disable-next-line max-depth
-          if (projects[j] && projects[j].shortname === i) {
-            const access = BrainboxAccessControlService.getUserOrPublicAccessLevel(projects[j], loggedUser, AccessType.ANNOTATIONS);
-            // eslint-disable-next-line max-depth
-            if (access.isGreaterThan(AccessLevel.NONE)) {
-              // eslint-disable-next-line max-depth
-              for (k of json.mri.annotations[key]) {
-                json.mri.annotations[key][k].access = access.toString();
-              }
-            } else {
-              delete json.mri.annotations[key];
-            }
-          }
-        }
-      }
+    // set access to volume annotations
+    BrainboxAccessControlService.setVolumeAnnotationsAccessByProjects(json, projects, loggedUser);
+    // BrainboxAccessControlService.setTextAnnotationsAccessByProjects(json, projects, loggedUser)
+
+    const isPubliclyVisible = projects.some((project) => BrainboxAccessControlService.canViewFiles(project, 'anyone'));
+    const hasCustomViewAccess = BrainboxAccessControlService.hasAccesstoFileIfAllowedBySomeProjects(json, projects, loggedUser, AccessLevel.VIEW);
+    if (!isPubliclyVisible && !hasCustomViewAccess) {
+      res.status(403).send('Authorization required');
+
+      return;
     }
 
     // Send data
-    console.log('Hello');
     res.render('mri', {
       title: json.name || 'BrainBox',
       params: JSON.stringify(req.query),
       mriInfo: JSON.stringify(json),
+      hasPrivilegedAccess: !isPubliclyVisible && hasCustomViewAccess,
       login
     });
   }
