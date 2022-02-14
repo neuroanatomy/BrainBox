@@ -42,22 +42,28 @@ module.exports = class BrainboxAccessControlService extends AccessControlService
     */
   static setVolumeAnnotationsAccessByProjects(mri, projects, user) {
     const atlas = _.get(mri, 'mri.atlas');
-    if(_.isNil(atlas) || _.isEmpty(projects)) {
+    if(_.isEmpty(atlas) || _.isEmpty(projects)) {
       return;
     }
 
-    for (const [i, a] of atlas.entries()) {
+    const filteredAtlas = atlas.map((a) => {
       const project = projects.find((p) => p.shortname === a.project);
       if (_.isNil(project)) {
-        continue;
+        return a;
       }
       const access = super.getUserOrPublicAccessLevel(project, user, AccessType.ANNOTATIONS);
       if (access.isGreaterThan(AccessLevel.NONE)) {
-        a.access = access.toString();
-      } else {
-        atlas.splice(i, 1);
+        return {
+          ...a,
+          access: access.toString()
+        };
       }
-    }
+
+      return null;
+
+    }).filter(_.isObject);
+
+    mri.mri.atlas = filteredAtlas;
   }
 
   /*
