@@ -34,7 +34,8 @@ module.exports = class BrainboxAccessControlService extends AccessControlService
   }
 
   /**
-    * Set access to volume annotations
+    * Set the `access` property on volume annotations, to be processed by view.
+    * Will remove any layers users shouldn't see.
     * @param {Object} mri The mri file
     * @param {Array} projects The projects list
     * @param {Object} user UserIdentifier
