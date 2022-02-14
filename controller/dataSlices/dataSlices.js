@@ -16,7 +16,7 @@ const BrainboxAccessControlService = require('../../services/BrainboxAccessContr
  */
 const getUserFilesSlice = function getUserFilesSlice(req, requestedUser, start, length) {
   console.log('getUserFilesSlice. Start, end:', start, length);
-  var loggedUser = "anonymous";
+  var loggedUser = 'anonymous';
   if(req.isAuthenticated()) {
     loggedUser = req.user.username;
   } else
@@ -31,7 +31,7 @@ const getUserFilesSlice = function getUserFilesSlice(req, requestedUser, start, 
       req.db.get('project').find({
         $or: [
           {owner: requestedUser},
-          {"collaborators.list": {$elemMatch:{userID:requestedUser}}}
+          {'collaborators.list': {$elemMatch:{userID:requestedUser}}}
         ],
         backup: {$exists: false}
       })
@@ -52,11 +52,11 @@ const getUserFilesSlice = function getUserFilesSlice(req, requestedUser, start, 
           const obj = {
             url: o.source,
             name: o.name,
-            included: dateFormat(o.included, "d mmm yyyy, HH:MM")
+            included: dateFormat(o.included, 'd mmm yyyy, HH:MM')
           };
 
-          if(typeof o.dim !== "undefined") {
-            obj.volDimensions = o.dim.join(" x ");
+          if(typeof o.dim !== 'undefined') {
+            obj.volDimensions = o.dim.join(' x ');
             mriFiles.push(obj);
           }
         });
@@ -68,7 +68,7 @@ const getUserFilesSlice = function getUserFilesSlice(req, requestedUser, start, 
         //     resolve({success:false, list:[]});
       })
       .catch(function(err) {
-        console.log("ERROR:", err);
+        console.log('ERROR:', err);
         reject(err);
       });
   });
@@ -84,7 +84,7 @@ const getUserFilesSlice = function getUserFilesSlice(req, requestedUser, start, 
  * @returns {Object} user atlas slice
  */
 const getUserAtlasSlice = function getUserAtlasSlice(req, requestedUser, start, length) {
-  let loggedUser = "anonymous";
+  let loggedUser = 'anonymous';
   if(req.isAuthenticated()) {
     loggedUser = req.user.username;
   } else
@@ -95,11 +95,11 @@ const getUserAtlasSlice = function getUserAtlasSlice(req, requestedUser, start, 
   return new Promise(function (resolve, reject) {
     Promise.all([
       req.db.get('mri')
-        .find({"mri.atlas": {$elemMatch: {owner: requestedUser}}, backup: {$exists: false}}, {skip:start, limit:length}),
+        .find({'mri.atlas': {$elemMatch: {owner: requestedUser}}, backup: {$exists: false}}, {skip:start, limit:length}),
       req.db.get('project').find({
         $or: [
           {owner: requestedUser},
-          {"collaborators.list": {$elemMatch:{userID:requestedUser}}}
+          {'collaborators.list': {$elemMatch:{userID:requestedUser}}}
         ],
         backup: {$exists: false}
       })
@@ -121,10 +121,10 @@ const getUserAtlasSlice = function getUserAtlasSlice(req, requestedUser, start, 
             atlasFiles.push({
               url: o.source,
               parentName: o.name,
-              name: a.name||"",
-              project: a.project||"",
-              projectURL: '/project/'+a.project||"",
-              modified: dateFormat(a.modified, "d mmm yyyy, HH:MM")
+              name: a.name||'',
+              project: a.project||'',
+              projectURL: '/project/'+a.project||'',
+              modified: dateFormat(a.modified, 'd mmm yyyy, HH:MM')
             });
           }
         });
@@ -136,7 +136,7 @@ const getUserAtlasSlice = function getUserAtlasSlice(req, requestedUser, start, 
         //     resolve({success:false, list:[]});
       })
       .catch(function(err) {
-        console.log("ERROR:", err);
+        console.log('ERROR:', err);
         reject(err);
       });
   });
@@ -152,7 +152,7 @@ const getUserAtlasSlice = function getUserAtlasSlice(req, requestedUser, start, 
  * @returns {Object} user projects slice
  */
 const getUserProjectsSlice = function getUserProjectsSlice(req, requestedUser, start, length) {
-  var loggedUser = "anonymous";
+  var loggedUser = 'anonymous';
   if(req.isAuthenticated()) {
     loggedUser = req.user.username;
   } else
@@ -164,7 +164,7 @@ const getUserProjectsSlice = function getUserProjectsSlice(req, requestedUser, s
     req.db.get('project').find({
       $or: [
         {owner: requestedUser},
-        {"collaborators.list": {$elemMatch:{userID:requestedUser}}}
+        {'collaborators.list': {$elemMatch:{userID:requestedUser}}}
       ],
       backup: {$exists: false}
     }, {skip:start, limit:length})
@@ -186,14 +186,14 @@ const getUserProjectsSlice = function getUserProjectsSlice(req, requestedUser, s
             numFiles: o.files.list.length,
             numCollaborators: o.collaborators.list.length,
             owner: o.owner,
-            modified: dateFormat(o.modified, "d mmm yyyy, HH:MM")
+            modified: dateFormat(o.modified, 'd mmm yyyy, HH:MM')
           };
         });
 
         if(projects.length>0) { resolve({success:true, list:projects}); } else { resolve({success:false, list:[]}); }
       })
       .catch(function(err) {
-        console.log("ERROR:", err);
+        console.log('ERROR:', err);
         reject(err);
       });
   });
@@ -209,7 +209,7 @@ const getUserProjectsSlice = function getUserProjectsSlice(req, requestedUser, s
  */
 // eslint-disable-next-line max-statements
 const getProjectFilesSlice = async (req, projShortname, start, length, namesFlag) => {
-  var loggedUser = "anonymous";
+  var loggedUser = 'anonymous';
   if(req.isAuthenticated()) {
     loggedUser = req.user.username;
   } else
@@ -227,7 +227,7 @@ const getProjectFilesSlice = async (req, projShortname, start, length, namesFlag
 
   // return if project is empty
   if (!project) {
-    console.log("project is empty");
+    console.log('project is empty');
 
     return;
   }
@@ -267,7 +267,7 @@ const getProjectFilesSlice = async (req, projShortname, start, length, namesFlag
       BrainboxAccessControlService.setVolumeAnnotationsAccessByProjects(mris[j], [project], loggedUser);
 
       // append to list
-      if(typeof namesFlag !== "undefined" && namesFlag === true) {
+      if(typeof namesFlag !== 'undefined' && namesFlag === true) {
         newList[j] = {source: mris[j].source, name: mris[j].name};
       } else {
         newList[j] = mris[j];
@@ -276,7 +276,7 @@ const getProjectFilesSlice = async (req, projShortname, start, length, namesFlag
       // mri file not present in DB (probably not yet downloaded)
       newList[j] = {
         source: list[start+j],
-        name: ""
+        name: ''
       };
     }
   }
@@ -293,7 +293,7 @@ const getProjectFilesSlice = async (req, projShortname, start, length, namesFlag
  * @returns {Object} files slice
  */
 const getFilesSlice = function getFilesSlice(req, start, length) {
-  var loggedUser = "anonymous";
+  var loggedUser = 'anonymous';
   if(req.isAuthenticated()) {
     loggedUser = req.user.username;
   } else
@@ -332,7 +332,7 @@ const getFilesSlice = function getFilesSlice(req, start, length) {
         resolve(mriFiles);
       })
       .catch(function(err) {
-        console.log("ERROR:", err);
+        console.log('ERROR:', err);
         reject(err);
       });
   });
@@ -348,7 +348,7 @@ const getFilesSlice = function getFilesSlice(req, start, length) {
  */
 // eslint-disable-next-line max-statements
 const getProjectsSlice = async function getProjectsSlice(req, start, length) {
-  var loggedUser = "anonymous";
+  var loggedUser = 'anonymous';
   if(req.isAuthenticated()) {
     loggedUser = req.user.username;
   } else
@@ -387,7 +387,7 @@ const getProjectsSlice = async function getProjectsSlice(req, start, length) {
     return projects;
 
   } catch (err) {
-    console.log("ERROR:", err);
+    console.log('ERROR:', err);
     throw err;
   }
 };

@@ -21,8 +21,8 @@ export var BrainBox={
   hostname: Config.hostname,
   info:{},
   labelSets:null,
-  annotationType:["volume", "text", "multiple choices", "hidden text"],
-  accessLevels: ["none", "view", "edit", "add", "remove"],
+  annotationType:['volume', 'text', 'multiple choices', 'hidden text'],
+  accessLevels: ['none', 'view', 'edit', 'add', 'remove'],
 
   /*
         JavaScript implementation of Java's hashCode method from
@@ -35,7 +35,7 @@ export var BrainBox={
      */
   hash: function hash(str) {
     let i, res, v, v0, v1;
-    const abc = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const abc = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const sz = abc.length;
 
     v0 = 0;
@@ -45,7 +45,7 @@ export var BrainBox={
       v0 &= v0;
     }
 
-    res = "";
+    res = '';
     for(i = 0; i<8; i++) {
       v1 = parseInt(v0/sz);
       v = Math.abs(v0-v1*sz);
@@ -67,14 +67,14 @@ export var BrainBox={
   loadScript: function loadScript(path, testScriptPresent) {
     return new Promise(function(resolve, reject) {
       if(testScriptPresent && testScriptPresent()) {
-        console.log("[loadScript] Script", path, "already present, not loading it again");
+        console.log('[loadScript] Script', path, 'already present, not loading it again');
 
         return resolve();
       }
-      var s = document.createElement("script");
+      var s = document.createElement('script');
       s.src = path;
       s.onload=function () {
-        console.log("Loaded", path);
+        console.log('Loaded', path);
         resolve();
       };
       s.onerror = function (e) {
@@ -91,11 +91,11 @@ export var BrainBox={
   initBrainBox: function initBrainBox() {
     var pr = new Promise(function(resolve, reject) {
       // Add AtlasMaker and friends
-      var stereotaxic = document.getElementById("stereotaxic");
+      var stereotaxic = document.getElementById('stereotaxic');
       stereotaxic.innerHTML = '';
-      var atlasmaker = document.createElement("div");
-      atlasmaker.id = "atlasmaker";
-      atlasmaker.className = "edit-mode";
+      var atlasmaker = document.createElement('div');
+      atlasmaker.id = 'atlasmaker';
+      atlasmaker.className = 'edit-mode';
       stereotaxic.appendChild(atlasmaker);
 
       AtlasMakerWidget.initAtlasMaker(atlasmaker)
@@ -103,7 +103,7 @@ export var BrainBox={
           resolve();
         })
         .catch( (err) => {
-          console.error("ERROR:", err);
+          console.error('ERROR:', err);
           reject(err);
         });
 
@@ -124,19 +124,19 @@ export var BrainBox={
       var index=param.annotationItemIndex||0;
 
       // Copy MRI from source
-      $("#msgLog").html("<p>Downloading from source to server...");
+      $('#msgLog').html('<p>Downloading from source to server...');
 
       // Configure MRI into atlasmaker
       if(param.info.success===false) {
-        $("#msgLog").append("<p>ERROR: "+param.info.message+".");
-        console.log("<p>ERROR: "+param.info.message+".");
+        $('#msgLog').append('<p>ERROR: '+param.info.message+'.');
+        console.log('<p>ERROR: '+param.info.message+'.');
         reject(new Error(param.info.message));
 
         return;
       }
       BrainBox.info=param.info;
 
-      $("#msgLog").append("<p>Downloading from server...</p>");
+      $('#msgLog').append('<p>Downloading from server...</p>');
 
       /**
             * @todo Check it these two lines are of any use...
@@ -176,6 +176,7 @@ export var BrainBox={
         .then(function(info2) {
           BrainBox.info = info2;
 
+
           // check 'edit' access
           var accessStr = BrainBox.info.mri.atlas[index].access;
           var accessLvl = BrainBox.accessLevels.indexOf(accessStr);
@@ -186,7 +187,7 @@ export var BrainBox={
 
         })
         .catch( (err) => {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           reject(err);
 
 
@@ -216,7 +217,7 @@ export var BrainBox={
         f.readAsDataURL(x.response);
       };
       x.onerror = function () {
-        reject(new Error("Can't convert image to data URL"));
+        reject(new Error('Can\'t convert image to data URL'));
       };
       x.send();
     });
@@ -250,7 +251,7 @@ export var BrainBox={
         }
         stored.history.push({
           url:         BrainBox.info.source,
-          view:        AtlasMakerWidget.User.view?AtlasMakerWidget.User.view.toLowerCase():"sag",
+          view:        AtlasMakerWidget.User.view?AtlasMakerWidget.User.view.toLowerCase():'sag',
           slice:       AtlasMakerWidget.User.slice?AtlasMakerWidget.User.slice:0,
           img:         data,
           lastVisited: (new Date()).toJSON()
@@ -372,16 +373,16 @@ export var BrainBox={
   selectAnnotationTableRow: function selectAnnotationTableRow(index, param) {
     var {table} = param;
     var currentIndex=$(table)
-      .find("tr.selected")
+      .find('tr.selected')
       .index();
     if(index>=0 && currentIndex !== index) {
-      console.log("bb>>  change selected annotation");
+      console.log('bb>>  change selected annotation');
       $(table)
-        .find("tr")
-        .removeClass("selected");
+        .find('tr')
+        .removeClass('selected');
       $(table)
         .find('tbody tr:eq('+index+')')
-        .addClass("selected");
+        .addClass('selected');
       AtlasMakerWidget.configureAtlasMaker(BrainBox.info, index);
     }
   },
@@ -401,8 +402,8 @@ export var BrainBox={
         tw.bind1(
           param.infoProxy,
           param.info,
-          param.objTemplate[icol].path.replace("#", irow),
-          $(param.table).find("tr:eq("+(irow+1)+") td:eq("+icol+")"),
+          param.objTemplate[icol].path.replace('#', irow),
+          $(param.table).find('tr:eq('+(irow+1)+') td:eq('+icol+')'),
           param.objTemplate[icol].format
         );
         break;
@@ -410,8 +411,8 @@ export var BrainBox={
         tw.bind2(
           param.infoProxy,
           param.info,
-          param.objTemplate[icol].path.replace("#", irow),
-          $(param.table).find("tr:eq("+(irow+1)+") td:eq("+icol+")"),
+          param.objTemplate[icol].path.replace('#', irow),
+          $(param.table).find('tr:eq('+(irow+1)+') td:eq('+icol+')'),
           param.objTemplate[icol].format,
           param.objTemplate[icol].parse
         );
@@ -436,8 +437,8 @@ export var BrainBox={
         tw.bind1(
           param.infoProxy,
           param.info,
-          param.objTemplate[icol].path.replace("#", iarr),
-          $(param.table).find("tr:eq("+(irow+1)+") td:eq("+icol+")"),
+          param.objTemplate[icol].path.replace('#', iarr),
+          $(param.table).find('tr:eq('+(irow+1)+') td:eq('+icol+')'),
           param.objTemplate[icol].format
         );
         break;
@@ -445,8 +446,8 @@ export var BrainBox={
         tw.bind2(
           param.infoProxy,
           param.info,
-          param.objTemplate[icol].path.replace("#", iarr),
-          $(param.table).find("tr:eq("+(irow+1)+") td:eq("+icol+")"),
+          param.objTemplate[icol].path.replace('#', iarr),
+          $(param.table).find('tr:eq('+(irow+1)+') td:eq('+icol+')'),
           param.objTemplate[icol].format,
           param.objTemplate[icol].parse
         );
@@ -460,7 +461,7 @@ export var BrainBox={
      * @returns {object} A promise
      */
   loadLabelsets: function loadLabelsets() {
-    return $.getJSON(BrainBox.hostname + "/api/getLabelsets", function(data) {
+    return $.getJSON(BrainBox.hostname + '/api/getLabelsets', function(data) {
       BrainBox.labelSets=data;
 
       /*
@@ -533,7 +534,7 @@ export var BrainBox={
         return BrainBox.configureBrainBox(param);
       })
       .catch((err) => {
-        console.log("ERROR", err);
+        console.log('ERROR', err);
       });
 
     return pr;
