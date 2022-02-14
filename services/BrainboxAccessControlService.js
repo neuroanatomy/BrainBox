@@ -53,6 +53,7 @@ module.exports = class BrainboxAccessControlService extends AccessControlService
         return a;
       }
       const access = super.getUserOrPublicAccessLevel(project, user, AccessType.ANNOTATIONS);
+      console.log('access found', project.shortname, access);
       if (access.isGreaterThan(AccessLevel.NONE)) {
         return {
           ...a,
