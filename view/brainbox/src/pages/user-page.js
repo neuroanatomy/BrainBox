@@ -1,68 +1,49 @@
-/* globals userInfo, nickname */
+/* globals nickname, loggedUser */
+import 'nwl-components/dist/style.css';
+import { Tab, Table, Tabs, UserPage } from 'nwl-components';
+import { createApp, ref } from 'vue';
+import config from '../nwl-components-config';
 
-import 'jquery-ui/themes/base/core.css';
-import 'jquery-ui/themes/base/theme.css';
-import 'jquery-ui/themes/base/autocomplete.css';
-import 'jquery-ui/ui/core';
-import 'jquery-ui/ui/widgets/autocomplete';
+const PageContents = {
+  template: '#template',
+  setup() {
+    const projects = ref([]);
 
-import '../style/style.css';
-import '../style/ui.css';
-import '../style/user-style.css';
-
-import $ from 'jquery';
-// import * as tw from '../twoWayBinding.js';
-
-var cursorProjects = 0;
-
-const appendProjects = (list) => {
-  userInfo.projects.push(...list);
-  for(var i=0; i<list.length; i++) {
-    $('#projects tbody').append([
-      '<tr><td><div style="position:relative"><a style="margin-left:15px" class="projectName" href="',
-      list[i].projectURL,
-      '">',
-      list[i].project,
-      '</a><a href="',
-      list[i].projectURL,
-      '/settings" class="settings" title="Settings" style="position:absolute;top:0;left:0"><img style="width:11px; margin:3px 8px 0 0" src="/img/settings.svg"/></a></div></td><td>',
-      list[i].numFiles,
-      '</td><td>',
-      list[i].numCollaborators,
-      '</td><td><a href="/user/',
-      list[i].owner,
-      '">',
-      list[i].owner,
-      '</a></td><td>',
-      list[i].modified,
-      '</td></tr>'
-    ].join(""));
-  }
-  $("#numProjects").text(userInfo.projects.length);
-};
-
-const queryProjects = () => {
-  $.getJSON(`/user/json/${nickname}/projects`, { start: cursorProjects, length: 100 })
-    .then(function(res) {
-      if(res.success & res.list.length > 0) {
-        appendProjects(res.list);
+    return {
+      projects
+    };
+  },
+  mounted() {
+    let cursorProjects = 0;
+    const url = new URL(
+      `/user/json/${nickname}/projects`,
+      window.location.protocol + '//' + window.location.host
+    );
+    const fetchProjects = async () => {
+      const params = {
+        start: cursorProjects,
+        length: 100
+      };
+      url.search = new URLSearchParams(params).toString();
+      const res = await (await fetch(url)).json();
+      if (res.success & (res.list.length > 0)) {
+        this.projects.push(...res.list);
         cursorProjects += 100;
-        queryProjects();
+        fetchProjects();
       }
-    });
+    };
+    fetchProjects();
+  },
+  compilerOptions: {
+    delimiters: ['[[', ']]']
+  }
 };
+const app = createApp(PageContents);
+app.component('UserPage', UserPage);
+app.component('Tabs', Tabs);
+app.component('Tab', Tab);
+app.component('Table', Table);
+app.provide('config', config);
+app.provide('user', loggedUser);
 
-// eslint-disable-next-line no-global-assign, no-native-reassign
-userInfo = JSON.parse(userInfo);
-userInfo.projects = [];
-
-$("#addProject").click(function() { location="/project/new"; });
-$("#settings").click(function() {
-  var {pathname}=location;
-  if(pathname.slice(-1)==="/") { location=pathname+"settings"; } else { location=pathname+"/settings"; }
-});
-
-queryProjects();
-
-$(".tab:eq(0)").addClass("selected");
-$("#projects").show();
+app.mount('#app');

@@ -1,66 +1,71 @@
-/* global $ */
+/* global loggedUser */
 
-import 'jquery-ui/themes/base/core.css';
-import 'jquery-ui/themes/base/theme.css';
-import 'jquery-ui/themes/base/autocomplete.css';
-import 'jquery-ui/ui/core';
-import 'jquery-ui/ui/widgets/autocomplete';
-
-import '../style/style.css';
-import '../style/ui.css';
-import '../style/projectNew-style.css';
-
-import * as DOMPurify from 'dompurify';
-
-import $ from 'jquery';
-
+import 'nwl-components/dist/style.css';
+import { createApp, ref } from 'vue';
 import Config from './../../../../cfg.json';
+import { NewProjectPage } from 'nwl-components';
+import config from '../nwl-components-config';
 
-var host;
+let host;
 if(Config.secure) {
-  host = "wss://" + Config.wshostname;
+  host = 'wss://' + Config.wshostname;
 } else {
-  host = "ws://" + Config.wshostname;
+  host = 'ws://' + Config.wshostname;
 }
-let ws;
-if (window.WebSocket) {
-  ws = new window.WebSocket(host);
-} else if (window.MozWebSocket) {
-  ws = new window.MozWebSocket(host);
-}
-ws.onopen = function () {
-  ws.send(JSON.stringify({ "type": "autocompleteClient" }));
-};
-ws.onmessage = function (message) {
-  message = JSON.parse(message.data);
-  if (message.type === "projectNameQuery") {
-    if (message.metadata) {
-      $("#warning").html("The project <a><strong>" + message.metadata.shortname + "</strong></a> already exists");
-      $("#warning a").attr('href', '/project/' + message.metadata.shortname);
-      $("#warning").show();
-      $("#createProject").css({ 'pointer-events': 'none', opacity: 0.5 });
-    } else {
-      $("#warning").hide();
-      $("#createProject").css({ 'pointer-events': 'auto', opacity: 1 });
+
+const NewPage = {
+  template: `
+      <NewProjectPage
+        :onKeyDown="checkInput"
+        :existing-project="existingProject"
+        :validInput="validInput"
+      >
+        A project contains a list of MRI files, a set of volume or
+        text annotations, and a list of collaborators with their access rights.
+        The short name of a project can only contain letters and numbers, but
+        you can choose a longer display name later.
+      </NewProjectPage>
+    `,
+  setup() {
+    const existingProject = ref(false);
+    const validInput = ref(true);
+
+    let ws;
+    if (window.WebSocket) {
+      ws = new window.WebSocket(host);
+    } else if (window.MozWebSocket) {
+      ws = new window.MozWebSocket(host);
     }
+    ws.onopen = function () {
+      ws.send(JSON.stringify({ 'type': 'autocompleteClient' }));
+    };
+    ws.onmessage = function (message) {
+      message = JSON.parse(message.data);
+      if (message.type === 'projectNameQuery') {
+        if (message.metadata) {
+          existingProject.value = true;
+        } else {
+          existingProject.value = false;
+        }
+      }
+    };
+
+    return {
+      ws,
+      existingProject,
+      validInput,
+      checkInput(event) {
+        existingProject.value = false;
+        validInput.value = (/^[a-zA-Z0-9]*$/).test(event.target.value);
+        ws.send(JSON.stringify({ 'type': 'projectNameQuery', 'metadata': { 'name': event.target.value } }));
+      }
+    };
   }
 };
 
-$("#projectName").on('keyup', function () {
-  var name = DOMPurify.sanitize($("#projectName").val());
+const app = createApp(NewPage);
+app.component('NewProjectPage', NewProjectPage);
+app.provide('config', config);
+app.provide('user', loggedUser);
 
-  // check if name is alphanumeric
-  if (/[^a-zA-Z0-9]+/.test(name) === true) {
-    $("#warning").html("The name <strong>" + name + "</strong> is not allowed. Project short names can only contain letters and numbers");
-    $("#warning").show();
-    $("#createProject").css({ 'pointer-events': 'none', opacity: 0.5 });
-  } else {
-    // check if name already exists
-    ws.send(JSON.stringify({ "type": "projectNameQuery", "metadata": { "name": name } }));
-  }
-});
-
-$("#createProject").click(function cancelChanges() { location.pathname = '/project/' + $("#projectName").val() + '/settings'; });
-$("#cancelChanges").click(function cancelChanges() { location.pathname = projectURL; });
-
-$("#addProject").click(function () { location = "/project/new"; });
+app.mount('#app');
