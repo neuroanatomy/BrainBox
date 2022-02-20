@@ -38,7 +38,7 @@ describe('TESTING THE /project ROUTE', function () {
 
     it('get("/project/json/") should get an error message requesting page', async function () {
       const { body } = await chai.request(U.serverURL).get('/project/json/');
-      const expected = {error: "Provide the parameter 'page'"};
+      const expected = {error: 'Provide the parameter \'page\''};
       assert.deepEqual(body, expected);
     });
 
@@ -56,9 +56,9 @@ describe('TESTING THE /project ROUTE', function () {
     it('get("/project/json/test") should return an object with appropriate keys', async function () {
       const {body} = await chai.request(U.serverURL).get(`/project/json/${U.projectTest.shortname}`);
       const expectedKeys = [
-        "name", "shortname", "url", "brainboxURL", "created", "owner",
-        "collaborators", "files", "annotations", "description",
-        "modified", "modifiedBy"
+        'name', 'shortname', 'url', 'brainboxURL', 'created', 'owner',
+        'collaborators', 'files', 'annotations', 'description',
+        'modified', 'modifiedBy'
       ];
       assert.hasAllKeys(body, expectedKeys);
     });
@@ -76,11 +76,11 @@ describe('TESTING THE /project ROUTE', function () {
         .get(`/project/json/${U.projectTest.shortname}/files`)
         .query({start: 0, length: 10});
       const expectedKeys1 = [
-        "_id", "filename", "success", "source", "url", "included",
-        "dim", "pixdim", "voxel2world", "worldOrigin",
-        "owner", "mri", "modified", "modifiedBy", "name"
+        '_id', 'filename', 'success', 'source', 'url', 'included',
+        'dim', 'pixdim', 'voxel2world', 'worldOrigin',
+        'owner', 'mri', 'modified', 'modifiedBy', 'name'
       ];
-      const expectedKeys2 = ["source", "name"];
+      const expectedKeys2 = ['source', 'name'];
       // console.log(body);
       assert.isArray(body);
       assert.containsAllKeys(body[0], expectedKeys1);
@@ -92,7 +92,7 @@ describe('TESTING THE /project ROUTE', function () {
         .get(`/project/json/${U.projectTest.shortname}/files`)
         .query({start: 0, length: 10, names: true});
       assert.isArray(body);
-      assert.hasAllKeys(body[0], ["source", "name"]);
+      assert.hasAllKeys(body[0], ['source', 'name']);
     });
 
     it('Remove test MRI from db and disk', async function () {
@@ -102,7 +102,7 @@ describe('TESTING THE /project ROUTE', function () {
           url: U.localBertURL
         });
       const {body} = res;
-      const dirPath = "./public" + body.url;
+      const dirPath = './public' + body.url;
       await U.removeMRI({dirPath, srcURL: U.localBertURL});
     });
   });

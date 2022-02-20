@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 console.log('dataSlices.js');
 const dateFormat = require('dateformat');
 

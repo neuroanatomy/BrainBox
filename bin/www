@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-var debug = require('debug')('xt');
-var {app} = require('../app');
-
+// var debug = require('debug')('xt');
+var app = require('../app');
+app.start();
 // app.set('port', process.env.PORT || 3000);
 
 // var server = app.listen(app.get('port'), function() {

@@ -1,14 +1,19 @@
-var {assert} = require("chai");
-const mriController = require('../../controller/mri/mri.controller');
+/* eslint-disable max-lines */
+var {assert} = require('chai');
+const MriController = require('../../controller/mri/mri.controller');
 // const atlasMakerServer = require('../../controller/atlasmakerServer/atlasmakerServer');
-const monk = require('monk');
 require('mocha-sinon');
 const sinon = require('sinon');
-var db = monk('localhost:27017/brainbox');
 const U = require('../utils');
 const dirname = require('path').resolve(__dirname, '../..');
 
+let db, mriController;
+
 describe('MRI Controller: ', function () {
+  before( function() {
+    db=U.getDB();
+    mriController=new MriController(db);
+  });
 
   describe('Validator function() ', function() {
     it('should perform the validations correctly', async function () {
@@ -314,7 +319,7 @@ describe('MRI Controller: ', function () {
       await mriController.apiMriGet(req, res);
       assert.strictEqual(resSpy.callCount, 1);
       assert.strictEqual(jsonSpy.callCount, 0);
-      assert.strictEqual(resSpy.args[0][0].error, "Provide the parameter 'page'");
+      assert.strictEqual(resSpy.args[0][0].error, 'Provide the parameter \'page\'');
       sinon.restore();
     });
   });

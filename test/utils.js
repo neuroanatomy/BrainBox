@@ -1,20 +1,20 @@
+/* eslint-disable max-lines */
 var fs = require('fs');
 const path = require('path');
-const monk = require('monk');
-const db = monk('localhost:27017/brainbox');
-const rimraf = require("rimraf");
+const rimraf = require('rimraf');
 const {PNG} = require('pngjs');
 var jpeg = require('jpeg-js');
 const pixelmatch = require('pixelmatch');
-const { exec } = require("child_process");
+const { exec } = require('child_process');
 // const { constants } = require('buffer');
+const brainboxApp = require('../app');
 
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-const serverURL = "http://127.0.0.1:3001";
-const localBertURL = serverURL + "/test_data/bert_brain.nii.gz";
-const cheetahURL = "https://zenodo.org/record/44846/files/MRI.nii.gz?download=1";
-const testToken = "qwertyuiopasdfghjklzxcvbnm";
+const serverURL = 'http://127.0.0.1:3001';
+const localBertURL = serverURL + '/test_data/bert_brain.nii.gz';
+const cheetahURL = 'https://zenodo.org/record/44846/files/MRI.nii.gz?download=1';
+const testToken = 'qwertyuiopasdfghjklzxcvbnm';
 const testTokenDuration = 2 * (1000 * 3600); // 2h
 const noTimeout = 0; // disable timeout
 const longTimeout = 20 * 1000; // 20 sec
@@ -22,100 +22,100 @@ const mediumTimeout = 10 * 1000; // 10 sec
 const shortTimeout = 6 * 1000; // 6 sec
 
 const userFoo = {
-  name: "Founibald Barr",
-  nickname: "foo",
-  url: "https://foo.bar",
-  brainboxURL: "/user/foo",
-  avatarURL: serverURL + "/test_data/foo.png",
+  name: 'Founibald Barr',
+  nickname: 'foo',
+  url: 'https://foo.bar',
+  brainboxURL: '/user/foo',
+  avatarURL: serverURL + '/test_data/foo.png',
   joined: (new Date()).toJSON()
 };
 const userBar = {
-  name: "Barton Fouquet",
-  nickname: "bar",
-  url: "https://bar.foo",
-  brainboxURL: "/user/foo",
-  avatarURL: serverURL + "/test_data/bar.png",
+  name: 'Barton Fouquet',
+  nickname: 'bar',
+  url: 'https://bar.foo',
+  brainboxURL: '/user/foo',
+  avatarURL: serverURL + '/test_data/bar.png',
   joined: (new Date()).toJSON()
 };
 const userFooB = {
-  name: "Founibald Barr",
-  username: "foo",
-  url: "https://foo.bar",
-  brainboxURL: "/user/foo",
-  avatarURL: serverURL + "/test_data/foo.png",
+  name: 'Founibald Barr',
+  username: 'foo',
+  url: 'https://foo.bar',
+  brainboxURL: '/user/foo',
+  avatarURL: serverURL + '/test_data/foo.png',
   joined: (new Date()).toJSON()
 };
 const userBarB = {
-  name: "Barton Fouquet",
-  username: "bar",
-  url: "https://bar.foo",
-  brainboxURL: "/user/foo",
-  avatarURL: serverURL + "/test_data/bar.png",
+  name: 'Barton Fouquet',
+  username: 'bar',
+  url: 'https://bar.foo',
+  brainboxURL: '/user/foo',
+  avatarURL: serverURL + '/test_data/bar.png',
   joined: (new Date()).toJSON()
 };
 const projectTest = {
-  name: "Test Project",
-  shortname: "testproject",
-  url: "https://testproject.org",
-  brainboxURL: "/project/testproject",
+  name: 'Test Project',
+  shortname: 'testproject',
+  url: 'https://testproject.org',
+  brainboxURL: '/project/testproject',
   created: (new Date()).toJSON(),
-  owner: "foo",
+  owner: 'foo',
   collaborators: {
     list: [
       {
-        userID: "anyone",
+        userID: 'anyone',
         access: {
-          collaborators: "view",
-          annotations: "edit",
-          files: "view"
+          collaborators: 'view',
+          annotations: 'edit',
+          files: 'view'
         },
-        username: "anyone",
-        name: "Any User"
+        username: 'anyone',
+        name: 'Any User'
       }
     ]
   },
   files: {
     list: [
-      serverURL + "/test_data/bert_brain.nii.gz",
-      "https://zenodo.org/record/44855/files/MRI-n4.nii.gz",
-      "http://files.figshare.com/2284784/MRI_n4.nii.gz",
-      "https://dl.dropbox.com/s/cny5b3so267bv94/p32-f18-uchar.nii.gz",
-      "https://s3.amazonaws.com/fcp-indi/data/Projects/ABIDE_Initiative/Outputs/freesurfer/5.1/Caltech_0051456/mri/T1.mgz"
+      serverURL + '/test_data/bert_brain.nii.gz',
+      'https://zenodo.org/record/44855/files/MRI-n4.nii.gz',
+      'http://files.figshare.com/2284784/MRI_n4.nii.gz',
+      'https://dl.dropbox.com/s/cny5b3so267bv94/p32-f18-uchar.nii.gz',
+      'https://s3.amazonaws.com/fcp-indi/data/Projects/ABIDE_Initiative/Outputs/freesurfer/5.1/Caltech_0051456/mri/T1.mgz'
     ]
   },
   annotations: {
     list: [
       {
-        type: "volume",
-        values: "cerebellum.json",
-        display: "true",
-        name: "Cerebrum"
+        type: 'volume',
+        values: 'cerebellum.json',
+        display: 'true',
+        name: 'Cerebrum'
       }
     ]
   },
-  description: "A test project used for checking that rendering is behaving as expected.",
+  description: 'A test project used for checking that rendering is behaving as expected.',
   modified: (new Date()).toJSON(),
-  modifiedBy: "foo"
+  modifiedBy: 'foo'
 };
 
 const privateProjectTest = {
-  name: "Private Test Project",
-  shortname: "privatetestproject",
-  url: "https://testproject.org",
-  brainboxURL: "/project/privatetestproject",
+  name: 'Private Test Project',
+  shortname: 'privatetestproject',
+  url: 'https://testproject.org',
+  brainboxURL: '/project/privatetestproject',
   created: (new Date()).toJSON(),
-  owner: "foo",
+  owner: 'foo',
   collaborators: {
     list: [
       {
-        userID: "anyone",
+        userID: 'anyone',
         access: {
-          collaborators: "none",
-          annotations: "none",
-          files: "none"
+          collaborators: 'none',
+          annotations: 'none',
+          files: 'none'
         },
-        username: "anyone",
-        name: "Any User"
+        username: 'anyone',
+        name: 'Any User'
       }
     ]
   },
@@ -125,20 +125,43 @@ const privateProjectTest = {
   annotations: {
     list: [
       {
-        type: "volume",
-        name: "Annotation name",
+        type: 'volume',
+        name: 'Annotation name',
         values: null
       }
     ]
   },
-  description: "A private test project used for checking the authorization process.",
+  description: 'A private test project used for checking the authorization process.',
   modified: (new Date()).toJSON(),
-  modifiedBy: "foo"
+  modifiedBy: 'foo'
 };
 
+let app, atlasmakerServer, db, server;
+
+const initResources = async () => {
+  ({ app, server, atlasmakerServer } = await brainboxApp.start());
+
+  db = app.db.mongoDB();
+};
+
+const closeResources = () => {
+  if (db) {
+    db.close();
+  }
+  if (server) {
+    server.close();
+  }
+  if (atlasmakerServer) {
+    atlasmakerServer.server.close();
+  }
+  process.stdin.pause();
+};
+
+const getServer = () => server;
+const getDB = () => db;
 
 const currentDirectory = function () {
-  console.log("Current directory:", __dirname);
+  console.log('Current directory:', __dirname);
   exec('ls -l', (error, stdout) => {
     console.log(stdout);
   });
@@ -176,13 +199,13 @@ const insertTestTokenForUser =async function (nickname) {
     expiryDate: new Date(now.getTime() + testTokenDuration),
     username: nickname
   };
-  const res = await db.get("log").insert(obj);
+  const res = await db.get('log').insert(obj);
 
   return res;
 };
 
 const removeTestTokenForUser =async function (nickname) {
-  await db.get("log").remove({token: testToken + nickname});
+  await db.get('log').remove({token: testToken + nickname});
 };
 
 const delay=async function (delayTimeout) {
@@ -202,14 +225,14 @@ const compareImages = async function (pathImg1, pathImg2) {
   const data1 = await fs.promises.readFile(pathImg1);
   const data2 = await fs.promises.readFile(pathImg2);
   let img1, img2;
-  if(pathImg1.split(".").pop() === "png") {
+  if(pathImg1.split('.').pop() === 'png') {
     img1 = PNG.sync.read(data1);
-  } else if(pathImg1.split(".").pop() === "jpg") {
+  } else if(pathImg1.split('.').pop() === 'jpg') {
     img1 = jpeg.decode(data1);
   }
-  if(pathImg2.split(".").pop() === "png") {
+  if(pathImg2.split('.').pop() === 'png') {
     img2 = PNG.sync.read(data2);
-  } else if(pathImg2.split(".").pop() === "jpg") {
+  } else if(pathImg2.split('.').pop() === 'jpg') {
     img2 = jpeg.decode(data2);
   }
   const pixdiff = pixelmatch(img1.data, img2.data, null, img1.width, img1.height);
@@ -280,53 +303,53 @@ const parseCookies = (str) => str
   }, []);
 
 const testingCredentials = {
-  username: "testing-user",
-  password: "baz"
+  username: 'testing-user',
+  password: 'baz'
 };
 
 const createProjectWithPermission = function(name, accessProp) {
   const access = Object.assign({}, {
-    collaborators: "view",
-    annotations: "none",
-    files: "none"
+    collaborators: 'view',
+    annotations: 'none',
+    files: 'none'
   }, accessProp);
 
   const project = {
     name: name,
     shortname: name,
-    url: "https://testproject.org",
-    brainboxURL: "/project/" + name,
+    url: 'https://testproject.org',
+    brainboxURL: '/project/' + name,
     created: (new Date()).toJSON(),
-    owner: "foo",
+    owner: 'foo',
     collaborators: { list: [
       {
-        userID: "anyone",
+        userID: 'anyone',
         access: {
-          collaborators: "none",
-          annotations: "none",
-          files: "view"
+          collaborators: 'none',
+          annotations: 'none',
+          files: 'view'
         },
-        username: "anyone",
-        name: "Any User"
+        username: 'anyone',
+        name: 'Any User'
       },
       {
-        userID: "bar",
+        userID: 'bar',
         access: {
-          collaborators: "view",
-          annotations: "view",
-          files: "view"
+          collaborators: 'view',
+          annotations: 'view',
+          files: 'view'
         },
-        username: "foo",
-        name: "Foo"
+        username: 'foo',
+        name: 'Foo'
       }
     ] },
     files: {
-      list: [{source: "https://zenodo.org/record/44855/files/MRI-n4.nii.gz", name: "MRI-n4.nii.gz"}]
+      list: [{source: 'https://zenodo.org/record/44855/files/MRI-n4.nii.gz', name: 'MRI-n4.nii.gz'}]
     },
     annotations: {
       list: [
-        {"type":"volume", "name":"Test", "values":"axolotl_labels.json", "display":"true"},
-        {"type":"volume", "name":"Test2", "values":"axolotl_labels.json", "display":"true"}
+        {'type':'volume', 'name':'Test', 'values':'axolotl_labels.json', 'display':'true'},
+        {'type':'volume', 'name':'Test2', 'values':'axolotl_labels.json', 'display':'true'}
       ]
     }
   };
@@ -353,6 +376,10 @@ module.exports = {
   projectTest,
   privateProjectTest,
   testToken,
+  initResources,
+  closeResources,
+  getServer,
+  getDB,
   removeMRI,
   currentDirectory,
   insertTestTokenForUser,

@@ -1,13 +1,15 @@
 /* eslint-disable no-empty-function */
-var assert = require("assert");
+var assert = require('assert');
 const uploadController = require('../../controller/mri/upload.controller');
-const monk = require('monk');
 require('mocha-sinon');
 const sinon = require('sinon');
-var db = monk('localhost:27017/brainbox');
 const U = require('../utils');
 
-describe('Upload Controller: ', function() {
+describe('Upload Controller: ', function () {
+  let db;
+  before(function () {
+    db = U.getDB();
+  });
 
   describe('Validator function() ', function() {
     it('should perform the validations correctly', async function() {

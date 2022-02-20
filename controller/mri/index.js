@@ -1,24 +1,31 @@
 /*global authTokenMiddleware */
 
-var express = require('express');
-var controller = require('./mri.controller');
-var uploadController = require('./upload.controller');
+const express = require('express');
+const Controller = require('./mri.controller');
+const uploadController = require('./upload.controller');
 
-var multer = require('multer');
-var router = new express.Router();
+const multer = require('multer');
 
-router.get('', controller.validator, controller.mri);
-router.get('/json', controller.validator, authTokenMiddleware, controller.apiMriGet);
-router.post('/json', controller.validatorPost, authTokenMiddleware, controller.apiMriPost);
+const MriRouter = function(db) {
 
-router.get('/upload', uploadController.token);
+  const router = new express.Router();
+  const controller = new Controller(db);
 
-router.post('/upload',
-  multer({ dest: './tmp/'}).array('atlas'),
-  uploadController.validator,
-  uploadController.otherValidations,
-  uploadController.upload);
+  router.get('', controller.validator, controller.mri);
+  router.get('/json', controller.validator, authTokenMiddleware, controller.apiMriGet);
+  router.post('/json', controller.validatorPost, authTokenMiddleware, controller.apiMriPost);
 
-router.get('/reset', controller.reset);
+  router.get('/upload', uploadController.token);
 
-module.exports = router;
+  router.post('/upload',
+    multer({ dest: './tmp/'}).array('atlas'),
+    uploadController.validator,
+    uploadController.otherValidations,
+    uploadController.upload);
+
+  router.get('/reset', controller.reset);
+
+  return router;
+};
+
+module.exports = MriRouter;
