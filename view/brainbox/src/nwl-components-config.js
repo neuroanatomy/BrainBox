@@ -7,5 +7,6 @@ export default {
   searchURL: 'https://openneurolab.github.io/metasearch',
   docURL: 'https://github.com/neuroanatomy/BrainBox',
   userSearchURL: '/api/userNameQuery?q=',
-  fetchLabelSets: async () => await (await fetch('/api/getLabelsets')).json()
+  fetchLabelSets: async () => (await fetch('/api/getLabelsets')).json(),
+  annotationTypes: ['text', 'volume']
 };
