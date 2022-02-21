@@ -134,11 +134,11 @@ const start = async function () {
 
   if (Config.secure) {
     const options = {
-      key: await fs.read(Config.ssl_key),
-      cert: await fs.read(Config.ssl_cert)
+      key: await fs.promises.readFile(Config.ssl_key),
+      cert: await fs.promises.readFile(Config.ssl_cert)
     };
     if(Config.ssl_chain) {
-      options.ca = await fs.read(Config.ssl_chain);
+      options.ca = await fs.promises.readFile(Config.ssl_chain);
     }
     atlasmakerServer.server = https.createServer(options, app);
   } else {
