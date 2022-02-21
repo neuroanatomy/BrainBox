@@ -1,17 +1,23 @@
 const fs = require('fs');
 const path = require('path');
 const WebSocket = require('ws').Server;
-var assert = require("assert");
+var assert = require('assert');
 // const tracer = require('tracer').console({ format: '[{{file}}:{{line}}]  {{message}}' });
 const la = require('../../controller/atlasmakerServer/atlasmaker-linalg.js');
 const amri = require('../../controller/atlasmakerServer/atlasmaker-mri.js');
-const AMS = require('../../controller/atlasmakerServer/atlasmakerServer.js');
+const atlasmakerServer = require('../../controller/atlasmakerServer/atlasmakerServer.js');
 const datadir = './test/data/';
 const U = require('../utils.js');
 const { expect } = require('chai');
 require('mocha-sinon');
 
+let AMS;
+
 describe('UNIT TESTING ATLASMAKER SERVER', function () {
+  before(function() {
+    AMS = atlasmakerServer(U.getDB());
+  });
+
   describe('MRI IO', function () {
     let mri1, mri2;
 
@@ -32,18 +38,18 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
     });
 
     it('Should recognize nii.gz from a filename', function () {
-      const ext = amri.filetypeFromFilename("/path/to/mri.nii.gz");
-      assert.strictEqual(ext, "nii.gz");
+      const ext = amri.filetypeFromFilename('/path/to/mri.nii.gz');
+      assert.strictEqual(ext, 'nii.gz');
     });
 
     it('Should recognize mgz from a filename', function () {
-      const ext = amri.filetypeFromFilename("/path/to/mri.mgz");
-      assert.strictEqual(ext, "mgz");
+      const ext = amri.filetypeFromFilename('/path/to/mri.mgz');
+      assert.strictEqual(ext, 'mgz');
     });
 
     it('Should return undefined if filename is not nii.gz nor mgz', function () {
-      const ext = amri.filetypeFromFilename("/path/to/mri.foo");
-      assert(typeof ext === "undefined");
+      const ext = amri.filetypeFromFilename('/path/to/mri.foo');
+      assert(typeof ext === 'undefined');
     });
 
     it('Subtract vectors correctly', function () {
@@ -94,26 +100,26 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
 
   describe('Database', function () {
     it('Find user name given their nickname', async function () {
-      const data = { type: "userNameQuery", metadata: { nickname: U.userFoo.nickname } };
+      const data = { type: 'userNameQuery', metadata: { nickname: U.userFoo.nickname } };
       const result = await AMS.queryUserName(data);
       assert.strictEqual(result[0].name, U.userFoo.name);
     });
 
     it('Find user nickname given their name', async function () {
-      const data = { type: "userNameQuery", metadata: { name: U.userFoo.name } };
+      const data = { type: 'userNameQuery', metadata: { name: U.userFoo.name } };
       const result = await AMS.queryUserName(data);
       assert.strictEqual(result[0].nickname, U.userFoo.nickname);
     });
 
     it('Find project', async function () {
-      const data = { type: "projectNameQuery", metadata: { name: U.projectTest.shortname } };
+      const data = { type: 'projectNameQuery', metadata: { name: U.projectTest.shortname } };
       const result = await AMS.queryProjectName(data);
       assert.strictEqual(result.name, U.projectTest.name);
     });
 
     it('Find similar project names', async function () {
       const data = {
-        type: "similarProjectNamesQuery",
+        type: 'similarProjectNamesQuery',
         metadata: { projectName: U.projectTest.shortname.slice(0, 3) }
       };
       const result = await AMS.querySimilarProjectNames(data);
@@ -132,8 +138,8 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
       const view = 'cor';
       const slice = 50;
       const jpg = await AMS.drawSlice(mri, view, slice);
-      const newPath = "./test/images/slice-bert-cor-50.jpg";
-      const refPath = "./test/data/reference-images/slice-bert-cor-50.jpg";
+      const newPath = './test/images/slice-bert-cor-50.jpg';
+      const refPath = './test/data/reference-images/slice-bert-cor-50.jpg';
       await fs.promises.mkdir(path.dirname(newPath), { recursive: true });
       await fs.promises.writeFile(newPath, jpg.data);
       const diff = await U.compareImages(newPath, refPath);

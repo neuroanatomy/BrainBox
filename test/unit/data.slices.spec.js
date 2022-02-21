@@ -1,10 +1,14 @@
 const { assert } = require('chai');
 const dataSlices = require('../../controller/dataSlices/dataSlices');
-const monk = require('monk');
 require('mocha-sinon');
-const db = monk('localhost:27017/brainbox');
+const U = require('../utils.js');
 
 describe('Data Slices ', function() {
+  let db;
+  before(function() {
+    db=U.getDB();
+  });
+
   describe('getUserFilesSlice function() ', function() {
     it('should return the correct files with valid input', async function() {
       const req = {

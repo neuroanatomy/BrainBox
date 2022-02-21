@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 'use strict';
 
 const chai = require('chai');
@@ -5,15 +6,35 @@ var {assert, expect} = chai;
 const chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 const U = require('../utils.js');
-const {server} = require('../../app');
 const puppeteer = require('puppeteer');
 const _ = require('lodash');
 
 describe('TESTING PERMISSIONS', function () {
   const forbiddenStatusCodes = [403, 401];
-  const agent = chai.request.agent(server);
   let cookies = [];
   let token = '';
+  let agent;
+
+  before(async function () {
+    agent = chai.request.agent(U.getServer());
+    await U.insertUser(U.userBar);
+    await agent.post('/localSignup')
+      .send(U.testingCredentials);
+    let res = await agent.post('/localLogin').redirects(0)
+      .send(U.testingCredentials);
+    expect(res).to.have.cookie('connect.sid');
+    cookies = U.parseCookies(res.headers['set-cookie'][0]);
+
+    res = await agent.get('/token');
+    assert.exists(res.body.token);
+    assert.isNotEmpty(res.body.token);
+    ({ token } = res.body);
+  });
+
+  after(function () {
+    U.removeUser(U.testingCredentials.username);
+    U.removeUser(U.userBar.nickname);
+  });
 
   const get = function(url, logged) {
     if (logged) {
@@ -38,31 +59,6 @@ describe('TESTING PERMISSIONS', function () {
 
     return chai.request(U.serverURL).del(url);
   };
-
-  before(async function () {
-    await U.insertUser(U.userBar);
-    try {
-      await agent.post('/localSignup')
-        .send(U.testingCredentials)
-        .timeout(1000); // FIXME: (in nwl)works but hangs indefinitely
-    } catch(_e) {
-      //
-    }
-    let res = await agent.post('/localLogin').redirects(0)
-      .send(U.testingCredentials);
-    expect(res).to.have.cookie('connect.sid');
-    cookies = U.parseCookies(res.headers['set-cookie'][0]);
-
-    res = await agent.get('/token');
-    assert.exists(res.body.token);
-    assert.isNotEmpty(res.body.token);
-    token = res.body.token;
-  });
-
-  after(function () {
-    U.removeUser(U.testingCredentials.username);
-    U.removeUser(U.userBar.nickname);
-  });
 
   describe('Test basic unprivileged access', function() {
 
@@ -114,7 +110,7 @@ describe('TESTING PERMISSIONS', function () {
     };
 
     before(function () {
-      ["none", "view"].forEach((access) => {
+      ['none', 'view'].forEach((access) => {
         setupProjectWithAccess(
           { collaborators: access, files: 'edit' },
           `collaborators${access}filesedit`
@@ -124,7 +120,7 @@ describe('TESTING PERMISSIONS', function () {
           `collaboratorseditfiles${access}`
         );
       });
-      ["edit", "add", "remove"].forEach((access) => {
+      ['edit', 'add', 'remove'].forEach((access) => {
         setupProjectWithAccess(
           { collaborators: access, files: 'none' },
           `collaborators${access}filesnone`
@@ -138,7 +134,7 @@ describe('TESTING PERMISSIONS', function () {
           `collaboratorseditfiles${access}`
         );
       });
-      ["none", "view", "add", "edit", "remove"].forEach((access) => {
+      ['none', 'view', 'add', 'edit', 'remove'].forEach((access) => {
         setupProjectWithAccess(
           { collaborators: 'edit', files: 'edit', annotations: access },
           `collaboratorseditfileseditannotations${access}`
@@ -192,14 +188,14 @@ describe('TESTING PERMISSIONS', function () {
       let project = _.cloneDeep(projects.collaboratorsnonefilesedit);
       let initialProjectState = _.cloneDeep(project);
       project.collaborators.list.push({
-        userID: "foo",
+        userID: 'foo',
         access: {
-          collaborators: "edit",
-          annotations: "edit",
-          files: "edit"
+          collaborators: 'edit',
+          annotations: 'edit',
+          files: 'edit'
         },
-        username: "foo",
-        name: "Foo"
+        username: 'foo',
+        name: 'Foo'
       });
 
       let res = await post('/project/json/' + project.shortname, true)
@@ -211,14 +207,14 @@ describe('TESTING PERMISSIONS', function () {
       project = _.cloneDeep(projects.collaboratorsviewfilesedit);
       initialProjectState = _.cloneDeep(project);
       project.collaborators.list.push({
-        userID: "foo",
+        userID: 'foo',
         access: {
-          collaborators: "edit",
-          annotations: "edit",
-          files: "edit"
+          collaborators: 'edit',
+          annotations: 'edit',
+          files: 'edit'
         },
-        username: "foo",
-        name: "Foo"
+        username: 'foo',
+        name: 'Foo'
       });
       res = await post('/project/json/' + project.shortname, true)
         .send({data: project});
@@ -268,14 +264,14 @@ describe('TESTING PERMISSIONS', function () {
       let project = projects.collaboratorsaddfilesedit;
       let initialProjectState = _.cloneDeep(project);
       project.collaborators.list.push({
-        userID: "foo",
+        userID: 'foo',
         access: {
-          collaborators: "edit",
-          annotations: "edit",
-          files: "edit"
+          collaborators: 'edit',
+          annotations: 'edit',
+          files: 'edit'
         },
-        username: "foo",
-        name: "Foo"
+        username: 'foo',
+        name: 'Foo'
       });
 
       let res = await post('/project/json/' + project.shortname, true)
@@ -288,14 +284,14 @@ describe('TESTING PERMISSIONS', function () {
       project = projects.collaboratorsremovefilesedit;
       initialProjectState = _.cloneDeep(project);
       project.collaborators.list.push({
-        userID: "foo",
+        userID: 'foo',
         access: {
-          collaborators: "edit",
-          annotations: "edit",
-          files: "edit"
+          collaborators: 'edit',
+          annotations: 'edit',
+          files: 'edit'
         },
-        username: "foo",
-        name: "Foo"
+        username: 'foo',
+        name: 'Foo'
       });
       res = await post('/project/json/' + project.shortname, true)
         .send({data: project});
@@ -321,8 +317,8 @@ describe('TESTING PERMISSIONS', function () {
       const project = _.cloneDeep(projects.collaboratorseditfileseditannotationsnone);
       const initialProjectState = _.cloneDeep(project);
       project.annotations.list.push({
-        type: "text",
-        name: "Annotation name",
+        type: 'text',
+        name: 'Annotation name',
         values: null
       });
       const res = await post('/project/json/' + project.shortname, true)
@@ -336,8 +332,8 @@ describe('TESTING PERMISSIONS', function () {
       const project = _.cloneDeep(projects.collaboratorseditfileseditannotationsview);
       const initialProjectState = _.cloneDeep(project);
       project.annotations.list.push({
-        type: "text",
-        name: "Annotation name",
+        type: 'text',
+        name: 'Annotation name',
         values: null
       });
       const res = await post('/project/json/' + project.shortname, true)
@@ -351,8 +347,8 @@ describe('TESTING PERMISSIONS', function () {
       let project = projects.collaboratorseditfileseditannotationsadd;
       let initialProjectState = _.cloneDeep(project);
       project.annotations.list.push({
-        type: "text",
-        name: "Annotation name",
+        type: 'text',
+        name: 'Annotation name',
         values: null
       });
       let res = await post('/project/json/' + project.shortname, true)
@@ -364,8 +360,8 @@ describe('TESTING PERMISSIONS', function () {
       project = projects.collaboratorseditfileseditannotationsremove;
       initialProjectState = _.cloneDeep(project);
       project.annotations.list.push({
-        type: "text",
-        name: "Annotation name",
+        type: 'text',
+        name: 'Annotation name',
         values: null
       });
       res = await post('/project/json/' + project.shortname, true)
@@ -414,13 +410,13 @@ describe('TESTING PERMISSIONS', function () {
 
     it('Checks that collaborators cannot add project files if set to none or view', async function() {
       let project = _.cloneDeep(projects.collaboratorseditfilesnone);
-      project.files.list.push({source: "https://zenodo.org/record/44855/files/MRI-n4.nii.gz", name: "MRI-n4.nii.gz"});
+      project.files.list.push({source: 'https://zenodo.org/record/44855/files/MRI-n4.nii.gz', name: 'MRI-n4.nii.gz'});
       let res = await post('/project/json/' + project.shortname, true)
         .send({data: project});
       assert.oneOf(res.statusCode, forbiddenStatusCodes);
 
       project = _.cloneDeep(projects.collaboratorseditfilesview);
-      project.files.list.push({source: "https://zenodo.org/record/44855/files/MRI-n4.nii.gz", name: "MRI-n4.nii.gz"});
+      project.files.list.push({source: 'https://zenodo.org/record/44855/files/MRI-n4.nii.gz', name: 'MRI-n4.nii.gz'});
       res = await post('/project/json/' + project.shortname, true)
         .send({data: project});
       assert.oneOf(res.statusCode, forbiddenStatusCodes);
@@ -429,7 +425,7 @@ describe('TESTING PERMISSIONS', function () {
     it('Checks that collaborators can add project files if set to add or remove', async function() {
       let project = _.cloneDeep(projects.collaboratorseditfilesadd);
       let initialProjectState = _.cloneDeep(project);
-      project.files.list.push({source: "https://zenodo.org/record/44855/files/MRI-n4.nii.gz", name: "MRI-n4.nii.gz"});
+      project.files.list.push({source: 'https://zenodo.org/record/44855/files/MRI-n4.nii.gz', name: 'MRI-n4.nii.gz'});
       let res = await post('/project/json/' + project.shortname, true)
         .send({data: project});
       assert.equal(res.statusCode, 200);
@@ -438,7 +434,7 @@ describe('TESTING PERMISSIONS', function () {
 
       project = _.cloneDeep(projects.collaboratorseditfilesremove);
       initialProjectState = _.cloneDeep(project);
-      project.files.list.push({source: "https://zenodo.org/record/44855/files/MRI-n4.nii.gz", name: "MRI-n4.nii.gz"});
+      project.files.list.push({source: 'https://zenodo.org/record/44855/files/MRI-n4.nii.gz', name: 'MRI-n4.nii.gz'});
       res = await post('/project/json/' + project.shortname, true)
         .send({data: project});
       assert.equal(res.statusCode, 200);

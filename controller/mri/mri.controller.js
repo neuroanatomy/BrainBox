@@ -1,17 +1,19 @@
+/* eslint-disable max-lines */
 'use strict';
 
 const crypto = require('crypto');
 const url = require('url');
 const fs = require('fs');
 const request = require('request');
-const sanitize = require("sanitize-filename");
-const atlasmakerServer = require('../atlasmakerServer/atlasmakerServer');
+const sanitize = require('sanitize-filename');
+const AtlasmakerServer = require('../atlasmakerServer/atlasmakerServer');
 const dataSlices = require('../dataSlices/dataSlices.js');
 const { AccessType, AccessLevel } = require('neuroweblab');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 const _ = require('lodash');
 
 const downloadQueue = {};
+let atlasmakerServer;
 
 // ExpressValidator = require('express-validator')
 
@@ -22,15 +24,15 @@ const validator = function (req, res, next) {
   console.log('query:', req.query);
 
   let myurl;
-  if (typeof req.body.url !== "undefined") {
+  if (typeof req.body.url !== 'undefined') {
     myurl = req.body.url;
-  } else if (typeof req.query.url !== "undefined") {
+  } else if (typeof req.query.url !== 'undefined') {
     myurl = req.query.url;
   }
 
-  console.log("validator: myurl", myurl);
-  if (typeof myurl !== "undefined") {
-    console.log("next");
+  console.log('validator: myurl', myurl);
+  if (typeof myurl !== 'undefined') {
+    console.log('next');
 
     return next();
   }
@@ -54,9 +56,9 @@ const validator = function (req, res, next) {
 
 const validatorPost = function (req, res, next) {
 
-  console.log("mri body", req.body);
-  console.log("mri query", req.query);
-  console.log("mri params", req.params);
+  console.log('mri body', req.body);
+  console.log('mri query', req.query);
+  console.log('mri params', req.params);
 
   req.checkBody('url', 'Provide a URL')
     .notEmpty();
@@ -68,7 +70,7 @@ const validatorPost = function (req, res, next) {
   // .matches("localpath|filename|source|url|dim|pixdim");    // @todo: decent regexp
   const errors = req.validationErrors();
   if (errors) {
-    console.log("mri send error 403");
+    console.log('mri send error 403');
     res.status(403).send(errors)
       .end();
   } else {
@@ -159,14 +161,14 @@ const downloadMRI = async function(myurl, req) {
         atlasmakerServer.getBrainAtPath('/data/' + hash + '/' + filename)
           .then((mri) => {
             // Create json file for new dataset
-            let ip = "";
-            if(typeof req.headers['x-forwarded-for'] !== "undefined") {
+            let ip = '';
+            if(typeof req.headers['x-forwarded-for'] !== 'undefined') {
               ip = req.headers['x-forwarded-for'];
-            } else if (req.connection.remoteAddress !== "undefined") {
+            } else if (req.connection.remoteAddress !== 'undefined') {
               ip = req.connection.remoteAddress;
-            } else if (req.socket.remoteAddress !== "undefined") {
+            } else if (req.socket.remoteAddress !== 'undefined') {
               ip = req.socket.remoteAddress;
-            } else if (req.connection.socket.remoteAddress !== "undefined") {
+            } else if (req.connection.socket.remoteAddress !== 'undefined') {
               ip = req.connection.socket.remoteAddress;
             }
 
@@ -190,7 +192,7 @@ const downloadMRI = async function(myurl, req) {
               voxel2world: mri.v2w,
               worldOrigin: mri.wori,
               owner: username,
-              name: "",
+              name: '',
               modified: (new Date()).toJSON(),
               modifiedBy: username,
               mri: {
@@ -299,17 +301,17 @@ const mri = async function (req, res) {
 };
 
 const removeVariablesFromURL = function (myurl) {
-  return myurl.split("&")[0];
+  return myurl.split('&')[0];
 };
 
 // eslint-disable-next-line max-statements
 const apiMriPost = async function (req, res) {
-  console.log("apiMriPost");
+  console.log('apiMriPost');
 
   let myurl;
-  if (typeof req.body.url !== "undefined") {
+  if (typeof req.body.url !== 'undefined') {
     myurl = req.body.url;
-  } else if (typeof req.query.url !== "undefined") {
+  } else if (typeof req.query.url !== 'undefined') {
     myurl = req.query.url;
   }
 
@@ -324,7 +326,7 @@ const apiMriPost = async function (req, res) {
 
 
   myurl = removeVariablesFromURL(myurl);
-  console.log("url:", myurl);
+  console.log('url:', myurl);
 
   const hash = crypto
     .createHash('md5')
@@ -345,7 +347,7 @@ const apiMriPost = async function (req, res) {
   let doDownload = false;
 
   // Check if client is requesting for a specific variable
-  const doReturnAll = (typeof req.body.var === "undefined");
+  const doReturnAll = (typeof req.body.var === 'undefined');
 
   // Asking for a single variable does not trigger a download in case
   // the file is not already present.
@@ -384,7 +386,7 @@ const apiMriPost = async function (req, res) {
       //     console.log("after delete". downloadQueue);
       //     res.json(info);
       // } else
-      if (success === "downloading") {
+      if (success === 'downloading') {
         console.log('>> Still downloading. Wait');
         res.json(downloadQueue[myurl]);
       } else {
@@ -393,14 +395,14 @@ const apiMriPost = async function (req, res) {
           returns 403 in case the download has already failed
           consequently, it will not be possible to retry the download until the server is restarted
         */
-        console.log(">> Failed. Throw an error");
+        console.log('>> Failed. Throw an error');
         res.status(403).json(downloadQueue[myurl]);
       }
     } else {
       console.log('Start download:');
       downloadQueue[myurl] = { success: 'downloading', cur: 0, len: 1 };
       downloadMRI(myurl, req).then((obj) => {
-        console.log("downloadMRI obj:", obj);
+        console.log('downloadMRI obj:', obj);
         console.log('Download succeeded. Insert in DB, remove from queue');
         obj.success = true;
 
@@ -451,8 +453,8 @@ const apiMriGet = async function (req, res) {
 
   // if the query does not contain a specific mri, send a paginated list of mris
   if (!myurl) {
-    if (typeof page === "undefined") {
-      res.send({ error: "Provide the parameter 'page'" });
+    if (typeof page === 'undefined') {
+      res.send({ error: 'Provide the parameter \'page\'' });
 
       return;
     }
@@ -481,12 +483,12 @@ const apiMriGet = async function (req, res) {
       console.log('err:', err);
     });
   if (!json) {
-    console.log("MRI not present in DB");
+    console.log('MRI not present in DB');
     if (download === true) {
-      console.log("trigger download");
+      console.log('trigger download');
       res.json({ source: myurl });
     } else {
-      console.log("send 404 error");
+      console.log('send 404 error');
       res.status(404).json({});
     }
   } else {
@@ -506,7 +508,7 @@ const apiMriGet = async function (req, res) {
       }
     }
     // Check access to text annotations
-    if (typeof json.mri.annotations !== "undefined") {
+    if (typeof json.mri.annotations !== 'undefined') {
       for (const key of Object.keys(json.mri.annotations)) {
         console.log('text annotation is in project', key);
         prj.add(key);
@@ -540,7 +542,7 @@ const apiMriGet = async function (req, res) {
       }
     }
     // Set access to text annotations
-    if (typeof json.mri.annotations !== "undefined") {
+    if (typeof json.mri.annotations !== 'undefined') {
       for (const key of Object.keys(json.mri.annotations)) {
         for (j = 0; j < projects.length; j++) {
           if (projects[j] && projects[j].shortname === key) {
@@ -607,13 +609,14 @@ const reset = async function reset(req, res) {
   });
 };
 
-const MriController = function () {
+const MriController = function (db) {
   this.validator = validator;
   this.validatorPost = validatorPost;
   this.apiMriGet = apiMriGet;
   this.apiMriPost = apiMriPost;
   this.mri = mri;
   this.reset = reset;
+  atlasmakerServer = new AtlasmakerServer(db);
 };
 
-module.exports = new MriController();
+module.exports = MriController;

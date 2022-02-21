@@ -1,13 +1,17 @@
-var assert = require("assert");
+/* eslint-disable max-lines */
+var assert = require('assert');
 const projectController = require('../../controller/project/project.controller');
-const monk = require('monk');
 require('mocha-sinon');
 const sinon = require('sinon');
 const projectObject = require('../data/model_objects/project');
-const { expect } = require("chai");
-const db = monk('localhost:27017/brainbox');
+const { expect } = require('chai');
+const U = require('../utils.js');
 
 describe('Project Controller: ', function () {
+  let db;
+  before(function () {
+    db = U.getDB();
+  });
 
   describe('Validator function() ', function () {
     it('should pass successfully when validations are successful', async function () {
@@ -264,7 +268,7 @@ describe('Project Controller: ', function () {
       };
       await projectController.apiProjectFiles(req, res);
       assert.strictEqual(resSpy.callCount, 1);
-      assert.deepStrictEqual(resSpy.args, [[{ error: "Provide 'start'" }]]);
+      assert.deepStrictEqual(resSpy.args, [[{ error: 'Provide \'start\'' }]]);
       sinon.restore();
     });
 
@@ -291,7 +295,7 @@ describe('Project Controller: ', function () {
       };
       await projectController.apiProjectFiles(req, res);
       assert.strictEqual(resSpy.callCount, 1);
-      assert.deepStrictEqual(resSpy.args, [[{ error: "Provide 'length'" }]]);
+      assert.deepStrictEqual(resSpy.args, [[{ error: 'Provide \'length\'' }]]);
       sinon.restore();
     });
   });
@@ -318,7 +322,7 @@ describe('Project Controller: ', function () {
           'askForLogin',
           {
             functionality: 'create a new project',
-            login: "<a href='/auth/github'>Log in with GitHub</a>",
+            login: '<a href=\'/auth/github\'>Log in with GitHub</a>',
             title: 'BrainBox: New Project'
           }
         ]
@@ -348,7 +352,7 @@ describe('Project Controller: ', function () {
         [
           'projectNew',
           {
-            login: "<a href='/user/anyone'>anyone</a> (<a href='/logout'>Log Out</a>)",
+            login: '<a href=\'/user/anyone\'>anyone</a> (<a href=\'/logout\'>Log Out</a>)',
             title: 'BrainBox: New Project'
           }
         ]
@@ -362,12 +366,12 @@ describe('Project Controller: ', function () {
 
     before(function (done) {
       db.get('user').insert({
-        "name": "Any Brainbox User",
-        "nickname": "anyone",
-        "url": "",
-        "brainboxURL": "/user/anyone",
-        "avatarURL": "",
-        "joined": "2020-05-01T08:26:35.348Z"
+        'name': 'Any Brainbox User',
+        'nickname': 'anyone',
+        'url': '',
+        'brainboxURL': '/user/anyone',
+        'avatarURL': '',
+        'joined': '2020-05-01T08:26:35.348Z'
       })
         .then(() => done());
     });
@@ -462,7 +466,7 @@ describe('Project Controller: ', function () {
       };
       await projectController.deleteProject(req, res);
       assert.strictEqual(jsonSpy.callCount, 1);
-      assert.deepStrictEqual(jsonSpy.args, [[{ success: false, message: "User not authenticated" }]]);
+      assert.deepStrictEqual(jsonSpy.args, [[{ success: false, message: 'User not authenticated' }]]);
       sinon.restore();
     });
 
@@ -484,7 +488,7 @@ describe('Project Controller: ', function () {
       };
       await projectController.deleteProject(req, res);
       assert.strictEqual(res.json.callCount, 1);
-      assert.deepStrictEqual(res.json.args, [[{ success: false, message: "Unable to delete. Try again later" }]]);
+      assert.deepStrictEqual(res.json.args, [[{ success: false, message: 'Unable to delete. Try again later' }]]);
       sinon.restore();
     });
 
@@ -578,7 +582,7 @@ describe('Project Controller: ', function () {
       await projectController.apiProjectAll(req, res);
       assert.strictEqual(sendSpy.callCount, 1);
       assert.strictEqual(jsonSpy.callCount, 0);
-      assert.deepStrictEqual(sendSpy.args, [[{ error: "Provide the parameter 'page'" }]]);
+      assert.deepStrictEqual(sendSpy.args, [[{ error: 'Provide the parameter \'page\'' }]]);
       sinon.restore();
     });
 

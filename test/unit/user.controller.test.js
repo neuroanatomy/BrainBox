@@ -1,21 +1,25 @@
-/* eslint-disable no-empty-function */
-var assert = require("assert");
+/* eslint-disable max-lines */
+var assert = require('assert');
 const userController = require('../../controller/user/user.controller');
-const monk = require('monk');
 require('mocha-sinon');
 const sinon = require('sinon');
 // const { expect, use } = require("chai");
 // const { doesNotMatch, fail } = require("assert");
-const db = monk('localhost:27017/brainbox');
+const U = require('../utils');
 
 describe('User Controller: ', function () {
+  let db;
+  before(function () {
+    db = U.getDB();
+  });
+
   describe('validator function() ', function () {
     it('should perform the validations correctly', async function () {
       const req = {};
       const res = {
         send: sinon.spy()
       };
-      await userController.validator(req, res, () => { });
+      await userController.validator(req, res, () => { /* do nothing */ });
       assert.strictEqual(res.send.callCount, 0);
       sinon.restore();
     });
@@ -105,7 +109,7 @@ describe('User Controller: ', function () {
       };
       await userController.apiUserAll(req, res);
       assert.strictEqual(res.json.callCount, 1);
-      assert.notStrictEqual(res.json.args, [{ error: "Provide the parameter 'page'" }]);
+      assert.notStrictEqual(res.json.args, [{ error: 'Provide the parameter \'page\'' }]);
       sinon.restore();
     });
 
@@ -151,7 +155,7 @@ describe('User Controller: ', function () {
       };
       await userController.apiUserFiles(req, res);
       assert.strictEqual(sendSpy.callCount, 1);
-      assert.notStrictEqual(sendSpy.args, [{ error: "Provide 'start'" }]);
+      assert.notStrictEqual(sendSpy.args, [{ error: 'Provide \'start\'' }]);
       sinon.restore();
     });
 
@@ -178,7 +182,7 @@ describe('User Controller: ', function () {
       };
       await userController.apiUserFiles(req, res);
       assert.strictEqual(sendSpy.callCount, 1);
-      assert.notStrictEqual(sendSpy.args, [{ error: "Provide 'length'" }]);
+      assert.notStrictEqual(sendSpy.args, [{ error: 'Provide \'length\'' }]);
       sinon.restore();
     });
 
@@ -235,7 +239,7 @@ describe('User Controller: ', function () {
       };
       await userController.apiUserAtlas(req, res);
       assert.strictEqual(sendSpy.callCount, 1);
-      assert.notStrictEqual(sendSpy.args, [{ error: "Provide 'start'" }]);
+      assert.notStrictEqual(sendSpy.args, [{ error: 'Provide \'start\'' }]);
       sinon.restore();
     });
 
@@ -262,7 +266,7 @@ describe('User Controller: ', function () {
       };
       await userController.apiUserAtlas(req, res);
       assert.strictEqual(sendSpy.callCount, 1);
-      assert.notStrictEqual(sendSpy.args, [{ error: "Provide 'length'" }]);
+      assert.notStrictEqual(sendSpy.args, [{ error: 'Provide \'length\'' }]);
       sinon.restore();
     });
 
@@ -319,7 +323,7 @@ describe('User Controller: ', function () {
       };
       await userController.apiUserProjects(req, res);
       assert.strictEqual(sendSpy.callCount, 1);
-      assert.notStrictEqual(sendSpy.args, [{ error: "Provide 'start'" }]);
+      assert.notStrictEqual(sendSpy.args, [{ error: 'Provide \'start\'' }]);
       sinon.restore();
     });
 
@@ -346,7 +350,7 @@ describe('User Controller: ', function () {
       };
       await userController.apiUserProjects(req, res);
       assert.strictEqual(sendSpy.callCount, 1);
-      assert.notStrictEqual(sendSpy.args, [{ error: "Provide 'length'" }]);
+      assert.notStrictEqual(sendSpy.args, [{ error: 'Provide \'length\'' }]);
       sinon.restore();
     });
 

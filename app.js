@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 /*
     Atlas Maker Server
@@ -16,6 +16,13 @@ const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const mustacheExpress = require('mustache-express');
 const Config = JSON.parse(fs.readFileSync('./cfg.json'));
+const https = require('https');
+const http = require('http');
+
+global.authTokenMiddleware = nwl.authTokenMiddleware;
+
+const AtlasmakerServer = require('./controller/atlasmakerServer/atlasmakerServer');
+const routes = require('./controller/routes/routes');
 
 let MONGO_DB;
 const DOCKER_DB = process.env.DB_PORT;
@@ -51,137 +58,139 @@ if (DOCKER_DEVELOP === '1') {
   tracer.log(`Watching: ${__dirname}`);
 }
 
-const app = express();
+// eslint-disable-next-line max-statements
+const start = async function () {
+  const app = express();
 
-app.use(bodyParser.json({limit: '50mb'}));
-app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
+  app.use(bodyParser.json({limit: '50mb'}));
+  app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 
-/*
-Use the NeuroWebLab (NWL) module for authentication.
-NWL will also create the DB. In the future, a series
-of functions common to BrainBox and MicroDraw will be
-moved to NWL.
-*/
-nwl.init({
-  app,
-  MONGO_DB,
-  dirname,
-  usernameField: "nickname",
-  usersCollection: "user",
-  projectsCollection: "project",
-  annotationsCollection: "mri"
-});
-global.authTokenMiddleware = nwl.authTokenMiddleware;
-const db = app.db.mongoDB();
+  /*
+  Use the NeuroWebLab (NWL) module for authentication.
+  NWL will also create the DB. In the future, a series
+  of functions common to BrainBox and MicroDraw will be
+  moved to NWL.
+  */
+  await nwl.init({
+    app,
+    MONGO_DB,
+    dirname,
+    usernameField: 'nickname',
+    usersCollection: 'user',
+    projectsCollection: 'project',
+    annotationsCollection: 'mri'
+  });
+  const db = app.db.mongoDB();
 
-//========================================================================================
-// Allow CORS
-//========================================================================================
-app.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  next();
-});
+  //========================================================================================
+  // Allow CORS
+  //========================================================================================
+  app.use(function(req, res, next) {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    next();
+  });
 
-//========================================================================================
-// Enable compression
-//========================================================================================
-app.use(compression());
+  //========================================================================================
+  // Enable compression
+  //========================================================================================
+  app.use(compression());
 
-app.engine('mustache', mustacheExpress());
-app.set('views', path.join(dirname, 'templates'));
-app.set('view engine', 'mustache');
-app.use(favicon(dirname + '/public/favicon.png'));
-app.set('trust proxy', 'loopback');
-if (app.get('env') === 'development') {
-  app.use(logger(':remote-addr :method :url :status :response-time ms - :res[content-length]'));//app.use(logger('dev'));
-}
-app.use(expressValidator());
-app.use(cookieParser());
-app.use(express.static(path.join(dirname, 'public')));
-
-if (DOCKER_DEVELOP === '1') {
-  // eslint-disable-next-line global-require
-  app.use(require('connect-livereload')());
-}
-
-//========================================================================================
-// App-wide variables
-//========================================================================================
-app.use((req, res, next) => {
-  req.dirname = dirname;
-  req.db = db;
-  req.tokenDuration = 24 * (1000 * 3600); // token duration in milliseconds
-
-  next();
-});
-
-//========================================================================================
-// Configure server and web socket
-//========================================================================================
-const https = require('https');
-const http = require('http');
-
-const server = http.createServer(app).listen(3001, () => { console.log("Listening http on port 3001"); });
-const atlasmakerServer = require('./controller/atlasmakerServer/atlasmakerServer.js');
-atlasmakerServer.dataDirectory = dirname + '/public';
-
-if (Config.secure) {
-  const options = {
-    key: fs.readFileSync(Config.ssl_key),
-    cert: fs.readFileSync(Config.ssl_cert)
-  };
-  if(Config.ssl_chain) {
-    options.ca = fs.readFileSync(Config.ssl_chain);
+  app.engine('mustache', mustacheExpress());
+  app.set('views', path.join(dirname, 'templates'));
+  app.set('view engine', 'mustache');
+  app.use(favicon(dirname + '/public/favicon.png'));
+  app.set('trust proxy', 'loopback');
+  if (app.get('env') === 'development') {
+    app.use(logger(':remote-addr :method :url :status :response-time ms - :res[content-length]'));//app.use(logger('dev'));
   }
-  atlasmakerServer.server = https.createServer(options, app);
-} else {
-  atlasmakerServer.server = http.createServer(app);
-}
+  app.use(expressValidator());
+  app.use(cookieParser());
+  app.use(express.static(path.join(dirname, 'public')));
 
-atlasmakerServer.server.listen(8080, () => {
+  if (DOCKER_DEVELOP === '1') {
+    // eslint-disable-next-line global-require
+    app.use(require('connect-livereload')());
+  }
+
+  //========================================================================================
+  // App-wide variables
+  //========================================================================================
+  app.use((req, res, next) => {
+    req.dirname = dirname;
+    req.db = db;
+    req.tokenDuration = 24 * (1000 * 3600); // token duration in milliseconds
+
+    next();
+  });
+
+  //========================================================================================
+  // Configure server and web socket
+  //========================================================================================
+
+  const server = http.createServer(app).listen(3001, () => { console.log('Listening http on port 3001'); });
+  const atlasmakerServer = new AtlasmakerServer(db);
+  atlasmakerServer.dataDirectory = dirname + '/public';
+
   if (Config.secure) {
-    console.log('Listening wss on port 8080');
+    const options = {
+      key: await fs.read(Config.ssl_key),
+      cert: await fs.read(Config.ssl_cert)
+    };
+    if(Config.ssl_chain) {
+      options.ca = await fs.read(Config.ssl_chain);
+    }
+    atlasmakerServer.server = https.createServer(options, app);
   } else {
-    console.log('Listening ws on port 8080');
+    atlasmakerServer.server = http.createServer(app);
   }
-  atlasmakerServer.initSocketConnection();
-});
 
-//========================================================================================
-// Setup routes
-//========================================================================================
-require('./controller/routes/routes')(app);
+  atlasmakerServer.server.listen(8080, () => {
+    if (Config.secure) {
+      console.log('Listening wss on port 8080');
+    } else {
+      console.log('Listening ws on port 8080');
+    }
+    atlasmakerServer.initSocketConnection();
+  });
 
-//========================================================================================
-// Error handlers
-//========================================================================================
-// catch 404 and forward to error handler
-app.use(function (req, res, next) {
-  var err = new Error('Not Found');
-  err.status = 404;
-  next(err);
-});
+  //========================================================================================
+  // Setup routes
+  //========================================================================================
+  routes(app);
 
-// development error handler
-// will print stacktrace
-if (app.get('env') === 'development') {
+  //========================================================================================
+  // Error handlers
+  //========================================================================================
+  // catch 404 and forward to error handler
+  app.use(function (req, res, next) {
+    var err = new Error('Not Found');
+    err.status = 404;
+    next(err);
+  });
+
+  // development error handler
+  // will print stacktrace
+  if (app.get('env') === 'development') {
+    app.use(function (err, req, res) {
+      res.status(err.status || 500);
+      res.render('error', {
+        message: err.message,
+        error: err
+      });
+    });
+  }
+  // production error handler
+  // no stacktraces leaked to user
   app.use(function (err, req, res) {
     res.status(err.status || 500);
     res.render('error', {
       message: err.message,
-      error: err
+      error: {}
     });
   });
-}
-// production error handler
-// no stacktraces leaked to user
-app.use(function (err, req, res) {
-  res.status(err.status || 500);
-  res.render('error', {
-    message: err.message,
-    error: {}
-  });
-});
 
-module.exports = {app, server};
+  return { app, server, atlasmakerServer };
+};
+
+module.exports = {start};

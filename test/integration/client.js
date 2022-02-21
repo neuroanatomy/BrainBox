@@ -34,7 +34,7 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
 
     before(async function () {
       // Remove screenshot directory (require node v14+ to work)
-      await fs.promises.rmdir('./test/screenshots/', { recursive: true });
+      await fs.promises.rm('./test/screenshots/', { recursive: true, force: true });
     });
 
     it('Browser opens', async function () {
@@ -125,7 +125,7 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
         U.serverURL + '/user/' + U.userFoo.nickname,
         filename
       );
-      const nbProjects = await page.evaluate(() => document.getElementById("projects").tBodies[0].rows.length);
+      const nbProjects = await page.evaluate(() => document.getElementById('projects').tBodies[0].rows.length);
       assert(diff < npixels1pct, `${diff} pixels were different in ${filename}`);
       assert.strictEqual(nbProjects, 1);
     }).timeout(U.noTimeout);
@@ -144,7 +144,7 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
           url: U.localBertURL
         });
       const { body } = res;
-      const dirPath = "./public" + body.url;
+      const dirPath = './public' + body.url;
       await U.removeMRI({ dirPath, srcURL: U.localBertURL });
     });
   });

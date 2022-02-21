@@ -1,12 +1,16 @@
-/* eslint-disable global-require */
+const admin = require('../admin/');
+const Mri = require('../mri/');
+const project = require('../project/');
+const user = require('../user/');
+const api = require('../api/');
 
 module.exports = (app) => {
-  console.log("Setting up routes");
+  console.log('Setting up routes');
 
   //========================================================================================
   // Admin route
   //========================================================================================
-  app.use('/admin', require('../admin/'));
+  app.use('/admin', admin);
 
   //========================================================================================
   // GUI routes
@@ -25,8 +29,8 @@ module.exports = (app) => {
     });
   });
 
-  app.use('/mri', require('../mri/'));
-  app.use('/project', require('../project/'));
-  app.use('/user', require('../user/'));
-  app.use('/api', require('../api/'));
+  app.use('/mri', new Mri(app.db.mongoDB));
+  app.use('/project', project);
+  app.use('/user', user);
+  app.use('/api', api);
 };

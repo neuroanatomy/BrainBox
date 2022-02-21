@@ -22,8 +22,8 @@ const validator = function (req, res, next) {
 
 const user = async function (req, res) {
   var login = (req.isAuthenticated()) ?
-    ("<a href='/user/" + req.user.username + "'>" + req.user.username + "</a> (<a href='/logout'>Log Out</a>)")
-    : ("<a href='/auth/github'>Log in with GitHub</a>");
+    ('<a href=\'/user/' + req.user.username + '\'>' + req.user.username + '</a> (<a href=\'/logout\'>Log Out</a>)')
+    : ('<a href=\'/auth/github\'>Log in with GitHub</a>');
   var requestedUser = req.params.userName;
 
   // store return path in case of login
@@ -31,31 +31,31 @@ const user = async function (req, res) {
 
   const json = await req.db.get('user').findOne({ nickname: requestedUser })
     .catch(function (err) {
-      console.log("ERROR:", err);
-      res.status(400).send("Error");
+      console.log('ERROR:', err);
+      res.status(400).send('Error');
     });
   if (json) {
     var context = {
       username: json.name,
       nickname: json.nickname,
-      joined: dateFormat(json.joined, "dddd d mmm yyyy, HH:MM"),
+      joined: dateFormat(json.joined, 'dddd d mmm yyyy, HH:MM'),
       avatar: json.avatarURL,
       title: requestedUser,
       userInfo: JSON.stringify(json),
-      tab: req.query.tab || "mri",
+      tab: req.query.tab || 'mri',
       login: login
     };
     res.render('user', context);
   } else {
-    res.status(404).send("User Not Found");
+    res.status(404).send('User Not Found');
   }
 };
 
 const apiUser = async function (req, res) {
-  let json = await req.db.get('user').findOne({ nickname: req.params.userName, backup: { $exists: false } }, "-_id");
+  let json = await req.db.get('user').findOne({ nickname: req.params.userName, backup: { $exists: false } }, '-_id');
   if (json) {
     if (req.query.var) {
-      const arr = req.query.var.split("/");
+      const arr = req.query.var.split('/');
       for (const i in arr) {
         if ({}.hasOwnProperty.call(arr, i)) {
           json = json[arr[i]];
@@ -70,7 +70,7 @@ const apiUser = async function (req, res) {
 
 const apiUserAll = async function (req, res) {
   if (!req.query.page) {
-    res.json({ error: "Provide the parameter 'page'" });
+    res.json({ error: 'Provide the parameter \'page\'' });
 
     return;
   }
@@ -97,15 +97,15 @@ const apiUserFiles = async function (req, res) {
   const { userName } = req.params;
   let { start, length } = req.query;
 
-  console.log("userName:", userName, "start:", start, "length:", length);
+  console.log('userName:', userName, 'start:', start, 'length:', length);
 
-  if (typeof start === "undefined") {
-    res.status(403).send({ error: "Provide 'start'" });
+  if (typeof start === 'undefined') {
+    res.status(403).send({ error: 'Provide \'start\'' });
 
     return;
   }
-  if (typeof length === "undefined") {
-    res.status(403).send({ error: "Provide 'length'" });
+  if (typeof length === 'undefined') {
+    res.status(403).send({ error: 'Provide \'length\'' });
 
     return;
   }
@@ -115,7 +115,7 @@ const apiUserFiles = async function (req, res) {
 
   const result = await dataSlices.getUserFilesSlice(req, userName, start, length)
     .catch(function (err) {
-      console.log("ERROR:", err);
+      console.log('ERROR:', err);
       res.send({ success: false, list: [] });
     });
   res.send(result);
@@ -132,14 +132,14 @@ const apiUserAtlas = async function (req, res) {
   var { userName } = req.params;
   let { start, length } = req.query;
 
-  console.log("userName:", userName, "start:", start, "length:", length);
-  if (typeof start === "undefined") {
-    res.status(403).send({ error: "Provide 'start'" });
+  console.log('userName:', userName, 'start:', start, 'length:', length);
+  if (typeof start === 'undefined') {
+    res.status(403).send({ error: 'Provide \'start\'' });
 
     return;
   }
-  if (typeof length === "undefined") {
-    res.status(403).send({ error: "Provide 'length'" });
+  if (typeof length === 'undefined') {
+    res.status(403).send({ error: 'Provide \'length\'' });
 
     return;
   }
@@ -148,7 +148,7 @@ const apiUserAtlas = async function (req, res) {
 
   const result = await dataSlices.getUserAtlasSlice(req, userName, start, length)
     .catch(function (err) {
-      console.log("ERROR:", err);
+      console.log('ERROR:', err);
       res.send({ success: false, list: [] });
     });
   res.send(result);
@@ -165,14 +165,14 @@ const apiUserProjects = async function (req, res) {
   var { userName } = req.params;
   let { start, length } = req.query;
 
-  console.log("userName:", userName, "start:", start, "length:", length);
-  if (typeof start === "undefined") {
-    res.status(403).send({ error: "Provide 'start'" });
+  console.log('userName:', userName, 'start:', start, 'length:', length);
+  if (typeof start === 'undefined') {
+    res.status(403).send({ error: 'Provide \'start\'' });
 
     return;
   }
-  if (typeof length === "undefined") {
-    res.status(403).send({ error: "Provide 'length'" });
+  if (typeof length === 'undefined') {
+    res.status(403).send({ error: 'Provide \'length\'' });
 
     return;
   }
@@ -181,7 +181,7 @@ const apiUserProjects = async function (req, res) {
 
   const result = await dataSlices.getUserProjectsSlice(req, userName, start, length)
     .catch(function (err) {
-      console.log("ERROR:", err);
+      console.log('ERROR:', err);
       res.send({ success: false, list: [] });
     });
   res.send(result);
