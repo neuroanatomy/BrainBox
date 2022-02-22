@@ -38,6 +38,7 @@ jobs:
           directory: ./test/integration/coverage
           flags: integration
       - name: Archive screenshots
+        if: always()
         uses: actions/upload-artifact@v2
         with:
           name: screenshots
