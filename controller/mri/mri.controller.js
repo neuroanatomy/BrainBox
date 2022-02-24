@@ -277,6 +277,14 @@ const mri = async function (req, res) {
         console.log('ERROR Cannot get db information:', err);
       });
 
+    // also query projects that set this MRI as a source
+    projects.push(...await req.db.get('project').find({
+      $or: [
+        { 'files.list': {$eq: myurl }},
+        { 'files.list.source': {$eq: myurl }}
+      ]}
+    ));
+
     // set access to volume annotations
     BrainboxAccessControlService.setVolumeAnnotationsAccessByProjects(json, projects, loggedUser);
     // BrainboxAccessControlService.setTextAnnotationsAccessByProjects(json, projects, loggedUser)
