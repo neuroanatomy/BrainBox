@@ -8,5 +8,6 @@ export default {
   docURL: 'https://github.com/neuroanatomy/BrainBox',
   userSearchURL: '/api/userNameQuery?q=',
   fetchLabelSets: async () => (await fetch('/api/getLabelsets')).json(),
-  annotationTypes: ['text', 'volume']
+  annotationTypes: ['text', 'volume'],
+  usernameField: 'nickname'
 };
