@@ -64,6 +64,7 @@ const projectTest = {
     list: [
       {
         userID: 'anyone',
+        nickname: 'anyone',
         access: {
           collaborators: 'view',
           annotations: 'edit',
@@ -115,6 +116,7 @@ const privateProjectTest = {
           files: 'none'
         },
         username: 'anyone',
+        nickname: 'anyone',
         name: 'Any User'
       }
     ]
@@ -344,6 +346,7 @@ const createProjectWithPermission = function(name, accessProp) {
           files: 'view'
         },
         username: 'anyone',
+        nickname: 'anyone',
         name: 'Any User'
       },
       {
