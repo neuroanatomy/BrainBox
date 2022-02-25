@@ -396,6 +396,7 @@ const settings = async function (req, res) {
         list: [
           {
             userID: 'anyone',
+            nickname: 'anyone',
             access: {
               collaborators: 'view',
               annotations: 'edit',
