@@ -29,8 +29,6 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
 
     const pageWidth = 1600;
     const pageHeight = 1200;
-    const npixels1pct = pageWidth*pageHeight*0.01;
-    const npixels2pct = pageWidth*pageHeight*0.02;
 
     before(async function () {
       // Remove screenshot directory (require node v14+ to work)
@@ -55,79 +53,101 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
 
     // OPEN HOMEPAGE
     it('Home page renders as expected', async function () {
-      const filename = '01.home.png';
-      const diff = await U.comparePageScreenshots(
-        page,
-        U.serverURL,
-        filename
-      );
-      assert(diff < npixels1pct, `${diff} pixels were different in ${filename}`);
+      await U.waitForDOMReady(page, U.serverURL);
+
+      const elements = await page.evaluate(() => ({
+        menu: document.querySelectorAll('#menu'),
+        menuLinksLength: document.querySelectorAll('#menu a').length,
+        urlInput: document.querySelectorAll('#url'),
+        list: document.querySelectorAll('#list'),
+        go: document.querySelectorAll('#go')
+      }));
+
+      assert.equal(true, U.isDomElementVisible(elements.menu));
+      assert.equal(5, elements.menuLinksLength);
+      assert.equal(true, U.isDomElementVisible(elements.urlInput));
+      assert.equal(true, U.isDomElementVisible(elements.list));
+      assert.equal(true, U.isDomElementVisible(elements.go));
     }).timeout(U.noTimeout);
 
     // OPEN MRI PAGE
     it('MRI page renders as expected', async function () {
-      const filename = '02.mri.png';
-      const diff = await U.comparePageScreenshots(
-        page,
-        U.serverURL + '/mri?url=' + U.localBertURL,
-        filename
-      );
-      assert(diff < npixels2pct, `${diff} pixels were different in ${filename}`);
+      await page.goto(U.serverURL + '/mri?url=' + U.localBertURL);
+      const pane = await page.waitForSelector('#annotations tbody tr', { timeout: 10000 });
+      assert.equal(1, await page.evaluate(() => document.querySelectorAll('#annotations tbody tr').length));
+      assert.equal('Foreground', await pane.$eval('select', (node) => node.value));
+
     }).timeout(U.noTimeout);
 
     // ASK FOR AUTHENTICATION IF CREATING A PROJECT
     it('"Ask for login" renders as expected', async function () {
-      const filename = '03.ask-for-login.png';
-      const diff = await U.comparePageScreenshots(
-        page,
-        U.serverURL + '/project/new',
-        filename
-      );
-      assert(diff < npixels1pct, `${diff} pixels were different in ${filename}`);
+      await page.goto(U.serverURL + '/project/new');
+      const title = await page.waitForSelector('h1', { timeout: 10000 });
+      assert.equal('Log in required', await title.evaluate((node) => node.innerText));
     }).timeout(U.noTimeout);
 
     // OPEN PROJECT PAGE
     it('Project page renders as expected', async function () {
-      const filename = '04.project.png';
-      const diff = await U.comparePageScreenshots(
-        page,
-        U.serverURL + '/project/' + U.projectTest.shortname,
-        filename
-      );
-      assert(diff < npixels1pct, `${diff} pixels were different in ${filename}`);
+      await page.goto(U.serverURL + '/project/' + U.projectTest.shortname);
+      await page.waitForSelector('#sliderBlock');
+      await page.waitForSelector('#buttonsBlock');
+      await page.waitForSelector('#penSizeBlock');
+      await page.waitForSelector('canvas');
+      await page.waitForSelector('#notificationsBlock');
+      await page.waitForSelector('#textInputBlock');
+
+      const annotation = await page.waitForSelector('#volAnnotations tbody tr td:first-child');
+      assert.equal('Cerebrum', await page.evaluate((el) => el.textContent, annotation));
+      const annotationValue = await page.waitForSelector('#volAnnotations tbody tr td:last-child');
+      assert.equal('cerebellum.json', await page.evaluate((el) => el.textContent, annotationValue));
     }).timeout(U.noTimeout); // OPEN PROJECT SETTINGS PAGE FOR EXISTING PROJECT
+
     it('Project Settings page for an existing project renders as expected', async function () {
-      const filename = '05.project-settings-existing.png';
-      const diff = await U.comparePageScreenshots(
-        page,
-        `${U.serverURL}/project/${U.projectTest.shortname}/settings`,
-        filename
-      );
-      assert(diff < npixels2pct, `${diff} pixels were different in ${filename}`);
+      await page.goto(U.serverURL + '/project/' + U.projectTest.shortname + '/settings');
+      const access = await page.waitForSelector('#access');
+      assert.equal(1, await access.$$eval('tbody tr', ((nodes) => nodes.length)));
+      assert.equal('anyone', await access.$eval('input', ((node) => node.value)));
+
+      const annotations = await page.waitForSelector('#annotations');
+      assert.equal(1, await annotations.$$eval('tbody tr', ((nodes) => nodes.length)));
+      assert.equal('Cerebrum', await annotations.$eval('tbody tr td:first-child input', ((node) => node.value)));
+      assert.equal('cerebellum.json', await annotations.$eval('tbody tr td:nth-child(3) select', ((node) => node.value)));
+
+      const files = await page.waitForSelector('#files');
+      assert.equal(5, await files.$$eval('tbody tr', ((nodes) => nodes.length)));
+      assert.deepEqual([
+        'http://127.0.0.1:3001/test_data/bert_brain.nii.gz',
+        'https://zenodo.org/record/44855/files/MRI-n4.nii.gz',
+        'http://files.figshare.com/2284784/MRI_n4.nii.gz',
+        'https://dl.dropbox.com/s/cny5b3so267bv94/p32-f18-uchar.nii.gz',
+        'https://s3.amazonaws.com/fcp-indi/data/Projects/ABIDE_Initiative/Outputs/freesurfer/5.1/Caltech_0051456/mri/T1.mgz'
+      ], await files.$$eval('tbody tr td:first-child', ((nodes) => Array.from(nodes).map((node) => node.innerText))));
+
     }).timeout(U.noTimeout);
 
     // OPEN PROJECT SETTINGS PAGE FOR EMPTY PROJECT
     it('Project Settings page for an empty project renders as expected', async function () {
-      const filename = '06.project-settings-nonexisting.png';
-      const diff = await U.comparePageScreenshots(
-        page,
-        U.serverURL + '/project/nonexisting/settings',
-        filename
-      );
-      assert(diff < npixels1pct, `${diff} pixels were different in ${filename}`);
+      await page.goto(U.serverURL + '/project/nonexisting/settings');
+      const access = await page.waitForSelector('#access');
+      assert.equal(1, await access.$$eval('tbody tr', ((nodes) => nodes.length)));
+      assert.equal('anyone', await access.$eval('input', ((node) => node.value)));
+
+      const annotations = await page.waitForSelector('#annotations');
+      assert.equal(1, await annotations.$$eval('tbody tr', ((nodes) => nodes.length)));
+
+      await page.waitForSelector('#files');
     }).timeout(U.noTimeout);
 
     // OPEN USER PAGE
     it('User page renders as expected', async function () {
-      const filename = '07.user.png';
-      const diff = await U.comparePageScreenshots(
-        page,
-        U.serverURL + '/user/' + U.userFoo.nickname,
-        filename
-      );
-      const nbProjects = await page.evaluate(() => document.getElementById('projects').tBodies[0].rows.length);
-      assert(diff < npixels1pct, `${diff} pixels were different in ${filename}`);
-      assert.strictEqual(nbProjects, 1);
+      await page.goto(U.serverURL + '/user/' + U.userFoo.nickname);
+      const image = await page.waitForSelector('#userImage');
+      assert.equal(U.userFoo.avatarURL, await image.$eval('img', ((node) => node.src)));
+      const description = await page.waitForSelector('#userDescription');
+      assert.equal(U.userFoo.name, await description.$eval('h1', ((node) => node.innerText)));
+      assert.equal(U.userFoo.nickname, await description.$eval('h2', ((node) => node.innerText)));
+      assert.equal('1 Projects ', await page.evaluate((el) => el.childNodes[4].textContent, description));
+
     }).timeout(U.noTimeout);
 
     // CLOSE

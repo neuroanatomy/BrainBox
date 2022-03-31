@@ -110,7 +110,7 @@ describe('Project Controller: ', function () {
       assert.strictEqual(failure.callCount, 0);
       assert.strictEqual(success.args[0].length, 2);
       assert.strictEqual(success.args[0][0], 'project');
-      expect(success.args[0][1]).to.have.keys(['annotationsAccessLevel', 'login', 'projectInfo', 'projectName', 'title']);
+      expect(success.args[0][1]).to.have.keys(['annotationsAccessLevel', 'loggedUser', 'projectInfo', 'projectName', 'title']);
       expect(success.args[0][1].title).to.equal('Unit Test');
       const projectInfo = JSON.parse(success.args[0][1].projectInfo);
       expect(projectInfo).to.deep.include({
@@ -352,7 +352,7 @@ describe('Project Controller: ', function () {
         [
           'projectNew',
           {
-            login: '<a href=\'/user/anyone\'>anyone</a> (<a href=\'/logout\'>Log Out</a>)',
+            loggedUser: '{"username":"anyone"}',
             title: 'BrainBox: New Project'
           }
         ]

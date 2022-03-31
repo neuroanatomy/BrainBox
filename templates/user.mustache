@@ -11,110 +11,76 @@
 
 <body>
 
-<div style="width:100%;height:100%;display:flex;flex-direction:column">
-    
-    <!-- Header (fixed height) -->
-    <div style="flex:0 0 64px">
-        <!-- Top-right menu bar -->
-        <div id="menu">
-            <img id="addProject" class="button" title="add project" alt="add project" src="/img/plus.svg"/>
-            <a href="https://openneurolab.github.io/metasearch" target="_blank"><img id="search" class="button" title="search" alt="search" src="/img/search.svg"/></a>
-            <img id="doc" class="button" title="documentation" alt="documentation" src="/img/doc.svg"/>
-            <a href="https://github.com/neuroanatomy/BrainBox/issues/new" target="_blank"><img id="bug" class="button" title="report a bug" alt="report a bug" src="/img/bug.svg"/></a>
-            <a href="https://github.com/neuroanatomy/BrainBox" target="_blank"><img id="github" class="button" title="join our github project" alt="join our github project" style="width:15px;height:15px" src="/img/github.svg"/></a>
-            <div id="MyLogin">
-                <span>{{{login}}}</span>
-            </div>
-        </div>
+<script type="text/html" id="template">
+<UserPage :user='{{{userInfo}}}'>
+    <template v-slot:side>
+        [[projects.length]] Projects
+    </template>
+    <template v-slot:content>
+        <Tabs>
+            <Tab title="Projects">
+                <Table id="projects">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Files</th>
+                            <th>Collaborators</th>
+                            <th>Owner</th>
+                            <th>Last modified</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <tr v-for="project in projects">
+                        <td>
+                            <a :href="`${project.projectURL}/settings`" class="settings">
+                                <img style="width:11px; margin:3px 8px 0 0" src="/img/settings.svg"/>
+                            </a>
+                            <a :href="project.projectURL">
+                                [[project.project]]
+                            </a>
+                        </td>
+                        <td>[[project.numFiles]]</td>
+                        <td>[[project.numCollaborators]]</td>
+                        <td>
+                            <a :href="`/user/${project.owner}`">
+                                [[project.owner]]
+                            </a>
+                        </td>
+                        <td>[[project.modified]]</td>
+                    </tr>
+                    </tbody>
+                </Table>
+            </Tab>
+        </Tabs>
+    </template>
+</UserPage>
+</script>
+<style>
+#projects {
+    table-layout: auto;
+}
+#projects td {
+    padding: 0 4px;
+}
+#projects a {
+    text-decoration: none;
+}
+.settings {
+    opacity: 0.5;
+    transition: opacity 500ms;
+}
+.settings:hover {
+    opacity: 1;
+}
+</style>
 
-        <!-- Small left-top logo -->
-        <div style="display:inline-block;margin:10px">
-            <a href="/" style="text-decoration:none">
-                <img style="height:56px;vertical-align:middle" alt="brainbox logo" src="/img/brainbox-logo-small_noFont.svg"/>
-            </a><span style="font-family: Roboto, sans-serif; font-size: 36px; font-weight:100;vertical-align:middle" id="fontLogo"> 
-                <a href="/" style="font-family: Roboto, sans-serif; font-size: 36px; font-weight:100; text-decoration:none">{{nickname}}</a>
-            </span>
-        </div>
-    </div>
-
-    <!-- Content (variable height) -->
-    <div id="content" style="flex:1 0 auto;justify-content:center">
-    
-        <!-- to center -->
-        <!--<table style="margin:auto;width:1000px">-->
-        <div id="centeringDiv">
-            
-            <div id="userImage">
-                <img alt="user avatar" src="{{{avatar}}}" style="width:100%"/>
-            </div>
-            <!-- end of #userImage -->
-            
-            <div id="userDescription">
-                <h1>{{username}}</h1>
-                <h2>{{nickname}}</h2>
-                <p>{{joined}}</p>
-                <p><span id="numProjects"></span> Projects</p>
-            </div>
-            <!-- end of #userDescription -->
-            
-            <div id="userTable">
-                <!-- Tab heads -->
-                <div>
-                    <a class="tab" value="projects">Projects</a>
-                </div>
-        
-                <!-- Tab contents -->
-                <div style="width:calc(100% - 40px);min-height:400px;background:#333;padding:20px">
-        
-            
-                    <!-- Tab Content 3: Projects -->
-                    <table id="projects" class="tabContent" style="padding:10px;display:none">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Files</th>
-                                <th>Collaborators</th>
-                                <th>Owner</th>
-                                <th>Last modified</th>
-                            <tr>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
-            
-                </div>
-            </div>
-            <!-- end of #userTable -->
-
-        </div>
-
-    </div>
-    <!-- End Content -->
-    
-    <!-- Space (fixed height) -->
-    <div style="flex:0 0 50px">
-    </div>
-
-    <!-- Footer (fixed height) -->
-    <div style="flex:0 0 100px;background-color:#000">
-        <p style="width:100%;font-size:small;text-align:center"> 
-            <a target="_blank" href="http://neuroanatomy.github.io">
-                <img title="naat logo" alt="naat logo" src="/img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/></a>
-            <a target="_blank" href="http://neuroanatomy.github.io" class="linkNoULine">
-                groupe de neuroanatomie appliquée et théorique
-            </a>
-        </p>
-    </div>
-    
-</div>
+<div id="app"></div>
 
 <script>
-    let userInfo='{{{userInfo}}}';
-    let nickname = '{{nickname}}';
-    let tab = '{{tab}}';
+const nickname = '{{nickname}}';
+const loggedUser = {{{loggedUser}}};
 </script>
 <script src='/js/user-page.js'></script>
-
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),

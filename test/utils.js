@@ -17,7 +17,7 @@ const cheetahURL = 'https://zenodo.org/record/44846/files/MRI.nii.gz?download=1'
 const testToken = 'qwertyuiopasdfghjklzxcvbnm';
 const testTokenDuration = 2 * (1000 * 3600); // 2h
 const noTimeout = 0; // disable timeout
-const longTimeout = 20 * 1000; // 20 sec
+const longTimeout = 30 * 1000; // 30 sec
 const mediumTimeout = 10 * 1000; // 10 sec
 const shortTimeout = 6 * 1000; // 6 sec
 
@@ -64,6 +64,7 @@ const projectTest = {
     list: [
       {
         userID: 'anyone',
+        nickname: 'anyone',
         access: {
           collaborators: 'view',
           annotations: 'edit',
@@ -115,6 +116,7 @@ const privateProjectTest = {
           files: 'none'
         },
         username: 'anyone',
+        nickname: 'anyone',
         name: 'Any User'
       }
     ]
@@ -286,6 +288,20 @@ const comparePageScreenshots=async function (testPage, url, filename) {
   return pixdiff;
 };
 
+const waitForDOMReady =async function (testPage, url) {
+  await testPage.goto(url, {waitUntil: 'networkidle2', timeout: 90000});
+  await waitUntilHTMLRendered(testPage);
+};
+
+const isDomElementVisible = (element) => {
+  if (!element.ownerDocument || !element.ownerDocument.defaultView) { return true; }
+  const style = element.ownerDocument.defaultView.getComputedStyle(element);
+  if (!style || style.visibility === 'hidden') { return false; }
+  const rect = element.getBoundingClientRect();
+
+  return rect.width > 0 && rect.height > 0;
+};
+
 const parseCookies = (str) => str
   .split(';')
   .map((v) => v.split('='))
@@ -330,6 +346,7 @@ const createProjectWithPermission = function(name, accessProp) {
           files: 'view'
         },
         username: 'anyone',
+        nickname: 'anyone',
         name: 'Any User'
       },
       {
@@ -394,6 +411,8 @@ module.exports = {
   compareImages,
   comparePageScreenshots,
   waitUntilHTMLRendered,
+  waitForDOMReady,
+  isDomElementVisible,
   noTimeout,
   longTimeout,
   mediumTimeout,

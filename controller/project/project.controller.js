@@ -202,9 +202,6 @@ const isProjectObject = function (req, res, object) {
  * @return {void}
  */
 const project = async function (req, res) {
-  var login = (req.isAuthenticated()) ?
-    ('<a href=\'/user/' + req.user.username + '\'>' + req.user.username + '</a> (<a href=\'/logout\'>Log Out</a>)')
-    : ('<a href=\'/auth/github\'>Log in with GitHub</a>');
   var loggedUser = 'anonymous';
   if (req.isAuthenticated()) {
     loggedUser = req.user.username;
@@ -230,7 +227,7 @@ const project = async function (req, res) {
       projectInfo: JSON.stringify(json),
       projectName: json.name,
       annotationsAccessLevel: AccessControlService.getUserOrPublicAccessLevel(json, loggedUser, AccessType.ANNOTATIONS),
-      login: login
+      loggedUser: JSON.stringify(req.user || null)
     });
   } else {
     res.status(404).send('Project Not Found');
@@ -368,9 +365,6 @@ const apiProjectFiles = async function (req, res) {
  */
 // eslint-disable-next-line max-statements
 const settings = async function (req, res) {
-  var login = (req.isAuthenticated()) ?
-    ('<a href=\'/user/' + req.user.username + '\'>' + req.user.username + '</a> (<a href=\'/logout\'>Log Out</a>)')
-    : ('<a href=\'/auth/github\'>Log in with GitHub</a>');
   var loggedUser = 'anonymous';
   if (req.isAuthenticated()) {
     loggedUser = req.user.username;
@@ -402,6 +396,7 @@ const settings = async function (req, res) {
         list: [
           {
             userID: 'anyone',
+            nickname: 'anyone',
             access: {
               collaborators: 'view',
               annotations: 'edit',
@@ -447,11 +442,13 @@ const settings = async function (req, res) {
     filteredJSON.annotations.list = [];
   }
 
+  console.log(JSON.stringify(req.user || null));
+
   var context = {
     projectShortname: filteredJSON.shortname,
     owner: filteredJSON.owner,
     projectInfo: JSON.stringify(filteredJSON),
-    login: login
+    loggedUser: JSON.stringify(req.user || null)
   };
 
   res.render('projectSettings', context);
@@ -488,7 +485,7 @@ const newProject = function (req, res) {
   } else {
     const context = {
       title: 'BrainBox: New Project',
-      login: login
+      loggedUser: JSON.stringify(req.user || null)
     };
     res.render('projectNew', context);
   }

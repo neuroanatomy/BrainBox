@@ -21,9 +21,6 @@ const validator = function (req, res, next) {
 };
 
 const user = async function (req, res) {
-  var login = (req.isAuthenticated()) ?
-    ('<a href=\'/user/' + req.user.username + '\'>' + req.user.username + '</a> (<a href=\'/logout\'>Log Out</a>)')
-    : ('<a href=\'/auth/github\'>Log in with GitHub</a>');
   var requestedUser = req.params.userName;
 
   // store return path in case of login
@@ -43,7 +40,7 @@ const user = async function (req, res) {
       title: requestedUser,
       userInfo: JSON.stringify(json),
       tab: req.query.tab || 'mri',
-      login: login
+      loggedUser: JSON.stringify(req.user || null)
     };
     res.render('user', context);
   } else {
