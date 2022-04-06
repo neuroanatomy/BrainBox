@@ -89,7 +89,6 @@ describe('Upload Controller: ', function () {
           url: ''
         },
         files: [],
-        tokenDuration: 2 * (1000 * 3600),
         query: { },
         params: { },
         value: 0,
@@ -114,12 +113,12 @@ describe('Upload Controller: ', function () {
           url: ''
         },
         files: [],
-        tokenDuration: 60*60,
         query: { },
         params: { },
         value: 0,
         db: db
       };
+      sinon.useFakeTimers(new Date().getTime() + 365 * 86400 * 1000);
       const resSpy = sinon.spy();
       const jsonSpy = sinon.spy();
       const sendStub = sinon.stub().returns({ end: resSpy });
@@ -140,7 +139,6 @@ describe('Upload Controller: ', function () {
           url: ''
         },
         files: [],
-        tokenDuration: 60*60,
         query: { },
         params: { },
         value: 0,

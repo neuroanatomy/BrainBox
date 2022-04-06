@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 const url = require('url');
 const crypto = require('crypto');
 const validatorNPM = require('validator');
@@ -43,155 +44,131 @@ const validator = function (req, res, next) {
  * @returns {Promise} true if the project is valid
  * @todo object.annotations??
  */
-const isProjectObject = function (req, res, object) {
+// eslint-disable-next-line max-statements, complexity
+const isProjectObject = async function (req, res, object) {
   // var goodOwner = false;
   // var goodCollaborators = false;
 
   // eslint-disable-next-line max-statements, complexity
-  const pr = new Promise(function (resolve, reject) {
-    let arr;
-    const allowed = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,_- \'–:;'.split('');
-    const allowedAlphanumericHyphen = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-'.split('');
+  let arr;
+  const allowed = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,_- \'–:;'.split('');
+  const allowedAlphanumericHyphen = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-'.split('');
 
-    // 1. Synchronous checks
-    //----------------------
-    // files
-    if (object.files) {
-      for (const file of object.files.list) {
-        if (!validatorNPM.isURL(file.source)) {
-          reject(new Error('Invalid file URL' ));
-
-          return;
-        }
-        if (!validatorNPM.isWhitelisted(file.name, allowed)) {
-          reject(new Error(`Invalid file name "${file.name}"`));
-
-          return;
-        }
+  // 1. Synchronous checks
+  //----------------------
+  // files
+  if (object.files) {
+    for (const file of object.files.list) {
+      if (!validatorNPM.isURL(file.source)) {
+        throw(new Error('Invalid file URL' ));
+      }
+      if (!validatorNPM.isWhitelisted(file.name, allowed)) {
+        throw(new Error(`Invalid file name "${file.name}"`));
       }
     }
-    console.log('> files ok');
+  }
+  console.log('> files ok');
 
-    // description
-    if (object.description && !validatorNPM.isWhitelisted(object.description, allowed)) {
-      reject(new Error('Invalid project description'));
+  // description
+  if (object.description && !validatorNPM.isWhitelisted(object.description, allowed)) {
+    throw(new Error('Invalid project description'));
+    // delete object.description;
+  }
+  console.log('> description ok');
 
-      return;
-      // delete object.description;
+  // name
+  if (object.name && !validatorNPM.isWhitelisted(object.name, allowed)) {
+    throw(new Error('Invalid name'));
+    //delete object.name;
+  }
+  console.log('> name ok');
+
+  // check that owner and shortname are present
+  if (!object.owner || !object.shortname) {
+    throw(new Error('Invalid owner or project shortname, not present'));
+  }
+  console.log('> owner and project shortname present');
+
+  // check that shortname is alphanumeric
+  if (!validatorNPM.isWhitelisted(object.owner, allowedAlphanumericHyphen) || !validatorNPM.isWhitelisted(object.shortname, allowedAlphanumericHyphen)) {
+    throw(new Error('Invalid owner or project shortname, not alphanumeric'));
+  }
+  console.log('> owner and project shortname valid');
+
+  // convenience array for collaborator checks
+  arr = object.collaborators.list;
+  // check that the 'anyone' user is present
+  let flag = false;
+  for (const collaborator of arr) {
+    if (collaborator.userID === 'anyone') {
+      flag = true;
+      break;
     }
-    console.log('> description ok');
+  }
+  if (flag === false) {
+    throw(new Error('User \'anyone\' is not present'));
+  }
 
-    // name
-    if (object.name && !validatorNPM.isWhitelisted(object.name, allowed)) {
-      reject(new Error('Invalid name'));
-
-      return;
-      //delete object.name;
+  // check that collaborator's access values are valid
+  flag = true;
+  for (const collaborator of arr) {
+    if (validatorNPM.matches(collaborator.access.collaborators, 'none|view|edit|add|remove') === false) {
+      // console.log("collaborators",collaborator);
+      flag = false;
+      break;
     }
-    console.log('> name ok');
-
-    // check that owner and shortname are present
-    if (!object.owner || !object.shortname) {
-      reject(new Error('Invalid owner or project shortname, not present'));
-
-      return;
+    if (validatorNPM.matches(collaborator.access.annotations, 'none|view|edit|add|remove') === false) {
+      // console.log("annotations",collaborator);
+      flag = false;
+      break;
     }
-    console.log('> owner and project shortname present');
-
-    // check that shortname is alphanumeric
-    if (!validatorNPM.isWhitelisted(object.owner, allowedAlphanumericHyphen) || !validatorNPM.isWhitelisted(object.shortname, allowedAlphanumericHyphen)) {
-      reject(new Error('Invalid owner or project shortname, not alphanumeric'));
-
-      return;
+    if (validatorNPM.matches(collaborator.access.files, 'none|view|edit|add|remove') === false) {
+      // console.log("files",collaborator);
+      flag = false;
+      break;
     }
-    console.log('> owner and project shortname valid');
+  }
+  if (flag === false) {
+    throw(new Error('Access values are invalid'));
+  }
+  console.log('> Access values ok');
 
-    // convenience array for collaborator checks
-    arr = object.collaborators.list;
-    // check that the 'anyone' user is present
-    let flag = false;
-    for (const collaborator of arr) {
-      if (collaborator.userID === 'anyone') {
-        flag = true;
-        break;
-      }
+  // check that the list of annotations contains at least 1 volume-type entry
+  flag = false;
+  for (const annotation of object.annotations.list) {
+    if (annotation.type === 'volume') {
+      flag = true;
+      break;
     }
-    if (flag === false) {
-      reject(new Error('User \'anyone\' is not present'));
+  }
+  if (flag === false) {
+    throw(new Error('Annotations must contain at least 1 volume-type entry'));
+  }
 
-      return;
+
+  // 2. Asynchronous checks
+  //-----------------------
+
+  arr = [];
+  arr.push(req.db.get('user').findOne({ nickname: object.owner }));
+  for (const collaborator of object.collaborators.list) {
+    arr.push(req.db.get('user').findOne({ nickname: collaborator.userID }));
+  }
+  const users = await Promise.all(arr);
+  var notFound = false;
+  for (const user of users) {
+    if (user === null) {
+      notFound = true;
+      break;
     }
+  }
+  if (notFound === true) {
+    throw(new Error('Users are invalid, one or more do not exist'));
+  }
 
-    // check that collaborator's access values are valid
-    flag = true;
-    for (const collaborator of arr) {
-      if (validatorNPM.matches(collaborator.access.collaborators, 'none|view|edit|add|remove') === false) {
-        // console.log("collaborators",collaborator);
-        flag = false;
-        break;
-      }
-      if (validatorNPM.matches(collaborator.access.annotations, 'none|view|edit|add|remove') === false) {
-        // console.log("annotations",collaborator);
-        flag = false;
-        break;
-      }
-      if (validatorNPM.matches(collaborator.access.files, 'none|view|edit|add|remove') === false) {
-        // console.log("files",collaborator);
-        flag = false;
-        break;
-      }
-    }
-    if (flag === false) {
-      reject(new Error('Access values are invalid'));
-
-      return;
-    }
-    console.log('> Access values ok');
-
-    // check that the list of annotations contains at least 1 volume-type entry
-    flag = false;
-    for (const annotation of object.annotations.list) {
-      if (annotation.type === 'volume') {
-        flag = true;
-        break;
-      }
-    }
-    if (flag === false) {
-      reject(new Error('Annotations must contain at least 1 volume-type entry'));
-
-      return;
-    }
-
-
-    // 2. Asynchronous checks
-    //-----------------------
-
-    arr = [];
-    arr.push(req.db.get('user').findOne({ nickname: object.owner }));
-    for (const collaborator of object.collaborators.list) {
-      arr.push(req.db.get('user').findOne({ nickname: collaborator.userID }));
-    }
-    Promise.all(arr).then(function (users) {
-      var notFound = false;
-      for (const user of users) {
-        if (user === null) {
-          notFound = true;
-          break;
-        }
-      }
-      if (notFound === true) {
-        reject(new Error('Users are invalid, one or more do not exist'));
-
-        return;
-      }
-
-      // All checks are successful, resolve the promisse
-      //console.log({success:true, message:"All checks ok. Project object looks valid"});
-      resolve(object);
-    });
-  });
-
-  return pr;
+  // All checks are successful, resolve the promisse
+  //console.log({success:true, message:"All checks ok. Project object looks valid"});
+  return object;
 };
 
 /**
@@ -205,9 +182,6 @@ const project = async function (req, res) {
   var loggedUser = 'anonymous';
   if (req.isAuthenticated()) {
     loggedUser = req.user.username;
-  } else
-  if (req.isTokenAuthenticated) {
-    loggedUser = req.tokenUsername;
   }
 
   // store return path in case of login
@@ -247,9 +221,6 @@ const apiProject = async function (req, res) {
   var loggedUser = 'anonymous';
   if (req.isAuthenticated()) {
     loggedUser = req.user.username;
-  } else
-  if (req.isTokenAuthenticated) {
-    loggedUser = req.tokenUsername;
   }
 
   const json = await req.db.get('project').findOne({ shortname: req.params.projectName, backup: { $exists: 0 } }, '-_id');
@@ -295,9 +266,6 @@ const apiProjectAll = async function (req, res) {
   // var loggedUser = "anonymous";
   // if (req.isAuthenticated()) {
   //   loggedUser = req.user.username;
-  // } else
-  // if (req.isTokenAuthenticated) {
-  //   loggedUser = req.tokenUsername;
   // }
 
   if (!req.query.page) {
@@ -368,9 +336,6 @@ const settings = async function (req, res) {
   var loggedUser = 'anonymous';
   if (req.isAuthenticated()) {
     loggedUser = req.user.username;
-  } else
-  if (req.isTokenAuthenticated) {
-    loggedUser = req.tokenUsername;
   }
 
   // store return path in case of login
@@ -468,8 +433,6 @@ const newProject = function (req, res) {
   var loggedUser = 'anonymous';
   if (req.isAuthenticated()) {
     loggedUser = req.user.username;
-  } else if (req.isTokenAuthenticated) {
-    loggedUser = req.tokenUsername;
   }
 
   // store return path in case of login
@@ -566,9 +529,6 @@ const postProject = async function (req, res) {
   var loggedUser = 'anonymous';
   if (req.isAuthenticated()) {
     loggedUser = req.user.username;
-  } else
-  if (req.isTokenAuthenticated) {
-    loggedUser = req.tokenUsername;
   }
 
   if (loggedUser === 'anonymous') {
@@ -690,9 +650,6 @@ const deleteProject = async function (req, res) {
   var loggedUser = 'anonymous';
   if (req.isAuthenticated()) {
     loggedUser = req.user.username;
-  } else
-  if (req.isTokenAuthenticated) {
-    loggedUser = req.tokenUsername;
   }
 
   if (loggedUser === 'anonymous') {
