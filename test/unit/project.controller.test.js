@@ -364,28 +364,30 @@ describe('Project Controller: ', function () {
 
   describe('postProject function() ', function () {
 
-    before(function (done) {
-      db.get('user').insert({
-        'name': 'Any Brainbox User',
-        'nickname': 'anyone',
-        'url': '',
-        'brainboxURL': '/user/anyone',
-        'avatarURL': '',
-        'joined': '2020-05-01T08:26:35.348Z'
-      })
-        .then(() => done());
-    });
+    // should not be useful since anyone user should already exists
+    // before(function (done) {
+    //   db.get('user').insert({
+    //     'name': 'Any Brainbox User',
+    //     'nickname': 'anyone',
+    //     'url': '',
+    //     'brainboxURL': '/user/anyone',
+    //     'avatarURL': '',
+    //     'joined': '2020-05-01T08:26:35.348Z'
+    //   })
+    //     .then(() => done());
+    // });
 
     after(function (done) {
-      db.get('user').remove({
-        nickname: 'anyone'
+      // anyone user should not be removed
+      // db.get('user').remove({
+      //   nickname: 'anyone'
+      // })
+      //   .then(() => {
+      db.get('project').remove({
+        shortname: 'testing'
       })
-        .then(() => {
-          db.get('project').remove({
-            shortname: 'testing'
-          })
-            .then(() => done());
-        });
+        .then(() => done());
+      // });
     });
     it('should throw error if user is not authenticated', async function () {
       const req = {
@@ -483,12 +485,16 @@ describe('Project Controller: ', function () {
           return Boolean(this.user.username);
         }
       };
+      const jsonSpy = sinon.spy();
       const res = {
-        json: sinon.spy()
+        json: jsonSpy,
+        status: sinon.stub().returns({ json: jsonSpy })
       };
       await projectController.deleteProject(req, res);
-      assert.strictEqual(res.json.callCount, 1);
-      assert.deepStrictEqual(res.json.args, [[{ success: false, message: 'Unable to delete. Try again later' }]]);
+      assert.strictEqual(res.status.callCount, 1);
+      assert.deepStrictEqual(res.status.args, [[500]]);
+      assert.strictEqual(jsonSpy.callCount, 1);
+      assert.deepStrictEqual(jsonSpy.args, [[{ success: false, message: 'Unable to delete. Project does not exist in the database' }]]);
       sinon.restore();
     });
 

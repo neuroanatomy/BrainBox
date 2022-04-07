@@ -175,8 +175,6 @@ const downloadMRI = async function(myurl, req) {
             let username;
             if(req.isAuthenticated()) {
               ({username} = req.user);
-            } else if(req.isTokenAuthenticated) {
-              username = req.tokenUsername;
             } else {
               username = ip;
             }
@@ -342,7 +340,7 @@ const apiMriPost = async function (req, res) {
     .digest('hex');
 
   // It's fine to post(/mri/json) without being authenticated
-  // if (!(req.isAuthenticated() || req.isTokenAuthenticated)) {
+  // if (!req.isAuthenticated()) {
   //     return res.status(403).send({error: "Provide authentication"}).end();
   // }
 
@@ -454,9 +452,6 @@ const apiMriGet = async function (req, res) {
   let loggedUser = 'anonymous';
   if (req.isAuthenticated()) {
     loggedUser = req.user.username;
-  } else
-  if (req.isTokenAuthenticated) {
-    loggedUser = req.tokenUsername;
   }
 
   // if the query does not contain a specific mri, send a paginated list of mris
@@ -542,6 +537,7 @@ const apiMriGet = async function (req, res) {
         if (projects[j] && projects[j].shortname === json.mri.atlas[i].project) {
           const access = BrainboxAccessControlService.getUserOrPublicAccessLevel(projects[j], loggedUser, AccessType.ANNOTATIONS);
           console.log('loggedUser,access:', loggedUser, access.toString());
+          // eslint-disable-next-line max-depth
           if (access.isEqualTo(AccessLevel.NONE)) {
             json.mri.atlas.splice(i, 1);
           }
@@ -553,6 +549,7 @@ const apiMriGet = async function (req, res) {
     if (typeof json.mri.annotations !== 'undefined') {
       for (const key of Object.keys(json.mri.annotations)) {
         for (j = 0; j < projects.length; j++) {
+          // eslint-disable-next-line max-depth
           if (projects[j] && projects[j].shortname === key) {
             const access = BrainboxAccessControlService.getUserOrPublicAccessLevel(projects[j], loggedUser, AccessType.ANNOTATIONS);
             console.log('loggedUser,access,level:', loggedUser, access.toString());

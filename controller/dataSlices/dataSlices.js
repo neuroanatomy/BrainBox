@@ -20,9 +20,6 @@ const getUserFilesSlice = function getUserFilesSlice(req, requestedUser, start, 
   var loggedUser = 'anonymous';
   if(req.isAuthenticated()) {
     loggedUser = req.user.username;
-  } else
-  if(req.isTokenAuthenticated) {
-    loggedUser = req.tokenUsername;
   }
 
   return new Promise(function (resolve, reject) {
@@ -88,9 +85,6 @@ const getUserAtlasSlice = function getUserAtlasSlice(req, requestedUser, start, 
   let loggedUser = 'anonymous';
   if(req.isAuthenticated()) {
     loggedUser = req.user.username;
-  } else
-  if(req.isTokenAuthenticated) {
-    loggedUser = req.tokenUsername;
   }
 
   return new Promise(function (resolve, reject) {
@@ -156,9 +150,6 @@ const getUserProjectsSlice = function getUserProjectsSlice(req, requestedUser, s
   var loggedUser = 'anonymous';
   if(req.isAuthenticated()) {
     loggedUser = req.user.username;
-  } else
-  if(req.isTokenAuthenticated) {
-    loggedUser = req.tokenUsername;
   }
 
   return new Promise(function (resolve, reject) {
@@ -213,9 +204,6 @@ const getProjectFilesSlice = async (req, projShortname, start, length, namesFlag
   var loggedUser = 'anonymous';
   if(req.isAuthenticated()) {
     loggedUser = req.user.username;
-  } else
-  if(req.isTokenAuthenticated) {
-    loggedUser = req.tokenUsername;
   }
 
   // query project
@@ -297,9 +285,6 @@ const getFilesSlice = function getFilesSlice(req, start, length) {
   var loggedUser = 'anonymous';
   if(req.isAuthenticated()) {
     loggedUser = req.user.username;
-  } else
-  if(req.isTokenAuthenticated) {
-    loggedUser = req.tokenUsername;
   }
 
   return new Promise(function (resolve, reject) {
@@ -352,9 +337,6 @@ const getProjectsSlice = async function getProjectsSlice(req, start, length) {
   var loggedUser = 'anonymous';
   if(req.isAuthenticated()) {
     loggedUser = req.user.username;
-  } else
-  if(req.isTokenAuthenticated) {
-    loggedUser = req.tokenUsername;
   }
 
   try {

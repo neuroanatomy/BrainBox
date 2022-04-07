@@ -119,7 +119,6 @@ const start = async function () {
   app.use((req, res, next) => {
     req.dirname = dirname;
     req.db = db;
-    req.tokenDuration = 24 * (1000 * 3600); // token duration in milliseconds
 
     next();
   });
