@@ -15,12 +15,11 @@
     "dev-brainbox": "webpack --mode production --config webpack.brainbox.config.js && cp view/brainbox/dist/brainbox.js public/lib/brainbox.js",
     "dev-pages": "webpack --mode development --config webpack.pages.config.js && cp view/brainbox/dist/*-page.js public/js/",
     "dev": "npm run dev-atlasmaker && npm run dev-atlasmaker-tools && npm run dev-brainbox && npm run dev-pages",
-    "test-unit": "nyc --report-dir test/unit/coverage mocha --timeout 5000 ./test/runner.js test/unit/*.js",
-    "test-integration": "cross-env LOCALSIGNIN=true nyc --report-dir test/integration/coverage mocha --timeout 5000 ./test/runner.js test/integration/*.js",
-    "mocha-test": "cross-env LOCALSIGNIN=true nyc mocha --timeout 5000 ./test/runner.js test/unit/*.js test/integration/*.js",
+    "test-unit": "cross-env MONGODB='127.0.0.1:27017/brainbox_test' nyc --report-dir test/unit/coverage mocha --timeout 5000 ./test/runner.js test/unit/*.js",
+    "test-integration": "cross-env MONGODB='127.0.0.1:27017/brainbox_test' LOCALSIGNIN=true nyc --report-dir test/integration/coverage mocha --timeout 5000 ./test/runner.js test/integration/*.js",
+    "mocha-test": "cross-env MONGODB='127.0.0.1:27017/brainbox_test' LOCALSIGNIN=true nyc mocha --timeout 5000 ./test/runner.js test/unit/*.js test/integration/*.js",
     "lint": "eslint .",
     "test": "docker exec brainbox_web_1 /bin/bash -c 'cd /brainbox && npm run mocha-test'",
-    "coverage": "nyc mocha --exit ./test/runner.js test/unit/*.js test/integration/*.js",
     "prepare": "husky install"
   },
   "dependencies": {

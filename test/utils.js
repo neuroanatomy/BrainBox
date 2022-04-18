@@ -2,12 +2,16 @@
 var fs = require('fs');
 const path = require('path');
 const rimraf = require('rimraf');
-const {PNG} = require('pngjs');
+const { PNG } = require('pngjs');
 var jpeg = require('jpeg-js');
 const pixelmatch = require('pixelmatch');
 const { exec } = require('child_process');
 // const { constants } = require('buffer');
 const brainboxApp = require('../app');
+
+const chai = require('chai');
+const chaiHttp = require('chai-http');
+chai.use(chaiHttp);
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
@@ -77,11 +81,11 @@ const projectTest = {
   },
   files: {
     list: [
-      serverURL + '/test_data/bert_brain.nii.gz',
-      'https://zenodo.org/record/44855/files/MRI-n4.nii.gz',
-      'http://files.figshare.com/2284784/MRI_n4.nii.gz',
-      'https://dl.dropbox.com/s/cny5b3so267bv94/p32-f18-uchar.nii.gz',
-      'https://s3.amazonaws.com/fcp-indi/data/Projects/ABIDE_Initiative/Outputs/freesurfer/5.1/Caltech_0051456/mri/T1.mgz'
+      {source: serverURL + '/test_data/bert_brain.nii.gz', name: 'bert_brain'},
+      {source: 'https://zenodo.org/record/44855/files/MRI-n4.nii.gz', name: 'MRI-n4'},
+      {source: 'http://files.figshare.com/2284784/MRI_n4.nii.gz', name: 'MRI_n4'},
+      {source: 'https://dl.dropbox.com/s/cny5b3so267bv94/p32-f18-uchar.nii.gz', name: 'p32-f18-uchar'},
+      {source: 'https://s3.amazonaws.com/fcp-indi/data/Projects/ABIDE_Initiative/Outputs/freesurfer/5.1/Caltech_0051456/mri/T1.mgz', name: 'T1'}
     ]
   },
   annotations: {
@@ -170,7 +174,7 @@ const currentDirectory = function () {
 };
 
 const queryUser = function (nickname) {
-  return db.get('user').findOne({nickname});
+  return db.get('user').findOne({ nickname });
 };
 
 const insertUser = function (user) {
@@ -178,22 +182,23 @@ const insertUser = function (user) {
 };
 
 const removeUser = function (nickname) {
-  return db.get('user').remove({nickname});
+  return db.get('user').remove({ nickname });
 };
 
 const insertProject = function (project) {
-  return db.get('project').insert(project);
+  return chai.request(serverURL).post(`/project/json/${project.shortname}?token=${testToken}foo`)
+    .send({data: project});
 };
 
 const removeProject = function (shortname) {
-  return db.get('project').remove({shortname});
+  return db.get('project').remove({ shortname });
 };
 
 const queryProject = function (shortname) {
   return db.get('project').findOne({ shortname, backup: { $exists: 0 } });
 };
 
-const insertTestTokenForUser =async function (nickname) {
+const insertTestTokenForUser = async function (nickname) {
   const now = new Date();
   const obj = {
     token: testToken + nickname,
@@ -206,19 +211,19 @@ const insertTestTokenForUser =async function (nickname) {
   return res;
 };
 
-const removeTestTokenForUser =async function (nickname) {
-  await db.get('log').remove({token: testToken + nickname});
+const removeTestTokenForUser = async function (nickname) {
+  await db.get('log').remove({ token: testToken + nickname });
 };
 
-const delay=async function (delayTimeout) {
+const delay = async function (delayTimeout) {
   await new Promise((resolve) => {
     setTimeout(resolve, delayTimeout);
   });
 };
 
-const removeMRI=async function ({dirPath, srcURL}) {
+const removeMRI = async function ({ dirPath, srcURL }) {
   rimraf.sync(dirPath, {}, (err) => console.log(new Error(err)));
-  const res = await db.get('mri').remove({source: srcURL});
+  const res = await db.get('mri').remove({ source: srcURL });
 
   return res;
 };
@@ -227,14 +232,14 @@ const compareImages = async function (pathImg1, pathImg2) {
   const data1 = await fs.promises.readFile(pathImg1);
   const data2 = await fs.promises.readFile(pathImg2);
   let img1, img2;
-  if(pathImg1.split('.').pop() === 'png') {
+  if (pathImg1.split('.').pop() === 'png') {
     img1 = PNG.sync.read(data1);
-  } else if(pathImg1.split('.').pop() === 'jpg') {
+  } else if (pathImg1.split('.').pop() === 'jpg') {
     img1 = jpeg.decode(data1);
   }
-  if(pathImg2.split('.').pop() === 'png') {
+  if (pathImg2.split('.').pop() === 'png') {
     img2 = PNG.sync.read(data2);
-  } else if(pathImg2.split('.').pop() === 'jpg') {
+  } else if (pathImg2.split('.').pop() === 'jpg') {
     img2 = jpeg.decode(data2);
   }
   const pixdiff = pixelmatch(img1.data, img2.data, null, img1.width, img1.height);
@@ -243,7 +248,7 @@ const compareImages = async function (pathImg1, pathImg2) {
 };
 
 // eslint-disable-next-line max-statements
-const waitUntilHTMLRendered=async function (page, timeout = 30000) {
+const waitUntilHTMLRendered = async function (page, timeout = 30000) {
   const checkDurationMsecs = 1000;
   const maxChecks = timeout / checkDurationMsecs;
   let lastHTMLSize = 0;
@@ -251,7 +256,7 @@ const waitUntilHTMLRendered=async function (page, timeout = 30000) {
   let countStableSizeIterations = 0;
   const minStableSizeIterations = 3;
 
-  while(checkCounts++ <= maxChecks) {
+  while (checkCounts++ <= maxChecks) {
     // eslint-disable-next-line no-await-in-loop
     const html = await page.content();
     const currentHTMLSize = html.length;
@@ -260,13 +265,13 @@ const waitUntilHTMLRendered=async function (page, timeout = 30000) {
 
     // console.log('last: ', lastHTMLSize, ' <> curr: ', currentHTMLSize, " body html size: ", bodyHTMLSize);
 
-    if(lastHTMLSize !== 0 && currentHTMLSize === lastHTMLSize) {
+    if (lastHTMLSize !== 0 && currentHTMLSize === lastHTMLSize) {
       countStableSizeIterations++;
     } else {
       countStableSizeIterations = 0; //reset the counter
     }
 
-    if(countStableSizeIterations >= minStableSizeIterations) {
+    if (countStableSizeIterations >= minStableSizeIterations) {
       // console.log("Page rendered fully..");
       break;
     }
@@ -276,20 +281,20 @@ const waitUntilHTMLRendered=async function (page, timeout = 30000) {
   }
 };
 
-const comparePageScreenshots=async function (testPage, url, filename) {
+const comparePageScreenshots = async function (testPage, url, filename) {
   const newPath = './test/screenshots/' + filename;
   const refPath = './test/data/reference-screenshots/' + filename;
-  await testPage.goto(url, {waitUntil: 'networkidle2', timeout: 90000});
+  await testPage.goto(url, { waitUntil: 'networkidle2', timeout: 90000 });
   await waitUntilHTMLRendered(testPage);
   fs.promises.mkdir(path.dirname(newPath), { recursive: true });
-  await testPage.screenshot({path:'./test/screenshots/' + filename});
+  await testPage.screenshot({ path: './test/screenshots/' + filename });
   const pixdiff = await compareImages(newPath, refPath);
 
   return pixdiff;
 };
 
-const waitForDOMReady =async function (testPage, url) {
-  await testPage.goto(url, {waitUntil: 'networkidle2', timeout: 90000});
+const waitForDOMReady = async function (testPage, url) {
+  await testPage.goto(url, { waitUntil: 'networkidle2', timeout: 90000 });
   await waitUntilHTMLRendered(testPage);
 };
 
@@ -323,7 +328,7 @@ const testingCredentials = {
   password: 'baz'
 };
 
-const createProjectWithPermission = function(name, accessProp) {
+const createProjectWithPermission = function (name, accessProp) {
   const access = Object.assign({}, {
     collaborators: 'view',
     annotations: 'none',
@@ -337,36 +342,38 @@ const createProjectWithPermission = function(name, accessProp) {
     brainboxURL: '/project/' + name,
     created: (new Date()).toJSON(),
     owner: 'foo',
-    collaborators: { list: [
-      {
-        userID: 'anyone',
-        access: {
-          collaborators: 'none',
-          annotations: 'none',
-          files: 'view'
+    collaborators: {
+      list: [
+        {
+          userID: 'anyone',
+          access: {
+            collaborators: 'none',
+            annotations: 'none',
+            files: 'view'
+          },
+          username: 'anyone',
+          nickname: 'anyone',
+          name: 'Any User'
         },
-        username: 'anyone',
-        nickname: 'anyone',
-        name: 'Any User'
-      },
-      {
-        userID: 'bar',
-        access: {
-          collaborators: 'view',
-          annotations: 'view',
-          files: 'view'
-        },
-        username: 'foo',
-        name: 'Foo'
-      }
-    ] },
+        {
+          userID: 'bar',
+          access: {
+            collaborators: 'view',
+            annotations: 'view',
+            files: 'view'
+          },
+          username: 'foo',
+          name: 'Foo'
+        }
+      ]
+    },
     files: {
-      list: [{source: 'https://zenodo.org/record/44855/files/MRI-n4.nii.gz', name: 'MRI-n4.nii.gz'}]
+      list: [{ source: 'https://zenodo.org/record/44855/files/MRI-n4.nii.gz', name: 'MRI-n4.nii.gz' }]
     },
     annotations: {
       list: [
-        {'type':'volume', 'name':'Test', 'values':'axolotl_labels.json', 'display':'true'},
-        {'type':'volume', 'name':'Test2', 'values':'axolotl_labels.json', 'display':'true'}
+        { 'type': 'volume', 'name': 'Test', 'values': 'axolotl_labels.json', 'display': 'true' },
+        { 'type': 'volume', 'name': 'Test2', 'values': 'axolotl_labels.json', 'display': 'true' }
       ]
     }
   };

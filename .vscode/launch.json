@@ -32,7 +32,8 @@
                 "--no-timeout"
             ],
             "env": {
-                "LOCALSIGNIN": "true"
+                "LOCALSIGNIN": "true",
+                "MONGODB": "127.0.0.1:27017/brainbox_test"
             }
         }
     ]
