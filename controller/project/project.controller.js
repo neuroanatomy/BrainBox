@@ -10,7 +10,7 @@ const _ = require('lodash');
 const createDOMPurify = require('dompurify');
 const { JSDOM } = require('jsdom');
 const { ForbiddenAccessError } = require('../../errors.js');
-const {window} = (new JSDOM('', {
+const { window } = (new JSDOM('', {
   features: {
     FetchExternalResources: false, // disables resource loading over HTTP / filesystem
     ProcessExternalResources: false // do not execute JS within script blocks
@@ -59,11 +59,17 @@ const isProjectObject = async function (req, res, object) {
   // files
   if (object.files) {
     for (const file of object.files.list) {
+      if (typeof file.source !== 'string') {
+        throw (new Error('File source not specified'));
+      }
+      if (typeof file.name !== 'string') {
+        throw (new Error('File name not specified'));
+      }
       if (!validatorNPM.isURL(file.source)) {
-        throw(new Error('Invalid file URL' ));
+        throw (new Error(`Invalid file URL: ${file.source}`));
       }
       if (!validatorNPM.isWhitelisted(file.name, allowed)) {
-        throw(new Error(`Invalid file name "${file.name}"`));
+        throw (new Error(`Invalid file name "${file.name}"`));
       }
     }
   }
@@ -71,27 +77,27 @@ const isProjectObject = async function (req, res, object) {
 
   // description
   if (object.description && !validatorNPM.isWhitelisted(object.description, allowed)) {
-    throw(new Error('Invalid project description'));
+    throw (new Error('Invalid project description'));
     // delete object.description;
   }
   console.log('> description ok');
 
   // name
   if (object.name && !validatorNPM.isWhitelisted(object.name, allowed)) {
-    throw(new Error('Invalid name'));
+    throw (new Error('Invalid name'));
     //delete object.name;
   }
   console.log('> name ok');
 
   // check that owner and shortname are present
   if (!object.owner || !object.shortname) {
-    throw(new Error('Invalid owner or project shortname, not present'));
+    throw (new Error('Invalid owner or project shortname, not present'));
   }
   console.log('> owner and project shortname present');
 
   // check that shortname is alphanumeric
   if (!validatorNPM.isWhitelisted(object.owner, allowedAlphanumericHyphen) || !validatorNPM.isWhitelisted(object.shortname, allowedAlphanumericHyphen)) {
-    throw(new Error('Invalid owner or project shortname, not alphanumeric'));
+    throw (new Error('Invalid owner or project shortname, not alphanumeric'));
   }
   console.log('> owner and project shortname valid');
 
@@ -106,7 +112,7 @@ const isProjectObject = async function (req, res, object) {
     }
   }
   if (flag === false) {
-    throw(new Error('User \'anyone\' is not present'));
+    throw (new Error('User \'anyone\' is not present'));
   }
 
   // check that collaborator's access values are valid
@@ -129,7 +135,7 @@ const isProjectObject = async function (req, res, object) {
     }
   }
   if (flag === false) {
-    throw(new Error('Access values are invalid'));
+    throw (new Error('Access values are invalid'));
   }
   console.log('> Access values ok');
 
@@ -142,7 +148,7 @@ const isProjectObject = async function (req, res, object) {
     }
   }
   if (flag === false) {
-    throw(new Error('Annotations must contain at least 1 volume-type entry'));
+    throw (new Error('Annotations must contain at least 1 volume-type entry'));
   }
 
 
@@ -163,7 +169,7 @@ const isProjectObject = async function (req, res, object) {
     }
   }
   if (notFound === true) {
-    throw(new Error('Users are invalid, one or more do not exist'));
+    throw (new Error('Users are invalid, one or more do not exist'));
   }
 
   // All checks are successful, resolve the promisse
@@ -316,8 +322,8 @@ const apiProjectFiles = async function (req, res) {
   try {
     const list = await dataSlices.getProjectFilesSlice(req, projShortname, start, length, namesFlag);
     res.send(list);
-  } catch(err) {
-    if(err instanceof ForbiddenAccessError) {
+  } catch (err) {
+    if (err instanceof ForbiddenAccessError) {
       res.status(403).send({ error: err.message });
     } else {
       res.status(500).send({ error: err.message });
@@ -454,68 +460,67 @@ const newProject = function (req, res) {
   }
 };
 
+// eslint-disable-next-line max-statements
 const insertMRInames = function (req, res, list) {
   // insert MRI names, but only if they don't exist
-  for (var i = 0; i < list.length; i++) {
-    var {name} = list[i];
-    var {source} = list[i];
-    var filename = url.parse(source).pathname.split('/').pop();
+  return Promise.all(list.map((el) => (async function (file) {
+    const { name, source } = file;
+    const filename = url.parse(source).pathname.split('/').pop();
 
     // it there's no name, continue to the next mri
-    if (!name) { continue; }
+    if (!name) { return; }
 
     // check if the mri entry already exists
-    (async function (na, so, fi) { // without a closure, only the last name in the list is used and repeated
-      let mri = await req.db.get('mri').findOne({ source: so, backup: { $exists: 0 } });
-      var hash = crypto.createHash('md5').update(so)
-        .digest('hex');
+    // without a closure, only the last name in the list is used and repeated
+    let mri = await req.db.get('mri').findOne({ source, backup: { $exists: 0 } });
+    var hash = crypto.createHash('md5').update(source)
+      .digest('hex');
 
-      // if mri exists, and has no name, insert the name
-      if (!mri) {
-        mri = {
-          filename: fi,
-          source: so,
-          url: '/data/' + hash + '/',
-          included: (new Date()).toJSON(),
-          owner: req.user.username,
-          mri: {
-            brain: fi,
-            atlas: [
-              {
-                owner: req.user.username,
-                created: (new Date()).toJSON(),
-                modified: (new Date()).toJSON(),
-                type: 'volume',
-                filename: 'Atlas.nii.gz',
-                labels: 'foreground.json'
-              }
-            ]
-          }
-        };
-      } else {
-        delete mri._id;
-      }
-      mri.modified = (new Date()).toJSON();
-      mri.modifiedBy = req.user.username;
+    // if mri exists, and has no name, insert the name
+    if (!mri) {
+      mri = {
+        filename,
+        source,
+        url: '/data/' + hash + '/',
+        included: (new Date()).toJSON(),
+        owner: req.user.username,
+        mri: {
+          brain: filename,
+          atlas: [
+            {
+              owner: req.user.username,
+              created: (new Date()).toJSON(),
+              modified: (new Date()).toJSON(),
+              type: 'volume',
+              filename: 'Atlas.nii.gz',
+              labels: 'foreground.json'
+            }
+          ]
+        }
+      };
+    } else {
+      delete mri._id;
+    }
+    mri.modified = (new Date()).toJSON();
+    mri.modifiedBy = req.user.username;
 
-      /* Use this if you want imported names to overwrite existing ones */
-      mri.name = na;
+    /* Use this if you want imported names to overwrite existing ones */
+    mri.name = name;
 
-      /* Use this if you want imported names to be used only if no previous name exists */
-      /*
-          if(!mri.name) {
-              mri.name=na;
-          }
-          */
+    /* Use this if you want imported names to be used only if no previous name exists */
+    /*
+    if(!mri.name) {
+        mri.name=name;
+    }
+    */
 
-      // sanitise json
-      mri = JSON.parse(DOMPurify.sanitize(JSON.stringify(mri))); // sanitize works on strings, not objects
+    // sanitise json
+    mri = JSON.parse(DOMPurify.sanitize(JSON.stringify(mri))); // sanitize works on strings, not objects
 
-      // update and insert
-      await req.db.get('mri').update({ source: mri.source }, { $set: { backup: true } }, { multi: true });
-      await req.db.get('mri').insert(mri);
-    }(name, source, filename));
-  }
+    // update and insert
+    await req.db.get('mri').update({ source: mri.source }, { $set: { backup: true } }, { multi: true });
+    await req.db.get('mri').insert(mri);
+  }(el))));
 };
 
 /**
@@ -546,20 +551,21 @@ const postProject = async function (req, res) {
   } catch (err) {
     console.log('ERROR');
     console.log({ clean, obj });
-    res.status(500).send({error: err.message});
+    res.status(500).send({ error: err.message });
 
     return;
   }
   var k;
 
   // eslint-disable-next-line max-statements
-  await lock.acquire(['project', 'mri'], async function() {
+  await lock.acquire(['project', 'mri'], async function () {
+    console.log('enter lock block');
     let object;
     try {
       object = await isProjectObject(req, res, obj);
-    } catch(err) {
+    } catch (err) {
       console.error(err.message);
-      res.status(500).send({error: err.message});
+      res.status(500).send({ error: err.message });
 
       return;
     }
@@ -570,7 +576,7 @@ const postProject = async function (req, res) {
       });
     // update/insert project
     if (oldProject) {
-    // project exists, save update
+      // project exists, save update
       if (!AccessControlService.hasFilesAccess(AccessLevel.EDIT, oldProject, loggedUser)) {
         console.log('User does not have edit rights');
         res.status(403).json({ error: 'error', message: 'User does not have edit rights' });
@@ -611,13 +617,13 @@ const postProject = async function (req, res) {
 
       console.log('success: true');
       let successMessage = 'Project settings updated.';
-      if(ignoredChanges.length > 0) {
+      if (ignoredChanges.length > 0) {
         successMessage += ` Some changes (on ${ignoredChanges.join(', ')}) were ignored due to a lack of permissions.`;
       }
 
       res.json({ success: true, message: successMessage });
     } else {
-    // new project, insert
+      // new project, insert
       console.log('inserting...');
       console.log('insert mri names');
       await insertMRInames(req, res, obj.files.list);
@@ -635,6 +641,7 @@ const postProject = async function (req, res) {
       console.log('success: true');
       res.json({ success: true, message: 'New project inserted' });
     }
+    console.log('leave lock block');
   });
 };
 
@@ -661,7 +668,7 @@ const deleteProject = async function (req, res) {
 
   try {
     // eslint-disable-next-line max-statements
-    await lock.acquire(['project', 'mri'], async function() {
+    await lock.acquire(['project', 'mri'], async function () {
 
       shortname = req.params.projectName;
       const oldProject = await req.db.get('project').findOne({ shortname: shortname, backup: { $exists: 0 } });
