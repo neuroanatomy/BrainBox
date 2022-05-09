@@ -26,7 +26,7 @@ const PageContents = {
       };
       url.search = new URLSearchParams(params).toString();
       const res = await (await fetch(url)).json();
-      if (res.success & (res.list.length > 0)) {
+      if (res.success && (res.list.length > 0)) {
         this.projects.push(...res.list);
         cursorProjects += 100;
         fetchProjects();

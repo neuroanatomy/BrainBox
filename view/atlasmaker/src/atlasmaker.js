@@ -14,8 +14,8 @@ import {AtlasMakerUI} from './atlasmaker-ui.js';
 import {AtlasMakerWS} from './atlasmaker-ws.js';
 
 import Config from './../../../cfg.json';
-import toolsFull from './html/toolsFull.html';
-import toolsLight from './html/toolsLight.html';
+// import toolsFull from './html/toolsFull.html';
+// import toolsLight from './html/toolsLight.html';
 
 window.$ = $;
 
@@ -136,6 +136,10 @@ const me = {
   msg: null, // ?
   msg0: '', // ?
   prevData: 0, // ?
+
+  // messaging and logged info
+  receivedMessages: [],
+  notificationMessage: '',
 
   /**
    * Closes the websocket before leaving
@@ -362,6 +366,7 @@ const me = {
       me.drawImages();
     });
 
+    /*
     // Init the toolbar
 
     // configure and append tools
@@ -411,6 +416,8 @@ const me = {
     me.loadTools();
 
     // event connect: register click tools
+    */
+
     me._registerAllToolsDown();
     me._registerAllToolsMove();
     me._registerAllToolsUp();
@@ -418,6 +425,7 @@ const me = {
 
     // register functions displaying information
     me._registerAllToolsDisplayInformation();
+
 
     // start websocket
     // try {
@@ -610,7 +618,6 @@ const me = {
       const view=me.User.view.charAt(0).toUpperCase()+me.User.view.slice(1);
       $('.chose#plane .a:contains(\''+view+'\')').addClass('pressed');
     }
-
 
     // pick the first label for segmenting (it has to come after the
     // sendUserDataMessage calls, because it also sends ws messages)

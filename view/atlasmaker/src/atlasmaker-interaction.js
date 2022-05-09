@@ -695,7 +695,7 @@ export const AtlasMakerInteraction = {
         const hdim = me.brainHdim;
         let i;
         for(i = 1; i<p.length; i++) { length += Math.sqrt((wdim*(p[i].x-p[i-1].x))**2 + (hdim*(p[i].y-p[i-1].y))**2); }
-        $('#logChat .text').append('Length: ' + length + '<br/>');
+        me.appendChatMessage('Length: ' + length);
         me.User.measureLength = null;
         me.displayInformation();
       }
@@ -834,39 +834,6 @@ export const AtlasMakerInteraction = {
   },
 
   /**
-     * @function color
-     * @returns {void}
-     */
-  // eslint-disable-next-line max-statements
-  color: function () {
-    const me = AtlasMakerWidget;
-    const labelset = document.getElementById('labelset');
-    me.container.appendChild(labelset);
-    labelset.style.display = 'block';
-
-    labelset.querySelector('span#labels-name').textContent = me.ontology.name;
-    labelset.querySelector('#label-list').innerHTML = '';
-    for(let i = 0; i<me.ontology.labels.length; i++) {
-      const l = me.ontology.labels[i];
-      const la = labelset
-        .querySelector('#label-template')
-        .cloneNode(true);
-      la.removeAttribute('id');
-      la.setAttribute('data-index', i);
-      la.querySelector('.label-color').style.backgroundColor = 'rgb(' + l.color[0] + ', ' + l.color[1] + ', ' + l.color[2] + ')';
-      la.querySelector('.label-name').textContent = l.name;
-      la.onclick = function() {
-        me.changePenColor(this.getAttribute('data-index'));
-        labelset.style.display = 'none';
-      };
-      labelset
-        .querySelector('#label-list')
-        .appendChild(la);
-      la.style.display = 'block';
-    }
-  },
-
-  /**
      * @function togglePreciseCursor
      * @returns {void}
      */
@@ -932,6 +899,7 @@ export const AtlasMakerInteraction = {
     me.annotationLength = 0;
 
     // compute total segmented volume
+    console.log(me);
     const vol = me.computeSegmentedVolume();
     me.info.volume = parseInt(vol, 10) + ' mm3';
   },
@@ -1204,5 +1172,18 @@ export const AtlasMakerInteraction = {
     }
 
     return svgStr;
+  },
+
+  appendChatMessage: function(msg) {
+    const me = AtlasMakerWidget;
+    me.receivedMessages.push(msg);
+    window.dispatchEvent(new CustomEvent('newMessage', { detail: { message: msg }}));
+  },
+
+  setNotification: function(msg) {
+    const me = AtlasMakerWidget;
+    me.notificationMessage = msg;
+    window.dispatchEvent(new CustomEvent('newNotification', { detail: { notification: msg }}));
   }
+
 };

@@ -1,35 +1,47 @@
+<<<<<<< HEAD
 /* eslint-disable max-lines */
 /* global infoProxy projectInfo annotationsAccessLevel BrainBox AtlasMakerWidget $ */
+=======
+/* global projectInfo loggedUser BrainBox AtlasMakerWidget annotationsAccessLevel */
+/* eslint-disable max-lines */
+>>>>>>> de61f64 (New project page)
 
-import 'jquery-ui/themes/base/core.css';
-import 'jquery-ui/themes/base/theme.css';
-import 'jquery-ui/themes/base/autocomplete.css';
-import 'jquery-ui/ui/core';
-import 'jquery-ui/ui/widgets/autocomplete';
+import 'nwl-components/dist/style.css';
+import * as Vue from 'vue';
+import {
+  Button,
+  ButtonsGroup,
+  Chat,
+  Editor,
+  OntologySelector,
+  ProjectPage,
+  RangeSlider,
+  Row,
+  Table,
+  TextAnnotations,
+  VolumeAnnotations
+} from 'nwl-components';
+import { forEach, get, set } from 'lodash';
+import { initStore, waitForSync } from '../store';
+import config from '../nwl-components-config';
+import { enableVueBindings } from '@syncedstore/core';
 
-import '../style/style.css';
-import '../style/textAnnotations.css';
-import '../style/ui.css';
-import '../style/project-style.css';
+// make SyncedStore use Vuejs internally
+enableVueBindings(Vue);
 
-import freeform from '../tools/freeform.js';
-import hidden from '../tools/hidden.js';
-import multiple from '../tools/multiple.js';
+const requireIconsMap = () => {
+  const r = require.context(
+    '!!url-loader!../../../atlasmaker/src/svg',
+    false,
+    /^.*\.svg$/
+  );
+  const icons = {};
+  r.keys().forEach((key) => (icons[key.substr(2)] = r(key).default));
 
-const projShortname = projectInfo.shortname;
-const numFilesQuery = 20;
-const annotations = {
-  text: [], // collect text annotations
-  volume: [] // collect volume annotations
+  return icons;
 };
-let annType;
-let annName;
-let file;
-let trTemplate;
-let objTemplate;
-let aParam;
-// let hashOld;
 
+<<<<<<< HEAD
 // eslint-disable-next-line max-statements
 const appendFilesToProject = function (list) {
   const i0 = projectInfo.files.list.length;
@@ -229,22 +241,84 @@ const resizeButton = function (p) {
     AtlasMakerWidget.resizeWindow();
   }
 };
+=======
+const { store, webrtcProvider, doc } = initStore(projectInfo.shortname);
 
-// Prevent zoom on double tap
-$('body').on('touchstart', function preventZoom(e) {
-  const t2 = e.timeStamp;
-  const t1 = $(e.target).data('lastTouch') || t2;
-  const dt = t2 - t1;
-  const fingers = e.originalEvent.touches.length;
-  $(e.target).data('lastTouch', t2);
-  if (!dt || dt > 500 || fingers > 1) { return; } // not double-tap
-  e.preventDefault(); // double tap - prevent the zoom
-  // also synthesize click events we just swallowed up
-  $(e.target)
-    .trigger('click')
-    .trigger('click');
-});
+const PageContents = {
+  template: '#template',
+  setup() {
+    const files = Vue.ref([]);
+    doc.getArray('files').observe(() => {
+      files.value.splice(0, files.value.length);
+      files.value.push(...store.files);
+    });
 
+    return {
+      files,
+      currentFile: Vue.ref(null),
+      currentSlice: Vue.ref(0),
+      totalSlices: Vue.ref(0),
+      title: Vue.ref('Loading…'),
+      currentView: Vue.ref('sag'),
+      currentTool: Vue.ref('Show'),
+      currentPenSize: Vue.ref(1),
+      doFill: Vue.ref(false),
+      usePreciseCursor: Vue.ref(false),
+      ontology: Vue.ref({}),
+      displayOntology: Vue.ref(false),
+      displayChat: Vue.ref(true),
+      displayScript: Vue.ref(false),
+      currentLabel: Vue.ref(0),
+      receivedMessages: Vue.ref([]),
+      notification: Vue.ref(''),
+      project: projectInfo,
+      icons: requireIconsMap(),
+      fullscreen: Vue.ref(false),
+      linkPrefix: `${config.baseURL}/mri?url=`,
+      // define a map associating annotations keys to value selectors
+      // to extract content within the TextAnnotations component
+      volumeAnnotations: Vue.ref([]),
+      extractTextKeys: (_files) => {
+        if (!_files) {
+          return;
+        }
+        const keys = new Map();
+        keys.set('Name', 'name');
+        keys.set('File', 'source');
+        _files.forEach((file) => {
+          const annotations = get(file, ['mri', 'annotations', projectInfo.shortname]);
+          if (!annotations) {
+            return;
+          }
+          forEach(annotations, (value, key) => {
+            if (value.type === 'text') {
+              keys.set(key, ['mri', 'annotations', projectInfo.shortname, key, 'data']);
+            }
+          });
+        });
+
+        return keys;
+      },
+      extractVolumeKeys: () => {
+        const keys = new Map();
+        keys.set('Name', 'name');
+        keys.set('Labels set', 'labels');
+
+        return keys;
+      }
+    };
+  },
+>>>>>>> de61f64 (New project page)
+
+  async mounted() {
+    this.setupEventListeners();
+    await waitForSync(webrtcProvider);
+    await this.initBrainbox();
+    await this.fetchFiles();
+    this.selectFile(this.files[0]);
+  },
+
+<<<<<<< HEAD
 // collect the project's text annotations
 for (const k of projectInfo.annotations.list) {
   if (k.type === 'text' ||
@@ -261,9 +335,36 @@ for (const k of projectInfo.annotations.list) {
     annotations.volume.push(k);
   }
 }
+=======
+  methods: {
+    async initBrainbox() {
+      await BrainBox.initBrainBox();
+      await BrainBox.loadLabelsets();
+    },
 
-$('#projectName').text(projectInfo.name);
+    async fetchFiles() {
+      if (this.files.length === 0) {
+        const files = await this.doFetchFiles([], 0);
+        store.files.push(...this.populateTextAnnotations(files));
+      }
+    },
+>>>>>>> de61f64 (New project page)
 
+    async doFetchFiles(files, cursor) {
+      const params = {
+        start: cursor,
+        length: 100
+      };
+      const url = new URL(
+        `/project/json/${projectInfo.shortname}/files`,
+        window.location.protocol + '//' + window.location.host
+      );
+      url.search = new URLSearchParams(params).toString();
+      const res = await (await fetch(url)).json();
+      if (res && res.length > 0) {
+        files.push(...res);
+
+<<<<<<< HEAD
 $('#resizeButton').data({ flag: -1, x0: 0, y0: 0 });
 $('#resizeButton').on('mousedown touchstart', function (e) { $(e.target).data({ flag: 0, x0: e.pageX, y0: e.pageY }); });
 $('body').on('mousemove', function (e) { resizeButton({ x: e.pageX, y: e.pageY }); });
@@ -302,12 +403,25 @@ BrainBox.initBrainBox()
   // eslint-disable-next-line max-statements
   .then(function () {
     AtlasMakerWidget._metadataChangeSubscribers.push(receiveMetadata);
+=======
+        if (files.length % 100 === 0) {
+          return this.doFetchFiles(files, cursor + 100);
+        }
+      }
 
-    // Bind the project's files to the table within #projectFiles
-    //------------------------------------------------------------
-    trTemplate = ['<tr>'];
-    objTemplate = [];
+      return files;
+    },
+>>>>>>> de61f64 (New project page)
 
+    setupEventListeners() {
+      window.addEventListener('brainImageConfigured', (e) => {
+        this.title = `Slice ${e.detail.currentSlice}`;
+        this.currentView = e.detail.currentView;
+        this.currentSlice = e.detail.currentSlice;
+        this.totalSlices = e.detail.totalSlices;
+      });
+
+<<<<<<< HEAD
     // configure the binding template for table row and object.
     // the 1st two columns are fixed: name and source
     trTemplate.push(['<td contentEditable=true class=\'noEmpty\'></td>']);
@@ -322,9 +436,58 @@ BrainBox.initBrainBox()
           .prop('href', location.origin + '/mri?url=' + d);
         $(e).find('a')
           .html(d.split('/').pop());
-      }
-    });
+=======
+      window.addEventListener('newMessage', this.handleNewChatMessages);
+      window.addEventListener('newNotification', this.handleNewNotification);
+    },
 
+    getDefaultAtlas(annotation) {
+      const date = new Date();
+
+      return {
+        name: annotation.name,
+        project: projectInfo.shortname,
+        created: date.toJSON(),
+        modified: date.toJSON(),
+        modifiedBy: AtlasMakerWidget.User.username,
+        filename: Math.random().toString(36)
+          .slice(2) + '.nii.gz', // automatically generated filename
+        labels: annotation.values,
+        owner: AtlasMakerWidget.User.username,
+        type: 'volume',
+        access: annotationsAccessLevel
+      };
+    },
+
+    getMRIParams(file) {
+      // make sure we don't send proxified refs to AtlasMaker as it's bad for perfs
+      const plainFile = JSON.parse(JSON.stringify(file));
+
+      const url = plainFile.source;
+      const params = { url, view: 'cor', slice: 180, fullscreen: false };
+
+      // select the first annotation associated to this project
+      const annotationIndex = plainFile.mri.atlas.findIndex(
+        (atlas) => atlas.project === projectInfo.shortname
+      );
+
+      params.annotationItemIndex = annotationIndex;
+      params.info = plainFile;
+
+      return params;
+    },
+
+    async selectFile(file) {
+      if (this.currentFile && this.currentFile.source === file.source) {
+        return;
+>>>>>>> de61f64 (New project page)
+      }
+      this.currentFile = file;
+      this.title = 'Loading…';
+      this.populateVolumeAnnotations(file);
+      const params = this.getMRIParams(file);
+
+<<<<<<< HEAD
     // the following columns are completed from the project's 'annotations' definitions:
     // determine their type of display (multiple choices, freeform, etc.) based data type
     for (let g = 0; g < annotations.text.length; g++) {
@@ -358,8 +521,38 @@ BrainBox.initBrainBox()
         );
         trTemplate.push(td);
         objTemplate.push(obj);
-      }
+=======
+      await BrainBox.configureBrainBox(params);
+      this.ontology = AtlasMakerWidget.ontology;
+      this.currentLabel = 0;
 
+      this.volumeAnnotations = file.mri.atlas.filter(
+        (atlas) => atlas.project === projectInfo.shortname
+      );
+
+      AtlasMakerWidget.sendSaveMetadataMessage(BrainBox.info);
+      AtlasMakerWidget.User.projectPage = projectInfo.shortname;
+      AtlasMakerWidget.sendUserDataMessage(
+        JSON.stringify({ projectPage: projectInfo.shortname })
+      );
+    },
+
+    async selectVolumeAnnotation(selectedAtlas) {
+      const index = this.currentFile.mri.atlas.findIndex(
+        (atlas) =>
+          atlas.name === selectedAtlas.name && atlas.project === projectInfo.shortname
+      );
+      if (index === -1) {
+        return;
+>>>>>>> de61f64 (New project page)
+      }
+      this.title = 'Loading…';
+      await AtlasMakerWidget.configureAtlasMaker(BrainBox.info, index);
+      this.ontology = AtlasMakerWidget.ontology;
+      this.currentLabel = 0;
+    },
+
+<<<<<<< HEAD
       /**
              * @todo This is the place where 'position' or 'length' annotations should be added
              */
@@ -473,14 +666,77 @@ $(document).on('keydown', function (e) {
     .removeClass('selected');
   $(table).find('tr:eq(' + index + ')')
     .addClass('selected');
+=======
+    // make sure that all mri files have volume annotations as set in the project info
+    populateVolumeAnnotations(file) {
+      const volumeAnnotations = projectInfo.annotations.list.filter(
+        (anno) => anno.type === 'volume'
+      );
+      let annotationIndex = -1;
+      volumeAnnotations.forEach((annotation) => {
+        annotationIndex = file.mri.atlas.findIndex(
+          (atlas) =>
+            atlas.name === annotation.name &&
+            atlas.project === projectInfo.shortname
+        );
 
-  // remove table with previous annotations
-  $('table#volAnnotations tbody').html('');
+        if (annotationIndex >= 0) {
+          return;
+        }
 
-  // load and bind new file
-  loadProjectFile(index);
-});
+        // If no layer was found, create it
+        const atlas = this.getDefaultAtlas(annotation);
 
+        file.mri.atlas.push(atlas);
+      });
+
+    },
+
+    // make sure that all mri files have text annotations as set in the project info
+    populateTextAnnotations(files) {
+      return files.map((file) => {
+        if (!file.mri) {
+          file.mri = {};
+        }
+        if (!file.mri.annotations) {
+          file.mri.annotations = {};
+        }
+        if (!file.mri.annotations[projectInfo.shortname]) {
+          file.mri.annotations[projectInfo.shortname] = {};
+        }
+
+        const textAnnotations = projectInfo.annotations.list.filter(
+          (annotation) => annotation.type === 'text'
+        );
+        for (let i = 0; i < textAnnotations.length; i++) {
+          const annName = textAnnotations[i].name;
+          if (!file.mri.annotations[projectInfo.shortname][annName]) {
+            var date = new Date();
+            file.mri.annotations[projectInfo.shortname][annName] = {
+              created: date.toJSON(),
+              modified: date.toJSON(),
+              modifiedBy: AtlasMakerWidget.User.username,
+              type: 'text'
+            };
+          }
+        }
+
+        return file;
+      });
+    },
+>>>>>>> de61f64 (New project page)
+
+    // on text annotations value change
+    valueChange(content, index, selector) {
+      const sel = (typeof selector === 'string') ? [index, selector] : [index, ...selector];
+      set(store.files, sel, content);
+    },
+
+    delay(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    },
+
+<<<<<<< HEAD
 // listen to changes in selected volume annotation
 // eslint-disable-next-line max-statements
 $(document).on('click touchstart', '#volAnnotations tbody tr', function (e) {
@@ -502,12 +758,140 @@ $(document).on('click touchstart', '#volAnnotations tbody tr', function (e) {
         && BrainBox.info.mri.atlas[iarr].project === projectInfo.shortname) {
         found = true;
         break;
+=======
+    async handleLayoutChange() {
+      await this.delay(250);
+      AtlasMakerWidget.resizeWindow();
+    },
+
+    handleResize() {
+      AtlasMakerWidget.resizeWindow();
+    },
+
+    sliceChange(slice) {
+      this.title = `Slice ${slice}`;
+      AtlasMakerWidget.changeSlice(slice);
+    },
+
+    changeView(view) {
+      AtlasMakerWidget.changeView(view);
+      this.currentView = view;
+    },
+
+    changeTool(tool) {
+      AtlasMakerWidget.changeTool(tool);
+      this.currentTool = tool;
+    },
+
+    changePenSize(size) {
+      AtlasMakerWidget.changePenSize(size);
+      this.currentPenSize = size;
+    },
+
+    async toggleFullscreen() {
+      this.fullscreen = !this.fullscreen;
+      await this.delay(250);
+      AtlasMakerWidget.resizeWindow();
+    },
+
+    render3D() {
+      AtlasMakerWidget.render3D();
+    },
+
+    toggleChat() {
+      this.displayChat = !this.displayChat;
+      if (this.displayChat) {
+        this.displayScript = false;
+>>>>>>> de61f64 (New project page)
       }
+    },
+
+    toggleScript() {
+      this.displayScript = !this.displayScript;
+      if (this.displayScript) {
+        this.displayChat = false;
+      }
+    },
+
+    link() {
+      AtlasMakerWidget.link();
+    },
+
+    preciseCursor() {
+      AtlasMakerWidget.togglePreciseCursor();
+      this.usePreciseCursor = !this.usePreciseCursor;
+    },
+
+    fill() {
+      this.doFill = !this.doFill;
+      AtlasMakerWidget.toggleFill(this.doFill);
+    },
+
+    undo() {
+      AtlasMakerWidget.sendUndoMessage();
+    },
+
+    upload() {
+      AtlasMakerWidget.upload();
+    },
+
+    download() {
+      AtlasMakerWidget.download();
+    },
+
+    save() {
+      AtlasMakerWidget.sendSaveMessage();
+    },
+
+    toggleOntology() {
+      this.displayOntology = !this.displayOntology;
+    },
+
+    handleOntologyLabelClick(index) {
+      this.displayOntology = false;
+      this.currentLabel = index;
+      AtlasMakerWidget.changePenColor(index);
+    },
+
+    handleNewChatMessages(event) {
+      this.receivedMessages.push(event.detail.message);
+    },
+
+    handleNewNotification(event) {
+      this.notification = event.detail.notification;
+    },
+
+    sendChatMessage(message) {
+      AtlasMakerWidget.sendChatMessage(message);
     }
+<<<<<<< HEAD
     if (found) {
       AtlasMakerWidget.configureAtlasMaker(BrainBox.info, iarr);
     } else {
       console.log('ERROR: A quite unexpected one too...');
     }
+=======
+  },
+
+  compilerOptions: {
+    delimiters: ['[[', ']]']
+>>>>>>> de61f64 (New project page)
   }
-});
+};
+const app = Vue.createApp(PageContents);
+app.component('ProjectPage', ProjectPage);
+app.component('OntologySelector', OntologySelector);
+app.component('Editor', Editor);
+app.component('RangeSlider', RangeSlider);
+app.component('ButtonsGroup', ButtonsGroup);
+app.component('Button', Button);
+app.component('TextAnnotations', TextAnnotations);
+app.component('VolumeAnnotations', VolumeAnnotations);
+app.component('Table', Table);
+app.component('Row', Row);
+app.component('Chat', Chat);
+app.provide('displaySettings', true);
+app.provide('config', config);
+app.provide('user', loggedUser);
+
+app.mount('#app');
