@@ -210,7 +210,6 @@ const me = {
       {name: 'erase', func: me._eraseToolDown},
       {name: 'measure', func: me._measureToolDownHandler},
       {name: 'landmark', func: me._landmarkToolDown},
-      {name: 'adjust', func: me._adjustToolDown},
       {name: 'eyedrop', func: me._eyedropToolDown}
     ];
     for(const tool of arr) {
@@ -366,58 +365,10 @@ const me = {
       me.drawImages();
     });
 
-    /*
-    // Init the toolbar
-
-    // configure and append tools
-    let tools;
-    if(typeof me.useFullTools === 'undefined') {
-      me.useFullTools = true;
-    }
-    if(me.useFullTools) {
-      tools = toolsFull;
-    } else {
-      tools = toolsLight;
-    }
-    me.container.insertAdjacentHTML('beforeend', tools);
-
     // event connect: get keyboard events
     $(document).keydown(function(e) { me.keyDown(e); });
 
-    // event connect: configure annotation tools
-    $('#tools-minimized').click(function() { me.changeToolbarDisplay('maximize'); });
-    me.push($('.push#display-minimize'), function() { me.changeToolbarDisplay('minimize'); });
-    me.push($('.push#display-left'), function() { me.changeToolbarDisplay('left'); });
-    me.push($('.push#display-right'), function() { me.changeToolbarDisplay('right'); });
-    me.slider($('.slider#slice'), function(x) { me.changeSlice(Math.round(x)); });
-    me.chose($('.chose#plane'), me.changeView);
-    me.chose($('.chose#paintTool'), me.changeTool);
-    me.chose($('.chose#penSize'), me.changePenSize);
-    me.toggle($('.toggle#precise'), me.togglePreciseCursor);
-    me.toggle($('.toggle#fill'), me.toggleFill);
-    me.toggle($('.toggle#fullscreen'), me.toggleFullscreen);
-    me.chose3state($('.chose#text'), me.toggleTextInput);
-    me.push($('.push#3drender'), me.render3D);
-    me.push($('.push#link'), me.link);
-    me.push($('.push#upload'), me.upload);
-    me.push($('.push#download'), me.download);
-    me.push($('.push#color'), me.color);
-    me.push($('.push#undo'), me.sendUndoMessage);
-    me.push($('.push#save'), me.sendSaveMessage);
-    me.push($('.push#prev'), me.prevSlice);
-    me.push($('.push#next'), me.nextSlice);
-
-    // event connect: chat message input
-    $('#msg').keypress((e) => { me.onkey(e); });
-
-    $('#tools-minimized').hide();
-
-    // load tools
-    me.loadTools();
-
     // event connect: register click tools
-    */
-
     me._registerAllToolsDown();
     me._registerAllToolsMove();
     me._registerAllToolsUp();

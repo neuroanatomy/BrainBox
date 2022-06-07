@@ -127,12 +127,6 @@ export const AtlasMakerInteraction = {
     case 'Measure':
       me.User.tool = 'measure';
       break;
-    case 'Adjust':
-      me.User.tool = 'adjust';
-      if($('#adjust').length === 0) {
-        me.loadScript('/lib/atlasmaker-tools/adjust.js');
-      }
-      break;
     case 'Eyedrop':
       me.User.tool = 'eyedrop';
       break;
@@ -923,19 +917,6 @@ export const AtlasMakerInteraction = {
   _eraseToolMove: function (x, y) {
     const me = AtlasMakerWidget;
     me.paintxy(-1, 'le', x, y, me.User);
-  },
-
-  _adjustToolDown: function (x, y) {
-    const me = AtlasMakerWidget;
-    me.User.mouseIsDown = true;
-    me.info.x = x/me.brainW;
-    me.info.y = 1-y/me.brainH;
-  },
-  _adjustToolMove: function (x, y) {
-    const me = AtlasMakerWidget;
-    me.info.x = x/me.brainW;
-    me.info.y = 1-y/me.brainH;
-    me.drawImages();
   },
 
   /**

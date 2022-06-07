@@ -444,6 +444,24 @@ BrainBox.initBrainBox()
 =======
       window.addEventListener('newMessage', this.handleNewChatMessages);
       window.addEventListener('newNotification', this.handleNewNotification);
+      document.addEventListener('keydown', function(event) {
+        const selectedTr = document.querySelector('tr.selected');
+        if (!selectedTr) { return; }
+        switch(event.key) {
+        case 'ArrowUp':
+          if (selectedTr.previousElementSibling) {
+            selectedTr.previousElementSibling.click();
+          }
+          break;
+        case 'ArrowDown':
+          if (selectedTr.nextElementSibling) {
+            selectedTr.nextElementSibling.click();
+          }
+          break;
+        default:
+          break;
+        }
+      });
     },
 
     getDefaultAtlas(annotation) {
@@ -787,6 +805,10 @@ $(document).on('click touchstart', '#volAnnotations tbody tr', function (e) {
       AtlasMakerWidget.changeTool(tool);
       this.currentTool = tool;
       this.displayAdjustSettings = false;
+      if(tool === 'Measure') {
+        // remove focus from button
+        document.activeElement.blur();
+      }
     },
 
     changePenSize(size) {
