@@ -9,6 +9,7 @@
 import 'nwl-components/dist/style.css';
 import * as Vue from 'vue';
 import {
+  AdjustSettings,
   Button,
   ButtonsGroup,
   Chat,
@@ -268,12 +269,16 @@ const PageContents = {
       displayOntology: Vue.ref(false),
       displayChat: Vue.ref(true),
       displayScript: Vue.ref(false),
+      displayAdjustSettings: Vue.ref(false),
       currentLabel: Vue.ref(0),
       receivedMessages: Vue.ref([]),
       notification: Vue.ref(''),
       project: projectInfo,
       icons: requireIconsMap(),
       fullscreen: Vue.ref(false),
+      alphaValue: Vue.ref(50),
+      brightnessValue: Vue.ref(50),
+      contrastValue: Vue.ref(50),
       linkPrefix: `${config.baseURL}/mri?url=`,
       // define a map associating annotations keys to value selectors
       // to extract content within the TextAnnotations component
@@ -781,6 +786,7 @@ $(document).on('click touchstart', '#volAnnotations tbody tr', function (e) {
     changeTool(tool) {
       AtlasMakerWidget.changeTool(tool);
       this.currentTool = tool;
+      this.displayAdjustSettings = false;
     },
 
     changePenSize(size) {
@@ -863,6 +869,28 @@ $(document).on('click touchstart', '#volAnnotations tbody tr', function (e) {
 
     sendChatMessage(message) {
       AtlasMakerWidget.sendChatMessage(message);
+    },
+
+    toggleImageSettings() {
+      this.displayAdjustSettings = !this.displayAdjustSettings;
+      this.currentTool = null;
+    },
+
+    changeAlpha(x) {
+      AtlasMakerWidget.alphaLevel = x / 100;
+      AtlasMakerWidget.drawImages();
+    },
+
+    changeBrightness(x) {
+      const b = (2 * x / 100);
+      const c = 2 * this.contrastValue / 100;
+      document.querySelector('#canvas').style.filter = `brightness(${b}) contrast(${c})`;
+    },
+
+    changeContrast(x) {
+      const b = 2 * this.brightnessValue / 100;
+      const c = (2 * x / 100);
+      document.querySelector('#canvas').style.filter = `brightness(${b}) contrast(${c})`;
     }
 <<<<<<< HEAD
     if (found) {
@@ -890,6 +918,7 @@ app.component('VolumeAnnotations', VolumeAnnotations);
 app.component('Table', Table);
 app.component('Row', Row);
 app.component('Chat', Chat);
+app.component('AdjustSettings', AdjustSettings);
 app.provide('displaySettings', true);
 app.provide('config', config);
 app.provide('user', loggedUser);
