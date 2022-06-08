@@ -277,9 +277,9 @@ const PageContents = {
       project: projectInfo,
       icons: requireIconsMap(),
       fullscreen: Vue.ref(false),
-      alphaValue: Vue.ref(50),
-      brightnessValue: Vue.ref(50),
-      contrastValue: Vue.ref(50),
+      alpha: Vue.ref(50),
+      brightness: Vue.ref(50),
+      contrast: Vue.ref(50),
       linkPrefix: `${config.baseURL}/mri?url=`,
       volumeAnnotations: Vue.ref([]),
       // define a map associating annotations keys to value selectors
@@ -446,19 +446,26 @@ BrainBox.initBrainBox()
       window.addEventListener('newMessage', this.handleNewChatMessages);
       window.addEventListener('newNotification', this.handleNewNotification);
 
-      document.addEventListener('keydown', function(event) {
+      document.addEventListener('keydown', (event) => {
         const selectedTr = document.querySelector('tr.selected');
-        if (!selectedTr) { return; }
         switch(event.key) {
         case 'ArrowUp':
+          if (!selectedTr) { return; }
           if (selectedTr.previousElementSibling) {
             selectedTr.previousElementSibling.click();
           }
           break;
         case 'ArrowDown':
+          if (!selectedTr) { return; }
           if (selectedTr.nextElementSibling) {
             selectedTr.nextElementSibling.click();
           }
+          break;
+        case 'ArrowLeft':
+          this.sliceChange(Math.max(0, AtlasMakerWidget.User.slice - 1));
+          break;
+        case 'ArrowRight':
+          this.sliceChange(Math.min(this.totalSlices, AtlasMakerWidget.User.slice + 1));
           break;
         default:
           break;
@@ -795,6 +802,7 @@ $(document).on('click touchstart', '#volAnnotations tbody tr', function (e) {
 
     sliceChange(slice) {
       this.title = `Slice ${slice}`;
+      this.currentSlice = slice;
       AtlasMakerWidget.changeSlice(slice);
     },
 
@@ -907,12 +915,12 @@ $(document).on('click touchstart', '#volAnnotations tbody tr', function (e) {
 
     changeBrightness(x) {
       const b = (2 * x / 100);
-      const c = 2 * this.contrastValue / 100;
+      const c = 2 * this.contrast / 100;
       document.querySelector('#canvas').style.filter = `brightness(${b}) contrast(${c})`;
     },
 
     changeContrast(x) {
-      const b = 2 * this.brightnessValue / 100;
+      const b = 2 * this.brightness / 100;
       const c = (2 * x / 100);
       document.querySelector('#canvas').style.filter = `brightness(${b}) contrast(${c})`;
     }

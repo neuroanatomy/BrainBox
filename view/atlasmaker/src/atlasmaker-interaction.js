@@ -153,8 +153,6 @@ export const AtlasMakerInteraction = {
      */
   changePenColor: function (index) {
     const me = AtlasMakerWidget;
-    const c = me.ontology.labels[index].color;
-    $('#color').css({ backgroundColor:'rgb(' + c[0] + ', ' + c[1] + ', ' + c[2] + ')' });
     me.User.penValue = me.ontology.labels[index].value;
     me.sendUserDataMessage(JSON.stringify({ 'penValue':me.User.penValue }));
   },
@@ -167,41 +165,10 @@ export const AtlasMakerInteraction = {
   changeSlice: function (x) {
     const me = AtlasMakerWidget;
     me.User.slice = x;
+    console.log('change slice', x);
+    console.log('change user slice', me.User.slice);
     me.sendUserDataMessage(JSON.stringify({ 'slice':me.User.slice }));
     me.drawImages();
-  },
-
-  /**
-     * @function prevSlice
-     * @returns {void}
-     */
-  prevSlice: function () {
-    const me = AtlasMakerWidget;
-    let x = $('#slice').data('val')-1;
-    if(x<0) { x = 0; }
-    x = Math.round(x);
-    if(x !== $('#slice').data('val')) {
-      $('#slice').data('val', x);
-      me.changeSlice(x);
-      $('#slice').trigger('updateDisplay');
-    }
-  },
-
-  /**
-     * @function nextSlice
-     * @returns {void}
-     */
-  nextSlice: function () {
-    const me = AtlasMakerWidget;
-    const max = $('#slice').data('max');
-    let x = $('#slice').data('val') + 1;
-    if(x>max) { x = max; }
-    x = Math.round(x);
-    if(x !== $('#slice').data('val')) {
-      $('#slice').data('val', x);
-      me.changeSlice(x);
-      $('#slice').trigger('updateDisplay');
-    }
   },
 
   /**
@@ -693,14 +660,6 @@ export const AtlasMakerInteraction = {
         me.User.measureLength = null;
         me.displayInformation();
       }
-      break;
-    case 37: // left arrow
-      me.prevSlice();
-      e.preventDefault();
-      break;
-    case 39: // right arrow
-      me.nextSlice(this);
-      e.preventDefault();
       break;
     }
   },
