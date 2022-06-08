@@ -733,10 +733,10 @@ export const AtlasMakerWS = {
         doFadeOut: 0
       });
     } else if (dialogType === 'info') {
-      const prevMsg = document.querySelector('#notifications').textContent;
-      document.querySelector('#notifications').textContent = msg;
+      const prevMsg = document.querySelector('.tools .notifications').textContent;
+      me.setNotification(msg);
       setTimeout(function() {
-        document.querySelector('#notifications').textContent = prevMsg;
+        me.setNotification(prevMsg);
       }, 2000);
     } else {
       me.displayDialog({
