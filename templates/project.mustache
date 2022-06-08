@@ -141,11 +141,14 @@
                             </ButtonsGroup>
                         </Row>
                         <Row>
-                            <Chat
-                                v-if="displayChat"
-                                :receivedMessages="receivedMessages"
-                                :notification="notification"
-                                @send-message="sendChatMessage" />
+                            <div class="text">
+                                <Chat
+                                    v-if="displayChat"
+                                    :receivedMessages="receivedMessages"
+                                    :notification="notification"
+                                    @send-message="sendChatMessage" />
+                                <ScriptConsole v-if="displayScript"/>
+                            </div>
                         </Row>
                     </template>
                     <template v-slot:content>
@@ -179,6 +182,14 @@
         left: 0;
         padding: 10px;
         width: 200px;
+    }
+    .text {
+        opacity: 0.5;
+        width: 100%;
+        height: 100%;
+    }
+    .text:hover {
+        opacity: 1;
     }
     </style>
     <script src="/lib/atlasmaker.js"></script>

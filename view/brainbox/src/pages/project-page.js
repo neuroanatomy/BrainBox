@@ -18,6 +18,7 @@ import {
   ProjectPage,
   RangeSlider,
   Row,
+  ScriptConsole,
   Table,
   TextAnnotations,
   VolumeAnnotations
@@ -280,9 +281,9 @@ const PageContents = {
       brightnessValue: Vue.ref(50),
       contrastValue: Vue.ref(50),
       linkPrefix: `${config.baseURL}/mri?url=`,
+      volumeAnnotations: Vue.ref([]),
       // define a map associating annotations keys to value selectors
       // to extract content within the TextAnnotations component
-      volumeAnnotations: Vue.ref([]),
       extractTextKeys: (_files) => {
         if (!_files) {
           return;
@@ -444,6 +445,7 @@ BrainBox.initBrainBox()
 =======
       window.addEventListener('newMessage', this.handleNewChatMessages);
       window.addEventListener('newNotification', this.handleNewNotification);
+
       document.addEventListener('keydown', function(event) {
         const selectedTr = document.querySelector('tr.selected');
         if (!selectedTr) { return; }
@@ -941,6 +943,7 @@ app.component('Table', Table);
 app.component('Row', Row);
 app.component('Chat', Chat);
 app.component('AdjustSettings', AdjustSettings);
+app.component('ScriptConsole', ScriptConsole);
 app.provide('displaySettings', true);
 app.provide('config', config);
 app.provide('user', loggedUser);

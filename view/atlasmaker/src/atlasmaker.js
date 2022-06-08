@@ -335,23 +335,14 @@ const me = {
     me._createOffscreenCanvases();
     me._createOnscreenCanvases(elem);
 
+    // load tools
+    me.loadTools();
+
     // event connect: Configure mouse events for desktop computers
     // (touch events are configured in the initCursor function)
     me.canvas.onmousedown = me.mousedown;
     me.canvas.onmousemove = me.mousemove;
     me.canvas.onmouseup = me.mouseup;
-
-
-    // text input
-    Promise.all([
-      me.loadScript('https://unpkg.com/codeflask/build/codeflask.min.js'),
-      me.loadScript('https://cdn.jsdelivr.net/gh/r03ert0/consolita.js@v0.1.1/consolita.js')
-    ]).then(() => {
-      window.onload = () => {
-        // eslint-disable-next-line no-undef
-        Consolita.init('#logScript');
-      };
-    });
 
     // long-press event
     me.loadScript('https://cdn.jsdelivr.net/gh/john-doherty/long-press-event@2.1.0/dist/long-press-event.min.js')
