@@ -280,7 +280,8 @@ const mri = async function (req, res) {
       $or: [
         { 'files.list': {$eq: myurl }},
         { 'files.list.source': {$eq: myurl }}
-      ]}
+      ],
+      backup: { $exists: 0 }}
     ));
 
     // set access to volume annotations
