@@ -1,8 +1,7 @@
+/* global AtlasMakerWidget toBuffer toArrayBuffer Struct */
 /* eslint-disable max-lines */
 /* eslint-disable camelcase */
 /* eslint-disable new-cap */
-/* global AtlasMakerWidget toBuffer toArrayBuffer Struct $ */
-/*! AtlasMaker: Input/Output */
 import 'structjs';
 import pako from 'pako';
 
@@ -201,8 +200,9 @@ export const AtlasMakerIO = {
     const niigz = me.encodeNifti();
     const niigzBlob = new Blob([niigz]);
 
-    $('a#download_atlas').attr('href', window.URL.createObjectURL(niigzBlob));
-    $('a#download_atlas').attr('download', me.User.atlasFilename);
+    const atlas = document.querySelector('#download_atlas');
+    if (atlas) { atlas.setAttribute('href', window.URL.createObjectURL(niigzBlob)); }
+    atlas.setAttribute('download', me.User.atlasFilename);
   },
 
   swapInt16: function (arr) {

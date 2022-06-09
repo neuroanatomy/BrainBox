@@ -1,7 +1,7 @@
 import { getYjsValue, syncedStore } from '@syncedstore/core';
 import { WebrtcProvider } from 'y-webrtc';
 
-export const initStore = (identifier) => {
+export const initSyncedStore = (identifier) => {
   const store = syncedStore({ files: [], fragment: 'xml' });
 
   // Get the Yjs document and sync automatically using y-webrtc

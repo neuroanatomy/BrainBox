@@ -26,11 +26,12 @@ export const AtlasMakerPaint = {
       switch(c) {
       case 'u':
         if(usr.pointer) {
-          usr.pointer.remove();
+          usr.pointer.parentNode.removeChild(usr.pointer);
           delete usr.pointer;
         }
         break;
       case 'm':
+        const resizable = document.querySelector('#resizable');
         if(!usr.pointer) {
           const div = document.createElement('div');
           const icon = new Image();
@@ -39,10 +40,13 @@ export const AtlasMakerPaint = {
           div.appendChild(icon);
           div.style.cssText = 'display:inline-block;height:20px;margin-left:-10px;margin-top:-10px;position:absolute;color:white';
           div.innerHTML += ((usr.username === 'Anonymous')?u:usr.username);
-          usr.pointer = $(div);
-          $('#resizable').append(usr.pointer); // document.getElementById("resizable").appendChild(div);
+          usr.pointer = div;
+          resizable.appendChild(usr.pointer);
         }
-        usr.pointer.css({left:x*$('#resizable').width()/me.brainW, top:y*$('#resizable').height()/me.brainH});
+        const resizableWidth = parseFloat(getComputedStyle(resizable, null).width.replace('px', ''));
+        const resizableHeight = parseFloat(getComputedStyle(resizable, null).height.replace('px', ''));
+        usr.pointer.style.left = (x*resizableWidth/me.brainW) + 'px';
+        usr.pointer.style.top = (y*resizableHeight/me.brainH) + 'px';
         break;
       }
     }
@@ -87,6 +91,7 @@ export const AtlasMakerPaint = {
         }
       } else {
         if(!usr.pointer) {
+          const resizable = document.querySelector('#resizable');
           const div = document.createElement('div');
           const icon = new Image();
           icon.src = showIcon;
@@ -94,18 +99,14 @@ export const AtlasMakerPaint = {
           div.appendChild(icon);
           div.style.cssText = 'display:inline-block;height:20px;margin-left:-10px;margin-top:-10px;position:absolute;color:white';
           div.innerHTML += ((usr.username === 'Anonymous')?u:usr.username);
-          usr.pointer = $(div);
-          $('#resizable').append(usr.pointer); // document.getElementById("resizable").appendChild(div);
+          usr.pointer = div;
+          resizable.appendChild(usr.pointer); // document.getElementById("resizable").appendChild(div);
 
-          // usr.pointer = $([
-          //     '<div style="display:inline-block;height:20px;margin-left:-10px;margin-top:-10px;position:absolute;color:white">',
-          //     '<img src="' + me.hostname + './svg/show.svg" height="100%"/>',
-          //     ((usr.username === 'Anonymous')?u:usr.username),
-          //     '</div>'
-          //     ].join(''));
-          // $("#resizable").append(usr.pointer);
         }
-        usr.pointer.css({left:x*$('#resizable').width()/me.brainW, top:y*$('#resizable').height()/me.brainH});
+        const resizableWidth = parseFloat(getComputedStyle(resizable, null).width.replace('px', ''));
+        const resizableHeight = parseFloat(getComputedStyle(resizable, null).height.replace('px', ''));
+        usr.pointer.style.left = (x*resizableWidth/me.brainW) + 'px';
+        usr.pointer.style.top = (y*resizableHeight/me.brainH) + 'px';
       }
     }
     const val = usr.penValue;

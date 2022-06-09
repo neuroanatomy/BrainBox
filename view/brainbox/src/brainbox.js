@@ -8,7 +8,7 @@
  * @brief Real-time collaboration in neuroimaging
  */
 
-import * as tw from './twoWayBinding.js';
+import { AtlasMakerWidget } from '../../atlasmaker/src/atlasmaker';
 import Config from './../../../cfg.json';
 
 // var hashOld;
@@ -108,8 +108,7 @@ export const BrainBox = {
           reject(err);
         });
 
-      // store state on exit
-      $(window).on('unload', BrainBox.unload);
+      window.addEventListener( 'unload', BrainBox.unload);
     });
 
     return pr;
@@ -130,15 +129,13 @@ export const BrainBox = {
 
       // Configure MRI into atlasmaker
       if (param.info.success === false) {
-        $('#msgLog').append('<p>ERROR: ' + param.info.message + '.');
+        AtlasMakerWidget.appendChatMessage('<p>ERROR: ' + param.info.message + '.');
         console.log('<p>ERROR: ' + param.info.message + '.');
         reject(new Error(param.info.message));
 
         return;
       }
       BrainBox.info = param.info;
-
-      $('#msgLog').append('<p>Downloading from server...</p>');
 
       /**
             * @todo Check it these two lines are of any use...
@@ -463,82 +460,12 @@ export const BrainBox = {
      * @returns {object} A promise
      */
   loadLabelsets: function loadLabelsets() {
-    return $.getJSON(BrainBox.hostname + '/api/getLabelsets', function (data) {
-      BrainBox.labelSets = data;
 
-      /*
-                If we wanted to filter out the location, we would use:
-                BrainBox.labelSets=$.map(data,function(o){return new URL(o.source).pathname});
-            */
+    /*
+    return $.getJSON(BrainBox.hostname + '/api/getLabelsets', function(data) {
+      BrainBox.labelSets=data;
     });
-  },
-
-  /**
-     * @function widget
-     * @param {object} param Widget configuration parameters
-     * @returns {object} A promise
-     */
-  widget: function widget(param) {
-    AtlasMakerWidget.useFullTools = false;
-
-    const pr = BrainBox.initBrainBox()
-      .then(function () { return BrainBox.loadLabelsets(); })
-      .then(function () {
-        return $.get({
-          url: BrainBox.hostname + '/mri/json',
-          data: {
-            url: param.url,
-            download: true
-          }
-        });
-      })
-      .then(function (mriInfo) {
-        param.info = mriInfo;
-        const { mri } = mriInfo;
-        let i;
-
-        // if the brain has not been downloaded, mriInfo only contains a url
-        // (this url is later used to trigger the file download)
-        // if the brain has been downloaded, all the other fields are available,
-        // in particular, the `mri` field. In this case, and if the widget aims
-        // at loading a specific atlas, this choice can be enforced.
-
-        if (mri && mri.atlas) {
-          for (i = 0; i < mri.atlas.length; i++) {
-            if (param.project
-              && param.annotation
-              && mri.atlas[i].project === param.project
-              && mri.atlas[i].name === param.annotation) {
-              param.annotationItemIndex = i;
-              break;
-            }
-          }
-        }
-
-        $('#atlasmaker').append([
-          `<a href="${BrainBox.hostname}/mri?url=${param.url}">`,
-          '<div style="',
-          'position:absolute;',
-          'top:5px;',
-          'right:5px;',
-          'width:48px;',
-          'height:48px;',
-          'background-color:#222;',
-          'border:thin solid #555;',
-          'border-radius:32px;',
-          'box-shadow: 0px 0px 10px 1px #000;',
-          'z-index:10">',
-          `<img style="width:32px;position: absolute;left:50%;top:50%;transform:translate(-50%, -50%)" src="${BrainBox.hostname}/img/brainbox-logo-small_noFont.svg"/>`,
-          '</div>',
-          '</a>'
-        ].join(''));
-
-        return BrainBox.configureBrainBox(param);
-      })
-      .catch((err) => {
-        console.log('ERROR', err);
-      });
-
-    return pr;
+    */
   }
+
 };

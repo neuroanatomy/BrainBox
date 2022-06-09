@@ -47,14 +47,14 @@ export const AtlasMakerWS = {
       }
 
       if (me.debug) { console.log('[initSocketConnection] host:', host); }
-      if (me.progress) { me.progress.html('Connecting...'); }
+      if (me.progress) { me.progress.innerHTML = 'Connecting...'; }
 
       try {
         me.socket = me.createSocket(host);
 
         me.socket.onopen = function (msg) {
           if (me.debug) { console.log('[initSocketConnection] connection open', msg); }
-          me.progress.html('<img src=\'' + me.hostname + '/img/download.svg\' style=\'vertical-align:middle\'/>MRI');
+          if (me.progress) { me.progress.innerHTML = '<img src=\'' + me.hostname + '/img/download.svg\' style=\'vertical-align:middle\'/>MRI'; }
           me.setNotification('Chat (1 connected)');
           me.flagConnected = 1;
           me.reconnectionTimeout = 5;
@@ -256,7 +256,7 @@ export const AtlasMakerWS = {
           }
 
           // remove loading indicator
-          $('#loadingIndicator').hide();
+          me.sendFinishedLoadingEvent();
         };
         img.src = imageUrl;
 
@@ -283,7 +283,7 @@ export const AtlasMakerWS = {
     if (typeof me.Collab[u] === 'undefined') {
       try {
         //var    msg="<b>"+data.user.username+"</b> entered atlas "+data.user.specimenName+"/"+data.user.atlasFilename+"<br />"
-        var msg;
+        let msg;
         if (typeof data.user === 'undefined' || data.user.username === 'Anonymous') {
           msg = '<b>' + data.uid + '</b> entered';
         } else {
@@ -330,9 +330,9 @@ export const AtlasMakerWS = {
     * @returns {void}
     */
   sendChatMessage: function (message) {
-    var me = AtlasMakerWidget;
+    const me = AtlasMakerWidget;
     if (me.flagConnected === 0) { return; }
-    var msg = DOMPurify.sanitize(message);
+    let msg = DOMPurify.sanitize(message);
     try {
       me.socket.send(JSON.stringify({ 'type': 'chat', 'msg': msg, 'username': me.User.username }));
       msg = '<b>me: </b>' + msg;
@@ -658,15 +658,9 @@ export const AtlasMakerWS = {
     let msg;
     if(me.Collab[uid]) {
       if(typeof me.Collab[uid].username === 'undefined' || me.Collab[uid].username === 'Anonymous') {
-<<<<<<< HEAD
         msg = '<b>'+me.Collab[uid].uid+'</b> left<br />';
       } else {
         msg = '<b>'+me.Collab[uid].username+'</b> left<br />';
-=======
-        msg = '<b>'+me.Collab[uid].uid+'</b> left';
-      } else {
-        msg = '<b>'+me.Collab[uid].username+'</b> left';
->>>>>>> de61f64 (New project page)
       }
     } else {
       msg='<b>'+uid+'</b> left<br />';
@@ -771,7 +765,7 @@ export const AtlasMakerWS = {
    * @param {string} value The value
    * @returns {void}
    */
-  logToDatabase: function (key, value) {
+  logToDatabase(key, value) {
     return new Promise(function(resolve, reject) {
       const me = AtlasMakerWidget;
       $.ajax({

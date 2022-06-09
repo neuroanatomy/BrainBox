@@ -1,4 +1,4 @@
-/*global AtlasMakerWidget $*/
+/*global AtlasMakerWidget */
 /*! AtlasMaker: Image Drawing */
 
 /**

@@ -49,7 +49,10 @@ loadScript("/lib/three.min.js")
                 console.log("Worker finished");
                 var g=e.data.geometry;
                 createMesh(g);
-                $("#splash").remove();
+                const splash = document.querySelector('#splash');
+                if (splash) {
+                    splash.parentNode.removeChild(splash);
+                }
                 console.log("animate");
                 animate();
                 break;
@@ -91,7 +94,13 @@ loadScript("/lib/three.min.js")
 });
 
 // "wait" animation
-var dot=0;setInterval(function(){if($("#dot"))$("#dot").css({marginLeft:50*(1+Math.sin(dot))+"%"});dot+=0.1},33);
+let dot = 0;
+const dotEl = document.querySelector('#dot');
+setInterval(function() {
+    dotEl.style.marginLeft= 50*(1+Math.sin(dot))+'%';
+    dot += 0.1;
+}, 33);
+
 
 function loadScript(script) {
     const pr = new Promise((resolve, reject) => {

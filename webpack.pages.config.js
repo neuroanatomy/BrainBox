@@ -3,6 +3,7 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 // const WebpackShellPlugin = require('webpack-shell-plugin');
+const { VueLoaderPlugin } = require('vue-loader');
 
 module.exports = (env, argv) => ({
   entry: {
@@ -20,7 +21,8 @@ module.exports = (env, argv) => ({
     new CleanWebpackPlugin(['dist']),
     new HtmlWebpackPlugin({
       title: 'Output Management'
-    })
+    }),
+    new VueLoaderPlugin()
   ],
   output: {
     filename: '[name].js',
@@ -38,17 +40,16 @@ module.exports = (env, argv) => ({
       {
         test: /\.(png|svg|jpg|gif)$/,
         use: ['file-loader']
+      },
+      {
+        test: /\.vue$/,
+        loader: 'vue-loader'
       }
     ]
   },
   resolve: {
     symlinks: false,
     alias: {
-      // for now using the browser build to parse existing inlined components
-      vue: path.resolve(
-        `./node_modules/vue/dist/vue.esm-browser${argv.mode === 'production' ? '.prod' : ''
-        }`
-      )
     }
   }
 });
