@@ -112,50 +112,50 @@ describe('TESTING PERMISSIONS', function () {
   describe('Test specific edit / add / remove permissions of logged users', function() {
 
     const projects = {};
-    const setupProjectWithAccess = (access, name) => {
+    const setupProjectWithAccess = function (access, name) {
       const project = U.createProjectWithPermission(name, access);
       projects[project.name] = project;
-      U.insertProject(project);
+
+      return U.insertProject(project);
     };
 
-    before(function () {
-      ['none', 'view'].forEach((access) => {
-        setupProjectWithAccess(
+    before(async function () {
+      await Promise.all(['none', 'view'].map((acs) => (async function (access) {
+        await setupProjectWithAccess(
           { collaborators: access, files: 'edit' },
           `collaborators${access}filesedit`
         );
-        setupProjectWithAccess(
+        await setupProjectWithAccess(
           { collaborators: 'edit', files: access },
           `collaboratorseditfiles${access}`
         );
-      });
-      ['edit', 'add', 'remove'].forEach((access) => {
-        setupProjectWithAccess(
+      }(acs))));
+      await Promise.all(['edit', 'add', 'remove'].map((acs) => (async function (access) {
+        await setupProjectWithAccess(
           { collaborators: access, files: 'none' },
           `collaborators${access}filesnone`
         );
-        setupProjectWithAccess(
+        await setupProjectWithAccess(
           { collaborators: access, files: 'edit' },
           `collaborators${access}filesedit`
         );
-        setupProjectWithAccess(
+        await setupProjectWithAccess(
           { collaborators: 'edit', files: access },
           `collaboratorseditfiles${access}`
         );
-      });
-      ['none', 'view', 'add', 'edit', 'remove'].forEach((access) => {
-        setupProjectWithAccess(
+      }(acs))));
+      await Promise.all(['none', 'view', 'add', 'edit', 'remove'].map((acs) => (async function (access) {
+        await setupProjectWithAccess(
           { collaborators: 'edit', files: 'edit', annotations: access },
           `collaboratorseditfileseditannotations${access}`
         );
-      });
-
+      }(acs))));
     });
 
-    after(function() {
-      Object.keys(projects).forEach((shortname) => {
-        U.removeProject(shortname);
-      });
+    after(async function() {
+      await Promise.all(Object.keys(projects).map((shortname) =>
+        U.removeProject(shortname)
+      ));
 
     });
 
@@ -477,7 +477,7 @@ describe('TESTING PERMISSIONS', function () {
       it(`Checks that collaborators cannot remove project files if set to add (${userStatus})`, async function() {
         let project = U.createProjectWithPermission('permissionTest', { files: 'add' });
         projects.permissionTest = project;
-        U.insertProject(project);
+        await U.insertProject(project);
 
         const initialProjectState = _.cloneDeep(project);
         project = _.cloneDeep(project);

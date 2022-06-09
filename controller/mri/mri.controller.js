@@ -11,6 +11,8 @@ const dataSlices = require('../dataSlices/dataSlices.js');
 const { AccessType, AccessLevel } = require('neuroweblab');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 const _ = require('lodash');
+const AsyncLock = require('async-lock');
+const lock = new AsyncLock();
 
 const downloadQueue = {};
 let atlasmakerServer;
@@ -92,20 +94,20 @@ const validatorPost = function (req, res, next) {
 --------------------- */
 // @todo Change this function callback into a promise
 // eslint-disable-next-line max-statements
-const downloadMRI = async function(myurl, req) {
+const downloadMRI = async function (myurl, req) {
   console.log('downloadMRI');
   const hash = crypto
     .createHash('md5')
     .update(myurl)
     .digest('hex');
 
-  const mridb = await req.db.get('mri').findOne({source: myurl, backup: {$exists: 0}});
+  const mridb = await req.db.get('mri').findOne({ source: myurl, backup: { $exists: 0 } });
   console.log('mridb:', mridb);
   let filename;
   if (!mridb || !mridb.filename) {
     filename = sanitize(url.parse(myurl).pathname.split('/').pop());
   } else {
-    ({filename} = mridb);
+    ({ filename } = mridb);
   }
   let dest = req.dirname + '/public/data/' + hash + '/' + filename;
   console.log('   source:', myurl);
@@ -122,7 +124,7 @@ const downloadMRI = async function(myurl, req) {
   let cur = 0;
 
   return new Promise(function (resolve, reject) {
-    request({uri: myurl, followAllRedirects: true, rejectUnauthorized : false})
+    request({ uri: myurl, followAllRedirects: true, rejectUnauthorized: false })
       .on('error', (err) => {
         console.log('ERROR in downloadMRI', err);
         reject(err);
@@ -162,7 +164,7 @@ const downloadMRI = async function(myurl, req) {
           .then((mri) => {
             // Create json file for new dataset
             let ip = '';
-            if(typeof req.headers['x-forwarded-for'] !== 'undefined') {
+            if (typeof req.headers['x-forwarded-for'] !== 'undefined') {
               ip = req.headers['x-forwarded-for'];
             } else if (req.connection.remoteAddress !== 'undefined') {
               ip = req.connection.remoteAddress;
@@ -173,8 +175,8 @@ const downloadMRI = async function(myurl, req) {
             }
 
             let username;
-            if(req.isAuthenticated()) {
-              ({username} = req.user);
+            if (req.isAuthenticated()) {
+              ({ username } = req.user);
             } else {
               username = ip;
             }
@@ -325,7 +327,7 @@ const apiMriPost = async function (req, res) {
   try {
     // eslint-disable-next-line no-new
     new URL(myurl);
-  } catch(err) {
+  } catch (err) {
     res.send('Invalid URL!');
 
     return;
@@ -413,7 +415,10 @@ const apiMriPost = async function (req, res) {
         console.log('Download succeeded. Insert in DB, remove from queue');
         obj.success = true;
 
-        return req.db.get('mri').insert(obj);
+        return lock.acquire('mri', async function () {
+          await req.db.get('mri').update({ source: myurl }, { $set: { backup: true } }, { multi: true });
+          await req.db.get('mri').insert(obj);
+        });
       })
         .then(() => {
           // downloadQueue[myurl] = obj;
@@ -568,7 +573,7 @@ const apiMriGet = async function (req, res) {
 };
 
 // eslint-disable-next-line func-style
-const reset = async function reset(req, res) {
+const reset = async function reset (req, res) {
   const myurl = req.query.url;
   const hash = crypto.createHash('md5').update(myurl)
     .digest('hex');
@@ -583,7 +588,7 @@ const reset = async function reset(req, res) {
     });
   console.log(mridb);
   let filename;
-  if (mridb) { ({filename} = mridb); }
+  if (mridb) { ({ filename } = mridb); }
   const mrires = await atlasmakerServer.getBrainAtPath('/data/' + hash + '/' + filename)
     .catch((err) => {
       console.log('ERROR:', err);
