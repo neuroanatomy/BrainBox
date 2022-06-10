@@ -48,7 +48,7 @@ module.exports = class BrainboxAccessControlService extends AccessControlService
     }
 
     const filteredAtlas = atlas.map((a) => {
-      const project = projects.find((p) => p.shortname === a.project);
+      const project = projects.filter(_.isObject).find((p) => p.shortname === a.project);
       if (_.isNil(project)) {
         return a;
       }
