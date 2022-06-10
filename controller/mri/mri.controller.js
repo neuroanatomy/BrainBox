@@ -292,11 +292,6 @@ const mri = async function (req, res) {
 
     const isPubliclyVisible = projects.some((project) => BrainboxAccessControlService.canViewFiles(project, 'anyone'));
     const hasCustomViewAccess = BrainboxAccessControlService.hasAccesstoFileIfAllowedBySomeProjects(json, projects, loggedUser, AccessLevel.VIEW);
-    if (!isPubliclyVisible && !hasCustomViewAccess) {
-      res.status(403).send('Authorization required');
-
-      return;
-    }
 
     // Send data
     res.render('mri', {
