@@ -13,7 +13,11 @@ module.exports = class BrainboxAccessControlService extends AccessControlService
      * @returns {boolean} True if the user does have access to the MRI
      */
   static hasAccesstoFileIfAllowedByAllProjects(mri, projects, user, requestedAccessLevel) {
-    const projectsContainingFile = projects.filter((project) => project.files.list.indexOf(mri.source)>=0);
+    const projectsContainingFile = projects.filter(
+      (project) =>
+        project.files.list.indexOf(mri.source) >= 0 ||
+        project.files.list.map((file) => file.source).indexOf(mri.source) >= 0
+    );
 
     return projectsContainingFile.every((p) => super.hasFilesAccess(requestedAccessLevel, p, user));
   }
@@ -28,7 +32,11 @@ module.exports = class BrainboxAccessControlService extends AccessControlService
      * @returns {boolean} True if the user does have access to the MRI
      */
   static hasAccesstoFileIfAllowedBySomeProjects(mri, projects, user, requestedAccessLevel) {
-    const projectsContainingFile = projects.filter((project) => project.files.list.indexOf(mri.source)>=0);
+    const projectsContainingFile = projects.filter(
+      (project) =>
+        project.files.list.indexOf(mri.source) >= 0 ||
+        project.files.list.map((file) => file.source).indexOf(mri.source) >= 0
+    );
 
     return projectsContainingFile.some((p) => super.hasFilesAccess(requestedAccessLevel, p, user));
   }
