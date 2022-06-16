@@ -41,7 +41,7 @@ const getUserFilesSlice = function getUserFilesSlice(req, requestedUser, start, 
 
         // filter for view access
         for(const umri of unfilteredMRI) {
-          if(BrainboxAccessControlService.hasAccesstoFileIfAllowedByAllProjects(umri, unfilteredProjects, loggedUser, AccessLevel.VIEW)) {
+          if(BrainboxAccessControlService.hasAccesstoFileIfAllowedBySomeProjects(umri, unfilteredProjects, loggedUser, AccessLevel.VIEW)) {
             mri.push(umri);
           }
         }
@@ -106,7 +106,7 @@ const getUserAtlasSlice = function getUserAtlasSlice(req, requestedUser, start, 
 
         // filter for view access
         for(const ua of unfilteredAtlas) {
-          if(BrainboxAccessControlService.hasAccesstoFileIfAllowedByAllProjects(ua, unfilteredProjects, loggedUser, AccessLevel.VIEW)) {
+          if(BrainboxAccessControlService.hasAccesstoFileIfAllowedBySomeProjects(ua, unfilteredProjects, loggedUser, AccessLevel.VIEW)) {
             atlas.push(ua);
           }
         }
@@ -301,7 +301,7 @@ const getFilesSlice = function getFilesSlice(req, start, length) {
 
         // filter for view access
         for(i=0; i<unfilteredMRI.length; i++) {
-          if(BrainboxAccessControlService.hasAccesstoFileIfAllowedByAllProjects(unfilteredMRI[i], unfilteredProjects, loggedUser, AccessLevel.VIEW)) {
+          if(BrainboxAccessControlService.hasAccesstoFileIfAllowedBySomeProjects(unfilteredMRI[i], unfilteredProjects, loggedUser, AccessLevel.VIEW)) {
             mri.push(unfilteredMRI[i]);
           }
         }

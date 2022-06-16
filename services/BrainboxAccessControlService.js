@@ -5,21 +5,6 @@ module.exports = class BrainboxAccessControlService extends AccessControlService
 
   /**
      * Check the access a user has to an MRI file based on a list of projects. The MRI
-     * file is only accessible if all projects allow it.
-     * @param {Object} mri The file, which is an MRI object from the db
-     * @param {Array} projects Array of project objects relevant to the access decision
-     * @param {Object} user The user whose access is being decided
-     * @param {AccessLevel} requestedAccessLevel The access level requested
-     * @returns {boolean} True if the user does have access to the MRI
-     */
-  static hasAccesstoFileIfAllowedByAllProjects(mri, projects, user, requestedAccessLevel) {
-    const projectsContainingFile = projects.filter((project) => project.files.list.indexOf(mri.source)>=0);
-
-    return projectsContainingFile.every((p) => super.hasFilesAccess(requestedAccessLevel, p, user));
-  }
-
-  /**
-     * Check the access a user has to an MRI file based on a list of projects. The MRI
      * file is only accessible if some projects allow it.
      * @param {Object} mri The file, which is an MRI object from the db
      * @param {Array} projects Array of project objects relevant to the access decision
@@ -28,7 +13,11 @@ module.exports = class BrainboxAccessControlService extends AccessControlService
      * @returns {boolean} True if the user does have access to the MRI
      */
   static hasAccesstoFileIfAllowedBySomeProjects(mri, projects, user, requestedAccessLevel) {
-    const projectsContainingFile = projects.filter((project) => project.files.list.indexOf(mri.source)>=0);
+    const projectsContainingFile = projects.filter(
+      (project) =>
+        project.files.list.indexOf(mri.source) >= 0 ||
+        project.files.list.map((file) => file.source).indexOf(mri.source) >= 0
+    );
 
     return projectsContainingFile.some((p) => super.hasFilesAccess(requestedAccessLevel, p, user));
   }
@@ -48,7 +37,7 @@ module.exports = class BrainboxAccessControlService extends AccessControlService
     }
 
     const filteredAtlas = atlas.map((a) => {
-      const project = projects.find((p) => p.shortname === a.project);
+      const project = projects.filter(_.isObject).find((p) => p.shortname === a.project);
       if (_.isNil(project)) {
         return a;
       }

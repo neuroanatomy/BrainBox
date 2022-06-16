@@ -280,10 +280,10 @@ const mri = async function (req, res) {
     // also query projects that set this MRI as a source
     projects.push(...await req.db.get('project').find({
       $or: [
-        { 'files.list': { $eq: myurl } },
-        { 'files.list.source': { $eq: myurl } }
-      ]
-    }
+        { 'files.list': {$eq: myurl }},
+        { 'files.list.source': {$eq: myurl }}
+      ],
+      backup: { $exists: 0 }}
     ));
 
     // set access to volume annotations
@@ -292,11 +292,6 @@ const mri = async function (req, res) {
 
     const isPubliclyVisible = projects.some((project) => BrainboxAccessControlService.canViewFiles(project, 'anyone'));
     const hasCustomViewAccess = BrainboxAccessControlService.hasAccesstoFileIfAllowedBySomeProjects(json, projects, loggedUser, AccessLevel.VIEW);
-    if (!isPubliclyVisible && !hasCustomViewAccess) {
-      res.status(403).send('Authorization required');
-
-      return;
-    }
 
     // Send data
     res.render('mri', {

@@ -2,7 +2,7 @@
 'use strict';
 
 const chai = require('chai');
-var {assert, expect} = chai;
+const {assert, expect} = chai;
 const chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 const U = require('../utils.js');
@@ -72,6 +72,33 @@ describe('TESTING PERMISSIONS', function () {
   };
 
   describe('Test basic unprivileged access', function() {
+
+    describe('Disallow seeing private project annotations on MRI pages', function() {
+      let browser, page;
+
+      before(async () => {
+        const project = U.createProjectWithPermission('testwithprivateannotation', { files: 'none' });
+        project.files.list = [{ source: U.serverURL + '/test_data/bert_brain.nii.gz', name: 'Bert'}];
+        project.collaborators.list.find((c) => c.userID === 'anyone').access.files = 'none';
+        await U.insertProject(project);
+
+        browser = await puppeteer.launch({ headless: true, ignoreHTTPSErrors: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+        page = await browser.newPage();
+      });
+
+      it('Do not let see private annotations on a MRI page', async () => {
+        const response = await page.goto(`${U.serverURL}/mri?file=${U.serverURL}/test_data/bert_brain.nii.gz`);
+        assert.equal(response.status(), 200);
+        await page.waitForSelector('#annotations');
+        const annotationsTableLength = (await page.$$('#annotations tbody tr')).length;
+        assert.equal(annotationsTableLength, 0);
+      });
+
+      after(() => {
+        browser.close();
+        U.removeProject('testwithprivateannotation');
+      });
+    });
 
     ['unlogged', 'logged'].forEach((userStatus) => {
 
