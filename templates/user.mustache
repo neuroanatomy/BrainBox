@@ -11,74 +11,12 @@
 
 <body>
 
-<script type="text/html" id="template">
-<UserPage :user='{{{userInfo}}}'>
-    <template v-slot:side>
-        [[projects.length]] Projects
-    </template>
-    <template v-slot:content>
-        <Tabs>
-            <Tab title="Projects">
-                <Table id="projects">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Files</th>
-                            <th>Collaborators</th>
-                            <th>Owner</th>
-                            <th>Last modified</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    <tr v-for="project in projects">
-                        <td>
-                            <a :href="`${project.projectURL}/settings`" class="settings">
-                                <img style="width:11px; margin:3px 8px 0 0" src="/img/settings.svg"/>
-                            </a>
-                            <a :href="project.projectURL">
-                                [[project.project]]
-                            </a>
-                        </td>
-                        <td>[[project.numFiles]]</td>
-                        <td>[[project.numCollaborators]]</td>
-                        <td>
-                            <a :href="`/user/${project.owner}`">
-                                [[project.owner]]
-                            </a>
-                        </td>
-                        <td>[[project.modified]]</td>
-                    </tr>
-                    </tbody>
-                </Table>
-            </Tab>
-        </Tabs>
-    </template>
-</UserPage>
-</script>
-<style>
-#projects {
-    table-layout: auto;
-}
-#projects td {
-    padding: 0 4px;
-}
-#projects a {
-    text-decoration: none;
-}
-.settings {
-    opacity: 0.5;
-    transition: opacity 500ms;
-}
-.settings:hover {
-    opacity: 1;
-}
-</style>
-
 <div id="app"></div>
 
 <script>
 const nickname = '{{nickname}}';
 const loggedUser = {{{loggedUser}}};
+const user = {{{userInfo}}};
 </script>
 <script src='/js/user-page.js'></script>
 <script>

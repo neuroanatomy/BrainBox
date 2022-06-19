@@ -15,136 +15,18 @@
 
 <body>
 
-<div style="width:100%;height:100%;display:flex;flex-direction:column">
-    
-    <!-- Header (fixed height) -->
-    <div style="flex:0 0 64px">
-        <!-- Top-right menu bar -->
-        <div id="menu">
-            <img id="addProject" class="button" title="add project" alt="add project" src="/img/plus.svg"/>
-            <a href="https://openneurolab.github.io/metasearch" target="_blank"><img id="search" class="button" title="search" alt="search" src="/img/search.svg"/></a>
-            <img id="doc" class="button" title="documentation" alt="documentation" src="/img/doc.svg"/>
-            <a href="https://github.com/neuroanatomy/BrainBox/issues/new" target="_blank"><img id="bug" class="button" title="report a bug" alt="report a bug" src="/img/bug.svg"/></a>
-            <a href="https://github.com/neuroanatomy/BrainBox" target="_blank"><img id="github" class="button" title="join our github project" alt="join our github project" style="width:15px;height:15px" src="/img/github.svg"/></a>
-            <div id="MyLogin">
-                <span>{{{login}}}</span>
-            </div>
-        </div>
-
-        <!-- Small left-top logo -->
-        <div style="display:inline-block;margin:10px">
-            <a href="/" style="text-decoration:none">
-                <img style="height:56px;vertical-align:middle" src="/img/brainbox-logo-small_noFont.svg" alt="brainbox logo"/>
-            </a><span style="font-family: Roboto, sans-serif; font-size: 36px; font-weight:100;vertical-align:middle" id="fontLogo"> 
-                <a href="/" style="font-family: Roboto, sans-serif; font-size: 36px; font-weight:100; text-decoration:none">BrainBox</a>
-            </span>
-        </div>
-    </div>
-    
-    <!-- Content (variable height) -->
-    <div style="flex:1 0 auto">
-        <!-- Data -->
-        <div id="data">		
-            <!-- Data Flex -->
-            <div id="content" style="display:flex;justify-content:center">
-                    <!-- Annotations -->
-                    <div style="flex:0 1 auto">
-                        {{#hasPrivilegedAccess}}
-                            <div id="privilegedAccessInfo">You are seeing this private MRI because you were added as a collaborator with access to files. Share with caution.</div>
-                        {{/hasPrivilegedAccess}}
-                        <div id="annotationsPane">
-                            <table>
-                                <tr>
-                                <th><b>Name</b></th>
-                                <td><span id="name" class="noEmpty"></span></td>
-                                </tr>
-                            
-                                <tr>
-                                <th><b>Data&nbsp;source</b></th>
-                                <td><span id="source" style="word-break:break-all"></span></td>
-                                </tr>
-                            
-                                <tr>
-                                <th><b>Inclusion&nbsp;date</b></th>
-                                <td><span id="included"></span></td>
-                                </tr>
-                            </table>
-
-                            <br/>
-                        
-                            <b>Volume Annotations</b><br/>
-                            <table id="annotations" class="tabContent">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Value</th>
-                                    <th>Project</th>
-                                    <th>Modified</th>
-                                    <th style="width:80px">Access</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                            </table>
-                            <br />
-
-                            <b>Text Annotations</b><br/>
-                            <table id="textAnnotations" class="tabContent">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Value</th>
-                                    <th>Project</th>
-                                    <th>Modified</th>
-                                    <th style="width:80px">Access</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                            </table>
-
-                        </div>
-                    </div>
-                    <!-- end of Annotations -->
-
-                    <!-- AtlasMaker -->
-                    <div style="flex:0 0 auto;position:relative">
-                        <!-- AtlasMaker -->
-                        <div id="stereotaxic" style="display:inline-block">
-                        </div>
-                        <!-- End AtlasMaker -->
-                    </div>
-            </div>
-            <!-- End Data Flex -->
-        </div>
-        <!-- End Data -->
-
-    </div>
-    <!-- End Content -->
-    
-    <!-- Space (fixed height) -->
-    <div style="flex:0 0 50px">
-    </div>
-
-    <!-- Footer (fixed height) -->
-    <div style="flex:0 0 100px;background-color:#000">
-        <p style="width:100%;font-size:small;text-align:center"> 
-            <a target="_blank" href="http://neuroanatomy.github.io">
-                <img title="naat logo" alt="naat logo" src="img/naat-bw.svg" style="width:28px;height:28px;margin-right:4px;display:inline-block;vertical-align:middle"/></a>
-            <a target="_blank" href="http://neuroanatomy.github.io" class="linkNoULine">
-                groupe de neuroanatomie appliquée et théorique
-            </a>
-        </p>
-    </div>
-</div>
+<div id="app"></div>
 
 <script>
-var params = {{{params}}};
-var mriInfo = {{{mriInfo}}};
-const infoProxy = {};
+const params = {{{params}}};
+const mriInfo = {{{mriInfo}}};
+const loggedUser = {};
 </script>
 <script src="/lib/atlasmaker.js"></script>
 <script src="/lib/brainbox.js"></script>
 <script src="/js/mri-page.js"></script>
 <script>
+/* FIXME
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
     (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
     m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
@@ -152,6 +34,7 @@ const infoProxy = {};
 
     ga('create', 'UA-50078058-2', 'auto');
     ga('send', 'pageview');
+*/
 </script>
 
 </body>

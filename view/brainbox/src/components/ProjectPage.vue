@@ -62,7 +62,6 @@ import {
   VolumeAnnotations,
 } from "nwl-components";
 import * as Vue from "vue";
-import { defineProps } from "vue";
 
 const { annotationsAccessLevel, BrainBox, AtlasMakerWidget } = window;
 const { store, webrtcProvider, doc } = initSyncedStore(projectInfo.shortname);
@@ -86,8 +85,6 @@ doc.getArray("files").observe(() => {
 
 const {
   title,
-  notification,
-  receivedMessages,
   displayAdjustSettings,
   displayOntology,
   currentLabel,
@@ -99,7 +96,11 @@ const {
   fullscreen,
   alpha,
   brightness,
-  contrast
+  contrast,
+  changeAlpha,
+  changeBrightness,
+  changeContrast,
+  init: initVisualization,
 } = useVisualization();
 const linkPrefix = `${baseURL}/mri?url=`;
 const volumeAnnotations = Vue.ref([]);
@@ -146,11 +147,6 @@ const extractVolumeKeys = () => {
   return keys;
 };
 
-const initBrainbox = async () => {
-  await BrainBox.initBrainBox();
-  await BrainBox.loadLabelsets();
-};
-
 const fetchFiles = async () => {
   if (files.value.length === 0) {
     const fetchedFiles = await doFetchFiles([], 0);
@@ -186,17 +182,7 @@ const doFetchFiles = async (files, cursor) => {
   return files;
 };
 
-const setupEventListeners = () => {
-  window.addEventListener("brainImageConfigured", (e) => {
-    title.value = `Slice ${e.detail.currentSlice}`;
-    currentView.value = e.detail.currentView;
-    currentSlice.value = e.detail.currentSlice;
-    totalSlices.value = e.detail.totalSlices;
-  });
-
-  window.addEventListener("newMessage", handleNewChatMessages);
-  window.addEventListener("newNotification", handleNewNotification);
-
+const setupKeyDownListeners = () => {
   document.addEventListener("keydown", (event) => {
     const selectedTr = document.querySelector("tr.selected");
     switch (event.key) {
@@ -372,42 +358,13 @@ const handleOntologyLabelClick = (index) => {
   AtlasMakerWidget.changePenColor(index);
 };
 
-const handleNewChatMessages = (event) => {
-  receivedMessages.value.push(event.detail.message);
-};
-
-const handleNewNotification = (event) => {
-  notification.value = event.detail.notification;
-};
-
 Vue.onMounted(async () => {
-  setupEventListeners();
+  setupKeyDownListeners();
   await waitForSync(webrtcProvider);
-  await initBrainbox();
+  await initVisualization();
   await fetchFiles();
   selectFile(files.value[0]);
 });
-
-const changeAlpha = (x) => {
-  AtlasMakerWidget.alphaLevel = x / 100;
-  AtlasMakerWidget.drawImages();
-};
-
-const changeBrightness = (x) => {
-  const b = (2 * x) / 100;
-  const c = (2 * contrast.value) / 100;
-  document.querySelector(
-    "#canvas"
-  ).style.filter = `brightness(${b}) contrast(${c})`;
-};
-
-const changeContrast = (x) => {
-  const b = (2 * brightness.value) / 100;
-  const c = (2 * x) / 100;
-  document.querySelector(
-    "#canvas"
-  ).style.filter = `brightness(${b}) contrast(${c})`;
-};
 </script>
 <style>
 table {

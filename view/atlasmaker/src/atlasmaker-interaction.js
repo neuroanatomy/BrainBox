@@ -330,11 +330,16 @@ export const AtlasMakerInteraction = {
     }
   },
   _eventCoords2ImageCoords: function(ex, ey) {
-    const W = parseFloat($('#atlasmaker canvas').css('width'));
-    const H = parseFloat($('#atlasmaker canvas').css('height'));
-    const w = parseFloat($('#atlasmaker canvas').attr('width'));
-    const h = parseFloat($('#atlasmaker canvas').attr('height'));
-    const o = $('#atlasmaker canvas').offset();
+    const canvas = document.querySelector('#atlasmaker canvas');
+    const W = parseFloat(window.getComputedStyle(canvas, null).getPropertyValue('width'));
+    const H = parseFloat(window.getComputedStyle(canvas, null).getPropertyValue('height'));
+    const w = parseFloat(canvas.getAttribute('width'));
+    const h = parseFloat(canvas.getAttribute('height'));
+    const rect = canvas.getBoundingClientRect();
+    const offset = {
+      left: rect.left + (document.documentElement.scrollLeft || document.body.scrollLeft),
+      top: rect.top + (document.documentElement.scrollTop || document.body.scrollTop)
+    };
     const wratio = w/W;
     const hratio = h/H;
     const x = parseInt((ex-o.left)*wratio, 10);
@@ -437,8 +442,10 @@ export const AtlasMakerInteraction = {
 
       const finger = document.getElementById('finger');
       const rect = finger.getBoundingClientRect();
-      me.Crsr.fx = rect.left + document.body.scrollLeft;
-      me.Crsr.fy = rect.top + document.body.scrollTop;
+      const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+      const scrollLeft = document.documentElement.scrollLeft || document.body.scrollLeft;
+      me.Crsr.fx = rect.left + scrollLeft;
+      me.Crsr.fy = rect.top + scrollTop;
       me.Crsr.touchStarted = true;
       setTimeout(function() {
         if( me.Crsr.cachedX === me.Crsr.x0 && me.Crsr.cachedY === me.Crsr.y0 && !me.Crsr.touchStarted) {
@@ -502,9 +509,12 @@ export const AtlasMakerInteraction = {
       me.Crsr.fx += dx/wratio;
       me.Crsr.fy += dy/hratio;
       const finger = document.querySelector('#finger');
+      const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+      const scrollLeft = document.documentElement.scrollLeft || document.body.scrollLeft;
+
       if (finger) {
-        finger.style.left = (me.Crsr.fx + document.body.scrollLeft) + 'px';
-        finger.style.top = (me.Crsr.fy + document.body.scrollTop) + 'px';
+        finger.style.left = (me.Crsr.fx + scrollLeft) + 'px';
+        finger.style.top = (me.Crsr.fy + scrollTop) + 'px';
       }
 
       me.Crsr.x0 = x;

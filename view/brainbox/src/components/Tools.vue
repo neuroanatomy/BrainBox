@@ -233,7 +233,6 @@ const displayChat = ref(true);
 const displayScript = ref(false);
 const fullscreen = ref(false);
 const icons = requireIconsMap();
-const project = projectInfo;
 
 const sliceChange = (slice) => {
   title.value = `Slice ${slice}`;
