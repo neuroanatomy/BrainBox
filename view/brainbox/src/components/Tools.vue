@@ -338,7 +338,8 @@ button img.icon {
 }
 .color {
   height: 100%;
-  width: 30px;
+  width: 100%;
+  min-width: 30px;
 }
 .text {
   opacity: 0.5;

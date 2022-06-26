@@ -58,7 +58,7 @@
                   <a :href="`/project/${atlas.project}`">{{ atlas.project }}</a>
                 </td>
                 <td>{{ new Date(atlas.modified).toLocaleDateString() }}</td>
-                <td>Access</td>
+                <td><Access :collaborator="collaboratorAccess[atlas.filename]" type="files" readonly /></td>
               </tr>
             </tbody>
           </Table>
@@ -125,6 +125,7 @@ import {
   Table,
   AdjustSettings,
   OntologySelector,
+  Access,
 } from "nwl-components";
 import Tools from "./Tools.vue";
 import useVisualization from "../store/visualization";
@@ -167,7 +168,7 @@ const atlases = mriInfo.mri.atlas;
 const labelsName = ref({});
 const { name, source } = mriInfo;
 const date = new Date(mriInfo.included).toLocaleDateString();
-
+const collaboratorAccess = mapValues(keyBy(mriInfo.mri.atlas, "filename"), (atlas) => ({ access: { files: atlas.access }}))
 const displayPrivilegedAccessWarning = hasPrivilegedAccess;
 
 const handleOntologyLabelClick = (index) => {
