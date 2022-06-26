@@ -262,8 +262,9 @@ const changePenSize = (size) => {
 
 const toggleFullscreen = async () => {
   fullscreen.value = !fullscreen.value;
-  await delay.value(250);
-  AtlasMakerWidget.resizeWindow();
+  setTimeout(() => {
+    AtlasMakerWidget.resizeWindow();
+  }, 250)
 };
 
 const render3D = () => {
@@ -345,5 +346,8 @@ button img.icon {
 }
 .text:hover {
   opacity: 1;
+}
+:deep(.group), :deep(button) {
+  flex-grow: 1;
 }
 </style>

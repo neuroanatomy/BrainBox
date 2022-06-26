@@ -1,5 +1,5 @@
 /* eslint-disable max-lines */
-/* global AtlasMakerWidget MozWebSocket $*/
+/* global AtlasMakerWidget MozWebSocket */
 /*! AtlasMaker: WebSockets */
 import * as DOMPurify from 'dompurify';
 import * as pako from 'pako';
@@ -767,21 +767,22 @@ export const AtlasMakerWS = {
    */
   logToDatabase(key, value) {
     return new Promise(function(resolve, reject) {
-      const me = AtlasMakerWidget;
-      $.ajax({
-        url: me.hostname + '/api/log',
-        type: 'POST',
-        data: {
-          username: me.User.username,
-          key: key,
-          value: value
-        }})
-        .done(function(data) {
-          resolve(data);
-        })
-        .fail((err) => {
-          reject(err);
-        });
+      // FIXME: this route does not work
+      // const me = AtlasMakerWidget;
+      // $.ajax({
+      //   url: me.hostname + '/api/log',
+      //   type: 'POST',
+      //   data: {
+      //     username: me.User.username,
+      //     key: key,
+      //     value: value
+      //   }})
+      //   .done(function(data) {
+      //     resolve(data);
+      //   })
+      //   .fail((err) => {
+      //     reject(err);
+      //   });
     });
   }
 };

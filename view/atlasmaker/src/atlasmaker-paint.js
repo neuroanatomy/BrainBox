@@ -1,6 +1,5 @@
 /* eslint-disable max-lines */
-/* global AtlasMakerWidget $ */
-/*! AtlasMaker: Painting commands */
+/* global AtlasMakerWidget */
 
 import showIcon from './svg/show.svg';
 

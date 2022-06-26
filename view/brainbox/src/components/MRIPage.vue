@@ -5,54 +5,90 @@
     </Header>
     <main>
       <div class="left">
-        <h2>Volume annotations</h2>
-        <Table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Value</th>
-              <th>Project</th>
-              <th>Modified</th>
-              <th>Access</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(atlas, index) in atlases"
-              :class="{ selected: selectedIndex === index }"
-              :key="atlas.filename"
-              @click="selectVolumeAnnotation(index)"
-            >
-              <td>{{ atlas.name }}</td>
-              <td>{{ labelsName[atlas.labels] }}</td>
-              <td>{{ atlas.project }}</td>
-              <td>{{ atlas.modified }}</td>
-              <td>Access</td>
-            </tr>
-          </tbody>
-        </Table>
-        <h2>Text annotations</h2>
-        <Table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Value</th>
-              <th>Project</th>
-              <th>Modified</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="annotation in formattedTextAnnotations"
-              :key="annotation.name"
-            >
-              <td class="noEmpty">{{ annotation.name }}</td>
-              <td class="noEmpty">{{ annotation.data }}</td>
-              <td class="noEmpty">{{ annotation.project }}</td>
-              <td class="noEmpty">{{ annotation.modified }}</td>
-            </tr>
-          </tbody>
-        </Table>
+        <div class="privilegedAccessInfo" v-if="displayPrivilegedAccessWarning">
+          You are seeing this private MRI because you were added as a
+          collaborator with access to files. Share with caution.
+        </div>
+        <div class="annotationsPane">
+          <table class="info">
+            <tbody>
+              <tr>
+                <th>Name</th>
+                <td>
+                  <span class="noEmpty">{{ name }}</span>
+                </td>
+              </tr>
+
+              <tr>
+                <th>Data&nbsp;source</th>
+                <td>
+                  <span style="word-break: break-all">{{ source }}</span>
+                </td>
+              </tr>
+
+              <tr>
+                <th>Inclusion&nbsp;date</th>
+                <td>
+                  <span>{{ date }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <h2>Volume annotations</h2>
+          <Table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Value</th>
+                <th>Project</th>
+                <th>Modified</th>
+                <th>Access</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="(atlas, index) in atlases"
+                :class="{ selected: selectedIndex === index }"
+                :key="atlas.filename"
+                @click="selectVolumeAnnotation(index)"
+              >
+                <td>{{ atlas.name }}</td>
+                <td>{{ labelsName[atlas.labels] }}</td>
+                <td>
+                  <a :href="`/project/${atlas.project}`">{{ atlas.project }}</a>
+                </td>
+                <td>{{ new Date(atlas.modified).toLocaleDateString() }}</td>
+                <td>Access</td>
+              </tr>
+            </tbody>
+          </Table>
+          <h2>Text annotations</h2>
+          <Table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Value</th>
+                <th>Project</th>
+                <th>Modified</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="annotation in formattedTextAnnotations"
+                :key="annotation.name"
+              >
+                <td class="noEmpty">{{ annotation.name }}</td>
+                <td class="noEmpty">{{ annotation.data }}</td>
+                <td>
+                  <a class="noEmpty" :href="`/project/${annotation.project}`">{{
+                    annotation.project
+                  }}</a>
+                </td>
+                <td class="noEmpty">{{ new Date(annotation.modified).toLocaleDateString() }}</td>
+              </tr>
+            </tbody>
+          </Table>
+        </div>
       </div>
       <div class="right">
         <div class="container">
@@ -74,7 +110,7 @@
           />
         </div>
         <div class="tools">
-            <Tools />
+          <Tools />
         </div>
       </div>
     </main>
@@ -129,6 +165,10 @@ const formattedTextAnnotations = flatten(
 
 const atlases = mriInfo.mri.atlas;
 const labelsName = ref({});
+const { name, source } = mriInfo;
+const date = new Date(mriInfo.included).toLocaleDateString();
+
+const displayPrivilegedAccessWarning = hasPrivilegedAccess;
 
 const handleOntologyLabelClick = (index) => {
   displayOntology.value = false;
@@ -150,24 +190,81 @@ onMounted(async () => {
 main {
   display: flex;
   padding: 0;
-  align-items: space-between;
+  justify-content: center;
+  flex-direction: column;
 }
+
 .container {
   position: relative;
 }
+
 .left {
-  width: 60%;
-  margin-right: 20px;
+  flex-grow: 1;
+  max-width: 900px;
 }
-.right {
-  width: 40%;
+
+.privilegedAccessInfo {
+  background-color: #3B3B3B;
+  padding: 10px 20px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
 }
+.privilegedAccessInfo:before {
+    content: '\1F512';
+    font-size: 25px;
+    margin-right: 15px;
+    background: #2B2B2B;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.info {
+  margin-bottom: 20px;
+}
+.info th {
+  font-weight: bold;
+}
+
+.annotationsPane {
+  background-color: #333;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
 .noEmpty:empty:before {
   content: "Empty";
   color: rgba(255, 255, 255, 0.4);
 }
-
 .tools {
-    width: 100%;
+  width: 100%;
 }
+
+@media(max-width: 1300px) {
+  .left, .right {
+    max-width: 700px;
+    width: 100%;
+    margin: 0 auto;
+  }
+}
+
+
+@media(min-width: 1300px) {
+  main {
+    flex-direction: row;
+  }
+  .left {
+    margin-right: 20px;
+    width: auto;
+  }
+  .right {
+    max-width: 900px;
+    width: 600px;
+    flex-shrink: 0;
+  }
+}
+
 </style>
