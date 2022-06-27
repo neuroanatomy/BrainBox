@@ -15,8 +15,11 @@ module.exports = class BrainboxAccessControlService extends AccessControlService
   static hasAccesstoFileIfAllowedBySomeProjects(mri, projects, user, requestedAccessLevel) {
     const projectsContainingFile = projects.filter(
       (project) =>
-        project.files.list.indexOf(mri.source) >= 0 ||
-        project.files.list.map((file) => file.source).indexOf(mri.source) >= 0
+        _.isObject(project) &&
+        (
+          project.files.list.indexOf(mri.source) >= 0 ||
+          project.files.list.map((file) => file.source).indexOf(mri.source) >= 0
+        )
     );
 
     return projectsContainingFile.some((p) => super.hasFilesAccess(requestedAccessLevel, p, user));
