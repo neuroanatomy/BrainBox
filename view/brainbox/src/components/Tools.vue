@@ -6,135 +6,140 @@
       @update:modelValue="sliceChange"
     />
   </Row>
-  <Row centered>
-    <ButtonsGroup>
-      <Button
-        :class="{ pressed: currentView === 'sag' }"
-        @click="changeView('sag')"
-        >Sag</Button
-      >
-      <Button
-        :class="{ pressed: currentView === 'cor' }"
-        @click="changeView('cor')"
-        >Cor</Button
-      >
-      <Button
-        :class="{ pressed: currentView === 'axi' }"
-        @click="changeView('axi')"
-        >Axi</Button
-      >
-    </ButtonsGroup>
-    <ButtonsGroup>
-      <Button
-        @click="changeTool('Show')"
-        :class="{ pressed: currentTool === 'Show' }"
-      >
-        <img class="icon" alt="Show" :src="icons['show.svg']" />
+  <Row>
+    <Col>
+      <ButtonsGroup fullWidth>
+        <Button
+          :class="{ pressed: currentView === 'sag' }"
+          @click="changeView('sag')"
+          >Sag</Button
+        >
+        <Button
+          :class="{ pressed: currentView === 'cor' }"
+          @click="changeView('cor')"
+          >Cor</Button
+        >
+        <Button
+          :class="{ pressed: currentView === 'axi' }"
+          @click="changeView('axi')"
+          >Axi</Button
+        >
+      </ButtonsGroup>
+
+      <Button @click="toggleFullscreen()" title="Full screen">
+        <img class="icon" alt="Full screen" :src="icons['fullscreen.svg']" />
+      </Button>
+      <Button @click="render3D()" title="3D render">
+        <img class="icon" alt="3D Render" :src="icons['3drender.svg']" />
+      </Button>
+      <ButtonsGroup>
+        <Button
+          @click="toggleChat()"
+          title="Chat"
+          :class="{ pressed: displayChat }"
+        >
+          <img class="icon" alt="Chat" :src="icons['chat.svg']" />
+        </Button>
+        <Button
+          @click="toggleScript()"
+          title="Script"
+          :class="{ pressed: displayScript }"
+        >
+          <img class="icon" alt="Script" :src="icons['scroll.svg']" />
+        </Button>
+      </ButtonsGroup>
+      <Button @click="link()" title="Link">
+        <img class="icon" alt="Link" :src="icons['link.svg']" />
       </Button>
       <Button
-        @click="changeTool('Paint')"
-        :class="{ pressed: currentTool === 'Paint' }"
+        @click="preciseCursor()"
+        title="Precise Cursor"
+        :class="{ pressed: usePreciseCursor }"
       >
-        <img class="icon" alt="Paint" :src="icons['paint.svg']" />
+        <img
+          class="icon"
+          alt="Precise Cursor"
+          :src="icons['preciseCursor.svg']"
+        />
       </Button>
+    </Col>
+
+    <Col>
+      <ButtonsGroup fullWidth>
+        <Button
+          @click="changeTool('Show')"
+          :class="{ pressed: currentTool === 'Show' }"
+        >
+          <img class="icon" alt="Show" :src="icons['show.svg']" />
+        </Button>
+        <Button
+          @click="changeTool('Paint')"
+          :class="{ pressed: currentTool === 'Paint' }"
+        >
+          <img class="icon" alt="Paint" :src="icons['paint.svg']" />
+        </Button>
+        <Button
+          @click="changeTool('Erase')"
+          :class="{ pressed: currentTool === 'Erase' }"
+        >
+          <img class="icon" alt="Erase" :src="icons['erase.svg']" />
+        </Button>
+        <Button
+          @click="changeTool('Landmark')"
+          :class="{ pressed: currentTool === 'Landmark' }"
+        >
+          <img class="icon" alt="Landmark" :src="icons['landmark.svg']" />
+        </Button>
+        <Button
+          @click="changeTool('Measure')"
+          :class="{ pressed: currentTool === 'Measure' }"
+        >
+          <img class="icon" alt="ruler" :src="icons['ruler.svg']" />
+        </Button>
+        <Button
+          @click="toggleImageSettings()"
+          :class="{ pressed: displayAdjustSettings }"
+        >
+          <img class="icon" alt="Adjust" :src="icons['adjust.svg']" />
+        </Button>
+        <Button
+          @click="changeTool('Eyedrop')"
+          :class="{ pressed: currentTool === 'Eyedropper' }"
+        >
+          <img class="icon" alt="Eyedropper" :src="icons['eyedropper.svg']" />
+        </Button>
+      </ButtonsGroup>
+
       <Button
-        @click="changeTool('Erase')"
-        :class="{ pressed: currentTool === 'Erase' }"
+        style="padding: 1px"
+        @click="toggleOntology()"
+        v-if="
+          ontology != null &&
+          ontology.labels != null &&
+          ontology.labels[currentLabel] != null
+        "
       >
-        <img class="icon" alt="Erase" :src="icons['erase.svg']" />
+        <div
+          class="color"
+          :style="`background-color: rgb(${ontology.labels[currentLabel].color[0]}, ${ontology.labels[currentLabel].color[1]}, ${ontology.labels[currentLabel].color[2]})`"
+        ></div>
       </Button>
-      <Button
-        @click="changeTool('Landmark')"
-        :class="{ pressed: currentTool === 'Landmark' }"
-      >
-        <img class="icon" alt="Landmark" :src="icons['landmark.svg']" />
+      <Button @click="fill()" title="Fill" :class="{ pressed: doFill }">
+        <img class="icon" alt="Fill" :src="icons['fill.svg']" />
       </Button>
-      <Button
-        @click="changeTool('Measure')"
-        :class="{ pressed: currentTool === 'Measure' }"
-      >
-        <img class="icon" alt="ruler" :src="icons['ruler.svg']" />
+      <Button @click="undo()" title="Undo">
+        <img class="icon" alt="Undo" :src="icons['undo.svg']" />
       </Button>
-      <Button
-        @click="toggleImageSettings()"
-        :class="{ pressed: displayAdjustSettings }"
-      >
-        <img class="icon" alt="Adjust" :src="icons['adjust.svg']" />
+      <Button @click="upload()" title="Upload">
+        <img class="icon" alt="Upload" :src="icons['upload.svg']" />
       </Button>
-      <Button
-        @click="changeTool('Eyedrop')"
-        :class="{ pressed: currentTool === 'Eyedropper' }"
-      >
-        <img class="icon" alt="Eyedropper" :src="icons['eyedropper.svg']" />
+      <Button @click="download()" title="Download">
+        <img class="icon" alt="Download" :src="icons['download.svg']" />
       </Button>
-    </ButtonsGroup>
-  </Row>
-  <Row centered>
-    <Button @click="toggleFullscreen()" title="Full screen">
-      <img class="icon" alt="Full screen" :src="icons['fullscreen.svg']" />
-    </Button>
-    <Button @click="render3D()" title="3D render">
-      <img class="icon" alt="3D Render" :src="icons['3drender.svg']" />
-    </Button>
-    <ButtonsGroup>
-      <Button
-        @click="toggleChat()"
-        title="Chat"
-        :class="{ pressed: displayChat }"
-      >
-        <img class="icon" alt="Chat" :src="icons['chat.svg']" />
+      <Button @click="save()" title="Save">
+        <img class="icon" alt="Save" :src="icons['floppy.svg']" />
       </Button>
-      <Button
-        @click="toggleScript()"
-        title="Script"
-        :class="{ pressed: displayScript }"
-      >
-        <img class="icon" alt="Script" :src="icons['scroll.svg']" />
-      </Button>
-    </ButtonsGroup>
-    <Button @click="link()" title="Link">
-      <img class="icon" alt="Link" :src="icons['link.svg']" />
-    </Button>
-    <Button
-      @click="preciseCursor()"
-      title="Precise Cursor"
-      :class="{ pressed: usePreciseCursor }"
-    >
-      <img
-        class="icon"
-        alt="Precise Cursor"
-        :src="icons['preciseCursor.svg']"
-      />
-    </Button>
-    <Button
-      style="padding: 1px"
-      @click="toggleOntology()"
-      v-if="
-        ontology != null &&
-        ontology.labels != null &&
-        ontology.labels[currentLabel] != null
-      "
-    >
-      <div
-        class="color"
-        :style="`background-color: rgb(${ontology.labels[currentLabel].color[0]}, ${ontology.labels[currentLabel].color[1]}, ${ontology.labels[currentLabel].color[2]})`"
-      ></div>
-    </Button>
-    <Button @click="fill()" title="Fill" :class="{ pressed: doFill }">
-      <img class="icon" alt="Fill" :src="icons['fill.svg']" />
-    </Button>
-    <Button @click="undo()" title="Undo">
-      <img class="icon" alt="Undo" :src="icons['undo.svg']" />
-    </Button>
-    <Button @click="upload()" title="Upload">
-      <img class="icon" alt="Upload" :src="icons['upload.svg']" />
-    </Button>
-    <Button @click="download()" title="Download">
-      <img class="icon" alt="Download" :src="icons['download.svg']" />
-    </Button>
-    <Button @click="save()" title="Save">
-      <img class="icon" alt="Save" :src="icons['floppy.svg']" />
-    </Button>
+    </Col>
   </Row>
   <Row>
     <ButtonsGroup>
@@ -176,7 +181,8 @@
       >
     </ButtonsGroup>
   </Row>
-  <Row>
+
+  <Row style="flex-grow: 1">
     <div class="text">
       <Chat
         v-if="displayChat"
@@ -195,6 +201,7 @@ import {
   Chat,
   RangeSlider,
   Row,
+  Col,
   ScriptConsole,
 } from "nwl-components";
 import { ref, onMounted } from "vue";
@@ -226,12 +233,12 @@ const {
   currentSlice,
   currentPenSize,
   totalSlices,
+  fullscreen,
 } = useVisualization();
 const doFill = ref(false);
 const usePreciseCursor = ref(false);
 const displayChat = ref(true);
 const displayScript = ref(false);
-const fullscreen = ref(false);
 const icons = requireIconsMap();
 
 const sliceChange = (slice) => {
@@ -264,7 +271,7 @@ const toggleFullscreen = async () => {
   fullscreen.value = !fullscreen.value;
   setTimeout(() => {
     AtlasMakerWidget.resizeWindow();
-  }, 250)
+  }, 250);
 };
 
 const render3D = () => {
@@ -348,7 +355,8 @@ button img.icon {
 .text:hover {
   opacity: 1;
 }
-:deep(.group), :deep(button) {
+:deep(.group),
+:deep(button) {
   flex-grow: 1;
 }
 </style>

@@ -60,7 +60,7 @@ import {
   ProjectPage,
   TextAnnotations,
   VolumeAnnotations,
-} from "nwl-components";
+} from "nwl-components/dist/nwl-components.umd.js";
 import * as Vue from "vue";
 
 const { annotationsAccessLevel, BrainBox, AtlasMakerWidget } = window;

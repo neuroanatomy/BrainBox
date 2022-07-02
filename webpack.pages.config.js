@@ -46,10 +46,5 @@ module.exports = (env, argv) => ({
         loader: 'vue-loader'
       }
     ]
-  },
-  resolve: {
-    symlinks: false,
-    alias: {
-    }
   }
 });

@@ -243,6 +243,10 @@ main {
 .tools {
   width: 100%;
 }
+:deep(button), :deep(.group) {
+    height: 24px;
+    margin: 1px;  
+}
 
 @media(max-width: 1300px) {
   .left, .right {
