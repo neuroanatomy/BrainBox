@@ -6,6 +6,6 @@ var router = new express.Router();
 router.get('/getLabelsets', controller.getLabelsets);
 router.get('/userNameQuery', controller.userNameQuery);
 router.get('/getAtlasBackups', controller.getAtlasBackups);
-router.get('/log', controller.log);
+router.post('/log', controller.log);
 
 module.exports = router;
