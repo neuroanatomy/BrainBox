@@ -101,9 +101,13 @@ const start = async function () {
   app.set('view engine', 'mustache');
   app.use(favicon(dirname + '/public/favicon.png'));
   app.set('trust proxy', 'loopback');
-  if (app.get('env') === 'development') {
-    app.use(logger(':remote-addr :method :url :status :response-time ms - :res[content-length]'));//app.use(logger('dev'));
+  let loggerOptions = {};
+  if (app.get('env') === 'production') {
+    loggerOptions = {
+      skip: function (req, res) { return res.statusCode < 400; }
+    };
   }
+  app.use(logger(':remote-addr :method :url :status :response-time ms - :res[content-length]', loggerOptions));//app.use(logger('dev'));
   app.use(expressValidator());
   app.use(cookieParser());
   app.use(express.static(path.join(dirname, 'public')));
@@ -161,11 +165,11 @@ const start = async function () {
   //========================================================================================
   // Error handlers
   //========================================================================================
-  // catch 404 and forward to error handler
-  app.use(function (req, res, next) {
-    console.log('Not found URL requested: ' + req.url);
-    next();
-  });
+  // // catch 404 and forward to error handler
+  // app.use(function (req, res, next) {
+  //   console.log('Not found URL requested: ' + req.url);
+  //   next();
+  // });
 
   // the following middlewares will not be used by express as we need to pass 4 arguments to
   // the use method to handle express errors: https://expressjs.com/fr/guide/error-handling.html
