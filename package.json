@@ -39,7 +39,7 @@
     "express-session": "^1.17.1",
     "express-validator": "^5.3.1",
     "fast-json-patch": "^2.2.1",
-    "file-type": "^7.6.0",
+    "file-type": "^16.5.4",
     "fs": "0.0.1-security",
     "http": "0.0.0",
     "jdenticon": "^2.2.0",
