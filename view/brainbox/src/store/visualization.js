@@ -10,6 +10,8 @@ const state = reactive({
   receivedMessages: [],
   displayAdjustSettings: false,
   displayOntology: false,
+  displayChat: true,
+  displayScript: false,
   ontology: null,
   currentLabel: 0,
   currentFile: null,

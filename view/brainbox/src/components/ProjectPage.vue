@@ -26,7 +26,7 @@
         @on-close="displayOntology = false"
         @label-click="handleOntologyLabelClick"
       />
-      <Editor :title="title">
+      <Editor :title="title" :dense="!displayChat && !displayScript">
         <template v-slot:tools>
           <Tools />
         </template>
@@ -87,6 +87,8 @@ const {
   title,
   displayAdjustSettings,
   displayOntology,
+  displayChat,
+  displayScript,
   currentLabel,
   ontology,
   currentView,

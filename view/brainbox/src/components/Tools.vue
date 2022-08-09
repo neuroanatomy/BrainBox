@@ -182,7 +182,7 @@
     </ButtonsGroup>
   </Row>
 
-  <Row style="flex-grow: 1">
+  <Row style="flex: 1; min-height:60px; margin: 0 0 30px">
     <div class="text">
       <Chat
         v-if="displayChat"
@@ -234,11 +234,11 @@ const {
   currentPenSize,
   totalSlices,
   fullscreen,
+  displayChat,
+  displayScript
 } = useVisualization();
 const doFill = ref(false);
 const usePreciseCursor = ref(false);
-const displayChat = ref(true);
-const displayScript = ref(false);
 const icons = requireIconsMap();
 
 const sliceChange = (slice) => {
@@ -358,5 +358,27 @@ button img.icon {
 :deep(.group),
 :deep(button) {
   flex-grow: 1;
+}
+
+:deep #logScript {
+  height: 100%;
+}
+</style>
+
+<style>
+.resizable-component:after {
+    content: "";
+    display: block;
+    right: 0;
+    bottom: 0;
+    position: absolute;
+    z-index: 100;
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAHCAYAAADEUlfTAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAACC2lUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNS40LjAiPgogICA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPgogICAgICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgICAgICAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyI+CiAgICAgICAgIDx0aWZmOlJlc29sdXRpb25Vbml0PjI8L3RpZmY6UmVzb2x1dGlvblVuaXQ+CiAgICAgICAgIDx0aWZmOkNvbXByZXNzaW9uPjE8L3RpZmY6Q29tcHJlc3Npb24+CiAgICAgICAgIDx0aWZmOk9yaWVudGF0aW9uPjE8L3RpZmY6T3JpZW50YXRpb24+CiAgICAgICAgIDx0aWZmOlBob3RvbWV0cmljSW50ZXJwcmV0YXRpb24+MjwvdGlmZjpQaG90b21ldHJpY0ludGVycHJldGF0aW9uPgogICAgICA8L3JkZjpEZXNjcmlwdGlvbj4KICAgPC9yZGY6UkRGPgo8L3g6eG1wbWV0YT4KD0UqkwAAACJJREFUCB1jYMABPn/+/B+rFA0l4EbDGVAXwPlwBroEkA8ARSMmcY29DXYAAAAASUVORK5CYII=");
+    background-position: bottom right;
+    background-repeat: no-repeat;
+    pointer-events: none;
+    opacity: 0.6;
+    width: 7px;
+    height: 7px;
 }
 </style>
