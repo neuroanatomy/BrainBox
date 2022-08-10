@@ -157,7 +157,7 @@ const fetchFiles = async () => {
 };
 
 const syncBrainbox = () => {
-  BrainBox.info = store.files.find(file => file.id === currentFile.id)
+  BrainBox.info = store.files.find(file => file.id === currentFile.id);
   AtlasMakerWidget.sendSaveMetadataMessage(BrainBox.info);
 }
 

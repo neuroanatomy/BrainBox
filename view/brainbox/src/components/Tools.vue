@@ -182,7 +182,7 @@
     </ButtonsGroup>
   </Row>
 
-  <Row style="flex: 1; min-height:60px; margin: 0 0 30px">
+  <Row style="flex: 1; min-height:60px; margin: 0 0 30px" v-if="displayChat || displayScript">
     <div class="text">
       <Chat
         v-if="displayChat"
@@ -277,6 +277,7 @@ const toggleFullscreen = async () => {
 const render3D = () => {
   AtlasMakerWidget.render3D();
 };
+
 
 const toggleChat = () => {
   displayChat.value = !displayChat.value;
