@@ -91,42 +91,44 @@
         </div>
       </div>
       <div class="right">
-        <div class="container">
-          <div id="stereotaxic" style="width: 100%; height: 100%"></div>
-          <OntologySelector
-            :ontology="ontology"
-            :open="displayOntology"
-            @on-close="displayOntology = false"
-            @label-click="handleOntologyLabelClick"
-          />
-          <AdjustSettings
-            v-if="displayAdjustSettings"
-            :alpha="alpha"
-            @change-alpha="changeAlpha"
-            :brightness="brightness"
-            @change-brightness="changeBrightness"
-            :contrast="contrast"
-            @change-contrast="changeContrast"
-          />
-        </div>
-        <div class="tools">
-          <Tools />
-        </div>
+        <Editor title="MRI" :dense="!displayChat && !displayScript" :class="{ fullscreen }">
+          <template v-slot:tools>
+            <Tools />
+          </template>
+          <template v-slot:content>
+            <div id="stereotaxic" style="width: 100%; height: 100%"></div>
+            <OntologySelector
+              :ontology="ontology"
+              :open="displayOntology"
+              @on-close="displayOntology = false"
+              @label-click="handleOntologyLabelClick"
+            />
+            <AdjustSettings
+              v-if="displayAdjustSettings"
+              :alpha="alpha"
+              @change-alpha="changeAlpha"
+              :brightness="brightness"
+              @change-brightness="changeBrightness"
+              :contrast="contrast"
+              @change-contrast="changeContrast"
+            />
+          </template>
+        </Editor>
       </div>
     </main>
   </Wrapper>
 </template>
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import {
   Wrapper,
   Header,
-  Footer,
+  Editor,
   Table,
-  AdjustSettings,
-  OntologySelector,
   Access,
-} from "nwl-components";
+  OntologySelector,
+  AdjustSettings
+} from "nwl-components/dist/nwl-components.umd.js";
 import Tools from "./Tools.vue";
 import useVisualization from "../store/visualization";
 import { keyBy, mapValues, flatten, map } from "lodash";
@@ -142,10 +144,23 @@ const {
   changeAlpha,
   changeBrightness,
   changeContrast,
+  fullscreen,
+  displayChat,
+  displayScript,
   init: initVisualization,
 } = useVisualization();
 
 const selectedIndex = ref(0);
+
+watch(fullscreen, () => {
+  if(!fullscreen.value) {
+    const tools = document.querySelector('.area .tools');
+    setTimeout(() => {
+      tools.style.left = '10px';
+      tools.style.top = '10px';
+    }, 100)
+  }
+})
 
 const selectVolumeAnnotation = async (index) => {
   selectedIndex.value = index;
@@ -197,6 +212,13 @@ main {
 
 .container {
   position: relative;
+}
+
+.area.fullscreen {
+  position: absolute;
+  width: 100%;
+  height: calc(100vh - 82px);
+  left: 0;
 }
 
 .left {
