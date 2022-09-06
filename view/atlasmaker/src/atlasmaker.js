@@ -573,7 +573,7 @@ var me = {
     try {
       info2 = await me._configureMRI(info, index);
       info = info2;
-      res = await fetch(me.hostname + "/labels/" + info.mri.atlas[index].labels);
+      res = await fetch(me.hostname + '/labels/' + info.mri.atlas[index].labels);
       labels = await res.json();
     } catch (err) {
       throw new Error(err);
@@ -581,25 +581,30 @@ var me = {
     me.configureOntology(labels);
     me.User.penValue=me.ontology.labels[0].value;
 
+    // inform other connected users of the changes
+    console.log('====> Inform server of my settings');
+    me.sendUserDataMessage('allUserData');
+    me.sendUserDataMessage('sendAtlas');
+
     // configure vectorial layer
     // [HERE]
 
-    // enforce fullscreen setting
-    if(me.fullscreen === true) { // WARNING: HACK... would be better to implement enter/exit fullscreen
-      me.fullscreen=false;
-      me.toggleFullscreen();
-    }
+    /** @todo better implementation of this hack to enforce fullscreen setting after the server gets me.User settings */
+    setTimeout(() => {
+      console.log('====> Request fullscreen');
+      if(me.fullscreen === true) { // WARNING: HACK... would be better to implement enter/exit fullscreen
+        me.fullscreen=false;
+        me.toggleFullscreen();
+      }
+    }, 500);
 
     // enforce stereotaxic plane setting
     if(me.User.view !== null) {
-      $(".chose#plane .a").removeClass("pressed");
-      var view=me.User.view.charAt(0).toUpperCase()+me.User.view.slice(1);
-      $(".chose#plane .a:contains('"+view+"')").addClass("pressed");
+      $('.chose#plane .a').removeClass('pressed');
+      const view=me.User.view.charAt(0).toUpperCase()+me.User.view.slice(1);
+      $('.chose#plane .a:contains(\''+view+'\')').addClass('pressed');
     }
 
-    // inform other connected users of the changes
-    me.sendUserDataMessage("allUserData");
-    me.sendUserDataMessage("sendAtlas");
 
     // pick the first label for segmenting (it has to come after the
     // sendUserDataMessage calls, because it also sends ws messages)
