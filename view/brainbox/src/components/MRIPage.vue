@@ -158,8 +158,12 @@ watch(fullscreen, () => {
     setTimeout(() => {
       tools.style.left = '10px';
       tools.style.top = '10px';
-    }, 100)
+    }, 100);
   }
+  setTimeout(() => {
+    document.querySelector('#resizable').style = '';
+    AtlasMakerWidget.resizeWindow();
+  }, 100);
 })
 
 const selectVolumeAnnotation = async (index) => {
