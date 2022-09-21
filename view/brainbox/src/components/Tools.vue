@@ -284,6 +284,8 @@ const toggleChat = () => {
   if (displayChat.value) {
     displayScript.value = false;
   }
+  if (!displayChat.value && !displayScript.value) {
+  }
 };
 
 const toggleScript = () => {

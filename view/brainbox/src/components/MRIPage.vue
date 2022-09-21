@@ -91,7 +91,7 @@
         </div>
       </div>
       <div class="right">
-        <Editor title="MRI" :dense="!displayChat && !displayScript" :class="{ fullscreen }">
+        <Editor title="MRI" :class="{reduced: !displayChat && !displayScript}">
           <template v-slot:tools>
             <Tools />
           </template>
