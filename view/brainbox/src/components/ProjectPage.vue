@@ -26,7 +26,7 @@
         @on-close="displayOntology = false"
         @label-click="handleOntologyLabelClick"
       />
-      <Editor :title="title" :class="{reduced: !displayChat && !displayScript}">
+      <Editor :title="title" :class="{reduced: !displayChat && !displayScript}" toolsMinHeight="340px">
         <template v-slot:tools>
           <Tools />
         </template>

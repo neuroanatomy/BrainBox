@@ -91,7 +91,7 @@
         </div>
       </div>
       <div class="right">
-        <Editor title="MRI" :class="{reduced: !displayChat && !displayScript}">
+        <Editor title="MRI" :class="{fullscreen,reduced: !displayChat && !displayScript}" toolsMinHeight="340px">
           <template v-slot:tools>
             <Tools />
           </template>
@@ -218,7 +218,7 @@ main {
   position: relative;
 }
 
-.area.fullscreen {
+:deep(.area.fullscreen) {
   position: absolute;
   width: 100%;
   height: calc(100vh - 82px);

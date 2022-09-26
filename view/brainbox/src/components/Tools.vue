@@ -182,7 +182,7 @@
     </ButtonsGroup>
   </Row>
 
-  <Row style="flex: 1; min-height:60px; margin: 0 0 30px" v-if="displayChat || displayScript">
+  <Row style="flex: 1; min-height:60px" v-if="displayChat || displayScript">
     <div class="text">
       <Chat
         v-if="displayChat"
@@ -364,7 +364,7 @@ button img.icon {
 }
 
 :deep #logScript {
-  height: 100%;
+  height: calc(100% - 22px);
 }
 </style>
 
@@ -383,5 +383,8 @@ button img.icon {
     opacity: 0.6;
     width: 7px;
     height: 7px;
+}
+.text .chat .messages {
+  min-height: 75px;
 }
 </style>
