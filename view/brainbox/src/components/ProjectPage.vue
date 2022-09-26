@@ -2,7 +2,7 @@
   <ProjectPage
     @resize="handleResize"
     @layout-change="handleLayoutChange"
-    :project="project"
+    :project="{...project, title: projectName }"
     :fullscreen="fullscreen"
   >
     <template v-slot:left>
@@ -75,6 +75,7 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  projectName: String,
 });
 
 const files = Vue.ref([]);
