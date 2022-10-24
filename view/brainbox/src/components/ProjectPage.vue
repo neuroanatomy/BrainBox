@@ -26,7 +26,7 @@
         @on-close="displayOntology = false"
         @label-click="handleOntologyLabelClick"
       />
-      <Editor :title="title" :class="{reduced: !displayChat && !displayScript}" toolsMinHeight="340px">
+      <Editor :title="title" :class="{reduced}" :toolsMinHeight="reduced ? 'auto' : '340px'">
         <template v-slot:tools>
           <Tools />
         </template>
@@ -156,6 +156,8 @@ const fetchFiles = async () => {
     store.files.push(...populateTextAnnotations(fetchedFiles));
   }
 };
+
+const reduced = Vue.computed(() => !displayChat.value && !displayScript.value);
 
 const syncBrainbox = () => {
   BrainBox.info = store.files.find(file => file.id === currentFile.id);

@@ -91,7 +91,7 @@
         </div>
       </div>
       <div class="right">
-        <Editor title="MRI" :class="{fullscreen,reduced: !displayChat && !displayScript}" toolsMinHeight="340px">
+        <Editor title="MRI" :class="{fullscreen, reduced}" :toolsMinHeight="reduced ? 'auto' : '340px'">
           <template v-slot:tools>
             <Tools />
           </template>
@@ -119,7 +119,7 @@
   </Wrapper>
 </template>
 <script setup>
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
 import {
   Wrapper,
   Header,
@@ -151,6 +151,7 @@ const {
 } = useVisualization();
 
 const selectedIndex = ref(0);
+const reduced = computed(() => !displayChat.value && !displayScript.value);
 
 watch(fullscreen, () => {
   if(!fullscreen.value) {

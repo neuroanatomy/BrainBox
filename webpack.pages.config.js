@@ -11,6 +11,7 @@ module.exports = (env, argv) => ({
     'index-page': './view/brainbox/src/pages/index-page.js',
     'mri-page': './view/brainbox/src/pages/mri-page.js',
     'project-page': './view/brainbox/src/pages/project-page.js',
+    'embed-page': './view/brainbox/src/pages/embed-page.js',
     'project-new-page': './view/brainbox/src/pages/project-new-page.js',
     'project-settings-page':
       './view/brainbox/src/pages/project-settings-page.js',
