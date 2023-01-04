@@ -9,8 +9,8 @@ const path = require('path');
 const keypress = require('keypress');
 
 const amri = require('./atlasmaker-mri');
-var AsyncLock = require('async-lock');
-var lock = new AsyncLock();
+const AsyncLock = require('async-lock');
+const lock = new AsyncLock();
 
 // Get whitelist and blacklist
 const useWhitelist = false;
@@ -279,7 +279,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       delete me.Atlases[iAtlas];
     },
     unloadMRI: function (mriPath) {
-      for (let i=0; i<me.Brains.length; i++) {
+      for (let i = 0; i < me.Brains.length; i++) {
         if (me.Brains[i].path === mriPath) {
           me.Brains.splice(i, 1);
           tracer.log('Free memory', os.freemem());
@@ -334,14 +334,14 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
     // eslint-disable-next-line max-statements
     _saveAtlasVectorialData: async function (atlas) {
       if (typeof atlas === 'undefined'
-      || typeof atlas.vectorial === 'undefined') {
+        || typeof atlas.vectorial === 'undefined') {
 
         throw new Error('No vectorial atlas to save');
       }
       const { vectorial } = atlas;
 
       // eslint-disable-next-line max-statements
-      await lock.acquire('mri', async function() {
+      await lock.acquire('mri', async function () {
 
         // check if atlas has changed since the last time and
         // if it hasn't return
@@ -373,9 +373,9 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         }
 
         if (index === -1) {
-        // atlas was removed from MRI object, return
-        // const iAtlas = me.indexOfAtlasAtPath(atlas.dirname, atlas.filename);
-        // me.removeAtlasAtIndex(iAtlas);
+          // atlas was removed from MRI object, return
+          // const iAtlas = me.indexOfAtlasAtPath(atlas.dirname, atlas.filename);
+          // me.removeAtlasAtIndex(iAtlas);
 
           return;
         }
@@ -408,7 +408,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
     // eslint-disable-next-line max-statements
     _saveAtlasVoxelData: async function (atlas) {
       if (typeof atlas === 'undefined'
-      || typeof atlas.dim === 'undefined') {
+        || typeof atlas.dim === 'undefined') {
 
         throw new Error('No voxel atlas to save');
       }
@@ -579,8 +579,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           break;
         }
         if (undoLayer.User.username === User.username &&
-                    undoLayer.User.atlasFilename === User.atlasFilename &&
-                    undoLayer.User.specimenName === User.specimenName) {
+          undoLayer.User.atlasFilename === User.atlasFilename &&
+          undoLayer.User.specimenName === User.specimenName) {
           found = true;
           break;
         }
@@ -606,8 +606,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           break;
         }
         if (undoLayer.User.username === User.username
-            && undoLayer.User.atlasFilename === User.atlasFilename
-            && undoLayer.User.specimenName === User.specimenName
+          && undoLayer.User.atlasFilename === User.atlasFilename
+          && undoLayer.User.specimenName === User.specimenName
           && Object.keys(undoLayer.actions).length > 0) {
           found = true;
           me.UndoStack.splice(i, 1); // remove layer from me.UndoStack
@@ -792,7 +792,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         right = n.x;
         ({ y } = n);
         while (left - 1 >= 0 && vol[me._sliceXYZ2index(left - 1, y, z, User)] === bval) {
-          left--;
+          left -= 1;
         }
         while (right + 1 < brainWidth && vol[me._sliceXYZ2index(right + 1, y, z, User)] === bval) {
           right += 1;
@@ -1238,15 +1238,15 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       json.modifiedBy = (sourceUS.User && sourceUS.User.username) ? sourceUS.User.username : 'anonymous';
 
       // eslint-disable-next-line max-statements
-      await lock.acquire('mri', async function() {
+      await lock.acquire('mri', async function () {
         if (data.method === 'patch') {
-        // deal with patches
+          // deal with patches
 
           const addingORremovingLayerOrAnnotations = data.patch.some((operation) => {
             if (operation.path === null) { return false; }
 
             return (operation.op === 'remove' || operation.op === 'add') &&
-                   (operation.path.startsWith('/mri/atlas/') || operation.path.startsWith('/mri/annotations/'));
+              (operation.path.startsWith('/mri/atlas/') || operation.path.startsWith('/mri/annotations/'));
           });
           if (addingORremovingLayerOrAnnotations) {
             throw new Error('Refusing to apply patch - cannot directly remove or add annotation layers on MRI files');
@@ -1264,7 +1264,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           // insert new
           await db.get('mri').insert(ret);
         } else {
-        // deal with the complete object
+          // deal with the complete object
 
           // sanitise json
           json = JSON.parse(DOMPurify.sanitize(JSON.stringify(json))); // sanitize works on strings, not objects
@@ -1284,7 +1284,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
 
           await db.get('mri').update({ source: json.source }, { $set: { backup: true } }, { multi: true });
           await db.get('mri').insert(json);
-        // DEBUG: tracer.log("inserted mri:", JSON.stringify(json));
+          // DEBUG: tracer.log("inserted mri:", JSON.stringify(json));
         }
       });
     },
@@ -1396,16 +1396,16 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
      * @returns {Object} An atlas (mri structure)
      */
     // eslint-disable-next-line max-statements
-    loadAtlas: async function loadAtlas (User) {
+    loadAtlas: async function loadAtlas(User) {
       const mriPath = path.join(me.dataDirectory, User.dirname, User.atlasFilename);
 
       if (typeof User.dirname === 'undefined') {
         tracer.log('ERROR: Rejecting loadAtlas from undefined User.dirname:', User);
-        throw(new Error('ERROR: Rejecting loadAtlas from undefined User'));
+        throw (new Error('ERROR: Rejecting loadAtlas from undefined User'));
       }
       if (typeof User.atlasFilename === 'undefined') {
         tracer.log('ERROR: Rejecting loadAtlas from undefined User.atlasFilename:', User);
-        throw(new Error('ERROR: Rejecting loadAtlas from undefined User'));
+        throw (new Error('ERROR: Rejecting loadAtlas from undefined User'));
       }
 
       // eslint-disable-next-line no-sync
@@ -1416,16 +1416,16 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         let mri;
         try {
           mri = await me.getBrainAtPath(brainPath);
-        } catch(err) {
+        } catch (err) {
           tracer.log('ERROR Cannot get template brain for new atlas', err);
-          throw(err);
+          throw (err);
         }
-        var newAtlas;
+        let newAtlas;
         try {
           newAtlas = await amri.createNifti(mri);
-        } catch(err) {
+        } catch (err) {
           tracer.log('ERROR Cannot create nifti', err);
-          throw(err);
+          throw (err);
         }
         newAtlas.filename = User.atlasFilename;
         newAtlas.dirname = User.dirname;
@@ -1439,7 +1439,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           date: (new Date()).toJSON()
         });
 
-        return(newAtlas);
+        return (newAtlas);
       }
       // Load existing atlas
       tracer.log('    Atlas found. Loading it');
@@ -1479,10 +1479,10 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       case 'mgz':
 
         /*
-          createMGH(loadedAtlas)
-          .then(function(atlas8bit) {
-          });
-        */
+              createMGH(loadedAtlas)
+              .then(function(atlas8bit) {
+              });
+            */
         break;
       }
 
@@ -1562,6 +1562,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       if (typeof iAtlas !== 'undefined') {
         atlasLoadedFlag = true;
       } else {
+        // eslint-disable-next-line no-plusplus
         iAtlas = `a${++me.atlascounter}`;
       }
 
@@ -1893,8 +1894,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
     _handleBroadcastWebSocketMessage: function ({ data, sourceUS }) {
       // do not broadcast the following messages
       if (data.type === 'requestSlice' ||
-                data.type === 'requestSlice2' ||
-                (data.type === 'userData' && data.description === 'sendAtlas')) {
+        data.type === 'requestSlice2' ||
+        (data.type === 'userData' && data.description === 'sendAtlas')) {
 
         return;
       }
@@ -1978,8 +1979,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           tracer.log('There remain ' + sum + ' users connected to that MRI');
         } else {
           tracer.log('No user connected to MRI '
-                                + sourceUS.User.dirname
-                                + sourceUS.User.mri + ': unloading it', sourceUS.specimenName);
+            + sourceUS.User.dirname
+            + sourceUS.User.mri + ': unloading it', sourceUS.specimenName);
           me.unloadMRI(sourceUS.User.dirname + sourceUS.User.mri);
         }
 
@@ -1989,8 +1990,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           tracer.log('There remain ' + sum + ' users connected to that atlas');
         } else {
           tracer.log('No user connected to atlas '
-                                + sourceUS.User.dirname
-                                + sourceUS.User.atlasFilename + ': unloading it', sourceUS.specimenName);
+            + sourceUS.User.dirname
+            + sourceUS.User.atlasFilename + ': unloading it', sourceUS.specimenName);
           try {
             await me.unloadAtlas(sourceUS.User.dirname, sourceUS.User.atlasFilename, sourceUS.specimenName);
           } catch (err) {
@@ -2066,9 +2067,9 @@ free memory: ${os.freemem()}
 
       me.server.on('upgrade', function (req, socket) {
         let ip = req.ip
-                    || req.connection.remoteAddress
-                    || req.socket.remoteAddress
-                    || req.connection.socket.remoteAddress;
+          || req.connection.remoteAddress
+          || req.socket.remoteAddress
+          || req.connection.socket.remoteAddress;
         ip = ip.split(':').pop();
         tracer.log('UPGRADING SERVER WITH IP', ip);
 

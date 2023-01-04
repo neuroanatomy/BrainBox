@@ -1,8 +1,9 @@
 {
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
-  },
   "[javascript]": {
-    "editor.formatOnSave": false
+    "editor.formatOnSave": false,
+    "editor.codeActionsOnSave": [
+      "source.formatDocument", // used by rohit-gohri.format-code-action
+      "source.fixAll.eslint" // used by dbaeumer.vscode-eslint
+    ]
   }
 }
