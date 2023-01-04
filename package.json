@@ -95,7 +95,7 @@
     "nyc": "^15.1.0",
     "pixelmatch": "^4.0.2",
     "pngjs": "^3.4.0",
-    "puppeteer": "^8.0.0",
+    "puppeteer": "^19.4.1",
     "rimraf": "^3.0.2",
     "style-loader": "^0.23.1",
     "svg-inline-loader": "^0.8.2",
