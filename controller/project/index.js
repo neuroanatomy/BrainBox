@@ -1,9 +1,9 @@
 /*global authTokenMiddleware */
 
-var express = require('express');
-var controller = require('./project.controller');
+const express = require('express');
+const controller = require('./project.controller');
 
-var router = new express.Router();
+const router = new express.Router();
 
 router.get('/new', controller.newProject);
 

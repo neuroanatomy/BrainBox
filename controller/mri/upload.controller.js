@@ -2,8 +2,8 @@
 
 const fs = require('fs');
 const amri = require('../atlasmakerServer/atlasmaker-mri');
-var AsyncLock = require('async-lock');
-var lock = new AsyncLock();
+const AsyncLock = require('async-lock');
+const lock = new AsyncLock();
 
 // ExpressValidator = require('express-validator')
 
@@ -38,7 +38,7 @@ const validator = function (req, res, next) {
         atlasLabelSet: One of the labels available inside the /public/labels/ directory
     */
 
-  var errors = req.validationErrors();
+  const errors = req.validationErrors();
   if (errors) {
     return res.status(403).send(errors)
       .end();
@@ -51,7 +51,7 @@ const validator = function (req, res, next) {
 // eslint-disable-next-line max-statements
 const otherValidations = async function (req, res, next) {
 
-  const {token} = req.body;
+  const { token } = req.body;
   const obj = await req.db.get('log').findOne({ 'token': token })
     .catch(function (err) {
       console.log('ERROR:', err);
@@ -91,10 +91,10 @@ const otherValidations = async function (req, res, next) {
 
 // eslint-disable-next-line max-statements
 const upload = async function (req, res) {
-  const {username} = req.atlasUpload;
+  const { username } = req.atlasUpload;
   const { url, atlasName, atlasProject, atlasLabelSet } = req.body;
   const { mri } = req.atlasUpload;
-  const {files} = req;
+  const { files } = req;
 
   delete mri._id;
 
@@ -108,9 +108,7 @@ const upload = async function (req, res) {
   console.log('files:', files);
 
   // create final filename
-  var ext;
-  var filename;
-  var dir, path;
+  let ext;
 
   if ((/.nii.gz$/).test(files[0].originalname)) {
     ext = '.nii.gz';
@@ -121,12 +119,12 @@ const upload = async function (req, res) {
       .end();
   }
 
-  filename = Math.random().toString(36)
+  const filename = Math.random().toString(36)
     .slice(2) + ext;
 
   // check if directory exists (it may not exist if a volume annotation is being uploaded
   // for an mri that has only a db entry but has not yet been accessed)
-  dir = req.dirname + '/public' + mri.url;
+  const dir = req.dirname + '/public' + mri.url;
   // eslint-disable-next-line no-sync
   if (!(fs.existsSync(dir))) {
     // directory does not exist, create it
@@ -135,7 +133,7 @@ const upload = async function (req, res) {
   }
 
   // move tmp atlas file to final location
-  path = dir + filename;
+  const path = dir + filename;
   try {
     await fs.promises.rename(req.dirname + '/' + files[0].path, path);
   } catch (err) {
@@ -171,8 +169,8 @@ const upload = async function (req, res) {
         */
 
   // create the atlas object
-  var date = new Date();
-  var atlasMetadata = {
+  const date = new Date();
+  const atlasMetadata = {
     name: atlasName,
     project: atlasProject,
     access: 'edit',
@@ -189,15 +187,15 @@ const upload = async function (req, res) {
   console.log('atlasMetadata:', atlasMetadata);
 
   // remove previous atlases with the same atlasName and atlasProject
-  var i;
+  let i;
   for (i = mri.mri.atlas.length - 1; i >= 0; i--) {
     if (mri.mri.atlas[i].name === atlasName && mri.mri.atlas[i].project === atlasProject) {
       mri.mri.atlas.splice(i, 1);
     }
   }
 
-  await lock.acquire('mri', async function() {
-  // update the database
+  await lock.acquire('mri', async function () {
+    // update the database
     mri.mri.atlas.push(atlasMetadata);
     // mark previous version as backup
     await req.db.get('mri').update({ source: req.body.url, backup: { $exists: false } }, { $set: { backup: true } }, { multi: true });

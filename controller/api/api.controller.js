@@ -7,7 +7,7 @@ const getLabelsets = async (req, res) => {
   const info = [];
   for (const label of arr) {
     // eslint-disable-next-line no-await-in-loop
-    var json = JSON.parse(await fs.promises.readFile(path.join(__dirname, '../../public/labels/' + label)));
+    const json = JSON.parse(await fs.promises.readFile(path.join(__dirname, '../../public/labels/' + label)));
     info.push({
       name: json.name,
       source: label
@@ -139,7 +139,7 @@ const log = async (req, res) => {
       if(result) {
         length = parseFloat(result.value.length);
       }
-      var sum = parseFloat(json.value.length) + length;
+      const sum = parseFloat(json.value.length) + length;
       await db.get('log').update(obj, {$set:{
         'value.length':sum,
         date: (new Date()).toJSON()

@@ -1,7 +1,7 @@
-var express = require('express');
-var controller = require('./api.controller');
+const express = require('express');
+const controller = require('./api.controller');
 
-var router = new express.Router();
+const router = new express.Router();
 
 router.get('/getLabelsets', controller.getLabelsets);
 router.get('/userNameQuery', controller.userNameQuery);

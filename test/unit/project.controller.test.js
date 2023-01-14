@@ -1,5 +1,5 @@
 /* eslint-disable max-lines */
-var assert = require('assert');
+const assert = require('assert');
 const projectController = require('../../controller/project/project.controller');
 require('mocha-sinon');
 const sinon = require('sinon');

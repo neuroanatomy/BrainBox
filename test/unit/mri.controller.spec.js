@@ -1,5 +1,5 @@
 /* eslint-disable max-lines */
-var {assert} = require('chai');
+const {assert} = require('chai');
 const MriController = require('../../controller/mri/mri.controller');
 // const atlasMakerServer = require('../../controller/atlasmakerServer/atlasmakerServer');
 require('mocha-sinon');

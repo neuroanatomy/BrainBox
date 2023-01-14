@@ -1,7 +1,7 @@
-const notifier = require("../../notifier");
+const notifier = require('../../notifier');
 
 const validator = (req, res, next) => {
-  const authorizedIP = ["1"]; // hardcoded authorized IPs
+  const authorizedIP = ['1']; // hardcoded authorized IPs
   let ip;
   if(req.connection.remoteAddress) {
     ip = req.connection.remoteAddress;
@@ -9,14 +9,14 @@ const validator = (req, res, next) => {
     ip = req.socket._peername.address;
   }
 
-  ip = ip.split(":").pop();
+  ip = ip.split(':').pop();
   console.log({ip});
 
   if(authorizedIP.includes(ip)) {
     return next();
   }
 
-  res.status(403).send({error: "Unauthorized address"})
+  res.status(403).send({error: 'Unauthorized address'})
     .end();
 };
 
@@ -27,8 +27,8 @@ const validator = (req, res, next) => {
  * @returns {void}
  */
 const saveAllAtlases = (req, res) => {
-  notifier.emit("saveAllAtlases");
-  res.send({msg: "Will save all atlases", success: true});
+  notifier.emit('saveAllAtlases');
+  res.send({msg: 'Will save all atlases', success: true});
 };
 
 /**
@@ -39,7 +39,7 @@ const saveAllAtlases = (req, res) => {
  * @returns {void}
  */
 const broadcastMessage = (req, res) => {
-  console.log("broadcastMessage");
+  console.log('broadcastMessage');
 
   req.checkBody('msg', 'Provide a msg to broadcast')
     .notEmpty();
@@ -51,8 +51,8 @@ const broadcastMessage = (req, res) => {
   }
   // const msg = req.sanitize(req.body.msg); // why does this not work?
   const {msg} = req.body;
-  notifier.emit("broadcastMessage", msg);
-  res.send({msg: "Will broadcast message " + msg, success: true});
+  notifier.emit('broadcastMessage', msg);
+  res.send({msg: 'Will broadcast message ' + msg, success: true});
 };
 
 module.exports = {

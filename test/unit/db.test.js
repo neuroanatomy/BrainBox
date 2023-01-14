@@ -1,5 +1,5 @@
-var chai = require('chai');
-var {assert} = chai;
+const chai = require('chai');
+const {assert} = chai;
 const U = require('../utils.js');
 
 describe('UNIT TESTING DATABASE', function () {

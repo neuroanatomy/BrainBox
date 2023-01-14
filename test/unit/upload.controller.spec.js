@@ -1,5 +1,5 @@
 /* eslint-disable no-empty-function */
-var assert = require('assert');
+const assert = require('assert');
 const uploadController = require('../../controller/mri/upload.controller');
 require('mocha-sinon');
 const sinon = require('sinon');

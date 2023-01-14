@@ -8,7 +8,7 @@
  */
 export default function freeform(annotation, path, username) {
   // the object that will go into the table
-  const td = "<td contentEditable=true class='noEmpty'></td>";
+  const td = '<td contentEditable=true class=\'noEmpty\'></td>';
 
   // the object that will go into the database
   const obj = {
@@ -16,7 +16,7 @@ export default function freeform(annotation, path, username) {
     path: path,
     format: function(e, d) {
       if(typeof d.data === 'undefined') {
-        e.get(0).innerHTML = "";
+        e.get(0).innerHTML = '';
       } else {
         e.get(0).innerHTML = '<span>'+d.data+'</span>';
       }

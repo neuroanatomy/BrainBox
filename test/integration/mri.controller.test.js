@@ -1,7 +1,7 @@
 'use strict';
 
 const chai = require('chai');
-var {assert} = chai;
+const {assert} = chai;
 const chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 const U = require('../utils.js');
@@ -29,7 +29,7 @@ describe('TESTING THE /mri ROUTE', function () {
 
   it('POST /mri/json with url should start a download', async function () {
     let shouldContinue = true;
-    var body, res;
+    let body, res;
     while (shouldContinue) {
       // eslint-disable-next-line no-await-in-loop
       res = await chai.request(U.serverURL).post('/mri/json')

@@ -1,4 +1,5 @@
-/* global infoProxy projectInfo BrainBox AtlasMakerWidget $ */
+/* eslint-disable max-lines */
+/* global infoProxy projectInfo annotationsAccessLevel BrainBox AtlasMakerWidget $ */
 
 import 'jquery-ui/themes/base/core.css';
 import 'jquery-ui/themes/base/theme.css';
@@ -29,13 +30,14 @@ let objTemplate;
 let aParam;
 // let hashOld;
 
-function appendFilesToProject(list) {
+// eslint-disable-next-line max-statements
+const appendFilesToProject = function (list) {
   const i0 = projectInfo.files.list.length;
   projectInfo.files.list.push(...list);
 
   // make sure that all mri files have a text annotations object for the project
-  for(let i=0; i<list.length; i++) {
-    file = projectInfo.files.list[i0+i];
+  for (let i = 0; i < list.length; i++) {
+    file = projectInfo.files.list[i0 + i];
     if (!(file.mri)) {
       file.mri = {};
     }
@@ -47,12 +49,12 @@ function appendFilesToProject(list) {
     }
   }
   // initialise the relevant annotation entries in each mri file if required
-  for(let i=0; i<list.length; i++) {
-    file = projectInfo.files.list[i0+i];
-    for(let j=0; j<annotations.text.length; j++) {
+  for (let i = 0; i < list.length; i++) {
+    file = projectInfo.files.list[i0 + i];
+    for (let j = 0; j < annotations.text.length; j++) {
       annName = annotations.text[j].name;
-      if(!file.mri.annotations[projShortname][annName]) {
-        var date=new Date();
+      if (!file.mri.annotations[projShortname][annName]) {
+        const date = new Date();
         file.mri.annotations[projShortname][annName] = {
           created: date.toJSON(),
           modified: date.toJSON(),
@@ -62,25 +64,25 @@ function appendFilesToProject(list) {
       }
     }
   }
-  for(let i=0; i<list.length; i++) {
-    BrainBox.appendAnnotationTableRow(i0+i, aParam);
+  for (let i = 0; i < list.length; i++) {
+    BrainBox.appendAnnotationTableRow(i0 + i, aParam);
   }
-}
+};
 
-function queryFiles() {
-  $.getJSON('/project/json/'+projectInfo.shortname+'/files', {
+const queryFiles = function () {
+  $.getJSON('/project/json/' + projectInfo.shortname + '/files', {
     start: projectInfo.files.list.length,
     length: numFilesQuery
   })
-    .then(function(list) {
-      if(list.length) {
+    .then(function (list) {
+      if (list.length) {
         appendFilesToProject(list);
         queryFiles();
       } else {
         console.log('All files downloaded. Length:', projectInfo.files.list.length);
       }
     });
-}
+};
 
 /**
  * @func saveAnnotations
@@ -88,11 +90,11 @@ function queryFiles() {
  * @param {object} param Annotations
  * @returns {void}
  */
-function saveAnnotations(param) {
+const saveAnnotations = function (param) {
   JSON.stringify(param.infoProxy); // update BrainBox.info from infoProxy
   AtlasMakerWidget.sendSaveMetadataMessage(BrainBox.info);
   // hashOld = BrainBox.hash(JSON.stringify(BrainBox.info));
-}
+};
 
 /**
  * @func loadProjectFile
@@ -100,35 +102,36 @@ function saveAnnotations(param) {
  * @param {number} index of the file in the project list
  * @returns {object} A promise
  */
-function loadProjectFile(index) {
+const loadProjectFile = function (index) {
+  // eslint-disable-next-line max-statements
   const pr = new Promise((resolve, reject) => {
-    var url=projectInfo.files.list[index].source;
-    var params={url: url, view: 'cor', slice: 180, fullscreen: false};
+    const url = projectInfo.files.list[index].source;
+    const params = { url: url, view: 'cor', slice: 180, fullscreen: false };
     $('#loadingIndicator p').text('Loading...');
     $('#loadingIndicator').show();
 
     /**
        * @todo The mri entry may correspond to a file that has not been downloaded yet!
        */
-    var info = projectInfo.files.list[index];
+    const info = projectInfo.files.list[index];
 
-    if($.isEmptyObject(info) === false) {
+    if ($.isEmptyObject(info) === false) {
       // check if the mri contains the required annotations
-      var iarr; // index of the object in the data array
-      for(let irow=0; irow<annotations.volume.length; irow++) {
+      let iarr; // index of the object in the data array
+      for (let irow = 0; irow < annotations.volume.length; irow++) {
         let found = false;
-        if(!info.mri.atlas) { info.mri.atlas = []; }
-        for(iarr=0; iarr<info.mri.atlas.length; iarr++) {
-          if(annotations.volume[irow].name === info.mri.atlas[iarr].name
-                     && projectInfo.shortname === info.mri.atlas[iarr].project) {
-            found=true;
+        if (!info.mri.atlas) { info.mri.atlas = []; }
+        for (iarr = 0; iarr < info.mri.atlas.length; iarr++) {
+          if (annotations.volume[irow].name === info.mri.atlas[iarr].name
+            && projectInfo.shortname === info.mri.atlas[iarr].project) {
+            found = true;
             break;
           }
         }
         // if it doesn't, create them
-        if(found === false) {
+        if (found === false) {
           // add annotation
-          const date=new Date();
+          const date = new Date();
           // add data to annotations array
           const atlas = {
             name: annotations.volume[irow].name,
@@ -137,7 +140,7 @@ function loadProjectFile(index) {
             modified: date.toJSON(),
             modifiedBy: AtlasMakerWidget.User.username,
             filename: Math.random().toString(36)
-              .slice(2)+'.nii.gz', // automatically generated filename
+              .slice(2) + '.nii.gz', // automatically generated filename
             labels: annotations.volume[irow].values,
             owner: AtlasMakerWidget.User.username,
             type: 'volume',
@@ -147,11 +150,11 @@ function loadProjectFile(index) {
           projectInfo.files.list[index].mri.atlas.push(atlas);
         }
 
-        annotations.volume[irow].annotationItemIndex=iarr;
+        annotations.volume[irow].annotationItemIndex = iarr;
       }
-      params.info=projectInfo.files.list[index];
+      params.info = projectInfo.files.list[index];
 
-      if(annotations.volume[0]) {
+      if (annotations.volume[0]) {
         params.annotationItemIndex = annotations.volume[0].annotationItemIndex;
       } else {
         params.annotationItemIndex = -1;
@@ -161,7 +164,7 @@ function loadProjectFile(index) {
         .then(function () {
 
           // bind volume annotations to table#volAnnotations
-          const annvolProxy={};
+          const annvolProxy = {};
           const aParamVolAnnot = {
             table: $('table#volAnnotations'),
             infoProxy: annvolProxy,
@@ -171,19 +174,21 @@ function loadProjectFile(index) {
               ' <td></td>', // volume name
               ' <td></td>', // volume label set
               '</tr>'
-            ], function(o) { return o; }).join(),
+            ], function (o) { return o; }).join(),
             objTemplate: [
-              { typeOfBinding:1,
-                path:'mri.atlas.#.name'
+              {
+                typeOfBinding: 1,
+                path: 'mri.atlas.#.name'
               },
-              { typeOfBinding:1,
-                path:'mri.atlas.#.labels'
+              {
+                typeOfBinding: 1,
+                path: 'mri.atlas.#.labels'
               }
             ]
           };
 
           // add and bind new table row
-          for(let irow=0; irow<annotations.volume.length; irow++) {
+          for (let irow = 0; irow < annotations.volume.length; irow++) {
             BrainBox.appendAnnotationTableRow2(irow, annotations.volume[irow].annotationItemIndex, aParamVolAnnot);
           }
           // update in server
@@ -194,19 +199,19 @@ function loadProjectFile(index) {
           $('#annotations tbody tr:eq(0)').addClass('selected');
 
           AtlasMakerWidget.User.projectPage = projectInfo.shortname;
-          AtlasMakerWidget.sendUserDataMessage(JSON.stringify({projectPage:projectInfo.shortname}));
+          AtlasMakerWidget.sendUserDataMessage(JSON.stringify({ projectPage: projectInfo.shortname }));
 
           resolve();
         });
     } else {
-      var msg=AtlasMakerWidget.container.querySelector('#text-layer');
+      const msg = AtlasMakerWidget.container.querySelector('#text-layer');
       msg.innerHTML = '<text x=\'5\' y=\'15\' fill=\'white\'>ERROR: File is unreadable</text>';
       reject(new Error('ERROR: Cannot read data. The file is maybe corrupt?'));
     }
   });
 
   return pr;
-}
+};
 
 /**
  * @func resizeButton
@@ -214,16 +219,16 @@ function loadProjectFile(index) {
  * @param {object} p Mouse coordinates
  * @returns {void}
  */
-function resizeButton(p) {
-  if($('#resizeButton').data('flag')===0) {
-    $('#resizeButton').data({flag:1, x0:p.x, y0:p.y});
-  } else if($('#resizeButton').data('flag')===1) {
-    var d=$('#resizeButton').data('x0')-p.x;
-    $('#left').css({'flex-basis':$('#left').width()-d});
-    $('#resizeButton').data({x0:p.x, y0:p.y});
+const resizeButton = function (p) {
+  if ($('#resizeButton').data('flag') === 0) {
+    $('#resizeButton').data({ flag: 1, x0: p.x, y0: p.y });
+  } else if ($('#resizeButton').data('flag') === 1) {
+    const d = $('#resizeButton').data('x0') - p.x;
+    $('#left').css({ 'flex-basis': $('#left').width() - d });
+    $('#resizeButton').data({ x0: p.x, y0: p.y });
     AtlasMakerWidget.resizeWindow();
   }
-}
+};
 
 // Prevent zoom on double tap
 $('body').on('touchstart', function preventZoom(e) {
@@ -241,17 +246,17 @@ $('body').on('touchstart', function preventZoom(e) {
 });
 
 // collect the project's text annotations
-for(const k of projectInfo.annotations.list) {
+for (const k of projectInfo.annotations.list) {
   if (k.type === 'text' ||
-      k.type === 'hidden text' ||
-      k.type === 'multiple choices' ) {
+    k.type === 'hidden text' ||
+    k.type === 'multiple choices') {
     $('#projectFiles thead tr').append(`<th>${k.name}</th>`);
     annotations.text.push(k);
   }
 }
 
 // collect the project's volume annotations
-for(const k of projectInfo.annotations.list) {
+for (const k of projectInfo.annotations.list) {
   if (k.type === 'volume') {
     annotations.volume.push(k);
   }
@@ -259,24 +264,24 @@ for(const k of projectInfo.annotations.list) {
 
 $('#projectName').text(projectInfo.name);
 
-$('#resizeButton').data({flag:-1, x0:0, y0:0});
-$('#resizeButton').on('mousedown touchstart', function(e) { $(e.target).data({flag:0, x0:e.pageX, y0:e.pageY}); });
-$('body').on('mousemove', function(e) { resizeButton({x:e.pageX, y:e.pageY}); });
-$('body').on('touchmove', function(e) { resizeButton({x:e.originalEvent.changedTouches[0].pageX, y:e.originalEvent.changedTouches[0].pageY}); });
-$('body').on('mouseup touchend', function() { $('#resizeButton').data({flag:-1}); });
+$('#resizeButton').data({ flag: -1, x0: 0, y0: 0 });
+$('#resizeButton').on('mousedown touchstart', function (e) { $(e.target).data({ flag: 0, x0: e.pageX, y0: e.pageY }); });
+$('body').on('mousemove', function (e) { resizeButton({ x: e.pageX, y: e.pageY }); });
+$('body').on('touchmove', function (e) { resizeButton({ x: e.originalEvent.changedTouches[0].pageX, y: e.originalEvent.changedTouches[0].pageY }); });
+$('body').on('mouseup touchend', function () { $('#resizeButton').data({ flag: -1 }); });
 
-$('#addProject').click(function() { location.assign('/project/new'); });
-$('#settings').click(function() {
-  var {pathname}=location;
-  if(pathname.slice(-1)==='/') { location.assign(pathname+'settings'); } else { location.assign(pathname+'/settings'); }
+$('#addProject').click(function () { location.assign('/project/new'); });
+$('#settings').click(function () {
+  const { pathname } = location;
+  if (pathname.slice(-1) === '/') { location.assign(pathname + 'settings'); } else { location.assign(pathname + '/settings'); }
 });
 
-function receiveMetadata(data) {
-  const {shortname} = projectInfo;
-  for (var i in projectInfo.files.list) {
+const receiveMetadata = function (data) {
+  const { shortname } = projectInfo;
+  for (const i in projectInfo.files.list) {
     if (projectInfo.files.list[i].source === data.metadata.source) {
-      for (var key in projectInfo.files.list[i].mri.annotations[shortname]) {
-        if({}.hasOwnProperty.call(projectInfo.files.list[i].mri.annotations[shortname], key)) {
+      for (const key in projectInfo.files.list[i].mri.annotations[shortname]) {
+        if ({}.hasOwnProperty.call(projectInfo.files.list[i].mri.annotations[shortname], key)) {
           infoProxy['files.list.' + i + '.mri.annotations.' + shortname + '.' + key] = data.metadata.mri.annotations[shortname][key];
         }
       }
@@ -284,7 +289,7 @@ function receiveMetadata(data) {
       break;
     }
   }
-}
+};
 
 // Init BrainBox
 //---------------
@@ -294,6 +299,7 @@ BrainBox.initBrainBox()
     return BrainBox.loadLabelsets();
   })
   // subscribe to metadata changes received by AtlasMaker
+  // eslint-disable-next-line max-statements
   .then(function () {
     AtlasMakerWidget._metadataChangeSubscribers.push(receiveMetadata);
 
@@ -305,15 +311,15 @@ BrainBox.initBrainBox()
     // configure the binding template for table row and object.
     // the 1st two columns are fixed: name and source
     trTemplate.push(['<td contentEditable=true class=\'noEmpty\'></td>']);
-    objTemplate.push({ typeOfBinding: 2, path: 'files.list.#.name'});
+    objTemplate.push({ typeOfBinding: 2, path: 'files.list.#.name' });
 
     trTemplate.push(['<td><a></a></td>']);
     objTemplate.push({
-      typeOfBinding:1,
-      path:'files.list.#.source',
-      format:function(e, d) {
+      typeOfBinding: 1,
+      path: 'files.list.#.source',
+      format: function (e, d) {
         $(e).find('a')
-          .prop('href', location.origin+'/mri?url=' + d);
+          .prop('href', location.origin + '/mri?url=' + d);
         $(e).find('a')
           .html(d.split('/').pop());
       }
@@ -321,31 +327,31 @@ BrainBox.initBrainBox()
 
     // the following columns are completed from the project's 'annotations' definitions:
     // determine their type of display (multiple choices, freeform, etc.) based data type
-    for(let g=0; g<annotations.text.length; g++) {
+    for (let g = 0; g < annotations.text.length; g++) {
       annType = annotations.text[g].type;
       annName = annotations.text[g].name;
 
-      if(annType === 'multiple choices') {
+      if (annType === 'multiple choices') {
         // array of values
-        const {td, obj} = multiple(
+        const { td, obj } = multiple(
           annotations.text[g],
           'files.list.#.mri.annotations.' + projShortname + '.' + annName,
           AtlasMakerWidget.User.username
         );
         trTemplate.push(td);
         objTemplate.push(obj);
-      } else if(annType === 'text') {
+      } else if (annType === 'text') {
         // freeform text
-        const {td, obj} = freeform(
+        const { td, obj } = freeform(
           annotations.text[g],
           'files.list.#.mri.annotations.' + projShortname + '.' + annName,
           AtlasMakerWidget.User.username
         );
         trTemplate.push(td);
         objTemplate.push(obj);
-      } else if(annType === 'hidden text') {
+      } else if (annType === 'hidden text') {
         // freeform text
-        const {td, obj} = hidden(
+        const { td, obj } = hidden(
           annotations.text[g],
           'files.list.#.mri.annotations.' + projShortname + '.' + annName,
           AtlasMakerWidget.User.username
@@ -368,17 +374,17 @@ BrainBox.initBrainBox()
     };
   })
   // get list of project files
-  .then(function() {
+  .then(function () {
     // Start with the 1st #numFilesQuery files, load and
     // display the 1st file, configure the tools position, and keep querying for the
     // rest of the files
-    return $.getJSON('/project/json/'+projectInfo.shortname+'/files', {
+    return $.getJSON('/project/json/' + projectInfo.shortname + '/files', {
       start: 0,
       length: numFilesQuery
     });
   })
   // append files progressively
-  .then(function(list) {
+  .then(function (list) {
     appendFilesToProject(list);
 
     // mark first row as selected
@@ -392,13 +398,13 @@ BrainBox.initBrainBox()
   .then(function () {
     $('#tools-side').detach()
       .appendTo('#tools');
-    $(document).on('click touchstart', '#labels-close', function() { $('#labelset').hide(); });
+    $(document).on('click touchstart', '#labels-close', function () { $('#labelset').hide(); });
   })
   // query all files
-  .then(function() {
+  .then(function () {
     queryFiles();
   })
-  .catch( (err) => {
+  .catch((err) => {
     $('#msgLog').html('ERROR: Can\'t load data. ' + err);
     console.error(err);
   });
@@ -407,34 +413,34 @@ BrainBox.initBrainBox()
 //------------------------------------------------
 // send data when focus is lost (on blur)
 $(document).on('blur', '#projectFiles table tbody td', function (e) {
-  var index = $(e.target).closest('tr')
+  const index = $(e.target).closest('tr')
     .index();
   JSON.stringify(infoProxy); // update content of projectInfo object from proxy by calling all getters
   AtlasMakerWidget.sendSaveMetadataMessage(projectInfo.files.list[index]);
 });
 // blur when [enter] is clicked, to trigger data sending
-$(document).on('keydown', '#projectFiles table tbody td', function(e) {
-  if(e.which===13 && $(e.target).attr('contenteditable')) {
+$(document).on('keydown', '#projectFiles table tbody td', function (e) {
+  if (e.which === 13 && $(e.target).attr('contenteditable')) {
     e.preventDefault();
     $(e.target).blur();
   }
 });
 // blur when <select> changes value to trigger data sending
-$('#projectFiles table tbody').on('change', 'select', function(e) {
+$('#projectFiles table tbody').on('change', 'select', function (e) {
   $(e.target).blur();
 });
 
 // Listen to changes in selected table row
 //----------------------------------------
 // listen to changes in file selection by clicking on the file table
-$(document).on('click touchstart', '#projectFiles tbody tr', function(e) {
-  var table=$(e.target).closest('table');
-  var currentIndex=$(table).find('tr.selected')
+$(document).on('click touchstart', '#projectFiles tbody tr', function (e) {
+  const table = $(e.target).closest('table');
+  const currentIndex = $(table).find('tr.selected')
     .index();
   const selRow = e.target.closest('tr');
-  var index=$(selRow).index();
+  const index = $(selRow).index();
 
-  if(index>=0 && currentIndex!==index) {
+  if (index >= 0 && currentIndex !== index) {
     $(table).find('tr')
       .removeClass('selected');
     $(selRow).addClass('selected');
@@ -446,26 +452,26 @@ $(document).on('click touchstart', '#projectFiles tbody tr', function(e) {
 });
 
 // listen to changes in file selection by pressing the up/down arrows
-$(document).on('keydown', function(e) {
-  var table=$('#projectFiles tbody');
-  var index=$(table).find('tr.selected')
+$(document).on('keydown', function (e) {
+  const table = $('#projectFiles tbody');
+  let index = $(table).find('tr.selected')
     .index();
 
-  if(e.keyCode!==38 && e.keyCode!==40) {
+  if (e.keyCode !== 38 && e.keyCode !== 40) {
     return;
   }
 
-  switch(e.keyCode) {
+  switch (e.keyCode) {
   case 38: // up
-    index=(index+projectInfo.files.list.length-1)%projectInfo.files.list.length;
+    index = (index + projectInfo.files.list.length - 1) % projectInfo.files.list.length;
     break;
   case 40: // down
-    index=(index+1)%projectInfo.files.list.length;
+    index = (index + 1) % projectInfo.files.list.length;
     break;
   }
   $(table).find('tr')
     .removeClass('selected');
-  $(table).find('tr:eq('+index+')')
+  $(table).find('tr:eq(' + index + ')')
     .addClass('selected');
 
   // remove table with previous annotations
@@ -476,28 +482,29 @@ $(document).on('keydown', function(e) {
 });
 
 // listen to changes in selected volume annotation
+// eslint-disable-next-line max-statements
 $(document).on('click touchstart', '#volAnnotations tbody tr', function (e) {
-  const table=$(e.target).closest('tbody');
+  const table = $(e.target).closest('tbody');
   const targetRow = $(e.target).closest('tr');
   const targetIndex = targetRow.index();
   const currentIndex = $(table).find('tr.selected')
     .index();
 
-  if(targetIndex>=0 && currentIndex!==targetIndex) {
+  if (targetIndex >= 0 && currentIndex !== targetIndex) {
     $(table).find('tr')
       .removeClass('selected');
     targetRow.addClass('selected');
 
     let iarr;
-    let found=false;
-    for(iarr=0; iarr<BrainBox.info.mri.atlas.length; iarr++) {
-      if(BrainBox.info.mri.atlas[iarr].name===annotations.volume[targetIndex].name
-                    && BrainBox.info.mri.atlas[iarr].project===projectInfo.shortname) {
-        found=true;
+    let found = false;
+    for (iarr = 0; iarr < BrainBox.info.mri.atlas.length; iarr++) {
+      if (BrainBox.info.mri.atlas[iarr].name === annotations.volume[targetIndex].name
+        && BrainBox.info.mri.atlas[iarr].project === projectInfo.shortname) {
+        found = true;
         break;
       }
     }
-    if(found) {
+    if (found) {
       AtlasMakerWidget.configureAtlasMaker(BrainBox.info, iarr);
     } else {
       console.log('ERROR: A quite unexpected one too...');

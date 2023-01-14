@@ -2,16 +2,16 @@
 import html from './index.html';
 
 // append HTML
-const el = document.createElement("div");
-el.id = "adjust";
-el.style.width = "calc(100% - 20px )";
-el.style.position ="absolute";
+const el = document.createElement('div');
+el.id = 'adjust';
+el.style.width = 'calc(100% - 20px )';
+el.style.position = 'absolute';
 el.style.bottom = 0;
 el.style.left = 0;
-el.style.padding = "10px";
+el.style.padding = '10px';
 
 el.innerHTML = html;
-AtlasMakerWidget.container.querySelector("#resizable").appendChild(el);
+AtlasMakerWidget.container.querySelector('#resizable').appendChild(el);
 
 // Transparency
 AtlasMakerWidget.slider($('.slider#alphaLevel'), function (x) {
@@ -28,8 +28,8 @@ AtlasMakerWidget.slider($('.slider#minLevel'), function (x) {
   $('#minLevel').data('val', x);
   $('#minLevel .thumb')[0].style.left = x + '%';
 
-  var b = (2 * x / 100);
-  var c = (2 * $('#maxLevel').data('val') / 100);
+  const b = (2 * x / 100);
+  const c = (2 * $('#maxLevel').data('val') / 100);
   $('#canvas').css({
     'webkit-filter': 'brightness(' + b + ') contrast(' + c + ')',
     'filter': 'brightness(' + b + ') contrast(' + c + ')'
@@ -43,8 +43,8 @@ AtlasMakerWidget.slider($('.slider#maxLevel'), function (x) {
   $('#maxLevel').data('val', x);
   $('#maxLevel .thumb')[0].style.left = x + '%';
 
-  var b = (2 * $('#minLevel').data('val') / 100);
-  var c = (2 * x / 100);
+  const b = (2 * $('#minLevel').data('val') / 100);
+  const c = (2 * x / 100);
   $('#canvas').css({
     'webkit-filter': 'brightness(' + b + ') contrast(' + c + ')',
     'filter': 'brightness(' + b + ') contrast(' + c + ')'
@@ -53,11 +53,11 @@ AtlasMakerWidget.slider($('.slider#maxLevel'), function (x) {
 $('.slider#maxLevel').data({ max: 100, val: 50 });
 $('#maxLevel .thumb')[0].style.left = '50%';
 
-var observer = new MutationObserver(function (mutations) {
+const observer = new MutationObserver(function (mutations) {
   mutations.forEach(function (mutation) {
     if (mutation.attributeName === 'class') {
       console.log('mutation', mutation);
-      var attributeValue = $(mutation.target).prop(mutation.attributeName);
+      const attributeValue = $(mutation.target).prop(mutation.attributeName);
       if (attributeValue === 'a sub') {
         $('#adjust').remove();
       }
