@@ -8,6 +8,7 @@ const validator = function (req, res, next) {
   // userName can be an ip address (for anonymous users)
 
   /*
+    // legacy api, needs to be rewriten if uncommented
     req.checkParams('userName', 'incorrect user name').isAlphanumeric();
     var errors = req.validationErrors();
     console.log(errors);

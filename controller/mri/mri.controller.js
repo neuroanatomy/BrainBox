@@ -6,6 +6,7 @@ const url = require('url');
 const fs = require('fs');
 const request = require('request');
 const sanitize = require('sanitize-filename');
+const { body, validationResult } = require('express-validator');
 const AtlasmakerServer = require('../atlasmakerServer/atlasmakerServer');
 const dataSlices = require('../dataSlices/dataSlices.js');
 const { AccessType, AccessLevel } = require('neuroweblab');
@@ -44,9 +45,9 @@ const validator = function (req, res, next) {
   // req.checkQuery('var', 'please enter one of the variables that are indicated')
   // .optional()
   // .matches("localpath|filename|source|url|dim|pixdim");    // todo: decent regexp
-  const errors = req.validationErrors();
+  const errors = validationResult(req).array();
   console.log('errors:', errors);
-  if (errors) {
+  if (errors.length) {
     res
       .status(403)
       .send(errors)
@@ -56,28 +57,31 @@ const validator = function (req, res, next) {
   }
 };
 
-const validatorPost = function (req, res, next) {
+const validatorPost = async function (req, res, next) {
 
   console.log('mri body', req.body);
   console.log('mri query', req.query);
   console.log('mri params', req.params);
 
-  req.checkBody('url', 'Provide a URL')
-    .notEmpty();
-  req.checkBody('url', 'Provide a valid URL')
-    .isURL();
+  await body('url', 'Provide a URL')
+    .notEmpty()
+    .run(req);
+  await body('url', 'Provide a valid URL')
+    .isURL()
+    .run(req);
 
   // req.checkQuery('var', 'please enter one of the variables that are indicated')
   // .optional()
   // .matches("localpath|filename|source|url|dim|pixdim");    // @todo: decent regexp
-  const errors = req.validationErrors();
-  if (errors) {
+  const errors = validationResult(req).array();
+  if (errors.length) {
     console.log('mri send error 403');
-    res.status(403).send(errors)
+
+    return res.status(403).send(errors)
       .end();
-  } else {
-    return next();
   }
+
+  return next();
 };
 
 // does not seem to be used
@@ -280,10 +284,11 @@ const mri = async function (req, res) {
     // also query projects that set this MRI as a source
     projects.push(...await req.db.get('project').find({
       $or: [
-        { 'files.list': {$eq: myurl }},
-        { 'files.list.source': {$eq: myurl }}
+        { 'files.list': { $eq: myurl } },
+        { 'files.list.source': { $eq: myurl } }
       ],
-      backup: { $exists: 0 }}
+      backup: { $exists: 0 }
+    }
     ));
 
     // set access to volume annotations
@@ -568,7 +573,7 @@ const apiMriGet = async function (req, res) {
 };
 
 // eslint-disable-next-line func-style
-const reset = async function reset (req, res) {
+const reset = async function reset(req, res) {
   const myurl = req.query.url;
   const hash = crypto.createHash('md5').update(myurl)
     .digest('hex');

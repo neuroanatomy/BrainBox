@@ -2,6 +2,7 @@
 const url = require('url');
 const crypto = require('crypto');
 const validatorNPM = require('validator');
+const { param, validationResult } = require('express-validator');
 const dataSlices = require('../dataSlices/dataSlices.js');
 const AsyncLock = require('async-lock');
 const lock = new AsyncLock();
@@ -18,17 +19,18 @@ const { window } = (new JSDOM('', {
 }));
 const DOMPurify = createDOMPurify(window);
 
-const validator = function (req, res, next) {
+const validator = async function (req, res, next) {
 
-  req.checkParams('projectName', 'incorrect project name').isAlphanumeric();
+  await param('projectName', 'incorrect project name').isAlphanumeric()
+    .run(req);
   // req.checkQuery('url', 'please enter a valid URL')
   // .isURL();
 
   // req.checkQuery('var', 'please enter one of the variables that are indicated')
   // .optional()
   // .matches("localpath|filename|source|url|dim|pixdim"); //todo: decent regexp
-  const errors = req.validationErrors();
-  if (errors) {
+  const errors = validationResult(req).array();
+  if (errors.length) {
     res.status(403).send(errors)
       .end();
   } else {

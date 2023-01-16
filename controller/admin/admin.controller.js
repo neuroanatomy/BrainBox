@@ -1,22 +1,23 @@
 const notifier = require('../../notifier');
+const { body, validationResult } = require('express-validator');
 
 const validator = (req, res, next) => {
   const authorizedIP = ['1']; // hardcoded authorized IPs
   let ip;
-  if(req.connection.remoteAddress) {
+  if (req.connection.remoteAddress) {
     ip = req.connection.remoteAddress;
-  } else if(req.socket._peername) {
+  } else if (req.socket._peername) {
     ip = req.socket._peername.address;
   }
 
   ip = ip.split(':').pop();
-  console.log({ip});
+  console.log({ ip });
 
-  if(authorizedIP.includes(ip)) {
+  if (authorizedIP.includes(ip)) {
     return next();
   }
 
-  res.status(403).send({error: 'Unauthorized address'})
+  res.status(403).send({ error: 'Unauthorized address' })
     .end();
 };
 
@@ -28,7 +29,7 @@ const validator = (req, res, next) => {
  */
 const saveAllAtlases = (req, res) => {
   notifier.emit('saveAllAtlases');
-  res.send({msg: 'Will save all atlases', success: true});
+  res.send({ msg: 'Will save all atlases', success: true });
 };
 
 /**
@@ -38,21 +39,22 @@ const saveAllAtlases = (req, res) => {
  * @param {object} res Response object
  * @returns {void}
  */
-const broadcastMessage = (req, res) => {
+const broadcastMessage = async (req, res) => {
   console.log('broadcastMessage');
 
-  req.checkBody('msg', 'Provide a msg to broadcast')
-    .notEmpty();
+  await body('msg', 'Provide a msg to broadcast')
+    .notEmpty()
+    .run(req);
 
-  const errors = req.validationErrors();
-  if (errors) {
+  const errors = validationResult(req).array();
+  if (errors.length) {
     return res.status(403).send(errors)
       .end();
   }
   // const msg = req.sanitize(req.body.msg); // why does this not work?
-  const {msg} = req.body;
+  const { msg } = req.body;
   notifier.emit('broadcastMessage', msg);
-  res.send({msg: 'Will broadcast message ' + msg, success: true});
+  res.send({ msg: 'Will broadcast message ' + msg, success: true });
 };
 
 module.exports = {

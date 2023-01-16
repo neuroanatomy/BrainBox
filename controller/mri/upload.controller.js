@@ -1,33 +1,42 @@
 'use strict';
 
 const fs = require('fs');
+const { body, validationResult } = require('express-validator');
 const amri = require('../atlasmakerServer/atlasmaker-mri');
 const AsyncLock = require('async-lock');
 const lock = new AsyncLock();
 
 // ExpressValidator = require('express-validator')
 
-const validator = function (req, res, next) {
+const validator = async function (req, res, next) {
   console.log('upload.controller body', req.body);
   console.log('upload.controller query', req.query);
   console.log('upload.controller params', req.params);
 
-  req.checkBody('url', 'Provide a URL')
-    .notEmpty();
-  req.checkBody('url', 'Provide a valid URL')
-    .isURL();
-  req.checkBody('atlasName', 'Provide an atlasName')
-    .notEmpty();
-  req.checkBody('atlasName', 'Provide an alphanumeric atlasName')
-    .isAlphanumeric();
-  req.checkBody('atlasProject', 'Provide an atlasProject')
-    .notEmpty();
-  req.checkBody('atlasProject', 'Provide an alphanumeric atlasProject')
-    .isAlphanumeric();
-  req.checkBody('atlasLabelSet', 'Provide an atlasLabelSet')
-    .notEmpty();
-  req.checkBody('token', 'Provide an upload token')
-    .notEmpty();
+  await body('url', 'Provide a URL')
+    .notEmpty()
+    .run(req);
+  await body('url', 'Provide a valid URL')
+    .isURL()
+    .run(req);
+  await body('atlasName', 'Provide an atlasName')
+    .notEmpty()
+    .run(req);
+  await body('atlasName', 'Provide an alphanumeric atlasName')
+    .isAlphanumeric()
+    .run(req);
+  await body('atlasProject', 'Provide an atlasProject')
+    .notEmpty()
+    .run(req);
+  await body('atlasProject', 'Provide an alphanumeric atlasProject')
+    .isAlphanumeric()
+    .run(req);
+  await body('atlasLabelSet', 'Provide an atlasLabelSet')
+    .notEmpty()
+    .run(req);
+  await body('token', 'Provide an upload token')
+    .notEmpty()
+    .run(req);
 
   /*
         Check for all these required fields:
@@ -38,8 +47,8 @@ const validator = function (req, res, next) {
         atlasLabelSet: One of the labels available inside the /public/labels/ directory
     */
 
-  const errors = req.validationErrors();
-  if (errors) {
+  const errors = validationResult(req).array();
+  if (errors.length) {
     return res.status(403).send(errors)
       .end();
   }
