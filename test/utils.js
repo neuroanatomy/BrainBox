@@ -1,9 +1,9 @@
 /* eslint-disable max-lines */
-var fs = require('fs');
+const fs = require('fs');
 const path = require('path');
 const rimraf = require('rimraf');
 const { PNG } = require('pngjs');
-var jpeg = require('jpeg-js');
+const jpeg = require('jpeg-js');
 const pixelmatch = require('pixelmatch');
 const { exec } = require('child_process');
 // const { constants } = require('buffer');
@@ -81,11 +81,11 @@ const projectTest = {
   },
   files: {
     list: [
-      {source: serverURL + '/test_data/bert_brain.nii.gz', name: 'bert_brain'},
-      {source: 'https://zenodo.org/record/44855/files/MRI-n4.nii.gz', name: 'MRI-n4'},
-      {source: 'http://files.figshare.com/2284784/MRI_n4.nii.gz', name: 'MRI_n4'},
-      {source: 'https://dl.dropbox.com/s/cny5b3so267bv94/p32-f18-uchar.nii.gz', name: 'p32-f18-uchar'},
-      {source: 'https://s3.amazonaws.com/fcp-indi/data/Projects/ABIDE_Initiative/Outputs/freesurfer/5.1/Caltech_0051456/mri/T1.mgz', name: 'T1'}
+      { source: serverURL + '/test_data/bert_brain.nii.gz', name: 'bert_brain' },
+      { source: 'https://zenodo.org/record/44855/files/MRI-n4.nii.gz', name: 'MRI-n4' },
+      { source: 'http://files.figshare.com/2284784/MRI_n4.nii.gz', name: 'MRI_n4' },
+      { source: 'https://dl.dropbox.com/s/cny5b3so267bv94/p32-f18-uchar.nii.gz', name: 'p32-f18-uchar' },
+      { source: 'https://s3.amazonaws.com/fcp-indi/data/Projects/ABIDE_Initiative/Outputs/freesurfer/5.1/Caltech_0051456/mri/T1.mgz', name: 'T1' }
     ]
   },
   annotations: {
@@ -187,7 +187,7 @@ const removeUser = function (nickname) {
 
 const insertProject = function (project) {
   return chai.request(serverURL).post(`/project/json/${project.shortname}?token=${testToken}foo`)
-    .send({data: project});
+    .send({ data: project });
 };
 
 const removeProject = function (shortname) {
@@ -252,11 +252,10 @@ const waitUntilHTMLRendered = async function (page, timeout = 30000) {
   const checkDurationMsecs = 1000;
   const maxChecks = timeout / checkDurationMsecs;
   let lastHTMLSize = 0;
-  let checkCounts = 1;
   let countStableSizeIterations = 0;
   const minStableSizeIterations = 3;
 
-  while (checkCounts++ <= maxChecks) {
+  for (let checkCounts = 1; checkCounts <= maxChecks; checkCounts++) {
     // eslint-disable-next-line no-await-in-loop
     const html = await page.content();
     const currentHTMLSize = html.length;
@@ -266,7 +265,7 @@ const waitUntilHTMLRendered = async function (page, timeout = 30000) {
     // console.log('last: ', lastHTMLSize, ' <> curr: ', currentHTMLSize, " body html size: ", bodyHTMLSize);
 
     if (lastHTMLSize !== 0 && currentHTMLSize === lastHTMLSize) {
-      countStableSizeIterations++;
+      countStableSizeIterations += 1;
     } else {
       countStableSizeIterations = 0; //reset the counter
     }

@@ -1,7 +1,7 @@
 'use strict';
 
 const chai = require('chai');
-var {assert} = chai;
+const {assert} = chai;
 const chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 const U = require('../utils.js');

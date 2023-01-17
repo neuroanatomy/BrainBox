@@ -1,5 +1,6 @@
 /* eslint-disable max-lines */
-var assert = require('assert');
+const assert = require('assert');
+const httpMocks = require('node-mocks-http');
 const projectController = require('../../controller/project/project.controller');
 require('mocha-sinon');
 const sinon = require('sinon');
@@ -15,71 +16,39 @@ describe('Project Controller: ', function () {
 
   describe('Validator function() ', function () {
     it('should pass successfully when validations are successful', async function () {
-      const reqSpy = sinon.spy();
-      const req = {
+      const req = httpMocks.createRequest({
         params: {
           projectName: 'Braincat'
-        },
-        checkParams: sinon.stub().returns({ isAlphanumeric: reqSpy }),
-        validationErrors: function () {
-          if (this.params && this.params.projectName) {
-            if (this.params.projectName !== '') { return null; }
-
-            return new Error('Not alphanumeric!');
-
-          }
-
-          return new Error('Not alphanumeric!');
-
         }
-      };
-      const resSpy = sinon.spy();
-      const res = {
-        status: sinon.stub().returns({ send: sinon.stub().returns({ end: resSpy }) })
-      };
+      });
+      const res = httpMocks.createResponse();
       await projectController.validator(req, res, () => { /* do nothing */ });
-      assert.strictEqual(resSpy.callCount, 0);
-      assert.strictEqual(reqSpy.callCount, 1);
-      sinon.restore();
+      assert.strictEqual(res.statusCode, 200);
     });
 
     it('should throw errors when validations fail', async function () {
-      const reqSpy = sinon.spy();
-      const req = {
+      const req = httpMocks.createRequest({
         params: {
-        },
-        checkParams: sinon.stub().returns({ isAlphanumeric: reqSpy }),
-        validationErrors: function () {
-          if (this.params && this.params.projectName) {
-            if (this.params.projectName !== '') { return null; }
-
-            return new Error('Not alphanumeric!');
-
-          }
-
-          return new Error('Not alphanumeric!');
-
         }
-      };
-      const resSpy = sinon.spy();
-      const res = {
-        status: sinon.stub().returns({ send: sinon.stub().returns({ end: resSpy }) })
-      };
+      });
+      const res = httpMocks.createResponse();
       await projectController.validator(req, res, () => { /* do nothing */ });
-      assert.strictEqual(resSpy.callCount, 1);
-      assert.strictEqual(reqSpy.callCount, 1);
-      sinon.restore();
+      assert.strictEqual(res.statusCode, 403);
+      const resData = res._getData();
+      assert(Array.isArray(resData));
+      assert(resData.length);
+      assert.strictEqual(resData[0].msg, 'incorrect project name');
     });
   });
 
   describe('project function() ', function () {
-    before(function(done) {
+    before(function (done) {
       const testProject = projectObject;
       db.get('project').insert(testProject)
         .then(() => done());
     });
 
-    after(function(done) {
+    after(function (done) {
       db.get('project').remove({ shortname: 'testing' })
         .then(() => done());
     });
@@ -155,7 +124,7 @@ describe('Project Controller: ', function () {
       db.get('project').insert(projectObject)
         .then(() => done());
     });
-    after(function(done) {
+    after(function (done) {
       db.get('project').remove({ shortname: 'testing' })
         .then(() => done());
     });
@@ -448,7 +417,7 @@ describe('Project Controller: ', function () {
       db.get('project').insert(projectObject)
         .then(() => done());
     });
-    after(function(done) {
+    after(function (done) {
       db.get('project').remove({ shortname: 'testing' })
         .then(() => done());
     });
@@ -560,8 +529,8 @@ describe('Project Controller: ', function () {
     });
   });
 
-  describe('apiProjectAll function() ', function() {
-    it('should ask for page parameter if not provided', async function() {
+  describe('apiProjectAll function() ', function () {
+    it('should ask for page parameter if not provided', async function () {
       const req = {
         user: {
           username: 'foo'
@@ -592,7 +561,7 @@ describe('Project Controller: ', function () {
       sinon.restore();
     });
 
-    it('should send the files correctly with valid input', async function() {
+    it('should send the files correctly with valid input', async function () {
       const req = {
         user: {
           username: 'foo'

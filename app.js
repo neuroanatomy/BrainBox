@@ -7,7 +7,7 @@
 const nwl = require('neuroweblab');
 const fs = require('fs');
 const express = require('express');
-var compression = require('compression');
+const compression = require('compression');
 const path = require('path');
 const favicon = require('serve-favicon');
 const logger = require('morgan');
@@ -36,7 +36,6 @@ if (DOCKER_DB) {
 
 /** @todo Handle the case when MongoDB is not installed */
 // var db = monk(MONGO_DB);
-var expressValidator = require('express-validator');
 
 /* jslint nomen: true */
 const dirname = __dirname; // Local directory
@@ -108,7 +107,6 @@ const start = async function () {
     };
   }
   app.use(logger(':remote-addr :method :url :status :response-time ms - :res[content-length]', loggerOptions));//app.use(logger('dev'));
-  app.use(expressValidator());
   app.use(cookieParser());
   app.use(express.static(path.join(dirname, 'public')));
 

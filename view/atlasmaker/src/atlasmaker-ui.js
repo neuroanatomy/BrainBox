@@ -21,33 +21,33 @@ export const AtlasMakerUI = {
       max:100
     });
 
-    var movex = (el, clientX) => {
-      if ($(el).data("drag") === true) {
-        var R = $(el).find(".track")[0].getBoundingClientRect();
-        var x = (clientX-R.left)/R.width;
+    const movex = (el, clientX) => {
+      if ($(el).data('drag') === true) {
+        const R = $(el).find('.track')[0].getBoundingClientRect();
+        let x = (clientX-R.left)/R.width;
         if(x<0) { x=0; }
         if(x>1) { x=1; }
-        x *= $(el).data("max");
-        if(x !== $(el).data("val")) {
-          const max=$(el).data("max");
-          $(el).data("val", x);
-          $(el).find(".thumb")[0].style.left=(x*100/max)+"%";
+        x *= $(el).data('max');
+        if(x !== $(el).data('val')) {
+          const max=$(el).data('max');
+          $(el).data('val', x);
+          $(el).find('.thumb')[0].style.left=(x*100/max)+'%';
 
           return callback(x);
         }
       }
     };
 
-    var updateDisplay = () => {
-      const val=$(elem).data("val");
-      const max=$(elem).data("max");
-      const [thumb] = $(elem).find(".thumb");
-      thumb.style.left = (val*100/max) + "%";
+    const updateDisplay = () => {
+      const val=$(elem).data('val');
+      const max=$(elem).data('max');
+      const [thumb] = $(elem).find('.thumb');
+      thumb.style.left = (val*100/max) + '%';
     };
 
-    $(document).on("mousemove", (ev) => { movex(elem, ev.clientX); });
-    $(document).on("touchmove", (ev) => { movex(elem, ev.originalEvent.changedTouches[0].pageX); });
-    $(document).on("mouseup touchend", () => { $(elem).data({drag:false}); });
+    $(document).on('mousemove', (ev) => { movex(elem, ev.clientX); });
+    $(document).on('touchmove', (ev) => { movex(elem, ev.originalEvent.changedTouches[0].pageX); });
+    $(document).on('mouseup touchend', () => { $(elem).data({drag:false}); });
     $(elem).on('mousedown touchstart', () => { $(elem).data({drag:true}); });
     $(elem).on('updateDisplay', () => { updateDisplay(); });
   },
@@ -60,14 +60,14 @@ export const AtlasMakerUI = {
      */
   chose: function (elem, callback) {
     // Initialise a 'chose' control
-    var ch=$(elem).find(".a");
+    const ch=$(elem).find('.a');
     ch.each(function(c, d) {
       $(d).click(function() {
-        if($(d).hasClass("pressed")) {
+        if($(d).hasClass('pressed')) {
           return callback($(d).attr('title'));
         }
-        ch.each(function(c1, d1) { $(d1).removeClass("pressed"); });
-        $(d).addClass("pressed");
+        ch.each(function(c1, d1) { $(d1).removeClass('pressed'); });
+        $(d).addClass('pressed');
         if(callback) {
           return callback($(d).attr('title'));
         }
@@ -83,16 +83,16 @@ export const AtlasMakerUI = {
      */
   chose3state: function (elem, callback) {
     // Initialise a 'chose3state' control
-    var ch=$(elem).find(".a");
+    const ch=$(elem).find('.a');
     ch.each(function(c, d) {
       $(d).click(function() {
-        if($(d).hasClass("pressed")) {
-          $(d).removeClass("pressed");
+        if($(d).hasClass('pressed')) {
+          $(d).removeClass('pressed');
 
-          return callback("none");
+          return callback('none');
         }
-        ch.each(function(c1, d1) { $(d1).removeClass("pressed"); });
-        $(d).addClass("pressed");
+        ch.each(function(c1, d1) { $(d1).removeClass('pressed'); });
+        $(d).addClass('pressed');
         if(callback) {
           return callback($(d).attr('title'));
         }
@@ -109,13 +109,13 @@ export const AtlasMakerUI = {
   toggle: function (elem, callback) {
     // Initialise a 'toggle' control
     $(elem).click(function() {
-      if($(elem).hasClass("pressed")) {
-        $(elem).removeClass("pressed");
+      if($(elem).hasClass('pressed')) {
+        $(elem).removeClass('pressed');
       } else {
-        $(elem).addClass("pressed");
+        $(elem).addClass('pressed');
       }
       if(callback) {
-        return callback($(elem).hasClass("pressed"));
+        return callback($(elem).hasClass('pressed'));
       }
     });
   },
@@ -140,7 +140,7 @@ export const AtlasMakerUI = {
 
     (function _fade() {
       if ((el.style.opacity -= 0.1) < 0) {
-        el.style.display = "none";
+        el.style.display = 'none';
       } else {
         requestAnimationFrame(_fade);
       }
@@ -149,10 +149,10 @@ export const AtlasMakerUI = {
 
   _fadeIn: (el) => {
     el.style.opacity = 0;
-    el.style.display = "block";
+    el.style.display = 'block';
 
     (function _fade() {
-      var val = parseFloat(el.style.opacity);
+      let val = parseFloat(el.style.opacity);
       if (!((val += 0.1) > 1)) {
         el.style.opacity = val;
         requestAnimationFrame(_fade);
@@ -172,9 +172,10 @@ export const AtlasMakerUI = {
     });
   },
 
-  dialog: async ({el, message, doFadeOut=true, modal=false, delay=2000, background="#333"}) => {
+  // eslint-disable-next-line max-statements
+  dialog: async ({el, message, doFadeOut=true, modal=false, delay=2000, background='#333'}) => {
     const me = AtlasMakerUI;
-    if(typeof doFadeOut === "undefined") {
+    if(typeof doFadeOut === 'undefined') {
       doFadeOut = true;
     }
 
@@ -183,13 +184,13 @@ export const AtlasMakerUI = {
     me._fadeIn(el);
 
     if(modal) {
-      const back = document.createElement("div");
-      back.style = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); pointer-events:all; z-index:19`;
+      const back = document.createElement('div');
+      back.style = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); pointer-events:all; z-index:19';
       document.body.append(back);
 
-      const okButton = document.createElement("button");
-      okButton.textContent = "OK";
-      okButton.style = "background: none";
+      const okButton = document.createElement('button');
+      okButton.textContent = 'OK';
+      okButton.style = 'background: none';
       el.appendChild(okButton);
       await new Promise((resolve) => {
         okButton.addEventListener('click', () => {

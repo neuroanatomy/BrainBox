@@ -21,13 +21,13 @@ describe('TESTING AN MRI UPLOAD/DOWNLOAD WORKFLOW', function () {
 
   describe('Create a test token', function () {
     it('Can create a test token', async function () {
-      await U.insertTestTokenForUser("bar");
+      await U.insertTestTokenForUser('bar');
     });
   });
 
   describe('Simple upload workflow', function () {
     it('Does not find a non-existent user', async function () {
-      const res = await U.queryUser("bar");
+      const res = await U.queryUser('bar');
       assert.isNull(res);
     });
     it('Can insert a test user in the DB', async function () {
@@ -37,8 +37,8 @@ describe('TESTING AN MRI UPLOAD/DOWNLOAD WORKFLOW', function () {
     //     const res = await chai.request(url).post('/upload').query();
     // });
     it('Finds the inserted user', async function () {
-      const res = await U.queryUser("bar");
-      const expectedKeys = ["_id", "name", "nickname", "url", "brainboxURL", "avatarURL", "joined"];
+      const res = await U.queryUser('bar');
+      const expectedKeys = ['_id', 'name', 'nickname', 'url', 'brainboxURL', 'avatarURL', 'joined'];
       assert.hasAllKeys(res, expectedKeys);
       assert.equal(res.name, U.userBar.name);
       assert.equal(res.nickname, U.userBar.nickname);
@@ -48,14 +48,14 @@ describe('TESTING AN MRI UPLOAD/DOWNLOAD WORKFLOW', function () {
       await U.removeUser(U.userBar.nickname);
     });
     it('Does not find the removed user', async function () {
-      const res = await U.queryUser("bar");
+      const res = await U.queryUser('bar');
       assert.isNull(res);
     });
   });
 
   describe('Remove a test token', function () {
     it('Can remove a test token', async function () {
-      await U.removeTestTokenForUser("bar");
+      await U.removeTestTokenForUser('bar');
     });
   });
 });

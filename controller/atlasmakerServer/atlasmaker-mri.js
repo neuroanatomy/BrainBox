@@ -1,13 +1,14 @@
+/* eslint-disable max-lines */
 //========================================================================================
 // MRI I/O
 //========================================================================================
 
-const fs = require("fs");
+const fs = require('fs');
 const Struct = require('struct');
 const zlib = require('zlib');
 const { promisify } = require('util');
 const gunzip = promisify(zlib.gunzip);
-const la = require("./atlasmaker-linalg");
+const la = require('./atlasmaker-linalg');
 
 const NiiHdr = new Struct()
   .word32Sle('sizeof_hdr') // Size of the header. Must be 348 (bytes)
@@ -88,10 +89,10 @@ const computeS2VTransformation = (mri) => {
   // space directions are transposed!
   const v2w = [[], [], []];
   //for(b in mri.dir) for(a in mri.dir[b]) v2w[a][b] = mri.dir[b][a]; // transpose
-  for(const b in mri.dir) {
-    if({}.hasOwnProperty.call(mri.dir, b)) {
-      for(const a in mri.dir[b]) {
-        if({}.hasOwnProperty.call(mri.dir[b], a)) {
+  for (const b in mri.dir) {
+    if ({}.hasOwnProperty.call(mri.dir, b)) {
+      for (const a in mri.dir[b]) {
+        if ({}.hasOwnProperty.call(mri.dir[b], a)) {
           v2w[a][b] = mri.dir[a][b]; // do not transpose
         }
       }
@@ -99,24 +100,24 @@ const computeS2VTransformation = (mri) => {
   }
   const wpixdim = la.subVecVec(la.mulMatVec(v2w, [1, 1, 1]), la.mulMatVec(v2w, [0, 0, 0]));
   // min and max world coordinates
-  const wvmax = la.addVecVec(la.mulMatVec(v2w, [mri.dim[0]-1, mri.dim[1]-1, mri.dim[2]-1]), wori);
+  const wvmax = la.addVecVec(la.mulMatVec(v2w, [mri.dim[0] - 1, mri.dim[1] - 1, mri.dim[2] - 1]), wori);
   const wvmin = la.addVecVec(la.mulMatVec(v2w, [0, 0, 0]), wori);
   const wmin = [Math.min(wvmin[0], wvmax[0]), Math.min(wvmin[1], wvmax[1]), Math.min(wvmin[2], wvmax[2])];
   //        var wmax = [Math.max(wvmin[0], wvmax[0]), Math.max(wvmin[1], wvmax[1]), Math.max(wvmin[2], wvmax[2])];
-  const w2s = [[1/Math.abs(wpixdim[0]), 0, 0], [0, 1/Math.abs(wpixdim[1]), 0], [0, 0, 1/Math.abs(wpixdim[2])]];
+  const w2s = [[1 / Math.abs(wpixdim[0]), 0, 0], [0, 1 / Math.abs(wpixdim[1]), 0], [0, 0, 1 / Math.abs(wpixdim[2])]];
 
   // console.error(["v2w", v2w, "wori", wori, "wpixdim", wpixdim, "wvmax", wvmax, "wvmin", wvmin, "wmin", wmin, "wmax", wmax, "w2s", w2s]);
 
   const [i, j, k] = v2w;
-  let mi = { i: 0, v: 0 }; i.forEach(function(o, n) { if(Math.abs(o)>Math.abs(mi.v)) { mi = { i: n, v: o }; } });
-  let mj = { i: 0, v: 0 }; j.forEach(function(o, n) { if(Math.abs(o)>Math.abs(mj.v)) { mj = { i: n, v: o }; } });
-  let mk = { i: 0, v: 0 }; k.forEach(function(o, n) { if(Math.abs(o)>Math.abs(mk.v)) { mk = { i: n, v: o }; } });
+  let mi = { i: 0, v: 0 }; i.forEach(function (o, n) { if (Math.abs(o) > Math.abs(mi.v)) { mi = { i: n, v: o }; } });
+  let mj = { i: 0, v: 0 }; j.forEach(function (o, n) { if (Math.abs(o) > Math.abs(mj.v)) { mj = { i: n, v: o }; } });
+  let mk = { i: 0, v: 0 }; k.forEach(function (o, n) { if (Math.abs(o) > Math.abs(mk.v)) { mk = { i: n, v: o }; } });
 
   mri.s2v = {
     // old s2v fields
     s2w: la.invMat(w2s),
     sdim: [],
-    sori: [-wmin[0]/Math.abs(wpixdim[0]), -wmin[1]/Math.abs(wpixdim[1]), -wmin[2]/Math.abs(wpixdim[2])],
+    sori: [-wmin[0] / Math.abs(wpixdim[0]), -wmin[1] / Math.abs(wpixdim[1]), -wmin[2] / Math.abs(wpixdim[2])],
     w2v: la.invMat(v2w),
     wori: wori,
 
@@ -124,12 +125,12 @@ const computeS2VTransformation = (mri) => {
     x: mi.i, // correspondence between space coordinate x and voxel coordinate i
     y: mj.i, // same for y
     z: mk.i, // same for z
-    dx: (mi.v>0)?1: (-1), // direction of displacement in space coordinate x with displacement in voxel coordinate i
-    dy: (mj.v>0)?1: (-1), // same for y
-    dz: (mk.v>0)?1: (-1), // same for z
-    X: (mi.v>0)?0: (mri.dim[0]-1), // starting value for space coordinate x when voxel coordinate i starts
-    Y: (mj.v>0)?0: (mri.dim[1]-1), // same for y
-    Z: (mk.v>0)?0: (mri.dim[2]-1) // same for z
+    dx: (mi.v > 0) ? 1 : (-1), // direction of displacement in space coordinate x with displacement in voxel coordinate i
+    dy: (mj.v > 0) ? 1 : (-1), // same for y
+    dz: (mk.v > 0) ? 1 : (-1), // same for z
+    X: (mi.v > 0) ? 0 : (mri.dim[0] - 1), // starting value for space coordinate x when voxel coordinate i starts
+    Y: (mj.v > 0) ? 0 : (mri.dim[1] - 1), // same for y
+    Z: (mk.v > 0) ? 0 : (mri.dim[2] - 1) // same for z
   };
   mri.v2w = v2w;
   mri.wori = wori;
@@ -195,16 +196,16 @@ const computeS2VTransformation = (mri) => {
 // },
 
 const filetypeFromFilename = (mriPath) => {
-  if(mriPath.match(/.nii.gz$/)) {
-    return "nii.gz";
+  if (mriPath.match(/.nii.gz$/)) {
+    return 'nii.gz';
   } else
-  if(mriPath.match(/.mgz$/)) {
-    return "mgz";
+  if (mriPath.match(/.mgz$/)) {
+    return 'mgz';
   }
 };
 
 // eslint-disable-next-line max-statements
-const _readNiftiHeader = ({nii, mri}) => {
+const _readNiftiHeader = ({ nii, mri }) => {
   // read standard nii header
   let success = true;
   try {
@@ -219,7 +220,7 @@ const _readNiftiHeader = ({nii, mri}) => {
     mri.vox_offset = h.vox_offset;
 
     // nrrd-compatible header, computes space directions and space origin
-    if(h.sform_code>0) {
+    if (h.sform_code > 0) {
       mri.dir = [
         [h.srow_x[0], h.srow_y[0], h.srow_z[0]],
         [h.srow_x[1], h.srow_y[1], h.srow_z[1]],
@@ -230,84 +231,85 @@ const _readNiftiHeader = ({nii, mri}) => {
       mri.dir = [[mri.pixdim[0], 0, 0], [0, mri.pixdim[1], 0], [0, 0, mri.pixdim[2]]];
       mri.ori = [0, 0, 0];
     }
-  } catch(err) {
-    console.error("ERROR Cannot read nifti header:", err);
+  } catch (err) {
+    console.error('ERROR Cannot read nifti header:', err);
     success = false;
   }
 
   return success;
 };
 
-const _readNiftiData = ({nii, mri}) => {
+const _readNiftiData = ({ nii, mri }) => {
   let success = true;
   let j;
   let tmp;
 
-  switch(mri.datatype) {
+  switch (mri.datatype) {
   case 2: // UCHAR
     mri.data = nii.slice(mri.vox_offset);
     break;
   case 4: // SHORT
     tmp = nii.slice(mri.vox_offset);
-    mri.data = new Int16Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);
-    for(j = 0; j<mri.dim[0]*mri.dim[1]*mri.dim[2]; j += 1) {
-      mri.data[j] = tmp.readInt16LE(j*2);
+    mri.data = new Int16Array(mri.dim[0] * mri.dim[1] * mri.dim[2]);
+    for (j = 0; j < mri.dim[0] * mri.dim[1] * mri.dim[2]; j += 1) {
+      mri.data[j] = tmp.readInt16LE(j * 2);
     }
     break;
   case 8: // INT
     tmp = nii.slice(mri.vox_offset);
-    mri.data = new Uint32Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);
-    for(j = 0; j<mri.dim[0]*mri.dim[1]*mri.dim[2]; j += 1) {
-      mri.data[j] = tmp.readUInt32LE(j*4);
+    mri.data = new Uint32Array(mri.dim[0] * mri.dim[1] * mri.dim[2]);
+    for (j = 0; j < mri.dim[0] * mri.dim[1] * mri.dim[2]; j += 1) {
+      mri.data[j] = tmp.readUInt32LE(j * 4);
     }
     break;
   case 16: // FLOAT
     tmp = nii.slice(mri.vox_offset);
-    mri.data = new Float32Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);
-    for(j = 0; j<mri.dim[0]*mri.dim[1]*mri.dim[2]; j += 1) {
-      mri.data[j] = tmp.readFloatLE(j*4);
+    mri.data = new Float32Array(mri.dim[0] * mri.dim[1] * mri.dim[2]);
+    for (j = 0; j < mri.dim[0] * mri.dim[1] * mri.dim[2]; j += 1) {
+      mri.data[j] = tmp.readFloatLE(j * 4);
     }
     break;
   case 64: // FLOAT64
     tmp = nii.slice(mri.vox_offset);
-    mri.data = new Float64Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);
-    for(j = 0; j<mri.dim[0]*mri.dim[1]*mri.dim[2]; j += 1) {
-      mri.data[j] = tmp.readDoubleLE(j*8);
+    mri.data = new Float64Array(mri.dim[0] * mri.dim[1] * mri.dim[2]);
+    for (j = 0; j < mri.dim[0] * mri.dim[1] * mri.dim[2]; j += 1) {
+      mri.data[j] = tmp.readDoubleLE(j * 8);
     }
     break;
   case 256: // INT8
     tmp = nii.slice(mri.vox_offset);
-    mri.data = new Int8Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);
-    for(j = 0; j<mri.dim[0]*mri.dim[1]*mri.dim[2]; j += 1) {
+    mri.data = new Int8Array(mri.dim[0] * mri.dim[1] * mri.dim[2]);
+    for (j = 0; j < mri.dim[0] * mri.dim[1] * mri.dim[2]; j += 1) {
       mri.data[j] = tmp.readInt8(j);
     }
     break;
   case 512: // UINT16
     tmp = nii.slice(mri.vox_offset);
-    mri.data = new Uint16Array(mri.dim[0]*mri.dim[1]*mri.dim[2]);
-    for(j = 0; j<mri.dim[0]*mri.dim[1]*mri.dim[2]; j += 1) {
-      mri.data[j] = tmp.readUInt16LE(j*2);
+    mri.data = new Uint16Array(mri.dim[0] * mri.dim[1] * mri.dim[2]);
+    for (j = 0; j < mri.dim[0] * mri.dim[1] * mri.dim[2]; j += 1) {
+      mri.data[j] = tmp.readUInt16LE(j * 2);
     }
     break;
   default:
     success = false;
-    console.error("ERROR: Unknown dataType: " + mri.datatype);
+    console.error('ERROR: Unknown dataType: ' + mri.datatype);
   }
 
   return success;
 };
 
-const _computeVolumeStats = ({mri}) => {
+const _computeVolumeStats = ({ mri }) => {
+  // eslint-disable-next-line max-lines
   let sum = 0;
   let [min, max] = [mri.data[0], mri.data[0]];
-  for(let i = 0; i<mri.dim[0]*mri.dim[1]*mri.dim[2]; i += 1) {
+  for (let i = 0; i < mri.dim[0] * mri.dim[1] * mri.dim[2]; i += 1) {
     sum += mri.data[i];
 
-    if(mri.data[i]<min) {
+    if (mri.data[i] < min) {
       min = mri.data[i];
     }
 
-    if(mri.data[i]>max) {
+    if (mri.data[i] > max) {
       max = mri.data[i];
     }
   }
@@ -327,8 +329,8 @@ const readNifti = async (mriPath) => {
   const mri = {};
 
   // read header
-  if(!_readNiftiHeader({nii, mri})) {
-    throw(new Error("Cannot read nifti header"));
+  if (!_readNiftiHeader({ nii, mri })) {
+    throw (new Error('Cannot read nifti header'));
   }
 
   // compute the transformation from voxel space to screen space
@@ -343,47 +345,47 @@ const readNifti = async (mriPath) => {
   mri.datatype = nii.readUInt16LE(70);
 
   // read binary data
-  if(!_readNiftiData({nii, mri})) {
-    throw(new Error("Cannot read nifti binary data"));
+  if (!_readNiftiData({ nii, mri })) {
+    throw (new Error('Cannot read nifti binary data'));
   }
 
   // compute stats: sum, min and max
-  _computeVolumeStats({mri});
+  _computeVolumeStats({ mri });
 
-  return(mri);
+  return (mri);
 };
 
 // eslint-disable-next-line max-statements
-const _readMGZHeader = ({mgh, mri, hdr}) => {
+const _readMGZHeader = ({ mgh, mri, hdr }) => {
   let success = true;
 
   MghHdr.allocate();
   MghHdr._setBuff(mgh);
   const h = JSON.parse(JSON.stringify(MghHdr.fields));
-  for(const prop in h) {
-    if({}.hasOwnProperty.call(h, prop)) {
+  for (const prop in h) {
+    if ({}.hasOwnProperty.call(h, prop)) {
       hdr[prop] = h[prop];
     }
   }
 
   // Test Header
-  if(h.v<1 || h.v>100) {
-    console.error("ERROR: Wrong MGH Header", h);
+  if (h.v < 1 || h.v > 100) {
+    console.error('ERROR: Wrong MGH Header', h);
     success = false;
   } else {
     // Equations from freesurfer/matlab/load_mgh.m
-    const PcrsC = [h.ndim1/2, h.ndim2/2, h.ndim3/2];
+    const PcrsC = [h.ndim1 / 2, h.ndim2 / 2, h.ndim3 / 2];
     //var D = [[h.delta[0], 0, 0], [0, h.delta[1], 0], [0, 0, h.delta[2]]];
     const MdcD = [
-      [h.Mdc[0]*h.delta[0], h.Mdc[3]*h.delta[1], h.Mdc[6]*h.delta[2]],
-      [h.Mdc[1]*h.delta[0], h.Mdc[4]*h.delta[1], h.Mdc[7]*h.delta[2]],
-      [h.Mdc[2]*h.delta[0], h.Mdc[5]*h.delta[1], h.Mdc[8]*h.delta[2]]
+      [h.Mdc[0] * h.delta[0], h.Mdc[3] * h.delta[1], h.Mdc[6] * h.delta[2]],
+      [h.Mdc[1] * h.delta[0], h.Mdc[4] * h.delta[1], h.Mdc[7] * h.delta[2]],
+      [h.Mdc[2] * h.delta[0], h.Mdc[5] * h.delta[1], h.Mdc[8] * h.delta[2]]
     ];
     const Pxyz0 = la.subVecVec(h.Pxyz_c, la.mulMatVec(MdcD, PcrsC));
     const M = [
-      h.Mdc[0]*h.delta[0], h.Mdc[3]*h.delta[1], h.Mdc[6]*h.delta[2], Pxyz0[0],
-      h.Mdc[1]*h.delta[0], h.Mdc[4]*h.delta[1], h.Mdc[7]*h.delta[2], Pxyz0[1],
-      h.Mdc[2]*h.delta[0], h.Mdc[5]*h.delta[1], h.Mdc[8]*h.delta[2], Pxyz0[2],
+      h.Mdc[0] * h.delta[0], h.Mdc[3] * h.delta[1], h.Mdc[6] * h.delta[2], Pxyz0[0],
+      h.Mdc[1] * h.delta[0], h.Mdc[4] * h.delta[1], h.Mdc[7] * h.delta[2], Pxyz0[1],
+      h.Mdc[2] * h.delta[0], h.Mdc[5] * h.delta[1], h.Mdc[8] * h.delta[2], Pxyz0[2],
       0, 0, 0, 1
     ];
 
@@ -396,12 +398,12 @@ const _readMGZHeader = ({mgh, mri, hdr}) => {
   return success;
 };
 
-const _readMGZData = ({mgh, mri, hdr}) => {
+const _readMGZData = ({ mgh, mri, hdr }) => {
   let success = true;
   const hdrSize = 284;
   let tmp;
 
-  const sz = mri.dim[0]*mri.dim[1]*mri.dim[2];
+  const sz = mri.dim[0] * mri.dim[1] * mri.dim[2];
   const bpv = [1, 4, 0, 4, 2][hdr.type]; // bytes per voxel
 
   // keep the header
@@ -409,8 +411,8 @@ const _readMGZData = ({mgh, mri, hdr}) => {
   mri.hdrSz = hdrSize;
 
   // keep the footer
-  const ftrSz = mgh.length-hdrSize-sz*bpv;
-  mri.ftr = mgh.slice(hdrSize + sz*bpv);
+  const ftrSz = mgh.length - hdrSize - sz * bpv;
+  mri.ftr = mgh.slice(hdrSize + sz * bpv);
 
   // print info
   // console.error("    mgh.length:", mgh.length);
@@ -419,34 +421,34 @@ const _readMGZData = ({mgh, mri, hdr}) => {
   // console.error("         ftrSz:", ftrSz);
   // console.error("mri.ftr.length:", mri.ftr.length);
 
-  switch(hdr.type) {
+  switch (hdr.type) {
   case 0: // MGHUCHAR
     mri.data = mgh.slice(hdrSize, -ftrSz);
     break;
   case 1: // MGHINT
     tmp = mgh.slice(hdrSize, -ftrSz);
     mri.data = new Uint32Array(sz);
-    for(let j = 0; j<sz; j += 1) {
-      mri.data[j] = tmp.readUInt32BE(j*4);
+    for (let j = 0; j < sz; j += 1) {
+      mri.data[j] = tmp.readUInt32BE(j * 4);
     }
     break;
   case 3: // MGHFLOAT
     tmp = mgh.slice(hdrSize, -ftrSz);
     mri.data = new Float32Array(sz);
-    for(let j = 0; j<sz; j += 1) {
-      mri.data[j] = tmp.readFloatBE(j*4);
+    for (let j = 0; j < sz; j += 1) {
+      mri.data[j] = tmp.readFloatBE(j * 4);
     }
     break;
   case 4: // MGHSHORT
     tmp = mgh.slice(hdrSize, -ftrSz);
     mri.data = new Int16Array(sz);
-    for(let j = 0; j<sz; j += 1) {
-      mri.data[j] = tmp.readInt16BE(j*2);
+    for (let j = 0; j < sz; j += 1) {
+      mri.data[j] = tmp.readInt16BE(j * 2);
     }
     break;
   default:
     success = false;
-    console.error("ERROR: Unknown dataType: " + hdr.type);
+    console.error('ERROR: Unknown dataType: ' + hdr.type);
   }
 
   return success;
@@ -467,24 +469,24 @@ const readMGZ = (mriPath) => {
         the data is correctly uncompressed. We will ignore errors.
       */
 
-      var bufs = [];
+      const bufs = [];
       const readable = fs.createReadStream(mriPath).pipe(zlib.createGunzip());
-      readable.on('data', function(d) { bufs.push(d); });
+      readable.on('data', function (d) { bufs.push(d); });
       readable.on('error', function (err) {
-        if (err.code === "Z_DATA_ERROR") {
-          readable.emit("end");
+        if (err.code === 'Z_DATA_ERROR') {
+          readable.emit('end');
         } else {
           reject(err);
         }
       });
-      readable.on('end', function() {
+      readable.on('end', function () {
         const mgh = Buffer.concat(bufs);
         const mri = {};
         const hdr = {};
 
         // read header
-        if(!_readMGZHeader({mgh, mri, hdr})) {
-          reject(new Error("Failed to read MGZ header"));
+        if (!_readMGZHeader({ mgh, mri, hdr })) {
+          reject(new Error('Failed to read MGZ header'));
 
           return;
         }
@@ -496,19 +498,19 @@ const readMGZ = (mriPath) => {
         //testS2VTransformation(mri);
 
         // read binary data
-        if(!_readMGZData({mgh, mri, hdr})) {
-          reject(new Error("Failed to read MGZ binary data"));
+        if (!_readMGZData({ mgh, mri, hdr })) {
+          reject(new Error('Failed to read MGZ binary data'));
 
           return;
         }
 
         // compute volume stats
-        _computeVolumeStats({mri});
+        _computeVolumeStats({ mri });
 
         resolve(mri);
       });
-    } catch(e) {
-      reject(new Error("ERROR Cannot uncompress mgz file: ", e));
+    } catch (e) {
+      reject(new Error('ERROR Cannot uncompress mgz file: ', e));
     }
   });
 
@@ -525,7 +527,7 @@ const createNifti = (templateMRI) => {
 
   /*eslint-disable camelcase*/
   const mri = {};
-  const props = ["dim", "pixdim", "hdr"];
+  const props = ['dim', 'pixdim', 'hdr'];
   const datatype = 2;
   const vox_offset = 352;
   let i;
@@ -578,21 +580,21 @@ const createNifti = (templateMRI) => {
 
   NiiHdr.allocate();
   const niihdr = NiiHdr.buffer();
-  for(i in newHdr) {
-    if({}.hasOwnProperty.call(newHdr, i)) {
+  for (i in newHdr) {
+    if ({}.hasOwnProperty.call(newHdr, i)) {
       NiiHdr.fields[i] = newHdr[i];
     }
   }
 
   // copy information from templateMRI
-  for( i in props) {
-    if({}.hasOwnProperty.call(props, i)) {
+  for (i in props) {
+    if ({}.hasOwnProperty.call(props, i)) {
       mri[props[i]] = templateMRI[props[i]];
     }
   }
 
   // get volume size
-  const sz = mri.dim[0]*mri.dim[1]*mri.dim[2];
+  const sz = mri.dim[0] * mri.dim[1] * mri.dim[2];
 
   // update the header
   mri.hdr = niihdr;
@@ -603,7 +605,7 @@ const createNifti = (templateMRI) => {
 
   // zero the data
   mri.data = Buffer.alloc(sz);
-  for(i = 0; i<sz; i += 1) {
+  for (i = 0; i < sz; i += 1) {
     mri.data[i] = 0;
   }
 
@@ -623,8 +625,8 @@ const loadMRI = (mriPath) => {
             output: an mri structure
         */
   const pr = new Promise(function (resolve, reject) {
-    switch(filetypeFromFilename(mriPath)) {
-    case "nii.gz":
+    switch (filetypeFromFilename(mriPath)) {
+    case 'nii.gz':
       readNifti(mriPath)
         .then(function (mri) {
           resolve(mri);
@@ -633,19 +635,19 @@ const loadMRI = (mriPath) => {
           reject(err);
         });
       break;
-    case "mgz":
+    case 'mgz':
       readMGZ(mriPath)
-        .then(function(mri) {
+        .then(function (mri) {
           resolve(mri);
         })
         .catch(function (err) {
-          console.error("ERROR reading mgz file:", err);
+          console.error('ERROR reading mgz file:', err);
           reject(err);
         });
       break;
     default:
-      console.error("ERROR: nothing we can read");
-      reject(new Error("ERROR: nothing we can read"));
+      console.error('ERROR: nothing we can read');
+      reject(new Error('ERROR: nothing we can read'));
     }
   });
 

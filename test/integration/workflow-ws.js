@@ -10,23 +10,23 @@ const U = require('../utils.js');
 const Config = JSON.parse(fs.readFileSync('./cfg.json'));
 
 let u1, u2;
-const msgEcho = JSON.stringify({type:"echo", msg:"hi bruh"});
+const msgEcho = JSON.stringify({type:'echo', msg:'hi bruh'});
 const msgAllUserData = {
-  type: "userData",
+  type: 'userData',
   user: U.userFooB, // version B has username instead of nickname...
-  description: "allUserData"
+  description: 'allUserData'
 };
 const msgSendAtlas = {
-  type: "userData",
-  description: "sendAtlas"
+  type: 'userData',
+  description: 'sendAtlas'
 };
 let mri;
 
 let wshost;
 if(Config.secure) {
-  wshost = "wss://localhost:8080";
+  wshost = 'wss://localhost:8080';
 } else {
-  wshost = "ws://localhost:8080";
+  wshost = 'ws://localhost:8080';
 }
 
 describe('TESTING WEBSOCKET WORKFLOW', function () {
@@ -62,20 +62,20 @@ describe('TESTING WEBSOCKET WORKFLOW', function () {
       // check that data is not already there
       let res = await chai.request(U.serverURL).get('/mri/json')
         .query({url: U.localBertURL});
-      assert(res.statusCode === 404, "Unexpected status code");
+      assert(res.statusCode === 404, 'Unexpected status code');
 
       // trigger download
       res = await chai.request(U.serverURL).post('/mri/json')
         .send({url: U.localBertURL, token: U.testToken + U.userFoo.nickname});
       const {body} = res;
-      assert(body.success === "downloading");
+      assert(body.success === 'downloading');
 
       // wait until getting the data, and check it's ok
       await U.delay(U.shortTimeout);
       res = await chai.request(U.serverURL).get('/mri/json')
         .query({url: U.localBertURL});
       mri = res.body;
-      assert(mri.success === true, "Unexpected MRI structure");
+      assert(mri.success === true, 'Unexpected MRI structure');
     }).timeout(U.mediumTimeout);
 
     it('Can send larger data', () => {
@@ -92,7 +92,7 @@ describe('TESTING WEBSOCKET WORKFLOW', function () {
           assert(true);
         } else {
           data = JSON.parse(data);
-          assert(data.type === "vectorial");
+          assert(data.type === 'vectorial');
         }
         done();
       });
@@ -107,7 +107,7 @@ describe('TESTING WEBSOCKET WORKFLOW', function () {
           url: U.localBertURL
         });
       const {body} = res;
-      const dirPath = "./public" + body.url;
+      const dirPath = './public' + body.url;
       await U.removeMRI({dirPath, srcURL: U.localBertURL});
     });
   });

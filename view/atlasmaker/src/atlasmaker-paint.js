@@ -1,15 +1,17 @@
+/* eslint-disable max-lines */
 /* global AtlasMakerWidget $ */
 /*! AtlasMaker: Painting commands */
 
-import showIcon from "./svg/show.svg";
+import showIcon from './svg/show.svg';
 
 /**
  * @page AtlasMaker: Painting commands
  */
-export var AtlasMakerPaint = {
+export const AtlasMakerPaint = {
   //====================================================================================
   // Paint functions
   //====================================================================================
+  // eslint-disable-next-line max-statements
   showxy: function (u, c, x, y, usr) {
     const me=AtlasMakerWidget;
     // u: user number
@@ -30,17 +32,17 @@ export var AtlasMakerPaint = {
         break;
       case 'm':
         if(!usr.pointer) {
-          const div = document.createElement("div");
+          const div = document.createElement('div');
           const icon = new Image();
           icon.src = showIcon;
-          icon.style.cssText = "height:100%";
+          icon.style.cssText = 'height:100%';
           div.appendChild(icon);
-          div.style.cssText = "display:inline-block;height:20px;margin-left:-10px;margin-top:-10px;position:absolute;color:white";
+          div.style.cssText = 'display:inline-block;height:20px;margin-left:-10px;margin-top:-10px;position:absolute;color:white';
           div.innerHTML += ((usr.username === 'Anonymous')?u:usr.username);
           usr.pointer = $(div);
-          $("#resizable").append(usr.pointer); // document.getElementById("resizable").appendChild(div);
+          $('#resizable').append(usr.pointer); // document.getElementById("resizable").appendChild(div);
         }
-        usr.pointer.css({left:x*$("#resizable").width()/me.brainW, top:y*$("#resizable").height()/me.brainH});
+        usr.pointer.css({left:x*$('#resizable').width()/me.brainW, top:y*$('#resizable').height()/me.brainH});
         break;
       }
     }
@@ -58,6 +60,7 @@ export var AtlasMakerPaint = {
      * @param {Object} usr User object for the current user. Contains the painting value, view and slice
      * @returns {void}
      */
+  // eslint-disable-next-line max-statements
   paintxy: function (u, c, x, y, usr) {
     const me=AtlasMakerWidget;
     // u: user number
@@ -70,7 +73,7 @@ export var AtlasMakerPaint = {
       me.msg0 = msg;
     }
 
-    var coord={x:x, y:y, z:usr.slice};
+    const coord={x:x, y:y, z:usr.slice};
     if(usr.x0<0) {
       usr.x0=coord.x;
       usr.y0=coord.y;
@@ -84,15 +87,15 @@ export var AtlasMakerPaint = {
         }
       } else {
         if(!usr.pointer) {
-          const div = document.createElement("div");
+          const div = document.createElement('div');
           const icon = new Image();
           icon.src = showIcon;
-          icon.style.cssText = "height:100%";
+          icon.style.cssText = 'height:100%';
           div.appendChild(icon);
-          div.style.cssText = "display:inline-block;height:20px;margin-left:-10px;margin-top:-10px;position:absolute;color:white";
+          div.style.cssText = 'display:inline-block;height:20px;margin-left:-10px;margin-top:-10px;position:absolute;color:white';
           div.innerHTML += ((usr.username === 'Anonymous')?u:usr.username);
           usr.pointer = $(div);
-          $("#resizable").append(usr.pointer); // document.getElementById("resizable").appendChild(div);
+          $('#resizable').append(usr.pointer); // document.getElementById("resizable").appendChild(div);
 
           // usr.pointer = $([
           //     '<div style="display:inline-block;height:20px;margin-left:-10px;margin-top:-10px;position:absolute;color:white">',
@@ -102,10 +105,10 @@ export var AtlasMakerPaint = {
           //     ].join(''));
           // $("#resizable").append(usr.pointer);
         }
-        usr.pointer.css({left:x*$("#resizable").width()/me.brainW, top:y*$("#resizable").height()/me.brainH});
+        usr.pointer.css({left:x*$('#resizable').width()/me.brainW, top:y*$('#resizable').height()/me.brainH});
       }
     }
-    var val = usr.penValue;
+    const val = usr.penValue;
     switch(c) {
     case 'le':
       me.line(coord.x, coord.y, 0, usr);
@@ -153,6 +156,7 @@ export var AtlasMakerPaint = {
      * @param {string} myView The stereotaxic plane along which to fill: either 'cor', 'axi' or 'sag'
      * @returns {void}
      */
+  // eslint-disable-next-line max-statements
   fill: function (x, y, z, val, myView) {
     const me = AtlasMakerWidget;
     const {atlas} = me;
@@ -173,10 +177,10 @@ export var AtlasMakerPaint = {
       right=n.x;
       ({y}=n);
       while (left-1>=0 && atlas.data[me.slice2index(left-1, y, z, myView)] === bval) {
-        left--;
+        left-=1;
       }
       while (right + 1<me.brainW && atlas.data[me.slice2index(right + 1, y, z, myView)] === bval) {
-        right++;
+        right+=1;
       }
       for(x=left; x<=right; x++) {
         atlas.data[me.slice2index(x, y, z, myView)]=val;
@@ -185,7 +189,7 @@ export var AtlasMakerPaint = {
       }
     }
     me.drawImages();
-    console.log("max array size for fill:", max);
+    console.log('max array size for fill:', max);
   },
 
   /**
@@ -196,33 +200,34 @@ export var AtlasMakerPaint = {
      * @param {object} usr User object
      * @returns {void}
      */
+  // eslint-disable-next-line max-statements
   line: function (x, y, val, usr) {
     const me=AtlasMakerWidget;
     // Bresenham's line algorithm adapted from
     // http://stackoverflow.com/questions/4672279/bresenham-algorithm-in-javascript
 
     const {atlas} = me;
-    var xyzi1=new Array(4);
-    var xyzi2=new Array(4);
-    var i, j, k;
-    var x1=usr.x0;
-    var y1=usr.y0;
-    var x2=x;
-    var y2=y;
-    var z=usr.slice;
+    let xyzi1=new Array(4);
+    let xyzi2=new Array(4);
+    let i, j, k;
+    let x1=usr.x0;
+    let y1=usr.y0;
+    const x2=x;
+    const y2=y;
+    const z=usr.slice;
 
     // Define differences and error check
-    var dx = Math.abs(x2 - x1);
-    var dy = Math.abs(y2 - y1);
-    var sx = (x1 < x2) ? 1 : -1;
-    var sy = (y1 < y2) ? 1 : -1;
-    var err = dx - dy;
+    const dx = Math.abs(x2 - x1);
+    const dy = Math.abs(y2 - y1);
+    const sx = (x1 < x2) ? 1 : -1;
+    const sy = (y1 < y2) ? 1 : -1;
+    let err = dx - dy;
 
     xyzi1=me.slice2xyzi(x1, y1, z, usr.view);
     xyzi2=me.slice2xyzi(x2, y2, z, usr.view);
-    me.annotationLength+=Math.sqrt( Math.pow(me.brainPixdim[0]*(xyzi1[0]-xyzi2[0]), 2)+
-                                        Math.pow(me.brainPixdim[1]*(xyzi1[1]-xyzi2[1]), 2)+
-                                        Math.pow(me.brainPixdim[2]*(xyzi1[2]-xyzi2[2]), 2));
+    me.annotationLength+=Math.sqrt( (me.brainPixdim[0]*(xyzi1[0]-xyzi2[0]))**2+
+                                        (me.brainPixdim[1]*(xyzi1[1]-xyzi2[1]))**2+
+                                        (me.brainPixdim[2]*(xyzi1[2]-xyzi2[2]))**2);
 
     for(j=0; j<Math.min(usr.penSize, me.brainW-x1); j++) {
       for(k=0; k<Math.min(usr.penSize, me.brainH-y1); k++) {
@@ -232,7 +237,7 @@ export var AtlasMakerPaint = {
     }
 
     while (!((x1 === x2) && (y1 === y2))) {
-      var e2 = err << 1;
+      const e2 = err << 1;
       if (e2 > -dy) {
         err -= dy;
         x1 += sx;
@@ -269,6 +274,7 @@ export var AtlasMakerPaint = {
     case 'axi': x=mx; y=me.brainH-1-my; z=mz; break; // axial
     }
     const s=[x, y, z];
+    // eslint-disable-next-line new-cap
     const i=me.S2I(s, me.User);
 
     return i;
@@ -292,6 +298,7 @@ export var AtlasMakerPaint = {
     case 'axi': x=mx; y=me.brainH-1-my; z=mz; break; // axial
     }
     const s=[x, y, z];
+    // eslint-disable-next-line new-cap
     const i=me.S2I(s, me.User);
 
     return [x, y, z, i];

@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 /*! AtlasMaker */
 
 import 'structjs';
@@ -22,7 +23,7 @@ window.$ = $;
  * AtlasMakerWidget base object
  * @namespace AtlasMakerWidget
  */
-var me = {
+const me = {
   //========================================================================================
   // Globals
   //========================================================================================
@@ -59,16 +60,16 @@ var me = {
   alphaLevel: 0.5, // real, blending of brain and atlas image
   flagUsePreciseCursor: false, // use precise cursor?
   Crsr: { // precise cursor object
-    x:void 0, // cursor x coord
-    y:void 0, // cursor y coord
-    fx:void 0, // finger x coord
-    fy:void 0, // finger y coord
-    x0:void 0, // previous finger x coord
-    y0:void 0, // previous finger y coord
-    cachedX:void 0, // finger x coord at touch start
-    cachedY:void 0, // finger y coord at touch start
-    state:"move", // cursor state: mosve, draw, configure
-    prevState:void 0, // state before configure
+    x:null, // cursor x coord
+    y:null, // cursor y coord
+    fx:null, // finger x coord
+    fy:null, // finger y coord
+    x0:null, // previous finger x coord
+    y0:null, // previous finger y coord
+    cachedX:null, // finger x coord at touch start
+    cachedY:null, // finger y coord at touch start
+    state:'move', // cursor state: mosve, draw, configure
+    prevState:null, // state before configure
     touchStarted:false // touch started flag
   },
   editMode: 0, // editMode=0 to prevent editing, editMode=1 to accept it
@@ -133,7 +134,7 @@ var me = {
   displayInformationFunctions: [], // array, functions handling data display: landmarks, length measurement
   info:{}, // information displayed over each brain slice
   msg: null, // ?
-  msg0: "", // ?
+  msg0: '', // ?
   prevData: 0, // ?
 
   /**
@@ -142,7 +143,7 @@ var me = {
    * @return {void}
    */
   quit: function () {
-    me.log("", "Goodbye!");
+    me.log('', 'Goodbye!');
     me.socket.close();
     me.socket = null;
   },
@@ -158,14 +159,14 @@ var me = {
   loadScript: function (path, testScriptPresent) {
     const pr = new Promise((resolve, reject) => {
       if(testScriptPresent && testScriptPresent()) {
-        console.log("[loadScript] Script", path, "already present, not loading it again");
+        console.log('[loadScript] Script', path, 'already present, not loading it again');
 
         return resolve();
       }
-      const s = document.createElement("script");
+      const s = document.createElement('script');
       s.src = path;
       s.onload=function () {
-        console.log("Loaded", path);
+        console.log('Loaded', path);
         resolve();
       };
       s.onerror = function (e) {
@@ -177,7 +178,7 @@ var me = {
     return pr;
   },
   _removeVariablesFromURL: function (url) {
-    return url.split("&")[0];
+    return url.split('&')[0];
   },
   _registerToolDown: function(tool) {
     const {name, func} = tool;
@@ -260,48 +261,49 @@ var me = {
     me.atlasOffcn = document.createElement('canvas');
     me.atlasOfftx = me.atlasOffcn.getContext('2d');
   },
+  // eslint-disable-next-line max-statements
   _createOnscreenCanvases: function (elem) {
     // Set widget div (create one if none)
     if(typeof elem === 'undefined') {
-      me.container = document.getElementById("atlasmaker");
+      me.container = document.getElementById('atlasmaker');
       document.body.appendChild(me.container);
     } else {
       me.container = elem;
-      if(me.debug) { console.log("Container: ", me.container); }
+      if(me.debug) { console.log('Container: ', me.container); }
     }
     // Init drawing canvas
     me.container.innerHTML = '<div id="resizable"><canvas id="canvas" data-long-press-delay="500"></canvas></div>';
     me.canvas = me.container.querySelector('canvas');
     me.context = me.canvas.getContext('2d');
-    var resizable = me.container.querySelector('#resizable');
+    const resizable = me.container.querySelector('#resizable');
 
     // Add a div to display the slice number
-    var textLayer = document.createElement("div");
+    const textLayer = document.createElement('div');
     textLayer.id = 'text-layer';
     resizable.appendChild(textLayer);
 
     // Add a div to display the vector layer
-    const vectorLayer = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    const vectorLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     vectorLayer.id = 'vector-layer';
     resizable.appendChild(vectorLayer);
 
     // Add the cursor (a small div)
-    var cursor = document.createElement("div");
+    const cursor = document.createElement('div');
     cursor.id = 'cursor';
     resizable.appendChild(cursor);
 
     document.body.setAttribute('data-toolbarDisplay', 'right');
 
     // Add precise cursor
-    var isTouchArr = [];//["iPad","iPod"];
-    var [, curDevice] = navigator.userAgent.split(/[(;]/);
+    const isTouchArr = [];//["iPad","iPod"];
+    const [, curDevice] = navigator.userAgent.split(/[(;]/);
     if($.inArray(curDevice, isTouchArr)>=0) {
       me.flagUsePreciseCursor=true;
       me.initCursor();
     }
 
     // get pointer to progress div
-    me.progress=$("a.download_MRI");
+    me.progress=$('a.download_MRI');
   },
 
   //====================================================================================
@@ -314,11 +316,12 @@ var me = {
      * @param {object} elem DOM element
      * @return {object} Returns a promise
      */
+  // eslint-disable-next-line max-statements
   initAtlasMaker: function (elem) {
     me._addAtlasMakerComponents();
 
     // check if user is loged in
-    $.get("/loggedIn", function(res) {
+    $.get('/loggedIn', function(res) {
       if(res.loggedIn) {
         me.User.username=res.username;
       } else {
@@ -338,16 +341,17 @@ var me = {
 
     // text input
     Promise.all([
-      me.loadScript("https://unpkg.com/codeflask/build/codeflask.min.js"),
-      me.loadScript("https://cdn.jsdelivr.net/gh/r03ert0/consolita.js@v0.1.1/consolita.js")
+      me.loadScript('https://unpkg.com/codeflask/build/codeflask.min.js'),
+      me.loadScript('https://cdn.jsdelivr.net/gh/r03ert0/consolita.js@v0.1.1/consolita.js')
     ]).then(() => {
       window.onload = () => {
-        Consolita.init("#logScript");
+        // eslint-disable-next-line no-undef
+        Consolita.init('#logScript');
       };
     });
 
     // long-press event
-    me.loadScript("https://cdn.jsdelivr.net/gh/john-doherty/long-press-event@2.1.0/dist/long-press-event.min.js")
+    me.loadScript('https://cdn.jsdelivr.net/gh/john-doherty/long-press-event@2.1.0/dist/long-press-event.min.js')
       .then(() => {
         me.container.addEventListener('long-press', me.longpress);
       });
@@ -370,38 +374,38 @@ var me = {
     } else {
       tools = toolsLight;
     }
-    me.container.insertAdjacentHTML("beforeend", tools);
+    me.container.insertAdjacentHTML('beforeend', tools);
 
     // event connect: get keyboard events
     $(document).keydown(function(e) { me.keyDown(e); });
 
     // event connect: configure annotation tools
-    $("#tools-minimized").click(function() { me.changeToolbarDisplay("maximize"); });
-    me.push($(".push#display-minimize"), function() { me.changeToolbarDisplay("minimize"); });
-    me.push($(".push#display-left"), function() { me.changeToolbarDisplay("left"); });
-    me.push($(".push#display-right"), function() { me.changeToolbarDisplay("right"); });
-    me.slider($(".slider#slice"), function(x) { me.changeSlice(Math.round(x)); });
-    me.chose($(".chose#plane"), me.changeView);
-    me.chose($(".chose#paintTool"), me.changeTool);
-    me.chose($(".chose#penSize"), me.changePenSize);
-    me.toggle($(".toggle#precise"), me.togglePreciseCursor);
-    me.toggle($(".toggle#fill"), me.toggleFill);
-    me.toggle($(".toggle#fullscreen"), me.toggleFullscreen);
-    me.chose3state($(".chose#text"), me.toggleTextInput);
-    me.push($(".push#3drender"), me.render3D);
-    me.push($(".push#link"), me.link);
-    me.push($(".push#upload"), me.upload);
-    me.push($(".push#download"), me.download);
-    me.push($(".push#color"), me.color);
-    me.push($(".push#undo"), me.sendUndoMessage);
-    me.push($(".push#save"), me.sendSaveMessage);
-    me.push($(".push#prev"), me.prevSlice);
-    me.push($(".push#next"), me.nextSlice);
+    $('#tools-minimized').click(function() { me.changeToolbarDisplay('maximize'); });
+    me.push($('.push#display-minimize'), function() { me.changeToolbarDisplay('minimize'); });
+    me.push($('.push#display-left'), function() { me.changeToolbarDisplay('left'); });
+    me.push($('.push#display-right'), function() { me.changeToolbarDisplay('right'); });
+    me.slider($('.slider#slice'), function(x) { me.changeSlice(Math.round(x)); });
+    me.chose($('.chose#plane'), me.changeView);
+    me.chose($('.chose#paintTool'), me.changeTool);
+    me.chose($('.chose#penSize'), me.changePenSize);
+    me.toggle($('.toggle#precise'), me.togglePreciseCursor);
+    me.toggle($('.toggle#fill'), me.toggleFill);
+    me.toggle($('.toggle#fullscreen'), me.toggleFullscreen);
+    me.chose3state($('.chose#text'), me.toggleTextInput);
+    me.push($('.push#3drender'), me.render3D);
+    me.push($('.push#link'), me.link);
+    me.push($('.push#upload'), me.upload);
+    me.push($('.push#download'), me.download);
+    me.push($('.push#color'), me.color);
+    me.push($('.push#undo'), me.sendUndoMessage);
+    me.push($('.push#save'), me.sendSaveMessage);
+    me.push($('.push#prev'), me.prevSlice);
+    me.push($('.push#next'), me.nextSlice);
 
     // event connect: chat message input
-    $("#msg").keypress((e) => { me.onkey(e); });
+    $('#msg').keypress((e) => { me.onkey(e); });
 
-    $("#tools-minimized").hide();
+    $('#tools-minimized').hide();
 
     // load tools
     me.loadTools();
@@ -427,7 +431,7 @@ var me = {
           resolve();
         })
         .catch( (err) => {
-          console.error("ERROR:", err);
+          console.error('ERROR:', err);
           reject(err);
         });
     });
@@ -444,11 +448,11 @@ var me = {
    */
   _requestMRIInfo: function (source) {
     const url = me._removeVariablesFromURL(source);
-    $("#loadingIndicator p").text("Loading... ");
-    var pr = new Promise(function(resolve, reject) {
-      var timer = setInterval( function () {
-        console.log("polling for data...", url);
-        $.post(me.hostname + "/mri/json", {url}, function(info) {
+    $('#loadingIndicator p').text('Loading... ');
+    const pr = new Promise(function(resolve, reject) {
+      const timer = setInterval( function () {
+        console.log('polling for data...', url);
+        $.post(me.hostname + '/mri/json', {url}, function(info) {
           if(info.success === true) {
             console.log('requestMRIInfo promise resolved');
             clearInterval(timer);
@@ -456,15 +460,15 @@ var me = {
           } else if(info.success === 'downloading') {
             if(me.User.source !== url) {
               clearInterval(timer);
-              reject(new Error("source changed. Probably no longer requested?"));
+              reject(new Error('source changed. Probably no longer requested?'));
 
               return;
             }
-            $("#loadingIndicator p").text("Loading... "+parseInt(info.cur/info.len*100, 10)+"%");
+            $('#loadingIndicator p').text('Loading... '+parseInt(info.cur/info.len*100, 10)+'%');
           } else {
-            console.log("ERROR: requestMRIInfo", info);
+            console.log('ERROR: requestMRIInfo', info);
             clearInterval(timer);
-            reject(new Error("requestMRIInfo" + info));
+            reject(new Error('requestMRIInfo' + info));
           }
         });
       }, 2000);
@@ -482,6 +486,7 @@ var me = {
    * @param {number} index Index of the atlas to use
    * @return {object} A promise
    */
+  // eslint-disable-next-line max-statements
   _configureMRI: async function (info, index) {
     me.User.source = info.source;
     let info2;
@@ -502,7 +507,7 @@ var me = {
     info2 = info;
 
     // Get data from AtlasMaker object
-    me.name = info2.name||"Untitled"; // 1
+    me.name = info2.name||'Untitled'; // 1
     me.url = info2.url; // 2; NII
     me.atlasFilename = info2.mri.atlas[index].filename; // 3; NII
     me.atlasName = info2.mri.atlas[index].name;
@@ -564,6 +569,7 @@ var me = {
    * @param {number} index Index of the atlas to use
    * @return {object} A promise
    */
+  // eslint-disable-next-line max-statements
   configureAtlasMaker: async function (info, index) {
     let info2;
     let res;

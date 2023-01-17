@@ -30,7 +30,10 @@ module.exports = (env, argv) => ({
     rules: [
       {
         test: /\.css$/,
-        use: ['style-loader', 'css-loader']
+        use: [
+          'style-loader',
+          { loader: 'css-loader', options: { esModule: false, url: false } }
+        ]
       },
       {
         test: /\.(png|svg|jpg|gif)$/,
@@ -43,8 +46,7 @@ module.exports = (env, argv) => ({
     alias: {
       // for now using the browser build to parse existing inlined components
       vue: path.resolve(
-        `./node_modules/vue/dist/vue.esm-browser${
-          argv.mode === 'production' ? '.prod' : ''
+        `./node_modules/vue/dist/vue.esm-browser${argv.mode === 'production' ? '.prod' : ''
         }`
       )
     }

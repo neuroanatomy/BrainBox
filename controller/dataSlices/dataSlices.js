@@ -17,31 +17,31 @@ const BrainboxAccessControlService = require('../../services/BrainboxAccessContr
  */
 const getUserFilesSlice = function getUserFilesSlice(req, requestedUser, start, length) {
   console.log('getUserFilesSlice. Start, end:', start, length);
-  var loggedUser = 'anonymous';
-  if(req.isAuthenticated()) {
+  let loggedUser = 'anonymous';
+  if (req.isAuthenticated()) {
     loggedUser = req.user.username;
   }
 
   return new Promise(function (resolve, reject) {
     Promise.all([
       req.db.get('mri')
-        .find({owner: requestedUser, backup: {$exists: false}}, {skip:start, limit:length}),
+        .find({ owner: requestedUser, backup: { $exists: false } }, { skip: start, limit: length }),
       req.db.get('project').find({
         $or: [
-          {owner: requestedUser},
-          {'collaborators.list': {$elemMatch:{userID:requestedUser}}}
+          { owner: requestedUser },
+          { 'collaborators.list': { $elemMatch: { userID: requestedUser } } }
         ],
-        backup: {$exists: false}
+        backup: { $exists: false }
       })
     ])
-      .then(function(values) {
+      .then(function (values) {
         const [unfilteredMRI, unfilteredProjects] = values;
         const mri = [];
         const mriFiles = [];
 
         // filter for view access
-        for(const umri of unfilteredMRI) {
-          if(BrainboxAccessControlService.hasAccesstoFileIfAllowedBySomeProjects(umri, unfilteredProjects, loggedUser, AccessLevel.VIEW)) {
+        for (const umri of unfilteredMRI) {
+          if (BrainboxAccessControlService.hasAccesstoFileIfAllowedBySomeProjects(umri, unfilteredProjects, loggedUser, AccessLevel.VIEW)) {
             mri.push(umri);
           }
         }
@@ -53,19 +53,19 @@ const getUserFilesSlice = function getUserFilesSlice(req, requestedUser, start, 
             included: dateFormat(o.included, 'd mmm yyyy, HH:MM')
           };
 
-          if(typeof o.dim !== 'undefined') {
+          if (typeof o.dim !== 'undefined') {
             obj.volDimensions = o.dim.join(' x ');
             mriFiles.push(obj);
           }
         });
 
-        resolve({success: true, list: mriFiles});
+        resolve({ success: true, list: mriFiles });
         // if(mri.length>0)
         //     resolve({success:true, list:mriFiles});
         // else
         //     resolve({success:false, list:[]});
       })
-      .catch(function(err) {
+      .catch(function (err) {
         console.log('ERROR:', err);
         reject(err);
       });
@@ -83,30 +83,30 @@ const getUserFilesSlice = function getUserFilesSlice(req, requestedUser, start, 
  */
 const getUserAtlasSlice = function getUserAtlasSlice(req, requestedUser, start, length) {
   let loggedUser = 'anonymous';
-  if(req.isAuthenticated()) {
+  if (req.isAuthenticated()) {
     loggedUser = req.user.username;
   }
 
   return new Promise(function (resolve, reject) {
     Promise.all([
       req.db.get('mri')
-        .find({'mri.atlas': {$elemMatch: {owner: requestedUser}}, backup: {$exists: false}}, {skip:start, limit:length}),
+        .find({ 'mri.atlas': { $elemMatch: { owner: requestedUser } }, backup: { $exists: false } }, { skip: start, limit: length }),
       req.db.get('project').find({
         $or: [
-          {owner: requestedUser},
-          {'collaborators.list': {$elemMatch:{userID:requestedUser}}}
+          { owner: requestedUser },
+          { 'collaborators.list': { $elemMatch: { userID: requestedUser } } }
         ],
-        backup: {$exists: false}
+        backup: { $exists: false }
       })
     ])
-      .then(function(values) {
+      .then(function (values) {
         const [unfilteredAtlas, unfilteredProjects] = values;
         const atlas = [];
         const atlasFiles = [];
 
         // filter for view access
-        for(const ua of unfilteredAtlas) {
-          if(BrainboxAccessControlService.hasAccesstoFileIfAllowedBySomeProjects(ua, unfilteredProjects, loggedUser, AccessLevel.VIEW)) {
+        for (const ua of unfilteredAtlas) {
+          if (BrainboxAccessControlService.hasAccesstoFileIfAllowedBySomeProjects(ua, unfilteredProjects, loggedUser, AccessLevel.VIEW)) {
             atlas.push(ua);
           }
         }
@@ -116,21 +116,21 @@ const getUserAtlasSlice = function getUserAtlasSlice(req, requestedUser, start, 
             atlasFiles.push({
               url: o.source,
               parentName: o.name,
-              name: a.name||'',
-              project: a.project||'',
-              projectURL: '/project/'+a.project||'',
+              name: a.name || '',
+              project: a.project || '',
+              projectURL: '/project/' + a.project || '',
               modified: dateFormat(a.modified, 'd mmm yyyy, HH:MM')
             });
           }
         });
 
-        resolve({success:true, list:atlasFiles});
+        resolve({ success: true, list: atlasFiles });
         // if(atlas.length>0)
         //     resolve({success:true, list:atlasFiles});
         // else
         //     resolve({success:false, list:[]});
       })
-      .catch(function(err) {
+      .catch(function (err) {
         console.log('ERROR:', err);
         reject(err);
       });
@@ -147,24 +147,24 @@ const getUserAtlasSlice = function getUserAtlasSlice(req, requestedUser, start, 
  * @returns {Object} user projects slice
  */
 const getUserProjectsSlice = function getUserProjectsSlice(req, requestedUser, start, length) {
-  var loggedUser = 'anonymous';
-  if(req.isAuthenticated()) {
+  let loggedUser = 'anonymous';
+  if (req.isAuthenticated()) {
     loggedUser = req.user.username;
   }
 
   return new Promise(function (resolve, reject) {
     req.db.get('project').find({
       $or: [
-        {owner: requestedUser},
-        {'collaborators.list': {$elemMatch:{userID:requestedUser}}}
+        { owner: requestedUser },
+        { 'collaborators.list': { $elemMatch: { userID: requestedUser } } }
       ],
-      backup: {$exists: false}
-    }, {skip:start, limit:length})
-      .then(function(unfilteredProjects) {
-        var projects = [];
+      backup: { $exists: false }
+    }, { skip: start, limit: length })
+      .then(function (unfilteredProjects) {
+        let projects = [];
 
         // filter for view access
-        for(const i in unfilteredProjects) {
+        for (const i in unfilteredProjects) {
           if (BrainboxAccessControlService.hasFilesAccess(AccessLevel.VIEW, unfilteredProjects[i], loggedUser)) {
             projects.push(unfilteredProjects[i]);
           }
@@ -182,9 +182,9 @@ const getUserProjectsSlice = function getUserProjectsSlice(req, requestedUser, s
           };
         });
 
-        if(projects.length>0) { resolve({success:true, list:projects}); } else { resolve({success:false, list:[]}); }
+        if (projects.length > 0) { resolve({ success: true, list: projects }); } else { resolve({ success: false, list: [] }); }
       })
-      .catch(function(err) {
+      .catch(function (err) {
         console.log('ERROR:', err);
         reject(err);
       });
@@ -201,15 +201,15 @@ const getUserProjectsSlice = function getUserProjectsSlice(req, requestedUser, s
  */
 // eslint-disable-next-line max-statements
 const getProjectFilesSlice = async (req, projShortname, start, length, namesFlag) => {
-  var loggedUser = 'anonymous';
-  if(req.isAuthenticated()) {
+  let loggedUser = 'anonymous';
+  if (req.isAuthenticated()) {
     loggedUser = req.user.username;
   }
 
   // query project
   let project;
   try {
-    project = await req.db.get('project').findOne({shortname:projShortname, backup:{$exists:0}});
+    project = await req.db.get('project').findOne({ shortname: projShortname, backup: { $exists: 0 } });
   } catch (err) {
     throw new Error(err);
   }
@@ -230,15 +230,15 @@ const getProjectFilesSlice = async (req, projShortname, start, length, namesFlag
 
   // query mri info for project files
   let list;
-  if(project && project.files) {
-    ({list} = project.files);
+  if (project && project.files) {
+    ({ list } = project.files);
   }
   const arr = [];
 
   start = Math.min(start, list.length);
-  length = Math.min(length, list.length-start);
-  for(let i=start; i<start+length; i++) {
-    arr.push(req.db.get('mri').findOne({source:list[i], backup:{$exists:0}}, {_id:0}));
+  length = Math.min(length, list.length - start);
+  for (let i = start; i < start + length; i++) {
+    arr.push(req.db.get('mri').findOne({ source: list[i], backup: { $exists: 0 } }, { _id: 0 }));
   }
 
   let mris;
@@ -249,22 +249,22 @@ const getProjectFilesSlice = async (req, projShortname, start, length, namesFlag
   }
 
   const newList = [];
-  for(let j=0; j<mris.length; j++) {
-    if(mris[j]) {
+  for (let j = 0; j < mris.length; j++) {
+    if (mris[j]) {
       // mri file present in DB
       // check j-th mri annotation access
       BrainboxAccessControlService.setVolumeAnnotationsAccessByProjects(mris[j], [project], loggedUser);
 
       // append to list
-      if(typeof namesFlag !== 'undefined' && namesFlag === true) {
-        newList[j] = {source: mris[j].source, name: mris[j].name};
+      if (typeof namesFlag !== 'undefined' && namesFlag === true) {
+        newList[j] = { source: mris[j].source, name: mris[j].name };
       } else {
         newList[j] = mris[j];
       }
     } else {
       // mri file not present in DB (probably not yet downloaded)
       newList[j] = {
-        source: list[start+j],
+        source: list[start + j],
         name: ''
       };
     }
@@ -282,26 +282,25 @@ const getProjectFilesSlice = async (req, projShortname, start, length, namesFlag
  * @returns {Object} files slice
  */
 const getFilesSlice = function getFilesSlice(req, start, length) {
-  var loggedUser = 'anonymous';
-  if(req.isAuthenticated()) {
+  let loggedUser = 'anonymous';
+  if (req.isAuthenticated()) {
     loggedUser = req.user.username;
   }
 
   return new Promise(function (resolve, reject) {
     Promise.all([
       req.db.get('mri')
-        .find({backup: {$exists: false}}, {fields:{source:1, _id:0}, skip:start, limit:length}),
-      req.db.get('project').find({backup: {$exists: false}})
+        .find({ backup: { $exists: false } }, { fields: { source: 1, _id: 0 }, skip: start, limit: length }),
+      req.db.get('project').find({ backup: { $exists: false } })
     ])
-      .then(function(values) {
-        var [unfilteredMRI, unfilteredProjects] = values,
-          i,
-          mri = [],
-          mriFiles = [];
+      .then(function (values) {
+        const [unfilteredMRI, unfilteredProjects] = values,
+          mri = [];
+        let mriFiles = [];
 
         // filter for view access
-        for(i=0; i<unfilteredMRI.length; i++) {
-          if(BrainboxAccessControlService.hasAccesstoFileIfAllowedBySomeProjects(unfilteredMRI[i], unfilteredProjects, loggedUser, AccessLevel.VIEW)) {
+        for (let i = 0; i < unfilteredMRI.length; i++) {
+          if (BrainboxAccessControlService.hasAccesstoFileIfAllowedBySomeProjects(unfilteredMRI[i], unfilteredProjects, loggedUser, AccessLevel.VIEW)) {
             mri.push(unfilteredMRI[i]);
           }
         }
@@ -312,12 +311,12 @@ const getFilesSlice = function getFilesSlice(req, start, length) {
 
         // constrain start and length to available data
         start = Math.min(start, mriFiles.length);
-        length = Math.min(length, mriFiles.length-start);
-        mriFiles = mriFiles.slice(start, start+length);
+        length = Math.min(length, mriFiles.length - start);
+        mriFiles = mriFiles.slice(start, start + length);
 
         resolve(mriFiles);
       })
-      .catch(function(err) {
+      .catch(function (err) {
         console.log('ERROR:', err);
         reject(err);
       });
@@ -334,18 +333,18 @@ const getFilesSlice = function getFilesSlice(req, start, length) {
  */
 // eslint-disable-next-line max-statements
 const getProjectsSlice = async function getProjectsSlice(req, start, length) {
-  var loggedUser = 'anonymous';
-  if(req.isAuthenticated()) {
+  let loggedUser = 'anonymous';
+  if (req.isAuthenticated()) {
     loggedUser = req.user.username;
   }
 
   try {
     const unfilteredProjects = await req.db.get('project')
       .find({ backup: { $exists: false } }, { skip: start, limit: length });
-    var projects = [];
+    let projects = [];
 
     // filter for view access
-    for(const uproj of unfilteredProjects) {
+    for (const uproj of unfilteredProjects) {
       if (BrainboxAccessControlService.hasFilesAccess(AccessLevel.VIEW, uproj, loggedUser)) {
         projects.push(uproj);
       }
@@ -353,9 +352,9 @@ const getProjectsSlice = async function getProjectsSlice(req, start, length) {
 
     // constrain start and length to available data
     start = Math.min(start, projects.length);
-    length = Math.min(length, projects.length-start);
+    length = Math.min(length, projects.length - start);
 
-    projects = projects.slice(start, start+length);
+    projects = projects.slice(start, start + length);
 
     projects = projects.map(function (o) {
       return {

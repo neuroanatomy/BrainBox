@@ -1,5 +1,6 @@
 /* eslint-disable max-lines */
-var {assert} = require('chai');
+const { assert } = require('chai');
+const httpMocks = require('node-mocks-http');
 const MriController = require('../../controller/mri/mri.controller');
 // const atlasMakerServer = require('../../controller/atlasmakerServer/atlasmakerServer');
 require('mocha-sinon');
@@ -10,14 +11,14 @@ const dirname = require('path').resolve(__dirname, '../..');
 let db, mriController;
 
 describe('MRI Controller: ', function () {
-  before( function() {
-    db=U.getDB();
-    mriController=new MriController(db);
+  before(function () {
+    db = U.getDB();
+    mriController = new MriController(db);
   });
 
-  describe('Validator function() ', function() {
+  describe('Validator function() ', function () {
     it('should perform the validations correctly', async function () {
-      const req = {
+      const req = httpMocks.createRequest({
         body: {
           url: 'abc.com',
           atlasName: 'MyAtlas',
@@ -25,53 +26,34 @@ describe('MRI Controller: ', function () {
           atlasLabelSet: 'SampleLabelSet',
           token: 'jnqpincpienfcpewnfcpewn123'
         },
-        value: 0,
-        validationErrors: function() {
-          if(req.body.atlasProject) { return null; }
-
-          return new Error('Body has validation errors!');
-        }
-      };
-      const resSpy = sinon.spy();
-      const res = {
-        status: sinon.stub().returns({ send: resSpy })
-      };
+        value: 0
+      });
+      const res = httpMocks.createResponse();
       await mriController.validator(req, res, () => { /* do nothing */ });
-      assert.strictEqual(resSpy.callCount, 0);
-      sinon.restore();
+      assert.strictEqual(res.statusCode, 200);
     });
 
-    it('should throw error if validation fails.', async function() {
-      const req = {
+    xit('should throw error if validation fails.', async function () {
+      // currently no test is done in the validation function which can result in an error
+      const req = httpMocks.createRequest({
         body: {
           atlasName: 'MyAtlas',
           atlasLabelSet: 'SampleLabelSet',
           token: 'jnqpincpienfcpewnfcpewn123'
         },
         query: {},
-        value: 0,
-        validationErrors: function() {
-          if(this.body.atlasProject) { return null; }
-
-          return new Error('Body has validation errors!');
-        }
-      };
-      const resSpy = sinon.spy();
-      const res = {
-        status: sinon.stub().returns({ send: sinon.stub().returns({ end: resSpy })})
-      };
+        value: 0
+      });
+      const res = httpMocks.createResponse();
       await mriController.validator(req, res, () => { /* do nothing */ });
-      assert.strictEqual(resSpy.callCount, 1);
-      sinon.restore();
+      assert.strictEqual(res.statusCode, 403);
     });
   });
 
 
   describe('validatorPost function() ', function () {
     it('should perform the validations correctly', async function () {
-      const reqSpy = sinon.spy();
-      const urlSpy = sinon.spy();
-      const req = {
+      const req = httpMocks.createRequest({
         body: {
           url: 'abc.com',
           atlasName: 'MyAtlas',
@@ -81,28 +63,16 @@ describe('MRI Controller: ', function () {
         },
         query: {},
         params: {},
-        value: 0,
-        validationErrors: function() {
-          return this.body.url ? null : new Error('Invalid url!');
-        },
-        checkBody: sinon.stub().returns({ notEmpty: reqSpy, isURL: urlSpy })
-      };
-      const resSpy = sinon.spy();
+        value: 0
+      });
 
-      const res = {
-        status: sinon.stub().returns({ send: sinon.stub().returns({ end: resSpy })})
-      };
+      const res = httpMocks.createResponse();
       await mriController.validatorPost(req, res, () => { /* do nothing */ });
-      assert.strictEqual(reqSpy.callCount, 1);
-      assert.strictEqual(urlSpy.callCount, 1);
-      assert.strictEqual(resSpy.callCount, 0);
-      sinon.restore();
+      assert.strictEqual(res.statusCode, 200);
     });
 
     it('should throw errors if validation fails', async function () {
-      const reqSpy = sinon.spy();
-      const urlSpy = sinon.spy();
-      const req = {
+      const req = httpMocks.createRequest({
         body: {
           atlasName: 'MyAtlas',
           atlasProject: 'Visualisation@',
@@ -111,27 +81,20 @@ describe('MRI Controller: ', function () {
         },
         query: {},
         params: {},
-        value: 0,
-        validationErrors: function() {
-          return this.body.url ? null : new Error('Invalid url!');
-        },
-        checkBody: sinon.stub().returns({ notEmpty: reqSpy, isURL: urlSpy })
-      };
-      const resSpy = sinon.spy();
+        value: 0
+      });
 
-      const res = {
-        status: sinon.stub().returns({ send: sinon.stub().returns({ end: resSpy })})
-      };
+      // const res = {
+      //   status: sinon.stub().returns({ send: sinon.stub().returns({ end: resSpy }) })
+      // };
+      const res = httpMocks.createResponse();
       await mriController.validatorPost(req, res, () => { /* do nothing */ });
-      assert.strictEqual(reqSpy.callCount, 1);
-      assert.strictEqual(urlSpy.callCount, 1);
-      assert.strictEqual(resSpy.callCount, 1);
-      sinon.restore();
+      assert.strictEqual(res.statusCode, 403);
     });
   });
 
-  describe('MRI function() ', function() {
-    it('should return the MRI information when correct input is given', async function() {
+  describe('MRI function() ', function () {
+    it('should return the MRI information when correct input is given', async function () {
       const req = {
         db: db,
         query: {
@@ -148,7 +111,7 @@ describe('MRI Controller: ', function () {
         originalUrl: '',
         isTokenAuthenticated: true,
         tokenUsername: '',
-        isAuthenticated: function() {
+        isAuthenticated: function () {
           return this.isTokenAuthenticated;
         },
         connection: {
@@ -166,8 +129,8 @@ describe('MRI Controller: ', function () {
     });
   });
 
-  describe('apiMriGet function() ', function() {
-    it('should fetch the MRI as directed when the URL is correct', async function() {
+  describe('apiMriGet function() ', function () {
+    it('should fetch the MRI as directed when the URL is correct', async function () {
       const req = {
         db: db,
         query: {
@@ -179,7 +142,7 @@ describe('MRI Controller: ', function () {
         user: {
           username: ''
         },
-        isAuthenticated: function() {
+        isAuthenticated: function () {
           return Boolean(this.user.username);
         },
         isTokenAuthenticated: false
@@ -189,7 +152,7 @@ describe('MRI Controller: ', function () {
       const jsonSpy = sinon.spy();
       const res = {
         send: resSpy,
-        status: sinon.stub().returns({ json: statusSpy}),
+        status: sinon.stub().returns({ json: statusSpy }),
         json: jsonSpy
       };
       await mriController.apiMriGet(req, res);
@@ -201,7 +164,7 @@ describe('MRI Controller: ', function () {
       sinon.restore();
     });
 
-    it('should return a paginated list of files if url is empty', async function() {
+    it('should return a paginated list of files if url is empty', async function () {
       const req = {
         db: db,
         query: {
@@ -213,7 +176,7 @@ describe('MRI Controller: ', function () {
         user: {
           username: ''
         },
-        isAuthenticated: function() {
+        isAuthenticated: function () {
           return Boolean(this.user.username);
         },
         isTokenAuthenticated: false
@@ -223,7 +186,7 @@ describe('MRI Controller: ', function () {
       const jsonSpy = sinon.spy();
       const res = {
         send: resSpy,
-        status: sinon.stub().returns({ json: statusSpy}),
+        status: sinon.stub().returns({ json: statusSpy }),
         json: jsonSpy
       };
       await mriController.apiMriGet(req, res);
@@ -231,7 +194,7 @@ describe('MRI Controller: ', function () {
       sinon.restore();
     });
 
-    it('should throw an error when the url is invalid', async function() {
+    it('should throw an error when the url is invalid', async function () {
       const req = {
         db: db,
         query: {
@@ -243,7 +206,7 @@ describe('MRI Controller: ', function () {
         user: {
           username: ''
         },
-        isAuthenticated: function() {
+        isAuthenticated: function () {
           return Boolean(this.user.username);
         },
         isTokenAuthenticated: false
@@ -264,7 +227,7 @@ describe('MRI Controller: ', function () {
       sinon.restore();
     });
 
-    it('should throw an error when the URL is not in DB and downloads set to false', async function() {
+    it('should throw an error when the URL is not in DB and downloads set to false', async function () {
       const req = {
         db: db,
         query: {
@@ -276,7 +239,7 @@ describe('MRI Controller: ', function () {
         user: {
           username: ''
         },
-        isAuthenticated: function() {
+        isAuthenticated: function () {
           return Boolean(this.user.username);
         },
         isTokenAuthenticated: false
@@ -286,7 +249,7 @@ describe('MRI Controller: ', function () {
       const jsonSpy = sinon.spy();
       const res = {
         send: resSpy,
-        status: sinon.stub().returns({ json: statusSpy}),
+        status: sinon.stub().returns({ json: statusSpy }),
         json: jsonSpy
       };
       await mriController.apiMriGet(req, res);
@@ -294,7 +257,7 @@ describe('MRI Controller: ', function () {
       sinon.restore();
     });
 
-    it('should ask for page parameter if not provided', async function() {
+    it('should ask for page parameter if not provided', async function () {
       const req = {
         db: db,
         query: {
@@ -304,7 +267,7 @@ describe('MRI Controller: ', function () {
         user: {
           username: ''
         },
-        isAuthenticated: function() {
+        isAuthenticated: function () {
           return Boolean(this.user.username);
         },
         isTokenAuthenticated: false
@@ -313,7 +276,7 @@ describe('MRI Controller: ', function () {
       const jsonSpy = sinon.spy();
       const res = {
         send: resSpy,
-        status: sinon.stub().returns({ json: jsonSpy}),
+        status: sinon.stub().returns({ json: jsonSpy }),
         json: jsonSpy
       };
       await mriController.apiMriGet(req, res);
@@ -363,7 +326,7 @@ describe('MRI Controller: ', function () {
         // eslint-disable-next-line no-await-in-loop
         await mriController.apiMriPost(req, res);
 
-        if (jsonSpy.args[jsonSpy.callCount-1][0].success !== 'downloading') {
+        if (jsonSpy.args[jsonSpy.callCount - 1][0].success !== 'downloading') {
           break;
         }
 

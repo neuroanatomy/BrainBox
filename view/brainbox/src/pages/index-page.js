@@ -72,7 +72,7 @@ window.addEventListener('resize', () => {
 document.getElementById('go').addEventListener('click', goToURL);
 
 // video settings
-var vid = document.getElementById('bgBrains');
+const vid = document.getElementById('bgBrains');
 vid.onplaying = function () {
   vid.playbackRate = 0.5;
 };
@@ -98,7 +98,7 @@ document.getElementById('addProject').addEventListener('click', () => {
 });
 
 // multiple div as slides
-var menuShowing = true;
+let menuShowing = true;
 window.addEventListener('scroll', () => {
   const y = window.pageYOffset;
   if (y > 100 && menuShowing) {

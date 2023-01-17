@@ -6,7 +6,7 @@
  * @returns object
  */
 
-export var AtlasMakerDraw = {
+export const AtlasMakerDraw = {
 
   /**
      * @function resizeWindow
@@ -30,9 +30,10 @@ export var AtlasMakerDraw = {
      * @function configureBrainImage
      * @returns {void}
      */
+  // eslint-disable-next-line max-statements
   configureBrainImage: function () {
-    var me = AtlasMakerWidget;
-    if(me.User.view === null) { me.User.view = "sag"; }
+    const me = AtlasMakerWidget;
+    if(me.User.view === null) { me.User.view = 'sag'; }
 
     const {s2v} = me.User;
     switch(me.User.view) {
@@ -47,15 +48,15 @@ export var AtlasMakerDraw = {
     me.brainOffcn.height = me.brainH;
     // me.brainPix = me.brainOfftx.getImageData(0, 0, me.brainOffcn.width, me.brainOffcn.height); UNUSED!!
 
-    if(me.User.slice === null || me.User.slice >= me.brainD-1) { me.User.slice = parseInt(me.brainD/2); }
+    if(me.User.slice === null || me.User.slice >= me.brainD-1) { me.User.slice = parseInt(me.brainD/2, 10); }
 
     me.sendUserDataMessage(JSON.stringify({ 'view':me.User.view, 'slice':me.User.slice }));
 
     // configure toolbar slider
-    $(".slider#slice").data({ max:me.brainD-1, val:me.User.slice });
+    $('.slider#slice').data({ max:me.brainD-1, val:me.User.slice });
 
     // if($("#slice .thumb")[0]) { $("#slice .thumb")[0].style.left = (me.User.slice/(me.brainD-1)*100) + "%"; }
-    $("#slice").trigger("updateDisplay");
+    $('#slice').trigger('updateDisplay');
 
     me.drawImages();
     me.initCursor();
@@ -66,7 +67,7 @@ export var AtlasMakerDraw = {
      * @returns {void}
      */
   configureAtlasImage: function () {
-    var me = AtlasMakerWidget;
+    const me = AtlasMakerWidget;
     // has to be run *after* configureBrainImage
     me.atlasOffcn.width = me.brainW;
     me.atlasOffcn.height = me.brainH;
@@ -88,13 +89,13 @@ export var AtlasMakerDraw = {
      * @returns {number} Volume in voxel units
      */
   computeSegmentedVolume: function () {
-    var me = AtlasMakerWidget;
+    const me = AtlasMakerWidget;
     let i;
     let sum = 0;
     const {data, dim} = me.atlas;
 
     for(i = 0; i<dim[0]*dim[1]*dim[2]; i++) {
-      if(data[i]>0) { sum++; }
+      if(data[i]>0) { sum+=1; }
     }
 
     return sum*me.User.pixdim[0]*me.User.pixdim[1]*me.User.pixdim[2];
@@ -106,24 +107,24 @@ export var AtlasMakerDraw = {
    * @returns {void}
    */
   displayInformation: function () {
-    var me = AtlasMakerWidget;
-    var text = me.container.querySelector("#text-layer");
-    var vector = me.container.querySelector("#vector-layer");
+    const me = AtlasMakerWidget;
+    const text = me.container.querySelector('#text-layer');
+    const vector = me.container.querySelector('#vector-layer');
     let txtStr;
     let svgStr;
 
     me.info.slice = me.User.slice;
 
-    txtStr = "";
+    txtStr = '';
     for(const k in me.info) {
       if (Object.prototype.hasOwnProperty.call(me.info, k)) {
-        txtStr += "<span>" + k + ": " + me.info[k] + "</span><br/>";
+        txtStr += '<span>' + k + ': ' + me.info[k] + '</span><br/>';
       }
     }
     text.innerHTML = txtStr;
 
     // call registered displayInformation functions
-    svgStr = "";
+    svgStr = '';
     for(const func of me.displayInformationFunctions) {
       svgStr = func(svgStr);
     }
@@ -136,7 +137,7 @@ export var AtlasMakerDraw = {
    * @returns {void}
    */
   drawImages: function () {
-    var me = AtlasMakerWidget;
+    const me = AtlasMakerWidget;
     if(me.brainImg.img
            && me.flagLoadingImg.view
            && me.flagLoadingImg.slice) {
@@ -160,8 +161,9 @@ export var AtlasMakerDraw = {
      * @param {number} slice The slice number
      * @returns {void}
      */
+  // eslint-disable-next-line max-statements
   drawAtlasImage: function (view, slice) {
-    var me = AtlasMakerWidget;
+    const me = AtlasMakerWidget;
     if(!me.atlas) { return; }
     const {data} = me.atlas;
     let i, s, x, y;
@@ -173,9 +175,10 @@ export var AtlasMakerDraw = {
         case 'cor': s = [x, yc, me.brainH-1-y]; break;
         case 'axi': s = [x, me.brainH-1-y, ya]; break;
         }
+        // eslint-disable-next-line new-cap
         i = me.S2I(s, me.User);
-        var c = me.ontologyValueToColor(data[i]);
-        var alpha = (data[i]>0)?255:0;
+        const c = me.ontologyValueToColor(data[i]);
+        const alpha = (data[i]>0)?255:0;
         i = (y*me.atlasOffcn.width + x)*4;
         if (i <= me.atlasPix.data.length - 4) {
           me.atlasPix.data.set([...c, alpha*me.alphaLevel], i);

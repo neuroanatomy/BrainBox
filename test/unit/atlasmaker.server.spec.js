@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const WebSocket = require('ws').Server;
-var assert = require('assert');
+const assert = require('assert');
 // const tracer = require('tracer').console({ format: '[{{file}}:{{line}}]  {{message}}' });
 const la = require('../../controller/atlasmakerServer/atlasmaker-linalg.js');
 const amri = require('../../controller/atlasmakerServer/atlasmaker-mri.js');
@@ -14,7 +14,7 @@ require('mocha-sinon');
 let AMS;
 
 describe('UNIT TESTING ATLASMAKER SERVER', function () {
-  before(function() {
+  before(function () {
     AMS = atlasmakerServer(U.getDB());
   });
 
@@ -151,7 +151,7 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
     describe('numberOfUsersConnectedToMRI function() ', function () {
 
       it('should return 0 if the mri path is invalid or undefined', async function () {
-        var users = await AMS.numberOfUsersConnectedToMRI('');
+        const users = await AMS.numberOfUsersConnectedToMRI('');
         assert.strictEqual(users, 0);
       });
 
@@ -172,8 +172,8 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
       it('should return 0 if there are no users', async function () {
         let cnt = 0;
         await AMS.displayUsers();
-        for (var x = 0; x < AMS.US.length; x++) {
-          if (AMS.US[x]) { cnt++; }
+        for (let x = 0; x < AMS.US.length; x += 1) {
+          if (AMS.US[x]) { cnt += 1; }
         }
         assert.strictEqual(cnt, 0);
       });
@@ -183,8 +183,8 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
         await AMS._connectNewUser({ ws: ws });
         await AMS.displayUsers();
         let cnt = 0;
-        for (var x = 0; x < AMS.US.length; x++) {
-          if (AMS.US[x]) { cnt++; }
+        for (let x = 0; x < AMS.US.length; x++) {
+          if (AMS.US[x]) { cnt += 1; }
         }
         await AMS._disconnectUser({ ws: ws });
         ws.close();
@@ -197,8 +197,8 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
       it('should display no brains when no brains are loaded', async function () {
         await AMS.displayBrains();
         let cnt = 0;
-        for (var x = 0; x < AMS.Brains.length; x++) {
-          if (AMS.Brains[x]) { cnt++; }
+        for (let x = 0; x < AMS.Brains.length; x++) {
+          if (AMS.Brains[x]) { cnt += 1; }
         }
         assert.strictEqual(cnt, 0);
       });
@@ -208,8 +208,8 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
         await AMS.getBrainAtPath(mriPath);
         await AMS.displayBrains();
         let cnt = 0;
-        for (var x = 0; x < AMS.Brains.length; x++) {
-          if (AMS.Brains[x]) { cnt++; }
+        for (let x = 0; x < AMS.Brains.length; x++) {
+          if (AMS.Brains[x]) { cnt += 1; }
         }
         await AMS.unloadMRI(mriPath);
         assert.strictEqual(cnt, 1);
@@ -238,8 +238,8 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
         const ws = new WebSocket({ port: 8081 });
         await AMS._connectNewUser({ ws: ws });
         let cnt = 0;
-        for (var x = 0; x < AMS.US.length; x++) {
-          if (AMS.US[x]) { cnt++; }
+        for (let x = 0; x < AMS.US.length; x++) {
+          if (AMS.US[x]) { cnt += 1; }
         }
         await AMS._disconnectUser({ ws: ws });
         ws.close();
@@ -252,8 +252,8 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
         await AMS._connectNewUser({ ws: ws });
         await AMS.removeUser(ws);
         let cnt = 0;
-        for (var x = 0; x < AMS.US.length; x++) {
-          if (AMS.US[x]) { cnt++; }
+        for (let x = 0; x < AMS.US.length; x++) {
+          if (AMS.US[x]) { cnt += 1; }
         }
         ws.close();
         assert.strictEqual(cnt, 0);

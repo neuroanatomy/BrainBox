@@ -8,6 +8,7 @@ const validator = function (req, res, next) {
   // userName can be an ip address (for anonymous users)
 
   /*
+    // legacy api, needs to be rewriten if uncommented
     req.checkParams('userName', 'incorrect user name').isAlphanumeric();
     var errors = req.validationErrors();
     console.log(errors);
@@ -21,7 +22,7 @@ const validator = function (req, res, next) {
 };
 
 const user = async function (req, res) {
-  var requestedUser = req.params.userName;
+  const requestedUser = req.params.userName;
 
   // store return path in case of login
   req.session.returnTo = req.originalUrl;
@@ -32,7 +33,7 @@ const user = async function (req, res) {
       res.status(400).send('Error');
     });
   if (json) {
-    var context = {
+    const context = {
       username: json.name,
       nickname: json.nickname,
       joined: dateFormat(json.joined, 'dddd d mmm yyyy, HH:MM'),
@@ -73,8 +74,8 @@ const apiUserAll = async function (req, res) {
   }
 
   // eslint-disable-next-line radix
-  var page = parseInt(req.query.page);
-  var nItemsPerPage = 20;
+  const page = parseInt(req.query.page);
+  const nItemsPerPage = 20;
 
   const json = await req.db.get('user').find({ backup: { $exists: false } }, { skip: page * nItemsPerPage, limit: nItemsPerPage, fields: { _id: 0 } });
   res.send(json.map(function (o) {
@@ -126,7 +127,7 @@ const apiUserFiles = async function (req, res) {
  */
 const apiUserAtlas = async function (req, res) {
   // @todo Check access rights for this route
-  var { userName } = req.params;
+  const { userName } = req.params;
   let { start, length } = req.query;
 
   console.log('userName:', userName, 'start:', start, 'length:', length);
@@ -159,7 +160,7 @@ const apiUserAtlas = async function (req, res) {
  */
 const apiUserProjects = async function (req, res) {
   // @todo Check access rights for this route
-  var { userName } = req.params;
+  const { userName } = req.params;
   let { start, length } = req.query;
 
   console.log('userName:', userName, 'start:', start, 'length:', length);

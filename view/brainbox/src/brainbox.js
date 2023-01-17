@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 /* global AtlasMakerWidget $ */
 /*! BrainBox */
 
@@ -15,13 +16,13 @@ import Config from './../../../cfg.json';
 /**
  * @page BrainBox
  */
-export var BrainBox={
+export const BrainBox = {
   version: 1,
   debug: 1,
   hostname: Config.hostname,
-  info:{},
-  labelSets:null,
-  annotationType:['volume', 'text', 'multiple choices', 'hidden text'],
+  info: {},
+  labelSets: null,
+  annotationType: ['volume', 'text', 'multiple choices', 'hidden text'],
   accessLevels: ['none', 'view', 'edit', 'add', 'remove'],
 
   /*
@@ -39,16 +40,16 @@ export var BrainBox={
     const sz = abc.length;
 
     v0 = 0;
-    for(i = 0; i<str.length; i++) {
+    for (i = 0; i < str.length; i++) {
       const ch = str.charCodeAt(i);
-      v0 = ((v0<<5)-v0)+ch;
+      v0 = ((v0 << 5) - v0) + ch;
       v0 &= v0;
     }
 
     res = '';
-    for(i = 0; i<8; i++) {
-      v1 = parseInt(v0/sz);
-      v = Math.abs(v0-v1*sz);
+    for (i = 0; i < 8; i++) {
+      v1 = parseInt(v0 / sz, 10);
+      v = Math.abs(v0 - v1 * sz);
       res += abc[v];
       v0 = v1;
     }
@@ -65,15 +66,15 @@ export var BrainBox={
      * @returns {object} A promise
      */
   loadScript: function loadScript(path, testScriptPresent) {
-    return new Promise(function(resolve, reject) {
-      if(testScriptPresent && testScriptPresent()) {
+    return new Promise(function (resolve, reject) {
+      if (testScriptPresent && testScriptPresent()) {
         console.log('[loadScript] Script', path, 'already present, not loading it again');
 
         return resolve();
       }
-      var s = document.createElement('script');
+      const s = document.createElement('script');
       s.src = path;
-      s.onload=function () {
+      s.onload = function () {
         console.log('Loaded', path);
         resolve();
       };
@@ -89,20 +90,20 @@ export var BrainBox={
      * @returns {object} A promise
      */
   initBrainBox: function initBrainBox() {
-    var pr = new Promise(function(resolve, reject) {
+    const pr = new Promise(function (resolve, reject) {
       // Add AtlasMaker and friends
-      var stereotaxic = document.getElementById('stereotaxic');
+      const stereotaxic = document.getElementById('stereotaxic');
       stereotaxic.innerHTML = '';
-      var atlasmaker = document.createElement('div');
+      const atlasmaker = document.createElement('div');
       atlasmaker.id = 'atlasmaker';
       atlasmaker.className = 'edit-mode';
       stereotaxic.appendChild(atlasmaker);
 
       AtlasMakerWidget.initAtlasMaker(atlasmaker)
-        .then(function() {
+        .then(function () {
           resolve();
         })
-        .catch( (err) => {
+        .catch((err) => {
           console.error('ERROR:', err);
           reject(err);
         });
@@ -120,39 +121,40 @@ export var BrainBox={
      * @returns {object} A promise
      */
   configureBrainBox: function configureBrainBox(param) {
-    var pr=new Promise(function(resolve, reject) {
-      var index=param.annotationItemIndex||0;
+    // eslint-disable-next-line max-statements
+    const pr = new Promise(function (resolve, reject) {
+      const index = param.annotationItemIndex || 0;
 
       // Copy MRI from source
       $('#msgLog').html('<p>Downloading from source to server...');
 
       // Configure MRI into atlasmaker
-      if(param.info.success===false) {
-        $('#msgLog').append('<p>ERROR: '+param.info.message+'.');
-        console.log('<p>ERROR: '+param.info.message+'.');
+      if (param.info.success === false) {
+        $('#msgLog').append('<p>ERROR: ' + param.info.message + '.');
+        console.log('<p>ERROR: ' + param.info.message + '.');
         reject(new Error(param.info.message));
 
         return;
       }
-      BrainBox.info=param.info;
+      BrainBox.info = param.info;
 
       $('#msgLog').append('<p>Downloading from server...</p>');
 
       /**
             * @todo Check it these two lines are of any use...
             */
-      param.dim=BrainBox.info.dim; // this allows to keep dim and pixdim through annotation changes
-      param.pixdim=BrainBox.info.pixdim;
+      param.dim = BrainBox.info.dim; // this allows to keep dim and pixdim through annotation changes
+      param.pixdim = BrainBox.info.pixdim;
 
       // re-instance stored configuration
-      var stored=localStorage.AtlasMaker;
-      if(stored) {
-        stored=JSON.parse(stored);
-        if(stored.version && stored.version === BrainBox.version) {
-          for(var i=0; i<stored.history.length; i++) {
-            if(stored.history[i].url === param.url) {
-              AtlasMakerWidget.User.view=stored.history[i].view;
-              AtlasMakerWidget.User.slice=stored.history[i].slice;
+      let stored = localStorage.AtlasMaker;
+      if (stored) {
+        stored = JSON.parse(stored);
+        if (stored.version && stored.version === BrainBox.version) {
+          for (let i = 0; i < stored.history.length; i++) {
+            if (stored.history[i].url === param.url) {
+              AtlasMakerWidget.User.view = stored.history[i].view;
+              AtlasMakerWidget.User.slice = stored.history[i].slice;
               break;
             }
           }
@@ -160,33 +162,33 @@ export var BrainBox={
       }
 
       // enact configuration in param, eventually overriding the stored one
-      if(param.view) {
-        AtlasMakerWidget.User.view=param.view;
-        AtlasMakerWidget.User.slice=null; // this will set the slider to the middle slice in case no slice were specified
+      if (param.view) {
+        AtlasMakerWidget.User.view = param.view;
+        AtlasMakerWidget.User.slice = null; // this will set the slider to the middle slice in case no slice were specified
       }
-      if(param.slice) { AtlasMakerWidget.User.slice=param.slice; }
+      if (param.slice) { AtlasMakerWidget.User.slice = param.slice; }
 
-      if(param.fullscreen) {
-        AtlasMakerWidget.fullscreen=param.fullscreen;
+      if (param.fullscreen) {
+        AtlasMakerWidget.fullscreen = param.fullscreen;
       } else {
-        AtlasMakerWidget.fullscreen=false;
+        AtlasMakerWidget.fullscreen = false;
       }
 
       AtlasMakerWidget.configureAtlasMaker(BrainBox.info, index)
-        .then(function(info2) {
+        .then(function (info2) {
           BrainBox.info = info2;
 
 
           // check 'edit' access
-          var accessStr = BrainBox.info.mri.atlas[index].access;
-          var accessLvl = BrainBox.accessLevels.indexOf(accessStr);
-          if(accessLvl<0 || accessLvl>BrainBox.accessLevels.length-1) { accessLvl = 0; }
-          if(accessLvl>=2) { AtlasMakerWidget.editMode = 1; } else { AtlasMakerWidget.editMode = 0; }
-          resolve({success: true});
+          const accessStr = BrainBox.info.mri.atlas[index].access;
+          let accessLvl = BrainBox.accessLevels.indexOf(accessStr);
+          if (accessLvl < 0 || accessLvl > BrainBox.accessLevels.length - 1) { accessLvl = 0; }
+          if (accessLvl >= 2) { AtlasMakerWidget.editMode = 1; } else { AtlasMakerWidget.editMode = 0; }
+          resolve({ success: true });
 
 
         })
-        .catch( (err) => {
+        .catch((err) => {
           console.log('ERROR:', err);
           reject(err);
 
@@ -205,7 +207,7 @@ export var BrainBox={
      * @returns {object} A promise
      */
   convertImgObjectURLToDataURL: function convertImgObjectURLToDataURL(objURL) {
-    var pr = new Promise(function(resolve, reject) {
+    const pr = new Promise(function (resolve, reject) {
       const x = new XMLHttpRequest();
       const f = new FileReader();
       x.open('GET', objURL, true);
@@ -231,32 +233,32 @@ export var BrainBox={
      */
   addCurrentMRIToHistory: function addCurrentMRIToHistory() {
     BrainBox.convertImgObjectURLToDataURL(AtlasMakerWidget.brainImg.img.src)
-      .then(function(data) {
-        let foundStored=false;
-        let stored=localStorage.AtlasMaker;
-        if(stored) {
-          stored=JSON.parse(stored);
-          if(stored.version && stored.version === BrainBox.version) {
-            foundStored=true;
-            for(let i=0; i<stored.history.length; i++) {
-              if(stored.history[i].url === BrainBox.info.source) {
+      .then(function (data) {
+        let foundStored = false;
+        let stored = localStorage.AtlasMaker;
+        if (stored) {
+          stored = JSON.parse(stored);
+          if (stored.version && stored.version === BrainBox.version) {
+            foundStored = true;
+            for (let i = 0; i < stored.history.length; i++) {
+              if (stored.history[i].url === BrainBox.info.source) {
                 stored.history.splice(i, 1);
                 break;
               }
             }
           }
         }
-        if(foundStored === false) {
-          stored={version:BrainBox.version, history:[]};
+        if (foundStored === false) {
+          stored = { version: BrainBox.version, history: [] };
         }
         stored.history.push({
-          url:         BrainBox.info.source,
-          view:        AtlasMakerWidget.User.view?AtlasMakerWidget.User.view.toLowerCase():'sag',
-          slice:       AtlasMakerWidget.User.slice?AtlasMakerWidget.User.slice:0,
-          img:         data,
+          url: BrainBox.info.source,
+          view: AtlasMakerWidget.User.view ? AtlasMakerWidget.User.view.toLowerCase() : 'sag',
+          slice: AtlasMakerWidget.User.slice ? AtlasMakerWidget.User.slice : 0,
+          img: data,
           lastVisited: (new Date()).toJSON()
         });
-        localStorage.AtlasMaker=JSON.stringify(stored);
+        localStorage.AtlasMaker = JSON.stringify(stored);
       });
   },
 
@@ -310,11 +312,11 @@ export var BrainBox={
     */
   annotationsArrayToObject: function annotationsArrayToObject(arr) {
     let i;
-    const obj={};
-    for(i=0; i<arr.length; i++) {
-      const {project, name} = arr[i];
-      if(!obj[project]) { obj[project]={}; }
-      obj[project][name]=JSON.parse(JSON.stringify(arr[i]));
+    const obj = {};
+    for (i = 0; i < arr.length; i++) {
+      const { project, name } = arr[i];
+      if (!obj[project]) { obj[project] = {}; }
+      obj[project][name] = JSON.parse(JSON.stringify(arr[i]));
       delete obj[project][name].project;
       delete obj[project][name].name;
     }
@@ -328,14 +330,14 @@ export var BrainBox={
     * @returns {array} Array of annotations
     */
   annotationsObjectToArray: function annotationsObjectToArray(obj) {
-    const arr=[];
-    for(const i in obj) {
-      if({}.hasOwnProperty.call(obj, i)) {
-        for(const j in obj[i]) {
-          if({}.hasOwnProperty.call(obj[i], j)) {
-            var o=obj[i][j];
-            o.project=i;
-            o.name=j;
+    const arr = [];
+    for (const i in obj) {
+      if ({}.hasOwnProperty.call(obj, i)) {
+        for (const j in obj[i]) {
+          if ({}.hasOwnProperty.call(obj[i], j)) {
+            const o = obj[i][j];
+            o.project = i;
+            o.name = j;
             arr.push(o);
           }
         }
@@ -353,10 +355,10 @@ export var BrainBox={
      */
   selectAnnotation: function selectAnnotation(annName, annProject) {
     let i;
-    const {atlas} = BrainBox.info.mri;
+    const { atlas } = BrainBox.info.mri;
 
-    for(i=0; i<atlas.length; i++) {
-      if(atlas[i].name === annName && atlas[i].project === annProject) {
+    for (i = 0; i < atlas.length; i++) {
+      if (atlas[i].name === annName && atlas[i].project === annProject) {
         AtlasMakerWidget.configureAtlasMaker(BrainBox.info, i);
 
         return;
@@ -371,17 +373,17 @@ export var BrainBox={
      * @returns {void}
      */
   selectAnnotationTableRow: function selectAnnotationTableRow(index, param) {
-    var {table} = param;
-    var currentIndex=$(table)
+    const { table } = param;
+    const currentIndex = $(table)
       .find('tr.selected')
       .index();
-    if(index>=0 && currentIndex !== index) {
+    if (index >= 0 && currentIndex !== index) {
       console.log('bb>>  change selected annotation');
       $(table)
         .find('tr')
         .removeClass('selected');
       $(table)
-        .find('tbody tr:eq('+index+')')
+        .find('tbody tr:eq(' + index + ')')
         .addClass('selected');
       AtlasMakerWidget.configureAtlasMaker(BrainBox.info, index);
     }
@@ -396,14 +398,14 @@ export var BrainBox={
   appendAnnotationTableRow: function appendAnnotationTableRow(irow, param) {
     $(param.table).append(param.trTemplate);
 
-    for(var icol=0; icol<param.objTemplate.length; icol++) {
-      switch(param.objTemplate[icol].typeOfBinding) {
+    for (let icol = 0; icol < param.objTemplate.length; icol++) {
+      switch (param.objTemplate[icol].typeOfBinding) {
       case 1:
         tw.bind1(
           param.infoProxy,
           param.info,
           param.objTemplate[icol].path.replace('#', irow),
-          $(param.table).find('tr:eq('+(irow+1)+') td:eq('+icol+')'),
+          $(param.table).find('tr:eq(' + (irow + 1) + ') td:eq(' + icol + ')'),
           param.objTemplate[icol].format
         );
         break;
@@ -412,7 +414,7 @@ export var BrainBox={
           param.infoProxy,
           param.info,
           param.objTemplate[icol].path.replace('#', irow),
-          $(param.table).find('tr:eq('+(irow+1)+') td:eq('+icol+')'),
+          $(param.table).find('tr:eq(' + (irow + 1) + ') td:eq(' + icol + ')'),
           param.objTemplate[icol].format,
           param.objTemplate[icol].parse
         );
@@ -431,14 +433,14 @@ export var BrainBox={
   appendAnnotationTableRow2: function appendAnnotationTableRow2(irow, iarr, param) {
     $(param.table).append(param.trTemplate);
 
-    for(var icol=0; icol<param.objTemplate.length; icol++) {
-      switch(param.objTemplate[icol].typeOfBinding) {
+    for (let icol = 0; icol < param.objTemplate.length; icol++) {
+      switch (param.objTemplate[icol].typeOfBinding) {
       case 1:
         tw.bind1(
           param.infoProxy,
           param.info,
           param.objTemplate[icol].path.replace('#', iarr),
-          $(param.table).find('tr:eq('+(irow+1)+') td:eq('+icol+')'),
+          $(param.table).find('tr:eq(' + (irow + 1) + ') td:eq(' + icol + ')'),
           param.objTemplate[icol].format
         );
         break;
@@ -447,7 +449,7 @@ export var BrainBox={
           param.infoProxy,
           param.info,
           param.objTemplate[icol].path.replace('#', iarr),
-          $(param.table).find('tr:eq('+(irow+1)+') td:eq('+icol+')'),
+          $(param.table).find('tr:eq(' + (irow + 1) + ') td:eq(' + icol + ')'),
           param.objTemplate[icol].format,
           param.objTemplate[icol].parse
         );
@@ -461,8 +463,8 @@ export var BrainBox={
      * @returns {object} A promise
      */
   loadLabelsets: function loadLabelsets() {
-    return $.getJSON(BrainBox.hostname + '/api/getLabelsets', function(data) {
-      BrainBox.labelSets=data;
+    return $.getJSON(BrainBox.hostname + '/api/getLabelsets', function (data) {
+      BrainBox.labelSets = data;
 
       /*
                 If we wanted to filter out the location, we would use:
@@ -477,11 +479,11 @@ export var BrainBox={
      * @returns {object} A promise
      */
   widget: function widget(param) {
-    AtlasMakerWidget.useFullTools=false;
+    AtlasMakerWidget.useFullTools = false;
 
     const pr = BrainBox.initBrainBox()
-      .then(function() { return BrainBox.loadLabelsets(); })
-      .then(function() {
+      .then(function () { return BrainBox.loadLabelsets(); })
+      .then(function () {
         return $.get({
           url: BrainBox.hostname + '/mri/json',
           data: {
@@ -490,9 +492,9 @@ export var BrainBox={
           }
         });
       })
-      .then(function(mriInfo) {
+      .then(function (mriInfo) {
         param.info = mriInfo;
-        const {mri} = mriInfo;
+        const { mri } = mriInfo;
         let i;
 
         // if the brain has not been downloaded, mriInfo only contains a url
@@ -501,12 +503,12 @@ export var BrainBox={
         // in particular, the `mri` field. In this case, and if the widget aims
         // at loading a specific atlas, this choice can be enforced.
 
-        if(mri && mri.atlas) {
-          for(i=0; i<mri.atlas.length; i++) {
-            if(param.project
-                       && param.annotation
-                       && mri.atlas[i].project === param.project
-                       && mri.atlas[i].name === param.annotation) {
+        if (mri && mri.atlas) {
+          for (i = 0; i < mri.atlas.length; i++) {
+            if (param.project
+              && param.annotation
+              && mri.atlas[i].project === param.project
+              && mri.atlas[i].name === param.annotation) {
               param.annotationItemIndex = i;
               break;
             }

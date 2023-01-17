@@ -1,7 +1,7 @@
 'use strict';
 
 const chai = require('chai');
-var {assert} = chai;
+const {assert} = chai;
 const chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 const U = require('../utils.js');
@@ -39,7 +39,7 @@ describe('TESTING THE /user ROUTE', function () {
     it('get("/user/json/") should get an error message requesting page', async function () {
       const res = await chai.request(U.serverURL).get('/user/json/');
       const {body} = res;
-      const expected = {error: "Provide the parameter 'page'"};
+      const expected = {error: 'Provide the parameter \'page\''};
       assert.deepEqual(body, expected);
     });
 
@@ -104,7 +104,7 @@ describe('TESTING THE /user ROUTE', function () {
           url: U.localBertURL
         });
       const {body} = res;
-      const dirPath = "./public" + body.url;
+      const dirPath = './public' + body.url;
       await U.removeMRI({dirPath, srcURL: U.localBertURL});
     });
   });

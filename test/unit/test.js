@@ -1,8 +1,5 @@
-var chai = require("chai");
-var assert = chai.assert;
-const U = require('../utils.js');
-
-const datadir = './test/data/';
+const chai = require('chai');
+const { assert } = chai;
 
 
 describe('UNIT TEST TRIVIAL CHECK', function () {

@@ -1,9 +1,9 @@
 /* eslint-disable prefer-exponentiation-operator */
-var express = require('express');
-var controller = require('./user.controller');
+const express = require('express');
+const controller = require('./user.controller');
 
 // eslint-disable-next-line new-cap
-var router = express.Router();
+const router = express.Router();
 
 router.get('/json', controller.apiUserAll);
 router.get('/json/:userName', controller.validator, controller.apiUser);

@@ -2,6 +2,7 @@
 const url = require('url');
 const crypto = require('crypto');
 const validatorNPM = require('validator');
+const { param, validationResult } = require('express-validator');
 const dataSlices = require('../dataSlices/dataSlices.js');
 const AsyncLock = require('async-lock');
 const lock = new AsyncLock();
@@ -18,17 +19,18 @@ const { window } = (new JSDOM('', {
 }));
 const DOMPurify = createDOMPurify(window);
 
-const validator = function (req, res, next) {
+const validator = async function (req, res, next) {
 
-  req.checkParams('projectName', 'incorrect project name').isAlphanumeric();
+  await param('projectName', 'incorrect project name').isAlphanumeric()
+    .run(req);
   // req.checkQuery('url', 'please enter a valid URL')
   // .isURL();
 
   // req.checkQuery('var', 'please enter one of the variables that are indicated')
   // .optional()
   // .matches("localpath|filename|source|url|dim|pixdim"); //todo: decent regexp
-  var errors = req.validationErrors();
-  if (errors) {
+  const errors = validationResult(req).array();
+  if (errors.length) {
     res.status(403).send(errors)
       .end();
   } else {
@@ -161,7 +163,7 @@ const isProjectObject = async function (req, res, object) {
     arr.push(req.db.get('user').findOne({ nickname: collaborator.userID }));
   }
   const users = await Promise.all(arr);
-  var notFound = false;
+  let notFound = false;
   for (const user of users) {
     if (user === null) {
       notFound = true;
@@ -185,7 +187,7 @@ const isProjectObject = async function (req, res, object) {
  * @return {void}
  */
 const project = async function (req, res) {
-  var loggedUser = 'anonymous';
+  let loggedUser = 'anonymous';
   if (req.isAuthenticated()) {
     loggedUser = req.user.username;
   }
@@ -224,7 +226,7 @@ const project = async function (req, res) {
  */
 // eslint-disable-next-line max-statements
 const apiProject = async function (req, res) {
-  var loggedUser = 'anonymous';
+  let loggedUser = 'anonymous';
   if (req.isAuthenticated()) {
     loggedUser = req.user.username;
   }
@@ -268,7 +270,6 @@ const apiProject = async function (req, res) {
  * @result A json object with project data
  */
 const apiProjectAll = async function (req, res) {
-  var nItemsPerPage, page;
   // var loggedUser = "anonymous";
   // if (req.isAuthenticated()) {
   //   loggedUser = req.user.username;
@@ -281,8 +282,8 @@ const apiProjectAll = async function (req, res) {
   }
 
   // eslint-disable-next-line radix
-  page = Math.max(0, parseInt(req.query.page));
-  nItemsPerPage = 20;
+  const page = Math.max(0, parseInt(req.query.page));
+  const nItemsPerPage = 20;
 
   const values = await dataSlices.getProjectsSlice(req, page * nItemsPerPage, nItemsPerPage);
   res.json(values);
@@ -339,7 +340,7 @@ const apiProjectFiles = async function (req, res) {
  */
 // eslint-disable-next-line max-statements
 const settings = async function (req, res) {
-  var loggedUser = 'anonymous';
+  let loggedUser = 'anonymous';
   if (req.isAuthenticated()) {
     loggedUser = req.user.username;
   }
@@ -415,7 +416,7 @@ const settings = async function (req, res) {
 
   console.log(JSON.stringify(req.user || null));
 
-  var context = {
+  const context = {
     projectShortname: filteredJSON.shortname,
     owner: filteredJSON.owner,
     projectInfo: JSON.stringify(filteredJSON),
@@ -433,10 +434,10 @@ const settings = async function (req, res) {
  * @returns {void}
  */
 const newProject = function (req, res) {
-  var login = (req.isAuthenticated()) ?
+  const login = (req.isAuthenticated()) ?
     ('<a href=\'/user/' + req.user.username + '\'>' + req.user.username + '</a> (<a href=\'/logout\'>Log Out</a>)')
     : ('<a href=\'/auth/github\'>Log in with GitHub</a>');
-  var loggedUser = 'anonymous';
+  let loggedUser = 'anonymous';
   if (req.isAuthenticated()) {
     loggedUser = req.user.username;
   }
@@ -473,7 +474,7 @@ const insertMRInames = function (req, res, list) {
     // check if the mri entry already exists
     // without a closure, only the last name in the list is used and repeated
     let mri = await req.db.get('mri').findOne({ source, backup: { $exists: 0 } });
-    var hash = crypto.createHash('md5').update(source)
+    const hash = crypto.createHash('md5').update(source)
       .digest('hex');
 
     // if mri exists, and has no name, insert the name
@@ -531,7 +532,7 @@ const insertMRInames = function (req, res, list) {
  */
 // eslint-disable-next-line max-statements
 const postProject = async function (req, res) {
-  var loggedUser = 'anonymous';
+  let loggedUser = 'anonymous';
   if (req.isAuthenticated()) {
     loggedUser = req.user.username;
   }
@@ -555,7 +556,7 @@ const postProject = async function (req, res) {
 
     return;
   }
-  var k;
+  let k;
 
   // eslint-disable-next-line max-statements
   await lock.acquire(['project', 'mri'], async function () {
@@ -653,8 +654,8 @@ const postProject = async function (req, res) {
  */
 // eslint-disable-next-line max-statements
 const deleteProject = async function (req, res) {
-  var shortname;
-  var loggedUser = 'anonymous';
+  let shortname;
+  let loggedUser = 'anonymous';
   if (req.isAuthenticated()) {
     loggedUser = req.user.username;
   }
@@ -689,7 +690,7 @@ const deleteProject = async function (req, res) {
       }
       console.log('>> user does have remove rights');
 
-      var query = {},
+      const query = {},
         update = {};
       query['mri.annotations.' + shortname] = { $exists: 1 };
       query.backup = { $exists: 0 };
