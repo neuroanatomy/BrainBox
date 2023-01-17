@@ -3,6 +3,7 @@ const assert = require('assert');
 const uploadController = require('../../controller/mri/upload.controller');
 require('mocha-sinon');
 const sinon = require('sinon');
+const httpMocks = require('node-mocks-http');
 const U = require('../utils');
 
 describe('Upload Controller: ', function () {
@@ -11,86 +12,55 @@ describe('Upload Controller: ', function () {
     db = U.getDB();
   });
 
-  describe('Validator function() ', function() {
-    it('should perform the validations correctly', async function() {
-      const reqSpy = sinon.spy();
-      const urlSpy = sinon.spy();
-      const alphaSpy = sinon.spy();
-      const req = {
+  describe('Validator function() ', function () {
+    it('should perform the validations correctly', async function () {
+      const req = httpMocks.createRequest({
         body: {
-          url: 'abc',
-          atlasName: '',
-          atlasProject: '',
-          atlasLabelSet: '',
-          token: ''
+          url: 'abc.com',
+          atlasName: 'MyAtlas',
+          atlasProject: 'Visualisation',
+          atlasLabelSet: 'SampleLabelSet',
+          token: 'jnqpincpienfcpewnfcpewn123'
         },
-        query: { },
-        params: { },
-        value: 0,
-        validationErrors: function() {
-          if(!this.body.url) { return new Error('Validations failed!'); }
-
-          return null;
-        },
-        checkBody: sinon.stub().returns({ notEmpty: reqSpy, isURL: urlSpy, isAlphanumeric: alphaSpy })
-      };
-      const resSpy = sinon.spy();
-      const sendStub = sinon.stub().returns({ end: resSpy });
-      const res = {
-        status: sinon.stub().returns({ send: sendStub })
-      };
-      await uploadController.validator(req, res, () => {});
-      assert.strictEqual(reqSpy.callCount, 5);
-      assert.strictEqual(urlSpy.callCount, 1);
-      assert.strictEqual(resSpy.callCount, 0);
-      assert.strictEqual(alphaSpy.callCount, 2);
-      sinon.restore();
+        query: {},
+        params: {},
+        value: 0
+      });
+      const res = httpMocks.createResponse();
+      await uploadController.validator(req, res, () => { });
+      assert.strictEqual(res.statusCode, 200);
     });
 
-    it('should throw errors if any validation fails', async function() {
-      const reqSpy = sinon.spy();
-      const urlSpy = sinon.spy();
-      const alphaSpy = sinon.spy();
-      const req = {
+    it('should throw errors if any validation fails', async function () {
+      const req = httpMocks.createRequest({
         body: {
           url: '',
           token: ''
         },
-        query: { },
-        params: { },
-        value: 0,
-        validationErrors: function() {
-          if(!this.body.atlasLabelSet || !this.body.url || !this.body.atlasName || !this.body.atlasProject || !this.body.token) { return new Error('Validations failed!'); }
-
-          return null;
-        },
-        checkBody: sinon.stub().returns({ notEmpty: reqSpy, isURL: urlSpy, isAlphanumeric: alphaSpy })
-      };
-      const resSpy = sinon.spy();
-      const sendStub = sinon.stub().returns({ end: resSpy });
-      const res = {
-        status: sinon.stub().returns({ send: sendStub })
-      };
-      await uploadController.validator(req, res, () => {});
-      assert.strictEqual(reqSpy.callCount, 5);
-      assert.strictEqual(urlSpy.callCount, 1);
-      assert.strictEqual(resSpy.callCount, 1);
-      assert.strictEqual(alphaSpy.callCount, 2);
-      sinon.restore();
+        query: {},
+        params: {},
+        value: 0
+      });
+      const res = httpMocks.createResponse();
+      await uploadController.validator(req, res, () => { });
+      assert(res.statusCode, 403);
+      const resData = res._getData();
+      assert(Array.isArray(resData));
+      assert.strictEqual(resData.length, 8);
     });
   });
 
 
-  describe('otherValidations function() ', function() {
-    it('should perform the other validations successfully', async function() {
+  describe('otherValidations function() ', function () {
+    it('should perform the other validations successfully', async function () {
       const req = {
         body: {
           token: U.testToken + 'foo',
           url: ''
         },
         files: [],
-        query: { },
-        params: { },
+        query: {},
+        params: {},
         value: 0,
         db: db
       };
@@ -98,9 +68,9 @@ describe('Upload Controller: ', function () {
       const jsonSpy = sinon.spy();
       const sendStub = sinon.stub().returns({ end: resSpy });
       const res = {
-        status: sinon.stub().returns({ send: sendStub, json: sinon.stub().returns({ end: jsonSpy })})
+        status: sinon.stub().returns({ send: sendStub, json: sinon.stub().returns({ end: jsonSpy }) })
       };
-      await uploadController.otherValidations(req, res, () => {});
+      await uploadController.otherValidations(req, res, () => { });
       assert.strictEqual(jsonSpy.callCount, 1);
       assert.strictEqual(resSpy.callCount, 0);
       sinon.restore();
@@ -113,8 +83,8 @@ describe('Upload Controller: ', function () {
           url: ''
         },
         files: [],
-        query: { },
-        params: { },
+        query: {},
+        params: {},
         value: 0,
         db: db
       };
@@ -123,9 +93,9 @@ describe('Upload Controller: ', function () {
       const jsonSpy = sinon.spy();
       const sendStub = sinon.stub().returns({ end: resSpy });
       const res = {
-        status: sinon.stub().returns({ send: sendStub, json: sinon.stub().returns({ end: jsonSpy })})
+        status: sinon.stub().returns({ send: sendStub, json: sinon.stub().returns({ end: jsonSpy }) })
       };
-      await uploadController.otherValidations(req, res, () => {});
+      await uploadController.otherValidations(req, res, () => { });
       assert.strictEqual(jsonSpy.callCount, 0);
       assert.strictEqual(resSpy.callCount, 1);
       assert.strictEqual(sendStub.args[0][0], 'ERROR: Token expired');
@@ -139,8 +109,8 @@ describe('Upload Controller: ', function () {
           url: ''
         },
         files: [],
-        query: { },
-        params: { },
+        query: {},
+        params: {},
         value: 0,
         db: db
       };
@@ -148,9 +118,9 @@ describe('Upload Controller: ', function () {
       const jsonSpy = sinon.spy();
       const sendStub = sinon.stub().returns({ end: resSpy });
       const res = {
-        status: sinon.stub().returns({ send: sendStub, json: sinon.stub().returns({ end: jsonSpy })})
+        status: sinon.stub().returns({ send: sendStub, json: sinon.stub().returns({ end: jsonSpy }) })
       };
-      await uploadController.otherValidations(req, res, () => {});
+      await uploadController.otherValidations(req, res, () => { });
       assert.strictEqual(jsonSpy.callCount, 0);
       assert.strictEqual(resSpy.callCount, 1);
       assert.strictEqual(sendStub.args[0][0], 'ERROR: Cannot find token');

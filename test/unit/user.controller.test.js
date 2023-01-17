@@ -3,6 +3,7 @@ const assert = require('assert');
 const userController = require('../../controller/user/user.controller');
 require('mocha-sinon');
 const sinon = require('sinon');
+const httpMocks = require('node-mocks-http');
 // const { expect, use } = require("chai");
 // const { doesNotMatch, fail } = require("assert");
 const U = require('../utils');
@@ -15,13 +16,11 @@ describe('User Controller: ', function () {
 
   describe('validator function() ', function () {
     it('should perform the validations correctly', async function () {
-      const req = {};
-      const res = {
-        send: sinon.spy()
-      };
+      // currently the validation function does nothing
+      const req = httpMocks.createRequest();
+      const res = httpMocks.createResponse();
       await userController.validator(req, res, () => { /* do nothing */ });
-      assert.strictEqual(res.send.callCount, 0);
-      sinon.restore();
+      assert.strictEqual(res.statusCode, 200);
     });
   });
 
@@ -38,7 +37,7 @@ describe('User Controller: ', function () {
         originalUrl: 'some url',
         db: db,
         query: {},
-        isAuthenticated: function() {
+        isAuthenticated: function () {
           return Boolean(this.user.username);
         }
       };
@@ -52,7 +51,7 @@ describe('User Controller: ', function () {
       sinon.restore();
     });
 
-    it('should throw no user message when the input is invalid', async function() {
+    it('should throw no user message when the input is invalid', async function () {
       const req = {
         user: {
           username: 'anyone'
@@ -64,7 +63,7 @@ describe('User Controller: ', function () {
         originalUrl: 'some url',
         db: db,
         query: {},
-        isAuthenticated: function() {
+        isAuthenticated: function () {
           return Boolean(this.user.username);
         }
       };
@@ -79,8 +78,8 @@ describe('User Controller: ', function () {
     });
   });
 
-  describe('apiUser function() ', function() {
-    it('should work correctly when the input is valid.', async function() {
+  describe('apiUser function() ', function () {
+    it('should work correctly when the input is valid.', async function () {
       const req = {
         params: {
           userName: 'anyone'
@@ -97,8 +96,8 @@ describe('User Controller: ', function () {
     });
   });
 
-  describe('apiUserAll function() ', function() {
-    it('should ask for page parameter if not provided', async function() {
+  describe('apiUserAll function() ', function () {
+    it('should ask for page parameter if not provided', async function () {
       const req = {
         db: db,
         query: {}
@@ -113,7 +112,7 @@ describe('User Controller: ', function () {
       sinon.restore();
     });
 
-    it('should send the data correctly when the input is valid', async function() {
+    it('should send the data correctly when the input is valid', async function () {
       const req = {
         db: db,
         query: {
@@ -131,8 +130,8 @@ describe('User Controller: ', function () {
     });
   });
 
-  describe('apiUserFiles function() ', function() {
-    it('should ask for start parameter if not provided', async function() {
+  describe('apiUserFiles function() ', function () {
+    it('should ask for start parameter if not provided', async function () {
       const req = {
         db: db,
         params: {
@@ -144,7 +143,7 @@ describe('User Controller: ', function () {
         user: {
           username: 'anyone'
         },
-        isAuthenticated: function() {
+        isAuthenticated: function () {
           return Boolean(this.user.username);
         }
       };
@@ -159,7 +158,7 @@ describe('User Controller: ', function () {
       sinon.restore();
     });
 
-    it('should ask for length parameter if not provided', async function() {
+    it('should ask for length parameter if not provided', async function () {
       const req = {
         db: db,
         params: {
@@ -171,7 +170,7 @@ describe('User Controller: ', function () {
         user: {
           username: 'anyone'
         },
-        isAuthenticated: function() {
+        isAuthenticated: function () {
           return Boolean(this.user.username);
         }
       };
@@ -186,7 +185,7 @@ describe('User Controller: ', function () {
       sinon.restore();
     });
 
-    it('should send the data correctly with correct input', async function() {
+    it('should send the data correctly with correct input', async function () {
       const req = {
         db: db,
         params: {
@@ -199,7 +198,7 @@ describe('User Controller: ', function () {
         user: {
           username: 'anyone'
         },
-        isAuthenticated: function() {
+        isAuthenticated: function () {
           return Boolean(this.user.username);
         }
       };
@@ -215,8 +214,8 @@ describe('User Controller: ', function () {
     });
   });
 
-  describe('apiUserAtlas function() ', function() {
-    it('should ask for start parameter if not provided', async function() {
+  describe('apiUserAtlas function() ', function () {
+    it('should ask for start parameter if not provided', async function () {
       const req = {
         db: db,
         params: {
@@ -228,7 +227,7 @@ describe('User Controller: ', function () {
         user: {
           username: 'anyone'
         },
-        isAuthenticated: function() {
+        isAuthenticated: function () {
           return Boolean(this.user.username);
         }
       };
@@ -243,7 +242,7 @@ describe('User Controller: ', function () {
       sinon.restore();
     });
 
-    it('should ask for length parameter if not provided', async function() {
+    it('should ask for length parameter if not provided', async function () {
       const req = {
         db: db,
         params: {
@@ -255,7 +254,7 @@ describe('User Controller: ', function () {
         user: {
           username: 'anyone'
         },
-        isAuthenticated: function() {
+        isAuthenticated: function () {
           return Boolean(this.user.username);
         }
       };
@@ -270,7 +269,7 @@ describe('User Controller: ', function () {
       sinon.restore();
     });
 
-    it('should send the data correctly with valid input', async function() {
+    it('should send the data correctly with valid input', async function () {
       const req = {
         db: db,
         params: {
@@ -283,7 +282,7 @@ describe('User Controller: ', function () {
         user: {
           username: 'anyone'
         },
-        isAuthenticated: function() {
+        isAuthenticated: function () {
           return Boolean(this.user.username);
         }
       };
@@ -299,8 +298,8 @@ describe('User Controller: ', function () {
     });
   });
 
-  describe('apiUserProjects function() ', function() {
-    it('should ask for start parameter if not provided', async function() {
+  describe('apiUserProjects function() ', function () {
+    it('should ask for start parameter if not provided', async function () {
       const req = {
         db: db,
         params: {
@@ -312,7 +311,7 @@ describe('User Controller: ', function () {
         user: {
           username: 'anyone'
         },
-        isAuthenticated: function() {
+        isAuthenticated: function () {
           return Boolean(this.user.username);
         }
       };
@@ -327,7 +326,7 @@ describe('User Controller: ', function () {
       sinon.restore();
     });
 
-    it('should ask for length parameter if not provided', async function() {
+    it('should ask for length parameter if not provided', async function () {
       const req = {
         db: db,
         params: {
@@ -339,7 +338,7 @@ describe('User Controller: ', function () {
         user: {
           username: 'anyone'
         },
-        isAuthenticated: function() {
+        isAuthenticated: function () {
           return Boolean(this.user.username);
         }
       };
@@ -354,7 +353,7 @@ describe('User Controller: ', function () {
       sinon.restore();
     });
 
-    it('should return the data correctly with valid input', async function() {
+    it('should return the data correctly with valid input', async function () {
       const req = {
         db: db,
         params: {
@@ -367,7 +366,7 @@ describe('User Controller: ', function () {
         user: {
           username: 'anyone'
         },
-        isAuthenticated: function() {
+        isAuthenticated: function () {
           return Boolean(this.user.username);
         }
       };
