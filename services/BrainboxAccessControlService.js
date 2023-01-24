@@ -35,7 +35,7 @@ module.exports = class BrainboxAccessControlService extends AccessControlService
     */
   static setVolumeAnnotationsAccessByProjects(mri, projects, user) {
     const atlas = _.get(mri, 'mri.atlas');
-    if(_.isEmpty(atlas) || _.isEmpty(projects)) {
+    if (_.isEmpty(atlas) || _.isEmpty(projects)) {
       return;
     }
 
@@ -45,7 +45,7 @@ module.exports = class BrainboxAccessControlService extends AccessControlService
         return a;
       }
       const access = super.getUserOrPublicAccessLevel(project, user, AccessType.ANNOTATIONS);
-      console.log('access found', project.shortname, access);
+      // console.log('access found', project.shortname, access);
       if (access.isGreaterThan(AccessLevel.NONE)) {
         return {
           ...a,
