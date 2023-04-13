@@ -10,9 +10,9 @@
     "build-brainbox": "webpack --mode production --config webpack.brainbox.config.js && cp view/brainbox/dist/brainbox.js public/lib/brainbox.js",
     "build-pages": "webpack --mode production --config webpack.pages.config.js && cp view/brainbox/dist/*-page.js public/js/",
     "build": "npm run build-atlasmaker && npm run build-atlasmaker-tools && npm run build-brainbox && npm run build-pages",
-    "dev-atlasmaker": "webpack --mode production --config webpack.atlasmaker.config.js && cp view/atlasmaker/dist/atlasmaker.js public/lib/atlasmaker.js",
-    "dev-atlasmaker-tools": "webpack --mode production --config webpack.atlasmaker-tools.config.js && cp  -r view/atlasmaker/dist/atlasmaker-tools public/lib/",
-    "dev-brainbox": "webpack --mode production --config webpack.brainbox.config.js && cp view/brainbox/dist/brainbox.js public/lib/brainbox.js",
+    "dev-atlasmaker": "webpack --mode development --config webpack.atlasmaker.config.js && cp view/atlasmaker/dist/atlasmaker.js public/lib/atlasmaker.js",
+    "dev-atlasmaker-tools": "webpack --mode development --config webpack.atlasmaker-tools.config.js && cp  -r view/atlasmaker/dist/atlasmaker-tools public/lib/",
+    "dev-brainbox": "webpack --mode development --config webpack.brainbox.config.js && cp view/brainbox/dist/brainbox.js public/lib/brainbox.js",
     "dev-pages": "webpack --mode development --config webpack.pages.config.js && cp view/brainbox/dist/*-page.js public/js/",
     "dev": "npm run dev-atlasmaker && npm run dev-atlasmaker-tools && npm run dev-brainbox && npm run dev-pages",
     "test-unit": "cross-env MONGODB='127.0.0.1:27017/brainbox_test' nyc --report-dir test/unit/coverage mocha --timeout 5000 ./test/runner.js test/unit/*.js",
@@ -77,7 +77,6 @@
     "yjs": "^13.5.38"
   },
   "devDependencies": {
-    "@vue/compiler-sfc": "^3.2.37",
     "chai": "^4.2.0",
     "chai-http": "^4.3.0",
     "clean-webpack-plugin": "^0.1.19",
@@ -105,6 +104,7 @@
     "svg-inline-loader": "^0.8.2",
     "url-loader": "^4.1.1",
     "vue-loader": "^17.0.0",
+    "vue-template-compiler": "^2.7.14",
     "webpack": "^4.43.0",
     "webpack-cli": "^3.3.11",
     "webworkify-webpack": "^2.1.5"
