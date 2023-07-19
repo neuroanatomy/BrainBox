@@ -49,9 +49,8 @@
 
 <script setup>
 import { forEach, get, set } from "lodash";
-import { initSyncedStore, waitForSync } from "../store/synced";
+//import { initSyncedStore, waitForSync } from "../store/synced";
 import useVisualization from "../store/visualization";
-import { enableVueBindings } from "@syncedstore/core";
 import Tools from "./Tools.vue";
 import {
   AdjustSettings,
@@ -64,11 +63,7 @@ import {
 import * as Vue from "vue";
 
 const { annotationsAccessLevel, BrainBox, AtlasMakerWidget } = window;
-const { store, webrtcProvider, doc } = initSyncedStore(projectInfo.shortname);
 const { baseURL } = Vue.inject('config');
-
-// make SyncedStore use Vuejs internally
-enableVueBindings(Vue);
 
 const props = defineProps({
   project: {
@@ -76,12 +71,6 @@ const props = defineProps({
     required: true,
   },
   projectName: String,
-});
-
-const files = Vue.ref([]);
-doc.getArray("files").observe(() => {
-  files.value.splice(0, files.value.length);
-  files.value.push(...store.files);
 });
 
 const {
@@ -107,6 +96,7 @@ const {
 } = useVisualization();
 const linkPrefix = `${baseURL}/mri?url=`;
 const volumeAnnotations = Vue.ref([]);
+const files = Vue.ref([]);
 
 // define a map associating annotations keys to value selectors
 // to extract content within the TextAnnotations component
@@ -151,24 +141,19 @@ const extractVolumeKeys = () => {
 };
 
 const fetchFiles = async () => {
-  if (files.value.length === 0) {
-    const fetchedFiles = await doFetchFiles([], 0);
-    store.files.push(...populateTextAnnotations(fetchedFiles));
-  }
+  const fetchedFiles = await doFetchFiles([], 0);
+  files.value.push(...populateTextAnnotations(fetchedFiles));
 };
 
 const reduced = Vue.computed(() => !displayChat.value && !displayScript.value);
 
 const syncBrainbox = () => {
-  BrainBox.info = store.files.find(file => file.id === currentFile.id);
+  BrainBox.info = files.value.find(file => file.id === currentFile.id);
   AtlasMakerWidget.sendSaveMetadataMessage(BrainBox.info);
 }
 
 const valueChange = (content, index, selector) => {
-  const sel =
-    typeof selector === "string" ? [index, selector] : [index, ...selector];
-  set(store.files, sel, content);
-  syncBrainbox();
+  console.log(content, index, selector);
 };
 
 const doFetchFiles = async (files, cursor) => {
@@ -371,7 +356,6 @@ const handleOntologyLabelClick = (index) => {
 
 Vue.onMounted(async () => {
   setupKeyDownListeners();
-  await waitForSync(webrtcProvider);
   await initVisualization();
   await fetchFiles();
   selectFile(files.value[0]);

@@ -56,12 +56,12 @@ export const BrainBox = {
       const index = param.annotationItemIndex || 0;
 
       // Copy MRI from source
-      $('#msgLog').html('<p>Downloading from source to server...');
+      AtlasMakerWidget.appendChatMessage('Downloading from source to server...');
 
       // Configure MRI into atlasmaker
       if (param.info.success === false) {
-        AtlasMakerWidget.appendChatMessage('<p>ERROR: ' + param.info.message + '.');
-        console.log('<p>ERROR: ' + param.info.message + '.');
+        AtlasMakerWidget.appendChatMessage('ERROR: ' + param.info.message + '.');
+        console.log('ERROR: ' + param.info.message + '.');
         reject(new Error(param.info.message));
 
         return;

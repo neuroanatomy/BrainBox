@@ -179,51 +179,6 @@ export const AtlasMakerInteraction = {
   },
 
   /**
-     * @function toggleFullscreen
-     * @returns {void}
-     */
-  // eslint-disable-next-line max-statements
-  toggleFullscreen: function () {
-    const me = AtlasMakerWidget;
-    if(me.fullscreen === false) {
-      // Enter fullscreen
-      //-----------------
-
-      // add black overlay
-      const black = $('<div id = \'blackOverlay\'>');
-      black.css({ position:'fixed', top:0, left:0, width:'100%', height:'100%', 'z-index':5, 'background-color':'#222' });
-      $('body').append(black);
-
-      // configure display mode
-      $('body').addClass('atlasmaker-fullscreen');
-      $('#atlasmaker')
-        .detach()
-        .appendTo('body');
-      me.resizeWindow();
-      me.drawImages();
-
-      // configure toolbar for edit mode
-      me.fullscreen = true;
-    } else {
-
-      // Exit fullscreen
-      //----------------
-
-      // remove black overlay
-      $('#blackOverlay').remove();
-
-      // go back to display mode
-      $('body').removeClass('atlasmaker-fullscreen');
-      $('#atlasmaker')
-        .detach()
-        .appendTo('#stereotaxic');
-      me.resizeWindow();
-      me.drawImages();
-      me.fullscreen = false;
-    }
-  },
-
-  /**
      * @function ontologyValueToColor
      * @param {number} val Numerical value used for painting with the selected label
      * @returns {array} Red, green and blue colors
@@ -265,17 +220,28 @@ export const AtlasMakerInteraction = {
   // eslint-disable-next-line max-statements
   initCursor: function () {
     const me = AtlasMakerWidget;
-    const W = parseFloat($('#atlasmaker canvas').css('width'));
-    const H = parseFloat($('#atlasmaker canvas').css('height'));
-    const w = parseFloat($('#atlasmaker canvas').attr('width'));
-    const h = parseFloat($('#atlasmaker canvas').attr('height'));
+    const canvas = document.querySelector('#atlasmaker canvas');
+    if (canvas == null) return
+    const W = parseFloat(window.getComputedStyle(canvas, null).getPropertyValue('width'));
+    const H = parseFloat(window.getComputedStyle(canvas, null).getPropertyValue('height'));
+    const w = parseFloat(canvas.getAttribute('width'));
+    const h = parseFloat(canvas.getAttribute('height'));
 
-    me.Crsr.x = parseInt(w/2, 10);
-    me.Crsr.y = parseInt(h/2, 10);
+    me.Crsr.x = parseInt(w / 2, 10);
+    me.Crsr.y = parseInt(h / 2, 10);
+
+    me.Crsr.fx = parseInt(w / 2, 10) * (W / w);
+    me.Crsr.fy = parseInt(h / 2, 10) * (H / h);
+
+    let cursorElement = document.querySelector('#cursor')
+    if (cursorElement == null) return
+      cursorElement.style.top = me.Crsr.y * (H / h) + 'px'
+      cursorElement.style.left = me.Crsr.x * (W / w) + 'px'
+      cursorElement.style.width = me.User.penSize * (W / w)
+      cursorElement.style.height = me.User.penSize * (H / h)
 
     me.Crsr.fx = parseInt(w/2, 10)*(W/w);
     me.Crsr.fy = parseInt(h/2, 10)*(H/h);
-    $('#cursor').css({ left:(me.Crsr.x*(W/w)) + 'px', top:(me.Crsr.y*(H/h)) + 'px', width:me.User.penSize*(W/w), height:me.User.penSize*(H/h) });
 
     if(me.flagUsePreciseCursor) {
       let finger = document.getElementById('finger');
@@ -342,8 +308,8 @@ export const AtlasMakerInteraction = {
     };
     const wratio = w/W;
     const hratio = h/H;
-    const x = parseInt((ex-o.left)*wratio, 10);
-    const y = parseInt((ey-o.top)*hratio, 10);
+    const x = parseInt((ex-offset.left)*wratio, 10);
+    const y = parseInt((ey-offset.top)*hratio, 10);
 
     return {x, y, wratio, hratio};
   },
