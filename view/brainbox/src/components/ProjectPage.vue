@@ -9,7 +9,7 @@
       <TextAnnotations
         :extract-keys="extractTextKeys"
         :link-prefix="linkPrefix"
-        :files="files"
+        :files="store.files"
         @value-change="valueChange"
         @select-file="selectFile"
       />
@@ -62,6 +62,22 @@ import {
 } from "nwl-components/dist/nwl-components.umd.js";
 import * as Vue from "vue";
 
+import * as Y from "yjs";
+import { HocuspocusProvider } from "@hocuspocus/provider";
+import { enableVueBindings } from "@syncedstore/core";
+import { syncedStore, getYjsDoc } from "@syncedstore/core";
+
+enableVueBindings(Vue);
+
+const store = syncedStore({ files: [], fragment: "xml" });
+const doc = getYjsDoc(store);
+
+const crdtProvider = new HocuspocusProvider({
+  url: "ws://0.0.0.0:8081",
+  name: projectInfo.shortname,
+  document: doc
+});
+
 const { annotationsAccessLevel, BrainBox, AtlasMakerWidget } = window;
 const { baseURL } = Vue.inject('config');
 
@@ -96,7 +112,6 @@ const {
 } = useVisualization();
 const linkPrefix = `${baseURL}/mri?url=`;
 const volumeAnnotations = Vue.ref([]);
-const files = Vue.ref([]);
 
 // define a map associating annotations keys to value selectors
 // to extract content within the TextAnnotations component
@@ -142,18 +157,13 @@ const extractVolumeKeys = () => {
 
 const fetchFiles = async () => {
   const fetchedFiles = await doFetchFiles([], 0);
-  files.value.push(...populateTextAnnotations(fetchedFiles));
+  store.files.push(...populateTextAnnotations(fetchedFiles));
 };
 
 const reduced = Vue.computed(() => !displayChat.value && !displayScript.value);
 
-const syncBrainbox = () => {
-  BrainBox.info = files.value.find(file => file.id === currentFile.id);
-  AtlasMakerWidget.sendSaveMetadataMessage(BrainBox.info);
-}
-
 const valueChange = (content, index, selector) => {
-  console.log(content, index, selector);
+  set(store.files[index], selector, content);
 };
 
 const doFetchFiles = async (files, cursor) => {
@@ -240,13 +250,15 @@ const getMRIParams = (file) => {
 };
 
 const selectFile = async (file) => {
-  if (currentFile.value && currentFile.value.source === file.source) {
+  const selectedFile = {...file};
+  const openFile = {...currentFile.value};
+  if (selectedFile.source === openFile.source) {
     return;
   }
-  currentFile.value = file;
+  currentFile.value = selectedFile;
   title.value = "Loading…";
-  populateVolumeAnnotations(file);
-  const params = getMRIParams(file);
+  populateVolumeAnnotations(selectedFile);
+  const params = getMRIParams(selectedFile);
 
   await BrainBox.configureBrainBox(params);
   ontology.value = AtlasMakerWidget.ontology;
@@ -357,8 +369,12 @@ const handleOntologyLabelClick = (index) => {
 Vue.onMounted(async () => {
   setupKeyDownListeners();
   await initVisualization();
-  await fetchFiles();
-  selectFile(files.value[0]);
+  crdtProvider.on('synced', async () => {
+    if (store.files.length === 0) {
+      await fetchFiles();
+   }
+   selectFile(store.files[0]);
+  })
 });
 </script>
 <style>

@@ -18,7 +18,7 @@ const mustacheExpress = require('mustache-express');
 const Config = JSON.parse(fs.readFileSync('./cfg.json'));
 const https = require('https');
 const http = require('http');
-
+const { Server: HocuspocusServer } = require('@hocuspocus/server');
 global.authTokenMiddleware = nwl.authTokenMiddleware;
 
 const AtlasmakerServer = require('./controller/atlasmakerServer/atlasmakerServer');
@@ -154,6 +154,29 @@ const start = async function () {
     }
     atlasmakerServer.initSocketConnection();
   });
+
+  //========================================================================================
+  // Configure Yjs backend for multiuser edition
+  //========================================================================================
+
+  const hocuspocusServer = HocuspocusServer.configure({
+    port: 8081,
+    onDisconnect(data) {
+      data.document.getArray('files').toJSON()
+        .forEach((json) => {
+          delete json._id;
+          db.get('mri').update({
+            source: json.source,
+            backup: { $exists: false }
+          }, json
+          , { replaceOne: true })
+            .then((result) => console.log(result))
+            .catch((er) => console.log(er));
+        });
+    }
+  });
+
+  hocuspocusServer.listen();
 
   //========================================================================================
   // Setup routes
