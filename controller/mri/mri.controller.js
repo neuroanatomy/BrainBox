@@ -244,6 +244,7 @@ const mri = async function (req, res) {
       title: obj.name || 'BrainBox',
       params: JSON.stringify(req.query),
       mriInfo: JSON.stringify(obj),
+      hasPrivilegedAccess: false,
       loggedUser: JSON.stringify(req.user || null)
     });
   } else {

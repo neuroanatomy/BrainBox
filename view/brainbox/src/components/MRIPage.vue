@@ -120,6 +120,7 @@
 </template>
 <script setup>
 import { ref, onMounted, watch, computed } from "vue";
+import get from 'lodash/get';
 import {
   Wrapper,
   Header,
@@ -175,8 +176,9 @@ const selectVolumeAnnotation = async (index) => {
   currentLabel.value = 0;
 };
 
+const annotations = get(mriInfo, "mri.annotations", {});
 const formattedTextAnnotations = flatten(
-  map(mriInfo.mri.annotations, (nestedAnnotations, project) =>
+  map(annotations, (nestedAnnotations, project) =>
     map(nestedAnnotations, (annotation, name) => ({
       ...annotation,
       project,
@@ -185,11 +187,11 @@ const formattedTextAnnotations = flatten(
   )
 );
 
-const atlases = mriInfo.mri.atlas;
+const atlases = get(mriInfo, "mri.atlas", {});
 const labelsName = ref({});
 const { name, source } = mriInfo;
 const date = new Date(mriInfo.included).toLocaleDateString();
-const collaboratorAccess = mapValues(keyBy(mriInfo.mri.atlas, "filename"), (atlas) => ({ access: { files: atlas.access }}))
+const collaboratorAccess = mapValues(keyBy(atlases, "filename"), (atlas) => ({ access: { files: atlas.access }}))
 const displayPrivilegedAccessWarning = hasPrivilegedAccess;
 
 const handleOntologyLabelClick = (index) => {
