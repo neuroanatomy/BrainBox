@@ -91,7 +91,7 @@
         </div>
       </div>
       <div class="right">
-        <Editor title="MRI" :class="{fullscreen, reduced}" :toolsMinHeight="reduced ? 'auto' : '340px'">
+        <Editor :title="title" :class="{fullscreen, reduced}" :toolsMinHeight="reduced ? 'auto' : '340px'">
           <template v-slot:tools>
             <Tools />
           </template>
@@ -147,6 +147,7 @@ const {
   fullscreen,
   displayChat,
   displayScript,
+  title,
   init: initVisualization,
 } = useVisualization();
 
