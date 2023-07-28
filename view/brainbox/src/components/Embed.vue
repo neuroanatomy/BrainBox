@@ -15,7 +15,7 @@
       </option>
     </select>
     <Editor
-      title="BrainBox"
+      :title="title"
       :class="{ fullscreen, reduced: !displayChat && !displayScript }"
       toolsMinHeight="340px"
     >
