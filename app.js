@@ -160,7 +160,8 @@ const start = async function () {
   //========================================================================================
 
   const hocuspocusServer = HocuspocusServer.configure({
-    port: 8081,
+    address: Config.crdt_backend_host,
+    port: Config.crdt_backend_port,
     onDisconnect(data) {
       data.document.getArray('files').toJSON()
         .forEach((json) => {
@@ -170,7 +171,6 @@ const start = async function () {
             backup: { $exists: false }
           }, json
           , { replaceOne: true })
-            .then((result) => console.log(result))
             .catch((er) => console.log(er));
         });
     }

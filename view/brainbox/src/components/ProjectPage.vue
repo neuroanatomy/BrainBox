@@ -61,11 +61,10 @@ import {
   VolumeAnnotations,
 } from "nwl-components/dist/nwl-components.umd.js";
 import * as Vue from "vue";
+import config from '../../../../cfg.json';
 
-import * as Y from "yjs";
 import { HocuspocusProvider } from "@hocuspocus/provider";
-import { enableVueBindings } from "@syncedstore/core";
-import { syncedStore, getYjsDoc } from "@syncedstore/core";
+import { syncedStore, getYjsDoc, enableVueBindings } from "@syncedstore/core";
 
 enableVueBindings(Vue);
 
@@ -73,7 +72,7 @@ const store = syncedStore({ files: [], fragment: "xml" });
 const doc = getYjsDoc(store);
 
 const crdtProvider = new HocuspocusProvider({
-  url: "ws://0.0.0.0:8081",
+  url: `ws://${config.crdt_backend_host}:${config.crdt_backend_port}`,
   name: projectInfo.shortname,
   document: doc
 });

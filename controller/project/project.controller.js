@@ -716,6 +716,10 @@ const embed = async function (req, res) {
     loggedUser = req.user.username;
   }
 
+  // const refererURL = new URL(req.headers.referer);
+  // const disallowedDomains = []; // load from project owner settings
+  // if (disallowedDomains.include(refererURL.host)) {}
+
   const json = await req.db.get('project').findOne({ shortname: req.params.projectName, backup: { $exists: 0 } });
   if (json) {
     if (!AccessControlService.hasFilesAccess(AccessLevel.VIEW, json, loggedUser)) {
