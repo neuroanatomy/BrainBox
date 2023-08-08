@@ -4,21 +4,22 @@ const dateFormat = require('dateformat');
 const dataSlices = require('../dataSlices/dataSlices.js');
 
 const validator = function (req, res, next) {
-
   // userName can be an ip address (for anonymous users)
+  const nickname = req.params.userName;
 
-  /*
-    // legacy api, needs to be rewriten if uncommented
-    req.checkParams('userName', 'incorrect user name').isAlphanumeric();
-    var errors = req.validationErrors();
-    console.log(errors);
-    if (errors) {
-        res.status(403).send(errors).end();
-    } else {
-        return next();
-    }
-    */
-  next();
+  req.app.db.queryUser({nickname})
+    .then((result) => {
+      if (!result) {
+        res.status(404);
+      }
+      if (result.disabled) {
+        res.status(404);
+
+        return res.render('disabledUser');
+      }
+      next();
+
+    });
 };
 
 const user = async function (req, res) {
@@ -185,6 +186,37 @@ const apiUserProjects = async function (req, res) {
   res.send(result);
 };
 
+const deleteProfile = async function(req, res) {
+  const loggedUser = req.user;
+  if (!loggedUser) {
+    res.status(401);
+  }
+  try {
+    const userInfo = await req.app.db.queryUser({nickname: loggedUser.username});
+    await req.app.db.updateUser({ ...userInfo, disabled: true });
+    res.redirect('/logout');
+  } catch(err) {
+    console.log(err);
+    res.status(500);
+  }
+};
+
+const savePreferences = async function(req, res) {
+  const loggedUser = req.user;
+  if (!loggedUser) {
+    res.status(401);
+  }
+  try {
+    const userInfo = await req.app.db.queryUser({nickname: loggedUser.username});
+    await req.app.db.updateUser({ ...userInfo, authorizedHostsForEmbedding: req.body.authorizedHosts });
+    res.redirect(`/user/${req.user.username}`);
+  } catch(err) {
+    console.log(err);
+    res.status(500);
+  }
+
+};
+
 const UserController = function () {
   this.validator = validator;
   this.apiUser = apiUser;
@@ -192,6 +224,8 @@ const UserController = function () {
   this.apiUserFiles = apiUserFiles;
   this.apiUserAtlas = apiUserAtlas;
   this.apiUserProjects = apiUserProjects;
+  this.savePreferences = savePreferences;
+  this.deleteProfile = deleteProfile;
   this.user = user;
 };
 

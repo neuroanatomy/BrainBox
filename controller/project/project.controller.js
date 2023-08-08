@@ -716,9 +716,11 @@ const embed = async function (req, res) {
     loggedUser = req.user.username;
   }
 
-  // const refererURL = new URL(req.headers.referer);
-  // const disallowedDomains = []; // load from project owner settings
-  // if (disallowedDomains.include(refererURL.host)) {}
+  const refererURL = new URL(req.headers.referer);
+  const disallowedDomains = req.user.authorizedHostsForEmbedding.split('\n') || [];
+  if (disallowedDomains.include(refererURL.host)) {
+    return res.status(403).send('Not authorized to embed this project');
+  }
 
   const json = await req.db.get('project').findOne({ shortname: req.params.projectName, backup: { $exists: 0 } });
   if (json) {
