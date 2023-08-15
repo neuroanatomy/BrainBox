@@ -45,7 +45,7 @@
     "jdenticon": "^2.2.0",
     "jpeg-js": "^0.4.4",
     "jquery": "^3.5.0",
-    "jquery-ui": "^1.13.0",
+    "jquery-ui": "^1.13.2",
     "jsdom": "^16.5.0",
     "keypress": "^0.2.1",
     "lodash": "^4.17.21",
