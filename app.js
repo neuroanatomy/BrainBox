@@ -129,7 +129,7 @@ const start = async function () {
   // Configure server and web socket
   //========================================================================================
 
-  const server = http.createServer(app).listen(3001, () => { console.log('Listening http on port 3001'); });
+  const server = http.createServer(app).listen(Config.app_port, () => { console.log(`Listening http on port ${Config.app_port}`); });
   const atlasmakerServer = new AtlasmakerServer(db);
   atlasmakerServer.dataDirectory = dirname + '/public';
 
@@ -146,11 +146,11 @@ const start = async function () {
     atlasmakerServer.server = http.createServer(app);
   }
 
-  atlasmakerServer.server.listen(8080, () => {
+  atlasmakerServer.server.listen(Config.ws_port, () => {
     if (Config.secure) {
-      console.log('Listening wss on port 8080');
+      console.log(`Listening wss on port ${Config.ws_port}`);
     } else {
-      console.log('Listening ws on port 8080');
+      console.log(`Listening ws on port ${Config.ws_port}`);
     }
     atlasmakerServer.initSocketConnection();
   });
@@ -160,7 +160,6 @@ const start = async function () {
   //========================================================================================
 
   const hocuspocusServer = HocuspocusServer.configure({
-    address: Config.crdt_backend_host,
     port: Config.crdt_backend_port,
     onDisconnect(data) {
       data.document.getArray('files').toJSON()

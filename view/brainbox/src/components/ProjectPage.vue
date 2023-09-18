@@ -48,31 +48,27 @@
 </template>
 
 <script setup>
-import { forEach, get, set } from "lodash";
-//import { initSyncedStore, waitForSync } from "../store/synced";
-import useVisualization from "../store/visualization";
-import Tools from "./Tools.vue";
 import {
   AdjustSettings,
   Editor,
   OntologySelector,
   ProjectPage,
   TextAnnotations,
-  VolumeAnnotations,
-} from "nwl-components/dist/nwl-components.umd.js";
-import * as Vue from "vue";
-import config from '../../../../cfg.json';
+  VolumeAnnotations
+} from 'nwl-components/dist/nwl-components.umd.js';
+import * as Vue from 'vue';
 
-import { HocuspocusProvider } from "@hocuspocus/provider";
-import { syncedStore, getYjsDoc, enableVueBindings } from "@syncedstore/core";
+import { HocuspocusProvider } from '@hocuspocus/provider';
+import { syncedStore, getYjsDoc, enableVueBindings } from '@syncedstore/core';
+import config from '../../../../cfg.json';
 
 enableVueBindings(Vue);
 
-const store = syncedStore({ files: [], fragment: "xml" });
+const store = syncedStore({ files: [], fragment: 'xml' });
 const doc = getYjsDoc(store);
 
 const crdtProvider = new HocuspocusProvider({
-  url: `ws://${config.crdt_backend_host}:${config.crdt_backend_port}`,
+  url: config.crdt_backend_url,
   name: projectInfo.shortname,
   document: doc
 });
@@ -83,9 +79,9 @@ const { baseURL } = Vue.inject('config');
 const props = defineProps({
   project: {
     type: Object,
-    required: true,
+    required: true
   },
-  projectName: String,
+  projectName: String
 });
 
 const {
@@ -107,7 +103,7 @@ const {
   changeAlpha,
   changeBrightness,
   changeContrast,
-  init: initVisualization,
+  init: initVisualization
 } = useVisualization();
 const linkPrefix = `${baseURL}/mri?url=`;
 const volumeAnnotations = Vue.ref([]);
@@ -119,25 +115,25 @@ const extractTextKeys = (_files) => {
     return;
   }
   const keys = new Map();
-  keys.set("Name", "name");
-  keys.set("File", "source");
+  keys.set('Name', 'name');
+  keys.set('File', 'source');
   _files.forEach((file) => {
     const annotations = get(file, [
-      "mri",
-      "annotations",
-      projectInfo.shortname,
+      'mri',
+      'annotations',
+      projectInfo.shortname
     ]);
     if (!annotations) {
       return;
     }
     forEach(annotations, (value, key) => {
-      if (value.type === "text") {
+      if (value.type === 'text') {
         keys.set(key, [
-          "mri",
-          "annotations",
+          'mri',
+          'annotations',
           projectInfo.shortname,
           key,
-          "data",
+          'data'
         ]);
       }
     });
@@ -148,8 +144,8 @@ const extractTextKeys = (_files) => {
 
 const extractVolumeKeys = () => {
   const keys = new Map();
-  keys.set("Name", "name");
-  keys.set("Labels set", "labels");
+  keys.set('Name', 'name');
+  keys.set('Labels set', 'labels');
 
   return keys;
 };
@@ -168,11 +164,11 @@ const valueChange = (content, index, selector) => {
 const doFetchFiles = async (files, cursor) => {
   const params = {
     start: cursor,
-    length: 100,
+    length: 100
   };
   const url = new URL(
     `/project/json/${projectInfo.shortname}/files`,
-    window.location.protocol + "//" + window.location.host
+    window.location.protocol + '//' + window.location.host
   );
   url.search = new URLSearchParams(params).toString();
   const res = await (await fetch(url)).json();
@@ -188,27 +184,27 @@ const doFetchFiles = async (files, cursor) => {
 };
 
 const setupKeyDownListeners = () => {
-  document.addEventListener("keydown", (event) => {
-    const selectedTr = document.querySelector("tr.selected");
+  document.addEventListener('keydown', (event) => {
+    const selectedTr = document.querySelector('tr.selected');
     switch (event.key) {
-      case "ArrowUp":
-        if (!selectedTr) {
-          return;
-        }
-        if (selectedTr.previousElementSibling) {
-          selectedTr.previousElementSibling.click();
-        }
-        break;
-      case "ArrowDown":
-        if (!selectedTr) {
-          return;
-        }
-        if (selectedTr.nextElementSibling) {
-          selectedTr.nextElementSibling.click();
-        }
-        break;
-      default:
-        break;
+    case 'ArrowUp':
+      if (!selectedTr) {
+        return;
+      }
+      if (selectedTr.previousElementSibling) {
+        selectedTr.previousElementSibling.click();
+      }
+      break;
+    case 'ArrowDown':
+      if (!selectedTr) {
+        return;
+      }
+      if (selectedTr.nextElementSibling) {
+        selectedTr.nextElementSibling.click();
+      }
+      break;
+    default:
+      break;
     }
   });
 };
@@ -222,11 +218,12 @@ const getDefaultAtlas = (annotation) => {
     created: date.toJSON(),
     modified: date.toJSON(),
     modifiedBy: AtlasMakerWidget.User.username,
-    filename: Math.random().toString(36).slice(2) + ".nii.gz", // automatically generated filename
+    filename: Math.random().toString(36)
+      .slice(2) + '.nii.gz', // automatically generated filename
     labels: annotation.values,
     owner: AtlasMakerWidget.User.username,
-    type: "volume",
-    access: annotationsAccessLevel,
+    type: 'volume',
+    access: annotationsAccessLevel
   };
 };
 
@@ -235,7 +232,7 @@ const getMRIParams = (file) => {
   const plainFile = JSON.parse(JSON.stringify(file));
 
   const url = plainFile.source;
-  const params = { url, view: "cor", slice: 180, fullscreen: false };
+  const params = { url, view: 'cor', slice: 180, fullscreen: false };
 
   // select the first annotation associated to this project
   const annotationIndex = plainFile.mri.atlas.findIndex(
@@ -255,7 +252,7 @@ const selectFile = async (file) => {
     return;
   }
   currentFile.value = selectedFile;
-  title.value = "Loading…";
+  title.value = 'Loading…';
   populateVolumeAnnotations(selectedFile);
   const params = getMRIParams(selectedFile);
 
@@ -283,7 +280,7 @@ const selectVolumeAnnotation = async (selectedAtlas) => {
   if (index === -1) {
     return;
   }
-  title.value = "Loading…";
+  title.value = 'Loading…';
   await AtlasMakerWidget.configureAtlasMaker(BrainBox.info, index);
   ontology.value = AtlasMakerWidget.ontology;
   currentLabel.value = 0;
@@ -292,7 +289,7 @@ const selectVolumeAnnotation = async (selectedAtlas) => {
 // make sure that all mri files have volume annotations as set in the project info
 const populateVolumeAnnotations = (file) => {
   const volumeAnnotations = projectInfo.annotations.list.filter(
-    (anno) => anno.type === "volume"
+    (anno) => anno.type === 'volume'
   );
   let annotationIndex = -1;
   volumeAnnotations.forEach((annotation) => {
@@ -314,41 +311,37 @@ const populateVolumeAnnotations = (file) => {
 };
 
 // make sure that all mri files have text annotations as set in the project info
-const populateTextAnnotations = (files) => {
-  return files.map((file) => {
-    if (!file.mri) {
-      file.mri = {};
-    }
-    if (!file.mri.annotations) {
-      file.mri.annotations = {};
-    }
-    if (!file.mri.annotations[projectInfo.shortname]) {
-      file.mri.annotations[projectInfo.shortname] = {};
-    }
+const populateTextAnnotations = (files) => files.map((file) => {
+  if (!file.mri) {
+    file.mri = {};
+  }
+  if (!file.mri.annotations) {
+    file.mri.annotations = {};
+  }
+  if (!file.mri.annotations[projectInfo.shortname]) {
+    file.mri.annotations[projectInfo.shortname] = {};
+  }
 
-    const textAnnotations = projectInfo.annotations.list.filter(
-      (annotation) => annotation.type === "text"
-    );
-    for (let i = 0; i < textAnnotations.length; i++) {
-      const annName = textAnnotations[i].name;
-      if (!file.mri.annotations[projectInfo.shortname][annName]) {
-        const date = new Date();
-        file.mri.annotations[projectInfo.shortname][annName] = {
-          created: date.toJSON(),
-          modified: date.toJSON(),
-          modifiedBy: AtlasMakerWidget.User.username,
-          type: "text",
-        };
-      }
+  const textAnnotations = projectInfo.annotations.list.filter(
+    (annotation) => annotation.type === 'text'
+  );
+  for (let i = 0; i < textAnnotations.length; i++) {
+    const annName = textAnnotations[i].name;
+    if (!file.mri.annotations[projectInfo.shortname][annName]) {
+      const date = new Date();
+      file.mri.annotations[projectInfo.shortname][annName] = {
+        created: date.toJSON(),
+        modified: date.toJSON(),
+        modifiedBy: AtlasMakerWidget.User.username,
+        type: 'text'
+      };
     }
+  }
 
-    return file;
-  });
-};
+  return file;
+});
 
-const delay = (ms) => {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-};
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const handleLayoutChange = async () => {
   await delay(250);
@@ -371,9 +364,9 @@ Vue.onMounted(async () => {
   crdtProvider.on('synced', async () => {
     if (store.files.length === 0) {
       await fetchFiles();
-   }
-   selectFile(store.files[0]);
-  })
+    }
+    selectFile(store.files[0]);
+  });
 });
 </script>
 <style>
