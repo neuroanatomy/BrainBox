@@ -18,7 +18,7 @@
     "test-unit": "cross-env MONGODB='127.0.0.1:27017/brainbox_test' nyc --report-dir test/unit/coverage mocha --timeout 5000 ./test/runner.js test/unit/*.js",
     "test-integration": "cross-env MONGODB='127.0.0.1:27017/brainbox_test' LOCALSIGNIN=true nyc --report-dir test/integration/coverage mocha --timeout 5000 ./test/runner.js test/integration/*.js",
     "mocha-test": "cross-env MONGODB='127.0.0.1:27017/brainbox_test' LOCALSIGNIN=true nyc mocha --timeout 5000 ./test/runner.js test/unit/*.js test/integration/*.js",
-    "lint": "eslint .",
+    "lint": "eslint --ext .js,.vue .",
     "test": "docker exec brainbox_web_1 /bin/bash -c 'cd /brainbox && npm run mocha-test'",
     "prepare": "husky install"
   },
@@ -87,6 +87,7 @@
     "del": "^3.0.0",
     "eslint": "^8.8.0",
     "eslint-config-naat": "git+https://github.com/neuroanatomy/eslint-config-naat.git",
+    "eslint-plugin-vue": "^9.17.0",
     "file-loader": "^2.0.0",
     "html-loader": "^0.5.5",
     "html-webpack-plugin": "^4.5.2",
@@ -112,6 +113,6 @@
     "webworkify-webpack": "^2.1.5"
   },
   "lint-staged": {
-    "*.js": "eslint --cache --fix"
+    "*.{js,vue}": "eslint --cache --fix"
   }
 }

@@ -2,5 +2,5 @@ module.exports = {
   'env': {
     'mocha': true
   },
-  'extends': ['naat']
+  'extends': ['naat', 'plugin:vue/vue3-strongly-recommended']
 };
