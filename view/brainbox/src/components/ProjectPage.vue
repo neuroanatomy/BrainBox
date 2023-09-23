@@ -5,7 +5,7 @@
     :project="{...project, title: projectName }"
     :fullscreen="fullscreen"
   >
-    <template v-slot:left>
+    <template #left>
       <TextAnnotations
         :extract-keys="extractTextKeys"
         :link-prefix="linkPrefix"
@@ -19,19 +19,26 @@
         @select-annotation="selectVolumeAnnotation"
       />
     </template>
-    <template v-slot:right>
+    <template #right>
       <OntologySelector
         :ontology="ontology"
         :open="displayOntology"
         @on-close="displayOntology = false"
         @label-click="handleOntologyLabelClick"
       />
-      <Editor :title="title" :class="{reduced}" :toolsMinHeight="reduced ? 'auto' : '340px'">
-        <template v-slot:tools>
+      <Editor
+        :title="title"
+        :class="{reduced}"
+        :tools-min-height="reduced ? 'auto' : '340px'"
+      >
+        <template #tools>
           <Tools />
         </template>
-        <template v-slot:content>
-          <div id="stereotaxic" style="width: 100%; height: 100%"></div>
+        <template #content>
+          <div
+            id="stereotaxic"
+            style="width: 100%; height: 100%"
+          />
           <AdjustSettings
             v-if="displayAdjustSettings"
             :alpha="alpha"
@@ -48,6 +55,11 @@
 </template>
 
 <script setup>
+/* global projectInfo */
+/* eslint-disable max-lines */
+
+import { forEach, get, set } from 'lodash';
+//import { initSyncedStore, waitForSync } from "../store/synced";
 import {
   AdjustSettings,
   Editor,
@@ -61,6 +73,8 @@ import * as Vue from 'vue';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import { syncedStore, getYjsDoc, enableVueBindings } from '@syncedstore/core';
 import config from '../../../../cfg.json';
+import useVisualization from '../store/visualization';
+import Tools from './Tools.vue';
 
 enableVueBindings(Vue);
 
