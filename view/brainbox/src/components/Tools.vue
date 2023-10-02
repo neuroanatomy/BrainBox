@@ -26,7 +26,7 @@
         >
       </ButtonsGroup>
 
-      <Button @click="toggleFullscreen()" title="Full screen">
+      <Button :class="{ pressed: fullscreen }" @click="toggleFullscreen()" title="Full screen">
         <img class="icon" alt="Full screen" :src="icons['fullscreen.svg']" />
       </Button>
       <Button @click="render3D()" title="3D render">
