@@ -378,6 +378,7 @@ const toggleFullscreen = () => {
   fullscreen.value = !fullscreen.value;
   setTimeout(() => {
     AtlasMakerWidget.resizeWindow();
+    AtlasMakerWidget.drawImages();
   }, 250);
 };
 

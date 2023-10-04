@@ -90,12 +90,15 @@ const crdtProvider = new HocuspocusProvider({
 const { annotationsAccessLevel, BrainBox, AtlasMakerWidget } = window;
 const { baseURL } = Vue.inject('config');
 
-const props = defineProps({
+defineProps({
   project: {
     type: Object,
     required: true
   },
-  projectName: String
+  projectName: {
+    type: String,
+    default: ''
+  }
 });
 
 const {
@@ -106,10 +109,7 @@ const {
   displayScript,
   currentLabel,
   ontology,
-  currentView,
-  currentSlice,
   currentFile,
-  totalSlices,
   fullscreen,
   alpha,
   brightness,
@@ -164,16 +164,79 @@ const extractVolumeKeys = () => {
   return keys;
 };
 
-const fetchFiles = async () => {
-  const fetchedFiles = await doFetchFiles([], 0);
-  store.files.push(...populateTextAnnotations(fetchedFiles));
+const getDefaultAtlas = (annotation) => {
+  const date = new Date();
+
+  return {
+    name: annotation.name,
+    project: projectInfo.shortname,
+    created: date.toJSON(),
+    modified: date.toJSON(),
+    modifiedBy: AtlasMakerWidget.User.username,
+    filename: Math.random().toString(36)
+      .slice(2) + '.nii.gz', // automatically generated filename
+    labels: annotation.values,
+    owner: AtlasMakerWidget.User.username,
+    type: 'volume',
+    access: annotationsAccessLevel
+  };
 };
 
-const reduced = Vue.computed(() => !displayChat.value && !displayScript.value);
+// make sure that all mri files have volume annotations as set in the project info
+const populateVolumeAnnotations = (file) => {
+  const volumeAnnotationsUnproxified = projectInfo.annotations.list.filter(
+    (anno) => anno.type === 'volume'
+  );
+  let annotationIndex = -1;
+  volumeAnnotationsUnproxified.forEach((annotation) => {
+    annotationIndex = file.mri.atlas.findIndex(
+      (atlas) =>
+        atlas.name === annotation.name &&
+        atlas.project === projectInfo.shortname
+    );
 
-const valueChange = (content, index, selector) => {
-  set(store.files[index], selector, content);
+    if (annotationIndex >= 0) {
+      return;
+    }
+
+    // If no layer was found, create it
+    const atlas = getDefaultAtlas(annotation);
+
+    file.mri.atlas.push(atlas);
+  });
 };
+
+
+// make sure that all mri files have text annotations as set in the project info
+const populateTextAnnotations = (files) => files.map((file) => {
+  if (!file.mri) {
+    file.mri = {};
+  }
+  if (!file.mri.annotations) {
+    file.mri.annotations = {};
+  }
+  if (!file.mri.annotations[projectInfo.shortname]) {
+    file.mri.annotations[projectInfo.shortname] = {};
+  }
+
+  const textAnnotations = projectInfo.annotations.list.filter(
+    (annotation) => annotation.type === 'text'
+  );
+  for (let i = 0; i < textAnnotations.length; i++) {
+    const annName = textAnnotations[i].name;
+    if (!file.mri.annotations[projectInfo.shortname][annName]) {
+      const date = new Date();
+      file.mri.annotations[projectInfo.shortname][annName] = {
+        created: date.toJSON(),
+        modified: date.toJSON(),
+        modifiedBy: AtlasMakerWidget.User.username,
+        type: 'text'
+      };
+    }
+  }
+
+  return file;
+});
 
 const doFetchFiles = async (files, cursor) => {
   const params = {
@@ -197,6 +260,16 @@ const doFetchFiles = async (files, cursor) => {
   return files;
 };
 
+const fetchFiles = async () => {
+  const fetchedFiles = await doFetchFiles([], 0);
+  store.files.push(...populateTextAnnotations(fetchedFiles));
+};
+
+const reduced = Vue.computed(() => !displayChat.value && !displayScript.value);
+
+const valueChange = (content, index, selector) => {
+  set(store.files[index], selector, content);
+};
 const setupKeyDownListeners = () => {
   document.addEventListener('keydown', (event) => {
     const selectedTr = document.querySelector('tr.selected');
@@ -221,24 +294,6 @@ const setupKeyDownListeners = () => {
       break;
     }
   });
-};
-
-const getDefaultAtlas = (annotation) => {
-  const date = new Date();
-
-  return {
-    name: annotation.name,
-    project: projectInfo.shortname,
-    created: date.toJSON(),
-    modified: date.toJSON(),
-    modifiedBy: AtlasMakerWidget.User.username,
-    filename: Math.random().toString(36)
-      .slice(2) + '.nii.gz', // automatically generated filename
-    labels: annotation.values,
-    owner: AtlasMakerWidget.User.username,
-    type: 'volume',
-    access: annotationsAccessLevel
-  };
 };
 
 const getMRIParams = (file) => {
@@ -300,61 +355,6 @@ const selectVolumeAnnotation = async (selectedAtlas) => {
   currentLabel.value = 0;
 };
 
-// make sure that all mri files have volume annotations as set in the project info
-const populateVolumeAnnotations = (file) => {
-  const volumeAnnotations = projectInfo.annotations.list.filter(
-    (anno) => anno.type === 'volume'
-  );
-  let annotationIndex = -1;
-  volumeAnnotations.forEach((annotation) => {
-    annotationIndex = file.mri.atlas.findIndex(
-      (atlas) =>
-        atlas.name === annotation.name &&
-        atlas.project === projectInfo.shortname
-    );
-
-    if (annotationIndex >= 0) {
-      return;
-    }
-
-    // If no layer was found, create it
-    const atlas = getDefaultAtlas(annotation);
-
-    file.mri.atlas.push(atlas);
-  });
-};
-
-// make sure that all mri files have text annotations as set in the project info
-const populateTextAnnotations = (files) => files.map((file) => {
-  if (!file.mri) {
-    file.mri = {};
-  }
-  if (!file.mri.annotations) {
-    file.mri.annotations = {};
-  }
-  if (!file.mri.annotations[projectInfo.shortname]) {
-    file.mri.annotations[projectInfo.shortname] = {};
-  }
-
-  const textAnnotations = projectInfo.annotations.list.filter(
-    (annotation) => annotation.type === 'text'
-  );
-  for (let i = 0; i < textAnnotations.length; i++) {
-    const annName = textAnnotations[i].name;
-    if (!file.mri.annotations[projectInfo.shortname][annName]) {
-      const date = new Date();
-      file.mri.annotations[projectInfo.shortname][annName] = {
-        created: date.toJSON(),
-        modified: date.toJSON(),
-        modifiedBy: AtlasMakerWidget.User.username,
-        type: 'text'
-      };
-    }
-  }
-
-  return file;
-});
-
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const handleLayoutChange = async () => {
@@ -364,6 +364,7 @@ const handleLayoutChange = async () => {
 
 const handleResize = () => {
   AtlasMakerWidget.resizeWindow();
+  AtlasMakerWidget.drawImages();
 };
 
 const handleOntologyLabelClick = (index) => {
