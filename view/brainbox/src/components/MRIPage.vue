@@ -5,7 +5,10 @@
     </Header>
     <main>
       <div class="left">
-        <div class="privilegedAccessInfo" v-if="displayPrivilegedAccessWarning">
+        <div
+          class="privilegedAccessInfo"
+          v-if="displayPrivilegedAccessWarning"
+        >
           You are seeing this private MRI because you were added as a
           collaborator with access to files. Share with caution.
         </div>
@@ -58,7 +61,13 @@
                   <a :href="`/project/${atlas.project}`">{{ atlas.project }}</a>
                 </td>
                 <td>{{ new Date(atlas.modified).toLocaleDateString() }}</td>
-                <td><Access :collaborator="collaboratorAccess[atlas.filename]" type="files" readonly /></td>
+                <td>
+                  <Access
+                    :collaborator="collaboratorAccess[atlas.filename]"
+                    type="files"
+                    readonly
+                  />
+                </td>
               </tr>
             </tbody>
           </Table>
@@ -77,26 +86,42 @@
                 v-for="annotation in formattedTextAnnotations"
                 :key="annotation.name"
               >
-                <td class="noEmpty">{{ annotation.name }}</td>
-                <td class="noEmpty">{{ annotation.data }}</td>
+                <td class="noEmpty">
+                  {{ annotation.name }}
+                </td>
+                <td class="noEmpty">
+                  {{ annotation.data }}
+                </td>
                 <td>
-                  <a class="noEmpty" :href="`/project/${annotation.project}`">{{
+                  <a
+                    class="noEmpty"
+                    :href="`/project/${annotation.project}`"
+                  >{{
                     annotation.project
                   }}</a>
                 </td>
-                <td class="noEmpty">{{ new Date(annotation.modified).toLocaleDateString() }}</td>
+                <td class="noEmpty">
+                  {{ new Date(annotation.modified).toLocaleDateString() }}
+                </td>
               </tr>
             </tbody>
           </Table>
         </div>
       </div>
       <div class="right">
-        <Editor :title="title" :class="{fullscreen, reduced}" :toolsMinHeight="reduced ? 'auto' : '340px'">
-          <template v-slot:tools>
+        <Editor
+          :title="title"
+          :class="{fullscreen, reduced}"
+          :tools-min-height="reduced ? 'auto' : '340px'"
+        >
+          <template #tools>
             <Tools />
           </template>
-          <template v-slot:content>
-            <div id="stereotaxic" style="width: 100%; height: 100%"></div>
+          <template #content>
+            <div
+              id="stereotaxic"
+              style="width: 100%; height: 100%"
+            />
             <OntologySelector
               :ontology="ontology"
               :open="displayOntology"
@@ -119,7 +144,7 @@
   </Wrapper>
 </template>
 <script setup>
-import { ref, onMounted, watch, computed } from "vue";
+import { ref, onMounted, watch, computed } from 'vue';
 import get from 'lodash/get';
 import {
   Wrapper,
@@ -129,10 +154,10 @@ import {
   Access,
   OntologySelector,
   AdjustSettings
-} from "nwl-components/dist/nwl-components.umd.js";
-import Tools from "./Tools.vue";
-import useVisualization from "../store/visualization";
-import { keyBy, mapValues, flatten, map } from "lodash";
+} from 'nwl-components/dist/nwl-components.umd.js';
+import { keyBy, mapValues, flatten, map } from 'lodash';
+import useVisualization from '../store/visualization';
+import Tools from './Tools.vue';
 
 const {
   displayAdjustSettings,
@@ -149,8 +174,10 @@ const {
   displayChat,
   displayScript,
   title,
-  init: initVisualization,
+  init: initVisualization
 } = useVisualization();
+
+displayChat.value = false;
 
 const selectedIndex = ref(0);
 const reduced = computed(() => !displayChat.value && !displayScript.value);
@@ -162,12 +189,15 @@ watch(fullscreen, () => {
       tools.style.left = '10px';
       tools.style.top = '10px';
     }, 100);
+  } else {
+    displayChat.value = true;
   }
+
   setTimeout(() => {
     document.querySelector('#resizable').style = '';
     AtlasMakerWidget.resizeWindow();
   }, 100);
-})
+});
 
 const selectVolumeAnnotation = async (index) => {
   selectedIndex.value = index;
@@ -176,22 +206,22 @@ const selectVolumeAnnotation = async (index) => {
   currentLabel.value = 0;
 };
 
-const annotations = get(mriInfo, "mri.annotations", {});
+const annotations = get(mriInfo, 'mri.annotations', {});
 const formattedTextAnnotations = flatten(
   map(annotations, (nestedAnnotations, project) =>
     map(nestedAnnotations, (annotation, name) => ({
       ...annotation,
       project,
-      name,
+      name
     }))
   )
 );
 
-const atlases = get(mriInfo, "mri.atlas", {});
+const atlases = get(mriInfo, 'mri.atlas', {});
 const labelsName = ref({});
 const { name, source } = mriInfo;
 const date = new Date(mriInfo.included).toLocaleDateString();
-const collaboratorAccess = mapValues(keyBy(atlases, "filename"), (atlas) => ({ access: { files: atlas.access }}))
+const collaboratorAccess = mapValues(keyBy(atlases, 'filename'), (atlas) => ({ access: { files: atlas.access }}));
 const displayPrivilegedAccessWarning = hasPrivilegedAccess;
 
 const handleOntologyLabelClick = (index) => {
@@ -202,8 +232,8 @@ const handleOntologyLabelClick = (index) => {
 
 onMounted(async () => {
   await initVisualization();
-  const labels = await (await fetch("/api/getLabelsets")).json();
-  labelsName.value = mapValues(keyBy(labels, "source"), "name");
+  const labels = await (await fetch('/api/getLabelsets')).json();
+  labelsName.value = mapValues(keyBy(labels, 'source'), 'name');
   params.info = mriInfo;
   await BrainBox.configureBrainBox(params);
   ontology.value = AtlasMakerWidget.ontology;
@@ -275,7 +305,7 @@ main {
 }
 :deep(button), :deep(.group) {
     height: 24px;
-    margin: 1px;  
+    margin: 1px;
 }
 
 @media(max-width: 1300px) {

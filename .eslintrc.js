@@ -6,9 +6,13 @@ module.exports = {
   'rules': { 'vue/multi-word-component-names': 'off' },
   'overrides': [
     {
-      files: ['view/brainbox/src/components/Tools.vue'],
+      files: [
+        'view/brainbox/src/components/Tools.vue',
+        'view/brainbox/src/components/MRIPage.vue'
+      ],
       rules: {
-        'max-lines': 'off'
+        'max-lines': 'off',
+        'no-undef': 'off'
       }
     }
   ]
