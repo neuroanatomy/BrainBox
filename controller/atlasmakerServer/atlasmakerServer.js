@@ -1,15 +1,23 @@
 /* eslint-disable max-lines */
 const fs = require('fs');
 const os = require('os');
-const zlib = require('zlib');
-const tracer = require('tracer').console({ format: '[{{file}}:{{line}}]  {{message}}' });
-const jpeg = require('jpeg-js'); // jpeg-js library: https://github.com/eugeneware/jpeg-js
-const merge = require('merge');
 const path = require('path');
+const zlib = require('zlib');
+
+const AsyncLock = require('async-lock');
+const createDOMPurify = require('dompurify');
+const jsonpatch = require('fast-json-patch');
+const jpeg = require('jpeg-js'); // jpeg-js library: https://github.com/eugeneware/jpeg-js
+const { JSDOM } = require('jsdom');
 const keypress = require('keypress');
+const merge = require('merge');
+const tracer = require('tracer').console({ format: '[{{file}}:{{line}}]  {{message}}' });
+const WebSocket = require('ws');
+
+const notifier = require('../../notifier');
 
 const amri = require('./atlasmaker-mri');
-const AsyncLock = require('async-lock');
+
 const lock = new AsyncLock();
 
 // Get whitelist and blacklist
@@ -19,12 +27,9 @@ const whitelist = JSON.parse(fs.readFileSync(path.join(__dirname, 'whitelist.jso
 const blacklist = JSON.parse(fs.readFileSync(path.join(__dirname, 'blacklist.json')));
 
 // var http = require('http');
-const WebSocket = require('ws');
 const WebSocketServer = WebSocket.Server;
 let websocketserver;
 
-const createDOMPurify = require('dompurify');
-const { JSDOM } = require('jsdom');
 const { window } = (new JSDOM('', {
   features: {
     FetchExternalResources: false, // disables resource loading over HTTP / filesystem
@@ -33,7 +38,6 @@ const { window } = (new JSDOM('', {
 }));
 const DOMPurify = createDOMPurify(window);
 
-const jsonpatch = require('fast-json-patch');
 
 const bufferTag = function (str, sz) {
   const buf = Buffer.alloc(sz).fill(32);
@@ -322,11 +326,13 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       try {
         await me._saveAtlasVoxelData(atlas);
       } catch (err) {
+        // can crash brainbox, second argument is not used
         throw new Error('Can\'t save atlas voxel data', err);
       }
       try {
         await me._saveAtlasVectorialData(atlas);
       } catch (err) {
+        // can crash brainbox, second argument is not used
         throw new Error('Can\'t save atlas vectorial data', err);
       }
     },
@@ -1126,6 +1132,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       const sourceUS = me.getUserFromUserId(data.uid);
 
       // get brainPath from User object
+      // can crash brainbox in case of sourceUS.User object still not created
       const brainPath = sourceUS.User.dirname + sourceUS.User.mri;
 
       // update User object
@@ -2108,7 +2115,6 @@ free memory: ${os.freemem()}
 };
 
 // Notifications
-const notifier = require('../../notifier');
 notifier.on('saveAllAtlases', () => {
   atlasmakerServer.saveAllAtlases();
 });
