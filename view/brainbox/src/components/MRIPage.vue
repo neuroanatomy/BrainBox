@@ -38,7 +38,7 @@
             </tbody>
           </table>
           <h2>Volume annotations</h2>
-          <Table>
+          <Table id="annotations">
             <thead>
               <tr>
                 <th>Name</th>
@@ -56,7 +56,9 @@
                 @click="selectVolumeAnnotation(index)"
               >
                 <td>{{ atlas.name }}</td>
-                <td>{{ labelsName[atlas.labels] }}</td>
+                <td class="annotation-label">
+                  {{ labelsName[atlas.labels] }}
+                </td>
                 <td>
                   <a :href="`/project/${atlas.project}`">{{ atlas.project }}</a>
                 </td>
@@ -144,7 +146,7 @@
   </Wrapper>
 </template>
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue';
+import { keyBy, mapValues, flatten, map } from 'lodash';
 import get from 'lodash/get';
 import {
   Wrapper,
@@ -155,8 +157,10 @@ import {
   OntologySelector,
   AdjustSettings
 } from 'nwl-components/dist/nwl-components.umd.js';
-import { keyBy, mapValues, flatten, map } from 'lodash';
+import { ref, onMounted, watch, computed } from 'vue';
+
 import useVisualization from '../store/visualization';
+
 import Tools from './Tools.vue';
 
 const {

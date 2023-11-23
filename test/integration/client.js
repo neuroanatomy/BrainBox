@@ -3,10 +3,12 @@
 
 // require('../browser');
 const fs = require('fs');
-const puppeteer = require('puppeteer');
+
 const chai = require('chai');
 const { assert } = chai;
 const chaiHttp = require('chai-http');
+const puppeteer = require('puppeteer');
+
 chai.use(chaiHttp);
 const U = require('../utils.js');
 
@@ -75,7 +77,7 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
       await page.goto(U.serverURL + '/mri?url=' + U.localBertURL);
       const pane = await page.waitForSelector('#annotations tbody tr', { timeout: 10000 });
       assert.equal(1, await page.evaluate(() => document.querySelectorAll('#annotations tbody tr').length));
-      assert.equal('Foreground', await pane.$eval('select', (node) => node.value));
+      assert.equal('Foreground', await pane.$eval('.annotation-label', (node) => node.innerText));
 
     }).timeout(U.noTimeout);
 
