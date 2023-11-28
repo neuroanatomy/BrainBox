@@ -1,12 +1,15 @@
 /* eslint-disable max-lines */
+const path = require('path');
+
+require('mocha-sinon');
 const { assert } = require('chai');
 const httpMocks = require('node-mocks-http');
-const MriController = require('../../controller/mri/mri.controller');
-// const atlasMakerServer = require('../../controller/atlasmakerServer/atlasmakerServer');
-require('mocha-sinon');
 const sinon = require('sinon');
+
+const dirname = path.resolve(__dirname, '../..');
+
+const MriController = require('../../controller/mri/mri.controller');
 const U = require('../utils');
-const dirname = require('path').resolve(__dirname, '../..');
 
 let db, mriController;
 
@@ -127,6 +130,7 @@ describe('MRI Controller: ', function () {
       assert.deepStrictEqual(res.render.args[0], [
         'mri',
         {
+          hasPrivilegedAccess: false,
           title: 'BrainBox',
           params: JSON.stringify({ url: req.query.url }),
           mriInfo: JSON.stringify({ source: req.query.url }),

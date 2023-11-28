@@ -2,17 +2,19 @@
 'use strict';
 
 const crypto = require('crypto');
-const url = require('url');
 const fs = require('fs');
+const url = require('url');
+
+const AsyncLock = require('async-lock');
+const { body, validationResult } = require('express-validator');
+const _ = require('lodash');
+const { AccessType, AccessLevel } = require('neuroweblab');
 const request = require('request');
 const sanitize = require('sanitize-filename');
-const { body, validationResult } = require('express-validator');
+
+const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 const AtlasmakerServer = require('../atlasmakerServer/atlasmakerServer');
 const dataSlices = require('../dataSlices/dataSlices.js');
-const { AccessType, AccessLevel } = require('neuroweblab');
-const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
-const _ = require('lodash');
-const AsyncLock = require('async-lock');
 const lock = new AsyncLock();
 
 const downloadQueue = {};
