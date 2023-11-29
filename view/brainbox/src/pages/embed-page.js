@@ -1,12 +1,9 @@
-/* global loggedUser */
-
 import 'nwl-components/dist/style.css';
-import MRIPage from '../components/MRIPage.vue';
+import Embed from '../components/Embed.vue';
 import config from '../nwl-components-config';
 import { createApp } from 'vue';
 
-const app = createApp(MRIPage);
+const app = createApp(Embed);
 app.provide('config', config);
-app.provide('user', loggedUser);
 
 app.mount('#app');

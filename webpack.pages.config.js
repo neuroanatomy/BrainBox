@@ -3,6 +3,7 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 // const WebpackShellPlugin = require('webpack-shell-plugin');
+const { VueLoaderPlugin } = require('vue-loader');
 
 module.exports = (env, argv) => ({
   entry: {
@@ -10,6 +11,7 @@ module.exports = (env, argv) => ({
     'index-page': './view/brainbox/src/pages/index-page.js',
     'mri-page': './view/brainbox/src/pages/mri-page.js',
     'project-page': './view/brainbox/src/pages/project-page.js',
+    'embed-page': './view/brainbox/src/pages/embed-page.js',
     'project-new-page': './view/brainbox/src/pages/project-new-page.js',
     'project-settings-page':
       './view/brainbox/src/pages/project-settings-page.js',
@@ -20,7 +22,8 @@ module.exports = (env, argv) => ({
     new CleanWebpackPlugin(['dist']),
     new HtmlWebpackPlugin({
       title: 'Output Management'
-    })
+    }),
+    new VueLoaderPlugin()
   ],
   output: {
     filename: '[name].js',
@@ -38,17 +41,11 @@ module.exports = (env, argv) => ({
       {
         test: /\.(png|svg|jpg|gif)$/,
         use: ['file-loader']
+      },
+      {
+        test: /\.vue$/,
+        loader: 'vue-loader'
       }
     ]
-  },
-  resolve: {
-    symlinks: false,
-    alias: {
-      // for now using the browser build to parse existing inlined components
-      vue: path.resolve(
-        `./node_modules/vue/dist/vue.esm-browser${argv.mode === 'production' ? '.prod' : ''
-        }`
-      )
-    }
   }
 });

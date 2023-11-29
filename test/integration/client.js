@@ -3,10 +3,12 @@
 
 // require('../browser');
 const fs = require('fs');
-const puppeteer = require('puppeteer');
+
 const chai = require('chai');
 const { assert } = chai;
 const chaiHttp = require('chai-http');
+const puppeteer = require('puppeteer');
+
 chai.use(chaiHttp);
 const U = require('../utils.js');
 
@@ -75,7 +77,7 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
       await page.goto(U.serverURL + '/mri?url=' + U.localBertURL);
       const pane = await page.waitForSelector('#annotations tbody tr', { timeout: 10000 });
       assert.equal(1, await page.evaluate(() => document.querySelectorAll('#annotations tbody tr').length));
-      assert.equal('Foreground', await pane.$eval('select', (node) => node.value));
+      assert.equal('Foreground', await pane.$eval('.annotation-label', (node) => node.innerText));
 
     }).timeout(U.noTimeout);
 
@@ -89,12 +91,13 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
     // OPEN PROJECT PAGE
     it('Project page renders as expected', async function () {
       await page.goto(U.serverURL + '/project/' + U.projectTest.shortname);
-      await page.waitForSelector('#sliderBlock');
-      await page.waitForSelector('#buttonsBlock');
-      await page.waitForSelector('#penSizeBlock');
+      await page.waitForSelector('.editor .tools');
+      await page.waitForSelector('.editor .tools .range-slider');
+      await page.waitForSelector('.editor .tools button[title="Change pen size to 1"]');
+      await page.waitForSelector('.editor .tools button[title="Change pen size to 15"]');
       await page.waitForSelector('canvas');
-      await page.waitForSelector('#notificationsBlock');
-      await page.waitForSelector('#textInputBlock');
+      await page.waitForSelector('.editor .tools .notifications');
+      await page.waitForSelector('.editor .tools .chat input[type=text]');
 
       const annotation = await page.waitForSelector('#volAnnotations tbody tr td:first-child');
       assert.equal('Cerebrum', await page.evaluate((el) => el.textContent, annotation));

@@ -710,6 +710,35 @@ const deleteProject = async function (req, res) {
   }
 };
 
+const embed = async function (req, res) {
+  let loggedUser = 'anonymous';
+  if (req.isAuthenticated()) {
+    loggedUser = req.user.username;
+  }
+
+  const refererURL = new URL(req.headers.referer);
+  const disallowedDomains = req.user.authorizedHostsForEmbedding.split('\n') || [];
+  if (disallowedDomains.include(refererURL.host)) {
+    return res.status(403).send('Not authorized to embed this project');
+  }
+
+  const json = await req.db.get('project').findOne({ shortname: req.params.projectName, backup: { $exists: 0 } });
+  if (json) {
+    if (!AccessControlService.hasFilesAccess(AccessLevel.VIEW, json, loggedUser)) {
+      res.status(401).send('Authorization required');
+
+      return;
+    }
+    json.files.list = [];
+    res.render('embed', {
+      projectInfo: JSON.stringify(json),
+      annotationsAccessLevel: AccessControlService.getUserOrPublicAccessLevel(json, loggedUser, AccessType.ANNOTATIONS)
+    });
+  } else {
+    res.status(404).send('Project Not Found');
+  }
+};
+
 
 const ProjectController = function () {
   this.validator = validator;
@@ -717,6 +746,7 @@ const ProjectController = function () {
   this.apiProject = apiProject;
   this.apiProjectFiles = apiProjectFiles;
   this.project = project;
+  this.embed = embed;
   this.settings = settings;
   this.newProject = newProject;
   this.postProject = postProject;

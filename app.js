@@ -4,11 +4,13 @@
     Atlas Maker Server
     Roberto Toro, 25 July 2014
 */
-const nwl = require('neuroweblab');
 const fs = require('fs');
+const path = require('path');
+const https = require('https');
+const http = require('http');
+const nwl = require('neuroweblab');
 const express = require('express');
 const compression = require('compression');
-const path = require('path');
 const favicon = require('serve-favicon');
 const logger = require('morgan');
 const tracer = require('tracer').console({ format: '[{{file}}:{{line}}]  {{message}}' });
@@ -16,9 +18,7 @@ const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const mustacheExpress = require('mustache-express');
 const Config = JSON.parse(fs.readFileSync('./cfg.json'));
-const https = require('https');
-const http = require('http');
-
+const { Server: HocuspocusServer } = require('@hocuspocus/server');
 global.authTokenMiddleware = nwl.authTokenMiddleware;
 
 const AtlasmakerServer = require('./controller/atlasmakerServer/atlasmakerServer');
@@ -129,7 +129,7 @@ const start = async function () {
   // Configure server and web socket
   //========================================================================================
 
-  const server = http.createServer(app).listen(3001, () => { console.log('Listening http on port 3001'); });
+  const server = http.createServer(app).listen(Config.app_port, () => { console.log(`Listening http on port ${Config.app_port}`); });
   const atlasmakerServer = new AtlasmakerServer(db);
   atlasmakerServer.dataDirectory = dirname + '/public';
 
@@ -146,14 +146,36 @@ const start = async function () {
     atlasmakerServer.server = http.createServer(app);
   }
 
-  atlasmakerServer.server.listen(8080, () => {
+  atlasmakerServer.server.listen(Config.ws_port, () => {
     if (Config.secure) {
-      console.log('Listening wss on port 8080');
+      console.log(`Listening wss on port ${Config.ws_port}`);
     } else {
-      console.log('Listening ws on port 8080');
+      console.log(`Listening ws on port ${Config.ws_port}`);
     }
     atlasmakerServer.initSocketConnection();
   });
+
+  //========================================================================================
+  // Configure Yjs backend for multiuser edition
+  //========================================================================================
+
+  const hocuspocusServer = HocuspocusServer.configure({
+    port: Config.crdt_backend_port,
+    onDisconnect(data) {
+      data.document.getArray('files').toJSON()
+        .forEach((json) => {
+          delete json._id;
+          db.get('mri').update({
+            source: json.source,
+            backup: { $exists: false }
+          }, json
+          , { replaceOne: true })
+            .catch((er) => console.log(er));
+        });
+    }
+  });
+
+  hocuspocusServer.listen();
 
   //========================================================================================
   // Setup routes
@@ -192,7 +214,7 @@ const start = async function () {
   //   });
   // });
 
-  return { app, server, atlasmakerServer };
+  return { app, server, atlasmakerServer, hocuspocusServer };
 };
 
 module.exports = { start };

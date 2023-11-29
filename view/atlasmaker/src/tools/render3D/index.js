@@ -1,15 +1,15 @@
 import './style.css';
+import pako from 'pako';
+import work from 'webworkify-webpack';
 import * as THREE from './three.js-r109/build/three.module.js';
-import $ from 'jquery';
 import { TrackballControls } from './three.js-r109/examples/jsm/controls/TrackballControls.js';
 import html from './index.html';
-import pako from 'pako';
 
 let camera, renderer, scene, trackball;
 const level = 1;
 let dot = 0; // dot for "wait" animation
 
-import work from 'webworkify-webpack';
+
 const snw = work(require.resolve('./surfacenets.worker.js'));
 
 const onWindowResize = function () {
@@ -119,13 +119,13 @@ const configureNifti = function (niigz) {
 //     oReq.send();
 // }
 
-const startWaitingAnimation = function () {
-  setInterval(function () {
-    if ($('#dot')) {
-      $('#dot').css({
-        marginLeft: 50 * (1 + Math.sin(dot)) + '%'
-      });
-    }
+const startWaitingAnimation = () => {
+  const dotEl = document.querySelector('#dot');
+  if(!dotEl) {
+    return;
+  }
+  setInterval(function() {
+    dotEl.style.marginLeft= 50*(1+Math.sin(dot))+'%';
     dot += 0.1;
   }, 33);
 };
@@ -178,7 +178,10 @@ const init = function () {
 snw.addEventListener('message', (event) => {
   const [vertices, faces] = event.data;
   createMesh(vertices, faces);
-  $('#splash').remove();
+  const splash = document.querySelector('#splash');
+  if (splash) {
+    splash.parentNode.removeChild(splash);
+  }
   animate();
 });
 

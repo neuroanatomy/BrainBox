@@ -1,12 +1,11 @@
 /* global THREE */
 
 import './style.css';
-import $ from 'jquery';
 import html from './index.html';
 import pako from 'pako';
 
-var level = 1;
-var dot = 0;
+const level = 1;
+const dot = 0;
 
 import work from 'webworkify-webpack';
 const snw = work(require.resolve('./surfacenets.worker.js'));
@@ -24,10 +23,10 @@ function createMesh(vertices, faces) {
   const group = new THREE.Group();
   group.add(mesh);
   group.position.set(0, 2, -5);
-  var entity = document.createElement('a-entity');
+  const entity = document.createElement('a-entity');
   entity.object3D = group;
-  entity.id = "mesh";
-  entity.setAttribute("scale", "0.1 0.1 0.1");
+  entity.id = 'mesh';
+  entity.setAttribute('scale', '0.1 0.1 0.1');
   const scene = document.querySelector('a-scene');
   scene.appendChild(entity);
 }
@@ -65,10 +64,12 @@ function configureNifti(niigz) {
 }
 
 function startWaitingAnimation() {
+  const dotEl = document.querySelector('#dot');
+  if(!dotEl) {
+    return;
+  }
   setInterval(function() {
-    if($("#dot")) {
-      $("#dot").css({marginLeft: 50*(1+Math.sin(dot))+"%"});
-    }
+    dotEl.style.marginLeft= 50*(1+Math.sin(dot))+'%';
     dot += 0.1;
   }, 33);
 }
@@ -79,9 +80,9 @@ function startRender3D() {
     xhr.open('GET', localStorage.brainbox, true);
     xhr.responseType = 'blob';
     xhr.onload = function() {
-      var blob = this.response;
-      var reader = new FileReader();
-      reader.addEventListener("loadend", function() {
+      const blob = this.response;
+      const reader = new FileReader();
+      reader.addEventListener('loadend', function() {
         const niigz = this.result;
         const brain = configureNifti(niigz);
         brain.level = level;
@@ -98,7 +99,7 @@ function startRender3D() {
       reader.readAsArrayBuffer(blob);
     };
     xhr.onerror = function(e) {
-      console.log("load from localStorage failed. Try to load from server");
+      console.log('load from localStorage failed. Try to load from server');
       reject(e);
     };
     xhr.send();
@@ -114,7 +115,10 @@ function loadHTML() {
 snw.addEventListener('message', (event) => {
   const [vertices, faces] = event.data;
   createMesh(vertices, faces);
-  $("#splash").remove();
+  const splash = document.querySelector('#splash');
+  if (splash) {
+    splash.parentNode.removeChild(splash);
+  }
 });
 
 function init() {
