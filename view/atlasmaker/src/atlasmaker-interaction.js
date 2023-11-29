@@ -35,7 +35,7 @@ export const AtlasMakerInteraction = {
      * @description Load graphic tools and commands
      * @returns {void}
      */
-  async loadTools() {
+  async loadTools () {
     const me = AtlasMakerWidget;
     const tools = await (await fetch('/lib/atlasmaker-tools/tools.json')).json();
     me._loadTools(tools);
@@ -1011,12 +1011,16 @@ export const AtlasMakerInteraction = {
     }
     displayTable();
   },
+  // eslint-disable-next-line max-statements
   landmarkToolDisplayInformation: function (svgStr) {
     const me = AtlasMakerWidget;
+    if (!me.brainW) {
+      return '';
+    }
     const { slice } = me.User;
     const canvas = document.querySelector('#atlasmaker canvas');
     const W = parseFloat(window.getComputedStyle(canvas, null).getPropertyValue('width'));
-    const w = parseFloat(canvas.getAttribute('width'));
+    const w = me.brainW;
     const zx = W / w;
     const zy = zx * me.brainHdim / me.brainWdim;
     if (typeof me.User.vectorial !== 'undefined') {
@@ -1086,11 +1090,11 @@ export const AtlasMakerInteraction = {
     window.dispatchEvent(new CustomEvent('newNotification', { detail: { notification: msg } }));
   },
 
-  setLoadingMessage(msg) {
+  setLoadingMessage (msg) {
     window.dispatchEvent(new CustomEvent('newLoadingMessage', { detail: { message: msg } }));
   },
 
-  sendFinishedLoadingEvent() {
+  sendFinishedLoadingEvent () {
     window.dispatchEvent(new Event('finishedLoading'));
   }
 
