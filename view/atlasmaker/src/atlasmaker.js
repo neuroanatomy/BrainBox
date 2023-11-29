@@ -5,14 +5,13 @@
 import 'structjs';
 import './css/atlasmaker.css';
 
+import Config from './../../../cfg.json';
 import {AtlasMakerDraw} from './atlasmaker-draw.js';
-import {AtlasMakerIO} from './atlasmaker-io.js';
 import {AtlasMakerInteraction} from './atlasmaker-interaction.js';
+import {AtlasMakerIO} from './atlasmaker-io.js';
 import {AtlasMakerPaint} from './atlasmaker-paint.js';
 import {AtlasMakerUI} from './atlasmaker-ui.js';
 import {AtlasMakerWS} from './atlasmaker-ws.js';
-
-import Config from './../../../cfg.json';
 
 /**
  * AtlasMakerWidget base object
@@ -55,17 +54,17 @@ const me = {
   alphaLevel: 0.5, // real, blending of brain and atlas image
   flagUsePreciseCursor: false, // use precise cursor?
   Crsr: { // precise cursor object
-    x:null, // cursor x coord
-    y:null, // cursor y coord
-    fx:null, // finger x coord
-    fy:null, // finger y coord
-    x0:null, // previous finger x coord
-    y0:null, // previous finger y coord
-    cachedX:null, // finger x coord at touch start
-    cachedY:null, // finger y coord at touch start
-    state:'move', // cursor state: mosve, draw, configure
-    prevState:null, // state before configure
-    touchStarted:false // touch started flag
+    x: null, // cursor x coord
+    y: null, // cursor y coord
+    fx: null, // finger x coord
+    fy: null, // finger y coord
+    x0: null, // previous finger x coord
+    y0: null, // previous finger y coord
+    cachedX: null, // finger x coord at touch start
+    cachedY: null, // finger y coord at touch start
+    state: 'move', // cursor state: mosve, draw, configure
+    prevState: null, // state before configure
+    touchStarted: false // touch started flag
   },
   editMode: 0, // editMode=0 to prevent editing, editMode=1 to accept it
   fullscreen: false, // fullscreen mode?
@@ -119,7 +118,7 @@ const me = {
   sendFunctions: [], // array, functions to send messages through the websocket
   flagConnected: 0, // boolean, is the user is currently connected to the server?
   reconnectionTimeout: 5, // reconnection timeout starts at 5 seconds, used in case of websocket cuts
-  flagLoadingImg: {loading:false}, // is an image is loading?
+  flagLoadingImg: {loading: false}, // is an image is loading?
   isMRILoaded: false, // is the currently requested MRI already loaded in the server?
 
   clickDownTools: [], // array, functions handling clicks made by different tools: show, paint, erase, ...
@@ -127,7 +126,7 @@ const me = {
   clickUpTools: [], // array, functions handling clicks made by different tools: show, paint, erase, ...
   longPressTools: [], // array, functions handling long clicks
   displayInformationFunctions: [], // array, functions handling data display: landmarks, length measurement
-  info:{}, // information displayed over each brain slice
+  info: {}, // information displayed over each brain slice
   msg: null, // ?
   msg0: '', // ?
   prevData: 0, // ?
@@ -141,7 +140,7 @@ const me = {
    * @function quit
    * @return {void}
    */
-  quit() {
+  quit () {
     me.log('', 'Goodbye!');
     me.socket.close();
     me.socket = null;
@@ -155,16 +154,16 @@ const me = {
    *        If undefined, the script will be loaded.
    * @returns {object} A promise
    */
-  loadScript(path, testScriptPresent) {
+  loadScript (path, testScriptPresent) {
     const pr = new Promise((resolve, reject) => {
-      if(testScriptPresent && testScriptPresent()) {
+      if (testScriptPresent && testScriptPresent()) {
         console.log('[loadScript] Script', path, 'already present, not loading it again');
 
         return resolve();
       }
       const s = document.createElement('script');
       s.src = path;
-      s.onload=function () {
+      s.onload = function () {
         console.log('Loaded', path);
         resolve();
       };
@@ -176,29 +175,29 @@ const me = {
 
     return pr;
   },
-  _removeVariablesFromURL(url) {
+  _removeVariablesFromURL (url) {
     return url.split('&')[0];
   },
-  _registerToolDown(tool) {
+  _registerToolDown (tool) {
     const {name, func} = tool;
     me.clickDownTools[name] = func;
   },
-  _registerToolMove(tool) {
+  _registerToolMove (tool) {
     const {name, func} = tool;
     me.moveTools[name] = func;
   },
-  _registerToolUp(tool) {
+  _registerToolUp (tool) {
     const {name, func} = tool;
     me.clickUpTools[name] = func;
   },
-  _registerToolLongPress(tool) {
+  _registerToolLongPress (tool) {
     const {name, func} = tool;
     me.longPressTools[name] = func;
   },
-  _registerToolDisplayInformation(func) {
+  _registerToolDisplayInformation (func) {
     me.displayInformationFunctions.push(func);
   },
-  _registerAllToolsDown() {
+  _registerAllToolsDown () {
     const arr = [
       {name: 'show', func: me._showToolDown},
       {name: 'paint', func: me._paintToolDown},
@@ -207,22 +206,22 @@ const me = {
       {name: 'landmark', func: me._landmarkToolDown},
       {name: 'eyedrop', func: me._eyedropToolDown}
     ];
-    for(const tool of arr) {
+    for (const tool of arr) {
       me._registerToolDown(tool);
     }
   },
-  _registerAllToolsMove() {
+  _registerAllToolsMove () {
     const arr = [
       {name: 'landmark', func: me._landmarkToolMove},
       {name: 'paint', func: me._paintToolMove},
       {name: 'erase', func: me._eraseToolMove},
       {name: 'show', func: me._showToolMove}
     ];
-    for(const tool of arr) {
+    for (const tool of arr) {
       me._registerToolMove(tool);
     }
   },
-  _registerAllToolsUp() {
+  _registerAllToolsUp () {
     const arr = [
       {name: 'show', func: me._showToolUp},
       {name: 'eyedrop', func: me._eyedropToolUp},
@@ -230,21 +229,21 @@ const me = {
       {name: 'paint', func: me._paintToolUp}, // same up function for paint and erase
       {name: 'erase', func: me._paintToolUp} // same up function for paint and erase
     ];
-    for(const tool of arr) {
+    for (const tool of arr) {
       me._registerToolUp(tool);
     }
   },
-  _registerAllToolsLongPress() {
+  _registerAllToolsLongPress () {
     const arr = [{name: 'landmark', func: me._landmarkToolLong}];
-    for(const tool of arr) {
+    for (const tool of arr) {
       me._registerToolLongPress(tool);
     }
   },
-  _registerAllToolsDisplayInformation() {
+  _registerAllToolsDisplayInformation () {
     me._registerToolDisplayInformation(me.landmarkToolDisplayInformation);
     me._registerToolDisplayInformation(me.measureToolDisplayInformation);
   },
-  _addAtlasMakerComponents() {
+  _addAtlasMakerComponents () {
     Object.assign(me, AtlasMakerDraw);
     Object.assign(me, AtlasMakerInteraction);
     Object.assign(me, AtlasMakerIO);
@@ -252,7 +251,7 @@ const me = {
     Object.assign(me, AtlasMakerUI);
     Object.assign(me, AtlasMakerWS);
   },
-  _createOffscreenCanvases() {
+  _createOffscreenCanvases () {
     // Create offscreen canvases for mri and atlas
     me.brainOffcn = document.createElement('canvas');
     me.brainOfftx = me.brainOffcn.getContext('2d');
@@ -262,12 +261,12 @@ const me = {
   // eslint-disable-next-line max-statements
   _createOnscreenCanvases: function (elem) {
     // Set widget div (create one if none)
-    if(typeof elem === 'undefined') {
+    if (typeof elem === 'undefined') {
       me.container = document.getElementById('atlasmaker');
       document.body.appendChild(me.container);
     } else {
       me.container = elem;
-      if(me.debug) { console.log('Container: ', me.container); }
+      if (me.debug) { console.log('Container: ', me.container); }
     }
     // Init drawing canvas
     me.container.innerHTML = '<div id="resizable"><canvas id="canvas" data-long-press-delay="500"></canvas></div>';
@@ -295,13 +294,13 @@ const me = {
     // Add precise cursor
     const isTouchArr = [];//["iPad","iPod"];
     const [, curDevice] = navigator.userAgent.split(/[(;]/);
-    if(isTouchArr.includes(curDevice)) {
-      me.flagUsePreciseCursor=true;
+    if (isTouchArr.includes(curDevice)) {
+      me.flagUsePreciseCursor = true;
       me.initCursor();
     }
 
     // get pointer to progress div
-    me.progress=document.querySelector('a.download_MRI');
+    me.progress = document.querySelector('a.download_MRI');
   },
 
   //====================================================================================
@@ -314,7 +313,7 @@ const me = {
      * @param {object} elem DOM element
      * @return {object} Returns a promise
      */
-  async initAtlasMaker(elem) {
+  async initAtlasMaker (elem) {
     me._addAtlasMakerComponents();
     me.identifyUser();
 
@@ -336,23 +335,23 @@ const me = {
 
     try {
       await me.initSocketConnection();
-    } catch(err) {
+    } catch (err) {
       console.error('ERROR:', err);
       throw err;
     }
   },
 
-  async identifyUser() {
+  async identifyUser () {
     // check if user is logged in
     const res = await (await fetch('/loggedIn')).json();
-    if(res.loggedIn) {
-      me.User.username=res.username;
+    if (res.loggedIn) {
+      me.User.username = res.username;
     } else {
-      me.User.username='Anonymous';
+      me.User.username = 'Anonymous';
     }
   },
 
-  async setupEventListeners() {
+  async setupEventListeners () {
     // event connect: Configure mouse events for desktop computers
     // (touch events are configured in the initCursor function)
     me.canvas.onmousedown = me.mousedown;
@@ -382,11 +381,11 @@ const me = {
    * @param {string} source The MRI source, a URL
    * @return {object} A promise
    */
-  _requestMRIInfo(source) {
+  _requestMRIInfo (source) {
     const url = me._removeVariablesFromURL(source);
     me.setLoadingMessage('Loading... ');
-    const pr = new Promise(function(resolve, reject) {
-      const timer = setInterval( async function () {
+    const pr = new Promise(function (resolve, reject) {
+      const timer = setInterval(async function () {
         console.log('polling for data...', url);
 
         const res = await fetch(me.hostname + '/mri/json', {
@@ -395,18 +394,18 @@ const me = {
           body: JSON.stringify({ url })
         });
         const info = await res.json();
-        if(info.success === true) {
+        if (info.success === true) {
           console.log('requestMRIInfo promise resolved');
           clearInterval(timer);
           resolve(info);
-        } else if(info.success === 'downloading') {
-          if(me.User.source !== url) {
+        } else if (info.success === 'downloading') {
+          if (me.User.source !== url) {
             clearInterval(timer);
             reject(new Error('source changed. Probably no longer requested?'));
 
             return;
           }
-          me.setLoadingMessage('Loading... '+parseInt(info.cur/info.len*100, 10)+'%');
+          me.setLoadingMessage('Loading... ' + parseInt(info.cur / info.len * 100, 10) + '%');
         } else {
           console.log('ERROR: requestMRIInfo', info);
           clearInterval(timer);
@@ -418,12 +417,11 @@ const me = {
     return pr;
   },
 
-  merge(source, target) {
+  merge (source, target) {
     for (const [key, val] of Object.entries(source)) {
       if (val !== null && typeof val === 'object') {
         if (typeof target[key] === 'undefined') {
-          // eslint-disable-next-line
-          target[key] = new Object.getPrototypeOf(val).constructor();
+          target[key] = new val.constructor();
         }
         me.merge(val, target[key]);
       } else {
@@ -444,16 +442,12 @@ const me = {
    * @return {object} A promise
    */
   // eslint-disable-next-line max-statements
-  async _configureMRI(info, index) {
+  async _configureMRI (info, index) {
     me.User.source = info.source;
     let info2;
-    try {
-      info2 = await me._requestMRIInfo(info.source);
-    } catch(err) {
-      throw new Error(err);
-    }
+    info2 = await me._requestMRIInfo(info.source);
 
-    if(!info.dim) {
+    if (!info.dim) {
       // the mri object used to call this function does not have a 'dim'
       // property, indicating that it had not been downloaded at the time of the
       // call. Here we merge the fields from info2 that are initialised upon
@@ -464,7 +458,7 @@ const me = {
     info2 = info;
 
     // Get data from AtlasMaker object
-    me.name = info2.name||'Untitled'; // 1
+    me.name = info2.name || 'Untitled'; // 1
     me.url = info2.url; // 2; NII
     me.atlasFilename = info2.mri.atlas[index].filename; // 3; NII
     me.atlasName = info2.mri.atlas[index].name;
@@ -487,16 +481,16 @@ const me = {
     me.computeS2VTransformation();
     //me.testS2VTransformation();
 
-    me.flagLoadingImg = {loading:false}; // NII
+    me.flagLoadingImg = {loading: false}; // NII
 
     me.brainImg.img = null; // NII
 
     // get volume dimensions
     me.brainDim = info2.dim; // REPEATED (4); NII
-    if(info2.pixdim) {
-      me.brainPixdim=info2.pixdim; // REPEATED (5); NII
+    if (info2.pixdim) {
+      me.brainPixdim = info2.pixdim; // REPEATED (5); NII
     } else {
-      me.brainPixdim=[1, 1, 1];
+      me.brainPixdim = [1, 1, 1];
     }
 
     return info2;
@@ -510,10 +504,10 @@ const me = {
    * @param {object} json A json object with ontology information
    * @return {void}
    */
-  configureOntology(json) {
-    me.ontology=json;
-    me.ontology.valueToIndex=[];
-    me.ontology.labels.forEach(function(o, i) { me.ontology.valueToIndex[o.value]=i; });
+  configureOntology (json) {
+    me.ontology = json;
+    me.ontology.valueToIndex = [];
+    me.ontology.labels.forEach(function (o, i) { me.ontology.valueToIndex[o.value] = i; });
     // to clear the region name being displayed on the info text-layer when having used eyedrop
     delete me.info.region;
   },
@@ -528,21 +522,13 @@ const me = {
    */
   // eslint-disable-next-line max-statements
   configureAtlasMaker: async function (info, index) {
-    let info2;
-    let res;
-    let labels;
-
     // configure MRI and ontology
-    try {
-      info2 = await me._configureMRI(info, index);
-      info = info2;
-      res = await fetch(me.hostname + '/labels/' + info.mri.atlas[index].labels);
-      labels = await res.json();
-    } catch (err) {
-      throw new Error(err);
-    }
+    const info2 = await me._configureMRI(info, index);
+    info = info2;
+    const res = await fetch(me.hostname + '/labels/' + info.mri.atlas[index].labels);
+    const labels = await res.json();
     me.configureOntology(labels);
-    me.User.penValue=me.ontology.labels[0].value;
+    me.User.penValue = me.ontology.labels[0].value;
 
     // inform other connected users of the changes
     console.log('====> Inform server of my settings');
@@ -553,14 +539,14 @@ const me = {
     // [HERE]
 
     // enforce fullscreen setting
-    if(me.fullscreen === true) { // WARNING: HACK... would be better to implement enter/exit fullscreen
+    if (me.fullscreen === true) { // WARNING: HACK... would be better to implement enter/exit fullscreen
       //me.fullscreen=false;
       //me.toggleFullscreen(); // FIXME
     }
 
     // pick the first label for segmenting (it has to come after the
     // sendUserDataMessage calls, because it also sends ws messages)
-    me.changePenColor( 0 );
+    me.changePenColor(0);
 
     return info;
   }
