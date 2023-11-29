@@ -326,14 +326,12 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       try {
         await me._saveAtlasVoxelData(atlas);
       } catch (err) {
-        // can crash brainbox, second argument is not used
-        throw new Error('Can\'t save atlas voxel data', err);
+        console.error('Can\'t save atlas voxel data', err);
       }
       try {
         await me._saveAtlasVectorialData(atlas);
       } catch (err) {
-        // can crash brainbox, second argument is not used
-        throw new Error('Can\'t save atlas vectorial data', err);
+        console.error('Can\'t save atlas vectorial data', err);
       }
     },
 
@@ -357,7 +355,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         try {
           mri = await db.get('mri').findOne({ source: atlas.source, backup: { $exists: 0 } }, { _id: 0 });
         } catch (err) {
-          throw new Error('Can\'t find entry for atlas voxel data in DB', err);
+          console.error(err);
+          throw new Error('Can\'t find entry for atlas voxel data in DB');
         }
 
         if (mri === null) {
@@ -1132,7 +1131,9 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       const sourceUS = me.getUserFromUserId(data.uid);
 
       // get brainPath from User object
-      // can crash brainbox in case of sourceUS.User object still not created
+      if (!sourceUS.User) {
+        console.error('sourceUS.User object still not created, do not try to get brain slice');
+      }
       const brainPath = sourceUS.User.dirname + sourceUS.User.mri;
 
       // update User object
@@ -1146,7 +1147,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       me.getBrainAtPath(brainPath)
         .then(function (theData) {
           me.sendSliceToUser(theData, view, slice, userSocket);
-        });
+        })
+        .catch((err) => console.error(err));
     },
     receiveRequestSlice2Message: function (data, userSocket) {
       const { view } = data; // user view
@@ -1344,7 +1346,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       try {
         await Promise.all(results);
       } catch (err) {
-        throw new Error('Can\'t unload atlases', err);
+        console.error(err);
+        throw new Error('Can\'t unload atlases');
       }
     },
     _sendAtlasVoxelDataToUser: function (atlasdata, userSocket, flagCompress) {
@@ -1403,7 +1406,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
      * @returns {Object} An atlas (mri structure)
      */
     // eslint-disable-next-line max-statements
-    loadAtlas: async function loadAtlas(User) {
+    loadAtlas: async function loadAtlas (User) {
       const mriPath = path.join(me.dataDirectory, User.dirname, User.atlasFilename);
 
       if (typeof User.dirname === 'undefined') {
@@ -1626,9 +1629,9 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
                 me.sendAtlasToUser(atlas, userSocket, true);
                 sourceUS.User.isMRILoaded = true;
               })
-              .catch((err) => console.log(new Error('ERROR: Unable to load atlas', err)));
+              .catch((err) => console.error('ERROR: Unable to load atlas', err));
           }
-        } else {
+        } else if (User) {
           // receive a specific field of the User data object from the user
           /** @todo If the atlas/mri for the client failed to be sent, `User` is undefined */
           const changes = JSON.parse(data.description);
@@ -2002,7 +2005,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           try {
             await me.unloadAtlas(sourceUS.User.dirname, sourceUS.User.atlasFilename, sourceUS.specimenName);
           } catch (err) {
-            throw new Error('Can\'t unload atlas', err);
+            console.error(err);
+            throw new Error('Can\'t unload atlas');
           }
         }
       } else {
@@ -2054,7 +2058,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         try {
           await me._disconnectUser({ ws });
         } catch (err) {
-          throw new Error('Can\'t disconnect user', err);
+          console.error(err);
+          throw new Error('Can\'t disconnect user');
         }
       });
     },
