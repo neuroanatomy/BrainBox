@@ -6,13 +6,10 @@ module.exports = {
   'rules': { 'vue/multi-word-component-names': 'off' },
   'overrides': [
     {
-      files: [
-        'view/brainbox/src/components/Tools.vue',
-        'view/brainbox/src/components/MRIPage.vue'
-      ],
+      files: ['*.vue'],
       rules: {
-        'max-lines': 'off',
-        'no-undef': 'off'
+        // 300 lines limit seems to short for *.vue files
+        'max-lines': 'off'
       }
     }
   ]

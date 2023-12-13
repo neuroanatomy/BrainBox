@@ -1,16 +1,18 @@
 /* eslint-disable max-lines */
-const url = require('url');
 const crypto = require('crypto');
-const validatorNPM = require('validator');
-const { param, validationResult } = require('express-validator');
-const dataSlices = require('../dataSlices/dataSlices.js');
+const url = require('url');
+
 const AsyncLock = require('async-lock');
 const lock = new AsyncLock();
-const { AccessType, AccessLevel, AccessControlService } = require('neuroweblab');
-const _ = require('lodash');
 const createDOMPurify = require('dompurify');
+const { param, validationResult } = require('express-validator');
 const { JSDOM } = require('jsdom');
+const _ = require('lodash');
+const { AccessType, AccessLevel, AccessControlService } = require('neuroweblab');
+const validatorNPM = require('validator');
+
 const { ForbiddenAccessError } = require('../../errors.js');
+const dataSlices = require('../dataSlices/dataSlices.js');
 const { window } = (new JSDOM('', {
   features: {
     FetchExternalResources: false, // disables resource loading over HTTP / filesystem
@@ -477,7 +479,7 @@ const insertMRInames = function (req, res, list) {
     const hash = crypto.createHash('md5').update(source)
       .digest('hex');
 
-    // if mri exists, and has no name, insert the name
+    // if mri doesn't exists, create it
     if (!mri) {
       mri = {
         filename,

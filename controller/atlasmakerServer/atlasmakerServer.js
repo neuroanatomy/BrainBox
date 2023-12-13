@@ -278,6 +278,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       }
     },
     removeAtlasAtIndex: function (iAtlas) {
+      // can throw an error if me.Atlases[iAtlas] is undefined
       console.log(`INFO: Removing atlas ${me.Atlases[iAtlas].filename}`);
       clearInterval(me.Atlases[iAtlas].timer);
       delete me.Atlases[iAtlas];
@@ -1133,6 +1134,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       // get brainPath from User object
       if (!sourceUS.User) {
         console.error('sourceUS.User object still not created, do not try to get brain slice');
+
+        return;
       }
       const brainPath = sourceUS.User.dirname + sourceUS.User.mri;
 
@@ -1346,8 +1349,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       try {
         await Promise.all(results);
       } catch (err) {
+        console.error('Can\'t unload atlases');
         console.error(err);
-        throw new Error('Can\'t unload atlases');
       }
     },
     _sendAtlasVoxelDataToUser: function (atlasdata, userSocket, flagCompress) {
@@ -2005,8 +2008,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           try {
             await me.unloadAtlas(sourceUS.User.dirname, sourceUS.User.atlasFilename, sourceUS.specimenName);
           } catch (err) {
+            console.error('Can\'t unload atlas');
             console.error(err);
-            throw new Error('Can\'t unload atlas');
           }
         }
       } else {
@@ -2058,8 +2061,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         try {
           await me._disconnectUser({ ws });
         } catch (err) {
+          console.error('Can\'t disconnect user');
           console.error(err);
-          throw new Error('Can\'t disconnect user');
         }
       });
     },

@@ -445,7 +445,6 @@ const me = {
   async _configureMRI (info, index) {
     me.User.source = info.source;
     let info2;
-    info2 = await me._requestMRIInfo(info.source);
 
     if (!info.dim) {
       // the mri object used to call this function does not have a 'dim'
@@ -453,6 +452,7 @@ const me = {
       // call. Here we merge the fields from info2 that are initialised upon
       // download of the mri server-side. The mri field in the original 'info',
       // which contains the newly created text 'annotations', is conserved
+      info2 = await me._requestMRIInfo(info.source);
       info = me.merge(info, info2);
     }
     info2 = info;

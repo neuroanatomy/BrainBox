@@ -312,6 +312,7 @@ import {
   ScriptConsole
 } from 'nwl-components';
 import { ref } from 'vue';
+
 import useVisualization from '../store/visualization';
 const { AtlasMakerWidget } = window;
 
