@@ -146,6 +146,7 @@
   </Wrapper>
 </template>
 <script setup>
+/* global AtlasMakerWidget BrainBox params mriInfo hasPrivilegedAccess */
 import { keyBy, mapValues, flatten, map } from 'lodash';
 import get from 'lodash/get';
 import {
@@ -156,7 +157,7 @@ import {
   Access,
   OntologySelector,
   AdjustSettings
-} from 'nwl-components/dist/nwl-components.umd.js';
+} from 'nwl-components';
 import { ref, onMounted, watch, computed } from 'vue';
 
 import useVisualization from '../store/visualization';
@@ -187,7 +188,7 @@ const selectedIndex = ref(0);
 const reduced = computed(() => !displayChat.value && !displayScript.value);
 
 watch(fullscreen, () => {
-  if(!fullscreen.value) {
+  if (!fullscreen.value) {
     const tools = document.querySelector('.area .tools');
     setTimeout(() => {
       tools.style.left = '10px';

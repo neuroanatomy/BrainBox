@@ -1,8 +1,7 @@
 /* eslint-disable max-lines */
 /*! AtlasMaker */
-/* eslint-disable max-lines */
 
-import 'structjs';
+// import 'structjs';
 import './css/atlasmaker.css';
 
 import Config from './../../../cfg.json';

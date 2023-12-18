@@ -318,12 +318,12 @@ const { AtlasMakerWidget } = window;
 
 const requireIconsMap = () => {
   const r = require.context(
-    '!!url-loader!../../../atlasmaker/src/svg',
+    '../../../atlasmaker/src/svg',
     false,
-    /^.*\.svg$/
+    /\.svg$/
   );
   const icons = {};
-  r.keys().forEach((key) => (icons[key.substr(2)] = r(key).default));
+  r.keys().forEach((key) => { console.log(key); icons[key.substr(2)] = r(key); });
 
   return icons;
 };

@@ -1,19 +1,26 @@
-/* eslint-disable prefer-exponentiation-operator */
 const path = require('path');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
-// const HtmlWebpackPlugin = require('html-webpack-plugin');
+
+const {ProvidePlugin} = require('webpack');
 
 module.exports = {
   entry: {
     atlasmaker: './view/atlasmaker/src/atlasmaker.js'
   },
   devtool: 'eval-source-map',
-  plugins: [new CleanWebpackPlugin(['dist'])],
+  plugins: [
+    // used by structjs
+    new ProvidePlugin({
+      Buffer: ['buffer', 'Buffer']
+    })
+  ],
   output: {
     filename: 'atlasmaker.js',
     library: 'AtlasMakerWidget',
     libraryExport: 'AtlasMakerWidget',
-    path: path.resolve(__dirname, 'view/atlasmaker/dist')
+    path: path.resolve(__dirname, 'view/atlasmaker/dist'),
+    clean: {
+      keep: 'atlasmaker-tools/'
+    }
   },
   module: {
     rules: [
@@ -25,16 +32,25 @@ module.exports = {
         ]
       },
       {
-        test: /\.(png|jpg|gif)$/,
-        use: ['file-loader']
-      },
-      {
         test: /\.svg$/,
-        use: ['url-loader']
+        type: 'asset/inline'
       },
       {
         test: /\.(html)$/,
-        use: ['html-loader']
+        loader: 'html-loader',
+
+        options: {
+          // do not resolve sources starting with /
+          sources: {
+            urlFilter: (_, value) => {
+              if ((/^\//).test(value)) {
+                return false;
+              }
+
+              return true;
+            }
+          }
+        }
       }
     ]
   }

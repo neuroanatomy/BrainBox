@@ -58,6 +58,8 @@
 /* global projectInfo */
 /* eslint-disable max-lines */
 
+import { HocuspocusProvider } from '@hocuspocus/provider';
+import { syncedStore, getYjsDoc, enableVueBindings } from '@syncedstore/core';
 import { forEach, get, set } from 'lodash';
 //import { initSyncedStore, waitForSync } from "../store/synced";
 import {
@@ -67,13 +69,13 @@ import {
   ProjectPage,
   TextAnnotations,
   VolumeAnnotations
-} from 'nwl-components/dist/nwl-components.umd.js';
+} from 'nwl-components';
 import * as Vue from 'vue';
 
-import { HocuspocusProvider } from '@hocuspocus/provider';
-import { syncedStore, getYjsDoc, enableVueBindings } from '@syncedstore/core';
+
 import config from '../../../../cfg.json';
 import useVisualization from '../store/visualization';
+
 import Tools from './Tools.vue';
 
 enableVueBindings(Vue);

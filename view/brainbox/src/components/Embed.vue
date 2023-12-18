@@ -1,11 +1,21 @@
 <template>
   <main>
-    <select @change="onFileSelect" class="fileSelector">
-      <option v-for="file in files" :key="file.source" :value="file.source">
+    <select
+      @change="onFileSelect"
+      class="fileSelector"
+    >
+      <option
+        v-for="file in files"
+        :key="file.source"
+        :value="file.source"
+      >
         {{ file.name || file.source }}
       </option>
     </select>
-    <select @change="onVolumeAnnotationSelect" class="layerSelector">
+    <select
+      @change="onVolumeAnnotationSelect"
+      class="layerSelector"
+    >
       <option
         v-for="annotation in volumeAnnotations"
         :key="annotation.name"
@@ -17,13 +27,16 @@
     <Editor
       :title="title"
       :class="{ fullscreen, reduced: !displayChat && !displayScript }"
-      toolsMinHeight="340px"
+      tools-min-height="340px"
     >
-      <template v-slot:tools>
+      <template #tools>
         <Tools />
       </template>
-      <template v-slot:content>
-        <div id="stereotaxic" style="width: 100%; height: 100%"></div>
+      <template #content>
+        <div
+          id="stereotaxic"
+          style="width: 100%; height: 100%"
+        />
         <OntologySelector
           :ontology="ontology"
           :open="displayOntology"
@@ -44,14 +57,17 @@
   </main>
 </template>
 <script setup>
-import { ref, onMounted, watch } from "vue";
+/* global AtlasMakerWidget BrainBox projectInfo annotationsAccessLevel */
 import {
   Editor,
   OntologySelector,
-  AdjustSettings,
-} from "nwl-components/dist/nwl-components.umd.js";
-import Tools from "./Tools.vue";
-import useVisualization from "../store/visualization";
+  AdjustSettings
+} from 'nwl-components';
+import { ref, onMounted, watch } from 'vue';
+
+import useVisualization from '../store/visualization';
+
+import Tools from './Tools.vue';
 
 const {
   title,
@@ -69,7 +85,7 @@ const {
   displayChat,
   displayScript,
   currentFile,
-  init: initVisualization,
+  init: initVisualization
 } = useVisualization();
 
 const files = ref([]);
@@ -88,7 +104,7 @@ const toggleFullScreen = () => {
   } else if (document.exitFullscreen) {
     document.exitFullscreen();
   }
-}
+};
 
 watch(fullscreen, toggleFullScreen);
 
@@ -101,11 +117,12 @@ const getDefaultAtlas = (annotation) => {
     created: date.toJSON(),
     modified: date.toJSON(),
     modifiedBy: AtlasMakerWidget.User.username,
-    filename: Math.random().toString(36).slice(2) + ".nii.gz", // automatically generated filename
+    filename: Math.random().toString(36)
+      .slice(2) + '.nii.gz', // automatically generated filename
     labels: annotation.values,
     owner: AtlasMakerWidget.User.username,
-    type: "volume",
-    access: annotationsAccessLevel,
+    type: 'volume',
+    access: annotationsAccessLevel
   };
 };
 
@@ -114,7 +131,7 @@ const getMRIParams = (file) => {
   const plainFile = JSON.parse(JSON.stringify(file));
 
   const url = plainFile.source;
-  const params = { url, view: "cor", slice: 180, fullscreen: false };
+  const params = { url, view: 'cor', slice: 180, fullscreen: false };
 
   // select the first annotation associated to this project
   const annotationIndex = plainFile.mri.atlas.findIndex(
@@ -130,7 +147,7 @@ const getMRIParams = (file) => {
 // make sure that all mri files have volume annotations as set in the project info
 const populateVolumeAnnotations = (file) => {
   const volumeAnnotations = projectInfo.annotations.list.filter(
-    (anno) => anno.type === "volume"
+    (anno) => anno.type === 'volume'
   );
   let annotationIndex = -1;
   volumeAnnotations.forEach((annotation) => {
@@ -156,7 +173,7 @@ const selectFile = async (file) => {
     return;
   }
   currentFile.value = file;
-  title.value = "Loading…";
+  title.value = 'Loading…';
   populateVolumeAnnotations(file);
   const params = getMRIParams(file);
 
@@ -184,7 +201,7 @@ const selectVolumeAnnotation = async (selectedAtlas) => {
   if (index === -1) {
     return;
   }
-  title.value = "Loading…";
+  title.value = 'Loading…';
   await AtlasMakerWidget.configureAtlasMaker(BrainBox.info, index);
   ontology.value = AtlasMakerWidget.ontology;
   currentLabel.value = 0;
@@ -193,11 +210,11 @@ const selectVolumeAnnotation = async (selectedAtlas) => {
 const doFetchFiles = async (files, cursor) => {
   const params = {
     start: cursor,
-    length: 100,
+    length: 100
   };
   const url = new URL(
     `/project/json/${projectInfo.shortname}/files`,
-    window.location.protocol + "//" + window.location.host
+    window.location.protocol + '//' + window.location.host
   );
   url.search = new URLSearchParams(params).toString();
   const res = await (await fetch(url)).json();

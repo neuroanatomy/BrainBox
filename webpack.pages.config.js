@@ -1,11 +1,8 @@
-/* eslint-disable prefer-exponentiation-operator */
 const path = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
-// const WebpackShellPlugin = require('webpack-shell-plugin');
+
 const { VueLoaderPlugin } = require('vue-loader');
 
-module.exports = (env, argv) => ({
+module.exports = {
   entry: {
     'ask-for-login-page': './view/brainbox/src/pages/ask-for-login-page.js',
     'index-page': './view/brainbox/src/pages/index-page.js',
@@ -18,16 +15,11 @@ module.exports = (env, argv) => ({
     'user-page': './view/brainbox/src/pages/user-page.js'
   },
   devtool: 'eval-source-map',
-  plugins: [
-    new CleanWebpackPlugin(['dist']),
-    new HtmlWebpackPlugin({
-      title: 'Output Management'
-    }),
-    new VueLoaderPlugin()
-  ],
+  plugins: [new VueLoaderPlugin()],
   output: {
     filename: '[name].js',
-    path: path.resolve(__dirname, 'view/brainbox/dist')
+    path: path.resolve(__dirname, 'view/brainbox/dist'),
+    clean: false // do not clean as same output dir is used by webpack.brainbox.config.js
   },
   module: {
     rules: [
@@ -39,8 +31,8 @@ module.exports = (env, argv) => ({
         ]
       },
       {
-        test: /\.(png|svg|jpg|gif)$/,
-        use: ['file-loader']
+        test: /\.svg$/,
+        type: 'asset/inline'
       },
       {
         test: /\.vue$/,
@@ -48,4 +40,4 @@ module.exports = (env, argv) => ({
       }
     ]
   }
-});
+};

@@ -1,16 +1,15 @@
 import './style.css';
 import pako from 'pako';
-import work from 'webworkify-webpack';
+
+import html from './index.html';
 import * as THREE from './three.js-r109/build/three.module.js';
 import { TrackballControls } from './three.js-r109/examples/jsm/controls/TrackballControls.js';
-import html from './index.html';
 
 let camera, renderer, scene, trackball;
 const level = 1;
 let dot = 0; // dot for "wait" animation
 
-
-const snw = work(require.resolve('./surfacenets.worker.js'));
+const snw = new Worker(new URL('./surfacenets.worker.js', import.meta.url));
 
 const onWindowResize = function () {
   const W = window.innerWidth;
@@ -121,11 +120,11 @@ const configureNifti = function (niigz) {
 
 const startWaitingAnimation = () => {
   const dotEl = document.querySelector('#dot');
-  if(!dotEl) {
+  if (!dotEl) {
     return;
   }
-  setInterval(function() {
-    dotEl.style.marginLeft= 50*(1+Math.sin(dot))+'%';
+  setInterval(function () {
+    dotEl.style.marginLeft = 50 * (1 + Math.sin(dot)) + '%';
     dot += 0.1;
   }, 33);
 };
