@@ -712,16 +712,11 @@ const deleteProject = async function (req, res) {
   }
 };
 
+// eslint-disable-next-line max-statements
 const embed = async function (req, res) {
   let loggedUser = 'anonymous';
   if (req.isAuthenticated()) {
     loggedUser = req.user.username;
-  }
-
-  const refererURL = new URL(req.headers.referer);
-  const disallowedDomains = req.user.authorizedHostsForEmbedding.split('\n') || [];
-  if (disallowedDomains.include(refererURL.host)) {
-    return res.status(403).send('Not authorized to embed this project');
   }
 
   const json = await req.db.get('project').findOne({ shortname: req.params.projectName, backup: { $exists: 0 } });
@@ -731,6 +726,21 @@ const embed = async function (req, res) {
 
       return;
     }
+
+    const {referer} = req.headers;
+    let isEmbeddingDisallowed = true;
+
+    if (referer) {
+      const refererURL = new URL(req.headers.referer);
+      const user = await req.db.get('user').findOne({ nickname: json.owner });
+      const disallowedDomains = user.authorizedHostsForEmbedding ? user.authorizedHostsForEmbedding.split('\n') : [];
+      isEmbeddingDisallowed = disallowedDomains.includes(refererURL.host);
+    }
+
+    if (isEmbeddingDisallowed) {
+      return res.status(403).send('Not authorized to embed this project');
+    }
+
     json.files.list = [];
     res.render('embed', {
       projectInfo: JSON.stringify(json),
