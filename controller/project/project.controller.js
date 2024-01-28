@@ -727,19 +727,9 @@ const embed = async function (req, res) {
       return;
     }
 
-    const {referer} = req.headers;
-    let isEmbeddingDisallowed = true;
-
-    if (referer) {
-      const refererURL = new URL(req.headers.referer);
-      const user = await req.db.get('user').findOne({ nickname: json.owner });
-      const disallowedDomains = user.authorizedHostsForEmbedding ? user.authorizedHostsForEmbedding.split('\n') : [];
-      isEmbeddingDisallowed = disallowedDomains.includes(refererURL.host);
-    }
-
-    if (isEmbeddingDisallowed) {
-      return res.status(403).send('Not authorized to embed this project');
-    }
+    const user = await req.db.get('user').findOne({ nickname: json.owner });
+    const allowedDomains = user.authorizedHostsForEmbedding ? user.authorizedHostsForEmbedding.split('\n').join(' ') : 'none';
+    res.header('Content-Security-Policy', `frame-ancestors ${allowedDomains}`);
 
     json.files.list = [];
     res.render('embed', {
