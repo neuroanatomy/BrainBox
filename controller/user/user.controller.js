@@ -1,6 +1,5 @@
-/* eslint-disable prefer-exponentiation-operator */
-/* eslint-disable radix */
 const dateFormat = require('dateformat');
+
 const dataSlices = require('../dataSlices/dataSlices.js');
 
 const validator = function (req, res, next) {
@@ -109,8 +108,8 @@ const apiUserFiles = async function (req, res) {
     return;
   }
 
-  start = parseInt(start);
-  length = parseInt(length);
+  start = parseInt(start, 10);
+  length = parseInt(length, 10);
 
   const result = await dataSlices.getUserFilesSlice(req, userName, start, length)
     .catch(function (err) {
@@ -142,8 +141,8 @@ const apiUserAtlas = async function (req, res) {
 
     return;
   }
-  start = parseInt(start);
-  length = parseInt(length);
+  start = parseInt(start, 10);
+  length = parseInt(length, 10);
 
   const result = await dataSlices.getUserAtlasSlice(req, userName, start, length)
     .catch(function (err) {
@@ -175,8 +174,8 @@ const apiUserProjects = async function (req, res) {
 
     return;
   }
-  start = parseInt(start);
-  length = parseInt(length);
+  start = parseInt(start, 10);
+  length = parseInt(length, 10);
 
   const result = await dataSlices.getUserProjectsSlice(req, userName, start, length)
     .catch(function (err) {
@@ -186,7 +185,7 @@ const apiUserProjects = async function (req, res) {
   res.send(result);
 };
 
-const deleteProfile = async function(req, res) {
+const deleteProfile = async function (req, res) {
   const loggedUser = req.user;
   if (!loggedUser) {
     res.status(401);
@@ -195,22 +194,23 @@ const deleteProfile = async function(req, res) {
     const userInfo = await req.app.db.queryUser({nickname: loggedUser.username});
     await req.app.db.updateUser({ ...userInfo, disabled: true });
     res.redirect('/logout');
-  } catch(err) {
+  } catch (err) {
     console.log(err);
     res.status(500);
   }
 };
 
-const savePreferences = async function(req, res) {
+const savePreferences = async function (req, res) {
   const loggedUser = req.user;
   if (!loggedUser) {
     res.status(401);
   }
   try {
     const userInfo = await req.app.db.queryUser({nickname: loggedUser.username});
-    await req.app.db.updateUser({ ...userInfo, authorizedHostsForEmbedding: req.body.authorizedHosts });
+    const authorizedHostsForEmbedding = req.body.authorizedHosts.replace(/[^a-zA-Z0-9\-.:\n]/g, '');
+    await req.app.db.updateUser({ ...userInfo, authorizedHostsForEmbedding });
     res.redirect(`/user/${req.user.username}`);
-  } catch(err) {
+  } catch (err) {
     console.log(err);
     res.status(500);
   }

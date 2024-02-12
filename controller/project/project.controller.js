@@ -728,8 +728,13 @@ const embed = async function (req, res) {
     }
 
     const user = await req.db.get('user').findOne({ nickname: json.owner });
-    const allowedDomains = user.authorizedHostsForEmbedding ? user.authorizedHostsForEmbedding.split('\n').join(' ') : 'none';
-    res.header('Content-Security-Policy', `frame-ancestors ${allowedDomains}`);
+    const allowedDomains = user.authorizedHostsForEmbedding ? user.authorizedHostsForEmbedding.split('\n').join(' ') : '\'none\'';
+    try {
+      res.header('Content-Security-Policy', `frame-ancestors ${allowedDomains}`);
+    } catch (err) {
+      console.log(err, 'setting frame-ancestors to none');
+      res.header('Content-Security-Policy', 'frame-ancestors \'none\'');
+    }
 
     json.files.list = [];
     res.render('embed', {
