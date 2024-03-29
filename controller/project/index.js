@@ -1,6 +1,7 @@
 /*global authTokenMiddleware */
 
 const express = require('express');
+
 const controller = require('./project.controller');
 
 const router = new express.Router();
