@@ -55,7 +55,7 @@
             <h3>Embed</h3>
             <p>Limit embedding of my contents to the following hosts (1 item by line):</p>
             <textarea
-              placeholder="example.com"
+              placeholder="https://example.com"
               name="authorizedHosts"
               :value="user.authorizedHostsForEmbedding"
             />

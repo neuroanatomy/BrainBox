@@ -207,7 +207,26 @@ const savePreferences = async function (req, res) {
   }
   try {
     const userInfo = await req.app.db.queryUser({nickname: loggedUser.username});
-    const authorizedHostsForEmbedding = req.body.authorizedHosts.replace(/[^a-zA-Z0-9\-.:\n]/g, '');
+    const authorizedHostsForEmbedding = req.body.authorizedHosts
+      .replace(/[^a-zA-Z0-9\-.:/\n]/g, '').split('\n')
+      .filter((url) => {
+        try {
+          const parsedURL = new URL(url);
+          // If protocol is not 'http:' or 'https:', consider it invalid
+          if (parsedURL.protocol !== 'http:' && parsedURL.protocol !== 'https:') {
+            console.error(`Invalid URL ${url}: Protocol is not supported`);
+
+            return false;
+          }
+
+          return true;
+        } catch (error) {
+          console.error(`${error.message}: ${url}`);
+
+          return false;
+        }
+      })
+      .join('\n');
     await req.app.db.updateUser({ ...userInfo, authorizedHostsForEmbedding });
     res.redirect(`/user/${req.user.username}`);
   } catch (err) {
