@@ -1,9 +1,10 @@
 /* global loggedUser */
 
 import 'nwl-components/dist/style.css';
+import { createApp } from 'vue';
+
 import NewProjectPage from '../components/NewProjectPage.vue';
 import config from '../nwl-components-config';
-import { createApp } from 'vue';
 
 const app = createApp(NewProjectPage);
 app.provide('config', config);

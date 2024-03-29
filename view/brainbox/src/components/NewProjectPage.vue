@@ -1,8 +1,8 @@
 <template>
   <NewProjectPage
-    :onKeyDown="checkInput"
+    :on-key-down="checkInput"
     :existing-project="existingProject"
-    :validInput="validInput"
+    :valid-input="validInput"
   >
     A project contains a list of MRI files, a set of volume or text annotations,
     and a list of collaborators with their access rights. The short name of a
@@ -13,6 +13,7 @@
 <script setup>
 import { NewProjectPage } from 'nwl-components';
 import { ref } from 'vue';
+
 import Config from './../../../../cfg.json';
 
 const host = Config.wshostname;

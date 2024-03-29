@@ -1,35 +1,39 @@
 <template>
-    <SettingsPage :project="project" :files="files" />
+  <SettingsPage
+    :project="project"
+    :files="files"
+  />
 </template>
 
 <script setup>
-import { onMounted, ref  } from 'vue';
+/* global project */
 import { SettingsPage } from 'nwl-components';
+import { onMounted, ref } from 'vue';
 const files = ref([]);
-const props = defineProps({
-    project: {
-        type: Object,
-        required: true,
-    }
+defineProps({
+  project: {
+    type: Object,
+    required: true
+  }
 });
 
 let cursorFiles = 0;
-const queryFiles = async (files) => {
+const queryFiles = async (fileArray) => {
   const res = await fetch(`/project/json/${project.shortname}/files?start=${cursorFiles}&length=100&name=true`);
   const list = await res.json();
-  if(list.length) {
-    files.push(...list);
+  if (list.length) {
+    fileArray.push(...list);
     cursorFiles += 100;
 
-    if(list.length === 100) {
-      return queryFiles(files);
+    if (list.length === 100) {
+      return queryFiles(fileArray);
     }
   }
 
-  return files;
+  return fileArray;
 };
 
 onMounted(async () => {
-    files.value.push(...await queryFiles([]));
+  files.value.push(...await queryFiles([]));
 });
 </script>

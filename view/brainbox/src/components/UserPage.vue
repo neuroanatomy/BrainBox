@@ -1,7 +1,9 @@
 <template>
   <UserPage :user="user">
-    <template v-slot:side> {{projects.length}} Projects </template>
-    <template v-slot:content>
+    <template #side>
+      {{ projects.length }} Projects
+    </template>
+    <template #content>
       <Tabs>
         <Tab title="Projects">
           <Table id="projects">
@@ -15,73 +17,122 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="project in projects" :key="project.name">
+              <tr
+                v-for="project in projects"
+                :key="project.name"
+              >
                 <td>
-                  <a :href="`${project.projectURL}/settings`" class="settings">
+                  <a
+                    :href="`${project.projectURL}/settings`"
+                    class="settings"
+                  >
                     <img
                       style="width: 11px; margin: 3px 8px 0 0"
                       src="/img/settings.svg"
-                    />
+                    >
                   </a>
                   <a :href="project.projectURL"> {{ project.project }} </a>
                 </td>
-                <td>{{project.numFiles}}</td>
-                <td>{{project.numCollaborators}}</td>
+                <td>{{ project.numFiles }}</td>
+                <td>{{ project.numCollaborators }}</td>
                 <td>
-                  <a :href="`/user/${project.owner}`"> {{project.owner}} </a>
+                  <a :href="`/user/${project.owner}`"> {{ project.owner }} </a>
                 </td>
-                <td>{{project.modified}}</td>
+                <td>{{ project.modified }}</td>
               </tr>
             </tbody>
           </Table>
         </Tab>
-        <Tab title="Settings" v-if="displaySettings">
-            <form class="embed-preferences" action="/user/savePreferences" method="POST">
-              <h3>Embed</h3>
-              <p>Limit embedding of my contents to the following hosts (1 item by line):</p>
-              <textarea placeholder="example.com" name="authorizedHosts">{{ user.authorizedHostsForEmbedding }}</textarea>
-              <div class="action-buttons">
-                <button className="push-button" type="submit">Save</button>
+        <Tab
+          title="Settings"
+          v-if="displaySettings"
+        >
+          <form
+            class="embed-preferences"
+            action="/user/savePreferences"
+            method="POST"
+          >
+            <h3>Embed</h3>
+            <p>Limit embedding of my contents to the following hosts (1 item by line):</p>
+            <textarea
+              placeholder="example.com"
+              name="authorizedHosts"
+              :value="user.authorizedHostsForEmbedding"
+            />
+            <div class="action-buttons">
+              <button
+                className="push-button"
+                type="submit"
+              >
+                Save
+              </button>
             </div>
+          </form>
+          <h3>Account</h3>
+          <dialog
+            ref="removeAccountDialog"
+            class="removeAccountDialog"
+          >
+            <form
+              action="/user/delete"
+              method="POST"
+            >
+              <p>
+                Are you sure you want to delete your account?
+              </p>
+              <div class="action-buttons">
+                <button
+                  className="push-button"
+                  value="cancel"
+                  formmethod="dialog"
+                >
+                  Cancel
+                </button>
+                <button
+                  className="push-button danger"
+                  type="submit"
+                  value="default"
+                >
+                  Delete account
+                </button>
+              </div>
             </form>
-            <h3>Account</h3>
-            <dialog ref="removeAccountDialog" class="removeAccountDialog">
-              <form action="/user/delete" method="POST">
-                <p>
-                  Are you sure you want to delete your account?
-                </p>
-                <div class="action-buttons">
-                  <button className="push-button" value="cancel" formmethod="dialog">Cancel</button>
-                  <button className="push-button danger" type="submit" value="default">Delete account</button>
-                </div>
-              </form>
-            </dialog>
-            <button class="push-button danger" @click.prevent="showRemoveAccountDialog">Remove account</button>
-          </Tab>
+          </dialog>
+          <button
+            class="push-button danger"
+            @click.prevent="showRemoveAccountDialog"
+          >
+            Remove account
+          </button>
+        </Tab>
       </Tabs>
     </template>
   </UserPage>
 </template>
 <script setup>
-import { ref, onMounted, computed } from "vue";
-import { UserPage, Tabs, Tab, Table } from "nwl-components";
+/* global loggedUser */
+import { UserPage, Tabs, Tab, Table } from 'nwl-components';
+import { ref, onMounted, computed } from 'vue';
 const projects = ref([]);
 const removeAccountDialog = ref(null);
 
 const props = defineProps({
-    user: Object,
-})
+  user: {
+    type: Object,
+    required: true
+  }
+});
 
 onMounted(() => {
   let cursorProjects = 0;
   const url = new URL(
-      `/user/json/${props.user.nickname}/projects`,
-    window.location.protocol + "//" + window.location.host
+    `/user/json/${props.user.nickname}/projects`,
+    window.location.protocol + '//' + window.location.host
   );
   const fetchProjects = async () => {
     const params = {
       start: cursorProjects,
-      length: 100,
+      length: 100
     };
     url.search = new URLSearchParams(params).toString();
     const res = await (await fetch(url)).json();
@@ -122,7 +173,7 @@ const showRemoveAccountDialog = () => {
 .push-button {
   border: 1px solid #ccc;
   padding: 10px;
-  background: #222;    
+  background: #222;
   color: white;
 }
 .push-button + .push-button {

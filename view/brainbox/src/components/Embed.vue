@@ -91,13 +91,6 @@ const {
 const files = ref([]);
 const volumeAnnotations = ref([]);
 
-const fetchFiles = async () => {
-  if (files.value.length === 0) {
-    const fetchedFiles = await doFetchFiles([], 0);
-    files.value.push(...fetchedFiles);
-  }
-};
-
 const toggleFullScreen = () => {
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen();
@@ -146,11 +139,11 @@ const getMRIParams = (file) => {
 
 // make sure that all mri files have volume annotations as set in the project info
 const populateVolumeAnnotations = (file) => {
-  const volumeAnnotations = projectInfo.annotations.list.filter(
+  const volumeAnnotationsUnproxified = projectInfo.annotations.list.filter(
     (anno) => anno.type === 'volume'
   );
   let annotationIndex = -1;
-  volumeAnnotations.forEach((annotation) => {
+  volumeAnnotationsUnproxified.forEach((annotation) => {
     annotationIndex = file.mri.atlas.findIndex(
       (atlas) =>
         atlas.name === annotation.name &&
@@ -207,6 +200,7 @@ const selectVolumeAnnotation = async (selectedAtlas) => {
   currentLabel.value = 0;
 };
 
+// eslint-disable-next-line no-shadow
 const doFetchFiles = async (files, cursor) => {
   const params = {
     start: cursor,
@@ -227,6 +221,13 @@ const doFetchFiles = async (files, cursor) => {
   }
 
   return files;
+};
+
+const fetchFiles = async () => {
+  if (files.value.length === 0) {
+    const fetchedFiles = await doFetchFiles([], 0);
+    files.value.push(...fetchedFiles);
+  }
 };
 
 const handleOntologyLabelClick = (index) => {
