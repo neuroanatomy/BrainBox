@@ -101,8 +101,8 @@
     "style-loader": "^0.23.1",
     "svg-inline-loader": "^0.8.2",
     "url-loader": "^1.1.2",
-    "webpack": "^4.43.0",
-    "webpack-cli": "^3.3.11",
+    "webpack": "^5.92.0",
+    "webpack-cli": "^5.1.4",
     "webworkify-webpack": "^2.1.5"
   },
   "lint-staged": {
