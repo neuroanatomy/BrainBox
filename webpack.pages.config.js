@@ -1,6 +1,7 @@
 const path = require('path');
 
 const { VueLoaderPlugin } = require('vue-loader');
+const { DefinePlugin } = require('webpack');
 
 module.exports = {
   entry: {
@@ -15,7 +16,14 @@ module.exports = {
     'user-page': './view/brainbox/src/pages/user-page.js'
   },
   devtool: 'eval-source-map',
-  plugins: [new VueLoaderPlugin()],
+  plugins: [
+    new VueLoaderPlugin(),
+    new DefinePlugin({
+      __VUE_OPTIONS_API__: 'true',
+      __VUE_PROD_DEVTOOLS__: 'false',
+      __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: 'false'
+    })
+  ],
   output: {
     filename: '[name].js',
     path: path.resolve(__dirname, 'view/brainbox/dist'),
