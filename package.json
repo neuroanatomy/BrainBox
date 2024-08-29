@@ -83,7 +83,7 @@
     "del": "^3.0.0",
     "eslint": "^8.8.0",
     "eslint-config-naat": "git+https://github.com/neuroanatomy/eslint-config-naat.git",
-    "file-loader": "^2.0.0",
+    "file-loader": "^6.2.0",
     "html-loader": "^0.5.5",
     "html-webpack-plugin": "^4.5.2",
     "husky": "^7.0.2",
@@ -100,9 +100,9 @@
     "rimraf": "^3.0.2",
     "style-loader": "^0.23.1",
     "svg-inline-loader": "^0.8.2",
-    "url-loader": "^1.1.2",
-    "webpack": "^4.43.0",
-    "webpack-cli": "^3.3.11",
+    "url-loader": "^4.1.1",
+    "webpack": "^5.94.0",
+    "webpack-cli": "^5.1.4",
     "webworkify-webpack": "^2.1.5"
   },
   "lint-staged": {
