@@ -101,6 +101,7 @@
       <ButtonsGroup full-width>
         <Button
           @click="changeTool('Show')"
+          title="Show"
           :class="{ pressed: currentTool === 'Show' }"
         >
           <img
@@ -111,6 +112,7 @@
         </Button>
         <Button
           @click="changeTool('Paint')"
+          title="Paint"
           :class="{ pressed: currentTool === 'Paint' }"
         >
           <img
@@ -121,6 +123,7 @@
         </Button>
         <Button
           @click="changeTool('Erase')"
+          title="Erase"
           :class="{ pressed: currentTool === 'Erase' }"
         >
           <img
@@ -131,6 +134,7 @@
         </Button>
         <Button
           @click="changeTool('Landmark')"
+          title="Landmark"
           :class="{ pressed: currentTool === 'Landmark' }"
         >
           <img
@@ -141,6 +145,7 @@
         </Button>
         <Button
           @click="changeTool('Measure')"
+          title="Measure"
           :class="{ pressed: currentTool === 'Measure' }"
         >
           <img
@@ -151,6 +156,7 @@
         </Button>
         <Button
           @click="toggleImageSettings()"
+          title="Adjust"
           :class="{ pressed: displayAdjustSettings }"
         >
           <img
@@ -161,6 +167,7 @@
         </Button>
         <Button
           @click="changeTool('Eyedrop')"
+          title="Eyedrop"
           :class="{ pressed: currentTool === 'Eyedropper' }"
         >
           <img
