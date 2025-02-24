@@ -1649,6 +1649,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       // 3. Update user data
       // If the user didn't have a name (wasn't logged in), but now has one,
       // display the name in the log
+      // will crash brainbox if User is undefined
       if ({}.hasOwnProperty.call(User, 'username')) {
         if (typeof sourceUS.User === 'undefined') {
           tracer.log(`No "User" data yet received for id ${data.uid}`);

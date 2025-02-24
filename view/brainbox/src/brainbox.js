@@ -13,14 +13,14 @@
 export const BrainBox = {
   version: 1,
   debug: 1,
-  info:{},
+  info: {},
   accessLevels: ['none', 'view', 'edit', 'add', 'remove'],
 
   /**
      * @function initBrainBox
      * @returns {object} A promise
      */
-  initBrainBox: function initBrainBox() {
+  initBrainBox: function initBrainBox () {
     const pr = new Promise(function (resolve, reject) {
       // Add AtlasMaker and friends
       const stereotaxic = document.getElementById('stereotaxic');
@@ -39,7 +39,7 @@ export const BrainBox = {
           reject(err);
         });
 
-      window.addEventListener( 'unload', BrainBox.unload);
+      window.addEventListener('unload', BrainBox.unload);
     });
 
     return pr;
@@ -50,7 +50,7 @@ export const BrainBox = {
      * @param {object} param Configuration parameters
      * @returns {object} A promise
      */
-  configureBrainBox: function configureBrainBox(param) {
+  configureBrainBox: function configureBrainBox (param) {
     // eslint-disable-next-line max-statements
     const pr = new Promise(function (resolve, reject) {
       const index = param.annotationItemIndex || 0;

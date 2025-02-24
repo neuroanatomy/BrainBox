@@ -26,7 +26,7 @@ const state = reactive({
   contrast: 50
 });
 
-export default function useVisualization() {
+export default function useVisualization () {
   const handleNewChatMessages = (event) => {
     state.receivedMessages.push(event.detail.message);
   };
@@ -49,27 +49,27 @@ export default function useVisualization() {
 
   return {
     ...toRefs(state),
-    changeAlpha(x) {
+    changeAlpha () {
       const { AtlasMakerWidget } = window;
-      AtlasMakerWidget.alphaLevel = x / 100;
+      AtlasMakerWidget.alphaLevel = state.alpha / 100;
       AtlasMakerWidget.drawImages();
     },
-    changeBrightness(x) {
-      const b = (2 * x) / 100;
+    changeBrightness () {
+      const b = (2 * state.brightness) / 100;
       const c = (2 * state.contrast) / 100;
       document.querySelector(
         '#canvas'
       ).style.filter = `brightness(${b}) contrast(${c})`;
     },
-    changeContrast(x) {
+    changeContrast () {
       const b = (2 * state.brightness) / 100;
-      const c = (2 * x) / 100;
+      const c = (2 * state.contrast) / 100;
       document.querySelector(
         '#canvas'
       ).style.filter = `brightness(${b}) contrast(${c})`;
     },
 
-    async init() {
+    async init () {
       const { BrainBox } = window;
       await BrainBox.initBrainBox();
       setupEventListeners();

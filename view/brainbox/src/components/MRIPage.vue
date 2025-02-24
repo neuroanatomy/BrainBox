@@ -132,12 +132,12 @@
             />
             <AdjustSettings
               v-if="displayAdjustSettings"
-              :alpha="alpha"
-              @change-alpha="changeAlpha"
-              :brightness="brightness"
-              @change-brightness="changeBrightness"
-              :contrast="contrast"
-              @change-contrast="changeContrast"
+              v-model:alpha="alpha"
+              @update:alpha="changeAlpha"
+              v-model:brightness="brightness"
+              @update:brightness="changeBrightness"
+              v-model:contrast="contrast"
+              @update:contrast="changeContrast"
             />
           </template>
         </Editor>
