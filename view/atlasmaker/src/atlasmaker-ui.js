@@ -8,7 +8,7 @@ export const AtlasMakerUI = {
   _fadeOut: (el) => {
     el.style.opacity = 1;
 
-    (function _fade() {
+    (function _fade () {
       if ((el.style.opacity -= 0.1) < 0) {
         el.style.display = 'none';
       } else {
@@ -21,7 +21,7 @@ export const AtlasMakerUI = {
     el.style.opacity = 0;
     el.style.display = 'block';
 
-    (function _fade() {
+    (function _fade () {
       let val = parseFloat(el.style.opacity);
       if (!((val += 0.1) > 1)) {
         el.style.opacity = val;
@@ -34,7 +34,7 @@ export const AtlasMakerUI = {
     const me = AtlasMakerUI;
     await new Promise((resolve) => {
       setTimeout(() => {
-        if(doFadeOut) {
+        if (doFadeOut) {
           me._fadeOut(el);
         }
         resolve();
@@ -43,9 +43,9 @@ export const AtlasMakerUI = {
   },
 
   // eslint-disable-next-line max-statements
-  dialog: async ({el, message, doFadeOut=true, modal=false, delay=2000, background='#333'}) => {
+  dialog: async ({el, message, doFadeOut = true, modal = false, delay = 2000, background = '#333'}) => {
     const me = AtlasMakerUI;
-    if(typeof doFadeOut === 'undefined') {
+    if (typeof doFadeOut === 'undefined') {
       doFadeOut = true;
     }
 
@@ -53,7 +53,7 @@ export const AtlasMakerUI = {
     el.style.background = background;
     me._fadeIn(el);
 
-    if(modal) {
+    if (modal) {
       const back = document.createElement('div');
       back.style = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); pointer-events:all; z-index:19';
       document.body.append(back);

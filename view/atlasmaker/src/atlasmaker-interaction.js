@@ -153,30 +153,6 @@ export const AtlasMakerInteraction = {
   },
 
   /**
-     * @function toggleTextInput
-     * @param {string} mode One from Chat or Script
-     * @returns {void}
-     */
-  toggleTextInput: function (mode) {
-    switch (mode) {
-    case 'Chat':
-      $('#textInputBlock').show();
-      document.getElementById('logScript').classList.add('hidden');
-      document.getElementById('logChat').classList.remove('hidden');
-      document.querySelector('#logChat #msg').focus();
-      break;
-    case 'Script':
-      $('#textInputBlock').show();
-      document.getElementById('logScript').classList.remove('hidden');
-      document.getElementById('logChat').classList.add('hidden');
-      document.querySelector('#logScript textarea').focus();
-      break;
-    default:
-      $('#textInputBlock').hide();
-    }
-  },
-
-  /**
      * @function ontologyValueToColor
      * @param {number} val Numerical value used for painting with the selected label
      * @returns {array} Red, green and blue colors

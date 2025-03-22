@@ -1,3 +1,5 @@
+/* probably not used */
+/* eslint-disable  */
 /* global THREE */
 
 import './style.css';
