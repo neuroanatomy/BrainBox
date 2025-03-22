@@ -1,5 +1,5 @@
 /* eslint-disable max-lines */
-/* global AtlasMakerWidget $ */
+/* global AtlasMakerWidget */
 /*! AtlasMaker: Interaction */
 
 import pako from 'pako';
@@ -660,10 +660,9 @@ export const AtlasMakerInteraction = {
      */
   upload: function () {
     const me = AtlasMakerWidget;
-    const inp = $('<input>');
-    inp.hide();
-    $('body').append(inp);
-    const input = inp.get(0);
+    const input = document.createElement('input');
+    input.style.display = 'none';
+    document.body.appendChild(input);
     input.type = 'file';
     input.onchange = function () {
       const [name] = this.files;
