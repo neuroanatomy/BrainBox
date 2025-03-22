@@ -1581,7 +1581,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
 
       return { iAtlas, atlasLoadedFlag };
     },
-    // eslint-disable-next-line max-statements
+    // eslint-disable-next-line max-statements, complexity
     receiveUserDataMessage: function (data, userSocket) {
       const sourceUS = me.getUserFromUserId(data.uid);
 
@@ -1649,20 +1649,22 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       // 3. Update user data
       // If the user didn't have a name (wasn't logged in), but now has one,
       // display the name in the log
-      // will crash brainbox if User is undefined
-      if ({}.hasOwnProperty.call(User, 'username')) {
-        if (typeof sourceUS.User === 'undefined') {
-          tracer.log(`No "User" data yet received for id ${data.uid}`);
-        } else if (!{}.hasOwnProperty.call(sourceUS.User, 'username')) {
-          tracer.log(`User ${User.username} (${data.uid}) logged in`);
+      // check if the User variable is defined to avoid brainbox crash
+      if (User) {
+        if ({}.hasOwnProperty.call(User, 'username')) {
+          if (typeof sourceUS.User === 'undefined') {
+            tracer.log(`No "User" data yet received for id ${data.uid}`);
+          } else if (!{}.hasOwnProperty.call(sourceUS.User, 'username')) {
+            tracer.log(`User ${User.username} (${data.uid}) logged in`);
+          }
         }
-      }
-      if ({}.hasOwnProperty.call(sourceUS, 'User') === false) {
-        sourceUS.User = {};
-      }
-      for (const prop in User) {
-        if ({}.hasOwnProperty.call(User, prop)) {
-          sourceUS.User[prop] = User[prop];
+        if ({}.hasOwnProperty.call(sourceUS, 'User') === false) {
+          sourceUS.User = {};
+        }
+        for (const prop in User) {
+          if ({}.hasOwnProperty.call(User, prop)) {
+            sourceUS.User[prop] = User[prop];
+          }
         }
       }
 
