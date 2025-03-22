@@ -142,22 +142,24 @@ export const AtlasMakerDraw = {
    * @returns {void}
    */
   drawImages: function () {
-    const me = AtlasMakerWidget;
-    if (me.brainImg.img
-           && me.flagLoadingImg.view
-           && me.flagLoadingImg.slice) {
-      me.context.clearRect(0, 0, me.context.canvas.width, me.canvas.height);
-      me.displayInformation();
+    window.requestAnimationFrame(() => {
+      const me = AtlasMakerWidget;
+      if (me.brainImg.img
+             && me.flagLoadingImg.view
+             && me.flagLoadingImg.slice) {
+        me.context.clearRect(0, 0, me.context.canvas.width, me.canvas.height);
+        me.displayInformation();
 
-      // me.nearestNeighbour(me.context);
+        // me.nearestNeighbour(me.context);
 
-      me.context.drawImage(me.brainImg.img, 0, 0, me.brainW, me.brainH * me.brainHdim / me.brainWdim);
-      me.drawAtlasImage(me.flagLoadingImg.view, me.flagLoadingImg.slice);
-    }
+        me.context.drawImage(me.brainImg.img, 0, 0, me.brainW, me.brainH * me.brainHdim / me.brainWdim);
+        me.drawAtlasImage(me.flagLoadingImg.view, me.flagLoadingImg.slice);
+      }
 
-    if (!me.brainImg.img || me.brainImg.view !== me.User.view || me.brainImg.slice !== me.User.slice) {
-      me.sendRequestSliceMessage();
-    }
+      if (!me.brainImg.img || me.brainImg.view !== me.User.view || me.brainImg.slice !== me.User.slice) {
+        me.sendRequestSliceMessage();
+      }
+    });
   },
 
   /**
