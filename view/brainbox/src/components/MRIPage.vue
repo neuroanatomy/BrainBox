@@ -1,10 +1,13 @@
 <template>
   <Wrapper>
-    <Header>
+    <Header v-if="!fullscreen">
       <span class="title">BrainBox</span>
     </Header>
     <main>
-      <div class="left">
+      <div
+        class="left"
+        v-if="!fullscreen"
+      >
         <div
           class="privilegedAccessInfo"
           v-if="displayPrivilegedAccessWarning"
@@ -114,7 +117,6 @@
         <Editor
           :title="title"
           :class="{fullscreen, reduced}"
-          :tools-min-height="reduced ? 'auto' : '340px'"
         >
           <template #tools>
             <Tools />
@@ -122,7 +124,6 @@
           <template #content>
             <div
               id="stereotaxic"
-              style="width: 100%; height: 100%"
             />
             <OntologySelector
               :ontology="ontology"
@@ -194,14 +195,14 @@ watch(fullscreen, () => {
       tools.style.left = '10px';
       tools.style.top = '10px';
     }, 100);
-  } else {
+  } else if (!displayScript.value) {
     displayChat.value = true;
   }
 
-  setTimeout(() => {
-    document.querySelector('#resizable').style = '';
-    AtlasMakerWidget.resizeWindow();
-  }, 100);
+  // setTimeout(() => {
+  //   // document.querySelector('#resizable').style = '';
+  //   AtlasMakerWidget.resizeWindow();
+  // }, 100);
 });
 
 const selectVolumeAnnotation = async (index) => {
@@ -250,7 +251,7 @@ main {
   display: flex;
   padding: 0;
   justify-content: center;
-  flex-direction: column;
+  margin: 0 auto;
 }
 
 .container {
@@ -260,7 +261,7 @@ main {
 :deep(.area.fullscreen) {
   position: absolute;
   width: 100%;
-  height: calc(100vh - 82px);
+  height: 100%;
   left: 0;
 }
 
@@ -276,6 +277,7 @@ main {
   display: flex;
   align-items: center;
 }
+
 .privilegedAccessInfo:before {
     content: '\1F512';
     font-size: 25px;
@@ -288,9 +290,11 @@ main {
     align-items: center;
     justify-content: center;
 }
+
 .info {
   margin-bottom: 20px;
 }
+
 .info th {
   font-weight: bold;
 }
@@ -305,35 +309,45 @@ main {
   content: "Empty";
   color: rgba(255, 255, 255, 0.4);
 }
+
 .tools {
   width: 100%;
 }
+
 :deep(button), :deep(.group) {
     height: 24px;
     margin: 1px;
 }
 
+#stereotaxic {
+  width: 600px;
+}
+
+.fullscreen #stereotaxic {
+  width: 100%;
+  height: 100%;
+}
+
+/******************************** resizable layout ******************************/
+
+/* for smaller screen (mobile, small iPad) */
 @media(max-width: 1300px) {
-  .left, .right {
+  main {
+    flex-direction: column;
     max-width: 700px;
-    width: 100%;
-    margin: 0 auto;
+  }
+  #stereotaxic {
+    min-width: 100%;
   }
 }
 
-
+/* for larger screen (computer, big iPad, small iPad landscape) */
 @media(min-width: 1300px) {
   main {
     flex-direction: row;
   }
   .left {
     margin-right: 20px;
-    width: auto;
-  }
-  .right {
-    max-width: 900px;
-    width: 600px;
-    flex-shrink: 0;
   }
 }
 

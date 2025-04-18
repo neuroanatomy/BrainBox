@@ -27,7 +27,6 @@
     <Editor
       :title="title"
       :class="{ fullscreen, reduced: !displayChat && !displayScript }"
-      tools-min-height="340px"
     >
       <template #tools>
         <Tools />

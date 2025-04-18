@@ -292,19 +292,14 @@
     </ButtonsGroup>
   </Row>
 
-  <Row
-    style="flex: 1; min-height:60px"
-    v-if="displayChat || displayScript"
-  >
-    <div class="text">
-      <Chat
-        v-if="displayChat"
-        :received-messages="receivedMessages"
-        :notification="notification"
-        @send-message="sendChatMessage"
-      />
-      <ScriptConsole v-if="displayScript" />
-    </div>
+  <Row style="flex: 1;">
+    <Chat
+      v-show="displayChat"
+      :received-messages="receivedMessages"
+      :notification="notification"
+      @send-message="sendChatMessage"
+    />
+    <ScriptConsole v-show="displayScript" />
   </Row>
 </template>
 
@@ -318,7 +313,7 @@ import {
   Col,
   ScriptConsole
 } from 'nwl-components';
-import { ref } from 'vue';
+import { ref, nextTick } from 'vue';
 
 import useVisualization from '../store/visualization';
 const { AtlasMakerWidget } = window;
@@ -399,6 +394,9 @@ const toggleChat = () => {
   displayChat.value = !displayChat.value;
   if (displayChat.value) {
     displayScript.value = false;
+    nextTick(() => {
+      document.querySelector('.chat input').focus();
+    });
   }
 };
 
@@ -406,6 +404,9 @@ const toggleScript = () => {
   displayScript.value = !displayScript.value;
   if (displayScript.value) {
     displayChat.value = false;
+    nextTick(() => {
+      document.querySelector('#logScript textarea').focus();
+    });
   }
 };
 
@@ -476,10 +477,6 @@ button img.icon {
 :deep(.group),
 :deep(button) {
   flex-grow: 1;
-}
-
-:deep #logScript {
-  height: calc(100% - 22px);
 }
 </style>
 

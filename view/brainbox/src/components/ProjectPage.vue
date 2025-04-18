@@ -29,7 +29,6 @@
       <Editor
         :title="title"
         :class="{reduced}"
-        :tools-min-height="reduced ? 'auto' : '340px'"
       >
         <template #tools>
           <Tools />
