@@ -237,7 +237,6 @@ export const AtlasMakerWS = {
         me.isMRILoaded = true; // receiving a jpg is proof of a loaded MRI
 
         img.onload = function () {
-          const flagFirstImage = (me.brainImg.img === null);
           me.brainImg.img = img;
           me.brainImg.view = me.flagLoadingImg.view;
           me.brainImg.slice = me.flagLoadingImg.slice;
@@ -246,7 +245,7 @@ export const AtlasMakerWS = {
 
           me.flagLoadingImg.loading = false;
 
-          if (flagFirstImage || me.flagLoadingImg.view !== me.User.view || me.flagLoadingImg.slice !== me.User.slice) {
+          if (me.flagLoadingImg.view !== me.User.view || me.flagLoadingImg.slice !== me.User.slice) {
             me.sendRequestSliceMessage();
           }
 
@@ -771,6 +770,6 @@ export const AtlasMakerWS = {
         key: key,
         value: value
       })
-    });
+    }).then((res) => res.json());
   }
 };
