@@ -633,6 +633,7 @@ export const AtlasMakerInteraction = {
         <script src="/lib/atlasmaker-tools/render3D.js"></script>
         </body>
       </html>`;
+    */
     newWindow.document.write(`
         <html>
         <body>
@@ -641,7 +642,6 @@ export const AtlasMakerInteraction = {
         </body>
         </html>`
     );
-    */
     newWindow.document.close();
   },
 
