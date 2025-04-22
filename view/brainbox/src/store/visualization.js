@@ -2,7 +2,7 @@
  * Shared state for the project page components
  */
 
-import { reactive, toRefs } from 'vue';
+import { reactive, toRefs, watch } from 'vue';
 
 const state = reactive({
   title: 'Loading...',
@@ -15,7 +15,7 @@ const state = reactive({
   ontology: null,
   currentLabel: 0,
   currentFile: null,
-  currentSlice: 0,
+  currentSlice: null,
   totalSlices: 0,
   currentTool: null,
   currentPenSize: 1,
@@ -24,6 +24,22 @@ const state = reactive({
   alpha: 50,
   brightness: 50,
   contrast: 50
+});
+
+watch(() => state.currentSlice, (slice, prevSlice) => {
+  if (slice < 0) {
+    state.currentSlice = 0;
+
+    return;
+  } else if (slice > state.totalSlices) {
+    state.currentSlice = state.totalSlices;
+
+    return;
+  }
+  state.title = `Slice ${slice}`;
+  if (prevSlice !== null && prevSlice !== slice) {
+    window.AtlasMakerWidget.changeSlice(slice);
+  }
 });
 
 export default function useVisualization () {
@@ -37,10 +53,9 @@ export default function useVisualization () {
 
   const setupEventListeners = () => {
     window.addEventListener('brainImageConfigured', (e) => {
-      state.title = `Slice ${e.detail.currentSlice}`;
       state.currentView = e.detail.currentView;
-      state.currentSlice = e.detail.currentSlice;
       state.totalSlices = e.detail.totalSlices;
+      state.currentSlice = e.detail.currentSlice;
     });
 
     window.addEventListener('newMessage', handleNewChatMessages);

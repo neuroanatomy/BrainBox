@@ -3,7 +3,6 @@
     <RangeSlider
       :max="totalSlices"
       v-model="currentSlice"
-      @update:model-value="sliceChange"
     />
   </Row>
   <Row>
@@ -313,7 +312,7 @@ import {
   Col,
   ScriptConsole
 } from 'nwl-components';
-import { ref, nextTick } from 'vue';
+import { ref, nextTick, onMounted, onUnmounted } from 'vue';
 
 import useVisualization from '../store/visualization';
 const { AtlasMakerWidget } = window;
@@ -331,7 +330,6 @@ const requireIconsMap = () => {
 };
 
 const {
-  title,
   notification,
   receivedMessages,
   displayAdjustSettings,
@@ -350,12 +348,6 @@ const {
 const doFill = ref(false);
 const usePreciseCursor = ref(false);
 const icons = requireIconsMap();
-
-const sliceChange = (slice) => {
-  title.value = `Slice ${slice}`;
-  currentSlice.value = slice;
-  AtlasMakerWidget.changeSlice(slice);
-};
 
 const changeView = (view) => {
   AtlasMakerWidget.changeView(view);
@@ -452,6 +444,30 @@ const toggleImageSettings = () => {
   displayAdjustSettings.value = !displayAdjustSettings.value;
   currentTool.value = null;
 };
+
+const handleKeyDown = (event) => {
+  console.log('handlekeydown:', event.key);
+  if (event.key === 'ArrowLeft') {
+    if (currentSlice.value > 0) {
+      currentSlice.value -= 1;
+    }
+    event.preventDefault();
+  } else if (event.key === 'ArrowRight') {
+    if (currentSlice.value < totalSlices.value) {
+      currentSlice.value += 1;
+    }
+    event.preventDefault();
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown);
+});
+
 </script>
 <style scoped>
 button.pressed {
