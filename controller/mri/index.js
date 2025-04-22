@@ -1,12 +1,13 @@
 /*global authTokenMiddleware */
 
 const express = require('express');
+const multer = require('multer');
+
 const Controller = require('./mri.controller');
 const uploadController = require('./upload.controller');
 
-const multer = require('multer');
 
-const MriRouter = function(db) {
+const MriRouter = function (db) {
 
   const router = new express.Router();
   const controller = new Controller(db);

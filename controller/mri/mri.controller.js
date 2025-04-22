@@ -573,7 +573,7 @@ const apiMriGet = async function (req, res) {
 };
 
 // eslint-disable-next-line func-style
-const reset = async function reset(req, res) {
+const reset = async function reset (req, res) {
   const myurl = req.query.url;
   const hash = crypto.createHash('md5').update(myurl)
     .digest('hex');

@@ -1,5 +1,6 @@
 /* eslint-disable prefer-exponentiation-operator */
 const express = require('express');
+
 const controller = require('./user.controller');
 
 // eslint-disable-next-line new-cap

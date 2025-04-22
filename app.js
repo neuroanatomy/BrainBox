@@ -5,20 +5,21 @@
     Roberto Toro, 25 July 2014
 */
 const fs = require('fs');
-const path = require('path');
-const https = require('https');
 const http = require('http');
-const nwl = require('neuroweblab');
-const express = require('express');
-const compression = require('compression');
-const favicon = require('serve-favicon');
-const logger = require('morgan');
-const tracer = require('tracer').console({ format: '[{{file}}:{{line}}]  {{message}}' });
-const cookieParser = require('cookie-parser');
-const bodyParser = require('body-parser');
-const mustacheExpress = require('mustache-express');
-const Config = JSON.parse(fs.readFileSync('./cfg.json'));
+const https = require('https');
+const path = require('path');
+
 const { Server: HocuspocusServer } = require('@hocuspocus/server');
+const bodyParser = require('body-parser');
+const compression = require('compression');
+const cookieParser = require('cookie-parser');
+const express = require('express');
+const logger = require('morgan');
+const mustacheExpress = require('mustache-express');
+const nwl = require('neuroweblab');
+const favicon = require('serve-favicon');
+const tracer = require('tracer').console({ format: '[{{file}}:{{line}}]  {{message}}' });
+const Config = JSON.parse(fs.readFileSync('./cfg.json'));
 global.authTokenMiddleware = nwl.authTokenMiddleware;
 
 const AtlasmakerServer = require('./controller/atlasmakerServer/atlasmakerServer');
@@ -161,7 +162,7 @@ const start = async function () {
 
   const hocuspocusServer = HocuspocusServer.configure({
     port: Config.crdt_backend_port,
-    onDisconnect(data) {
+    onDisconnect (data) {
       data.document.getArray('files').toJSON()
         .forEach((json) => {
           delete json._id;

@@ -833,7 +833,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
     */
     paintxy: function (u, c, x, y, User, undoLayer) {
       const atlas = me.Atlases[User.iAtlas];
-      if (typeof atlas.data === 'undefined') {
+      if (typeof atlas?.data === 'undefined') {
         tracer.log('ERROR: No atlas to draw into');
 
         return;
@@ -1124,9 +1124,11 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       }
     },
     receiveRequestSliceMessage: function (data, userSocket) {
+      console.log('INFO: Requesting slice from user');
       // get slice information from message
       const { view } = data; // user view
       const slice = parseInt(data.slice, 10); // user slice
+      console.log('slice', slice);
 
       // get User object
       const sourceUS = me.getUserFromUserId(data.uid);
@@ -1149,6 +1151,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       // getBrainAtPath() uses a client-side path, starting with "/data/[md5hash]"
       me.getBrainAtPath(brainPath)
         .then(function (theData) {
+          console.log('INFO: Sending slice to user');
           me.sendSliceToUser(theData, view, slice, userSocket);
         })
         .catch((err) => console.error(err));

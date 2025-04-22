@@ -1,8 +1,8 @@
 const admin = require('../admin/');
+const api = require('../api/');
 const Mri = require('../mri/');
 const project = require('../project/');
 const user = require('../user/');
-const api = require('../api/');
 
 module.exports = (app) => {
   console.log('Setting up routes');

@@ -1,9 +1,11 @@
 'use strict';
 
 const fs = require('fs');
-const { body, validationResult } = require('express-validator');
-const amri = require('../atlasmakerServer/atlasmaker-mri');
+
 const AsyncLock = require('async-lock');
+const { body, validationResult } = require('express-validator');
+
+const amri = require('../atlasmakerServer/atlasmaker-mri');
 const lock = new AsyncLock();
 
 // ExpressValidator = require('express-validator')
