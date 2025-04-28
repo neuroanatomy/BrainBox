@@ -82,7 +82,7 @@ describe('TESTING THE /project ROUTE', function () {
         'owner', 'mri', 'modified', 'modifiedBy', 'name'
       ];
       const expectedKeys2 = [
-        '_id', 'filename', 'source', 'url', 'included',
+        '_id', 'source', 'url', 'included',
         'owner', 'mri', 'modified', 'modifiedBy', 'name'
       ];
       // console.log(body);
