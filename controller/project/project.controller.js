@@ -1,5 +1,4 @@
 /* eslint-disable max-lines */
-const url = require('url');
 const crypto = require('crypto');
 const validatorNPM = require('validator');
 const { param, validationResult } = require('express-validator');
@@ -466,7 +465,6 @@ const insertMRInames = function (req, res, list) {
   // insert MRI names, but only if they don't exist
   return Promise.all(list.map((el) => (async function (file) {
     const { name, source } = file;
-    const filename = url.parse(source).pathname.split('/').pop();
 
     // it there's no name, continue to the next mri
     if (!name) { return; }
@@ -480,13 +478,11 @@ const insertMRInames = function (req, res, list) {
     // if mri exists, and has no name, insert the name
     if (!mri) {
       mri = {
-        filename,
         source,
         url: '/data/' + hash + '/',
         included: (new Date()).toJSON(),
         owner: req.user.username,
         mri: {
-          brain: filename,
           atlas: [
             {
               owner: req.user.username,

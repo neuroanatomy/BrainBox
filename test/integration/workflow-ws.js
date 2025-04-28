@@ -80,7 +80,7 @@ describe('TESTING WEBSOCKET WORKFLOW', function () {
 
     it('Can send larger data', () => {
       msgAllUserData.user.dirname = mri.url;
-      msgAllUserData.user.mri = mri.mri.brain;
+      msgAllUserData.user.mri = mri.filename;
       msgAllUserData.user.atlasFilename = mri.mri.atlas[0].filename;
       msgAllUserData.user.source = mri.source;
       u1.send(JSON.stringify(msgAllUserData));

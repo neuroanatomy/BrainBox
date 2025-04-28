@@ -827,7 +827,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
     */
     paintxy: function (u, c, x, y, User, undoLayer) {
       const atlas = me.Atlases[User.iAtlas];
-      if (typeof atlas.data === 'undefined') {
+      if (typeof atlas?.data === 'undefined') {
         tracer.log('ERROR: No atlas to draw into');
 
         return;
@@ -1126,6 +1126,11 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       const sourceUS = me.getUserFromUserId(data.uid);
 
       // get brainPath from User object
+      if (!sourceUS.User) {
+        console.error('sourceUS.User object still not created, do not try to get brain slice');
+
+        return;
+      }
       const brainPath = sourceUS.User.dirname + sourceUS.User.mri;
 
       // update User object
@@ -1139,7 +1144,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       me.getBrainAtPath(brainPath)
         .then(function (theData) {
           me.sendSliceToUser(theData, view, slice, userSocket);
-        });
+        })
+        .catch((err) => console.error(err));
     },
     receiveRequestSlice2Message: function (data, userSocket) {
       const { view } = data; // user view
@@ -1479,10 +1485,10 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       case 'mgz':
 
         /*
-              createMGH(loadedAtlas)
-              .then(function(atlas8bit) {
-              });
-            */
+          createMGH(loadedAtlas)
+          .then(function(atlas8bit) {
+          });
+        */
         break;
       }
 
@@ -1583,6 +1589,13 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         User.uid = data.uid;
       } else {
         ({ User } = sourceUS);
+
+        if (typeof User === 'undefined') {
+          tracer.log(`WARNING: 'User' structure is not defined for ${data.uid}`);
+
+          return;
+        }
+
         if (data.description === 'sendAtlas') {
           // receive an atlas from the user
           // 1. Check if the atlas the user is requesting has not been loaded
@@ -1619,7 +1632,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
                 me.sendAtlasToUser(atlas, userSocket, true);
                 sourceUS.User.isMRILoaded = true;
               })
-              .catch((err) => console.log(new Error('ERROR: Unable to load atlas', err)));
+              .catch((err) => console.error('ERROR: Unable to load atlas', err));
           }
         } else {
           // receive a specific field of the User data object from the user

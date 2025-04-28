@@ -106,9 +106,10 @@ const downloadMRI = async function (myurl, req) {
     .digest('hex');
 
   const mridb = await req.db.get('mri').findOne({ source: myurl, backup: { $exists: 0 } });
+  delete mridb?._id;
   console.log('mridb:', mridb);
   let filename;
-  if (!mridb || !mridb.filename) {
+  if (!mridb?.filename) {
     filename = sanitize(url.parse(myurl).pathname.split('/').pop());
   } else {
     ({ filename } = mridb);
@@ -185,35 +186,41 @@ const downloadMRI = async function (myurl, req) {
               username = ip;
             }
 
-            const json = {
+            let json = mridb;
+            if (!json) {
+              // Create new json object if it doesn't already exist
+              json = {
+                source: myurl,
+                name: '',
+                url: '/data/' + hash + '/',
+                included: (new Date()).toJSON(),
+                owner: username,
+                mri: {
+                  atlas: [
+                    {
+                      created: (new Date()).toJSON(),
+                      modified: (new Date()).toJSON(),
+                      access: 'edit',
+                      type: 'volume',
+                      name: 'Default',
+                      filename: 'Atlas.nii.gz',
+                      labels: 'foreground.json'
+                    }
+                  ]
+                }
+              };
+            }
+            // Add MRI information
+            Object.assign(json, {
               filename,
               success: true,
-              source: myurl,
-              url: '/data/' + hash + '/',
-              included: (new Date()).toJSON(),
               dim: mri.dim,
               pixdim: mri.pixdim,
               voxel2world: mri.v2w,
               worldOrigin: mri.wori,
-              owner: username,
-              name: '',
               modified: (new Date()).toJSON(),
-              modifiedBy: username,
-              mri: {
-                brain: filename,
-                atlas: [
-                  {
-                    created: (new Date()).toJSON(),
-                    modified: (new Date()).toJSON(),
-                    access: 'edit',
-                    type: 'volume',
-                    name: 'Default',
-                    filename: 'Atlas.nii.gz',
-                    labels: 'foreground.json'
-                  }
-                ]
-              }
-            };
+              modifiedBy: username
+            });
             resolve(json);
           })
           .catch((err) => {
