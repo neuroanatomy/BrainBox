@@ -464,7 +464,7 @@ const me = {
 
     // get local file path from url
     me.User.dirname = me.url; // REPEATED (2); NII
-    me.User.mri = info2.mri.brain; // NII
+    me.User.mri = info2.filename; // NII
     me.User.specimenName = me.name; // REPEATED (1)
     me.User.atlasFilename = info2.mri.atlas[index].filename; // REPEATED (3); NII
     me.User.isMRILoaded = false; // NII

@@ -564,7 +564,7 @@ export const AtlasMakerWS = {
    *  modified: string, a date string
    *  modifiedBy: string, a GitHub username
    *  mri: {
-   *    brain: string, a filename like "mri.nii.gz", same as the root filename
+   *    brain: string, a filename like "mri.nii.gz", same as the root filename (no longer used because uselessly redundant)
    *    atlas: [
    *      {
    *        created: string, date string

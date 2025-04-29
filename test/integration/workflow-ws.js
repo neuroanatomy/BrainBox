@@ -1,11 +1,13 @@
 'use strict';
 
 const fs = require('fs');
+
 const chai = require('chai');
 const { assert } = chai;
 const chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 const WebSocket = require('ws');
+
 const U = require('../utils.js');
 const Config = JSON.parse(fs.readFileSync('./cfg.json'));
 
@@ -75,7 +77,7 @@ describe('TESTING WEBSOCKET WORKFLOW', function () {
 
     it('Can send larger data', () => {
       msgAllUserData.user.dirname = mri.url;
-      msgAllUserData.user.mri = mri.mri.brain;
+      msgAllUserData.user.mri = mri.filename;
       msgAllUserData.user.atlasFilename = mri.mri.atlas[0].filename;
       msgAllUserData.user.source = mri.source;
       u1.send(JSON.stringify(msgAllUserData));

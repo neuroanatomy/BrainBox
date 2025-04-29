@@ -4,8 +4,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 16
       - uses: supercharge/mongodb-github-action@1.3.0
@@ -26,20 +26,20 @@ jobs:
       - name: Run unit tests
         run: npm run test-unit
       - name: Upload unit tests coverage to Codecov
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v5
         with:
           directory: ./test/unit/coverage
           flags: unittests
       - name: Run integration tests
         run: npm run test-integration
       - name: Upload integration tests coverage to Codecov
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v5
         with:
           directory: ./test/integration/coverage
           flags: integration
       - name: Archive screenshots
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: screenshots
           path: test/screenshots/
@@ -49,7 +49,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Invoke deployment hook
-        uses: distributhor/workflow-webhook@v1
+        uses: distributhor/workflow-webhook@v3
         env:
           webhook_url: ${{ secrets.WEBHOOK_URL }}
           webhook_secret: ${{ secrets.WEBHOOK_SECRET }}

@@ -1495,10 +1495,10 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       case 'mgz':
 
         /*
-              createMGH(loadedAtlas)
-              .then(function(atlas8bit) {
-              });
-            */
+          createMGH(loadedAtlas)
+          .then(function(atlas8bit) {
+          });
+        */
         break;
       }
 
@@ -1599,6 +1599,13 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         User.uid = data.uid;
       } else {
         ({ User } = sourceUS);
+
+        if (typeof User === 'undefined') {
+          tracer.log(`WARNING: 'User' structure is not defined for ${data.uid}`);
+
+          return;
+        }
+
         if (data.description === 'sendAtlas') {
           // receive an atlas from the user
           // 1. Check if the atlas the user is requesting has not been loaded
