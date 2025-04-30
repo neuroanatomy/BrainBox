@@ -446,7 +446,6 @@ const toggleImageSettings = () => {
 };
 
 const handleKeyDown = (event) => {
-  console.log('handlekeydown:', event.key);
   if (event.key === 'ArrowLeft') {
     if (currentSlice.value > 0) {
       currentSlice.value -= 1;

@@ -11,7 +11,7 @@
         :link-prefix="linkPrefix"
         :files="store.files"
         @value-change="valueChange"
-        @select-file="selectFile"
+        v-model:selected-index="selectedIndex"
       />
       <VolumeAnnotations
         :extract-keys="extractVolumeKeys"
@@ -122,6 +122,7 @@ const {
 } = useVisualization();
 const linkPrefix = `${baseURL}/mri?url=`;
 const volumeAnnotations = Vue.ref([]);
+const selectedIndex = Vue.ref(null);
 
 // define a map associating annotations keys to value selectors
 // to extract content within the TextAnnotations component
@@ -188,9 +189,9 @@ const populateVolumeAnnotations = (file) => {
   const volumeAnnotationsUnproxified = projectInfo.annotations.list.filter(
     (anno) => anno.type === 'volume'
   );
-  let annotationIndex = -1;
+  if (!file.mri.atlas) { file.mri.atlas = []; }
   volumeAnnotationsUnproxified.forEach((annotation) => {
-    annotationIndex = file.mri.atlas.findIndex(
+    const annotationIndex = file.mri.atlas.findIndex(
       (atlas) =>
         atlas.name === annotation.name &&
         atlas.project === projectInfo.shortname
@@ -305,7 +306,7 @@ const getMRIParams = (file) => {
   const params = { url, view: 'cor', slice: 180, fullscreen: false };
 
   // select the first annotation associated to this project
-  const annotationIndex = plainFile.mri.atlas.findIndex(
+  const annotationIndex = plainFile.mri.atlas?.findIndex(
     (atlas) => atlas.project === projectInfo.shortname
   );
 
@@ -315,8 +316,12 @@ const getMRIParams = (file) => {
   return params;
 };
 
-const selectFile = async (file) => {
-  const selectedFile = {...file};
+// eslint-disable-next-line max-statements
+Vue.watch(selectedIndex, async (newIndex) => {
+  const selectedFile = store.files[newIndex];
+  if (!selectedFile) {
+    return;
+  }
   const openFile = {...currentFile.value};
   if (selectedFile.source === openFile.source) {
     return;
@@ -330,7 +335,7 @@ const selectFile = async (file) => {
   ontology.value = AtlasMakerWidget.ontology;
   currentLabel.value = 0;
 
-  volumeAnnotations.value = file.mri.atlas.filter(
+  volumeAnnotations.value = selectedFile.mri.atlas.filter(
     (atlas) => atlas.project === projectInfo.shortname
   );
 
@@ -339,7 +344,7 @@ const selectFile = async (file) => {
   AtlasMakerWidget.sendUserDataMessage(
     JSON.stringify({ projectPage: projectInfo.shortname })
   );
-};
+});
 
 const selectVolumeAnnotation = async (selectedAtlas) => {
   const index = currentFile.value.mri.atlas.findIndex(
@@ -380,8 +385,10 @@ Vue.onMounted(async () => {
   crdtProvider.on('synced', async () => {
     if (store.files.length === 0) {
       await fetchFiles();
+      if (store.files.length > 0) {
+        selectedIndex.value = 0;
+      }
     }
-    selectFile(store.files[0]);
   });
 });
 </script>

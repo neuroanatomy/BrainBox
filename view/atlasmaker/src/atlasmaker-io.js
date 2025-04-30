@@ -2,6 +2,7 @@
 /* eslint-disable max-lines */
 /* eslint-disable camelcase */
 /* eslint-disable new-cap */
+/*! AtlasMaker: Input/Output */
 import 'structjs';
 import pako from 'pako';
 

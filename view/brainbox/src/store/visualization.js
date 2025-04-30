@@ -56,6 +56,7 @@ export default function useVisualization () {
       state.currentView = e.detail.currentView;
       state.totalSlices = e.detail.totalSlices;
       state.currentSlice = e.detail.currentSlice;
+      state.title = `Slice ${e.detail.currentSlice}`;
     });
 
     window.addEventListener('newMessage', handleNewChatMessages);

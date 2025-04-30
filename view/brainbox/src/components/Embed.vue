@@ -126,7 +126,7 @@ const getMRIParams = (file) => {
   const params = { url, view: 'cor', slice: 180, fullscreen: false };
 
   // select the first annotation associated to this project
-  const annotationIndex = plainFile.mri.atlas.findIndex(
+  const annotationIndex = plainFile.mri.atlas?.findIndex(
     (atlas) => atlas.project === projectInfo.shortname
   );
 
@@ -141,9 +141,9 @@ const populateVolumeAnnotations = (file) => {
   const volumeAnnotationsUnproxified = projectInfo.annotations.list.filter(
     (anno) => anno.type === 'volume'
   );
-  let annotationIndex = -1;
+  if (!file.mri.atlas) { file.mri.atlas = []; }
   volumeAnnotationsUnproxified.forEach((annotation) => {
-    annotationIndex = file.mri.atlas.findIndex(
+    const annotationIndex = file.mri.atlas.findIndex(
       (atlas) =>
         atlas.name === annotation.name &&
         atlas.project === projectInfo.shortname
