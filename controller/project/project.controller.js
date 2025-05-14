@@ -488,7 +488,9 @@ const insertMRInames = function (req, res, list) {
               owner: req.user.username,
               created: (new Date()).toJSON(),
               modified: (new Date()).toJSON(),
+              access: 'edit',
               type: 'volume',
+              name: 'Default',
               filename: 'Atlas.nii.gz',
               labels: 'foreground.json'
             }
