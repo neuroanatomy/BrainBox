@@ -161,19 +161,7 @@ const start = async function () {
   //========================================================================================
 
   const hocuspocusServer = HocuspocusServer.configure({
-    port: Config.crdt_backend_port,
-    onDisconnect (data) {
-      data.document.getArray('files').toJSON()
-        .forEach((json) => {
-          delete json._id;
-          db.get('mri').update({
-            source: json.source,
-            backup: { $exists: false }
-          }, json
-          , { replaceOne: true })
-            .catch((er) => console.log(er));
-        });
-    }
+    port: Config.crdt_backend_port
   });
 
   hocuspocusServer.listen();

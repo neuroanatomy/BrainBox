@@ -1289,7 +1289,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           const ret = await db.get('mri').findOne({ source: json.source, backup: { $exists: 0 } });
           // DEBUG: tracer.log("original mri:", JSON.stringify(ret));
 
-          if (data.method === 'overwrite') {
+          if (data.method === 'append') {
             json = merge.recursive(ret, json);
           }
           delete json._id;
@@ -1665,14 +1665,15 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
             tracer.log(`User ${User.username} (${data.uid}) logged in`);
           }
         }
-        if ({}.hasOwnProperty.call(sourceUS, 'User') === false) {
-          sourceUS.User = {};
-        }
-        for (const prop in User) {
-          if ({}.hasOwnProperty.call(User, prop)) {
-            sourceUS.User[prop] = User[prop];
-          }
-        }
+        // if ({}.hasOwnProperty.call(sourceUS, 'User') === false) {
+        //   sourceUS.User = {};
+        // }
+        // for (const prop in User) {
+        //   if ({}.hasOwnProperty.call(User, prop)) {
+        //     sourceUS.User[prop] = User[prop];
+        //   }
+        // }
+        sourceUS.User = User;
       }
 
       /*
@@ -1784,7 +1785,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
 
       return isInBlacklist;
     },
-    _handleUserWebSocketMessage: function ({ data, ws }) {
+    _handleUserWebSocketMessage: async function ({ data, ws }) {
       switch (data.type) {
       case 'userData':
         me.receiveUserDataMessage(data, ws); // sender);
@@ -1805,40 +1806,37 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         me.receiveRequestSlice2Message(data, ws); // sender);
         break;
       case 'save':
-        me.receiveSaveMessage(data, ws);
+        await me.receiveSaveMessage(data, ws);
         break;
       case 'saveMetadata':
-        me.receiveSaveMetadataMessage(data, ws); // sender);
+        await me.receiveSaveMetadataMessage(data, ws); // sender);
         break;
       case 'atlas':
-        me.receiveAtlasFromUserMessage(data, ws); // sender);
+        await me.receiveAtlasFromUserMessage(data, ws); // sender);
         break;
       case 'echo':
         tracer.log(`ECHO: "${data.msg}" from user ${data.username} (${data.uid})`);
         break;
       case 'userNameQuery':
-        me.queryUserName(data)
+        await me.queryUserName(data)
           .then(function (obj) {
             data.metadata = obj;
             ws.send(JSON.stringify(data)); // sender.send(JSON.stringify(data));
-          })
-          .catch((err) => tracer.log(err));
+          });
         break;
       case 'projectNameQuery':
-        me.queryProjectName(data)
+        await me.queryProjectName(data)
           .then(function (obj) {
             data.metadata = obj;
             ws.send(JSON.stringify(data)); // sender.send(JSON.stringify(data));
-          })
-          .catch(function (err) { tracer.log(err); });
+          });
         break;
       case 'similarProjectNamesQuery':
-        me.querySimilarProjectNames(data)
+        await me.querySimilarProjectNames(data)
           .then(function (obj) {
             data.metadata = obj;
             ws.send(JSON.stringify(data)); // sender.send(JSON.stringify(data));
-          })
-          .catch(function (err) { tracer.log(err); });
+          });
         break;
       case 'autocompleteClient':
         me.declareAutocompleteClient(data, ws); // sender);
@@ -1918,7 +1916,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         }
       }
     },
-    _handleWebSocketMessage: function ({ msg, ws }) {
+    _handleWebSocketMessage: async function ({ msg, ws }) {
       // var sender = ws;
       const sourceUS = me.getUserFromSocket(ws);
       let data = {};
@@ -1942,7 +1940,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       }
 
       // handle single user Web socket messages
-      me._handleUserWebSocketMessage({ data, ws });
+      await me._handleUserWebSocketMessage({ data, ws });
 
       // handle broadcast of messages
       me._handleBroadcastWebSocketMessage({ data, sourceUS });
@@ -2031,8 +2029,12 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         return;
       }
       me._connectNewUser({ ws });
-      ws.on('message', function (msg) {
-        me._handleWebSocketMessage({ msg, ws });
+      ws.on('message', async function (msg) {
+        try {
+          await me._handleWebSocketMessage({ msg, ws });
+        } catch (err) {
+          tracer.log('ERROR: Unable to handle WebSocket message', err);
+        }
       });
       ws.on('close', async function () {
         try {

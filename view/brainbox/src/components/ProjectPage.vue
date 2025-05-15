@@ -10,7 +10,7 @@
         :extract-keys="extractTextKeys"
         :link-prefix="linkPrefix"
         :files="store.files"
-        @value-change="valueChange"
+        @value-change="debouncedValueChange"
         v-model:selected-index="selectedIndex"
       />
       <VolumeAnnotations
@@ -59,7 +59,7 @@
 
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import { syncedStore, getYjsDoc, enableVueBindings } from '@syncedstore/core';
-import { forEach, get, set } from 'lodash';
+import { forEach, get, set, debounce } from 'lodash';
 //import { initSyncedStore, waitForSync } from "../store/synced";
 import {
   AdjustSettings,
@@ -270,8 +270,19 @@ const fetchFiles = async () => {
 const reduced = Vue.computed(() => !displayChat.value && !displayScript.value);
 
 const valueChange = (content, index, selector) => {
+  const path = Array.isArray(selector) ? '/' + selector.join('/') : '/' + selector;
+  AtlasMakerWidget.sendSaveMetadataMessage(store.files[index], 'patch', [
+    {
+      op: 'replace',
+      path,
+      value: content
+    }
+  ]);
   set(store.files[index], selector, content);
 };
+
+const debouncedValueChange = debounce(valueChange, 1000);
+
 const setupKeyDownListeners = () => {
   document.addEventListener('keydown', (event) => {
     const selectedTr = document.querySelector('tr.selected');
@@ -385,9 +396,9 @@ Vue.onMounted(async () => {
   crdtProvider.on('synced', async () => {
     if (store.files.length === 0) {
       await fetchFiles();
-      if (store.files.length > 0) {
-        selectedIndex.value = 0;
-      }
+    }
+    if (store.files.length > 0) {
+      selectedIndex.value = 0;
     }
   });
 });
