@@ -1,8 +1,8 @@
 /* eslint-disable max-lines */
 /* global AtlasMakerWidget MozWebSocket*/
 /*! AtlasMaker: WebSockets */
-import * as DOMPurify from 'dompurify';
-import * as pako from 'pako';
+import DOMPurify from 'dompurify';
+import pako from 'pako';
 
 /**
  * @page AtlasMaker: WebSockets
@@ -85,22 +85,6 @@ export const AtlasMakerWS = {
             if (me.timer) {
               clearInterval(me.timer);
             }
-            //   setTimeout(function() {
-            //     me.reconnectionTimeout *= 2;
-            //     me.initSocketConnection()
-            //       .then(function() {
-            //         me.sendUserDataMessage("allUserData");
-            //         me.sendUserDataMessage("sendAtlas");
-            //         clearInterval(me.timer);
-            //       })
-            //       .catch(function() {
-            //         timeout=me.reconnectionTimeout;
-            //         $("#notifications").text("Disconnected. Try to reconnect in "+(timeout--)+" s...");
-            //       });
-            //   }, 1000);
-            // } else {
-            //   $("#notifications").text("Disconnected. Try to reconnect in "+(timeout--)+" s...");
-            // }
             me.timer = setInterval(function () {
               if (timeout < 0) {
                 me.setNotification('Reconnecting...');
