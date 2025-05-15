@@ -2,6 +2,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const readline = require('readline');
 const zlib = require('zlib');
 
 const AsyncLock = require('async-lock');
@@ -9,7 +10,6 @@ const createDOMPurify = require('dompurify');
 const jsonpatch = require('fast-json-patch');
 const jpeg = require('jpeg-js'); // jpeg-js library: https://github.com/eugeneware/jpeg-js
 const { JSDOM } = require('jsdom');
-const keypress = require('keypress');
 const merge = require('merge');
 const tracer = require('tracer').console({ format: '[{{file}}:{{line}}]  {{message}}' });
 const WebSocket = require('ws');
@@ -1736,72 +1736,39 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         uid: uid
       }, uid);
     },
-    _initKeyPressHandler: function () {
-      keypress(process.stdin);
-      // eslint-disable-next-line max-statements
-      process.stdin.on('keypress', function (ch, key) {
-        if (key) {
-          // tracer.log(ch, key);
-          if (key.name === 'c' && key.ctrl) {
-            tracer.log('Exit.');
-            // eslint-disable-next-line no-process-exit
-            process.exit();
-          }
-          if (key.name === 'escape') {
-            me.enterCommands = !me.enterCommands;
-            tracer.log('enterCommands: ' + me.enterCommands);
-          }
-          if (key.name === 'backspace') {
-            process.stdout.write('\b');
-          }
-          if (me.enterCommands === false) {
-            if (key.name === 'return') {
-              tracer.log();
-            }
-          }
-        }
+    _initCommandLineHandler: function () {
 
-        if (ch) {
-          if (me.enterCommands) {
-            switch (ch) {
-            case 'a':
-              me.displayAtlases();
-              break;
-            case 'b':
-              me.displayBrains();
-              break;
-            case 'u':
-              me.displayUsers();
-              break;
-            case 'r':
-              me.toggleWebsocketRecording();
-              break;
-            case '0':
-              me.debug = 0;
-              tracer.log('debug level:', me.debug);
-              break;
-            case '1':
-              me.debug = 1;
-              tracer.log('debug level:', me.debug);
-              break;
-            case '2':
-              me.debug = 2;
-              tracer.log('debug level:', me.debug);
-              break;
-            case '3':
-              me.debug = 3;
-              tracer.log('debug level:', me.debug);
-              break;
-            }
-          } else {
-            process.stdout.write(ch);
-          }
+      const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+      });
+
+      rl.on('line', function (line) {
+        const ch = line.trim();
+        switch (ch) {
+        case 'a':
+          me.displayAtlases();
+          break;
+        case 'b':
+          me.displayBrains();
+          break;
+        case 'u':
+          me.displayUsers();
+          break;
+        case 'r':
+          me.toggleWebsocketRecording();
+          break;
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+          me.debug = Number(ch);
+          tracer.log('debug level:', me.debug);
+          break;
+        default:
+          console.log(`Unknown command: ${ch}`);
         }
       });
-      if (process.stdin.isTTY) {
-        process.stdin.setRawMode(true);
-      }
-      process.stdin.resume();
     },
     _isInBlacklist: function (remoteAddress) {
       let isInBlacklist = false;
@@ -2087,7 +2054,7 @@ free memory: ${os.freemem()}
 `);
 
       setInterval(function () { tracer.log('date:', new Date()); }, me.timeMarkInterval).unref(); // time mark
-      me._initKeyPressHandler();
+      me._initCommandLineHandler();
       me._initColorMap();
 
       me.server.on('upgrade', function (req, socket) {
