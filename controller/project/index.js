@@ -1,6 +1,7 @@
 /*global authTokenMiddleware */
 
 const express = require('express');
+
 const controller = require('./project.controller');
 
 const router = new express.Router();
@@ -15,5 +16,6 @@ router.delete('/json/:projectName', controller.validator, authTokenMiddleware, c
 
 router.get('/:projectName', controller.validator, controller.project);
 router.get('/:projectName/settings', controller.validator, controller.settings);
+router.get('/:projectName/embed', controller.validator, controller.embed);
 
 module.exports = router;

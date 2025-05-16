@@ -1,9 +1,9 @@
 /* eslint-disable max-lines */
 console.log('dataSlices.js');
 const dateFormat = require('dateformat');
+const { AccessLevel } = require('neuroweblab');
 
 const { ForbiddenAccessError } = require('../../errors');
-const { AccessLevel } = require('neuroweblab');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 
 /**
@@ -15,7 +15,7 @@ const BrainboxAccessControlService = require('../../services/BrainboxAccessContr
  * @param {integer} length Number of files to include in the slice
  * @returns {Object} user files slice
  */
-const getUserFilesSlice = function getUserFilesSlice(req, requestedUser, start, length) {
+const getUserFilesSlice = function getUserFilesSlice (req, requestedUser, start, length) {
   console.log('getUserFilesSlice. Start, end:', start, length);
   let loggedUser = 'anonymous';
   if (req.isAuthenticated()) {
@@ -81,7 +81,7 @@ const getUserFilesSlice = function getUserFilesSlice(req, requestedUser, start, 
  * @param {integer} length Number of files to include in the slice
  * @returns {Object} user atlas slice
  */
-const getUserAtlasSlice = function getUserAtlasSlice(req, requestedUser, start, length) {
+const getUserAtlasSlice = function getUserAtlasSlice (req, requestedUser, start, length) {
   let loggedUser = 'anonymous';
   if (req.isAuthenticated()) {
     loggedUser = req.user.username;
@@ -146,7 +146,7 @@ const getUserAtlasSlice = function getUserAtlasSlice(req, requestedUser, start, 
  * @param {integer} length Number of files to include in the slice
  * @returns {Object} user projects slice
  */
-const getUserProjectsSlice = function getUserProjectsSlice(req, requestedUser, start, length) {
+const getUserProjectsSlice = function getUserProjectsSlice (req, requestedUser, start, length) {
   let loggedUser = 'anonymous';
   if (req.isAuthenticated()) {
     loggedUser = req.user.username;
@@ -218,7 +218,7 @@ const getProjectFilesSlice = async (req, projShortname, start, length, namesFlag
   if (!project) {
     console.log('project is empty');
 
-    return;
+    return [];
   }
 
   // check access
@@ -281,7 +281,7 @@ const getProjectFilesSlice = async (req, projShortname, start, length, namesFlag
  * @param {integer} length Number of files to include in the slice
  * @returns {Object} files slice
  */
-const getFilesSlice = function getFilesSlice(req, start, length) {
+const getFilesSlice = function getFilesSlice (req, start, length) {
   let loggedUser = 'anonymous';
   if (req.isAuthenticated()) {
     loggedUser = req.user.username;
@@ -332,7 +332,7 @@ const getFilesSlice = function getFilesSlice(req, start, length) {
  * @returns {Object} project slice
  */
 // eslint-disable-next-line max-statements
-const getProjectsSlice = async function getProjectsSlice(req, start, length) {
+const getProjectsSlice = async function getProjectsSlice (req, start, length) {
   let loggedUser = 'anonymous';
   if (req.isAuthenticated()) {
     loggedUser = req.user.username;

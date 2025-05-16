@@ -1,9 +1,11 @@
 /* eslint-disable max-lines */
 const assert = require('assert');
-const userController = require('../../controller/user/user.controller');
+
 require('mocha-sinon');
-const sinon = require('sinon');
 const httpMocks = require('node-mocks-http');
+const sinon = require('sinon');
+
+const userController = require('../../controller/user/user.controller');
 // const { expect, use } = require("chai");
 // const { doesNotMatch, fail } = require("assert");
 const U = require('../utils');
@@ -16,11 +18,12 @@ describe('User Controller: ', function () {
 
   describe('validator function() ', function () {
     it('should perform the validations correctly', async function () {
-      // currently the validation function does nothing
-      const req = httpMocks.createRequest();
+      const queryUser = sinon.stub().resolves({ nickname: 'user' });
+      const req = httpMocks.createRequest({ app: { db: { queryUser }}});
       const res = httpMocks.createResponse();
       await userController.validator(req, res, () => { /* do nothing */ });
       assert.strictEqual(res.statusCode, 200);
+      assert.strictEqual(queryUser.callCount, 1);
     });
   });
 

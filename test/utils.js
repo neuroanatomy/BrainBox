@@ -1,16 +1,16 @@
 /* eslint-disable max-lines */
 const fs = require('fs');
 const path = require('path');
+const { exec } = require('child_process');
 const rimraf = require('rimraf');
 const { PNG } = require('pngjs');
 const jpeg = require('jpeg-js');
 const pixelmatch = require('pixelmatch');
-const { exec } = require('child_process');
 // const { constants } = require('buffer');
-const brainboxApp = require('../app');
-
 const chai = require('chai');
 const chaiHttp = require('chai-http');
+const brainboxApp = require('../app');
+
 chai.use(chaiHttp);
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
@@ -142,23 +142,26 @@ const privateProjectTest = {
   modifiedBy: 'foo'
 };
 
-let app, atlasmakerServer, db, server;
+let app, atlasmakerServer, db, hocuspocusServer, server;
 
 const initResources = async () => {
-  ({ app, server, atlasmakerServer } = await brainboxApp.start());
+  ({ app, server, atlasmakerServer, hocuspocusServer } = await brainboxApp.start());
 
   db = app.db.mongoDB();
 };
 
-const closeResources = () => {
+const closeResources = async () => {
   if (db) {
-    db.close();
+    await db.close();
   }
   if (server) {
     server.close();
   }
   if (atlasmakerServer) {
     atlasmakerServer.server.close();
+  }
+  if (hocuspocusServer) {
+    hocuspocusServer.httpServer.close();
   }
   process.stdin.pause();
 };

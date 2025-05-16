@@ -1,24 +1,24 @@
-/* eslint-disable prefer-exponentiation-operator */
-/* eslint-disable radix */
 const dateFormat = require('dateformat');
+
 const dataSlices = require('../dataSlices/dataSlices.js');
 
 const validator = function (req, res, next) {
-
   // userName can be an ip address (for anonymous users)
+  const nickname = req.params.userName;
 
-  /*
-    // legacy api, needs to be rewriten if uncommented
-    req.checkParams('userName', 'incorrect user name').isAlphanumeric();
-    var errors = req.validationErrors();
-    console.log(errors);
-    if (errors) {
-        res.status(403).send(errors).end();
-    } else {
-        return next();
-    }
-    */
-  next();
+  req.app.db.queryUser({nickname})
+    .then((result) => {
+      if (!result) {
+        res.status(404);
+      }
+      if (result.disabled) {
+        res.status(404);
+
+        return res.render('disabledUser');
+      }
+      next();
+
+    });
 };
 
 const user = async function (req, res) {
@@ -108,8 +108,8 @@ const apiUserFiles = async function (req, res) {
     return;
   }
 
-  start = parseInt(start);
-  length = parseInt(length);
+  start = parseInt(start, 10);
+  length = parseInt(length, 10);
 
   const result = await dataSlices.getUserFilesSlice(req, userName, start, length)
     .catch(function (err) {
@@ -141,8 +141,8 @@ const apiUserAtlas = async function (req, res) {
 
     return;
   }
-  start = parseInt(start);
-  length = parseInt(length);
+  start = parseInt(start, 10);
+  length = parseInt(length, 10);
 
   const result = await dataSlices.getUserAtlasSlice(req, userName, start, length)
     .catch(function (err) {
@@ -174,8 +174,8 @@ const apiUserProjects = async function (req, res) {
 
     return;
   }
-  start = parseInt(start);
-  length = parseInt(length);
+  start = parseInt(start, 10);
+  length = parseInt(length, 10);
 
   const result = await dataSlices.getUserProjectsSlice(req, userName, start, length)
     .catch(function (err) {
@@ -185,6 +185,57 @@ const apiUserProjects = async function (req, res) {
   res.send(result);
 };
 
+const deleteProfile = async function (req, res) {
+  const loggedUser = req.user;
+  if (!loggedUser) {
+    res.status(401);
+  }
+  try {
+    const userInfo = await req.app.db.queryUser({nickname: loggedUser.username});
+    await req.app.db.updateUser({ ...userInfo, disabled: true });
+    res.redirect('/logout');
+  } catch (err) {
+    console.log(err);
+    res.status(500);
+  }
+};
+
+const savePreferences = async function (req, res) {
+  const loggedUser = req.user;
+  if (!loggedUser) {
+    res.status(401);
+  }
+  try {
+    const userInfo = await req.app.db.queryUser({nickname: loggedUser.username});
+    const authorizedHostsForEmbedding = req.body.authorizedHosts
+      .replace(/[^a-zA-Z0-9\-.:/\n]/g, '').split('\n')
+      .filter((url) => {
+        try {
+          const parsedURL = new URL(url);
+          // If protocol is not 'http:' or 'https:', consider it invalid
+          if (parsedURL.protocol !== 'http:' && parsedURL.protocol !== 'https:') {
+            console.error(`Invalid URL ${url}: Protocol is not supported`);
+
+            return false;
+          }
+
+          return true;
+        } catch (error) {
+          console.error(`${error.message}: ${url}`);
+
+          return false;
+        }
+      })
+      .join('\n');
+    await req.app.db.updateUser({ ...userInfo, authorizedHostsForEmbedding });
+    res.redirect(`/user/${req.user.username}`);
+  } catch (err) {
+    console.log(err);
+    res.status(500);
+  }
+
+};
+
 const UserController = function () {
   this.validator = validator;
   this.apiUser = apiUser;
@@ -192,6 +243,8 @@ const UserController = function () {
   this.apiUserFiles = apiUserFiles;
   this.apiUserAtlas = apiUserAtlas;
   this.apiUserProjects = apiUserProjects;
+  this.savePreferences = savePreferences;
+  this.deleteProfile = deleteProfile;
   this.user = user;
 };
 

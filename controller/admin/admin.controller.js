@@ -1,5 +1,6 @@
-const notifier = require('../../notifier');
 const { body, validationResult } = require('express-validator');
+
+const notifier = require('../../notifier');
 
 const validator = (req, res, next) => {
   const authorizedIP = ['1']; // hardcoded authorized IPs
