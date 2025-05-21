@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+
 const tracer = require('tracer').console({format: '[{{file}}:{{line}}]  {{message}}'});
 
 const getLabelsets = async (req, res) => {
@@ -18,7 +19,7 @@ const getLabelsets = async (req, res) => {
 
 const userNameQuery = (req, res) => {
   const {query} = req;
-  if(typeof query.q === 'undefined') {
+  if (typeof query.q === 'undefined') {
     res.status(400).send({error: 'missing q parameter'});
 
     return;
@@ -27,8 +28,8 @@ const userNameQuery = (req, res) => {
   db.get('user')
     .find(
       { $or: [
-        {nickname: {$regex:query.q}},
-        {name: {$regex:query.q}}
+        {nickname: {$regex: query.q}},
+        {name: {$regex: query.q}}
       ]},
       { fields: ['name', 'nickname'], limit: 10 }
     )
@@ -44,7 +45,7 @@ const userNameQuery = (req, res) => {
 const getAtlasBackups = (req, res) => {
   const { source, atlasProject, atlasName } = req.query;
 
-  if(typeof source === 'undefined'
+  if (typeof source === 'undefined'
       || typeof atlasProject === 'undefined'
       || atlasName === 'undefined') {
     res.status(400);
@@ -59,30 +60,30 @@ const getAtlasBackups = (req, res) => {
   const db = req.app.db.mongoDB();
   db.get('mri').findOne({
     source: source,
-    'mri.atlas': {$elemMatch:{name: atlasName, project: atlasProject}},
+    'mri.atlas': {$elemMatch: {name: atlasName, project: atlasProject}},
     backup: {$exists: 0}
   }, {url: 1, 'mri.atlas.$': 1})
-    .then( (obj) => {
+    .then((obj) => {
     // get all filenames that have ever been associated with this atlas
       let {url: dataDir} = obj;
       [,, dataDir] = dataDir.split('/');
       db.get('mri').aggregate([
-        { $match:{ source: source, 'mri.atlas':{$elemMatch: {project: atlasProject, name: atlasName}}}},
+        { $match: { source: source, 'mri.atlas': {$elemMatch: {project: atlasProject, name: atlasName}}}},
         { $unwind: '$mri.atlas' },
-        { $match: { 'mri.atlas.project':atlasProject, 'mri.atlas.name': atlasName}},
-        { $group: {_id:{filename: '$mri.atlas.filename'}}},
-        { $project: {_id:0, filename:'$_id.filename'}}
+        { $match: { 'mri.atlas.project': atlasProject, 'mri.atlas.name': atlasName}},
+        { $group: {_id: {filename: '$mri.atlas.filename'}}},
+        { $project: {_id: 0, filename: '$_id.filename'}}
       ])
-        .then( (obj2) => {
+        .then((obj2) => {
         // get all backups for those files...
           let i;
           const promiseArray = [];
           // ...from backup logs
-          for(i=0; i<obj2.length; i++) {
+          for (i = 0; i < obj2.length; i++) {
             promiseArray.push(
               db.get('log').aggregate([
-                { $match: {key:'saveAtlasBackup', 'value.atlasDirectory': dataDir, 'value.atlasFilename': obj2[i].filename}},
-                { $project: {_id:0, filename:'$value.atlasFilename', timestamp:'$value.timestamp'}}
+                { $match: {key: 'saveAtlasBackup', 'value.atlasDirectory': dataDir, 'value.atlasFilename': obj2[i].filename}},
+                { $project: {_id: 0, filename: '$value.atlasFilename', timestamp: '$value.timestamp'}}
               ])
             );
           }
@@ -92,7 +93,7 @@ const getAtlasBackups = (req, res) => {
               result = result.concat(obj2);
               res.send(result);
             })
-            .catch( (err) => {
+            .catch((err) => {
               res.status(500);
               res.render('error', {
                 message: 'Can\'t query backup file logs',
@@ -100,7 +101,7 @@ const getAtlasBackups = (req, res) => {
               });
             });
         })
-        .catch( (err) => {
+        .catch((err) => {
           res.status(500);
           res.render('error', {
             message: 'Can\'t query backup files',
@@ -108,7 +109,7 @@ const getAtlasBackups = (req, res) => {
           });
         });
     })
-    .catch( (err) => {
+    .catch((err) => {
       res.status(400);
       res.render('error', {
         message: 'Can\'t find atlas',
@@ -136,12 +137,12 @@ const log = async (req, res) => {
 
       const result = await db.get('log').findOne(obj);
       let length = 0;
-      if(result) {
+      if (result) {
         length = parseFloat(result.value.length);
       }
       const sum = parseFloat(json.value.length) + length;
-      await db.get('log').update(obj, {$set:{
-        'value.length':sum,
+      await db.get('log').update(obj, {$set: {
+        'value.length': sum,
         date: (new Date()).toJSON()
       }}, {upsert: true});
       res.send({length: sum});
@@ -168,7 +169,7 @@ const log = async (req, res) => {
 
   db.get('mri').update({
     source: json.value.source,
-    'mri.atlas':{$elemMatch:{filename:json.value.atlas}}
+    'mri.atlas': {$elemMatch: {filename: json.value.atlas}}
   }, {
     $set: {
       'mri.atlas.$.modified': (new Date()).toJSON(),

@@ -1,5 +1,5 @@
 window.commands = (cmd) => {
-  if(cmd === 'help') { return 'List all available commands'; }
+  if (cmd === 'help') { return 'List all available commands'; }
 
   fetch('/lib/atlasmaker-tools/tools.json')
     .then((r) => r.text())
