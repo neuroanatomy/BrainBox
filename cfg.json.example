@@ -3,8 +3,6 @@
     "wshostname": "ws://localhost:8080",
     "app_port": 3001,
     "ws_port": 8080,
-    "crdt_backend_url": "ws://localhost:8081",
-    "crdt_backend_port": "8081",
     "secure": false,
     "ssl_key": "./key.pem",
     "ssl_cert": "./cert.pem",

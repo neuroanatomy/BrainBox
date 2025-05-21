@@ -9,7 +9,7 @@
       <TextAnnotations
         :extract-keys="extractTextKeys"
         :link-prefix="linkPrefix"
-        :files="store.files"
+        :files="files"
         @value-change="debouncedValueChange"
         v-model:selected-index="selectedIndex"
       />
@@ -57,8 +57,8 @@
 /* global projectInfo */
 /* eslint-disable max-lines */
 
-import { HocuspocusProvider } from '@hocuspocus/provider';
-import { syncedStore, getYjsDoc, enableVueBindings } from '@syncedstore/core';
+import DOMPurify from 'dompurify';
+import jsonpatch from 'fast-json-patch';
 import { forEach, get, set, debounce } from 'lodash';
 //import { initSyncedStore, waitForSync } from "../store/synced";
 import {
@@ -72,21 +72,9 @@ import {
 import * as Vue from 'vue';
 
 
-import config from '../../../../cfg.json';
 import useVisualization from '../store/visualization';
 
 import Tools from './Tools.vue';
-
-enableVueBindings(Vue);
-
-const store = syncedStore({ files: [], fragment: 'xml' });
-const doc = getYjsDoc(store);
-
-const crdtProvider = new HocuspocusProvider({
-  url: config.crdt_backend_url,
-  name: projectInfo.shortname,
-  document: doc
-});
 
 const { annotationsAccessLevel, BrainBox, AtlasMakerWidget } = window;
 const { baseURL } = Vue.inject('config');
@@ -110,6 +98,7 @@ const {
   displayScript,
   currentLabel,
   ontology,
+  files,
   currentFile,
   fullscreen,
   alpha,
@@ -210,7 +199,7 @@ const populateVolumeAnnotations = (file) => {
 
 
 // make sure that all mri files have text annotations as set in the project info
-const populateTextAnnotations = (files) => files.map((file) => {
+const populateTextAnnotations = (fetchedFiles) => fetchedFiles.map((file) => {
   if (!file.mri) {
     file.mri = {};
   }
@@ -240,7 +229,7 @@ const populateTextAnnotations = (files) => files.map((file) => {
   return file;
 });
 
-const doFetchFiles = async (files, cursor) => {
+const doFetchFiles = async (fetchedFiles, cursor) => {
   const params = {
     start: cursor,
     length: 100
@@ -252,33 +241,33 @@ const doFetchFiles = async (files, cursor) => {
   url.search = new URLSearchParams(params).toString();
   const res = await (await fetch(url)).json();
   if (res && res.length > 0) {
-    files.push(...res);
+    fetchedFiles.push(...res);
 
-    if (files.length % 100 === 0) {
-      return doFetchFiles(files, cursor + 100);
+    if (fetchedFiles.length % 100 === 0) {
+      return doFetchFiles(fetchedFiles, cursor + 100);
     }
   }
 
-  return files;
+  return fetchedFiles;
 };
 
 const fetchFiles = async () => {
   const fetchedFiles = await doFetchFiles([], 0);
-  store.files.push(...populateTextAnnotations(fetchedFiles));
+  files.value.push(...populateTextAnnotations(fetchedFiles));
 };
 
 const reduced = Vue.computed(() => !displayChat.value && !displayScript.value);
 
 const valueChange = (content, index, selector) => {
   const path = Array.isArray(selector) ? '/' + selector.join('/') : '/' + selector;
-  AtlasMakerWidget.sendSaveMetadataMessage(store.files[index], 'patch', [
+  AtlasMakerWidget.sendSaveMetadataMessage(files.value[index], 'patch', [
     {
       op: 'replace',
       path,
       value: content
     }
   ]);
-  set(store.files[index], selector, content);
+  set(files.value[index], selector, content);
 };
 
 const debouncedValueChange = debounce(valueChange, 1000);
@@ -329,7 +318,7 @@ const getMRIParams = (file) => {
 
 // eslint-disable-next-line max-statements
 Vue.watch(selectedIndex, async (newIndex) => {
-  const selectedFile = store.files[newIndex];
+  const selectedFile = files.value[newIndex];
   if (!selectedFile) {
     return;
   }
@@ -390,17 +379,32 @@ const handleOntologyLabelClick = (index) => {
   AtlasMakerWidget.changePenColor(index);
 };
 
+const receiveMetadata = function (data) {
+  if (data.method !== 'patch') {
+    // only deal with patch
+    return;
+  }
+  const json = data.metadata;
+  // find the matching file
+  const file = files.value.find((f) => f.source === json.source);
+  if (!file) { return; }
+  // apply patch
+  jsonpatch.applyPatch(file, data.patch);
+  // sanitise file in-place without losing its ref
+  Object.assign(file, JSON.parse(DOMPurify.sanitize(JSON.stringify(file))));
+};
+
 Vue.onMounted(async () => {
   setupKeyDownListeners();
   await initVisualization();
-  crdtProvider.on('synced', async () => {
-    if (store.files.length === 0) {
-      await fetchFiles();
-    }
-    if (store.files.length > 0) {
-      selectedIndex.value = 0;
-    }
-  });
+  AtlasMakerWidget._metadataChangeSubscribers.push(receiveMetadata);
+  console.log('brainbox intialized');
+  if (files.value.length === 0) {
+    await fetchFiles();
+  }
+  if (files.value.length > 0) {
+    selectedIndex.value = 0;
+  }
 });
 </script>
 <style>

@@ -9,7 +9,6 @@ const http = require('http');
 const https = require('https');
 const path = require('path');
 
-const { Server: HocuspocusServer } = require('@hocuspocus/server');
 const bodyParser = require('body-parser');
 const compression = require('compression');
 const cookieParser = require('cookie-parser');
@@ -157,16 +156,6 @@ const start = async function () {
   });
 
   //========================================================================================
-  // Configure Yjs backend for multiuser edition
-  //========================================================================================
-
-  const hocuspocusServer = HocuspocusServer.configure({
-    port: Config.crdt_backend_port
-  });
-
-  hocuspocusServer.listen();
-
-  //========================================================================================
   // Setup routes
   //========================================================================================
   routes(app);
@@ -203,7 +192,7 @@ const start = async function () {
   //   });
   // });
 
-  return { app, server, atlasmakerServer, hocuspocusServer };
+  return { app, server, atlasmakerServer };
 };
 
 module.exports = { start };

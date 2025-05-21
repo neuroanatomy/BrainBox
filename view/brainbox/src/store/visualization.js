@@ -14,6 +14,7 @@ const state = reactive({
   displayScript: false,
   ontology: null,
   currentLabel: 0,
+  files: [],
   currentFile: null,
   currentSlice: null,
   totalSlices: 0,

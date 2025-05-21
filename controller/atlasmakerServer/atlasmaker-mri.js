@@ -201,8 +201,7 @@ const computeS2VTransformation = (mri) => {
 const filetypeFromFilename = (mriPath) => {
   if (mriPath.match(/.nii.gz$/)) {
     return 'nii.gz';
-  } else
-  if (mriPath.match(/.mgz$/)) {
+  } else if (mriPath.match(/.mgz$/)) {
     return 'mgz';
   }
 };
@@ -649,8 +648,8 @@ const loadMRI = (mriPath) => {
         });
       break;
     default:
-      console.error('ERROR: nothing we can read');
-      reject(new Error('ERROR: nothing we can read'));
+      console.error('ERROR: nothing we can read ' + mriPath);
+      reject(new Error('ERROR: nothing we can read ' + mriPath));
     }
   });
 
