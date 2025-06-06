@@ -57,12 +57,12 @@
 #tools-side #tools-maximized div {
     pointer-events: all;
 }
-.atlasmaker-fullscreen #atlasmaker {
+/* .atlasmaker-fullscreen #atlasmaker {
     position:fixed;
     top:0px;
     left:0px;
     /*width: calc( 100% - 240px );*/	/* width of tools */
-    width: 100%;
+    /* width: 100%;
     height:100%;
     z-index:10;
 }
@@ -84,7 +84,7 @@
 }
 .atlasmaker-fullscreen[data-toolbarDisplay=right] #text-layer {
     text-align: left;
-}
+} */
 
 #tools-side #tools-minimized div {
     display:inline-block;
@@ -97,21 +97,21 @@
     margin: 10px;
     cursor: pointer;
 }
-.atlasmaker-fullscreen[data-toolbarDisplay=left] #tools-minimized div {
+/* .atlasmaker-fullscreen[data-toolbarDisplay=left] #tools-minimized div {
     top: 0;
     left: 0;
 }
 .atlasmaker-fullscreen[data-toolbarDisplay=right] #tools-minimized div {
     top: 0;
     right: 0;
-}
+} */
 
 #headerBlock {
     display: none;
 }
-.atlasmaker-fullscreen #headerBlock {
+/* .atlasmaker-fullscreen #headerBlock {
     display: block;
-}
+} */
 
 #logChat {
     -webkit-user-select:all;
@@ -182,34 +182,3 @@
 #msg {
     color: black;
 }
-
-/* Label set
------------------------- */
-#labelset {
-    display:none;
-    overflow:scroll;
-    position:fixed;
-    top:0px;
-    left:0px;
-    width:100%;
-    height:100%;
-    text-align:left;
-    background-color:#333;
-    z-index:21;
-}
-.label-color {
-    vertical-align:middle;
-    margin:6px;
-    display:inline-block;
-    width:40px;
-    height:30px;
-    background-color:rgb(0,0,0);
-}
-#label-template {
-    display:none;
-}
-#label-list {
-    display:flex;
-    flex-wrap:wrap;
-     text-align:left;
- }

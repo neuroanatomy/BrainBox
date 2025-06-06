@@ -83,6 +83,7 @@
     color:#ddd;
     text-align:center;
     -webkit-appearance:none;
+    appearance: none;
     cursor: pointer;
 }
 img.button {

@@ -1,15 +1,15 @@
-/* eslint-disable prefer-exponentiation-operator */
 const path = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
-// const WebpackShellPlugin = require('webpack-shell-plugin');
 
-module.exports = (env, argv) => ({
+const { VueLoaderPlugin } = require('vue-loader');
+const { DefinePlugin } = require('webpack');
+
+module.exports = {
   entry: {
     'ask-for-login-page': './view/brainbox/src/pages/ask-for-login-page.js',
     'index-page': './view/brainbox/src/pages/index-page.js',
     'mri-page': './view/brainbox/src/pages/mri-page.js',
     'project-page': './view/brainbox/src/pages/project-page.js',
+    'embed-page': './view/brainbox/src/pages/embed-page.js',
     'project-new-page': './view/brainbox/src/pages/project-new-page.js',
     'project-settings-page':
       './view/brainbox/src/pages/project-settings-page.js',
@@ -17,14 +17,17 @@ module.exports = (env, argv) => ({
   },
   devtool: 'eval-source-map',
   plugins: [
-    new CleanWebpackPlugin(['dist']),
-    new HtmlWebpackPlugin({
-      title: 'Output Management'
+    new VueLoaderPlugin(),
+    new DefinePlugin({
+      __VUE_OPTIONS_API__: 'true',
+      __VUE_PROD_DEVTOOLS__: 'false',
+      __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: 'false'
     })
   ],
   output: {
     filename: '[name].js',
-    path: path.resolve(__dirname, 'view/brainbox/dist')
+    path: path.resolve(__dirname, 'view/brainbox/dist'),
+    clean: false // do not clean as same output dir is used by webpack.brainbox.config.js
   },
   module: {
     rules: [
@@ -36,19 +39,13 @@ module.exports = (env, argv) => ({
         ]
       },
       {
-        test: /\.(png|svg|jpg|gif)$/,
-        use: ['file-loader']
+        test: /\.svg$/,
+        type: 'asset/inline'
+      },
+      {
+        test: /\.vue$/,
+        loader: 'vue-loader'
       }
     ]
-  },
-  resolve: {
-    symlinks: false,
-    alias: {
-      // for now using the browser build to parse existing inlined components
-      vue: path.resolve(
-        `./node_modules/vue/dist/vue.esm-browser${argv.mode === 'production' ? '.prod' : ''
-        }`
-      )
-    }
   }
-});
+};

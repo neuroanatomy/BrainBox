@@ -1,7 +1,6 @@
-/* eslint-disable prefer-exponentiation-operator */
 const fs = require('fs');
 const path = require('path');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
+
 const glob = require('glob');
 
 // list tools with user interface
@@ -46,10 +45,10 @@ module.exports = {
   mode: 'production',
   entry: entries,
   devtool: 'eval-source-map',
-  plugins: [new CleanWebpackPlugin(['dist'])],
   output: {
     filename: '[name].js',
-    path: path.resolve(__dirname, 'view/atlasmaker/dist/atlasmaker-tools')
+    path: path.resolve(__dirname, 'view/atlasmaker/dist/atlasmaker-tools'),
+    clean: true
   },
   module: {
     rules: [
@@ -62,12 +61,7 @@ module.exports = {
       },
       {
         test: /\.(svg)$/,
-        use: {
-          loader: 'url-loader',
-          options: {
-            noquotes: true
-          }
-        }
+        type: 'asset/inline'
       },
       {
         test: /\.(html)$/,

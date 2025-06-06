@@ -15,14 +15,8 @@ public/_img-all/
 public/.DS_Store
 public/data
 public/doc2/*
-public/js/
-public/js/ask-for-login-page.js
-public/js/index-page.js
-public/js/mri-page.js
-public/js/project-new-page.js
-public/js/project-page.js
-public/js/project-settings-page.js
-public/js/user-page.js
+/public/js/*
+!/public/js/surfacenets-worker.js
 public/lib/.DS_Store
 public/lib/atlasmaker-tools
 public/lib/atlasmaker.js

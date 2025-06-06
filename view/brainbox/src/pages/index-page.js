@@ -23,12 +23,7 @@ const testWebSockets = function () {
   return new Promise(function (resolve, reject) {
     // var host = "wss://websocketstest.com/service";
     // var host = "wss://echo.websocket.org";
-    let host;
-    if(Config.secure) {
-      host = 'wss://' + Config.wshostname;
-    } else {
-      host = 'ws://' + Config.wshostname;
-    }
+    const host = Config.wshostname;
 
     let ws;
     if (window.WebSocket) {

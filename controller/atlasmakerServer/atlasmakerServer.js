@@ -1,15 +1,23 @@
 /* eslint-disable max-lines */
 const fs = require('fs');
 const os = require('os');
-const zlib = require('zlib');
-const tracer = require('tracer').console({ format: '[{{file}}:{{line}}]  {{message}}' });
-const jpeg = require('jpeg-js'); // jpeg-js library: https://github.com/eugeneware/jpeg-js
-const merge = require('merge');
 const path = require('path');
-const keypress = require('keypress');
+const readline = require('readline');
+const zlib = require('zlib');
+
+const AsyncLock = require('async-lock');
+const createDOMPurify = require('dompurify');
+const jsonpatch = require('fast-json-patch');
+const jpeg = require('jpeg-js'); // jpeg-js library: https://github.com/eugeneware/jpeg-js
+const { JSDOM } = require('jsdom');
+const merge = require('merge');
+const tracer = require('tracer').console({ format: '[{{file}}:{{line}}]  {{message}}' });
+const WebSocket = require('ws');
+
+const notifier = require('../../notifier');
 
 const amri = require('./atlasmaker-mri');
-const AsyncLock = require('async-lock');
+
 const lock = new AsyncLock();
 
 // Get whitelist and blacklist
@@ -19,12 +27,9 @@ const whitelist = JSON.parse(fs.readFileSync(path.join(__dirname, 'whitelist.jso
 const blacklist = JSON.parse(fs.readFileSync(path.join(__dirname, 'blacklist.json')));
 
 // var http = require('http');
-const WebSocket = require('ws');
 const WebSocketServer = WebSocket.Server;
 let websocketserver;
 
-const createDOMPurify = require('dompurify');
-const { JSDOM } = require('jsdom');
 const { window } = (new JSDOM('', {
   features: {
     FetchExternalResources: false, // disables resource loading over HTTP / filesystem
@@ -33,7 +38,6 @@ const { window } = (new JSDOM('', {
 }));
 const DOMPurify = createDOMPurify(window);
 
-const jsonpatch = require('fast-json-patch');
 
 const bufferTag = function (str, sz) {
   const buf = Buffer.alloc(sz).fill(32);
@@ -274,6 +278,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       }
     },
     removeAtlasAtIndex: function (iAtlas) {
+      // can throw an error if me.Atlases[iAtlas] is undefined
       console.log(`INFO: Removing atlas ${me.Atlases[iAtlas].filename}`);
       clearInterval(me.Atlases[iAtlas].timer);
       delete me.Atlases[iAtlas];
@@ -322,12 +327,12 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       try {
         await me._saveAtlasVoxelData(atlas);
       } catch (err) {
-        throw new Error('Can\'t save atlas voxel data', err);
+        console.error('Can\'t save atlas voxel data', err);
       }
       try {
         await me._saveAtlasVectorialData(atlas);
       } catch (err) {
-        throw new Error('Can\'t save atlas vectorial data', err);
+        console.error('Can\'t save atlas vectorial data', err);
       }
     },
 
@@ -351,7 +356,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         try {
           mri = await db.get('mri').findOne({ source: atlas.source, backup: { $exists: 0 } }, { _id: 0 });
         } catch (err) {
-          throw new Error('Can\'t find entry for atlas voxel data in DB', err);
+          console.error(err);
+          throw new Error('Can\'t find entry for atlas voxel data in DB');
         }
 
         if (mri === null) {
@@ -1283,7 +1289,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           const ret = await db.get('mri').findOne({ source: json.source, backup: { $exists: 0 } });
           // DEBUG: tracer.log("original mri:", JSON.stringify(ret));
 
-          if (data.method === 'overwrite') {
+          if (data.method === 'append') {
             json = merge.recursive(ret, json);
           }
           delete json._id;
@@ -1343,7 +1349,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       try {
         await Promise.all(results);
       } catch (err) {
-        throw new Error('Can\'t unload atlases', err);
+        console.error('Can\'t unload atlases');
+        console.error(err);
       }
     },
     _sendAtlasVoxelDataToUser: function (atlasdata, userSocket, flagCompress) {
@@ -1402,7 +1409,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
      * @returns {Object} An atlas (mri structure)
      */
     // eslint-disable-next-line max-statements
-    loadAtlas: async function loadAtlas(User) {
+    loadAtlas: async function loadAtlas (User) {
       const mriPath = path.join(me.dataDirectory, User.dirname, User.atlasFilename);
 
       if (typeof User.dirname === 'undefined') {
@@ -1574,7 +1581,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
 
       return { iAtlas, atlasLoadedFlag };
     },
-    // eslint-disable-next-line max-statements
+    // eslint-disable-next-line max-statements, complexity
     receiveUserDataMessage: function (data, userSocket) {
       const sourceUS = me.getUserFromUserId(data.uid);
 
@@ -1634,7 +1641,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
               })
               .catch((err) => console.error('ERROR: Unable to load atlas', err));
           }
-        } else {
+        } else if (User) {
           // receive a specific field of the User data object from the user
           /** @todo If the atlas/mri for the client failed to be sent, `User` is undefined */
           const changes = JSON.parse(data.description);
@@ -1649,20 +1656,24 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       // 3. Update user data
       // If the user didn't have a name (wasn't logged in), but now has one,
       // display the name in the log
-      if ({}.hasOwnProperty.call(User, 'username')) {
-        if (typeof sourceUS.User === 'undefined') {
-          tracer.log(`No "User" data yet received for id ${data.uid}`);
-        } else if (!{}.hasOwnProperty.call(sourceUS.User, 'username')) {
-          tracer.log(`User ${User.username} (${data.uid}) logged in`);
+      // check if the User variable is defined to avoid brainbox crash
+      if (User) {
+        if ({}.hasOwnProperty.call(User, 'username')) {
+          if (typeof sourceUS.User === 'undefined') {
+            tracer.log(`No "User" data yet received for id ${data.uid}`);
+          } else if (!{}.hasOwnProperty.call(sourceUS.User, 'username')) {
+            tracer.log(`User ${User.username} (${data.uid}) logged in`);
+          }
         }
-      }
-      if ({}.hasOwnProperty.call(sourceUS, 'User') === false) {
-        sourceUS.User = {};
-      }
-      for (const prop in User) {
-        if ({}.hasOwnProperty.call(User, prop)) {
-          sourceUS.User[prop] = User[prop];
-        }
+        // if ({}.hasOwnProperty.call(sourceUS, 'User') === false) {
+        //   sourceUS.User = {};
+        // }
+        // for (const prop in User) {
+        //   if ({}.hasOwnProperty.call(User, prop)) {
+        //     sourceUS.User[prop] = User[prop];
+        //   }
+        // }
+        sourceUS.User = User;
       }
 
       /*
@@ -1726,72 +1737,39 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         uid: uid
       }, uid);
     },
-    _initKeyPressHandler: function () {
-      keypress(process.stdin);
-      // eslint-disable-next-line max-statements
-      process.stdin.on('keypress', function (ch, key) {
-        if (key) {
-          // tracer.log(ch, key);
-          if (key.name === 'c' && key.ctrl) {
-            tracer.log('Exit.');
-            // eslint-disable-next-line no-process-exit
-            process.exit();
-          }
-          if (key.name === 'escape') {
-            me.enterCommands = !me.enterCommands;
-            tracer.log('enterCommands: ' + me.enterCommands);
-          }
-          if (key.name === 'backspace') {
-            process.stdout.write('\b');
-          }
-          if (me.enterCommands === false) {
-            if (key.name === 'return') {
-              tracer.log();
-            }
-          }
-        }
+    _initCommandLineHandler: function () {
 
-        if (ch) {
-          if (me.enterCommands) {
-            switch (ch) {
-            case 'a':
-              me.displayAtlases();
-              break;
-            case 'b':
-              me.displayBrains();
-              break;
-            case 'u':
-              me.displayUsers();
-              break;
-            case 'r':
-              me.toggleWebsocketRecording();
-              break;
-            case '0':
-              me.debug = 0;
-              tracer.log('debug level:', me.debug);
-              break;
-            case '1':
-              me.debug = 1;
-              tracer.log('debug level:', me.debug);
-              break;
-            case '2':
-              me.debug = 2;
-              tracer.log('debug level:', me.debug);
-              break;
-            case '3':
-              me.debug = 3;
-              tracer.log('debug level:', me.debug);
-              break;
-            }
-          } else {
-            process.stdout.write(ch);
-          }
+      const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+      });
+
+      rl.on('line', function (line) {
+        const ch = line.trim();
+        switch (ch) {
+        case 'a':
+          me.displayAtlases();
+          break;
+        case 'b':
+          me.displayBrains();
+          break;
+        case 'u':
+          me.displayUsers();
+          break;
+        case 'r':
+          me.toggleWebsocketRecording();
+          break;
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+          me.debug = Number(ch);
+          tracer.log('debug level:', me.debug);
+          break;
+        default:
+          console.log(`Unknown command: ${ch}`);
         }
       });
-      if (process.stdin.isTTY) {
-        process.stdin.setRawMode(true);
-      }
-      process.stdin.resume();
     },
     _isInBlacklist: function (remoteAddress) {
       let isInBlacklist = false;
@@ -1807,7 +1785,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
 
       return isInBlacklist;
     },
-    _handleUserWebSocketMessage: function ({ data, ws }) {
+    _handleUserWebSocketMessage: async function ({ data, ws }) {
       switch (data.type) {
       case 'userData':
         me.receiveUserDataMessage(data, ws); // sender);
@@ -1828,40 +1806,37 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         me.receiveRequestSlice2Message(data, ws); // sender);
         break;
       case 'save':
-        me.receiveSaveMessage(data, ws);
+        await me.receiveSaveMessage(data, ws);
         break;
       case 'saveMetadata':
-        me.receiveSaveMetadataMessage(data, ws); // sender);
+        await me.receiveSaveMetadataMessage(data, ws); // sender);
         break;
       case 'atlas':
-        me.receiveAtlasFromUserMessage(data, ws); // sender);
+        await me.receiveAtlasFromUserMessage(data, ws); // sender);
         break;
       case 'echo':
         tracer.log(`ECHO: "${data.msg}" from user ${data.username} (${data.uid})`);
         break;
       case 'userNameQuery':
-        me.queryUserName(data)
+        await me.queryUserName(data)
           .then(function (obj) {
             data.metadata = obj;
             ws.send(JSON.stringify(data)); // sender.send(JSON.stringify(data));
-          })
-          .catch((err) => tracer.log(err));
+          });
         break;
       case 'projectNameQuery':
-        me.queryProjectName(data)
+        await me.queryProjectName(data)
           .then(function (obj) {
             data.metadata = obj;
             ws.send(JSON.stringify(data)); // sender.send(JSON.stringify(data));
-          })
-          .catch(function (err) { tracer.log(err); });
+          });
         break;
       case 'similarProjectNamesQuery':
-        me.querySimilarProjectNames(data)
+        await me.querySimilarProjectNames(data)
           .then(function (obj) {
             data.metadata = obj;
             ws.send(JSON.stringify(data)); // sender.send(JSON.stringify(data));
-          })
-          .catch(function (err) { tracer.log(err); });
+          });
         break;
       case 'autocompleteClient':
         me.declareAutocompleteClient(data, ws); // sender);
@@ -1941,7 +1916,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         }
       }
     },
-    _handleWebSocketMessage: function ({ msg, ws }) {
+    _handleWebSocketMessage: async function ({ msg, ws }) {
       // var sender = ws;
       const sourceUS = me.getUserFromSocket(ws);
       let data = {};
@@ -1965,7 +1940,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       }
 
       // handle single user Web socket messages
-      me._handleUserWebSocketMessage({ data, ws });
+      await me._handleUserWebSocketMessage({ data, ws });
 
       // handle broadcast of messages
       me._handleBroadcastWebSocketMessage({ data, sourceUS });
@@ -2008,7 +1983,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           try {
             await me.unloadAtlas(sourceUS.User.dirname, sourceUS.User.atlasFilename, sourceUS.specimenName);
           } catch (err) {
-            throw new Error('Can\'t unload atlas', err);
+            console.error('Can\'t unload atlas');
+            console.error(err);
           }
         }
       } else {
@@ -2053,14 +2029,19 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         return;
       }
       me._connectNewUser({ ws });
-      ws.on('message', function (msg) {
-        me._handleWebSocketMessage({ msg, ws });
+      ws.on('message', async function (msg) {
+        try {
+          await me._handleWebSocketMessage({ msg, ws });
+        } catch (err) {
+          tracer.log('ERROR: Unable to handle WebSocket message', err);
+        }
       });
       ws.on('close', async function () {
         try {
           await me._disconnectUser({ ws });
         } catch (err) {
-          throw new Error('Can\'t disconnect user', err);
+          console.error('Can\'t disconnect user');
+          console.error(err);
         }
       });
     },
@@ -2075,7 +2056,7 @@ free memory: ${os.freemem()}
 `);
 
       setInterval(function () { tracer.log('date:', new Date()); }, me.timeMarkInterval).unref(); // time mark
-      me._initKeyPressHandler();
+      me._initCommandLineHandler();
       me._initColorMap();
 
       me.server.on('upgrade', function (req, socket) {
@@ -2121,7 +2102,6 @@ free memory: ${os.freemem()}
 };
 
 // Notifications
-const notifier = require('../../notifier');
 notifier.on('saveAllAtlases', () => {
   atlasmakerServer.saveAllAtlases();
 });

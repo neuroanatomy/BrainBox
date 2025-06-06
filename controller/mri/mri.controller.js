@@ -2,17 +2,19 @@
 'use strict';
 
 const crypto = require('crypto');
-const url = require('url');
 const fs = require('fs');
+const url = require('url');
+
+const AsyncLock = require('async-lock');
+const { body, validationResult } = require('express-validator');
+const _ = require('lodash');
+const { AccessType, AccessLevel } = require('neuroweblab');
 const request = require('request');
 const sanitize = require('sanitize-filename');
-const { body, validationResult } = require('express-validator');
+
+const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 const AtlasmakerServer = require('../atlasmakerServer/atlasmakerServer');
 const dataSlices = require('../dataSlices/dataSlices.js');
-const { AccessType, AccessLevel } = require('neuroweblab');
-const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
-const _ = require('lodash');
-const AsyncLock = require('async-lock');
 const lock = new AsyncLock();
 
 const downloadQueue = {};
@@ -232,9 +234,6 @@ const downloadMRI = async function (myurl, req) {
 };
 // eslint-disable-next-line max-statements
 const mri = async function (req, res) {
-  const login = (req.isAuthenticated()) ?
-    ('<a href=\'/user/' + req.user.username + '\'>' + req.user.username + '</a> (<a href=\'/logout\'>Log Out</a>)') :
-    ('<a href=\'/auth/github\'>Log in with GitHub</a>');
   const loggedUser = req.isAuthenticated() ? req.user.username : 'anonymous';
   req.session.returnTo = req.originalUrl; // Store return path in case of login
 
@@ -254,7 +253,8 @@ const mri = async function (req, res) {
       title: obj.name || 'BrainBox',
       params: JSON.stringify(req.query),
       mriInfo: JSON.stringify(obj),
-      login
+      hasPrivilegedAccess: false,
+      loggedUser: JSON.stringify(req.user || null)
     });
   } else {
     // If the json object exists, and has annotations, configure the access to them
@@ -302,7 +302,7 @@ const mri = async function (req, res) {
     BrainboxAccessControlService.setVolumeAnnotationsAccessByProjects(json, projects, loggedUser);
     // BrainboxAccessControlService.setTextAnnotationsAccessByProjects(json, projects, loggedUser)
 
-    const isPubliclyVisible = projects.some((project) => BrainboxAccessControlService.canViewFiles(project, 'anyone'));
+    const isPubliclyVisible = projects.filter(_.isObject).some((project) => BrainboxAccessControlService.canViewFiles(project, 'anyone'));
     const hasCustomViewAccess = BrainboxAccessControlService.hasAccesstoFileIfAllowedBySomeProjects(json, projects, loggedUser, AccessLevel.VIEW);
 
     // Send data
@@ -311,7 +311,7 @@ const mri = async function (req, res) {
       params: JSON.stringify(req.query),
       mriInfo: JSON.stringify(json),
       hasPrivilegedAccess: !isPubliclyVisible && hasCustomViewAccess,
-      login
+      loggedUser: JSON.stringify(req.user || null)
     });
   }
 };
@@ -380,8 +380,7 @@ const apiMriPost = async function (req, res) {
       if (!fs.existsSync(filepath)) {
         console.log('No MRI file in server: download');
         doDownload = true;
-      } else
-      if (!json.dim) {
+      } else if (!json.dim) {
         // If the json object exists, there's a file, but no .dim object, download
         // If(debug>1) console.log("No dim[] field in DB entry: download");
         doDownload = true;
@@ -580,7 +579,7 @@ const apiMriGet = async function (req, res) {
 };
 
 // eslint-disable-next-line func-style
-const reset = async function reset(req, res) {
+const reset = async function reset (req, res) {
   const myurl = req.query.url;
   const hash = crypto.createHash('md5').update(myurl)
     .digest('hex');
