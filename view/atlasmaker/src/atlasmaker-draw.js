@@ -12,6 +12,7 @@ export const AtlasMakerDraw = {
      * @function resizeWindow
      * @returns {void}
      */
+  // eslint-disable-next-line max-statements
   resizeWindow: function () {
     const me = AtlasMakerWidget;
     const wH = me.container.clientHeight;
@@ -25,12 +26,18 @@ export const AtlasMakerDraw = {
       return;
     }
 
-    if (wAspect > bAspect) {
-      resizable.style.width = (100 * bAspect / wAspect) + '%';
-      resizable.style.height = '100%';
+    // only need to resize if the resizable element is not fullscreen, else it auto resizes
+    if (resizable.closest('.fullscreen') !== null) {
+      if (wAspect > bAspect) {
+        resizable.style.width = (100 * bAspect / wAspect) + '%';
+        resizable.style.height = '100%';
+      } else {
+        resizable.style.width = '100%';
+        resizable.style.height = (100 * wAspect / bAspect) + '%';
+      }
     } else {
       resizable.style.width = '100%';
-      resizable.style.height = (100 * wAspect / bAspect) + '%';
+      resizable.style.height = '100%';
     }
   },
 
