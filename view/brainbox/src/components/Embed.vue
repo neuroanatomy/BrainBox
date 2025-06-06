@@ -70,6 +70,7 @@ import Tools from './Tools.vue';
 
 const {
   title,
+  totalSlices,
   displayAdjustSettings,
   displayOntology,
   alpha,
@@ -160,28 +161,36 @@ const populateVolumeAnnotations = (file) => {
   });
 };
 
+// eslint-disable-next-line max-statements
 const selectFile = async (file) => {
   if (currentFile.value && currentFile.value.source === file.source) {
     return;
   }
   currentFile.value = file;
   title.value = 'Loading…';
-  populateVolumeAnnotations(file);
-  const params = getMRIParams(file);
+  totalSlices.value = 0;
+  try {
+    populateVolumeAnnotations(file);
+    const params = getMRIParams(file);
 
-  await BrainBox.configureBrainBox(params);
-  ontology.value = AtlasMakerWidget.ontology;
-  currentLabel.value = 0;
+    await BrainBox.configureBrainBox(params);
+    ontology.value = AtlasMakerWidget.ontology;
+    currentLabel.value = 0;
 
-  volumeAnnotations.value = file.mri.atlas.filter(
-    (atlas) => atlas.project === projectInfo.shortname
-  );
+    volumeAnnotations.value = file.mri.atlas.filter(
+      (atlas) => atlas.project === projectInfo.shortname
+    );
 
-  AtlasMakerWidget.sendSaveMetadataMessage(BrainBox.info);
-  AtlasMakerWidget.User.projectPage = projectInfo.shortname;
-  AtlasMakerWidget.sendUserDataMessage(
-    JSON.stringify({ projectPage: projectInfo.shortname })
-  );
+    AtlasMakerWidget.sendSaveMetadataMessage(BrainBox.info);
+    AtlasMakerWidget.User.projectPage = projectInfo.shortname;
+    AtlasMakerWidget.sendUserDataMessage(
+      JSON.stringify({ projectPage: projectInfo.shortname })
+    );
+
+  } catch (error) {
+    console.error('Error configuring BrainBox:', error);
+    title.value = 'Error';
+  }
 };
 
 const selectVolumeAnnotation = async (selectedAtlas) => {
@@ -194,8 +203,14 @@ const selectVolumeAnnotation = async (selectedAtlas) => {
     return;
   }
   title.value = 'Loading…';
-  await AtlasMakerWidget.configureAtlasMaker(BrainBox.info, index);
-  ontology.value = AtlasMakerWidget.ontology;
+  totalSlices.value = 0;
+  try {
+    await AtlasMakerWidget.configureAtlasMaker(BrainBox.info, index);
+    ontology.value = AtlasMakerWidget.ontology;
+  } catch (error) {
+    console.error('Error configuring AtlasMaker:', error);
+    title.value = 'Error';
+  }
   currentLabel.value = 0;
 };
 

@@ -384,31 +384,37 @@ const me = {
     const url = me._removeVariablesFromURL(source);
     me.setLoadingMessage('Loading... ');
     const pr = new Promise(function (resolve, reject) {
+      // eslint-disable-next-line max-statements
       const timer = setInterval(async function () {
         console.log('polling for data...', url);
-
-        const res = await fetch(me.hostname + '/mri/json', {
-          method: 'POST',
-          headers: {'content-type': 'application/json'},
-          body: JSON.stringify({ url })
-        });
-        const info = await res.json();
-        if (info.success === true) {
-          console.log('requestMRIInfo promise resolved');
-          clearInterval(timer);
-          resolve(info);
-        } else if (info.success === 'downloading') {
-          if (me.User.source !== url) {
+        try {
+          const res = await fetch(me.hostname + '/mri/json', {
+            method: 'POST',
+            headers: {'content-type': 'application/json'},
+            body: JSON.stringify({ url })
+          });
+          const info = await res.json();
+          if (info.success === true) {
+            console.log('requestMRIInfo promise resolved');
             clearInterval(timer);
-            reject(new Error('source changed. Probably no longer requested?'));
+            resolve(info);
+          } else if (info.success === 'downloading') {
+            if (me.User.source !== url) {
+              clearInterval(timer);
 
-            return;
+              return reject(new Error('source changed. Probably no longer requested?'));
+            }
+            me.setLoadingMessage('Loading... ' + parseInt(info.cur / info.len * 100, 10) + '%');
+          } else {
+            console.log('ERROR: requestMRIInfo', info);
+            clearInterval(timer);
+            reject(new Error('requestMRIInfo' + info));
           }
-          me.setLoadingMessage('Loading... ' + parseInt(info.cur / info.len * 100, 10) + '%');
-        } else {
-          console.log('ERROR: requestMRIInfo', info);
+        } catch (err) {
+          console.error('ERROR: requestMRIInfo', err);
           clearInterval(timer);
-          reject(new Error('requestMRIInfo' + info));
+
+          return reject(new Error('requestMRIInfo: ' + err.message));
         }
       }, 2000);
     });

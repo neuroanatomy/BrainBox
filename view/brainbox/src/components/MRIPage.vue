@@ -189,13 +189,7 @@ const selectedIndex = ref(0);
 const reduced = computed(() => !displayChat.value && !displayScript.value);
 
 watch(fullscreen, () => {
-  if (!fullscreen.value) {
-    const tools = document.querySelector('.area .tools');
-    setTimeout(() => {
-      tools.style.left = '10px';
-      tools.style.top = '10px';
-    }, 100);
-  } else if (!displayScript.value) {
+  if (fullscreen.value && !displayScript.value) {
     displayChat.value = true;
   }
 
@@ -241,8 +235,13 @@ onMounted(async () => {
   const labels = await (await fetch('/api/getLabelsets')).json();
   labelsName.value = mapValues(keyBy(labels, 'source'), 'name');
   params.info = mriInfo;
-  await BrainBox.configureBrainBox(params);
-  ontology.value = AtlasMakerWidget.ontology;
+  try {
+    await BrainBox.configureBrainBox(params);
+    ontology.value = AtlasMakerWidget.ontology;
+  } catch (e) {
+    console.error('Error configuring BrainBox:', e);
+    title.value = 'Error';
+  }
   currentLabel.value = 0;
 });
 </script>

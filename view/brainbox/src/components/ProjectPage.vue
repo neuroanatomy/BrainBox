@@ -92,6 +92,7 @@ defineProps({
 
 const {
   title,
+  totalSlices,
   displayAdjustSettings,
   displayOntology,
   displayChat,
@@ -328,22 +329,28 @@ Vue.watch(selectedIndex, async (newIndex) => {
   }
   currentFile.value = selectedFile;
   title.value = 'Loading…';
-  populateVolumeAnnotations(selectedFile);
-  const params = getMRIParams(selectedFile);
+  totalSlices.value = 0;
+  try {
+    populateVolumeAnnotations(selectedFile);
+    const params = getMRIParams(selectedFile);
 
-  await BrainBox.configureBrainBox(params);
-  ontology.value = AtlasMakerWidget.ontology;
-  currentLabel.value = 0;
+    await BrainBox.configureBrainBox(params);
+    ontology.value = AtlasMakerWidget.ontology;
+    currentLabel.value = 0;
 
-  volumeAnnotations.value = selectedFile.mri.atlas.filter(
-    (atlas) => atlas.project === projectInfo.shortname
-  );
+    volumeAnnotations.value = selectedFile.mri.atlas.filter(
+      (atlas) => atlas.project === projectInfo.shortname
+    );
 
-  AtlasMakerWidget.sendSaveMetadataMessage(BrainBox.info);
-  AtlasMakerWidget.User.projectPage = projectInfo.shortname;
-  AtlasMakerWidget.sendUserDataMessage(
-    JSON.stringify({ projectPage: projectInfo.shortname })
-  );
+    AtlasMakerWidget.sendSaveMetadataMessage(BrainBox.info);
+    AtlasMakerWidget.User.projectPage = projectInfo.shortname;
+    AtlasMakerWidget.sendUserDataMessage(
+      JSON.stringify({ projectPage: projectInfo.shortname })
+    );
+  } catch (error) {
+    console.error('Error configuring BrainBox:', error);
+    title.value = 'Error';
+  }
 });
 
 const selectVolumeAnnotation = async (selectedAtlas) => {
@@ -356,8 +363,14 @@ const selectVolumeAnnotation = async (selectedAtlas) => {
     return;
   }
   title.value = 'Loading…';
-  await AtlasMakerWidget.configureAtlasMaker(BrainBox.info, index);
-  ontology.value = AtlasMakerWidget.ontology;
+  totalSlices.value = 0;
+  try {
+    await AtlasMakerWidget.configureAtlasMaker(BrainBox.info, index);
+    ontology.value = AtlasMakerWidget.ontology;
+  } catch (error) {
+    console.error('Error configuring AtlasMaker:', error);
+    title.value = 'Error';
+  }
   currentLabel.value = 0;
 };
 

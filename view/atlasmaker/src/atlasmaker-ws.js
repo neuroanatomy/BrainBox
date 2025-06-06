@@ -580,49 +580,50 @@ export const AtlasMakerWS = {
    * @param {string} method Method "patch" or "append"
    * @param {object} patch Path object used in case method is "patch"
    * @returns {void}
-   * No reason to return a promise since the function does not do any asynchronous task
    */
-  sendSaveMetadataMessage: function (info, method, patch) {
+  // eslint-disable-next-line max-statements
+  sendSaveMetadataMessage: async function (info, method, patch) {
     const me = AtlasMakerWidget;
 
-    return new Promise(function (resolve, reject) {
-      if (me.flagConnected === 0) {
+    if (me.flagConnected === 0) {
+      try {
+        await me.initSocketConnection();
+      } catch (e) {
         console.log('WARNING: Not connected: will not save metadata');
 
-        return reject(new Error('Not connected'));
+        throw new Error('Not connected');
+      }
+    }
+
+    try {
+      const rnd = Math.random().toString(36)
+        .slice(2);
+      const met = method || 'append';
+      if (method === 'patch') {
+        me.socket.send(JSON.stringify({
+          type: 'saveMetadata',
+          metadata: info,
+          method: met,
+          patch: patch,
+          rnd: rnd
+        }));
+      } else {
+        me.socket.send(JSON.stringify({
+          type: 'saveMetadata',
+          metadata: info,
+          method: met,
+          rnd: rnd
+        }));
+      }
+      if (me.debug > 1) {
+        console.log(rnd);
+        console.log(info);
       }
 
-      try {
-        const rnd = Math.random().toString(36)
-          .slice(2);
-        const met = method || 'append';
-        if (method === 'patch') {
-          me.socket.send(JSON.stringify({
-            type: 'saveMetadata',
-            metadata: info,
-            method: met,
-            patch: patch,
-            rnd: rnd
-          }));
-        } else {
-          me.socket.send(JSON.stringify({
-            type: 'saveMetadata',
-            metadata: info,
-            method: met,
-            rnd: rnd
-          }));
-        }
-        if (me.debug > 1) {
-          console.log(rnd);
-          console.log(info);
-        }
-        resolve();
-
-      } catch (ex) {
-        console.log('ERROR: Unable to sendSaveMetadataMessage', ex);
-        reject(ex);
-      }
-    });
+    } catch (ex) {
+      console.log('ERROR: Unable to sendSaveMetadataMessage', ex);
+      throw ex;
+    }
   },
 
   /**

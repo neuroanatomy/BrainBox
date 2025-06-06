@@ -51,6 +51,15 @@ export const BrainBox = {
      * @returns {object} A promise
      */
   configureBrainBox: function configureBrainBox (param) {
+
+    // Clear previous brain
+    AtlasMakerWidget.User.mri = null;
+    AtlasMakerWidget.brainImg.img = null;
+    AtlasMakerWidget.flagLoadingImg.loading = true;
+    AtlasMakerWidget.editMode = 0;
+    AtlasMakerWidget.context.clearRect(0, 0, AtlasMakerWidget.context.canvas.width, AtlasMakerWidget.canvas.height);
+    AtlasMakerWidget.sendUserDataMessage('allUserData');
+
     // eslint-disable-next-line max-statements
     const pr = new Promise(function (resolve, reject) {
       const index = param.annotationItemIndex || 0;
