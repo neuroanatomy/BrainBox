@@ -824,15 +824,18 @@ export const AtlasMakerInteraction = {
       const selRegionName = me.ontology.labels[index].name;
       me.info.region = selRegionName;
       me.changePenColor(index);
+
+      window.visualization.currentLabel = index;
     }
   },
-  _eyedropToolUp: function () {
-    const me = AtlasMakerWidget;
-    me.displayInformation();
+  // _eyedropToolUp: function () {
+  //   // doesn't seem useful
+  //   const me = AtlasMakerWidget;
+  //   me.displayInformation();
 
-    const msg = { 'c': 'mu' };
-    me.sendPaintMessage(msg);
-  },
+  //   const msg = { 'c': 'mu' };
+  //   me.sendPaintMessage(msg);
+  // },
   eyedrop: function (x, y, usr) {
     const me = AtlasMakerWidget;
     const z = usr.slice;

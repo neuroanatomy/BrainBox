@@ -167,7 +167,7 @@
         <Button
           @click="changeTool('Eyedrop')"
           title="Eyedrop"
-          :class="{ pressed: currentTool === 'Eyedropper' }"
+          :class="{ pressed: currentTool === 'Eyedrop' }"
         >
           <img
             class="icon"
@@ -461,6 +461,7 @@ const handleKeyDown = (event) => {
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
+  console.log('Tools component mounted');
 });
 
 onUnmounted(() => {

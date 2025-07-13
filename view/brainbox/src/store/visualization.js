@@ -4,6 +4,10 @@
 
 import { reactive, toRefs, watch } from 'vue';
 
+const capitalize = function (str) {
+  return str?.charAt(0).toUpperCase() + str?.slice(1);
+};
+
 const state = reactive({
   title: 'Loading...',
   notification: '',
@@ -18,7 +22,7 @@ const state = reactive({
   currentFile: null,
   currentSlice: null,
   totalSlices: 0,
-  currentTool: null,
+  currentTool: capitalize(window.AtlasMakerWidget?.User.tool),
   currentPenSize: 1,
   currentView: 'sag',
   fullscreen: false,
@@ -43,27 +47,27 @@ watch(() => state.currentSlice, (slice, prevSlice) => {
   }
 });
 
+const handleNewChatMessages = (event) => {
+  state.receivedMessages.push(event.detail.message);
+};
+
+const handleNewNotification = (event) => {
+  state.notification = event.detail.notification;
+};
+
+const setupEventListeners = () => {
+  window.addEventListener('brainImageConfigured', (e) => {
+    state.currentView = e.detail.currentView;
+    state.totalSlices = e.detail.totalSlices;
+    state.currentSlice = e.detail.currentSlice;
+    state.title = `Slice ${e.detail.currentSlice}`;
+  });
+
+  window.addEventListener('newMessage', handleNewChatMessages);
+  window.addEventListener('newNotification', handleNewNotification);
+};
+
 export default function useVisualization () {
-  const handleNewChatMessages = (event) => {
-    state.receivedMessages.push(event.detail.message);
-  };
-
-  const handleNewNotification = (event) => {
-    state.notification = event.detail.notification;
-  };
-
-  const setupEventListeners = () => {
-    window.addEventListener('brainImageConfigured', (e) => {
-      state.currentView = e.detail.currentView;
-      state.totalSlices = e.detail.totalSlices;
-      state.currentSlice = e.detail.currentSlice;
-      state.title = `Slice ${e.detail.currentSlice}`;
-    });
-
-    window.addEventListener('newMessage', handleNewChatMessages);
-    window.addEventListener('newNotification', handleNewNotification);
-  };
-
   return {
     ...toRefs(state),
     changeAlpha () {
@@ -90,7 +94,8 @@ export default function useVisualization () {
       const { BrainBox } = window;
       await BrainBox.initBrainBox();
       setupEventListeners();
+      // put the state in the window object for global access
+      window.visualization = state;
     }
-
   };
 }

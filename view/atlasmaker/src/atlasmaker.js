@@ -224,7 +224,7 @@ const me = {
   _registerAllToolsUp () {
     const arr = [
       {name: 'show', func: me._showToolUp},
-      {name: 'eyedrop', func: me._eyedropToolUp},
+      // {name: 'eyedrop', func: me._eyedropToolUp},
       {name: 'landmark', func: me._landmarkToolUp},
       {name: 'paint', func: me._paintToolUp}, // same up function for paint and erase
       {name: 'erase', func: me._paintToolUp} // same up function for paint and erase
