@@ -446,6 +446,7 @@ const apiMriPost = async function (req, res) {
         json = json[v];
       }
     }
+    // no check are done on the atlases access rights, should be implemented in the future
     res.json(json);
   }
 };

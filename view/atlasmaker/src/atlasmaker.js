@@ -22,6 +22,7 @@ const me = {
   //========================================================================================
   debug: 1, // integer, debug level. None = 0
   version: 1, // version of the configuration file (slice number, plane, etc). Default=1
+  accessLevels: ['none', 'view', 'edit', 'add', 'remove'],
 
   // connection
   hostname: Config.hostname, // string, host url
@@ -552,6 +553,11 @@ const me = {
     // pick the first label for segmenting (it has to come after the
     // sendUserDataMessage calls, because it also sends ws messages)
     me.changePenColor(0);
+
+    // check 'edit' access
+    const accessStr = info.mri.atlas[index].access;
+    const accessLvl = me.accessLevels.indexOf(accessStr);
+    if (accessLvl >= 2) { me.editMode = 1; } else { me.editMode = 0; }
 
     return info;
   }

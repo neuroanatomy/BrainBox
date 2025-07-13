@@ -243,6 +243,7 @@ onMounted(async () => {
     title.value = 'Error';
   }
   currentLabel.value = 0;
+  console.log('mri page mounted');
 });
 </script>
 <style scoped>

@@ -1,14 +1,17 @@
 /* eslint-disable max-lines */
+
+const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const { exec } = require('child_process');
-const rimraf = require('rimraf');
-const { PNG } = require('pngjs');
-const jpeg = require('jpeg-js');
-const pixelmatch = require('pixelmatch');
-// const { constants } = require('buffer');
+
 const chai = require('chai');
 const chaiHttp = require('chai-http');
+const jpeg = require('jpeg-js');
+const pixelmatch = require('pixelmatch');
+const { PNG } = require('pngjs');
+const rimraf = require('rimraf');
+// const { constants } = require('buffer');
+
 const brainboxApp = require('../app');
 
 chai.use(chaiHttp);
@@ -142,10 +145,10 @@ const privateProjectTest = {
   modifiedBy: 'foo'
 };
 
-let app, atlasmakerServer, db, hocuspocusServer, server;
+let app, atlasmakerServer, db, server;
 
 const initResources = async () => {
-  ({ app, server, atlasmakerServer, hocuspocusServer } = await brainboxApp.start());
+  ({ app, server, atlasmakerServer } = await brainboxApp.start());
 
   db = app.db.mongoDB();
 };
@@ -159,9 +162,6 @@ const closeResources = async () => {
   }
   if (atlasmakerServer) {
     atlasmakerServer.server.close();
-  }
-  if (hocuspocusServer) {
-    hocuspocusServer.httpServer.close();
   }
   process.stdin.pause();
 };
@@ -430,5 +430,3 @@ module.exports = {
   testingCredentials,
   createProjectWithPermission
 };
-
-
