@@ -54,7 +54,7 @@
 </template>
 
 <script setup>
-/* global projectInfo */
+/* global projectInfo annotationsAccessLevel */
 /* eslint-disable max-lines */
 
 import DOMPurify from 'dompurify';
@@ -76,7 +76,7 @@ import useVisualization from '../store/visualization';
 
 import Tools from './Tools.vue';
 
-const { annotationsAccessLevel, BrainBox, AtlasMakerWidget } = window;
+const { BrainBox, AtlasMakerWidget } = window;
 const { baseURL } = Vue.inject('config');
 
 defineProps({
