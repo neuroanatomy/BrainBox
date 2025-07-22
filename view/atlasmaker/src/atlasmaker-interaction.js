@@ -824,6 +824,7 @@ export const AtlasMakerInteraction = {
       const selRegionName = me.ontology.labels[index].name;
       me.info.region = selRegionName;
       me.changePenColor(index);
+      me.displayInformation();
 
       window.visualization.currentLabel = index;
     }

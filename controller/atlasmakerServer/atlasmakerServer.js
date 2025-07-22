@@ -1463,7 +1463,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
 
       const mri = await db.get('mri').findOne({ source: loadedAtlas.source, backup: { $exists: 0 } }, { _id: 0 });
       let index = -1;
-      for (let i = 0; i < mri.mri.atlas.length; i++) {
+      for (let i = 0; i < mri?.mri.atlas.length; i++) {
         if (mri.mri.atlas[i].filename === loadedAtlas.filename) {
           index = i;
           break;

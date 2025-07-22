@@ -26,18 +26,12 @@ export const AtlasMakerDraw = {
       return;
     }
 
-    // only need to resize if the resizable element is not fullscreen, else it auto resizes
-    if (resizable.closest('.fullscreen') !== null) {
-      if (wAspect > bAspect) {
-        resizable.style.width = (100 * bAspect / wAspect) + '%';
-        resizable.style.height = '100%';
-      } else {
-        resizable.style.width = '100%';
-        resizable.style.height = (100 * wAspect / bAspect) + '%';
-      }
+    if (wAspect > bAspect) {
+      resizable.style.width = (100 * bAspect / wAspect) + '%';
+      resizable.style.height = '100%';
     } else {
       resizable.style.width = '100%';
-      resizable.style.height = '100%';
+      resizable.style.height = (100 * wAspect / bAspect) + '%';
     }
   },
 
