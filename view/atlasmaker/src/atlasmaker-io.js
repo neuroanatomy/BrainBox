@@ -1,7 +1,7 @@
+/* global AtlasMakerWidget toBuffer toArrayBuffer Struct */
 /* eslint-disable max-lines */
 /* eslint-disable camelcase */
 /* eslint-disable new-cap */
-/* global AtlasMakerWidget toBuffer toArrayBuffer Struct $ */
 /*! AtlasMaker: Input/Output */
 import 'structjs';
 import pako from 'pako';
@@ -176,17 +176,17 @@ export const AtlasMakerIO = {
     me.NiiHdrLE.allocate();
     const niihdr = me.NiiHdrLE.buffer();
     let i;
-    for(i in newHdr) {
-      if({}.hasOwnProperty.call(newHdr, i)) {
+    for (i in newHdr) {
+      if ({}.hasOwnProperty.call(newHdr, i)) {
         me.NiiHdrLE.fields[i] = newHdr[i];
       }
     }
     const hdr = toArrayBuffer(niihdr);
     const {data} = me.atlas;
     const nii = new Uint8Array(vox_offset + data.length);
-    for(i = 0; i<sizeof_hdr; i++) { nii[i] = hdr[i]; }
-    for(i = 0; i<data.length; i++) { nii[i + vox_offset] = data[i]; }
-    const niigz = new pako.Deflate({ gzip:true });
+    for (i = 0; i < sizeof_hdr; i++) { nii[i] = hdr[i]; }
+    for (i = 0; i < data.length; i++) { nii[i + vox_offset] = data[i]; }
+    const niigz = new pako.Deflate({ gzip: true });
     niigz.push(nii, true);
 
     return niigz.result;
@@ -201,15 +201,16 @@ export const AtlasMakerIO = {
     const niigz = me.encodeNifti();
     const niigzBlob = new Blob([niigz]);
 
-    $('a#download_atlas').attr('href', window.URL.createObjectURL(niigzBlob));
-    $('a#download_atlas').attr('download', me.User.atlasFilename);
+    const atlas = document.querySelector('#download_atlas');
+    if (atlas) { atlas.setAttribute('href', window.URL.createObjectURL(niigzBlob)); }
+    atlas.setAttribute('download', me.User.atlasFilename);
   },
 
   swapInt16: function (arr) {
     let i;
     const dv = new DataView(arr.buffer);
-    for(i = 0; i<arr.length; i++) {
-      arr[i]= dv.getInt16(2*i, false);
+    for (i = 0; i < arr.length; i++) {
+      arr[i] = dv.getInt16(2 * i, false);
     }
 
     return arr;
@@ -218,8 +219,8 @@ export const AtlasMakerIO = {
   swapUint16: function (arr) {
     let i;
     const dv = new DataView(arr.buffer);
-    for(i = 0; i<arr.length; i++) {
-      arr[i]= dv.getUint16(2*i, false);
+    for (i = 0; i < arr.length; i++) {
+      arr[i] = dv.getUint16(2 * i, false);
     }
 
     return arr;
@@ -228,8 +229,8 @@ export const AtlasMakerIO = {
   swapInt32: function (arr) {
     let i;
     const dv = new DataView(arr.buffer);
-    for(i = 0; i<arr.length; i++) {
-      arr[i]= dv.getInt32(4*i, false);
+    for (i = 0; i < arr.length; i++) {
+      arr[i] = dv.getInt32(4 * i, false);
     }
 
     return arr;
@@ -238,8 +239,8 @@ export const AtlasMakerIO = {
   swapFloat32: function (arr) {
     let i;
     const dv = new DataView(arr.buffer);
-    for(i = 0; i<arr.length; i++) {
-      arr[i]= dv.getFloat32(4*i, false);
+    for (i = 0; i < arr.length; i++) {
+      arr[i] = dv.getFloat32(4 * i, false);
     }
 
     return arr;
@@ -248,8 +249,8 @@ export const AtlasMakerIO = {
   swapFloat64: function (arr) {
     let i;
     const dv = new DataView(arr.buffer);
-    for(i = 0; i<arr.length; i++) {
-      arr[i]= dv.getFloat64(8*i, false);
+    for (i = 0; i < arr.length; i++) {
+      arr[i] = dv.getFloat64(8 * i, false);
     }
 
     return arr;
@@ -266,7 +267,7 @@ export const AtlasMakerIO = {
     let endianness = 'le';
     me.NiiHdrLE._setBuff(toBuffer(nii));
     let h = JSON.parse(JSON.stringify(me.NiiHdrLE.fields));
-    if(h.sizeof_hdr !== 348) {
+    if (h.sizeof_hdr !== 348) {
       me.NiiHdrBE._setBuff(toBuffer(nii));
       h = JSON.parse(JSON.stringify(me.NiiHdrBE.fields));
       endianness = 'be';
@@ -277,33 +278,33 @@ export const AtlasMakerIO = {
     mri.datatype = h.datatype;
     mri.dim = [h.dim[1], h.dim[2], h.dim[3]];
     mri.pixdim = [h.pixdim[1], h.pixdim[2], h.pixdim[3]];
-    switch(mri.datatype) {
+    switch (mri.datatype) {
     case 2: // UCHAR
       mri.data = new Uint8Array(nii, vox_offset);
       break;
     case 4: // SHORT
-      if(endianness === 'le') {
+      if (endianness === 'le') {
         mri.data = new Int16Array(nii, vox_offset);
       } else {
         mri.data = me.swapInt16(new Int16Array(nii, vox_offset));
       }
       break;
     case 8: // INT
-      if(endianness === 'le') {
+      if (endianness === 'le') {
         mri.data = new Int32Array(nii, vox_offset);
       } else {
         mri.data = me.swapInt32(new Int32Array(nii, vox_offset));
       }
       break;
     case 16: // FLOAT
-      if(endianness === 'le') {
+      if (endianness === 'le') {
         mri.data = new Float32Array(nii, vox_offset);
       } else {
         mri.data = me.swapFloat32(new Float32Array(nii, vox_offset));
       }
       break;
     case 64: // FLOAT64
-      if(endianness === 'le') {
+      if (endianness === 'le') {
         mri.data = new Float64Array(nii, vox_offset);
       } else {
         mri.data = me.swapFloat64(new Float64Array(nii, vox_offset));
@@ -313,7 +314,7 @@ export const AtlasMakerIO = {
       mri.data = new Int8Array(nii, vox_offset);
       break;
     case 512: // UINT16
-      if(endianness === 'le') {
+      if (endianness === 'le') {
         mri.data = new Uint16Array(nii, vox_offset);
       } else {
         mri.data = me.swapUint16(new Uint16Array(nii, vox_offset));
@@ -344,20 +345,20 @@ export const AtlasMakerIO = {
     const mri = me.User;
     const {v2w, wori} = mri;
     const wpixdim = me.subVecVec(me.mulMatVec(v2w, [1, 1, 1]), me.mulMatVec(v2w, [0, 0, 0]));
-    const wvmax = me.addVecVec(me.mulMatVec(v2w, [mri.dim[0]-1, mri.dim[1]-1, mri.dim[2]-1]), wori);
+    const wvmax = me.addVecVec(me.mulMatVec(v2w, [mri.dim[0] - 1, mri.dim[1] - 1, mri.dim[2] - 1]), wori);
     const wvmin = me.addVecVec(me.mulMatVec(v2w, [0, 0, 0]), wori);
     const wmin = [Math.min(wvmin[0], wvmax[0]), Math.min(wvmin[1], wvmax[1]), Math.min(wvmin[2], wvmax[2])];
-    const w2s = [[1/Math.abs(wpixdim[0]), 0, 0], [0, 1/Math.abs(wpixdim[1]), 0], [0, 0, 1/Math.abs(wpixdim[2])]];
+    const w2s = [[1 / Math.abs(wpixdim[0]), 0, 0], [0, 1 / Math.abs(wpixdim[1]), 0], [0, 0, 1 / Math.abs(wpixdim[2])]];
 
     const [i, j, k] = v2w;
-    let mi = { i:0, v:0 }; i.forEach((o, n) => { if(Math.abs(o)>Math.abs(mi.v)) { mi = { i:n, v:o }; } });
-    let mj = { i:0, v:0 }; j.forEach((o, n) => { if(Math.abs(o)>Math.abs(mj.v)) { mj = { i:n, v:o }; } });
-    let mk = { i:0, v:0 }; k.forEach((o, n) => { if(Math.abs(o)>Math.abs(mk.v)) { mk = { i:n, v:o }; } });
+    let mi = { i: 0, v: 0 }; i.forEach((o, n) => { if (Math.abs(o) > Math.abs(mi.v)) { mi = { i: n, v: o }; } });
+    let mj = { i: 0, v: 0 }; j.forEach((o, n) => { if (Math.abs(o) > Math.abs(mj.v)) { mj = { i: n, v: o }; } });
+    let mk = { i: 0, v: 0 }; k.forEach((o, n) => { if (Math.abs(o) > Math.abs(mk.v)) { mk = { i: n, v: o }; } });
     mri.s2v = {
       // old s2v fields
       s2w: me.invMat(w2s),
       sdim: [],
-      sori: [-wmin[0]/Math.abs(wpixdim[0]), -wmin[1]/Math.abs(wpixdim[1]), -wmin[2]/Math.abs(wpixdim[2])],
+      sori: [-wmin[0] / Math.abs(wpixdim[0]), -wmin[1] / Math.abs(wpixdim[1]), -wmin[2] / Math.abs(wpixdim[2])],
       wpixdim: [],
       w2v: me.invMat(v2w),
       wori: wori,
@@ -366,12 +367,12 @@ export const AtlasMakerIO = {
       x: mi.i, // correspondence between space coordinate x and voxel coordinate i
       y: mj.i, // same for y
       z: mk.i, // same for z
-      dx: (mi.v>0)?1:(-1), // direction of displacement in space coordinate x with displacement in voxel coordinate i
-      dy: (mj.v>0)?1:(-1), // same for y
-      dz: (mk.v>0)?1:(-1), // same for z
-      X: (mi.v>0)?0:(mri.dim[0]-1), // starting value for space coordinate x when voxel coordinate i starts
-      Y: (mj.v>0)?0:(mri.dim[1]-1), // same for y
-      Z: (mk.v>0)?0:(mri.dim[2]-1) // same for z
+      dx: (mi.v > 0) ? 1 : (-1), // direction of displacement in space coordinate x with displacement in voxel coordinate i
+      dy: (mj.v > 0) ? 1 : (-1), // same for y
+      dz: (mk.v > 0) ? 1 : (-1), // same for z
+      X: (mi.v > 0) ? 0 : (mri.dim[0] - 1), // starting value for space coordinate x when voxel coordinate i starts
+      Y: (mj.v > 0) ? 0 : (mri.dim[1] - 1), // same for y
+      Z: (mk.v > 0) ? 0 : (mri.dim[2] - 1) // same for z
     };
     mri.v2w = v2w;
     mri.wori = wori;
@@ -390,29 +391,29 @@ export const AtlasMakerIO = {
     const mri = me.User; // this line is different from server
     let doReset = false;
 
-    const vv = mri.dim[0]*mri.dim[1]*mri.dim[2];
-    const vs = mri.s2v.sdim[0]*mri.s2v.sdim[1]*mri.s2v.sdim[2];
-    const diff = (vs-vv)/vv;
-    if(Math.abs(diff)>0.001) {
+    const vv = mri.dim[0] * mri.dim[1] * mri.dim[2];
+    const vs = mri.s2v.sdim[0] * mri.s2v.sdim[1] * mri.s2v.sdim[2];
+    const diff = (vs - vv) / vv;
+    if (Math.abs(diff) > 0.001) {
       console.log('    ERROR: Difference is too large');
       console.log('    original volume:', vv);
       console.log('    rotated volume:', vs);
-      console.log('    % difference:', diff*100);
+      console.log('    % difference:', diff * 100);
       doReset = true;
     }
 
     // console.log("  2. transformation origin");
-    if( mri.s2v.sori[0]<0||mri.s2v.sori[0]>mri.s2v.sdim[0] ||
-            mri.s2v.sori[1]<0||mri.s2v.sori[1]>mri.s2v.sdim[1] ||
-            mri.s2v.sori[2]<0||mri.s2v.sori[2]>mri.s2v.sdim[2]) {
+    if (mri.s2v.sori[0] < 0 || mri.s2v.sori[0] > mri.s2v.sdim[0] ||
+            mri.s2v.sori[1] < 0 || mri.s2v.sori[1] > mri.s2v.sdim[1] ||
+            mri.s2v.sori[2] < 0 || mri.s2v.sori[2] > mri.s2v.sdim[2]) {
       // console.log("    Origin point is outside the dimensions of the data");
       doReset = true;
     }
 
-    if(doReset) {
+    if (doReset) {
       // console.log("THE TRANSFORMATION WILL BE RESET");
       mri.v2w = [[mri.pixdim[0], 0, 0], [0, -mri.pixdim[1], 0], [0, 0, -mri.pixdim[2]]];
-      mri.wori = [0, mri.dim[1]-1, mri.dim[2]-1];
+      mri.wori = [0, mri.dim[1] - 1, mri.dim[2] - 1];
 
       // re-compute the transformation from voxel space to screen space
       me.computeS2VTransformation(); // this line is different from server
@@ -427,8 +428,8 @@ export const AtlasMakerIO = {
      */
   S2I: function (s, mri) {
     const {s2v} = mri;
-    const v = [s2v.X + s2v.dx*s[s2v.x], s2v.Y + s2v.dy*s[s2v.y], s2v.Z + s2v.dz*s[s2v.z]];
-    const index = v[0] + v[1]*mri.dim[0] + v[2]*mri.dim[0]*mri.dim[1];
+    const v = [s2v.X + s2v.dx * s[s2v.x], s2v.Y + s2v.dy * s[s2v.y], s2v.Z + s2v.dz * s[s2v.z]];
+    const index = v[0] + v[1] * mri.dim[0] + v[2] * mri.dim[0] * mri.dim[1];
 
     return index;
   },
@@ -442,9 +443,9 @@ export const AtlasMakerIO = {
   mulMatVec: function (m, v) {
 
     return [
-      m[0][0]*v[0] + m[0][1]*v[1] + m[0][2]*v[2],
-      m[1][0]*v[0] + m[1][1]*v[1] + m[1][2]*v[2],
-      m[2][0]*v[0] + m[2][1]*v[1] + m[2][2]*v[2]
+      m[0][0] * v[0] + m[0][1] * v[1] + m[0][2] * v[2],
+      m[1][0] * v[0] + m[1][1] * v[1] + m[1][2] * v[2],
+      m[2][0] * v[0] + m[2][1] * v[1] + m[2][2] * v[2]
     ];
   },
 
@@ -456,19 +457,19 @@ export const AtlasMakerIO = {
   invMat: function (m) {
     const w = [[], [], []];
 
-    const det = m[0][1]*m[1][2]*m[2][0] + m[0][2]*m[1][0]*m[2][1] + m[0][0]*m[1][1]*m[2][2] - m[0][2]*m[1][1]*m[2][0] - m[0][0]*m[1][2]*m[2][1] - m[0][1]*m[1][0]*m[2][2];
+    const det = m[0][1] * m[1][2] * m[2][0] + m[0][2] * m[1][0] * m[2][1] + m[0][0] * m[1][1] * m[2][2] - m[0][2] * m[1][1] * m[2][0] - m[0][0] * m[1][2] * m[2][1] - m[0][1] * m[1][0] * m[2][2];
 
-    w[0][0] = (m[1][1]*m[2][2] - m[1][2]*m[2][1])/det;
-    w[0][1] = (m[0][2]*m[2][1] - m[0][1]*m[2][2])/det;
-    w[0][2] = (m[0][1]*m[1][2] - m[0][2]*m[1][1])/det;
+    w[0][0] = (m[1][1] * m[2][2] - m[1][2] * m[2][1]) / det;
+    w[0][1] = (m[0][2] * m[2][1] - m[0][1] * m[2][2]) / det;
+    w[0][2] = (m[0][1] * m[1][2] - m[0][2] * m[1][1]) / det;
 
-    w[1][0] = (m[1][2]*m[2][0] - m[1][0]*m[2][2])/det;
-    w[1][1] = (m[0][0]*m[2][2] - m[0][2]*m[2][0])/det;
-    w[1][2] = (m[0][2]*m[1][0] - m[0][0]*m[1][2])/det;
+    w[1][0] = (m[1][2] * m[2][0] - m[1][0] * m[2][2]) / det;
+    w[1][1] = (m[0][0] * m[2][2] - m[0][2] * m[2][0]) / det;
+    w[1][2] = (m[0][2] * m[1][0] - m[0][0] * m[1][2]) / det;
 
-    w[2][0] = (m[1][0]*m[2][1] - m[1][1]*m[2][0])/det;
-    w[2][1] = (m[0][1]*m[2][0] - m[0][0]*m[2][1])/det;
-    w[2][2] = (m[0][0]*m[1][1] - m[0][1]*m[1][0])/det;
+    w[2][0] = (m[1][0] * m[2][1] - m[1][1] * m[2][0]) / det;
+    w[2][1] = (m[0][1] * m[2][0] - m[0][0] * m[2][1]) / det;
+    w[2][2] = (m[0][0] * m[1][1] - m[0][1] * m[1][0]) / det;
 
     return w;
   },
@@ -480,7 +481,7 @@ export const AtlasMakerIO = {
      * @returns {array} Vector 1x3
      */
   subVecVec: function (a, b) {
-    return [a[0]-b[0], a[1]-b[1], a[2]-b[2]];
+    return [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
   },
 
   /**

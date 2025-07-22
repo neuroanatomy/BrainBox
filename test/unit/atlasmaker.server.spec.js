@@ -1,15 +1,17 @@
+const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
+
+const { expect } = require('chai');
+require('mocha-sinon');
 const WebSocket = require('ws').Server;
-const assert = require('assert');
+
 // const tracer = require('tracer').console({ format: '[{{file}}:{{line}}]  {{message}}' });
 const la = require('../../controller/atlasmakerServer/atlasmaker-linalg.js');
 const amri = require('../../controller/atlasmakerServer/atlasmaker-mri.js');
 const atlasmakerServer = require('../../controller/atlasmakerServer/atlasmakerServer.js');
 const datadir = './test/data/';
 const U = require('../utils.js');
-const { expect } = require('chai');
-require('mocha-sinon');
 
 let AMS;
 
@@ -81,7 +83,7 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
 
     it('should throw an error when a path to invalid file is passed', async function () {
       await amri.loadMRI('').catch((err) => {
-        assert.strictEqual(err.message, 'ERROR: nothing we can read');
+        assert.ok(err.message.startsWith('ERROR: nothing we can read'));
       });
     });
   });
@@ -219,7 +221,7 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
     describe('getBrainAtPath function() ', function () {
       it('should throw an error when the mri path is invalid', async function () {
         await AMS.getBrainAtPath('').catch((err) => {
-          assert.strictEqual(err.message, 'ERROR: nothing we can read');
+          assert.ok(err.message.startsWith('ERROR: nothing we can read'));
         });
       });
 

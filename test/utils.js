@@ -1,16 +1,19 @@
 /* eslint-disable max-lines */
+
+const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const rimraf = require('rimraf');
-const { PNG } = require('pngjs');
-const jpeg = require('jpeg-js');
-const pixelmatch = require('pixelmatch');
-const { exec } = require('child_process');
-// const { constants } = require('buffer');
-const brainboxApp = require('../app');
 
 const chai = require('chai');
 const chaiHttp = require('chai-http');
+const jpeg = require('jpeg-js');
+const pixelmatch = require('pixelmatch');
+const { PNG } = require('pngjs');
+const rimraf = require('rimraf');
+// const { constants } = require('buffer');
+
+const brainboxApp = require('../app');
+
 chai.use(chaiHttp);
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
@@ -150,9 +153,9 @@ const initResources = async () => {
   db = app.db.mongoDB();
 };
 
-const closeResources = () => {
+const closeResources = async () => {
   if (db) {
-    db.close();
+    await db.close();
   }
   if (server) {
     server.close();
@@ -427,5 +430,3 @@ module.exports = {
   testingCredentials,
   createProjectWithPermission
 };
-
-

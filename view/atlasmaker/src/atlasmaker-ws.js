@@ -1,8 +1,8 @@
 /* eslint-disable max-lines */
-/* global AtlasMakerWidget MozWebSocket $*/
+/* global AtlasMakerWidget MozWebSocket*/
 /*! AtlasMaker: WebSockets */
-import * as DOMPurify from 'dompurify';
-import * as pako from 'pako';
+import DOMPurify from 'dompurify';
+import pako from 'pako';
 
 /**
  * @page AtlasMaker: WebSockets
@@ -39,23 +39,18 @@ export const AtlasMakerWS = {
     // eslint-disable-next-line max-statements
     return new Promise(function (resolve, reject) {
       // WS connection
-      let host;
-      if(me.secure) {
-        host = 'wss://' + me.wshostname;
-      } else {
-        host = 'ws://' + me.wshostname;
-      }
+      const host = me.wshostname;
 
       if (me.debug) { console.log('[initSocketConnection] host:', host); }
-      if (me.progress) { me.progress.html('Connecting...'); }
+      if (me.progress) { me.progress.innerHTML = 'Connecting...'; }
 
       try {
         me.socket = me.createSocket(host);
 
         me.socket.onopen = function (msg) {
           if (me.debug) { console.log('[initSocketConnection] connection open', msg); }
-          me.progress.html('<img src=\'' + me.hostname + '/img/download.svg\' style=\'vertical-align:middle\'/>MRI');
-          $('#notifications').text('Chat (1 connected)');
+          if (me.progress) { me.progress.innerHTML = '<img src=\'' + me.hostname + '/img/download.svg\' style=\'vertical-align:middle\'/>MRI'; }
+          me.setNotification('Chat (1 connected)');
           me.flagConnected = 1;
           me.reconnectionTimeout = 5;
           resolve();
@@ -86,29 +81,13 @@ export const AtlasMakerWS = {
           console.log('Initial random time:', rand);
           setTimeout(function () {
             let timeout = me.reconnectionTimeout;
-            $('#notifications').text('Disconnected. Try to reconnect in ' + (timeout-=1) + ' s...');
+            me.setNotification('Disconnected. Try to reconnect in ' + (timeout -= 1) + ' s...');
             if (me.timer) {
               clearInterval(me.timer);
             }
-            //   setTimeout(function() {
-            //     me.reconnectionTimeout *= 2;
-            //     me.initSocketConnection()
-            //       .then(function() {
-            //         me.sendUserDataMessage("allUserData");
-            //         me.sendUserDataMessage("sendAtlas");
-            //         clearInterval(me.timer);
-            //       })
-            //       .catch(function() {
-            //         timeout=me.reconnectionTimeout;
-            //         $("#notifications").text("Disconnected. Try to reconnect in "+(timeout--)+" s...");
-            //       });
-            //   }, 1000);
-            // } else {
-            //   $("#notifications").text("Disconnected. Try to reconnect in "+(timeout--)+" s...");
-            // }
             me.timer = setInterval(function () {
               if (timeout < 0) {
-                $('#notifications').text('Reconnecting...');
+                me.setNotification('Reconnecting...');
                 me.socket = null;
                 clearInterval(me.timer);
                 setTimeout(function () {
@@ -122,11 +101,11 @@ export const AtlasMakerWS = {
                     })
                     .catch(function () {
                       timeout = me.reconnectionTimeout;
-                      $('#notifications').text('Disconnected. Try to reconnect in ' + (timeout-=1) + ' s...');
+                      me.setNotification('Disconnected. Try to reconnect in ' + (timeout -= 1) + ' s...');
                     });
                 }, 1000);
               } else {
-                $('#notifications').text('Disconnected. Try to reconnect in ' + (timeout-=1) + ' s...');
+                me.setNotification('Disconnected. Try to reconnect in ' + (timeout -= 1) + ' s...');
               }
             }, 1000);
           }, rand);
@@ -137,7 +116,7 @@ export const AtlasMakerWS = {
           me.socket.close();
         };
       } catch (ex) {
-        $('#notifications').text('Chat (not connected - connection error)');
+        me.setNotification('Chat (not connected - connection error)');
         reject(ex);
       }
     });
@@ -198,9 +177,9 @@ export const AtlasMakerWS = {
 
       if (me.debug > 1) { console.log('type: ' + ext); }
 
-      if(me.debug>1) { console.log('type: '+ext); }
+      if (me.debug > 1) { console.log('type: ' + ext); }
 
-      switch(ext) {
+      switch (ext) {
       case 'nii': {
         const inflate = new pako.Inflate();
         inflate.push(data, true);
@@ -215,12 +194,12 @@ export const AtlasMakerWS = {
         me.configureAtlasImage();
         me.resizeWindow();
 
-        me.brainImg.img=null;
+        me.brainImg.img = null;
         me.drawImages();
 
         // compute total segmented volume
-        const vol=me.computeSegmentedVolume();
-        me.info.volume=parseInt(vol, 10)+' mm3';
+        const vol = me.computeSegmentedVolume();
+        me.info.volume = parseInt(vol, 10) + ' mm3';
 
         // setup download link
         const link = me.container.querySelector('span#download_atlas');
@@ -242,7 +221,6 @@ export const AtlasMakerWS = {
         me.isMRILoaded = true; // receiving a jpg is proof of a loaded MRI
 
         img.onload = function () {
-          const flagFirstImage = (me.brainImg.img === null);
           me.brainImg.img = img;
           me.brainImg.view = me.flagLoadingImg.view;
           me.brainImg.slice = me.flagLoadingImg.slice;
@@ -251,12 +229,12 @@ export const AtlasMakerWS = {
 
           me.flagLoadingImg.loading = false;
 
-          if (flagFirstImage || me.flagLoadingImg.view !== me.User.view || me.flagLoadingImg.slice !== me.User.slice) {
+          if (me.flagLoadingImg.view !== me.User.view || me.flagLoadingImg.slice !== me.User.slice) {
             me.sendRequestSliceMessage();
           }
 
           // remove loading indicator
-          $('#loadingIndicator').hide();
+          me.sendFinishedLoadingEvent();
         };
         img.src = imageUrl;
 
@@ -285,12 +263,11 @@ export const AtlasMakerWS = {
         //var    msg="<b>"+data.user.username+"</b> entered atlas "+data.user.specimenName+"/"+data.user.atlasFilename+"<br />"
         let msg;
         if (typeof data.user === 'undefined' || data.user.username === 'Anonymous') {
-          msg = '<b>' + data.uid + '</b> entered<br />';
+          msg = '<b>' + data.uid + '</b> entered';
         } else {
-          msg = '<b>' + data.user.username + '</b> entered<br />';
+          msg = '<b>' + data.user.username + '</b> entered';
         }
-        $('#logChat .text').append(msg);
-        $('#logChat .text').scrollTop($('#logChat .text')[0].scrollHeight);
+        me.appendChatMessage(msg);
       } catch (e) {
         console.log('data:', data);
         console.log(e);
@@ -306,7 +283,7 @@ export const AtlasMakerWS = {
         const changes = JSON.parse(data.description);
         let i;
         for (i in changes) {
-          if({}.hasOwnProperty.call(changes, i)) {
+          if ({}.hasOwnProperty.call(changes, i)) {
             me.Collab[u][i] = changes[i];
           }
         }
@@ -319,26 +296,25 @@ export const AtlasMakerWS = {
     let v;
     let nusers = 1;
     for (v in me.Collab) {
-      if({}.hasOwnProperty.call(me.Collab, v)) {
-        nusers+=1;
+      if ({}.hasOwnProperty.call(me.Collab, v)) {
+        nusers += 1;
       }
     }
-    $('#notifications').text('Chat (' + nusers + ' connected)');
+    me.setNotification('Chat (' + nusers + ' connected)');
   },
 
   /**
+    * @param {string} message The message to be sent
     * @returns {void}
     */
-  sendChatMessage: function () {
+  sendChatMessage: function (message) {
     const me = AtlasMakerWidget;
     if (me.flagConnected === 0) { return; }
-    let msg = DOMPurify.sanitize($('input#msg')[0].value);
+    let msg = DOMPurify.sanitize(message);
     try {
       me.socket.send(JSON.stringify({ 'type': 'chat', 'msg': msg, 'username': me.User.username }));
-      msg = '<b>me: </b>' + msg + '<br />';
-      $('#logChat .text').append(msg);
-      $('#logChat .text').scrollTop($('#logChat .text')[0].scrollHeight);
-      $('input#msg').val('');
+      msg = '<b>me: </b>' + msg;
+      me.appendChatMessage(msg);
     } catch (ex) {
       console.log('ERROR: Unable to sendChatMessage', ex);
     }
@@ -356,10 +332,9 @@ export const AtlasMakerWS = {
     const theView = me.Collab[data.uid].view;
     const theSlice = me.Collab[data.uid].slice;
     const link = me.hostname + '/mri?url=' + theSource + '&view=' + theView + '&slice=' + theSlice;
-    const theUsername = (data.username === 'Anonymous')?data.uid:data.username;
-    const msg = '<a href=\'' +link+'\'><b>'+theUsername+':</b></a> '+data.msg+'<br />';
-    $('#logChat .text').append(msg);
-    $('#logChat .text').scrollTop($('#logChat .text')[0].scrollHeight);
+    const theUsername = (data.username === 'Anonymous') ? data.uid : data.username;
+    const msg = '<a href=\'' + link + '\'><b>' + theUsername + ':</b></a> ' + data.msg + '<br />';
+    me.appendChatMessage(msg);
   },
 
   /**
@@ -371,9 +346,9 @@ export const AtlasMakerWS = {
     */
   sendPaintMessage: function (msg) {
     const me = AtlasMakerWidget;
-    if(me.flagConnected === 0) { return; }
+    if (me.flagConnected === 0) { return; }
     try {
-      me.socket.send(JSON.stringify({type:'paint', data:msg}));
+      me.socket.send(JSON.stringify({ type: 'paint', data: msg }));
     } catch (ex) {
       console.log('ERROR: Unable to sendPaintMessage', ex);
     }
@@ -381,7 +356,7 @@ export const AtlasMakerWS = {
 
   sendVectorialAnnotationMessage: function (msg) {
     const me = AtlasMakerWidget;
-    if(me.flagConnected === 0) { return; }
+    if (me.flagConnected === 0) { return; }
     try {
       me.socket.send(JSON.stringify({
         type: 'vectorial',
@@ -410,9 +385,9 @@ export const AtlasMakerWS = {
    */
   receivePaintMessage: function (data) {
     const me = AtlasMakerWidget;
-    const {uid:u, data:msg}=data; // user
+    const { uid: u, data: msg } = data; // user
 
-    if(me.Collab[u]) { me.paintxy(u, msg.c, msg.x, msg.y, me.Collab[u]); }
+    if (me.Collab[u]) { me.paintxy(u, msg.c, msg.x, msg.y, me.Collab[u]); }
   },
 
   /**
@@ -424,9 +399,9 @@ export const AtlasMakerWS = {
    */
   sendShowMessage: function (msg) {
     const me = AtlasMakerWidget;
-    if(me.flagConnected === 0) { return; }
+    if (me.flagConnected === 0) { return; }
     try {
-      me.socket.send(JSON.stringify({type:'show', data:msg}));
+      me.socket.send(JSON.stringify({ type: 'show', data: msg }));
     } catch (ex) {
       console.log('ERROR: Unable to sendShowMessage', ex);
     }
@@ -440,9 +415,9 @@ export const AtlasMakerWS = {
    */
   receiveShowMessage: function (data) {
     const me = AtlasMakerWidget;
-    const {uid:u, data:msg} = data; // user
+    const { uid: u, data: msg } = data; // user
 
-    if(me.Collab[u]) { me.showxy(u, msg.c, msg.x, msg.y, me.Collab[u]); }
+    if (me.Collab[u]) { me.showxy(u, msg.c, msg.x, msg.y, me.Collab[u]); }
   },
 
   /**
@@ -452,7 +427,7 @@ export const AtlasMakerWS = {
   receivePaintVolumeMessage: function (data) {
     const me = AtlasMakerWidget;
 
-    const voxels=data.data;
+    const voxels = data.data;
     me.paintvol(voxels.data);
 
     // TEST
@@ -465,7 +440,7 @@ export const AtlasMakerWS = {
    */
   receiveVectorialAnnotationMessage: function (data) {
     const me = AtlasMakerWidget;
-    ({data: me.User.vectorial} = data);
+    ({ data: me.User.vectorial } = data);
     me.displayInformation();
   },
 
@@ -474,9 +449,9 @@ export const AtlasMakerWS = {
    */
   sendUndoMessage: function () {
     const me = AtlasMakerWidget;
-    if(me.flagConnected === 0) { return; }
+    if (me.flagConnected === 0) { return; }
     try {
-      me.socket.send(JSON.stringify({type:'paint', data:{c:'u'}}));
+      me.socket.send(JSON.stringify({ type: 'paint', data: { c: 'u' } }));
     } catch (ex) {
       console.log('ERROR: Unable to sendUndoMessage', ex);
     }
@@ -487,9 +462,9 @@ export const AtlasMakerWS = {
    */
   sendSaveMessage: function () {
     const me = AtlasMakerWidget;
-    if(me.flagConnected === 0) { return; }
+    if (me.flagConnected === 0) { return; }
     try {
-      me.socket.send(JSON.stringify({type:'save'}));
+      me.socket.send(JSON.stringify({ type: 'save' }));
     } catch (ex) {
       console.log('ERROR: Unable to sendSaveMessage', ex);
     }
@@ -500,12 +475,12 @@ export const AtlasMakerWS = {
    */
   sendRequestMRIMessage: function () {
     const me = AtlasMakerWidget;
-    if(me.flagConnected === 0) { return; }
+    if (me.flagConnected === 0) { return; }
 
     try {
       me.socket.send(JSON.stringify({
-        type:'requestMRI',
-        source:'sendRequestMRIMessage'
+        type: 'requestMRI',
+        source: 'sendRequestMRIMessage'
       }));
     } catch (ex) {
       console.log('ERROR: Unable to sendRequestMRIMessage', ex);
@@ -517,24 +492,24 @@ export const AtlasMakerWS = {
    */
   sendRequestSliceMessage: function () {
     const me = AtlasMakerWidget;
-    if(me.flagConnected === 0) { return; }
-    if(me.flagLoadingImg.loading === true) { return; }
+    if (me.flagConnected === 0) { return; }
+    if (me.flagLoadingImg.loading === true) { return; }
     try {
       me.socket.send(JSON.stringify({
 
-        type:'requestSlice',
+        type: 'requestSlice',
 
         /*
                 TEST
         */
         //type:"requestSlice2",
 
-        view:me.User.view,
-        slice:me.User.slice
+        view: me.User.view,
+        slice: me.User.slice
       }));
-      me.flagLoadingImg.loading=true;
-      me.flagLoadingImg.view=me.User.view;
-      me.flagLoadingImg.slice=me.User.slice;
+      me.flagLoadingImg.loading = true;
+      me.flagLoadingImg.view = me.User.view;
+      me.flagLoadingImg.slice = me.User.slice;
 
     } catch (ex) {
       console.log('ERROR: Unable to sendRequestSliceMessage', ex);
@@ -549,7 +524,7 @@ export const AtlasMakerWS = {
    */
   receiveMetadata: function (data) {
     const me = AtlasMakerWidget;
-    for(const subscriberCallback of me._metadataChangeSubscribers) {
+    for (const subscriberCallback of me._metadataChangeSubscribers) {
       subscriberCallback(data);
     }
   },
@@ -605,49 +580,50 @@ export const AtlasMakerWS = {
    * @param {string} method Method "patch" or "append"
    * @param {object} patch Path object used in case method is "patch"
    * @returns {void}
-   * No reason to return a promise since the function does not do any asynchronous task
    */
-  sendSaveMetadataMessage: function (info, method, patch) {
+  // eslint-disable-next-line max-statements
+  sendSaveMetadataMessage: async function (info, method, patch) {
     const me = AtlasMakerWidget;
 
-    return new Promise(function(resolve, reject) {
-      if(me.flagConnected === 0) {
+    if (me.flagConnected === 0) {
+      try {
+        await me.initSocketConnection();
+      } catch (e) {
         console.log('WARNING: Not connected: will not save metadata');
 
-        return reject(new Error('Not connected'));
+        throw new Error('Not connected');
+      }
+    }
+
+    try {
+      const rnd = Math.random().toString(36)
+        .slice(2);
+      const met = method || 'append';
+      if (method === 'patch') {
+        me.socket.send(JSON.stringify({
+          type: 'saveMetadata',
+          metadata: info,
+          method: met,
+          patch: patch,
+          rnd: rnd
+        }));
+      } else {
+        me.socket.send(JSON.stringify({
+          type: 'saveMetadata',
+          metadata: info,
+          method: met,
+          rnd: rnd
+        }));
+      }
+      if (me.debug > 1) {
+        console.log(rnd);
+        console.log(info);
       }
 
-      try {
-        const rnd = Math.random().toString(36)
-          .slice(2);
-        const met = method || 'append';
-        if(method === 'patch') {
-          me.socket.send(JSON.stringify({
-            type:'saveMetadata',
-            metadata: info,
-            method: met,
-            patch: patch,
-            rnd: rnd
-          }));
-        } else {
-          me.socket.send(JSON.stringify({
-            type:'saveMetadata',
-            metadata: info,
-            method: met,
-            rnd: rnd
-          }));
-        }
-        if(me.debug>1) {
-          console.log(rnd);
-          console.log(info);
-        }
-        resolve();
-
-      } catch (ex) {
-        console.log('ERROR: Unable to sendSaveMetadataMessage', ex);
-        reject(ex);
-      }
-    });
+    } catch (ex) {
+      console.log('ERROR: Unable to sendSaveMetadataMessage', ex);
+      throw ex;
+    }
   },
 
   /**
@@ -657,31 +633,30 @@ export const AtlasMakerWS = {
   // eslint-disable-next-line max-statements
   receiveDisconnectMessage: function (data) {
     const me = AtlasMakerWidget;
-    const {uid} = data; // user
+    const { uid } = data; // user
     let msg;
-    if(me.Collab[uid]) {
-      if(typeof me.Collab[uid].username === 'undefined' || me.Collab[uid].username === 'Anonymous') {
-        msg = '<b>'+me.Collab[uid].uid+'</b> left<br />';
+    if (me.Collab[uid]) {
+      if (typeof me.Collab[uid].username === 'undefined' || me.Collab[uid].username === 'Anonymous') {
+        msg = '<b>' + me.Collab[uid].uid + '</b> left<br />';
       } else {
-        msg = '<b>'+me.Collab[uid].username+'</b> left<br />';
+        msg = '<b>' + me.Collab[uid].username + '</b> left<br />';
       }
     } else {
-      msg='<b>'+uid+'</b> left<br />';
+      msg = '<b>' + uid + '</b> left<br />';
     }
     delete me.Collab[uid];
     let v;
-    let nusers=1;
-    for(v in me.Collab) {
-      if({}.hasOwnProperty.call(me.Collab, v)) {
-        nusers+=1;
+    let nusers = 1;
+    for (v in me.Collab) {
+      if ({}.hasOwnProperty.call(me.Collab, v)) {
+        nusers += 1;
       }
     }
-    $('#notifications').text('Chat ('+nusers+' connected)');
-    $('#logChat .text').append(msg);
-    $('#logChat .text').scrollTop($('#logChat .text')[0].scrollHeight);
+    me.setNotification('Chat (' + nusers + ' connected)');
+    me.appendChatMessage(msg);
   },
 
-  displayDialog: async ({msg, modal, delay, doFadeOut}) => {
+  displayDialog: async ({ msg, modal, delay, doFadeOut }) => {
 
     /*
       Use like this:
@@ -721,7 +696,7 @@ export const AtlasMakerWS = {
    */
   receiveServerMessage: function (data) {
     const me = AtlasMakerWidget;
-    const {msg, dialogType} = data;
+    const { msg, dialogType } = data;
 
     if (dialogType === 'modal') {
       me.displayDialog({
@@ -731,10 +706,10 @@ export const AtlasMakerWS = {
         doFadeOut: 0
       });
     } else if (dialogType === 'info') {
-      const prevMsg = document.querySelector('#notifications').textContent;
-      document.querySelector('#notifications').textContent = msg;
-      setTimeout(function() {
-        document.querySelector('#notifications').textContent = prevMsg;
+      const prevMsg = document.querySelector('.tools .notifications').textContent;
+      me.setNotification(msg);
+      setTimeout(function () {
+        me.setNotification(prevMsg);
       }, 2000);
     } else {
       me.displayDialog({
@@ -754,7 +729,7 @@ export const AtlasMakerWS = {
   replayWSTraffic: function (recorded) {
     const me = AtlasMakerWidget;
     let i;
-    for(i=0; i<recorded.length; i++) {
+    for (i = 0; i < recorded.length; i++) {
       me.socket.send(JSON.stringify(recorded[i]));
     }
   },
@@ -770,22 +745,16 @@ export const AtlasMakerWS = {
    * @returns {void}
    */
   logToDatabase: function (key, value) {
-    return new Promise(function(resolve, reject) {
-      const me = AtlasMakerWidget;
-      $.ajax({
-        url: me.hostname + '/api/log',
-        type: 'POST',
-        data: {
-          username: me.User.username,
-          key: key,
-          value: value
-        }})
-        .done(function(data) {
-          resolve(data);
-        })
-        .fail((err) => {
-          reject(err);
-        });
-    });
+    const me = AtlasMakerWidget;
+
+    return fetch(me.hostname + '/api/log', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        username: me.User.username,
+        key: key,
+        value: value
+      })
+    }).then((res) => res.json());
   }
 };

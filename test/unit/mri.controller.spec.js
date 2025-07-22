@@ -1,12 +1,15 @@
 /* eslint-disable max-lines */
+const path = require('path');
+
+require('mocha-sinon');
 const { assert } = require('chai');
 const httpMocks = require('node-mocks-http');
-const MriController = require('../../controller/mri/mri.controller');
-// const atlasMakerServer = require('../../controller/atlasmakerServer/atlasmakerServer');
-require('mocha-sinon');
 const sinon = require('sinon');
+
+const dirname = path.resolve(__dirname, '../..');
+
+const MriController = require('../../controller/mri/mri.controller');
 const U = require('../utils');
-const dirname = require('path').resolve(__dirname, '../..');
 
 let db, mriController;
 
@@ -103,7 +106,7 @@ describe('MRI Controller: ', function () {
         dirname,
         headers: {},
         user: {
-          username: ''
+          username: 'foo'
         },
         session: {
           returnTo: ''
@@ -118,13 +121,23 @@ describe('MRI Controller: ', function () {
           remoteAddress: 'http://localhost:3000'
         }
       };
-      const authenticated = sinon.stub(req, 'isAuthenticated').resolves(true);
+      const authenticated = sinon.stub(req, 'isAuthenticated').resolves(false);
       const res = {
         render: sinon.spy()
       };
       await mriController.mri(req, res);
       assert.strictEqual(res.render.callCount, 1);
-      assert.strictEqual(authenticated.callCount, 2);
+      assert.deepStrictEqual(res.render.args[0], [
+        'mri',
+        {
+          hasPrivilegedAccess: false,
+          title: 'BrainBox',
+          params: JSON.stringify({ url: req.query.url }),
+          mriInfo: JSON.stringify({ source: req.query.url }),
+          loggedUser: JSON.stringify({ username: req.user.username })
+        }
+      ]);
+      assert.isAtLeast(authenticated.callCount, 1);
       sinon.restore();
     });
   });

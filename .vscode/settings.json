@@ -3,7 +3,13 @@
     "editor.formatOnSave": false,
     "editor.codeActionsOnSave": [
       // "source.formatDocument", // problem with switch case multi lines comment indents
-      "source.fixAll.eslint" // used by dbaeumer.vscode-eslint
+      "source.fixAll.eslint"
     ]
+  },
+  "[vue]": {
+    "editor.formatOnSave": false,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    },
   }
 }

@@ -1,7 +1,7 @@
 /* global AtlasMakerWidget */
 // eslint-disable-next-line camelcase
 window.put_label = (cmd) => {
-  if(cmd === 'help') { return '({vox: array}) Puts the label in the current volume'; }
+  if (cmd === 'help') { return '({vox: array}) Puts the label in the current volume'; }
 
   const me = AtlasMakerWidget;
   const {data} = me.atlas;

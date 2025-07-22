@@ -1,15 +1,17 @@
 /* eslint-disable max-lines */
 const crypto = require('crypto');
-const validatorNPM = require('validator');
-const { param, validationResult } = require('express-validator');
-const dataSlices = require('../dataSlices/dataSlices.js');
+
 const AsyncLock = require('async-lock');
 const lock = new AsyncLock();
-const { AccessType, AccessLevel, AccessControlService } = require('neuroweblab');
-const _ = require('lodash');
 const createDOMPurify = require('dompurify');
+const { param, validationResult } = require('express-validator');
 const { JSDOM } = require('jsdom');
+const _ = require('lodash');
+const { AccessType, AccessLevel, AccessControlService } = require('neuroweblab');
+const validatorNPM = require('validator');
+
 const { ForbiddenAccessError } = require('../../errors.js');
+const dataSlices = require('../dataSlices/dataSlices.js');
 const { window } = (new JSDOM('', {
   features: {
     FetchExternalResources: false, // disables resource loading over HTTP / filesystem
@@ -475,7 +477,7 @@ const insertMRInames = function (req, res, list) {
     const hash = crypto.createHash('md5').update(source)
       .digest('hex');
 
-    // if mri exists, and has no name, insert the name
+    // if mri doesn't exists, create it
     if (!mri) {
       mri = {
         source,
@@ -708,6 +710,40 @@ const deleteProject = async function (req, res) {
   }
 };
 
+// eslint-disable-next-line max-statements
+const embed = async function (req, res) {
+  let loggedUser = 'anonymous';
+  if (req.isAuthenticated()) {
+    loggedUser = req.user.username;
+  }
+
+  const json = await req.db.get('project').findOne({ shortname: req.params.projectName, backup: { $exists: 0 } });
+  if (json) {
+    if (!AccessControlService.hasFilesAccess(AccessLevel.VIEW, json, loggedUser)) {
+      res.status(401).send('Authorization required');
+
+      return;
+    }
+
+    const user = await req.db.get('user').findOne({ nickname: json.owner });
+    const allowedDomains = user.authorizedHostsForEmbedding ? user.authorizedHostsForEmbedding.split('\n').join(' ') : '\'none\'';
+    try {
+      res.header('Content-Security-Policy', `frame-ancestors ${allowedDomains}`);
+    } catch (err) {
+      console.log(err, 'setting frame-ancestors to none');
+      res.header('Content-Security-Policy', 'frame-ancestors \'none\'');
+    }
+
+    json.files.list = [];
+    res.render('embed', {
+      projectInfo: JSON.stringify(json),
+      annotationsAccessLevel: AccessControlService.getUserOrPublicAccessLevel(json, loggedUser, AccessType.ANNOTATIONS)
+    });
+  } else {
+    res.status(404).send('Project Not Found');
+  }
+};
+
 
 const ProjectController = function () {
   this.validator = validator;
@@ -715,6 +751,7 @@ const ProjectController = function () {
   this.apiProject = apiProject;
   this.apiProjectFiles = apiProjectFiles;
   this.project = project;
+  this.embed = embed;
   this.settings = settings;
   this.newProject = newProject;
   this.postProject = postProject;

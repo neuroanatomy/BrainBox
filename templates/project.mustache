@@ -10,106 +10,24 @@
 </head>
 
 <body>
+    <div id="app"></div>
+    <script>
+        const projectInfo={{{projectInfo}}};
+        const projectName='{{{projectName}}}';
+        const annotationsAccessLevel='{{{annotationsAccessLevel}}}';
+        const loggedUser = {{{loggedUser}}};
+    </script>
+    <script src="/lib/atlasmaker.js"></script>
+    <script src="/lib/brainbox.js"></script>
+    <script src="/js/project-page.js"></script>
+    <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:stretch">
-    
-    <!-- Header (fixed height) -->
-    <div style="flex:0 0 64px">
-        <!-- Top-right menu bar -->
-        <div id="menu">
-            <img id="addProject" class="button" title="add project" alt="add project" src="/img/plus.svg"/>
-            <img id="settings" class="button" title="settings" alt="settings" src="/img/settings.svg"/>
-            <a href="https://openneurolab.github.io/metasearch" target="_blank"><img id="search" class="button" title="search" alt="search" src="/img/search.svg"/></a>
-            <img id="doc" class="button" title="documentation" alt="documentation" src="/img/doc.svg"/>
-            <a href="https://github.com/neuroanatomy/BrainBox/issues/new" target="_blank"><img id="bug" class="button" title="report a bug" alt="report a bug" src="/img/bug.svg"/></a>
-            <a href="https://github.com/neuroanatomy/BrainBox" target="_blank"><img id="github" class="button" title="join our github project" alt="join our github project" style="width:15px;height:15px" src="/img/github.svg"/></a>
-            <div id="MyLogin">
-                <span>{{{login}}}</span>
-            </div>
-        </div>
-
-        <!-- Small left-top logo -->
-        <div style="display:inline-block;margin:10px">
-            <a href="/" style="text-decoration:none">
-                <img style="height:56px;vertical-align:middle" src="/img/brainbox-logo-small_noFont.svg"/>
-            </a><span style="font-family: Roboto, sans-serif; font-size: 36px; font-weight:100;vertical-align:middle" id="fontLogo"> 
-                <a href="/" style="font-family: Roboto, sans-serif; font-size: 36px; font-weight:100; text-decoration:none">{{projectName}}</a>
-            </span>
-        </div>
-    </div>
-    
-    <!-- Content -->
-    <div id="content" style="flex:1 1 auto;position:relative">
-        <div style="display:flex;width:100%;height:100%;align-items:stretch;position:absolute">
-
-            <div id="left" style="flex:0 0 400px;position:relative">
-            
-                <div style="display:flex;flex-direction:column;height:100%">
-                    <!-- Tools -->
-                    <div id="tools" class="block" style="flex:1 0 0">
-                    </div>
-                
-                    <!-- Project Files -->
-                    <div id="projectFiles" class="block" style="flex:1 1 auto">
-                        <table style="width:100%;text-align:left">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>File</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            </tbody>
-                        </table>
-                    </div>
-                
-                    <!-- File Annotations -->
-                    <div id="annotations" class="block" style="flex:1 1 200px">
-                        <table id="volAnnotations" style="width:100%;text-align:left">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Label Set</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                
-                <div id="resizeButton" class="block">
-                </div>
-                
-            </div>
-            
-            <div id="right" style="flex:1 0;position:relative">
-                <!-- AtlasMaker -->
-                <div id="stereotaxic" style="width:100%;height:100%">
-                <!-- End of AtlasMaker -->
-                </div>
-            </div>
-
-        </div>
-    </div>
-</div>
-
-<script>
-const projectInfo={{{projectInfo}}};
-const annotationsAccessLevel='{{{annotationsAccessLevel}}}';
-const infoProxy = {};
-</script>
-<script src="/lib/atlasmaker.js"></script>
-<script src="/lib/brainbox.js"></script>
-<script src="/js/project-page.js"></script>
-<script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-
-    ga('create', 'UA-50078058-2', 'auto');
-    ga('send', 'pageview');
-</script>
+        ga('create', 'UA-50078058-2', 'auto');
+        ga('send', 'pageview');
+    </script>
 </body>
 </html>
