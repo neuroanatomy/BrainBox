@@ -132,7 +132,7 @@ const start = async function () {
   //========================================================================================
 
   const server = http.createServer(app).listen(3001, () => { console.log('Listening http on port 3001'); });
-  const atlasmakerServer = new AtlasmakerServer(db);
+  const atlasmakerServer = new AtlasmakerServer(db, nativeDb);
   atlasmakerServer.dataDirectory = dirname + '/public';
 
   if (Config.secure) {
