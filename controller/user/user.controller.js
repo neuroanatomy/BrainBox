@@ -28,7 +28,7 @@ const user = async function (req, res) {
   req.session.returnTo = req.originalUrl;
 
   // const json = await req.db.get('user').findOne({ nickname: requestedUser })
-  const json = await req.nativeDb.collection('user').findOne({ nickname: requestedUser }, { projection: { _id: 0 } })
+  const json = await req.nativeDb.collection('user').findOne({ nickname: requestedUser })
     .catch(function (err) {
       console.log('ERROR:', err);
       res.status(400).send('Error');

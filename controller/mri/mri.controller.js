@@ -626,14 +626,14 @@ const reset = async function reset(req, res) {
   });
 };
 
-const MriController = function (db) {
+const MriController = function (db, nativeDb) {
   this.validator = validator;
   this.validatorPost = validatorPost;
   this.apiMriGet = apiMriGet;
   this.apiMriPost = apiMriPost;
   this.mri = mri;
   this.reset = reset;
-  atlasmakerServer = new AtlasmakerServer(db);
+  atlasmakerServer = new AtlasmakerServer(db, nativeDb);
 };
 
 module.exports = MriController;

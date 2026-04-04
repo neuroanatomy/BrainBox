@@ -158,10 +158,10 @@ const isProjectObject = async function (req, res, object) {
 
   arr = [];
   // arr.push(req.db.get('user').findOne({ nickname: object.owner }));
-  arr.push(req.nativeDb.collection('user').findOne({ nickname: object.owner }, { projection: { _id: 0 } }));
+  arr.push(req.nativeDb.collection('user').findOne({ nickname: object.owner }));
   for (const collaborator of object.collaborators.list) {
     // arr.push(req.db.get('user').findOne({ nickname: collaborator.userID }));
-    arr.push(req.nativeDb.collection('user').findOne({ nickname: collaborator.userID }, { projection: { _id: 0 } }));
+    arr.push(req.nativeDb.collection('user').findOne({ nickname: collaborator.userID }));
   }
   const users = await Promise.all(arr);
   let notFound = false;
@@ -196,7 +196,9 @@ const project = async function (req, res) {
   // store return path in case of login
   req.session.returnTo = req.originalUrl;
 
-  const json = await req.db.get('project').findOne({ shortname: req.params.projectName, backup: { $exists: 0 } });
+  // const json = await req.db.get('project').findOne({ shortname: req.params.projectName, backup: { $exists: 0 } });
+  const json = await req.nativeDb.collection('project')
+    .findOne({ shortname: req.params.projectName, backup: { $exists: false } });
   if (json) {
     // check that the logged user has access to view this project
     if (!AccessControlService.hasFilesAccess(AccessLevel.VIEW, json, loggedUser)) {
@@ -232,7 +234,7 @@ const apiProject = async function (req, res) {
     loggedUser = req.user.username;
   }
 
-  const json = await req.db.get('project').findOne({ shortname: req.params.projectName, backup: { $exists: 0 } }, { projection: { _id: 0 } });
+  const json = await req.db.get('project').findOne({ shortname: req.params.projectName, backup: { $exists: 0 } });
   if (json) {
     // check that the logged user has access to view this project
     if (!AccessControlService.hasFilesAccess(AccessLevel.VIEW, json, loggedUser)) {

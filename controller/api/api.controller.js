@@ -30,8 +30,10 @@ const userNameQuery = (req, res) => {
 
     return;
   }
-  const db = req.app.db.mongoDB();
-  db.get('user')
+  // const db = req.app.db.mongoDB();
+  const nativeDb = req.app.db.nativeMongoDB();
+  // db.get('user')
+  nativeDb.collection('user')
     .find(
       { $or: [
         {nickname: {$regex:escapeRegex(query.q)}},
@@ -64,7 +66,9 @@ const getAtlasBackups = (req, res) => {
 
   // get the mri object to which this atlas belongs
   const db = req.app.db.mongoDB();
-  db.get('mri').findOne({
+  const nativeDb = req.app.db.nativeMongoDB();
+  // db.get('mri').findOne({
+  nativeDb.collection('mri').findOne({
     source: source,
     'mri.atlas': {$elemMatch:{name: atlasName, project: atlasProject}},
     backup: {$exists: 0}
@@ -87,10 +91,12 @@ const getAtlasBackups = (req, res) => {
           // ...from backup logs
           for(i=0; i<obj2.length; i++) {
             promiseArray.push(
-              db.get('log').aggregate([
+              // db.get('log').aggregate([
+              nativeDb.collection('log').aggregate([
                 { $match: {key:'saveAtlasBackup', 'value.atlasDirectory': dataDir, 'value.atlasFilename': obj2[i].filename}},
                 { $project: {_id:0, filename:'$value.atlasFilename', timestamp:'$value.timestamp'}}
               ])
+                .toArray()
             );
           }
           Promise.all(promiseArray)
@@ -130,6 +136,7 @@ const log = async (req, res) => {
   const json = req.body;
   let obj;
   const db = req.app.db.mongoDB();
+  const nativeDb = req.app.db.nativeMongoDB();
   try {
     switch (json.key) {
     case 'annotationLength': {
@@ -141,7 +148,8 @@ const log = async (req, res) => {
         'value.atlas': json.value.atlas
       };
 
-      const result = await db.get('log').findOne(obj);
+      // const result = await db.get('log').findOne(obj);
+      const result = await nativeDb.collection('log').findOne(obj);
       let length = 0;
       if(result) {
         length = parseFloat(result.value.length);
@@ -156,7 +164,8 @@ const log = async (req, res) => {
     }
 
     default:
-      await db.get('log').insert({
+      // await db.get('log').insert({
+      await nativeDb.collection('log').insert({
         key: json.key,
         value: json.value,
         username: loggedUser,
@@ -173,7 +182,8 @@ const log = async (req, res) => {
     res.status(500).send({error: JSON.stringify(err)});
   }
 
-  db.get('mri').update({
+  // db.get('mri').update({
+  nativeDb.collection('mri').updateOne({
     source: json.value.source,
     'mri.atlas':{$elemMatch:{filename:json.value.atlas}}
   }, {

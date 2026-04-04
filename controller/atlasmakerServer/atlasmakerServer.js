@@ -51,7 +51,7 @@ const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 let atlasmakerServer;
 
-const AtlasmakerServer = function (db) {
+const AtlasmakerServer = function (db, nativeDb) {
   const me = {
     debug: 0,
     dataDirectory: 'public',
@@ -356,7 +356,9 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         // remove it from the Atlases array and return
         let mri;
         try {
-          mri = await db.get('mri').findOne({ source: atlas.source, backup: { $exists: 0 } }, { _id: 0 });
+          // mri = await db.get('mri').findOne({ source: atlas.source, backup: { $exists: 0 } }, { _id: 0 });
+          mri = await nativeDb.collection('mri')
+            .findOne({ source: atlas.source, backup: { $exists: 0 } }, { projection: { _id: 0 } });
         } catch (err) {
           throw new Error('Can\'t find entry for atlas voxel data in DB', err);
         }

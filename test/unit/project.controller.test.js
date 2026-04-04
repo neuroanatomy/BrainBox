@@ -70,7 +70,8 @@ describe('Project Controller: ', function () {
         isAuthenticated: function () {
           return Boolean(this.user.username);
         },
-        db: db
+        db: db,
+        nativeDb: nativeDb
       };
       const success = sinon.spy();
       const failure = sinon.spy();
@@ -107,7 +108,8 @@ describe('Project Controller: ', function () {
         isAuthenticated: function () {
           return Boolean(this.user.username);
         },
-        db: db
+        db: db,
+        nativeDb: nativeDb
       };
       const success = sinon.spy();
       const failure = sinon.spy();
@@ -149,7 +151,8 @@ describe('Project Controller: ', function () {
         isAuthenticated: function () {
           return Boolean(this.user.username);
         },
-        db: db
+        db: db,
+        nativeDb: nativeDb
       };
       const success = sinon.spy();
       const failure = sinon.spy();
@@ -177,7 +180,8 @@ describe('Project Controller: ', function () {
         isAuthenticated: function () {
           return Boolean(this.user.username);
         },
-        db: db
+        db: db,
+        nativeDb: nativeDb
       };
       const resSpy = sinon.spy();
       const res = {
@@ -495,7 +499,8 @@ describe('Project Controller: ', function () {
         isAuthenticated: function () {
           return Boolean(this.user.username);
         },
-        db: db
+        db: db,
+        nativeDb: nativeDb
       };
       const res = {
         json: sinon.spy()
