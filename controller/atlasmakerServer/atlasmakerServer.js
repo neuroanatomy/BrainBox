@@ -42,6 +42,13 @@ const bufferTag = function (str, sz) {
   return buf;
 };
 
+/**
+ * Escape special regex characters for use inside a MongoDB $regex query.
+ * @param {string} str - raw user input
+ * @returns {string} escaped string safe for $regex
+ */
+const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 let atlasmakerServer;
 
 const AtlasmakerServer = function (db) {
@@ -882,7 +889,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         if (data.metadata && data.metadata.nickname) {
           db.get('user')
             .find(
-              { 'nickname': { '$regex': data.metadata.nickname } },
+              { 'nickname': { '$regex': escapeRegex(data.metadata.nickname) } },
               { fields: ['nickname', 'name'], limit: 10 })
             .then(function (obj) {
               resolve(obj);
@@ -891,7 +898,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         } else if (data.metadata && data.metadata.name) {
           db.get('user')
             .find(
-              { 'name': { '$regex': data.metadata.name } },
+              { 'name': { '$regex': escapeRegex(data.metadata.name) } },
               { fields: ['nickname', 'name'], limit: 10 })
             .then(function (obj) {
               resolve(obj);
@@ -924,7 +931,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         if (data.metadata && data.metadata.projectName) {
           db.get('project')
             .find({
-              shortname: { $regex: data.metadata.projectName },
+              shortname: { $regex: escapeRegex(data.metadata.projectName) },
               backup: { $exists: 0 }
             }, {
               fields: ['name', 'shortname'],
