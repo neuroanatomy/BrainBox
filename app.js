@@ -80,6 +80,7 @@ const start = async function () {
     annotationsCollection: 'mri'
   });
   const db = app.db.mongoDB();
+  const nativeDb = app.db.nativeMongoDB();
 
   //========================================================================================
   // Allow CORS
@@ -121,7 +122,7 @@ const start = async function () {
   app.use((req, res, next) => {
     req.dirname = dirname;
     req.db = db; // monk
-    req.nativeDb = app.db.nativeMongoDB(); // native mongodb driver
+    req.nativeDb = nativeDb; // native mongodb driver
 
     next();
   });
