@@ -230,7 +230,7 @@ const apiProject = async function (req, res) {
     loggedUser = req.user.username;
   }
 
-  const json = await req.db.get('project').findOne({ shortname: req.params.projectName, backup: { $exists: 0 } }, '-_id');
+  const json = await req.db.get('project').findOne({ shortname: req.params.projectName, backup: { $exists: 0 } }, { projection: { _id: 0 } });
   if (json) {
     // check that the logged user has access to view this project
     if (!AccessControlService.hasFilesAccess(AccessLevel.VIEW, json, loggedUser)) {
