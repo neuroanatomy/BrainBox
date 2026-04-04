@@ -9,9 +9,10 @@ const httpMocks = require('node-mocks-http');
 const U = require('../utils');
 
 describe('User Controller: ', function () {
-  let db;
+  let db, nativeDb;
   before(function () {
     db = U.getDB();
+    nativeDb = U.getNativeDB();
   });
 
   describe('validator function() ', function () {
@@ -36,6 +37,7 @@ describe('User Controller: ', function () {
         session: {},
         originalUrl: 'some url',
         db: db,
+        nativeDb: nativeDb,
         query: {},
         isAuthenticated: function () {
           return Boolean(this.user.username);
@@ -62,6 +64,7 @@ describe('User Controller: ', function () {
         session: {},
         originalUrl: 'some url',
         db: db,
+        nativeDb: nativeDb,
         query: {},
         isAuthenticated: function () {
           return Boolean(this.user.username);

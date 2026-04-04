@@ -202,6 +202,7 @@ describe('Project Controller: ', function () {
           projectName: 'testproject'
         },
         db: db,
+        nativeDb: nativeDb,
         user: {
           username: 'anyone'
         },
@@ -230,6 +231,7 @@ describe('Project Controller: ', function () {
           projectName: 'testproject'
         },
         db: db,
+        nativeDb: nativeDb,
         user: {
           username: 'anyone'
         },
@@ -257,6 +259,7 @@ describe('Project Controller: ', function () {
           projectName: 'testproject'
         },
         db: db,
+        nativeDb: nativeDb,
         user: {
           username: 'anyone'
         },
@@ -279,6 +282,7 @@ describe('Project Controller: ', function () {
     it('should render the new project screen correctly for an anonymous user', async function () {
       const req = {
         db: db,
+        nativeDb: nativeDb,
         user: {
         },
         isAuthenticated: function () {
@@ -309,6 +313,7 @@ describe('Project Controller: ', function () {
     it('should render the new project page correctly for a logged in user', async function () {
       const req = {
         db: db,
+        nativeDb: nativeDb,
         user: {
           username: 'anyone'
         },
@@ -373,6 +378,7 @@ describe('Project Controller: ', function () {
           }
         },
         db: db,
+        nativeDb: nativeDb,
         user: {
         },
         isAuthenticated: function () {
@@ -403,6 +409,7 @@ describe('Project Controller: ', function () {
           return Boolean(this.user.username);
         },
         db: db,
+        nativeDb: nativeDb,
         session: {
           returnTo: ''
         }
@@ -459,6 +466,7 @@ describe('Project Controller: ', function () {
           projectName: 'general'
         },
         db: db,
+        nativeDb: nativeDb,
         isAuthenticated: function () {
           return Boolean(this.user.username);
         }
@@ -518,6 +526,7 @@ describe('Project Controller: ', function () {
           username: 'foo'
         },
         db: db,
+        nativeDb: nativeDb,
         isAuthenticated: function () {
           return Boolean(this.user.username);
         },
@@ -547,6 +556,7 @@ describe('Project Controller: ', function () {
           username: 'foo'
         },
         db: db,
+        nativeDb: nativeDb,
         isAuthenticated: function () {
           return Boolean(this.user.username);
         },
@@ -578,6 +588,7 @@ describe('Project Controller: ', function () {
           username: 'foo'
         },
         db: db,
+        nativeDb: nativeDb,
         isAuthenticated: function () {
           return Boolean(this.user.username);
         },

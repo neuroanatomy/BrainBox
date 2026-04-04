@@ -157,9 +157,11 @@ const isProjectObject = async function (req, res, object) {
   //-----------------------
 
   arr = [];
-  arr.push(req.db.get('user').findOne({ nickname: object.owner }));
+  // arr.push(req.db.get('user').findOne({ nickname: object.owner }));
+  arr.push(req.nativeDb.collection('user').findOne({ nickname: object.owner }, { projection: { _id: 0 } }));
   for (const collaborator of object.collaborators.list) {
-    arr.push(req.db.get('user').findOne({ nickname: collaborator.userID }));
+    // arr.push(req.db.get('user').findOne({ nickname: collaborator.userID }));
+    arr.push(req.nativeDb.collection('user').findOne({ nickname: collaborator.userID }, { projection: { _id: 0 } }));
   }
   const users = await Promise.all(arr);
   let notFound = false;
