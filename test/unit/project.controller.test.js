@@ -9,9 +9,11 @@ const { expect } = require('chai');
 const U = require('../utils.js');
 
 describe('Project Controller: ', function () {
-  let db;
+  let db; // monk
+  let nativeDb; // native mongodb
   before(function () {
     db = U.getDB();
+    nativeDb = U.getNativeDB();
   });
 
   describe('Validator function() ', function () {
@@ -44,12 +46,14 @@ describe('Project Controller: ', function () {
   describe('project function() ', function () {
     before(function (done) {
       const testProject = projectObject;
-      db.get('project').insert(testProject)
+      // db.get('project').insert(testProject)
+      nativeDb.collection('project').insert(testProject)
         .then(() => done());
     });
 
     after(function (done) {
-      db.get('project').remove({ shortname: 'testing' })
+      // db.get('project').remove({ shortname: 'testing' })
+      nativeDb.collection('project').deleteMany({ shortname: 'testing' })
         .then(() => done());
     });
 
@@ -121,11 +125,13 @@ describe('Project Controller: ', function () {
   describe('apiProject function() ', function () {
 
     before(function (done) {
-      db.get('project').insert(projectObject)
+      // db.get('project').insert(projectObject)
+      nativeDb.collection('project').insert(projectObject)
         .then(() => done());
     });
     after(function (done) {
-      db.get('project').remove({ shortname: 'testing' })
+      // db.get('project').remove({ shortname: 'testing' })
+      nativeDb.collection('project').deleteMany({ shortname: 'testing' })
         .then(() => done());
     });
 
@@ -352,7 +358,8 @@ describe('Project Controller: ', function () {
       //   nickname: 'anyone'
       // })
       //   .then(() => {
-      db.get('project').remove({
+      // db.get('project').remove({
+      nativeDb.collection('project').deleteMany({
         shortname: 'testing'
       })
         .then(() => done());
@@ -414,11 +421,13 @@ describe('Project Controller: ', function () {
 
   describe('deleteProject function() ', function () {
     before(function (done) {
-      db.get('project').insert(projectObject)
+      // db.get('project').insert(projectObject)
+      nativeDb.collection('project').insert(projectObject)
         .then(() => done());
     });
     after(function (done) {
-      db.get('project').remove({ shortname: 'testing' })
+      // db.get('project').remove({ shortname: 'testing' })
+      nativeDb.collection('project').deleteMany({ shortname: 'testing' })
         .then(() => done());
     });
 
@@ -493,11 +502,13 @@ describe('Project Controller: ', function () {
   describe('settings function() ', function () {
     before(function (done) {
       delete projectObject._id;
-      db.get('project').insert(projectObject)
+      // db.get('project').insert(projectObject)
+      nativeDb.collection('project').insert(projectObject)
         .then(() => done());
     });
     after(function (done) {
-      db.get('project').remove({ shortname: 'testing' })
+      // db.get('project').remove({ shortname: 'testing' })
+      nativeDb.collection('project').deleteMany({ shortname: 'testing' })
         .then(() => done());
     });
 
