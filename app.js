@@ -120,7 +120,8 @@ const start = async function () {
   //========================================================================================
   app.use((req, res, next) => {
     req.dirname = dirname;
-    req.db = db;
+    req.db = db; // monk
+    req.nativeDb = app.db.nativeMongoDB(); // native mongodb driver
 
     next();
   });

@@ -165,6 +165,7 @@ const closeResources = () => {
 
 const getServer = () => server;
 const getDB = () => db;
+const getNativeDB = () => db._db;
 
 const currentDirectory = function () {
   console.log('Current directory:', __dirname);
@@ -402,7 +403,8 @@ module.exports = {
   initResources,
   closeResources,
   getServer,
-  getDB,
+  getDB, // monk
+  getNativeDB, // native mongodb
   removeMRI,
   currentDirectory,
   insertTestTokenForUser,

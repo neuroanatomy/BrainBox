@@ -148,7 +148,7 @@ describe('Project Controller: ', function () {
       const success = sinon.spy();
       const failure = sinon.spy();
       const res = {
-        status: sinon.stub().returns({ send: failure }),
+        status: sinon.stub().returns({ send: failure, json: failure }),
         json: success
       };
       await projectController.apiProject(req, res);
