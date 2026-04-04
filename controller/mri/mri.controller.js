@@ -380,8 +380,7 @@ const apiMriPost = async function (req, res) {
       if (!fs.existsSync(filepath)) {
         console.log('No MRI file in server: download');
         doDownload = true;
-      } else
-      if (!json.dim) {
+      } else if (!json.dim) {
         // If the json object exists, there's a file, but no .dim object, download
         // If(debug>1) console.log("No dim[] field in DB entry: download");
         doDownload = true;
