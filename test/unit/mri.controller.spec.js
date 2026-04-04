@@ -8,11 +8,12 @@ const sinon = require('sinon');
 const U = require('../utils');
 const dirname = require('path').resolve(__dirname, '../..');
 
-let db, mriController;
+let db, mriController, nativeDb;
 
 describe('MRI Controller: ', function () {
   before(function () {
     db = U.getDB();
+    nativeDb = U.getNativeDB();
     mriController = new MriController(db);
   });
 
@@ -289,7 +290,8 @@ describe('MRI Controller: ', function () {
 
   describe('apiMriPost function() ', function () {
     after(async function () {
-      await db.get('mri').remove({ source: U.localBertURL });
+      // await db.get('mri').remove({ source: U.localBertURL });
+      await nativeDb.collection('mri').deleteMany({ source: U.localBertURL });
     });
 
     // eslint-disable-next-line max-statements
