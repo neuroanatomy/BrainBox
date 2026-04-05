@@ -446,31 +446,113 @@ const me = {
    * @param {string} source The MRI source, a URL
    * @return {object} A promise
    */
+  /**
+   * @function _manualUploadFallback
+   * @desc Prompts the user to manually download and upload an MRI file when
+   *       the server cannot download it directly (e.g. WAF/bot protection).
+   * @param {string} url The source URL of the MRI file
+   * @returns {Promise} Resolves with the MRI info object from the server
+   */
+  _manualUploadFallback: function (url) {
+    return new Promise(function(resolve, reject) {
+      const filename = url.split('/').pop();
+      const panel = $(
+        '<div id="manual-upload-panel" style="' +
+        'position:fixed;top:0;left:0;width:100%;height:100%;' +
+        'background:rgba(0,0,0,0.7);z-index:10000;display:flex;' +
+        'align-items:center;justify-content:center">' +
+        '<div style="background:#222;color:#eee;padding:30px;border-radius:8px;max-width:500px;text-align:center">' +
+        '<h3>Manual download required</h3>' +
+        '<p>The remote server blocked the automatic download.<br>' +
+        'Please download the file manually and upload it here:</p>' +
+        '<p><strong>1.</strong> <a href="' + url + '" target="_blank" rel="noopener" style="color:#6cf">Download ' + filename + '</a></p>' +
+        '<p><strong>2.</strong> Upload it here:</p>' +
+        '<input type="file" id="manual-mri-upload" accept=".nii,.gz,.mgz" style="margin:10px 0"/>' +
+        '<p id="manual-upload-status"></p>' +
+        '<button id="manual-upload-cancel" style="margin-top:10px;padding:5px 15px;background:#444;color:#eee;border:1px solid #666;border-radius:4px;cursor:pointer">Cancel</button>' +
+        '</div></div>'
+      );
+      $('body').append(panel);
+
+      $('#manual-upload-cancel').on('click', function() {
+        panel.remove();
+        reject(new Error('Upload cancelled by user'));
+      });
+
+      $('#manual-mri-upload').on('change', function(e) {
+        const [file] = e.target.files;
+        if (!file) { return; }
+
+        $('#manual-upload-status').text('Uploading to server...');
+        $('#manual-mri-upload').prop('disabled', true);
+        $('#manual-upload-cancel').prop('disabled', true);
+
+        const formData = new FormData();
+        formData.append('url', url);
+        formData.append('mriFile', file, filename);
+
+        $.ajax({
+          url: me.hostname + '/mri/upload-from-url',
+          type: 'POST',
+          data: formData,
+          processData: false,
+          contentType: false
+        })
+          .done(function(info) {
+            panel.remove();
+            resolve(info);
+          })
+          .fail(function(jqXHR) {
+            const msg = (jqXHR.responseJSON && jqXHR.responseJSON.error) || 'Upload failed';
+            $('#manual-upload-status').text('Error: ' + msg);
+            $('#manual-mri-upload').prop('disabled', false);
+            $('#manual-upload-cancel').prop('disabled', false);
+          });
+      });
+    });
+  },
+
   _requestMRIInfo: function (source) {
     const url = me._removeVariablesFromURL(source);
     $('#loadingIndicator p').text('Loading... ');
     const pr = new Promise(function(resolve, reject) {
       const timer = setInterval( function () {
         console.log('polling for data...', url);
-        $.post(me.hostname + '/mri/json', {url}, function(info) {
-          if(info.success === true) {
-            console.log('requestMRIInfo promise resolved');
-            clearInterval(timer);
-            resolve(info);
-          } else if(info.success === 'downloading') {
-            if(me.User.source !== url) {
+        $.post(me.hostname + '/mri/json', {url})
+          .done(function(info) {
+            if(info.success === true) {
+              console.log('requestMRIInfo promise resolved');
               clearInterval(timer);
-              reject(new Error('source changed. Probably no longer requested?'));
+              resolve(info);
+            } else if(info.success === 'downloading') {
+              if(me.User.source !== url) {
+                clearInterval(timer);
+                reject(new Error('source changed. Probably no longer requested?'));
+
+                return;
+              }
+              $('#loadingIndicator p').text('Loading... '+parseInt(info.cur/info.len*100, 10)+'%');
+            } else {
+              console.log('ERROR: requestMRIInfo', info);
+              clearInterval(timer);
+              reject(new Error('requestMRIInfo: ' + (info.error || JSON.stringify(info))));
+            }
+          })
+          .fail(function(jqXHR) {
+            clearInterval(timer);
+            if (jqXHR.responseJSON && jqXHR.responseJSON.clientDownloadRequired) {
+              console.log('Server cannot download directly, asking user to download manually');
+              me._manualUploadFallback(url)
+                .then(resolve)
+                .catch(reject);
 
               return;
             }
-            $('#loadingIndicator p').text('Loading... '+parseInt(info.cur/info.len*100, 10)+'%');
-          } else {
-            console.log('ERROR: requestMRIInfo', info);
-            clearInterval(timer);
-            reject(new Error('requestMRIInfo' + info));
-          }
-        });
+            const errorMsg = (jqXHR.responseJSON && jqXHR.responseJSON.error)
+              || 'Download failed (HTTP ' + jqXHR.status + ')';
+            console.error('ERROR: requestMRIInfo', errorMsg);
+            reject(new Error(errorMsg));
+          });
       }, 2000);
     });
 

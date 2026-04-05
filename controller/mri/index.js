@@ -23,6 +23,10 @@ const MriRouter = function(db) {
     uploadController.otherValidations,
     uploadController.upload);
 
+  router.post('/upload-from-url',
+    multer({ dest: './tmp/'}).single('mriFile'),
+    controller.apiMriUploadFromURL);
+
   router.get('/reset', controller.reset);
 
   return router;

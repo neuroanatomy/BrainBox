@@ -157,10 +157,8 @@ const isProjectObject = async function (req, res, object) {
   //-----------------------
 
   arr = [];
-  // arr.push(req.db.get('user').findOne({ nickname: object.owner }));
   arr.push(req.nativeDb.collection('user').findOne({ nickname: object.owner }));
   for (const collaborator of object.collaborators.list) {
-    // arr.push(req.db.get('user').findOne({ nickname: collaborator.userID }));
     arr.push(req.nativeDb.collection('user').findOne({ nickname: collaborator.userID }));
   }
   const users = await Promise.all(arr);
@@ -196,9 +194,8 @@ const project = async function (req, res) {
   // store return path in case of login
   req.session.returnTo = req.originalUrl;
 
-  // const json = await req.db.get('project').findOne({ shortname: req.params.projectName, backup: { $exists: 0 } });
   const json = await req.nativeDb.collection('project')
-    .findOne({ shortname: req.params.projectName, backup: { $exists: false } });
+    .findOne({ shortname: req.params.projectName, backup: { $exists: false } }, { projection: { _id: 0 } });
   if (json) {
     // check that the logged user has access to view this project
     if (!AccessControlService.hasFilesAccess(AccessLevel.VIEW, json, loggedUser)) {
@@ -234,7 +231,7 @@ const apiProject = async function (req, res) {
     loggedUser = req.user.username;
   }
 
-  const json = await req.db.get('project').findOne({ shortname: req.params.projectName, backup: { $exists: 0 } });
+  const json = await req.nativeDb.collection('project').findOne({ shortname: req.params.projectName, backup: { $exists: false } }, { projection: { _id: 0 } });
   if (json) {
     // check that the logged user has access to view this project
     if (!AccessControlService.hasFilesAccess(AccessLevel.VIEW, json, loggedUser)) {
@@ -350,7 +347,7 @@ const settings = async function (req, res) {
 
   // store return path in case of login
   req.session.returnTo = req.originalUrl;
-  let json = await req.db.get('project').findOne({ shortname: req.params.projectName, backup: { $exists: 0 } });
+  let json = await req.nativeDb.collection('project').findOne({ shortname: req.params.projectName, backup: { $exists: false } }, { projection: { _id: 0 } });
   if (json) {
     // check that the logged user has access to view this project
     if (!AccessControlService.hasFilesAccess(AccessLevel.VIEW, json, loggedUser)) {
@@ -398,7 +395,15 @@ const settings = async function (req, res) {
   if (AccessControlService.canViewCollaborators(json, loggedUser)) {
     const arr1 = [];
     for (let j = 0; j < filteredJSON.collaborators.list.length; j++) {
-      arr1.push(req.db.get('user').findOne({ nickname: json.collaborators.list[j].userID, backup: { $exists: 0 } }, { name: 1, _id: 0 }));
+      arr1.push(
+        req.nativeDb.collection('user')
+          .findOne({
+            nickname: json.collaborators.list[j].userID,
+            backup: { $exists: false }
+          }, {
+            projection: { name: 1, _id: 0 }
+          })
+      );
     }
     const obj = await Promise.all(arr1);
     for (let j = 0; j < obj.length; j++) {
@@ -475,7 +480,7 @@ const insertMRInames = function (req, res, list) {
 
     // check if the mri entry already exists
     // without a closure, only the last name in the list is used and repeated
-    let mri = await req.db.get('mri').findOne({ source, backup: { $exists: 0 } });
+    let mri = await req.nativeDb.collection('mri').findOne({ source, backup: { $exists: false } }, { projection: { _id: 0 } });
     const hash = crypto.createHash('md5').update(source)
       .digest('hex');
 
@@ -501,8 +506,6 @@ const insertMRInames = function (req, res, list) {
           ]
         }
       };
-    } else {
-      delete mri._id;
     }
     mri.modified = (new Date()).toJSON();
     mri.modifiedBy = req.user.username;
@@ -521,8 +524,8 @@ const insertMRInames = function (req, res, list) {
     mri = JSON.parse(DOMPurify.sanitize(JSON.stringify(mri))); // sanitize works on strings, not objects
 
     // update and insert
-    await req.db.get('mri').update({ source: mri.source }, { $set: { backup: true } }, { multi: true });
-    await req.db.get('mri').insert(mri);
+    await req.nativeDb.collection('mri').updateMany({ source: mri.source }, { $set: { backup: true } });
+    await req.nativeDb.collection('mri').insertOne(mri);
   }(el))));
 };
 
@@ -572,7 +575,7 @@ const postProject = async function (req, res) {
 
       return;
     }
-    const oldProject = await req.db.get('project').findOne({ shortname: object.shortname, backup: { $exists: false } })
+    const oldProject = await req.nativeDb.collection('project').findOne({ shortname: object.shortname, backup: { $exists: false } }, { projection: { _id: 0 } })
       .catch(function (error) {
         console.log('ERROR', error);
         res.status(300).json({ 'error': error });
@@ -612,11 +615,10 @@ const postProject = async function (req, res) {
 
       object.modified = (new Date()).toJSON();
       object.modifiedBy = req.user.username;
-      delete object._id;
 
       console.log('updating...');
-      await req.db.get('project').update({ shortname: object.shortname }, { $set: { backup: true } }, { multi: true });
-      await req.db.get('project').insert(object);
+      await req.nativeDb.collection('project').updateMany({ shortname: object.shortname }, { $set: { backup: true } });
+      await req.nativeDb.collection('project').insertOne(object);
 
       console.log('success: true');
       let successMessage = 'Project settings updated.';
@@ -639,7 +641,7 @@ const postProject = async function (req, res) {
 
       delete object._id;
 
-      await req.db.get('project').insert(obj);
+      await req.nativeDb.collection('project').insertOne(obj);
 
       console.log('success: true');
       res.json({ success: true, message: 'New project inserted' });
@@ -674,7 +676,7 @@ const deleteProject = async function (req, res) {
     await lock.acquire(['project', 'mri'], async function () {
 
       shortname = req.params.projectName;
-      const oldProject = await req.db.get('project').findOne({ shortname: shortname, backup: { $exists: 0 } });
+      const oldProject = await req.nativeDb.collection('project').findOne({ shortname: shortname, backup: { $exists: false } }, { projection: { _id: 0 } });
 
       if (!oldProject) {
         console.log('WARNING: project does not exist');
@@ -695,13 +697,13 @@ const deleteProject = async function (req, res) {
       const query = {},
         update = {};
       query['mri.annotations.' + shortname] = { $exists: 1 };
-      query.backup = { $exists: 0 };
+      query.backup = { $exists: false };
       update.$unset = {};
       update.$unset['mri.annotations.' + shortname] = '';
       await Promise.all([
-        req.db.get('project').remove({ _id: oldProject._id, backup: { $exists: false } }),
-        req.db.get('mri').update(query, update, { multi: true }),
-        req.db.get('mri').update({ 'mri.atlas': { $elemMatch: { project: shortname } } }, { $pull: { 'mri.atlas': { project: shortname } } }, { multi: true })
+        req.nativeDb.collection('project').deleteOne({ shortname: shortname, backup: { $exists: false } }),
+        req.nativeDb.collection('mri').updateMany(query, update),
+        req.nativeDb.collection('mri').updateMany({ 'mri.atlas': { $elemMatch: { project: shortname } } }, { $pull: { 'mri.atlas': { project: shortname } } })
       ]);
       console.log('>> project and project-related annotations removed');
       res.json({ success: true, message: 'Project deleted' });

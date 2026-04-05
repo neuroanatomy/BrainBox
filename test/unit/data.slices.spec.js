@@ -4,9 +4,11 @@ require('mocha-sinon');
 const U = require('../utils.js');
 
 describe('Data Slices ', function() {
-  let db;
+  let db, nativeDb;
+
   before(function() {
     db=U.getDB();
+    nativeDb=U.getNativeDB();
   });
 
   describe('getUserFilesSlice function() ', function() {
@@ -19,7 +21,8 @@ describe('Data Slices ', function() {
           // eslint-disable-next-line no-unneeded-ternary
           return this.user.username ? true : false;
         },
-        db: db
+        db: db,
+        nativeDb: nativeDb
       };
       const requestedUser = 'foo';
       const files = await dataSlices.getUserFilesSlice(req, requestedUser, 1, 2);
@@ -40,7 +43,8 @@ describe('Data Slices ', function() {
           // eslint-disable-next-line no-unneeded-ternary
           return this.user.username ? true : false;
         },
-        db: db
+        db: db,
+        nativeDb: nativeDb
       };
       const requestedUser = 'foo';
       const files = await dataSlices.getUserAtlasSlice(req, requestedUser, 0, 10);
@@ -58,7 +62,8 @@ describe('Data Slices ', function() {
           // eslint-disable-next-line no-unneeded-ternary
           return this.user.username ? true : false;
         },
-        db: db
+        db: db,
+        nativeDb: nativeDb
       };
       const requestedUser = 'foo';
       const files = await dataSlices.getUserProjectsSlice(req, requestedUser, 0, 4);
@@ -76,12 +81,47 @@ describe('Data Slices ', function() {
           // eslint-disable-next-line no-unneeded-ternary
           return this.user.username ? true : false;
         },
-        db: db
+        db: db,
+        nativeDb: nativeDb
       };
       const requestedUser = 'general';
       const files = await dataSlices.getUserProjectsSlice(req, requestedUser, 0, 4);
       assert.strictEqual(files.success, false);
       assert.strictEqual(files.list.length, 0);
+    });
+  });
+
+  describe('getProjectFilesSlice function() ', function() {
+    it('should return files for an existing project', async function() {
+      const req = {
+        user: {
+          username: 'foo'
+        },
+        isAuthenticated: function () {
+          // eslint-disable-next-line no-unneeded-ternary
+          return this.user.username ? true : false;
+        },
+        db: db,
+        nativeDb: nativeDb
+      };
+      const result = await dataSlices.getProjectFilesSlice(req, 'testproject', 0, 2);
+      assert.isArray(result);
+    });
+
+    it('should return undefined for a non-existent project', async function() {
+      const req = {
+        user: {
+          username: 'foo'
+        },
+        isAuthenticated: function () {
+          // eslint-disable-next-line no-unneeded-ternary
+          return this.user.username ? true : false;
+        },
+        db: db,
+        nativeDb: nativeDb
+      };
+      const result = await dataSlices.getProjectFilesSlice(req, 'nonexistentproject', 0, 2);
+      assert.isUndefined(result);
     });
   });
 
@@ -95,7 +135,8 @@ describe('Data Slices ', function() {
           // eslint-disable-next-line no-unneeded-ternary
           return this.user.username ? true : false;
         },
-        db: db
+        db: db,
+        nativeDb: nativeDb
       };
       const files = await dataSlices.getFilesSlice(req, 0, 4);
       assert.notEqual(files, null);
@@ -112,7 +153,8 @@ describe('Data Slices ', function() {
           // eslint-disable-next-line no-unneeded-ternary
           return this.user.username ? true : false;
         },
-        db: db
+        db: db,
+        nativeDb: nativeDb
       };
       const files = await dataSlices.getProjectsSlice(req, 0, 10);
       assert.notStrictEqual(files.length, 0);
@@ -127,7 +169,8 @@ describe('Data Slices ', function() {
           // eslint-disable-next-line no-unneeded-ternary
           return this.user.username ? true : false;
         },
-        db: db
+        db: db,
+        nativeDb: nativeDb
       };
       const files = await dataSlices.getProjectsSlice(req, 0, 0);
       assert.strictEqual(files.length, 0);

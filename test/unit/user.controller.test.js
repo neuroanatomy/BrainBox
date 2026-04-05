@@ -10,6 +10,7 @@ const U = require('../utils');
 
 describe('User Controller: ', function () {
   let db, nativeDb;
+
   before(function () {
     db = U.getDB();
     nativeDb = U.getNativeDB();
@@ -50,6 +51,8 @@ describe('User Controller: ', function () {
       };
       await userController.user(req, res);
       assert.strictEqual(res.render.callCount, 1);
+      const userInfo = JSON.parse(res.render.args[0][1].userInfo);
+      assert.ok(!userInfo._id, 'Rendered user data must not include _id');
       sinon.restore();
     });
 
@@ -88,13 +91,15 @@ describe('User Controller: ', function () {
           userName: 'anyone'
         },
         query: {},
-        db: db
+        db: db,
+        nativeDb: nativeDb
       };
       const res = {
         send: sinon.spy()
       };
       await userController.apiUser(req, res);
       assert.strictEqual(res.send.callCount, 1);
+      assert.ok(!res.send.args[0][0]._id, 'API response must not include _id');
       sinon.restore();
     });
   });

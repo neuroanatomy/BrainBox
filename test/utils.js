@@ -147,6 +147,13 @@ let app, atlasmakerServer, db, nativeDb, server;
 const initResources = async () => {
   ({ app, server, atlasmakerServer } = await brainboxApp.start());
 
+  // Test-only route: serves HTML with text/html content-type
+  // to simulate a remote server returning an error page instead of a binary file
+  app.get('/test_data/html_error_page.nii.gz', (req, res) => {
+    res.set('Content-Type', 'text/html');
+    res.send('<html><body><h1>403 Forbidden</h1><p>Rate limited</p></body></html>');
+  });
+
   db = app.db.mongoDB();
   nativeDb = app.db.nativeMongoDB();
 };

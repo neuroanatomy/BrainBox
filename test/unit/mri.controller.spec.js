@@ -21,7 +21,7 @@ describe('MRI Controller: ', function () {
     it('should perform the validations correctly', async function () {
       const req = httpMocks.createRequest({
         body: {
-          url: 'abc.com',
+          url: 'https://example.com/brain.nii.gz',
           atlasName: 'MyAtlas',
           atlasProject: 'Visualisation@',
           atlasLabelSet: 'SampleLabelSet',
@@ -34,20 +34,30 @@ describe('MRI Controller: ', function () {
       assert.strictEqual(res.statusCode, 200);
     });
 
-    xit('should throw error if validation fails.', async function () {
-      // currently no test is done in the validation function which can result in an error
+    it('should reject an invalid URL', function () {
       const req = httpMocks.createRequest({
-        body: {
-          atlasName: 'MyAtlas',
-          atlasLabelSet: 'SampleLabelSet',
-          token: 'jnqpincpienfcpewnfcpewn123'
-        },
+        body: {},
+        query: { url: 'not-a-valid-url' },
+        value: 0
+      });
+      const res = httpMocks.createResponse();
+      let nextCalled = false;
+      mriController.validator(req, res, () => { nextCalled = true; });
+      assert.strictEqual(res.statusCode, 403);
+      assert.strictEqual(nextCalled, false);
+    });
+
+    it('should pass when url is absent (optional)', function () {
+      const req = httpMocks.createRequest({
+        body: {},
         query: {},
         value: 0
       });
       const res = httpMocks.createResponse();
-      await mriController.validator(req, res, () => { /* do nothing */ });
-      assert.strictEqual(res.statusCode, 403);
+      let nextCalled = false;
+      mriController.validator(req, res, () => { nextCalled = true; });
+      assert.strictEqual(nextCalled, true);
+      assert.strictEqual(res.statusCode, 200);
     });
   });
 
@@ -164,6 +174,7 @@ describe('MRI Controller: ', function () {
       assert.strictEqual(jsonSpy.callCount, 1);
       const values = jsonSpy.args;
       assert.ok(values[0][0].source);
+      assert.notProperty(values[0][0], '_id', 'API response must not include _id');
       sinon.restore();
     });
 
@@ -347,6 +358,7 @@ describe('MRI Controller: ', function () {
       assert.isAtLeast(jsonSpy.callCount, 1);
       assert.strictEqual(jsonSpy.args[jsonSpy.callCount - 1][0].success, true);
       assert.strictEqual(jsonSpy.args[jsonSpy.callCount - 1][0].source, U.localBertURL);
+      assert.notProperty(jsonSpy.args[jsonSpy.callCount - 1][0], '_id', 'API response must not include _id');
       sinon.restore();
     }).timeout(U.longTimeout);
 
@@ -381,5 +393,49 @@ describe('MRI Controller: ', function () {
       assert.strictEqual(statusSpy.callCount, 0);
       sinon.restore();
     });
+
+    it('should reject a download when remote server returns HTML instead of a binary file', async function () {
+      const htmlErrorURL = U.serverURL + '/test_data/html_error_page.nii.gz';
+      const makeReq = () => ({
+        db,
+        nativeDb,
+        body: {},
+        query: { url: htmlErrorURL },
+        user: { username: '' },
+        headers: { 'x-forwarded-for': U.userFoo.nickname },
+        dirname,
+        isAuthenticated: function () { return Boolean(this.user.username); },
+        isTokenAuthenticated: false
+      });
+
+      // first call starts the download
+      const jsonSpy1 = sinon.spy();
+      await mriController.apiMriPost(makeReq(), {
+        send: sinon.spy(),
+        status: sinon.stub().returns({ json: sinon.spy() }),
+        json: jsonSpy1
+      });
+      assert.strictEqual(jsonSpy1.args[0][0].success, 'downloading');
+
+      // wait for the download to fail
+      await U.delay(U.shortTimeout);
+
+      // second call should report the failure with 403
+      const jsonSpy2 = sinon.spy();
+      const statusStub2 = sinon.stub().returns({ json: jsonSpy2 });
+      await mriController.apiMriPost(makeReq(), {
+        send: sinon.spy(),
+        status: statusStub2,
+        json: jsonSpy2
+      });
+      assert.isTrue(statusStub2.calledWith(403), 'should return 403 for failed download');
+      const errorMsg = jsonSpy2.args[0][0].error;
+      assert.isString(errorMsg);
+      assert.include(errorMsg, 'HTML instead of a binary file');
+
+      // cleanup
+      await nativeDb.collection('mri').deleteMany({ source: htmlErrorURL });
+      sinon.restore();
+    }).timeout(U.longTimeout);
   });
 });

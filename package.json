@@ -83,6 +83,7 @@
     "del": "^3.0.0",
     "eslint": "^8.8.0",
     "eslint-config-naat": "git+https://github.com/neuroanatomy/eslint-config-naat.git",
+    "eslint-plugin-mocha": "^10.5.0",
     "file-loader": "^2.0.0",
     "html-loader": "^0.5.5",
     "html-webpack-plugin": "^4.5.2",

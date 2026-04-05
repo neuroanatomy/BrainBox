@@ -24,15 +24,17 @@ const getUserFilesSlice = function getUserFilesSlice(req, requestedUser, start, 
 
   return new Promise(function (resolve, reject) {
     Promise.all([
-      req.db.get('mri')
-        .find({ owner: requestedUser, backup: { $exists: false } }, { skip: start, limit: length }),
-      req.db.get('project').find({
+      req.nativeDb.collection('mri')
+        .find({ owner: requestedUser, backup: { $exists: false } }, { skip: start, limit: length })
+        .toArray(),
+      req.nativeDb.collection('project').find({
         $or: [
           { owner: requestedUser },
           { 'collaborators.list': { $elemMatch: { userID: requestedUser } } }
         ],
         backup: { $exists: false }
       })
+        .toArray()
     ])
       .then(function (values) {
         const [unfilteredMRI, unfilteredProjects] = values;
@@ -89,15 +91,17 @@ const getUserAtlasSlice = function getUserAtlasSlice(req, requestedUser, start, 
 
   return new Promise(function (resolve, reject) {
     Promise.all([
-      req.db.get('mri')
-        .find({ 'mri.atlas': { $elemMatch: { owner: requestedUser } }, backup: { $exists: false } }, { skip: start, limit: length }),
-      req.db.get('project').find({
+      req.nativeDb.collection('mri')
+        .find({ 'mri.atlas': { $elemMatch: { owner: requestedUser } }, backup: { $exists: false } }, { skip: start, limit: length })
+        .toArray(),
+      req.nativeDb.collection('project').find({
         $or: [
           { owner: requestedUser },
           { 'collaborators.list': { $elemMatch: { userID: requestedUser } } }
         ],
         backup: { $exists: false }
       })
+        .toArray()
     ])
       .then(function (values) {
         const [unfilteredAtlas, unfilteredProjects] = values;
@@ -153,13 +157,14 @@ const getUserProjectsSlice = function getUserProjectsSlice(req, requestedUser, s
   }
 
   return new Promise(function (resolve, reject) {
-    req.db.get('project').find({
+    req.nativeDb.collection('project').find({
       $or: [
         { owner: requestedUser },
         { 'collaborators.list': { $elemMatch: { userID: requestedUser } } }
       ],
       backup: { $exists: false }
     }, { skip: start, limit: length })
+      .toArray()
       .then(function (unfilteredProjects) {
         let projects = [];
 
@@ -209,7 +214,7 @@ const getProjectFilesSlice = async (req, projShortname, start, length, namesFlag
   // query project
   let project;
   try {
-    project = await req.db.get('project').findOne({ shortname: projShortname, backup: { $exists: 0 } });
+    project = await req.nativeDb.collection('project').findOne({ shortname: projShortname, backup: { $exists: false } });
   } catch (err) {
     throw new Error(err);
   }
@@ -238,7 +243,7 @@ const getProjectFilesSlice = async (req, projShortname, start, length, namesFlag
   start = Math.min(start, list.length);
   length = Math.min(length, list.length - start);
   for (let i = start; i < start + length; i++) {
-    arr.push(req.db.get('mri').findOne({ source: list[i], backup: { $exists: 0 } }, { _id: 0 }));
+    arr.push(req.nativeDb.collection('mri').findOne({ source: list[i], backup: { $exists: false } }, { projection: { _id: 0 } }));
   }
 
   let mris;
@@ -289,9 +294,11 @@ const getFilesSlice = function getFilesSlice(req, start, length) {
 
   return new Promise(function (resolve, reject) {
     Promise.all([
-      req.db.get('mri')
-        .find({ backup: { $exists: false } }, { fields: { source: 1, _id: 0 }, skip: start, limit: length }),
-      req.db.get('project').find({ backup: { $exists: false } })
+      req.nativeDb.collection('mri')
+        .find({ backup: { $exists: false } }, { projection: { source: 1, _id: 0 }, skip: start, limit: length })
+        .toArray(),
+      req.nativeDb.collection('project').find({ backup: { $exists: false } })
+        .toArray()
     ])
       .then(function (values) {
         const [unfilteredMRI, unfilteredProjects] = values,
@@ -339,8 +346,9 @@ const getProjectsSlice = async function getProjectsSlice(req, start, length) {
   }
 
   try {
-    const unfilteredProjects = await req.db.get('project')
-      .find({ backup: { $exists: false } }, { skip: start, limit: length });
+    const unfilteredProjects = await req.nativeDb.collection('project')
+      .find({ backup: { $exists: false } }, { skip: start, limit: length })
+      .toArray();
     let projects = [];
 
     // filter for view access

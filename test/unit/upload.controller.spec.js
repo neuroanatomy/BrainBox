@@ -7,9 +7,11 @@ const httpMocks = require('node-mocks-http');
 const U = require('../utils');
 
 describe('Upload Controller: ', function () {
-  let db;
+  let db, nativeDb;
+
   before(function () {
     db = U.getDB();
+    nativeDb = U.getNativeDB();
   });
 
   describe('Validator function() ', function () {
@@ -62,7 +64,8 @@ describe('Upload Controller: ', function () {
         query: {},
         params: {},
         value: 0,
-        db: db
+        db: db,
+        nativeDb: nativeDb
       };
       const resSpy = sinon.spy();
       const jsonSpy = sinon.spy();
@@ -86,7 +89,8 @@ describe('Upload Controller: ', function () {
         query: {},
         params: {},
         value: 0,
-        db: db
+        db: db,
+        nativeDb: nativeDb
       };
       sinon.useFakeTimers(new Date().getTime() + 365 * 86400 * 1000);
       const resSpy = sinon.spy();
@@ -112,7 +116,8 @@ describe('Upload Controller: ', function () {
         query: {},
         params: {},
         value: 0,
-        db: db
+        db: db,
+        nativeDb: nativeDb
       };
       const resSpy = sinon.spy();
       const jsonSpy = sinon.spy();

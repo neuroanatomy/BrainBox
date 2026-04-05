@@ -77,12 +77,12 @@ describe('TESTING THE /project ROUTE', function () {
         .query({ start: 0, length: 10 });
       // only the first mri was fetched, dim info can be missing for the others
       const expectedKeys1 = [
-        '_id', 'filename', 'success', 'source', 'url', 'included',
+        'filename', 'success', 'source', 'url', 'included',
         'dim', 'pixdim', 'voxel2world', 'worldOrigin',
         'owner', 'mri', 'modified', 'modifiedBy', 'name'
       ];
       const expectedKeys2 = [
-        '_id', 'source', 'url', 'included',
+        'source', 'url', 'included',
         'owner', 'mri', 'modified', 'modifiedBy', 'name'
       ];
       // console.log(body);
