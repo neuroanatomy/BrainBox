@@ -38,7 +38,9 @@ const validator = function (req, res, next) {
   // url is optional (apiMriGet serves a paginated list when url is absent),
   // but if provided it must be a valid URL
   if (typeof myurl !== 'undefined') {
-    if (!URL.canParse(myurl)) {
+    try {
+      const _url = new URL(myurl); // eslint-disable-line no-unused-vars
+    } catch (_err) {
       return res
         .status(403)
         .json({ error: 'Invalid URL' })
