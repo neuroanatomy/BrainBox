@@ -48,7 +48,7 @@ export const AtlasMakerUI = {
     $(document).on('mousemove', (ev) => { movex(elem, ev.clientX); });
     $(document).on('touchmove', (ev) => { movex(elem, ev.originalEvent.changedTouches[0].pageX); });
     $(document).on('mouseup touchend', () => { $(elem).data({drag:false}); });
-    $(elem).on('mousedown touchstart', () => { $(elem).data({drag:true}); });
+    $(elem).on('mousedown touchstart', (ev) => { ev.preventDefault(); $(elem).data({drag:true}); });
     $(elem).on('updateDisplay', () => { updateDisplay(); });
   },
 
