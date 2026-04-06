@@ -42,9 +42,16 @@ const bufferTag = function (str, sz) {
   return buf;
 };
 
+/**
+ * Escape special regex characters for use inside a MongoDB $regex query.
+ * @param {string} str - raw user input
+ * @returns {string} escaped string safe for $regex
+ */
+const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 let atlasmakerServer;
 
-const AtlasmakerServer = function (db) {
+const AtlasmakerServer = function (db, nativeDb) {
   const me = {
     debug: 0,
     dataDirectory: 'public',
@@ -349,7 +356,9 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         // remove it from the Atlases array and return
         let mri;
         try {
-          mri = await db.get('mri').findOne({ source: atlas.source, backup: { $exists: 0 } }, { _id: 0 });
+          // mri = await db.get('mri').findOne({ source: atlas.source, backup: { $exists: 0 } }, { _id: 0 });
+          mri = await nativeDb.collection('mri')
+            .findOne({ source: atlas.source, backup: { $exists: 0 } }, { projection: { _id: 0 } });
         } catch (err) {
           throw new Error('Can\'t find entry for atlas voxel data in DB', err);
         }
@@ -358,10 +367,6 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           tracer.log(`WARNING: There's not DB entry for MRI with source ${atlas.source}`);
 
           return;
-        }
-
-        if ({}.hasOwnProperty.call(mri, '_id')) {
-          delete mri._id;
         }
 
         let index = -1;
@@ -392,8 +397,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         // if has changed: update it and save to DB
         mri.mri.atlas[index].vectorial = vectorial;
         try {
-          await db.get('mri').update({ source: atlas.source }, { $set: { backup: true } }, { multi: true });
-          await db.get('mri').insert(mri);
+          await nativeDb.collection('mri').updateMany({ source: atlas.source }, { $set: { backup: true } });
+          await nativeDb.collection('mri').insertOne(mri);
         } catch (err) {
           throw new Error('Can\'t log update and save to DB');
         }
@@ -477,7 +482,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
 
       // log the saving
       try {
-        await db.get('log').insert({
+        await nativeDb.collection('log').insertOne({
           key: 'saveAtlasBackup',
           value: {
             atlasDirectory: atlas.dirname,
@@ -880,19 +885,21 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
     queryUserName: function (data) {
       return new Promise(function (resolve, reject) {
         if (data.metadata && data.metadata.nickname) {
-          db.get('user')
+          nativeDb.collection('user')
             .find(
-              { 'nickname': { '$regex': data.metadata.nickname } },
-              { fields: ['nickname', 'name'], limit: 10 })
+              { 'nickname': { '$regex': escapeRegex(data.metadata.nickname) } },
+              { projection: { nickname: 1, name: 1 }, limit: 10 })
+            .toArray()
             .then(function (obj) {
               resolve(obj);
             }
             );
         } else if (data.metadata && data.metadata.name) {
-          db.get('user')
+          nativeDb.collection('user')
             .find(
-              { 'name': { '$regex': data.metadata.name } },
-              { fields: ['nickname', 'name'], limit: 10 })
+              { 'name': { '$regex': escapeRegex(data.metadata.name) } },
+              { projection: { nickname: 1, name: 1 }, limit: 10 })
+            .toArray()
             .then(function (obj) {
               resolve(obj);
             });
@@ -904,12 +911,12 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
     queryProjectName: function (data) {
       return new Promise(function (resolve, reject) {
         if (data.metadata && data.metadata.name) {
-          db.get('project')
+          nativeDb.collection('project')
             .findOne({
               shortname: data.metadata.name,
-              backup: { $exists: 0 }
+              backup: { $exists: false }
             }, {
-              fields: ['name', 'shortname']
+              projection: { name: 1, shortname: 1 }
             })
             .then(function (obj) {
               resolve(obj);
@@ -922,14 +929,15 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
     querySimilarProjectNames: function (data) {
       return new Promise(function (resolve, reject) {
         if (data.metadata && data.metadata.projectName) {
-          db.get('project')
+          nativeDb.collection('project')
             .find({
-              shortname: { $regex: data.metadata.projectName },
-              backup: { $exists: 0 }
+              shortname: { $regex: escapeRegex(data.metadata.projectName) },
+              backup: { $exists: false }
             }, {
-              fields: ['name', 'shortname'],
+              projection: { name: 1, shortname: 1 },
               limit: 10
             })
+            .toArray()
             .then(function (obj) {
               resolve(obj);
             });
@@ -1259,16 +1267,15 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           }
 
           // get original object from db
-          let ret = await db.get('mri').findOne({ source: json.source, backup: { $exists: 0 } }, { _id: 0 });
-          delete ret._id;
+          let ret = await nativeDb.collection('mri').findOne({ source: json.source, backup: { $exists: false } }, { projection: { _id: 0 } });
           // apply patch
           jsonpatch.applyPatch(ret, data.patch);
           // sanitise
           ret = JSON.parse(DOMPurify.sanitize(JSON.stringify(ret))); // sanitize works on strings, not objects
           // mark previous as backup
-          await db.get('mri').update({ source: json.source }, { $set: { backup: true } }, { multi: true });
+          await nativeDb.collection('mri').updateMany({ source: json.source }, { $set: { backup: true } });
           // insert new
-          await db.get('mri').insert(ret);
+          await nativeDb.collection('mri').insertOne(ret);
         } else {
           // deal with the complete object
 
@@ -1280,7 +1287,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           }
 
           // mark previous one as backup
-          const ret = await db.get('mri').findOne({ source: json.source, backup: { $exists: 0 } });
+          const ret = await nativeDb.collection('mri').findOne({ source: json.source, backup: { $exists: false } });
           // DEBUG: tracer.log("original mri:", JSON.stringify(ret));
 
           if (data.method === 'overwrite') {
@@ -1288,8 +1295,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           }
           delete json._id;
 
-          await db.get('mri').update({ source: json.source }, { $set: { backup: true } }, { multi: true });
-          await db.get('mri').insert(json);
+          await nativeDb.collection('mri').updateMany({ source: json.source }, { $set: { backup: true } });
+          await nativeDb.collection('mri').insertOne(json);
           // DEBUG: tracer.log("inserted mri:", JSON.stringify(json));
         }
       });
@@ -1438,7 +1445,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         newAtlas.source = User.source;
 
         // log atlas creation
-        await db.get('log').insert({
+        await nativeDb.collection('log').insertOne({
           key: 'createAtlas',
           value: DOMPurify.sanitize(JSON.stringify({ atlasDirectory: User.dirname, atlasFilename: User.atlasFilename })),
           username: User.username,
@@ -1454,7 +1461,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       loadedAtlas.dirname = User.dirname;
       loadedAtlas.source = User.source;
 
-      const mri = await db.get('mri').findOne({ source: loadedAtlas.source, backup: { $exists: 0 } }, { _id: 0 });
+      const mri = await nativeDb.collection('mri').findOne({ source: loadedAtlas.source, backup: { $exists: false } }, { projection: { _id: 0 } });
       let index = -1;
       for (let i = 0; i < mri.mri.atlas.length; i++) {
         if (mri.mri.atlas[i].filename === loadedAtlas.filename) {

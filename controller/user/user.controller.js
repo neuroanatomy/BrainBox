@@ -27,7 +27,8 @@ const user = async function (req, res) {
   // store return path in case of login
   req.session.returnTo = req.originalUrl;
 
-  const json = await req.db.get('user').findOne({ nickname: requestedUser })
+  // const json = await req.db.get('user').findOne({ nickname: requestedUser })
+  const json = await req.nativeDb.collection('user').findOne({ nickname: requestedUser }, { projection: { _id: 0 } })
     .catch(function (err) {
       console.log('ERROR:', err);
       res.status(400).send('Error');
@@ -50,7 +51,7 @@ const user = async function (req, res) {
 };
 
 const apiUser = async function (req, res) {
-  let json = await req.db.get('user').findOne({ nickname: req.params.userName, backup: { $exists: false } }, '-_id');
+  let json = await req.nativeDb.collection('user').findOne({ nickname: req.params.userName, backup: { $exists: false } }, { projection: { _id: 0 } });
   if (json) {
     if (req.query.var) {
       const arr = req.query.var.split('/');
@@ -77,7 +78,8 @@ const apiUserAll = async function (req, res) {
   const page = parseInt(req.query.page);
   const nItemsPerPage = 20;
 
-  const json = await req.db.get('user').find({ backup: { $exists: false } }, { skip: page * nItemsPerPage, limit: nItemsPerPage, fields: { _id: 0 } });
+  const json = await req.nativeDb.collection('user').find({ backup: { $exists: false } }, { skip: page * nItemsPerPage, limit: nItemsPerPage, projection: { _id: 0 } })
+    .toArray();
   res.send(json.map(function (o) {
     return o.nickname;
   }));

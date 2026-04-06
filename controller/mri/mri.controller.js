@@ -34,27 +34,21 @@ const validator = function (req, res, next) {
   }
 
   console.log('validator: myurl', myurl);
+
+  // url is optional (apiMriGet serves a paginated list when url is absent),
+  // but if provided it must be a valid URL
   if (typeof myurl !== 'undefined') {
-    console.log('next');
-
-    return next();
+    try {
+      const _url = new URL(myurl); // eslint-disable-line no-unused-vars
+    } catch (_err) {
+      return res
+        .status(403)
+        .json({ error: 'Invalid URL' })
+        .end();
+    }
   }
 
-  // req.check('url', 'please enter a valid URL').isURL();
-
-  // req.checkQuery('var', 'please enter one of the variables that are indicated')
-  // .optional()
-  // .matches("localpath|filename|source|url|dim|pixdim");    // todo: decent regexp
-  const errors = validationResult(req).array();
-  console.log('errors:', errors);
-  if (errors.length) {
-    res
-      .status(403)
-      .send(errors)
-      .end();
-  } else {
-    return next();
-  }
+  return next();
 };
 
 const validatorPost = async function (req, res, next) {
@@ -105,7 +99,7 @@ const downloadMRI = async function (myurl, req) {
     .update(myurl)
     .digest('hex');
 
-  const mridb = await req.db.get('mri').findOne({ source: myurl, backup: { $exists: 0 } });
+  const mridb = await req.nativeDb.collection('mri').findOne({ source: myurl, backup: { $exists: false } });
   delete mridb?._id;
   console.log('mridb:', mridb);
   let filename;
@@ -129,12 +123,41 @@ const downloadMRI = async function (myurl, req) {
   let cur = 0;
 
   return new Promise(function (resolve, reject) {
-    request({ uri: myurl, followAllRedirects: true, rejectUnauthorized: false })
+    let aborted = false;
+    const req_ = request({
+      uri: myurl,
+      followAllRedirects: true,
+      rejectUnauthorized: false,
+      headers: { 'User-Agent': 'BrainBox/1.0 (https://brainbox.pasteur.fr)' }
+    });
+    req_
       .on('error', (err) => {
+        if (aborted) { return; }
         console.log('ERROR in downloadMRI', err);
         reject(err);
       })
+      // eslint-disable-next-line max-statements
       .on('response', (res) => {
+        // Check for HTTP errors before saving to disk
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          aborted = true;
+          req_.abort();
+          reject(new Error(`Remote server returned HTTP ${res.statusCode} for ${myurl}`));
+
+          return;
+        }
+
+        const contentType = res.headers['content-type'] || '';
+        if (contentType.includes('text/html')) {
+          aborted = true;
+          req_.abort();
+          const err = new Error(`Remote server returned HTML instead of a binary file for ${myurl} (possible rate limit or access restriction)`);
+          err.clientDownloadRequired = true;
+          reject(err);
+
+          return;
+        }
+
         const contentDisp = res.headers['content-disposition'];
         if (contentDisp && (/^attachment/).test(contentDisp)) {
           newFilename = sanitize(contentDisp.split('filename=')[1].split(';')[0].replace(/"/g, ''));
@@ -158,6 +181,7 @@ const downloadMRI = async function (myurl, req) {
       })
       .pipe(fs.createWriteStream(dest))
       .on('close', () => {
+        if (aborted) { return; }
         console.log('new:', newFilename, newDest);
         // eslint-disable-next-line no-sync
         fs.renameSync(dest, newDest);
@@ -242,7 +266,7 @@ const mri = async function (req, res) {
   // const hash = crypto.createHash('md5').update(myurl).digest('hex');
   // console.log('Receive GET, query:', myurl, hash);
 
-  const json = await req.db.get('mri').findOne({ source: myurl, backup: { $exists: 0 } }, { _id: 0 })
+  const json = await req.nativeDb.collection('mri').findOne({ source: myurl, backup: { $exists: false } }, { projection: { _id: 0 } })
     .catch((err) => {
       console.log('err 241:', err);
     });
@@ -276,9 +300,9 @@ const mri = async function (req, res) {
     }
 
     arr = [...prj].map(async (o) => {
-      const proj = await req.db.get('project').findOne({
+      const proj = await req.nativeDb.collection('project').findOne({
         shortname: o,
-        backup: { $exists: 0 }
+        backup: { $exists: false }
       });
 
       return proj;
@@ -289,14 +313,15 @@ const mri = async function (req, res) {
       });
 
     // also query projects that set this MRI as a source
-    projects.push(...await req.db.get('project').find({
+    projects.push(...await req.nativeDb.collection('project').find({
       $or: [
         { 'files.list': { $eq: myurl } },
         { 'files.list.source': { $eq: myurl } }
       ],
-      backup: { $exists: 0 }
-    }
-    ));
+      backup: { $exists: false }
+    })
+      .toArray()
+    );
 
     // set access to volume annotations
     BrainboxAccessControlService.setVolumeAnnotationsAccessByProjects(json, projects, loggedUser);
@@ -354,7 +379,7 @@ const apiMriPost = async function (req, res) {
   //     return res.status(403).send({error: "Provide authentication"}).end();
   // }
 
-  let json = await req.db.get('mri').findOne({ source: myurl, backup: { $exists: 0 }, success: { $exists: 1 } }, { _id: 0 })
+  let json = await req.nativeDb.collection('mri').findOne({ source: myurl, backup: { $exists: false }, success: { $exists: true } }, { projection: { _id: 0 } })
     .catch((err) => {
       console.log('ERROR:', err);
       res.json({ success: false });
@@ -380,8 +405,7 @@ const apiMriPost = async function (req, res) {
       if (!fs.existsSync(filepath)) {
         console.log('No MRI file in server: download');
         doDownload = true;
-      } else
-      if (!json.dim) {
+      } else if (!json.dim) {
         // If the json object exists, there's a file, but no .dim object, download
         // If(debug>1) console.log("No dim[] field in DB entry: download");
         doDownload = true;
@@ -406,13 +430,10 @@ const apiMriPost = async function (req, res) {
         console.log('>> Still downloading. Wait');
         res.json(downloadQueue[myurl]);
       } else {
-
-        /*
-          returns 403 in case the download has already failed
-          consequently, it will not be possible to retry the download until the server is restarted
-        */
-        console.log('>> Failed. Throw an error');
-        res.status(403).json(downloadQueue[myurl]);
+        console.log('>> Failed. Clearing queue entry so download can be retried');
+        const error = downloadQueue[myurl];
+        delete downloadQueue[myurl];
+        res.status(403).json(error);
       }
     } else {
       console.log('Start download:');
@@ -423,8 +444,8 @@ const apiMriPost = async function (req, res) {
         obj.success = true;
 
         return lock.acquire('mri', async function () {
-          await req.db.get('mri').update({ source: myurl }, { $set: { backup: true } }, { multi: true });
-          await req.db.get('mri').insert(obj);
+          await req.nativeDb.collection('mri').updateMany({ source: myurl }, { $set: { backup: true } });
+          await req.nativeDb.collection('mri').insertOne(obj);
         });
       })
         .then(() => {
@@ -433,7 +454,9 @@ const apiMriPost = async function (req, res) {
         })
         .catch((err) => {
           console.log('Download failed:', err);
-          downloadQueue[myurl] = { success: false, error: `${JSON.stringify(err)}` };
+          const entry = { success: false, error: err.message || String(err) };
+          if (err.clientDownloadRequired) { entry.clientDownloadRequired = true; }
+          downloadQueue[myurl] = entry;
         });
 
       res.json(downloadQueue[myurl]);
@@ -494,7 +517,7 @@ const apiMriGet = async function (req, res) {
     return;
   }
 
-  const json = await req.db.get('mri').findOne({ source: myurl, backup: { $exists: backups } }, { _id: 0 })
+  const json = await req.nativeDb.collection('mri').findOne({ source: myurl, backup: { $exists: backups } }, { projection: { _id: 0 } })
     .catch((err) => {
       console.log('err:', err);
     });
@@ -531,9 +554,9 @@ const apiMriGet = async function (req, res) {
       }
     }
     arr = [...prj].map(async (o) => {
-      const obj = await req.db.get('project').findOne({
+      const obj = await req.nativeDb.collection('project').findOne({
         shortname: o,
-        backup: { $exists: 0 }
+        backup: { $exists: false }
       });
 
       return obj;
@@ -585,7 +608,7 @@ const reset = async function reset(req, res) {
   const hash = crypto.createHash('md5').update(myurl)
     .digest('hex');
 
-  const mridb = await req.db.get('mri').findOne({ source: myurl, backup: { $exists: 0 } })
+  const mridb = await req.nativeDb.collection('mri').findOne({ source: myurl, backup: { $exists: false } })
     .catch((err) => {
       console.log('ERROR:', err);
       res
@@ -604,7 +627,7 @@ const reset = async function reset(req, res) {
         .send(err)
         .end();
     });
-  await req.db.get('mri').update({ source: myurl, backup: { $exists: 0 } }, {
+  await req.nativeDb.collection('mri').updateOne({ source: myurl, backup: { $exists: false } }, {
     $set: {
       dim: mrires.dim,
       pixdim: mrires.pixdim,
@@ -627,14 +650,124 @@ const reset = async function reset(req, res) {
   });
 };
 
-const MriController = function (db) {
+/**
+ * @function apiMriUploadFromURL
+ * @desc Receives an MRI file uploaded by the client (for sources that block
+ *       server-side downloads, e.g. behind WAF/bot-challenge). The client
+ *       downloads the file in the browser and relays it here.
+ * @param {Object} req Express request. req.body.url is the source URL,
+ *        req.file is the multer-uploaded file.
+ * @param {Object} res Express response
+ */
+// eslint-disable-next-line max-statements
+const apiMriUploadFromURL = async function (req, res) {
+  const myurl = req.body.url;
+  if (!myurl || !req.file) {
+    res.status(400).json({ success: false, error: 'Provide url and file' });
+
+    return;
+  }
+
+  try {
+    // eslint-disable-next-line no-new
+    new URL(myurl);
+  } catch (_err) {
+    res.status(400).json({ success: false, error: 'Invalid URL' });
+
+    return;
+  }
+
+  const hash = crypto.createHash('md5').update(myurl)
+    .digest('hex');
+  const filename = sanitize(url.parse(myurl).pathname.split('/').pop());
+  const destDir = req.dirname + '/public/data/' + hash;
+  const dest = destDir + '/' + filename;
+
+  // eslint-disable-next-line no-sync
+  if (!fs.existsSync(destDir)) {
+    // eslint-disable-next-line no-sync
+    fs.mkdirSync(destDir, '0777');
+  }
+
+  // Move uploaded temp file to final destination
+  // eslint-disable-next-line no-sync
+  fs.renameSync(req.file.path, dest);
+
+  try {
+    const mriData = await atlasmakerServer.getBrainAtPath('/data/' + hash + '/' + filename);
+
+    let ip = '';
+    if (typeof req.headers['x-forwarded-for'] !== 'undefined') {
+      ip = req.headers['x-forwarded-for'];
+    } else if (req.connection.remoteAddress !== 'undefined') {
+      ip = req.connection.remoteAddress;
+    }
+
+    let username;
+    if (req.isAuthenticated()) {
+      ({ username } = req.user);
+    } else {
+      username = ip;
+    }
+
+    // Check for existing DB entry
+    let json = await req.nativeDb.collection('mri').findOne({ source: myurl, backup: { $exists: false } }, { projection: { _id: 0 } });
+    if (!json) {
+      json = {
+        source: myurl,
+        name: '',
+        url: '/data/' + hash + '/',
+        included: (new Date()).toJSON(),
+        owner: username,
+        mri: {
+          atlas: [
+            {
+              created: (new Date()).toJSON(),
+              modified: (new Date()).toJSON(),
+              access: 'edit',
+              type: 'volume',
+              name: 'Default',
+              filename: 'Atlas.nii.gz',
+              labels: 'foreground.json'
+            }
+          ]
+        }
+      };
+    }
+
+    Object.assign(json, {
+      filename,
+      success: true,
+      dim: mriData.dim,
+      pixdim: mriData.pixdim,
+      voxel2world: mriData.v2w,
+      worldOrigin: mriData.wori,
+      modified: (new Date()).toJSON(),
+      modifiedBy: username
+    });
+
+    await lock.acquire('mri', async function () {
+      await req.nativeDb.collection('mri').updateMany({ source: myurl }, { $set: { backup: true } });
+      await req.nativeDb.collection('mri').insertOne(json);
+    });
+
+    delete json._id;
+    res.json(json);
+  } catch (err) {
+    console.log('ERROR processing client-uploaded MRI:', err);
+    res.status(500).json({ success: false, error: err.message || String(err) });
+  }
+};
+
+const MriController = function (db, nativeDb) {
   this.validator = validator;
   this.validatorPost = validatorPost;
   this.apiMriGet = apiMriGet;
   this.apiMriPost = apiMriPost;
+  this.apiMriUploadFromURL = apiMriUploadFromURL;
   this.mri = mri;
   this.reset = reset;
-  atlasmakerServer = new AtlasmakerServer(db);
+  atlasmakerServer = new AtlasmakerServer(db, nativeDb);
 };
 
 module.exports = MriController;

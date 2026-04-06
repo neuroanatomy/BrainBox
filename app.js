@@ -80,6 +80,7 @@ const start = async function () {
     annotationsCollection: 'mri'
   });
   const db = app.db.mongoDB();
+  const nativeDb = app.db.nativeMongoDB();
 
   //========================================================================================
   // Allow CORS
@@ -120,7 +121,8 @@ const start = async function () {
   //========================================================================================
   app.use((req, res, next) => {
     req.dirname = dirname;
-    req.db = db;
+    req.db = db; // monk
+    req.nativeDb = nativeDb; // native mongodb driver
 
     next();
   });
@@ -130,7 +132,7 @@ const start = async function () {
   //========================================================================================
 
   const server = http.createServer(app).listen(3001, () => { console.log('Listening http on port 3001'); });
-  const atlasmakerServer = new AtlasmakerServer(db);
+  const atlasmakerServer = new AtlasmakerServer(db, nativeDb);
   atlasmakerServer.dataDirectory = dirname + '/public';
 
   if (Config.secure) {

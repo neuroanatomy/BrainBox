@@ -61,7 +61,7 @@ const validator = async function (req, res, next) {
 const otherValidations = async function (req, res, next) {
 
   const { token } = req.body;
-  const obj = await req.db.get('log').findOne({ 'token': token })
+  const obj = await req.nativeDb.collection('log').findOne({ 'token': token })
     .catch(function (err) {
       console.log('ERROR:', err);
       res.status(403).send()
@@ -71,7 +71,7 @@ const otherValidations = async function (req, res, next) {
     // Check token expiry date
     const now = new Date();
     if (obj.expiryDate.getTime() > now.getTime()) {
-      const json = await req.db.get('mri').findOne({ source: req.body.url, backup: { $exists: false } });
+      const json = await req.nativeDb.collection('mri').findOne({ source: req.body.url, backup: { $exists: false } });
       if (json && req.files.length > 0) {
         req.atlasUpload = {
           mri: json,
@@ -207,9 +207,9 @@ const upload = async function (req, res) {
     // update the database
     mri.mri.atlas.push(atlasMetadata);
     // mark previous version as backup
-    await req.db.get('mri').update({ source: req.body.url, backup: { $exists: false } }, { $set: { backup: true } }, { multi: true });
+    await req.nativeDb.collection('mri').updateMany({ source: req.body.url, backup: { $exists: false } }, { $set: { backup: true } });
     // insert new version
-    await req.db.get('mri').insert(mri);
+    await req.nativeDb.collection('mri').insertOne(mri);
 
     // return the full mri object ???
     res.status(200).json(mri)

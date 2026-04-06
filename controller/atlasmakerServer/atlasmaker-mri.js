@@ -198,8 +198,7 @@ const computeS2VTransformation = (mri) => {
 const filetypeFromFilename = (mriPath) => {
   if (mriPath.match(/.nii.gz$/)) {
     return 'nii.gz';
-  } else
-  if (mriPath.match(/.mgz$/)) {
+  } else if (mriPath.match(/.mgz$/)) {
     return 'mgz';
   }
 };

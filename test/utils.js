@@ -142,12 +142,20 @@ const privateProjectTest = {
   modifiedBy: 'foo'
 };
 
-let app, atlasmakerServer, db, server;
+let app, atlasmakerServer, db, nativeDb, server;
 
 const initResources = async () => {
   ({ app, server, atlasmakerServer } = await brainboxApp.start());
 
+  // Test-only route: serves HTML with text/html content-type
+  // to simulate a remote server returning an error page instead of a binary file
+  app.get('/test_data/html_error_page.nii.gz', (req, res) => {
+    res.set('Content-Type', 'text/html');
+    res.send('<html><body><h1>403 Forbidden</h1><p>Rate limited</p></body></html>');
+  });
+
   db = app.db.mongoDB();
+  nativeDb = app.db.nativeMongoDB();
 };
 
 const closeResources = () => {
@@ -165,6 +173,7 @@ const closeResources = () => {
 
 const getServer = () => server;
 const getDB = () => db;
+const getNativeDB = () => nativeDb;
 
 const currentDirectory = function () {
   console.log('Current directory:', __dirname);
@@ -174,15 +183,15 @@ const currentDirectory = function () {
 };
 
 const queryUser = function (nickname) {
-  return db.get('user').findOne({ nickname });
+  return nativeDb.collection('user').findOne({ nickname });
 };
 
 const insertUser = function (user) {
-  return db.get('user').insert(user);
+  return nativeDb.collection('user').insertOne(user);
 };
 
 const removeUser = function (nickname) {
-  return db.get('user').remove({ nickname });
+  return nativeDb.collection('user').deleteMany({ nickname });
 };
 
 const insertProject = function (project) {
@@ -191,11 +200,11 @@ const insertProject = function (project) {
 };
 
 const removeProject = function (shortname) {
-  return db.get('project').remove({ shortname });
+  return nativeDb.collection('project').deleteMany({ shortname });
 };
 
 const queryProject = function (shortname) {
-  return db.get('project').findOne({ shortname, backup: { $exists: 0 } });
+  return nativeDb.collection('project').findOne({ shortname, backup: { $exists: 0 } });
 };
 
 const insertTestTokenForUser = async function (nickname) {
@@ -206,13 +215,13 @@ const insertTestTokenForUser = async function (nickname) {
     expiryDate: new Date(now.getTime() + testTokenDuration),
     username: nickname
   };
-  const res = await db.get('log').insert(obj);
+  const res = await nativeDb.collection('log').insertOne(obj);
 
   return res;
 };
 
 const removeTestTokenForUser = async function (nickname) {
-  await db.get('log').remove({ token: testToken + nickname });
+  await nativeDb.collection('log').deleteMany({ token: testToken + nickname });
 };
 
 const delay = async function (delayTimeout) {
@@ -223,7 +232,7 @@ const delay = async function (delayTimeout) {
 
 const removeMRI = async function ({ dirPath, srcURL }) {
   rimraf.sync(dirPath, {}, (err) => console.log(new Error(err)));
-  const res = await db.get('mri').remove({ source: srcURL });
+  const res = await nativeDb.collection('mri').deleteMany({ source: srcURL });
 
   return res;
 };
@@ -402,7 +411,8 @@ module.exports = {
   initResources,
   closeResources,
   getServer,
-  getDB,
+  getDB, // monk
+  getNativeDB, // native mongodb
   removeMRI,
   currentDirectory,
   insertTestTokenForUser,

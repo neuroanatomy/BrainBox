@@ -58,7 +58,7 @@ describe('TESTING THE /mri ROUTE', function () {
     const { body } = res;
     // console.log(body);
     const expectedKeys = [
-      '_id', 'filename', 'success', 'source', 'url', 'included',
+      'filename', 'success', 'source', 'url', 'included',
       'dim', 'pixdim', 'voxel2world', 'worldOrigin',
       'owner', 'mri', 'modified', 'modifiedBy', 'name'
     ];
@@ -81,7 +81,7 @@ describe('TESTING THE /mri ROUTE', function () {
       .query({ url: U.localBertURL });
     const { body } = res;
     const expectedKeys = [
-      '_id', 'filename', 'success', 'source', 'url', 'included',
+      'filename', 'success', 'source', 'url', 'included',
       'dim', 'pixdim', 'voxel2world', 'worldOrigin',
       'owner', 'mri', 'modified', 'modifiedBy', 'name'
     ];

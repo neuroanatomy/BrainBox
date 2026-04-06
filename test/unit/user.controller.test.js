@@ -9,9 +9,11 @@ const httpMocks = require('node-mocks-http');
 const U = require('../utils');
 
 describe('User Controller: ', function () {
-  let db;
+  let db, nativeDb;
+
   before(function () {
     db = U.getDB();
+    nativeDb = U.getNativeDB();
   });
 
   describe('validator function() ', function () {
@@ -35,7 +37,8 @@ describe('User Controller: ', function () {
         },
         session: {},
         originalUrl: 'some url',
-        db: db,
+        db,
+        nativeDb,
         query: {},
         isAuthenticated: function () {
           return Boolean(this.user.username);
@@ -48,6 +51,8 @@ describe('User Controller: ', function () {
       };
       await userController.user(req, res);
       assert.strictEqual(res.render.callCount, 1);
+      const userInfo = JSON.parse(res.render.args[0][1].userInfo);
+      assert.ok(!userInfo._id, 'Rendered user data must not include _id');
       sinon.restore();
     });
 
@@ -61,7 +66,8 @@ describe('User Controller: ', function () {
         },
         session: {},
         originalUrl: 'some url',
-        db: db,
+        db,
+        nativeDb,
         query: {},
         isAuthenticated: function () {
           return Boolean(this.user.username);
@@ -85,13 +91,15 @@ describe('User Controller: ', function () {
           userName: 'anyone'
         },
         query: {},
-        db: db
+        db: db,
+        nativeDb: nativeDb
       };
       const res = {
         send: sinon.spy()
       };
       await userController.apiUser(req, res);
       assert.strictEqual(res.send.callCount, 1);
+      assert.ok(!res.send.args[0][0]._id, 'API response must not include _id');
       sinon.restore();
     });
   });
@@ -99,7 +107,8 @@ describe('User Controller: ', function () {
   describe('apiUserAll function() ', function () {
     it('should ask for page parameter if not provided', async function () {
       const req = {
-        db: db,
+        db,
+        nativeDb,
         query: {}
       };
       const res = {
@@ -114,7 +123,8 @@ describe('User Controller: ', function () {
 
     it('should send the data correctly when the input is valid', async function () {
       const req = {
-        db: db,
+        db,
+        nativeDb,
         query: {
           page: 2
         }
@@ -133,7 +143,8 @@ describe('User Controller: ', function () {
   describe('apiUserFiles function() ', function () {
     it('should ask for start parameter if not provided', async function () {
       const req = {
-        db: db,
+        db,
+        nativeDb,
         params: {
           userName: 'foo'
         },
@@ -160,7 +171,8 @@ describe('User Controller: ', function () {
 
     it('should ask for length parameter if not provided', async function () {
       const req = {
-        db: db,
+        db,
+        nativeDb,
         params: {
           userName: 'foo'
         },
@@ -187,7 +199,8 @@ describe('User Controller: ', function () {
 
     it('should send the data correctly with correct input', async function () {
       const req = {
-        db: db,
+        db,
+        nativeDb,
         params: {
           userName: 'foo'
         },
@@ -217,7 +230,8 @@ describe('User Controller: ', function () {
   describe('apiUserAtlas function() ', function () {
     it('should ask for start parameter if not provided', async function () {
       const req = {
-        db: db,
+        db,
+        nativeDb,
         params: {
           userName: 'foo'
         },
@@ -244,7 +258,8 @@ describe('User Controller: ', function () {
 
     it('should ask for length parameter if not provided', async function () {
       const req = {
-        db: db,
+        db,
+        nativeDb,
         params: {
           userName: 'foo'
         },
@@ -271,7 +286,8 @@ describe('User Controller: ', function () {
 
     it('should send the data correctly with valid input', async function () {
       const req = {
-        db: db,
+        db,
+        nativeDb,
         params: {
           userName: 'foo'
         },
@@ -301,7 +317,8 @@ describe('User Controller: ', function () {
   describe('apiUserProjects function() ', function () {
     it('should ask for start parameter if not provided', async function () {
       const req = {
-        db: db,
+        db,
+        nativeDb,
         params: {
           userName: 'foo'
         },
@@ -328,7 +345,8 @@ describe('User Controller: ', function () {
 
     it('should ask for length parameter if not provided', async function () {
       const req = {
-        db: db,
+        db,
+        nativeDb,
         params: {
           userName: 'foo'
         },
@@ -355,7 +373,8 @@ describe('User Controller: ', function () {
 
     it('should return the data correctly with valid input', async function () {
       const req = {
-        db: db,
+        db,
+        nativeDb,
         params: {
           userName: 'foo'
         },

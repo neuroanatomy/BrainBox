@@ -32,9 +32,43 @@ describe('TESTING THE /api ROUTE', function () {
     assert.equal(res.statusCode, 400);
   });
 
-  // there is no atlas associated to a project currently in the test db
-  // need to add some in order to test this function
-  it('GET /api/getAtlasBackups/ with right parameters should return a list of atlas backups');
+  it('GET /api/getAtlasBackups/ with right parameters should return a list of atlas backups', async function () {
+    const testSource = U.projectTest.files.list[0].source;
+    const testProject = U.projectTest.shortname;
+    const testAtlasName = 'Default';
+
+    // insert a test MRI with an atlas referencing the test project
+    const nativeDb = U.getNativeDB();
+    await nativeDb.collection('mri').insertOne({
+      source: testSource,
+      url: '/data/testhash/',
+      mri: {
+        atlas: [
+          {
+            name: testAtlasName,
+            project: testProject,
+            filename: 'Atlas.nii.gz',
+            created: (new Date()).toJSON(),
+            modified: (new Date()).toJSON(),
+            access: 'edit',
+            type: 'volume',
+            labels: 'foreground.json'
+          }
+        ]
+      }
+    });
+
+    const res = await chai.request(U.serverURL)
+      .get('/api/getAtlasBackups')
+      .query({ source: testSource, atlasProject: testProject, atlasName: testAtlasName });
+    assert.equal(res.statusCode, 200);
+    assert.isArray(res.body);
+    assert.isNotEmpty(res.body);
+    res.body.forEach((item) => assert.property(item, 'filename'));
+
+    // cleanup
+    await nativeDb.collection('mri').deleteMany({ source: testSource, url: '/data/testhash/' });
+  });
 
   it('POST /api/log/ should return the total annotation length', async function () {
     const [, {source}] = U.projectTest.files.list;

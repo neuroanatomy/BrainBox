@@ -225,6 +225,16 @@ export const AtlasMakerIO = {
     return arr;
   },
 
+  swapUint32: function (arr) {
+    let i;
+    const dv = new DataView(arr.buffer);
+    for(i = 0; i<arr.length; i++) {
+      arr[i]= dv.getUint32(4*i, false);
+    }
+
+    return arr;
+  },
+
   swapInt32: function (arr) {
     let i;
     const dv = new DataView(arr.buffer);
@@ -295,20 +305,30 @@ export const AtlasMakerIO = {
         mri.data = me.swapInt32(new Int32Array(nii, vox_offset));
       }
       break;
-    case 16: // FLOAT
+    case 16: // FLOAT32
+    {
+      let tmp;
       if(endianness === 'le') {
-        mri.data = new Float32Array(nii, vox_offset);
+        tmp = new Float32Array(nii, vox_offset);
       } else {
-        mri.data = me.swapFloat32(new Float32Array(nii, vox_offset));
+        tmp = me.swapFloat32(new Float32Array(nii, vox_offset));
       }
+      mri.data = Uint16Array.from(tmp);
+      mri.datatype = 512;
       break;
+    }
     case 64: // FLOAT64
+    {
+      let tmp;
       if(endianness === 'le') {
-        mri.data = new Float64Array(nii, vox_offset);
+        tmp = new Float64Array(nii, vox_offset);
       } else {
-        mri.data = me.swapFloat64(new Float64Array(nii, vox_offset));
+        tmp = me.swapFloat64(new Float64Array(nii, vox_offset));
       }
+      mri.data = Uint16Array.from(tmp);
+      mri.datatype = 512;
       break;
+    }
     case 256: // INT8
       mri.data = new Int8Array(nii, vox_offset);
       break;
@@ -319,6 +339,18 @@ export const AtlasMakerIO = {
         mri.data = me.swapUint16(new Uint16Array(nii, vox_offset));
       }
       break;
+    case 768: // UINT32
+    {
+      let tmp;
+      if(endianness === 'le') {
+        tmp = new Uint32Array(nii, vox_offset);
+      } else {
+        tmp = me.swapUint32(new Uint32Array(nii, vox_offset));
+      }
+      mri.data = Uint16Array.from(tmp);
+      mri.datatype = 512;
+      break;
+    }
     default:
       console.log('ERROR: Unknown dataType: ' + mri.datatype);
     }

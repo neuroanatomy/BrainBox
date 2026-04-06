@@ -1,3 +1,5 @@
+/* eslint-disable max-lines */
+
 const fs = require('fs');
 const path = require('path');
 const WebSocket = require('ws').Server;
@@ -15,7 +17,7 @@ let AMS;
 
 describe('UNIT TESTING ATLASMAKER SERVER', function () {
   before(function () {
-    AMS = atlasmakerServer(U.getDB());
+    AMS = atlasmakerServer(U.getDB(), U.getNativeDB());
   });
 
   describe('MRI IO', function () {
@@ -33,7 +35,7 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
       mri2 = await amri.readMGZ(datadir + 'bert_brain.mgz');
     }).timeout(U.mediumTimeout);
 
-    it('Should get the dimensions right', function () {
+    it('Should get the dimensions right, still', function () {
       assert(mri2.dim[0] === 256 && mri2.dim[1] === 256 && mri2.dim[2] === 256);
     });
 
@@ -55,6 +57,49 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
     it('Subtract vectors correctly', function () {
       const res = la.subVecVec([1, 2, 3], [2, 3, 4]);
       assert(res[0] === -1 && res[1] === -1 && res[2] === -1);
+    });
+
+    it('Add vectors correctly', function () {
+      const res = la.addVecVec([1, 2, 3], [4, 5, 6]);
+      assert(res[0] === 5 && res[1] === 7 && res[2] === 9);
+    });
+
+    it('Multiply matrix by vector correctly with identity matrix', function () {
+      const identity = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+      const vec = [3, 7, 11];
+      const res = la.mulMatVec(identity, vec);
+      assert(res[0] === 3 && res[1] === 7 && res[2] === 11);
+    });
+
+    it('Multiply matrix by vector correctly with known matrix', function () {
+      const mat = [[2, 0, 0], [0, 3, 0], [0, 0, 4]];
+      const vec = [1, 2, 3];
+      const res = la.mulMatVec(mat, vec);
+      assert(res[0] === 2 && res[1] === 6 && res[2] === 12);
+    });
+
+    it('Invert identity matrix correctly', function () {
+      const identity = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+      const res = la.invMat(identity);
+      for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 3; j++) {
+          const expected = i === j ? 1 : 0;
+          assert(Math.abs(res[i][j] - expected) < 1e-10);
+        }
+      }
+    });
+
+    it('Invert matrix round-trip: invMat(M) * M = identity', function () {
+      const mat = [[1, 2, 3], [0, 1, 4], [5, 6, 0]];
+      const inv = la.invMat(mat);
+      // multiply inv * mat and check it equals identity
+      for (let i = 0; i < 3; i++) {
+        const row = la.mulMatVec(inv, [mat[0][i], mat[1][i], mat[2][i]]);
+        for (let j = 0; j < 3; j++) {
+          const expected = i === j ? 1 : 0;
+          assert(Math.abs(row[j] - expected) < 1e-10);
+        }
+      }
     });
   });
 
@@ -246,6 +291,7 @@ describe('UNIT TESTING ATLASMAKER SERVER', function () {
         assert.strictEqual(cnt, 1);
       });
     });
+
     describe('removeUser() function ', function () {
       it('should remove the user with the provided websocket', async function () {
         const ws = new WebSocket({ port: 8081 });
