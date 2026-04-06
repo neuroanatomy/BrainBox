@@ -158,15 +158,15 @@ const initResources = async () => {
   nativeDb = app.db.nativeMongoDB();
 };
 
-const closeResources = () => {
-  if (db) {
-    db.close();
+const closeResources = async () => {
+  if (atlasmakerServer) {
+    await new Promise((resolve) => { atlasmakerServer.server.close(resolve); });
   }
   if (server) {
-    server.close();
+    await new Promise((resolve) => { server.close(resolve); });
   }
-  if (atlasmakerServer) {
-    atlasmakerServer.server.close();
+  if (db) {
+    await db.close();
   }
   process.stdin.pause();
 };
