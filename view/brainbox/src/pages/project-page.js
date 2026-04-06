@@ -265,7 +265,7 @@ for (const k of projectInfo.annotations.list) {
 $('#projectName').text(projectInfo.name);
 
 $('#resizeButton').data({ flag: -1, x0: 0, y0: 0 });
-$('#resizeButton').on('mousedown touchstart', function (e) { $(e.target).data({ flag: 0, x0: e.pageX, y0: e.pageY }); });
+$('#resizeButton').on('mousedown touchstart', function (e) { e.preventDefault(); $(e.target).data({ flag: 0, x0: e.pageX, y0: e.pageY }); });
 $('body').on('mousemove', function (e) { resizeButton({ x: e.pageX, y: e.pageY }); });
 $('body').on('touchmove', function (e) { resizeButton({ x: e.originalEvent.changedTouches[0].pageX, y: e.originalEvent.changedTouches[0].pageY }); });
 $('body').on('mouseup touchend', function () { $('#resizeButton').data({ flag: -1 }); });

@@ -9,8 +9,23 @@
     border:thin solid #555;
     padding: 5px;
 }
+#left {
+    min-width: 0;
+}
+#left > div {
+    overflow: hidden;
+}
 #right {
     background-color: black;
+}
+#projectFiles table {
+    table-layout: fixed;
+}
+#projectFiles table td,
+#projectFiles table th {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 select {
