@@ -167,11 +167,15 @@ const closeResources = async () => {
       }
       await new Promise((resolve) => { atlasmakerServer.websocketserver.close(resolve); });
     }
-    atlasmakerServer.server.closeAllConnections();
+    if (typeof atlasmakerServer.server.closeAllConnections === 'function') {
+      atlasmakerServer.server.closeAllConnections();
+    }
     await new Promise((resolve) => { atlasmakerServer.server.close(resolve); });
   }
   if (server) {
-    server.closeAllConnections();
+    if (typeof server.closeAllConnections === 'function') {
+      server.closeAllConnections();
+    }
     await new Promise((resolve) => { server.close(resolve); });
   }
   if (db) {
