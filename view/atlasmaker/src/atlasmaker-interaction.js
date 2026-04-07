@@ -118,6 +118,7 @@ export const AtlasMakerInteraction = {
     };
 
     const onTouchStart = function(e) {
+      e.preventDefault();
       const touch = e.touches[0];
       const rect = panel.getBoundingClientRect();
       startX = touch.clientX;
@@ -134,6 +135,7 @@ export const AtlasMakerInteraction = {
       document.body.setAttribute('data-toolbarDisplay', 'free');
 
       const onTouchMove = function(e) {
+        e.preventDefault();
         const t = e.touches[0];
         const dx = t.clientX - startX;
         const dy = t.clientY - startY;
@@ -151,7 +153,7 @@ export const AtlasMakerInteraction = {
     };
 
     handle.addEventListener('mousedown', onMouseDown);
-    handle.addEventListener('touchstart', onTouchStart);
+    handle.addEventListener('touchstart', onTouchStart, {passive: false});
   },
 
   initTextInputResize: function () {
@@ -179,13 +181,15 @@ export const AtlasMakerInteraction = {
     };
 
     const onTouchStart = function(e) {
+      e.preventDefault();
       const touch = e.touches[0];
       const startY = touch.clientY;
       const startHeight = block.offsetHeight;
 
       const onTouchMove = function(e) {
+        e.preventDefault();
         const t = e.touches[0];
-        const delta = startY - t.clientY;
+        const delta = t.clientY - startY;
         const newHeight = Math.max(100, startHeight + delta);
         block.style.flex = '0 0 ' + newHeight + 'px';
       };
@@ -200,7 +204,7 @@ export const AtlasMakerInteraction = {
     };
 
     handle.addEventListener('mousedown', onMouseDown);
-    handle.addEventListener('touchstart', onTouchStart);
+    handle.addEventListener('touchstart', onTouchStart, {passive: false});
   },
 
   /**
