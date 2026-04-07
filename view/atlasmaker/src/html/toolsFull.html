@@ -11,7 +11,7 @@
       <div id="headerBlock" style="flex:0 1 28px;background:#333">
           <div style="display:flex">
               <div style="flex:0 0 28px"><div id="display-minimize" title="Minimize toolbar" class="a push noBorder"><img class="icon" alt="close" src="./img/times-circle.svg" /></div></div>
-              <div style="flex:1 1 auto"></div>
+              <div id="toolsDragHandle" style="flex:1 1 auto;cursor:grab" title="Drag to move toolbar"></div>
               <div style="flex:0 0 28px"><div id="display-left" title="Display to the left" class="a push noBorder"><img class="icon" alt="left" src="./img/caret-square-o-left.svg" /></div></div>
               <div style="flex:0 0 28px"><div id="display-right" title="Display to the right" class="a push noBorder"><img class="icon" alt="right" src="./img/caret-square-o-right.svg" /></div></div>
           </div>
@@ -121,8 +121,8 @@
           }
       </style>
 
-      <div id="textInputBlock" style="flex:1 1 auto;position:relative;display:flex">
-          <div id="textInputBlockContent" style="flex:1;display:flex;flex-direction:column">
+      <div id="textInputBlock" style="flex:0 0 270px;position:relative;display:flex;flex-direction:column;overflow:hidden">
+          <div id="textInputBlockContent" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
               <div style="flex:1 1 80px;display:flex">
                   <div id="logChat">
                       <div style="flex:1 1 30px; overflow:scroll">
@@ -132,6 +132,9 @@
                   </div>
                   <div id="logScript" class="text hidden" style="flex:1;height:auto"></div>
               </div>
+          </div>
+          <div id="textInputResize" style="flex:0 0 12px;cursor:ns-resize;display:flex;align-items:center;justify-content:center">
+              <div style="width:30px;height:3px;border-radius:2px;background:rgba(255,255,255,0.35)"></div>
           </div>
       </div>
 

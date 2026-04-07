@@ -158,15 +158,28 @@ const initResources = async () => {
   nativeDb = app.db.nativeMongoDB();
 };
 
+// eslint-disable-next-line max-statements
 const closeResources = async () => {
   if (atlasmakerServer) {
+    if (atlasmakerServer.websocketserver) {
+      for (const client of atlasmakerServer.websocketserver.clients) {
+        client.terminate();
+      }
+      await new Promise((resolve) => { atlasmakerServer.websocketserver.close(resolve); });
+    }
+    atlasmakerServer.server.closeAllConnections();
     await new Promise((resolve) => { atlasmakerServer.server.close(resolve); });
   }
   if (server) {
+    server.closeAllConnections();
     await new Promise((resolve) => { server.close(resolve); });
   }
   if (db) {
     await db.close();
+  }
+  process.stdin.removeAllListeners('keypress');
+  if (process.stdin.isTTY && process.stdin.setRawMode) {
+    process.stdin.setRawMode(false);
   }
   process.stdin.pause();
 };

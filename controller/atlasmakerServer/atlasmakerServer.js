@@ -2116,6 +2116,7 @@ free memory: ${os.freemem()}
           server: me.server,
           verifyClient: me.verifyClient
         });
+        me.websocketserver = websocketserver;
         websocketserver.on('connection', me._handleWebSocketConnection);
       } catch (ex) {
         tracer.log('ERROR: Unable to create a Web socket server', ex);

@@ -384,6 +384,8 @@ const me = {
     me.push($('.push#display-minimize'), function() { me.changeToolbarDisplay('minimize'); });
     me.push($('.push#display-left'), function() { me.changeToolbarDisplay('left'); });
     me.push($('.push#display-right'), function() { me.changeToolbarDisplay('right'); });
+    me.initToolsDrag();
+    me.initTextInputResize();
     me.slider($('.slider#slice'), function(x) { me.changeSlice(Math.round(x)); });
     me.chose($('.chose#plane'), me.changeView);
     me.chose($('.chose#paintTool'), me.changeTool);

@@ -79,11 +79,21 @@
 .atlasmaker-fullscreen[data-toolbarDisplay=right] #tools-side {
     right: 0;
 }
+.atlasmaker-fullscreen[data-toolbarDisplay=free] #tools-side {
+    height: auto;
+}
 .atlasmaker-fullscreen[data-toolbarDisplay=left] #text-layer {
     text-align: right;
 }
-.atlasmaker-fullscreen[data-toolbarDisplay=right] #text-layer {
+.atlasmaker-fullscreen[data-toolbarDisplay=right] #text-layer,
+.atlasmaker-fullscreen[data-toolbarDisplay=free] #text-layer {
     text-align: left;
+}
+#textInputResize:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+#textInputResize:hover div {
+    background: rgba(255, 255, 255, 0.6);
 }
 
 #tools-side #tools-minimized div {
@@ -101,7 +111,8 @@
     top: 0;
     left: 0;
 }
-.atlasmaker-fullscreen[data-toolbarDisplay=right] #tools-minimized div {
+.atlasmaker-fullscreen[data-toolbarDisplay=right] #tools-minimized div,
+.atlasmaker-fullscreen[data-toolbarDisplay=free] #tools-minimized div {
     top: 0;
     right: 0;
 }

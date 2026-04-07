@@ -66,11 +66,141 @@ export const AtlasMakerInteraction = {
       break;
     case 'left':
       $('body').attr('data-toolbarDisplay', 'left');
+      $('#tools-side').css({ left: '', top: '', right: '', height: '' });
+      document.getElementById('tools-maximized').style.height = '';
       break;
     case 'right':
       $('body').attr('data-toolbarDisplay', 'right');
+      $('#tools-side').css({ left: '', top: '', right: '', height: '' });
+      document.getElementById('tools-maximized').style.height = '';
       break;
     }
+  },
+
+  initToolsDrag: function () {
+    const handle = document.getElementById('toolsDragHandle');
+    const panel = document.getElementById('tools-side');
+    let startX, startY, startLeft, startTop;
+
+    const onMouseDown = function(e) {
+      e.preventDefault();
+      handle.style.cursor = 'grabbing';
+
+      const rect = panel.getBoundingClientRect();
+      startX = e.clientX;
+      startY = e.clientY;
+      startLeft = rect.left;
+      startTop = rect.top;
+
+      panel.style.position = 'fixed';
+      panel.style.left = startLeft + 'px';
+      panel.style.top = startTop + 'px';
+      panel.style.right = 'auto';
+      panel.style.height = 'auto';
+      document.getElementById('tools-maximized').style.height = 'auto';
+      document.body.setAttribute('data-toolbarDisplay', 'free');
+
+      const onMouseMove = function(e) {
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        panel.style.left = (startLeft + dx) + 'px';
+        panel.style.top = (startTop + dy) + 'px';
+      };
+
+      const onMouseUp = function() {
+        handle.style.cursor = 'grab';
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+      };
+
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    };
+
+    const onTouchStart = function(e) {
+      const touch = e.touches[0];
+      const rect = panel.getBoundingClientRect();
+      startX = touch.clientX;
+      startY = touch.clientY;
+      startLeft = rect.left;
+      startTop = rect.top;
+
+      panel.style.position = 'fixed';
+      panel.style.left = startLeft + 'px';
+      panel.style.top = startTop + 'px';
+      panel.style.right = 'auto';
+      panel.style.height = 'auto';
+      document.getElementById('tools-maximized').style.height = 'auto';
+      document.body.setAttribute('data-toolbarDisplay', 'free');
+
+      const onTouchMove = function(e) {
+        const t = e.touches[0];
+        const dx = t.clientX - startX;
+        const dy = t.clientY - startY;
+        panel.style.left = (startLeft + dx) + 'px';
+        panel.style.top = (startTop + dy) + 'px';
+      };
+
+      const onTouchEnd = function() {
+        document.removeEventListener('touchmove', onTouchMove);
+        document.removeEventListener('touchend', onTouchEnd);
+      };
+
+      document.addEventListener('touchmove', onTouchMove);
+      document.addEventListener('touchend', onTouchEnd);
+    };
+
+    handle.addEventListener('mousedown', onMouseDown);
+    handle.addEventListener('touchstart', onTouchStart);
+  },
+
+  initTextInputResize: function () {
+    const handle = document.getElementById('textInputResize');
+    const block = document.getElementById('textInputBlock');
+
+    const onMouseDown = function(e) {
+      e.preventDefault();
+      const startY = e.clientY;
+      const startHeight = block.offsetHeight;
+
+      const onMouseMove = function(e) {
+        const delta = e.clientY - startY;
+        const newHeight = Math.max(100, startHeight + delta);
+        block.style.flex = '0 0 ' + newHeight + 'px';
+      };
+
+      const onMouseUp = function() {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+      };
+
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    };
+
+    const onTouchStart = function(e) {
+      const touch = e.touches[0];
+      const startY = touch.clientY;
+      const startHeight = block.offsetHeight;
+
+      const onTouchMove = function(e) {
+        const t = e.touches[0];
+        const delta = startY - t.clientY;
+        const newHeight = Math.max(100, startHeight + delta);
+        block.style.flex = '0 0 ' + newHeight + 'px';
+      };
+
+      const onTouchEnd = function() {
+        document.removeEventListener('touchmove', onTouchMove);
+        document.removeEventListener('touchend', onTouchEnd);
+      };
+
+      document.addEventListener('touchmove', onTouchMove);
+      document.addEventListener('touchend', onTouchEnd);
+    };
+
+    handle.addEventListener('mousedown', onMouseDown);
+    handle.addEventListener('touchstart', onTouchStart);
   },
 
   /**
@@ -281,9 +411,20 @@ export const AtlasMakerInteraction = {
 
       // go back to display mode
       $('body').removeClass('atlasmaker-fullscreen');
+      const toolsSide = document.getElementById('tools-side');
+      toolsSide.style.position = '';
+      toolsSide.style.left = '';
+      toolsSide.style.top = '';
+      toolsSide.style.right = '';
+      toolsSide.style.width = '';
+      toolsSide.style.height = '';
+      document.getElementById('tools-maximized').style.height = '';
+      document.getElementById('textInputBlock').style.flex = '';
+      $('body').attr('data-toolbarDisplay', 'right');
       $('#atlasmaker')
         .detach()
         .appendTo('#stereotaxic');
+      $('#resizable').css({ width: '', height: '' });
       me.resizeWindow();
       me.drawImages();
       me.fullscreen = false;
