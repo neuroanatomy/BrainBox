@@ -127,7 +127,7 @@ export const AtlasMakerUI = {
      * @returns {void}
      */
   push: function (elem, callback) {
-    // Initialise a 'push' control, with 200ms debounce
+    // Initialise a 'push' control, with 200ms throttle
     let lastClickTime = 0;
     $(elem).click(function() {
       const now = Date.now();
