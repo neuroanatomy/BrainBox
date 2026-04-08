@@ -22,15 +22,15 @@
                 <Table id="projects">
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>Files</th>
-                            <th>Collaborators</th>
-                            <th>Owner</th>
-                            <th>Last modified</th>
+                            <th @click="sortBy('Name')" class="sortable">Name[[sortIndicator('Name')]]</th>
+                            <th @click="sortBy('Files')" class="sortable">Files[[sortIndicator('Files')]]</th>
+                            <th @click="sortBy('Collaborators')" class="sortable">Collaborators[[sortIndicator('Collaborators')]]</th>
+                            <th @click="sortBy('Owner')" class="sortable">Owner[[sortIndicator('Owner')]]</th>
+                            <th @click="sortBy('Last modified')" class="sortable">Last modified[[sortIndicator('Last modified')]]</th>
                         </tr>
                     </thead>
                     <tbody>
-                    <tr v-for="project in projects">
+                    <tr v-for="project in sortedProjects">
                         <td>
                             <a :href="`${project.projectURL}/settings`" class="settings">
                                 <img style="width:11px; margin:3px 8px 0 0" src="/img/settings.svg"/>
@@ -71,6 +71,13 @@
 }
 .settings:hover {
     opacity: 1;
+}
+.sortable {
+    cursor: pointer;
+    user-select: none;
+}
+.sortable:hover {
+    background-color: rgba(0, 0, 0, 0.05);
 }
 </style>
 

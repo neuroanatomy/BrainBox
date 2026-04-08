@@ -1,16 +1,62 @@
 /* globals nickname, loggedUser */
 import 'nwl-components/dist/style.css';
 import { Tab, Table, Tabs, UserPage } from 'nwl-components';
-import { createApp, ref } from 'vue';
+import { computed, createApp, ref } from 'vue';
 import config from '../nwl-components-config';
+
+const sortKeys = {
+  Name: 'project',
+  Files: 'numFiles',
+  Collaborators: 'numCollaborators',
+  Owner: 'owner',
+  'Last modified': 'modified'
+};
 
 const PageContents = {
   template: '#template',
   setup() {
     const projects = ref([]);
+    const sortColumn = ref(null);
+    const sortAsc = ref(true);
+
+    const sortedProjects = computed(() => {
+      if (!sortColumn.value) {
+        return projects.value;
+      }
+      const key = sortKeys[sortColumn.value];
+      const dir = sortAsc.value ? 1 : -1;
+
+      return [...projects.value].sort((a, b) => {
+        const va = a[key];
+        const vb = b[key];
+        if (typeof va === 'number' && typeof vb === 'number') {
+          return dir * (va - vb);
+        }
+
+        return dir * String(va).localeCompare(String(vb));
+      });
+    });
+
+    const sortBy = (column) => {
+      if (sortColumn.value === column) {
+        sortAsc.value = !sortAsc.value;
+      } else {
+        sortColumn.value = column;
+        sortAsc.value = true;
+      }
+    };
+
+    const sortIndicator = (column) => {
+      if (sortColumn.value !== column) { return ''; }
+
+      return sortAsc.value ? ' ▲' : ' ▼';
+    };
 
     return {
-      projects
+      projects,
+      sortedProjects,
+      sortBy,
+      sortIndicator
     };
   },
   mounted() {
