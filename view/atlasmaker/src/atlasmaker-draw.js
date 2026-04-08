@@ -1,10 +1,12 @@
-/*global AtlasMakerWidget $*/
+/*global AtlasMakerWidget*/
 /*! AtlasMaker: Image Drawing */
 
 /**
  * @page AtlasMaker: Image Drawing
  * @returns object
  */
+
+import { setData } from '../../shared/domData.js';
 
 export const AtlasMakerDraw = {
 
@@ -20,9 +22,13 @@ export const AtlasMakerDraw = {
     const bAspect = me.brainW*me.brainWdim/(me.brainH*me.brainHdim);
 
     if(wAspect>bAspect) {
-      $('#resizable').css({ width:(100*bAspect/wAspect) + '%', height:'100%' });
+      const resizable = document.getElementById('resizable');
+      resizable.style.width = (100*bAspect/wAspect) + '%';
+      resizable.style.height = '100%';
     } else {
-      $('#resizable').css({ width:'100%', height:(100*wAspect/bAspect) + '%' });
+      const resizable = document.getElementById('resizable');
+      resizable.style.width = '100%';
+      resizable.style.height = (100*wAspect/bAspect) + '%';
     }
   },
 
@@ -53,10 +59,9 @@ export const AtlasMakerDraw = {
     me.sendUserDataMessage(JSON.stringify({ 'view':me.User.view, 'slice':me.User.slice }));
 
     // configure toolbar slider
-    $('.slider#slice').data({ max:me.brainD-1, val:me.User.slice });
-
-    // if($("#slice .thumb")[0]) { $("#slice .thumb")[0].style.left = (me.User.slice/(me.brainD-1)*100) + "%"; }
-    $('#slice').trigger('updateDisplay');
+    const sliceSlider = document.getElementById('slice');
+    setData(sliceSlider, { max: me.brainD-1, val: me.User.slice });
+    sliceSlider.dispatchEvent(new CustomEvent('updateDisplay'));
 
     me.drawImages();
     me.initCursor();
