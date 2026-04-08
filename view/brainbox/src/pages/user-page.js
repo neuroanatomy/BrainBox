@@ -32,6 +32,9 @@ const PageContents = {
         if (typeof va === 'number' && typeof vb === 'number') {
           return dir * (va - vb);
         }
+        if (key === 'modified') {
+          return dir * (new Date(va) - new Date(vb));
+        }
 
         return dir * String(va).localeCompare(String(vb));
       });
