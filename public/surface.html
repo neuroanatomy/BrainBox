@@ -34,7 +34,6 @@
     </div>
 </div>
 
-<script src="/lib/jquery-3.1.1.min.js"></script>
 <script>
 var params=deparam();
 var renderer,scene,camera,trackball;
@@ -52,7 +51,7 @@ loadScript("/lib/three.min.js")
                 console.log("Worker finished");
                 var g=e.data.geometry;
                 createMesh(g);
-                $("#splash").remove();
+                document.getElementById('splash').remove();
                 console.log("animate");
                 animate();
                 break;
@@ -94,8 +93,12 @@ loadScript("/lib/three.min.js")
 });
 
 // "wait" animation
-var dot=0;setInterval(function(){if($("#dot"))$("#dot").css({marginLeft:50*(1+Math.sin(dot))+"%"});dot+=0.1},33);
-
+var dot=0;setInterval(function() {
+    if(document.getElementById('dot')) {
+        document.getElementById('dot').style.marginLeft = 50*(1+Math.sin(dot)) + '%';
+    }
+    dot+=0.1
+}, 33);
 function loadScript(script) {
     return new Promise(function(resolve, reject) {
         var s = document.createElement("script");
