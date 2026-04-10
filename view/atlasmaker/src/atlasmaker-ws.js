@@ -763,18 +763,19 @@ export const AtlasMakerWS = {
 
     return fetch(me.hostname + '/api/log', {
       method: 'POST',
-      body: {
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         username: me.User.username,
         key: key,
         value: value
-      }
+      })
     })
       .then((response) => {
         if (!response.ok) {
           throw new Error(response.statusText);
         }
 
-        return response.json();
+        return response.text().then((text) => (text ? JSON.parse(text) : {}));
       });
   }
 };
