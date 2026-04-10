@@ -1,6 +1,5 @@
 import './style.css';
 import * as THREE from './three.js-r109/build/three.module.js';
-import $ from 'jquery';
 import { TrackballControls } from './three.js-r109/examples/jsm/controls/TrackballControls.js';
 import html from './index.html';
 import pako from 'pako';
@@ -120,13 +119,11 @@ const configureNifti = function (niigz) {
 // }
 
 const startWaitingAnimation = function () {
-  setInterval(function () {
-    if ($('#dot')) {
-      $('#dot').css({
-        marginLeft: 50 * (1 + Math.sin(dot)) + '%'
-      });
+  setInterval(function() {
+    if(document.getElementById('dot')) {
+      document.getElementById('dot').style.marginLeft = 50*(1+Math.sin(dot)) + '%';
     }
-    dot += 0.1;
+    dot+=0.1;
   }, 33);
 };
 
@@ -178,7 +175,7 @@ const init = function () {
 snw.addEventListener('message', (event) => {
   const [vertices, faces] = event.data;
   createMesh(vertices, faces);
-  $('#splash').remove();
+  document.getElementById('splash').remove();
   animate();
 });
 
