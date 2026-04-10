@@ -405,7 +405,7 @@ export const BrainBox = {
           param.infoProxy,
           param.info,
           param.objTemplate[icol].path.replace('#', irow),
-          $(param.table).find('tr:eq(' + (irow + 1) + ') td:eq(' + icol + ')'),
+          param.table.querySelectorAll('tr')[irow + 1].querySelectorAll('td')[icol],
           param.objTemplate[icol].format
         );
         break;
@@ -414,7 +414,7 @@ export const BrainBox = {
           param.infoProxy,
           param.info,
           param.objTemplate[icol].path.replace('#', irow),
-          $(param.table).find('tr:eq(' + (irow + 1) + ') td:eq(' + icol + ')'),
+          param.table.querySelectorAll('tr')[irow + 1].querySelectorAll('td')[icol],
           param.objTemplate[icol].format,
           param.objTemplate[icol].parse
         );
@@ -440,7 +440,7 @@ export const BrainBox = {
           param.infoProxy,
           param.info,
           param.objTemplate[icol].path.replace('#', iarr),
-          $(param.table).find('tr:eq(' + (irow + 1) + ') td:eq(' + icol + ')'),
+          param.table.querySelectorAll('tr')[irow + 1].querySelectorAll('td')[icol],
           param.objTemplate[icol].format
         );
         break;
@@ -449,7 +449,7 @@ export const BrainBox = {
           param.infoProxy,
           param.info,
           param.objTemplate[icol].path.replace('#', iarr),
-          $(param.table).find('tr:eq(' + (irow + 1) + ') td:eq(' + icol + ')'),
+          param.table.querySelectorAll('tr')[irow + 1].querySelectorAll('td')[icol],
           param.objTemplate[icol].format,
           param.objTemplate[icol].parse
         );

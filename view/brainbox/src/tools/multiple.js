@@ -27,20 +27,20 @@ export default function multiple(annotation, path, username) {
       const obj2 = d;
       if (typeof obj2.data !== 'undefined') {
         // @todo Replace color assignment by the addition of a class
-        e.get(0).querySelectorAll('select')[0].style.color = '#fff';
-        e.get(0).querySelectorAll('select')[0].value = obj2.data;
+        e.querySelector('select').style.color = '#fff';
+        e.querySelector('select').value = obj2.data;
       } else {
-        e.get(0).querySelectorAll('select')[0].value = '';
+        e.querySelector('select').value = '';
       }
     },
     parse: function(e, d) {
-      if (e.get(0).querySelectorAll('select')[0].value) {
-        e.get(0).querySelectorAll('select')[0].style.color = '#fff';
+      if (e.querySelector('select').value) {
+        e.querySelector('select').style.color = '#fff';
       }
       const obj2 = d;
       obj2.modified = (new Date()).toJSON();
       obj2.modifiedBy = username;
-      obj2.data = e.get(0).querySelectorAll('select')[0].value;
+      obj2.data = e.querySelector('select').value;
 
       return obj2;
     }

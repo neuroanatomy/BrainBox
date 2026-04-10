@@ -54,7 +54,7 @@ const getAtlasBackups = (req, res) => {
 
   if(typeof source === 'undefined'
       || typeof atlasProject === 'undefined'
-      || atlasName === 'undefined') {
+      || typeof atlasName === 'undefined') {
     res.status(400);
     res.render('error', {
       message: 'Missing source, atlasProject or atlasName'
@@ -72,6 +72,12 @@ const getAtlasBackups = (req, res) => {
   }, {projection: {url: 1, 'mri.atlas.$': 1, _id: 0}})
     .then( (obj) => {
     // get all filenames that have ever been associated with this atlas
+      if (!obj) {
+        res.status(404);
+        res.render('error', { message: 'Atlas not found' });
+
+        return;
+      }
       let {url: dataDir} = obj;
       [,, dataDir] = dataDir.split('/');
       nativeDb.collection('mri').aggregate([
@@ -137,6 +143,10 @@ const log = async (req, res) => {
   try {
     switch (json.key) {
     case 'annotationLength': {
+      if (!json.value || !json.value.source || !json.value.atlas) {
+        res.status(400).send({error: 'missing value.source or value.atlas'});
+        break;
+      }
 
       obj = {
         key: 'annotationLength',
@@ -172,21 +182,21 @@ const log = async (req, res) => {
       });
       res.send();
     }
+    if (json.value && json.value.source && json.value.atlas) {
+      nativeDb.collection('mri').updateOne({
+        source: json.value.source,
+        'mri.atlas':{$elemMatch:{filename:json.value.atlas}}
+      }, {
+        $set: {
+          'mri.atlas.$.modified': (new Date()).toJSON(),
+          'mri.atlas.$.modifiedBy': loggedUser
+        }
+      });
+    }
   } catch (err) {
     tracer.log('ERROR', err);
     res.status(500).send({error: JSON.stringify(err)});
   }
-
-  // db.get('mri').update({
-  nativeDb.collection('mri').updateOne({
-    source: json.value.source,
-    'mri.atlas':{$elemMatch:{filename:json.value.atlas}}
-  }, {
-    $set: {
-      'mri.atlas.$.modified': (new Date()).toJSON(),
-      'mri.atlas.$.modifiedBy': loggedUser
-    }
-  });
 };
 
 module.exports = {

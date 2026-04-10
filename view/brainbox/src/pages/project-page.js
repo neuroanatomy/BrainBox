@@ -166,7 +166,7 @@ const loadProjectFile = function (index) {
           // bind volume annotations to table#volAnnotations
           const annvolProxy = {};
           const aParamVolAnnot = {
-            table: $('table#volAnnotations'),
+            table: document.querySelector('table#volAnnotations'),
             infoProxy: annvolProxy,
             info: BrainBox.info,
             trTemplate: $.map([
@@ -366,7 +366,7 @@ BrainBox.initBrainBox()
     }
     trTemplate.push('</tr>');
     aParam = {
-      table: $('#projectFiles table'),
+      table: document.querySelector('#projectFiles table'),
       infoProxy,
       info: projectInfo,
       trTemplate: trTemplate.join('\n'),

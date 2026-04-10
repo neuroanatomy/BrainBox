@@ -6,7 +6,7 @@ import DOMPurify from 'dompurify';
  */
 
 export const dateFormat = function (e, d) {
-  e.get(0).textContent = new Date(d).toLocaleDateString();
+  e.textContent = new Date(d).toLocaleDateString();
 };
 
 /*
@@ -43,7 +43,7 @@ export const bind2 = function (proxy, original, path, el, format, parse) {
       if (parse) {
         v = parse(el, o[k[i]]);
       } else {
-        v = el.get(0).textContent;
+        v = el.textContent;
       }
       o[k[i]] = JSON.parse(DOMPurify.sanitize(JSON.stringify(v)) || '""');
 
@@ -55,7 +55,7 @@ export const bind2 = function (proxy, original, path, el, format, parse) {
       if (format) {
         format(el, v);
       } else {
-        el.get(0).textContent = v;
+        el.textContent = v;
       }
     },
     configurable: true,
@@ -89,7 +89,7 @@ export const bind1 = function (proxy, original, path, el, format) {
       if (format) {
         format(el, v);
       } else {
-        el.get(0).textContent = v;
+        el.textContent = v;
       }
     },
     configurable: true,

@@ -9,8 +9,9 @@ export default function brainboxurl(annotation, path, username) {
     typeOfBinding: 1,
     path: path,
     format: function (e, d) {
-      e.get(0).querySelectorAll('a')[0].href = location.origin + '/mri?url=' + d;
-      e.get(0).querySelectorAll('a')[0].innerHTML = d.split('/').pop();
+      const link = e.querySelector('a');
+      link.href = location.origin + '/mri?url=' + d;
+      link.innerHTML = d.split('/').pop();
     }
   };
 

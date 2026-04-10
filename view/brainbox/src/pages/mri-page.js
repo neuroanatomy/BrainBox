@@ -101,15 +101,15 @@ if ($.isEmptyObject(mriInfo)) {
 
       // Bind general information
       //--------------------------
-      tw.bind2(infoProxy, BrainBox.info, 'name', $('#name'));
-      tw.bind1(infoProxy, BrainBox.info, 'source', $('#source'));
-      tw.bind1(infoProxy, BrainBox.info, 'included', $('#included'), tw.dateFormat);
+      tw.bind2(infoProxy, BrainBox.info, 'name', document.getElementById('name'));
+      tw.bind1(infoProxy, BrainBox.info, 'source', document.getElementById('source'));
+      tw.bind1(infoProxy, BrainBox.info, 'included', document.getElementById('included'), tw.dateFormat);
 
 
       // Bind volume-type annotations
       //------------------------------
       volAnnParam = {
-        table: $('table#annotations'),
+        table: document.querySelector('table#annotations'),
         infoProxy: infoProxy,
         info: BrainBox.info,
         trTemplate: $.map([
@@ -262,7 +262,7 @@ if ($.isEmptyObject(mriInfo)) {
       ];
 
       textAnnParam = {
-        table: $('table#textAnnotations'),
+        table: document.querySelector('table#textAnnotations'),
         infoProxy: infoProxy,
         info: textAnnotationsArray,
         trTemplate: trTemplate,

@@ -16,16 +16,16 @@ export default function hidden(annotation, path, username) {
     path: path,
     format: function(e, d) {
       if(typeof d.data === 'undefined') {
-        e.get(0).innerHTML = '';
+        e.innerHTML = '';
       } else {
-        e.get(0).innerHTML = '<span>'+d.data+'</span>';
+        e.innerHTML = '<span>'+d.data+'</span>';
       }
     },
     parse: function(e, d) {
       const obj2 = d;
       obj2.modified = (new Date()).toJSON();
       obj2.modifiedBy = username;
-      obj2.data = e.get(0).textContent;
+      obj2.data = e.textContent;
 
       return obj2;
     }
