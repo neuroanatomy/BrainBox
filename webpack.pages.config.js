@@ -20,6 +20,7 @@ module.exports = (env, argv) => ({
   optimization: {
     minimizer: [
       new TerserPlugin({
+        sourceMap: true,
         terserOptions: {
           mangle: false
         }
