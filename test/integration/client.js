@@ -100,6 +100,13 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
       assert.equal('Cerebrum', await page.evaluate((el) => el.textContent, annotation));
       const annotationValue = await page.waitForSelector('#volAnnotations tbody tr td:last-child');
       assert.equal('cerebellum.json', await page.evaluate((el) => el.textContent, annotationValue));
+
+      // Verify that the project files table populates via twoWayBinding
+      await page.waitForSelector('#projectFiles tbody tr', { timeout: 10000 });
+      const fileCount = await page.evaluate(
+        () => document.querySelectorAll('#projectFiles tbody tr').length
+      );
+      assert.isAtLeast(fileCount, 1, 'Project files table should have at least one row');
     }).timeout(U.noTimeout); // OPEN PROJECT SETTINGS PAGE FOR EXISTING PROJECT
 
     it('Project Settings page for an existing project renders as expected', async function () {
@@ -147,6 +154,15 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
       assert.equal(U.userFoo.name, await description.$eval('h1', ((node) => node.innerText)));
       assert.equal(U.userFoo.nickname, await description.$eval('h2', ((node) => node.innerText)));
       assert.equal('1 Projects ', await page.evaluate((el) => el.childNodes[4].textContent, description));
+
+      // Verify that v-for table rows actually render (catches Terser mangling bug)
+      const projectRow = await page.waitForSelector('#projects tbody tr', { timeout: 10000 });
+      assert.isNotNull(projectRow, 'Project table should have at least one row');
+      assert.equal(1, await page.evaluate(() => document.querySelectorAll('#projects tbody tr').length));
+      const projectName = await page.evaluate(
+        () => document.querySelector('#projects tbody tr td:first-child').innerText
+      );
+      assert.include(projectName, U.projectTest.shortname);
 
     }).timeout(U.noTimeout);
 
