@@ -7,7 +7,7 @@ module.exports = {
   entry: {
     brainbox: './view/brainbox/src/brainbox.js'
   },
-  devtool: 'eval-source-map',
+  devtool: 'source-map',
   plugins: [
     new CleanWebpackPlugin(['dist']),
     new HtmlWebpackPlugin({

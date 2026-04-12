@@ -7,7 +7,7 @@ module.exports = {
   entry: {
     atlasmaker: './view/atlasmaker/src/atlasmaker.js'
   },
-  devtool: 'eval-source-map',
+  devtool: 'source-map',
   plugins: [new CleanWebpackPlugin(['dist'])],
   output: {
     filename: 'atlasmaker.js',

@@ -14,7 +14,7 @@ import 'jquery-ui/ui/core';
 import 'jquery-ui/ui/widgets/autocomplete';
 
 import * as tw from '../twoWayBinding';
-
+import { getData, setData } from '../../../shared/domData';
 import $ from 'jquery';
 
 // let mriInfoOrig;
@@ -42,10 +42,10 @@ const receiveMetadata = function (data) {
 // Prevent zoom on double tap
 $('body').on('touchstart', (e) => {
   const t2 = e.timeStamp;
-  const t1 = $(e.currentTarget).data('lastTouch') || t2;
+  const t1 = getData(e.currentTarget, 'lastTouch') || t2;
   const dt = t2 - t1;
   const fingers = e.originalEvent.touches.length;
-  $(e.currentTarget).data('lastTouch', t2);
+  setData(e.currentTarget, {lastTouch: t2});
   if (!dt || dt > 500 || fingers > 1) {
     return; // not double-tap
   }

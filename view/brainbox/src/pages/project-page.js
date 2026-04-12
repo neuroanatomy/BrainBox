@@ -12,6 +12,7 @@ import '../style/textAnnotations.css';
 import '../style/ui.css';
 import '../style/project-style.css';
 
+import { getData, setData } from '../../../shared/domData.js';
 import freeform from '../tools/freeform.js';
 import hidden from '../tools/hidden.js';
 import multiple from '../tools/multiple.js';
@@ -220,12 +221,13 @@ const loadProjectFile = function (index) {
  * @returns {void}
  */
 const resizeButton = function (p) {
-  if ($('#resizeButton').data('flag') === 0) {
-    $('#resizeButton').data({ flag: 1, x0: p.x, y0: p.y });
-  } else if ($('#resizeButton').data('flag') === 1) {
-    const d = $('#resizeButton').data('x0') - p.x;
+  const resizeButtonElem = document.getElementById('resizeButton');
+  if (getData(resizeButtonElem, 'flag') === 0) {
+    setData(resizeButtonElem, { flag: 1, x0: p.x, y0: p.y });
+  } else if (getData(resizeButtonElem, 'flag') === 1) {
+    const d = getData(resizeButtonElem, 'x0') - p.x;
     $('#left').css({ 'flex-basis': $('#left').width() - d });
-    $('#resizeButton').data({ x0: p.x, y0: p.y });
+    setData(resizeButtonElem, { x0: p.x, y0: p.y });
     AtlasMakerWidget.resizeWindow();
   }
 };
@@ -233,10 +235,10 @@ const resizeButton = function (p) {
 // Prevent zoom on double tap
 $('body').on('touchstart', function preventZoom(e) {
   const t2 = e.timeStamp;
-  const t1 = $(e.target).data('lastTouch') || t2;
+  const t1 = getData(e.target, 'lastTouch') || t2;
   const dt = t2 - t1;
   const fingers = e.originalEvent.touches.length;
-  $(e.target).data('lastTouch', t2);
+  setData(e.target, {lastTouch: t2});
   if (!dt || dt > 500 || fingers > 1) { return; } // not double-tap
   e.preventDefault(); // double tap - prevent the zoom
   // also synthesize click events we just swallowed up
@@ -264,11 +266,12 @@ for (const k of projectInfo.annotations.list) {
 
 $('#projectName').text(projectInfo.name);
 
-$('#resizeButton').data({ flag: -1, x0: 0, y0: 0 });
-$('#resizeButton').on('mousedown touchstart', function (e) { e.preventDefault(); $(e.target).data({ flag: 0, x0: e.pageX, y0: e.pageY }); });
+const resizeButtonElem = document.getElementById('resizeButton');
+setData(resizeButtonElem, { flag: -1, x0: 0, y0: 0 });
+$('#resizeButton').on('mousedown touchstart', function (e) { e.preventDefault(); setData(e.target, { flag: 0, x0: e.pageX, y0: e.pageY }); });
 $('body').on('mousemove', function (e) { resizeButton({ x: e.pageX, y: e.pageY }); });
 $('body').on('touchmove', function (e) { resizeButton({ x: e.originalEvent.changedTouches[0].pageX, y: e.originalEvent.changedTouches[0].pageY }); });
-$('body').on('mouseup touchend', function () { $('#resizeButton').data({ flag: -1 }); });
+$('body').on('mouseup touchend', function () { setData(resizeButtonElem, { flag: -1 }); });
 
 $('#addProject').click(function () { location.assign('/project/new'); });
 $('#settings').click(function () {
@@ -296,6 +299,7 @@ const receiveMetadata = function (data) {
 BrainBox.initBrainBox()
   // load label sets
   .then(function () {
+
     return BrainBox.loadLabelsets();
   })
   // subscribe to metadata changes received by AtlasMaker
@@ -392,6 +396,7 @@ BrainBox.initBrainBox()
   })
   // load the 1st file
   .then(function () {
+
     return loadProjectFile(0);
   })
   // configure the UI

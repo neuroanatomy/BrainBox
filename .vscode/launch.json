@@ -17,6 +17,18 @@
             }
         },
         {
+            "type": "chrome",
+            "request": "launch",
+            "name": "debug frontend",
+            "url": "http://localhost:3001",
+            "webRoot": "${workspaceFolder}",
+            "sourceMapPathOverrides": {
+                "webpack://AtlasMakerWidget/*": "${workspaceFolder}/*",
+                "webpack://BrainBox/*": "${workspaceFolder}/*",
+                "webpack://*": "${workspaceFolder}/*"
+            }
+        },
+        {
             "type": "node",
             "request": "launch",
             "name": "run tests",

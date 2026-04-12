@@ -5,6 +5,7 @@
 /* it seems that this file is not used currently */
 /* eslint-disable */
 
+import { getData, setData } from '../../shared/domData.js';
 import pako from 'pako';
 
 /**
@@ -317,13 +318,14 @@ export const AtlasMakerInteraction = {
      */
   prevSlice: function () {
     const me = AtlasMakerWidget;
-    let x = $('#slice').data('val')-1;
+    const elem = document.getElementById('slice');
+    let x = getData(elem, 'val') - 1;
     if(x<0) { x = 0; }
     x = Math.round(x);
-    if(x !== $('#slice').data('val')) {
-      $('#slice').data('val', x);
+    if(x !== getData(elem, 'val')) {
+      setData(elem, { val: x });
       me.changeSlice(x);
-      $('#slice').trigger('updateDisplay');
+      elem.dispatchEvent(new CustomEvent('updateDisplay'));
     }
   },
 
@@ -333,14 +335,15 @@ export const AtlasMakerInteraction = {
      */
   nextSlice: function () {
     const me = AtlasMakerWidget;
-    const max = $('#slice').data('max');
-    let x = $('#slice').data('val') + 1;
+    const elem = document.getElementById('slice');
+    const max = getData(elem, 'max');
+    let x = getData(elem, 'val') + 1;
     if(x>max) { x = max; }
     x = Math.round(x);
-    if(x !== $('#slice').data('val')) {
-      $('#slice').data('val', x);
+    if(x !== getData(elem, 'val')) {
+      setData(elem, { val: x });
       me.changeSlice(x);
-      $('#slice').trigger('updateDisplay');
+      elem.dispatchEvent(new CustomEvent('updateDisplay'));
     }
   },
 

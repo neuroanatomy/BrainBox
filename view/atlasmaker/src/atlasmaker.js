@@ -380,29 +380,29 @@ const me = {
     $(document).keydown(function(e) { me.keyDown(e); });
 
     // event connect: configure annotation tools
-    $('#tools-minimized').click(function() { me.changeToolbarDisplay('maximize'); });
-    me.push($('.push#display-minimize'), function() { me.changeToolbarDisplay('minimize'); });
-    me.push($('.push#display-left'), function() { me.changeToolbarDisplay('left'); });
-    me.push($('.push#display-right'), function() { me.changeToolbarDisplay('right'); });
+    document.getElementById('tools-minimized').addEventListener('click', function() { me.changeToolbarDisplay('maximize'); });
+    me.push(document.getElementById('display-minimize'), function() { me.changeToolbarDisplay('minimize'); });
+    me.push(document.getElementById('display-left'), function() { me.changeToolbarDisplay('left'); });
+    me.push(document.getElementById('display-right'), function() { me.changeToolbarDisplay('right'); });
     me.initToolsDrag();
     me.initTextInputResize();
-    me.slider($('.slider#slice'), function(x) { me.changeSlice(Math.round(x)); });
-    me.chose($('.chose#plane'), me.changeView);
-    me.chose($('.chose#paintTool'), me.changeTool);
-    me.chose($('.chose#penSize'), me.changePenSize);
-    me.toggle($('.toggle#precise'), me.togglePreciseCursor);
-    me.toggle($('.toggle#fill'), me.toggleFill);
-    me.toggle($('.toggle#fullscreen'), me.toggleFullscreen);
-    me.chose3state($('.chose#text'), me.toggleTextInput);
-    me.push($('.push#3drender'), me.render3D);
-    me.push($('.push#link'), me.link);
-    me.push($('.push#upload'), me.upload);
-    me.push($('.push#download'), me.download);
-    me.push($('.push#color'), me.color);
-    me.push($('.push#undo'), me.sendUndoMessage);
-    me.push($('.push#save'), me.sendSaveMessage);
-    me.push($('.push#prev'), me.prevSlice);
-    me.push($('.push#next'), me.nextSlice);
+    me.slider(document.getElementById('slice'), function(x) { me.changeSlice(Math.round(x)); });
+    me.chose(document.getElementById('plane'), me.changeView);
+    me.chose(document.getElementById('paintTool'), me.changeTool);
+    me.chose(document.getElementById('penSize'), me.changePenSize);
+    me.toggle(document.getElementById('precise'), me.togglePreciseCursor);
+    me.toggle(document.getElementById('fill'), me.toggleFill);
+    me.toggle(document.getElementById('fullscreen'), me.toggleFullscreen);
+    me.chose3state(document.getElementById('text'), me.toggleTextInput);
+    me.push(document.getElementById('3drender'), me.render3D);
+    me.push(document.getElementById('link'), me.link);
+    me.push(document.getElementById('upload'), me.upload);
+    me.push(document.getElementById('download'), me.download);
+    me.push(document.getElementById('color'), me.color);
+    me.push(document.getElementById('undo'), me.sendUndoMessage);
+    me.push(document.getElementById('save'), me.sendSaveMessage);
+    me.push(document.getElementById('prev'), me.prevSlice);
+    me.push(document.getElementById('next'), me.nextSlice);
 
     // event connect: chat message input
     $('#msg').keypress((e) => { me.onkey(e); });

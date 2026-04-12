@@ -1,4 +1,5 @@
 /* global AtlasMakerWidget $ */
+import { getData, setData } from '../../../../shared/domData.js';
 import html from './index.html';
 
 // append HTML
@@ -14,44 +15,61 @@ el.innerHTML = html;
 AtlasMakerWidget.container.querySelector('#resizable').appendChild(el);
 
 // Transparency
-AtlasMakerWidget.slider($('.slider#alphaLevel'), function (x) {
-  $('#alphaLevel').data('val', x);
-  $('#alphaLevel .thumb')[0].style.left = x + '%';
+AtlasMakerWidget.slider(document.getElementById('alphaLevel'), function (x) {
+  const alphaLevelElem = document.getElementById('alphaLevel');
+  setData(alphaLevelElem, {val: x});
+  alphaLevelElem.querySelector('.thumb').style.left = x + '%';
   AtlasMakerWidget.alphaLevel = x / 100;
   AtlasMakerWidget.drawImages();
 });
-$('.slider#alphaLevel').data({ max: 100, val: 50 });
-$('#alphaLevel .thumb')[0].style.left = (AtlasMakerWidget.alphaLevel * 100) + '%';
+
+{
+  const alphaLevelElem = document.getElementById('alphaLevel');
+  setData(alphaLevelElem, { max: 100, val: 50 });
+  alphaLevelElem.querySelector('.thumb').style.left = (AtlasMakerWidget.alphaLevel * 100) + '%';
+}
 
 // Brightness
-AtlasMakerWidget.slider($('.slider#minLevel'), function (x) {
-  $('#minLevel').data('val', x);
-  $('#minLevel .thumb')[0].style.left = x + '%';
+AtlasMakerWidget.slider(document.getElementById('minLevel'), function (x) {
+  const minLevelElem = document.getElementById('minLevel');
+  setData(minLevelElem, {val: x});
+  minLevelElem.querySelector('.thumb').style.left = x + '%';
 
   const b = (2 * x / 100);
-  const c = (2 * $('#maxLevel').data('val') / 100);
+  const maxLevel = document.getElementById('maxLevel');
+  const c = (2 * getData(maxLevel, 'val') / 100);
   $('#canvas').css({
     'webkit-filter': 'brightness(' + b + ') contrast(' + c + ')',
     'filter': 'brightness(' + b + ') contrast(' + c + ')'
   });
 });
-$('.slider#minLevel').data({ max: 100, val: 50 });
-$('#minLevel .thumb')[0].style.left = '50%';
+
+{
+  const minLevelElem = document.getElementById('minLevel');
+  setData(minLevelElem, { max: 100, val: 50 });
+  minLevelElem.querySelector('.thumb').style.left = '50%';
+}
 
 // Contrast
-AtlasMakerWidget.slider($('.slider#maxLevel'), function (x) {
-  $('#maxLevel').data('val', x);
-  $('#maxLevel .thumb')[0].style.left = x + '%';
+AtlasMakerWidget.slider(document.getElementById('maxLevel'), function (x) {
+  const maxLevelElem = document.getElementById('maxLevel');
+  setData(maxLevelElem, {val: x});
+  maxLevelElem.querySelector('.thumb').style.left = x + '%';
 
-  const b = (2 * $('#minLevel').data('val') / 100);
+  const minLevel = document.getElementById('minLevel');
+  const b = (2 * getData(minLevel, 'val') / 100);
   const c = (2 * x / 100);
   $('#canvas').css({
     'webkit-filter': 'brightness(' + b + ') contrast(' + c + ')',
     'filter': 'brightness(' + b + ') contrast(' + c + ')'
   });
 });
-$('.slider#maxLevel').data({ max: 100, val: 50 });
-$('#maxLevel .thumb')[0].style.left = '50%';
+
+{
+  const maxLevelElem = document.getElementById('maxLevel');
+  setData(maxLevelElem, { max: 100, val: 50 });
+  maxLevelElem.querySelector('.thumb').style.left = '50%';
+}
 
 const observer = new MutationObserver(function (mutations) {
   mutations.forEach(function (mutation) {

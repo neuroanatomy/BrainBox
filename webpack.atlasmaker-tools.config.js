@@ -45,7 +45,7 @@ console.log('entries:', entries);
 module.exports = {
   mode: 'production',
   entry: entries,
-  devtool: 'eval-source-map',
+  devtool: 'source-map',
   plugins: [new CleanWebpackPlugin(['dist'])],
   output: {
     filename: '[name].js',

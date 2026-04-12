@@ -1,5 +1,14 @@
-/* global $ */
 /*! AtlasMaker: User Interface Elements */
+
+import { getData, setData } from '../../shared/domData.js';
+
+/**
+ * @function unwrap
+ * @description Unwrap a jQuery object to a raw DOM element, if needed
+ * @param {object} el The object to unwrap
+ * @returns {object} The unwrapped object
+ */
+const unwrap = (el) => ((el && el.jquery) ? el[0] : el);
 
 /**
  * @page AtlasMaker: User Interface Elements
@@ -8,30 +17,27 @@ export const AtlasMakerUI = {
 
   /**
      * @function slider
+     * @description Initialise a 'slider' control
      * @param {object} elem DOM element
      * @param {function} callback Function called after the slider position is updated
      * @returns {void}
      */
   slider: function (elem, callback) {
-    // Initialise a 'slider' control
-
-    $(elem).data({
-      drag:false,
-      val:0,
-      max:100
-    });
+    elem = unwrap(elem);
+    if (!elem) { return; }
+    setData(elem, { drag: false, val: 0, max: 100 });
 
     const movex = (el, clientX) => {
-      if ($(el).data('drag') === true) {
-        const R = $(el).find('.track')[0].getBoundingClientRect();
+      if (getData(el, 'drag') === true) {
+        const R = el.querySelector('.track').getBoundingClientRect();
         let x = (clientX-R.left)/R.width;
         if(x<0) { x=0; }
         if(x>1) { x=1; }
-        x *= $(el).data('max');
-        if(x !== $(el).data('val')) {
-          const max=$(el).data('max');
-          $(el).data('val', x);
-          $(el).find('.thumb')[0].style.left=(x*100/max)+'%';
+        x *= getData(el, 'max');
+        if(x !== getData(el, 'val')) {
+          const max=getData(el, 'max');
+          setData(el, { val: x });
+          el.querySelector('.thumb').style.left = (x * 100 / max) + '%';
 
           return callback(x);
         }
@@ -39,37 +45,41 @@ export const AtlasMakerUI = {
     };
 
     const updateDisplay = () => {
-      const val=$(elem).data('val');
-      const max=$(elem).data('max');
-      const [thumb] = $(elem).find('.thumb');
+      const val = getData(elem, 'val');
+      const max = getData(elem, 'max');
+      const thumb = elem.querySelector('.thumb');
       thumb.style.left = (val*100/max) + '%';
     };
 
-    $(document).on('mousemove', (ev) => { movex(elem, ev.clientX); });
-    $(document).on('touchmove', (ev) => { movex(elem, ev.originalEvent.changedTouches[0].pageX); });
-    $(document).on('mouseup touchend', () => { $(elem).data({drag:false}); });
-    $(elem).on('mousedown touchstart', (ev) => { ev.preventDefault(); $(elem).data({drag:true}); });
-    $(elem).on('updateDisplay', () => { updateDisplay(); });
+    document.addEventListener('mousemove', (ev) => { movex(elem, ev.clientX); });
+    document.addEventListener('touchmove', (ev) => { movex(elem, ev.changedTouches[0].pageX); });
+    document.addEventListener('mouseup', () => { setData(elem, { drag: false }); });
+    document.addEventListener('touchend', () => { setData(elem, { drag: false }); });
+    elem.addEventListener('mousedown', (ev) => { ev.preventDefault(); setData(elem, { drag: true }); });
+    elem.addEventListener('touchstart', (ev) => { ev.preventDefault(); setData(elem, { drag: true }); });
+    elem.addEventListener('updateDisplay', () => { updateDisplay(); });
   },
 
   /**
      * @function chose
+     * @description Initialise a 'chose' control
      * @param {object} elem DOM element
      * @param {function} callback Function called after a button is pressed
      * @returns {void}
      */
   chose: function (elem, callback) {
-    // Initialise a 'chose' control
-    const ch=$(elem).find('.a');
-    ch.each(function(c, d) {
-      $(d).click(function() {
-        if($(d).hasClass('pressed')) {
-          return callback($(d).attr('title'));
+    elem = unwrap(elem);
+    if (!elem) { return; }
+    const ch = elem.querySelectorAll('.a');
+    ch.forEach((d) => {
+      d.addEventListener('click', () => {
+        if (d.classList.contains('pressed')) {
+          return callback(d.getAttribute('title'));
         }
-        ch.each(function(c1, d1) { $(d1).removeClass('pressed'); });
-        $(d).addClass('pressed');
+        ch.forEach((d1) => { d1.classList.remove('pressed'); });
+        d.classList.add('pressed');
         if(callback) {
-          return callback($(d).attr('title'));
+          return callback(d.getAttribute('title'));
         }
       });
     });
@@ -77,24 +87,26 @@ export const AtlasMakerUI = {
 
   /**
      * @function chose3state
+     * @description Initialise a 'chose3state' control
      * @param {object} elem DOM element
      * @param {function} callback Function called after a button is pressed
      * @returns {void}
      */
   chose3state: function (elem, callback) {
-    // Initialise a 'chose3state' control
-    const ch=$(elem).find('.a');
-    ch.each(function(c, d) {
-      $(d).click(function() {
-        if($(d).hasClass('pressed')) {
-          $(d).removeClass('pressed');
+    elem = unwrap(elem);
+    if (!elem) { return; }
+    const ch = elem.querySelectorAll('.a');
+    ch.forEach((d) => {
+      d.addEventListener('click', () => {
+        if (d.classList.contains('pressed')) {
+          d.classList.remove('pressed');
 
           return callback('none');
         }
-        ch.each(function(c1, d1) { $(d1).removeClass('pressed'); });
-        $(d).addClass('pressed');
-        if(callback) {
-          return callback($(d).attr('title'));
+        ch.forEach((d1) => { d1.classList.remove('pressed'); });
+        d.classList.add('pressed');
+        if (callback) {
+          return callback(d.getAttribute('title'));
         }
       });
     });
@@ -102,34 +114,34 @@ export const AtlasMakerUI = {
 
   /**
      * @function toggle
+     * @description Initialise a 'toggle' control
      * @param {object} elem DOM element
      * @param {function} callback Function called after the slider position is updated
      * @returns {void}
      */
   toggle: function (elem, callback) {
-    // Initialise a 'toggle' control
-    $(elem).click(function() {
-      if($(elem).hasClass('pressed')) {
-        $(elem).removeClass('pressed');
-      } else {
-        $(elem).addClass('pressed');
-      }
-      if(callback) {
-        return callback($(elem).hasClass('pressed'));
+    elem = unwrap(elem);
+    if (!elem) { return; }
+    elem.addEventListener('click', () => {
+      elem.classList.toggle('pressed');
+      if (callback) {
+        return callback(elem.classList.contains('pressed'));
       }
     });
   },
 
   /**
      * @function push
+     * @description Initialise a 'push' control, with 200ms throttle
      * @param {object} elem DOM element
      * @param {function} callback Function called after the slider position is updated
      * @returns {void}
      */
   push: function (elem, callback) {
-    // Initialise a 'push' control, with 200ms throttle
+    elem = unwrap(elem);
+    if (!elem) { return; }
     let lastClickTime = 0;
-    $(elem).click(function() {
+    elem.addEventListener('click', () => {
       const now = Date.now();
       if(now - lastClickTime < 200) { return; }
       lastClickTime = now;
