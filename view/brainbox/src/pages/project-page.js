@@ -170,12 +170,12 @@ const loadProjectFile = function (index) {
             table: document.querySelector('table#volAnnotations'),
             infoProxy: annvolProxy,
             info: BrainBox.info,
-            trTemplate: $.map([
+            trTemplate: [
               '<tr>',
               ' <td></td>', // volume name
               ' <td></td>', // volume label set
               '</tr>'
-            ], function (o) { return o; }).join(),
+            ].join(''),
             objTemplate: [
               {
                 typeOfBinding: 1,
@@ -197,12 +197,25 @@ const loadProjectFile = function (index) {
 
           // select the first annotation by default
           // (should be read from project settings)
-          $('#annotations tbody tr:eq(0)').addClass('selected');
+          // $('#annotations tbody tr:eq(0)').addClass('selected');
+          const firstRow = document.querySelector('#annotations tbody tr');
+          if (firstRow) {
+            firstRow.classList.add('selected');
+          }
 
           AtlasMakerWidget.User.projectPage = projectInfo.shortname;
           AtlasMakerWidget.sendUserDataMessage(JSON.stringify({ projectPage: projectInfo.shortname }));
 
           resolve();
+        })
+        .catch(function (err) {
+          console.error(err);
+          $('#loadingIndicator').hide();
+          const textLayer = AtlasMakerWidget.container.querySelector('#text-layer');
+          if (textLayer) {
+            textLayer.innerHTML = '<text x=\'5\' y=\'15\' fill=\'white\'>ERROR: ' + err.message + '</text>';
+          }
+          reject(err);
         });
     } else {
       const msg = AtlasMakerWidget.container.querySelector('#text-layer');
@@ -392,7 +405,11 @@ BrainBox.initBrainBox()
     appendFilesToProject(list);
 
     // mark first row as selected
-    $('#projectFiles tbody tr:eq(0)').addClass('selected');
+    // $('#projectFiles tbody tr:eq(0)').addClass('selected');
+    const firstRow = document.querySelector('#projectFiles tbody tr');
+    if (firstRow) {
+      firstRow.classList.add('selected');
+    }
   })
   // load the 1st file
   .then(function () {
@@ -410,7 +427,6 @@ BrainBox.initBrainBox()
     queryFiles();
   })
   .catch((err) => {
-    $('#msgLog').html('ERROR: Can\'t load data. ' + err);
     console.error(err);
   });
 
@@ -452,7 +468,7 @@ $(document).on('click touchstart', '#projectFiles tbody tr', function (e) {
     // remove table with previous annotations
     $('table#volAnnotations tbody').html('');
     // load and bind new file
-    loadProjectFile(index);
+    loadProjectFile(index).catch(function () { /* handled in loadProjectFile */ });
   }
 });
 
@@ -483,7 +499,7 @@ $(document).on('keydown', function (e) {
   $('table#volAnnotations tbody').html('');
 
   // load and bind new file
-  loadProjectFile(index);
+  loadProjectFile(index).catch(function () { /* handled in loadProjectFile */ });
 });
 
 // listen to changes in selected volume annotation

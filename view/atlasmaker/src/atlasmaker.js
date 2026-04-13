@@ -89,6 +89,7 @@ const me = {
   // brainDatatype: null, // UNUSED: REMOVE!
   //}
 
+  _requestMRIId: 0, // counter to cancel stale _requestMRIInfo polls
   annotationLength: 0, // real, how much the user has drawn in the current atlas
   measureLength: null, // real, the result produced by the length measurement tool
   User: {
@@ -516,9 +517,18 @@ const me = {
 
   _requestMRIInfo: function (source) {
     const url = me._removeVariablesFromURL(source);
+    me._requestMRIId += 1;
+    const myRequestId = me._requestMRIId;
     $('#loadingIndicator p').text('Loading... ');
     const pr = new Promise(function(resolve, reject) {
       const timer = setInterval( function () {
+        if(me._requestMRIId !== myRequestId) {
+          clearInterval(timer);
+          console.log('requestMRIInfo cancelled: a newer request superseded this one');
+          reject(new Error('source changed'));
+
+          return;
+        }
         console.log('polling for data...', url);
         $.post(me.hostname + '/mri/json', {url})
           .done(function(info) {
@@ -527,12 +537,6 @@ const me = {
               clearInterval(timer);
               resolve(info);
             } else if(info.success === 'downloading') {
-              if(me.User.source !== url) {
-                clearInterval(timer);
-                reject(new Error('source changed. Probably no longer requested?'));
-
-                return;
-              }
               $('#loadingIndicator p').text('Loading... '+parseInt(info.cur/info.len*100, 10)+'%');
             } else {
               console.log('ERROR: requestMRIInfo', info);
@@ -574,11 +578,7 @@ const me = {
   _configureMRI: async function (info, index) {
     me.User.source = info.source;
     let info2;
-    try {
-      info2 = await me._requestMRIInfo(info.source);
-    } catch(err) {
-      throw new Error(err);
-    }
+    info2 = await me._requestMRIInfo(info.source);
 
     if(!info.dim) {
       // the mri object used to call this function does not have a 'dim'
@@ -655,19 +655,11 @@ const me = {
    */
   // eslint-disable-next-line max-statements
   configureAtlasMaker: async function (info, index) {
-    let info2;
-    let res;
-    let labels;
-
     // configure MRI and ontology
-    try {
-      info2 = await me._configureMRI(info, index);
-      info = info2;
-      res = await fetch(me.hostname + '/labels/' + info.mri.atlas[index].labels);
-      labels = await res.json();
-    } catch (err) {
-      throw new Error(err);
-    }
+    const info2 = await me._configureMRI(info, index);
+    info = info2;
+    const res = await fetch(me.hostname + '/labels/' + info.mri.atlas[index].labels);
+    const labels = await res.json();
     me.configureOntology(labels);
     me.User.penValue=me.ontology.labels[0].value;
 

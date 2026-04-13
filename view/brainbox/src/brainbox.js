@@ -109,7 +109,7 @@ export const BrainBox = {
         });
 
       // store state on exit
-      $(window).on('unload', BrainBox.unload);
+      window.addEventListener('unload', BrainBox.unload);
     });
 
     return pr;
@@ -124,13 +124,14 @@ export const BrainBox = {
     // eslint-disable-next-line max-statements
     const pr = new Promise(function (resolve, reject) {
       const index = param.annotationItemIndex || 0;
+      const msgLog = document.getElementById('msgLog');
 
       // Copy MRI from source
-      $('#msgLog').html('<p>Downloading from source to server...');
+      if (msgLog) { msgLog.innerHTML = '<p>Downloading from source to server...'; }
 
       // Configure MRI into atlasmaker
       if (param.info.success === false) {
-        $('#msgLog').append('<p>ERROR: ' + param.info.message + '.');
+        if (msgLog) { msgLog.innerHTML += '<p>ERROR: ' + param.info.message + '.'; }
         console.log('<p>ERROR: ' + param.info.message + '.');
         reject(new Error(param.info.message));
 
@@ -138,7 +139,7 @@ export const BrainBox = {
       }
       BrainBox.info = param.info;
 
-      $('#msgLog').append('<p>Downloading from server...</p>');
+      if (msgLog) { msgLog.innerHTML += '<p>Downloading from server...</p>'; }
 
       /**
             * @todo Check it these two lines are of any use...
@@ -374,17 +375,26 @@ export const BrainBox = {
      */
   selectAnnotationTableRow: function selectAnnotationTableRow(index, param) {
     const { table } = param;
-    const currentIndex = $(table)
-      .find('tr.selected')
-      .index();
+
+
+    const selectedRow = table.querySelector('tr.selected');
+    const currentIndex = selectedRow
+      ? [...selectedRow.parentNode.children].indexOf(selectedRow)
+      : -1;
+
+
     if (index >= 0 && currentIndex !== index) {
       console.log('bb>>  change selected annotation');
-      $(table)
-        .find('tr')
-        .removeClass('selected');
-      $(table)
-        .find('tbody tr:eq(' + index + ')')
-        .addClass('selected');
+
+      table.querySelectorAll('tr.selected').forEach((row) => {
+        row.classList.remove('selected');
+      });
+
+      const rows = table.querySelectorAll('tbody tr');
+      if (rows[index]) {
+        rows[index].classList.add('selected');
+      }
+
       AtlasMakerWidget.configureAtlasMaker(BrainBox.info, index);
     }
   },
@@ -396,7 +406,8 @@ export const BrainBox = {
      * @returns {void}
      */
   appendAnnotationTableRow: function appendAnnotationTableRow(irow, param) {
-    $(param.table).append(param.trTemplate);
+    const tbody = param.table.querySelector('tbody') || param.table;
+    tbody.insertAdjacentHTML('beforeend', param.trTemplate);
 
     for (let icol = 0; icol < param.objTemplate.length; icol++) {
       switch (param.objTemplate[icol].typeOfBinding) {
@@ -431,7 +442,8 @@ export const BrainBox = {
      * @returns {void}
      */
   appendAnnotationTableRow2: function appendAnnotationTableRow2(irow, iarr, param) {
-    $(param.table).append(param.trTemplate);
+    const tbody = param.table.querySelector('tbody') || param.table;
+    tbody.insertAdjacentHTML('beforeend', param.trTemplate);
 
     for (let icol = 0; icol < param.objTemplate.length; icol++) {
       switch (param.objTemplate[icol].typeOfBinding) {
@@ -515,7 +527,7 @@ export const BrainBox = {
           }
         }
 
-        $('#atlasmaker').append([
+        document.getElementById('atlasmaker').innerHTML += [
           `<a href="${BrainBox.hostname}/mri?url=${param.url}">`,
           '<div style="',
           'position:absolute;',
@@ -531,7 +543,7 @@ export const BrainBox = {
           `<img style="width:32px;position: absolute;left:50%;top:50%;transform:translate(-50%, -50%)" src="${BrainBox.hostname}/img/brainbox-logo-small_noFont.svg"/>`,
           '</div>',
           '</a>'
-        ].join(''));
+        ].join('');
 
         return BrainBox.configureBrainBox(param);
       })
