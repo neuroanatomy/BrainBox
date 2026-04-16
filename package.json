@@ -67,6 +67,7 @@
     "sinon": "^11.1.1",
     "struct": "0.0.12",
     "structjs": "git+https://git@github.com/neuroanatomy/structjs.git",
+    "three": "^0.183.2",
     "tracer": "^0.8.15",
     "url": "^0.11.0",
     "validator": "^13.7.0",
