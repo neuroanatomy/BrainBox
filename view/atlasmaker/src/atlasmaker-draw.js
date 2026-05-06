@@ -145,7 +145,8 @@ export const AtlasMakerDraw = {
     const me = AtlasMakerWidget;
     if(me.brainImg.img
            && me.flagLoadingImg.view
-           && me.flagLoadingImg.slice) {
+           // eslint-disable-next-line no-undefined
+           && me.flagLoadingImg.slice !== undefined) {
       me.context.clearRect(0, 0, me.context.canvas.width, me.canvas.height);
       me.displayInformation();
 
