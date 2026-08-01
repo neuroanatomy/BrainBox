@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
+    <title>BrainBox</title>
+    <style>
+        /* Deliberately chromeless: this is rendered inside someone else's page,
+           in a box that may be only a few hundred pixels wide. The full `error`
+           template drags in the whole BrainBox site header, menu and login. */
+        html, body {
+            height: 100%;
+            margin: 0;
+            background-color: #222;
+            color: #eee;
+            font: 14px/1.5 "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        main {
+            box-sizing: border-box;
+            height: 100%;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        p {
+            margin: 0;
+            max-width: 34ch;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+<main>
+    <p>{{message}}</p>
+</main>
+</body>
+</html>

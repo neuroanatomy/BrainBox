@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
+    <title>{{title}}</title>
+    <style>
+        /* render3D.js brings its own stylesheet; this only guarantees it a
+           full, scroll-free box whether it is loaded standalone or inside the
+           embed's viewer area. */
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+        }
+    </style>
+</head>
+<body>
+
+<!-- The renderer owns this document: it replaces body's content, appends its
+     WebGL canvas, and sizes itself from window.innerWidth/innerHeight. That is
+     why the embed hosts it in an iframe rather than mounting it into a div. -->
+<script>var path = {{{path}}};</script>
+<script src="/lib/atlasmaker-tools/render3D.js"></script>
+
+</body>
+</html>

@@ -68,7 +68,7 @@ if ($.isEmptyObject(mriInfo)) {
   // const fullscreen = false;
   if (params.fullscreen) { params.fullscreen = (params.fullscreen === 'true'); }
 
-  $('#loadingIndicator').show();
+  AtlasMakerWidget.setViewerState({ state: 'loading' });
 
   // Load data
   BrainBox.initBrainBox()
@@ -189,7 +189,7 @@ if ($.isEmptyObject(mriInfo)) {
             AtlasMakerWidget.changePenColor(0);
             AtlasMakerWidget.brainImg.img = null; // to force redraw with new colors
             AtlasMakerWidget.drawImages();
-            $('#loadingIndicator').hide();
+            AtlasMakerWidget.setViewerState({ state: 'ready' });
           });
           break;
         }

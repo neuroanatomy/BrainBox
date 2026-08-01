@@ -108,8 +108,7 @@ const loadProjectFile = function (index) {
   const pr = new Promise((resolve, reject) => {
     const url = projectInfo.files.list[index].source;
     const params = { url: url, view: 'cor', slice: 180, fullscreen: false };
-    $('#loadingIndicator p').text('Loading...');
-    $('#loadingIndicator').show();
+    AtlasMakerWidget.setViewerState({ state: 'loading' });
 
     /**
        * @todo The mri entry may correspond to a file that has not been downloaded yet!
@@ -210,7 +209,7 @@ const loadProjectFile = function (index) {
         })
         .catch(function (err) {
           console.error(err);
-          $('#loadingIndicator').hide();
+          AtlasMakerWidget.setViewerState({ state: 'error', message: err.message });
           const textLayer = AtlasMakerWidget.container.querySelector('#text-layer');
           if (textLayer) {
             textLayer.innerHTML = '<text x=\'5\' y=\'15\' fill=\'white\'>ERROR: ' + err.message + '</text>';

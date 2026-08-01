@@ -6,9 +6,6 @@
     <title>Sloth_bear</title>
 	<link href='https://fonts.googleapis.com/css?family=Droid+Serif' rel='stylesheet' type='text/css'/>
 	<link href='https://fonts.googleapis.com/css?family=Quicksand' rel='stylesheet' type='text/css'>
-	<link rel="stylesheet" href="/stylesheets/atlasmaker.css" />
-	<link rel="stylesheet" href="/stylesheets/ui.css" />
-	<link rel="stylesheet" href="/stylesheets/loading-style.css" />
 	<style>
 body {
     color: #333;
@@ -59,8 +56,20 @@ img.picture {
     line-height: 1em;
     box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.5);
 }
-#stereotaxic {
-    width:512px;
+.brainbox-embed {
+    display:block;
+    width:100%;
+    max-width:560px;
+    height:420px; /* starting guess; the embed reports the height it actually needs */
+    border:0;
+    background:#222;
+    padding: 10px;
+}
+.embed-caption {
+    max-width:560px;
+    margin:6px 0 24px;
+    font-size:0.8rem;
+    color:#777;
 }
 	 </style>
 </head>
@@ -107,10 +116,25 @@ img.picture {
 
 				<!-- 3.1.4 Data -->
 				<!--DATAVIEW-->
-                <!-- AtlasMaker -->
-                <div id="stereotaxic" style="display:inline-block"></div>
-                <!-- End AtlasMaker -->
-				
+                <!-- BrainBox embed -->
+                <iframe class="brainbox-embed"
+                        src="/mri/embed?url=http%3A%2F%2Fbraincatalogue.org%2Fdata%2FSloth_bear%2FMRI-n4.nii.gz&amp;view=cor&amp;slice=180"
+                        title="Sloth bear brain, coronal view"
+                        allow="fullscreen"
+                        allowfullscreen></iframe>
+                <p class="embed-caption">Coronal view. Switch planes, view the 3D rendering, or go full screen &mdash; all without leaving this page.</p>
+
+                <!-- A second, independent embed - this one added with the
+                     one-line loader instead of a hand-written iframe. Two
+                     viewers on one page size themselves separately, whichever
+                     way they were added. -->
+                <script src="/embed.js"
+                        data-url="http://braincatalogue.org/data/Sloth_bear/MRI-n4.nii.gz"
+                        data-view="axi"
+                        data-max-height="520"></script>
+                <p class="embed-caption">Axial view, added with a single <code>&lt;script&gt;</code> tag and capped at 520&nbsp;px tall.</p>
+                <!-- End BrainBox embed -->
+
 				<!-- 3.1.5 Acknowledgments -->
 				<p><div id="acknowledgements"></div>
 			</div><!-- #content-->
@@ -141,21 +165,29 @@ img.picture {
 	</div>
 </footer> <!-- footer -->
 
-<script src='/lib/jquery-3.1.1.min.js'></script>
-<script src="/js/brainbox.js"></script>
-
 <script>
-BrainBox.widget({
-    url:"http://braincatalogue.org/data/Sloth_bear/MRI-n4.nii.gz",
-    view:"cor",
-    slice:180,
-    fullscreen:false
+// Give each BrainBox embed the height it asks for. An iframe's box is set by
+// this page, not by its content, so without this a viewer showing a plane with
+// a different aspect ratio would sit in a box of the wrong shape. The embed
+// still lays itself out correctly at any size, so this is polish, not a
+// requirement - drop this script and everything remains usable.
+window.addEventListener('message', function (event) {
+    if (!event.data || event.data.type !== 'brainbox:embed-resize') { return; }
+
+    var embeds = document.querySelectorAll('.brainbox-embed');
+    for (var i = 0; i < embeds.length; i += 1) {
+        // Identify the sender by its window, so one embed cannot resize
+        // another - and an unrelated page cannot resize any of them.
+        if (event.source !== embeds[i].contentWindow) { continue; }
+
+        var height = event.data.height;
+        if (typeof height !== 'number' || !isFinite(height) || height <= 0 || height > 2000) { return; }
+        embeds[i].style.height = height + 'px';
+
+        return;
+    }
 });
 </script>
-
-</body>
-</html>
-
 
 </body>
 </html>

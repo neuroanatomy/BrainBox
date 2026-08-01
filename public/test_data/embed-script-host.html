@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BrainBox script embed host (test fixture)</title>
+    <style>
+        body { margin: 0; padding: 24px; font: 15px/1.5 system-ui, sans-serif; }
+    </style>
+</head>
+<body>
+
+<h1>Script embed host</h1>
+
+<!-- Test fixture for test/integration/embed.test.js. Written exactly as a real
+     page would: static one-line script tags, no supporting JavaScript. The
+     brain is the suite's own test file (U.localBertURL), which lives at a fixed
+     address, so nothing has to be patched in at runtime.
+
+     Two of them, so the loader is exercised for the several-embeds-on-one-page
+     case: one shared message listener, each iframe resized only by its own
+     viewer. -->
+
+<p>First:</p>
+<script src="/embed.js"
+        data-url="http://127.0.0.1:3001/test_data/bert_brain.nii.gz"
+        data-view="cor"></script>
+
+<p>Second:</p>
+<script src="/embed.js"
+        data-url="http://127.0.0.1:3001/test_data/bert_brain.nii.gz"
+        data-view="axi"
+        data-max-height="380"
+        data-brainbox-link="0"></script>
+
+</body>
+</html>

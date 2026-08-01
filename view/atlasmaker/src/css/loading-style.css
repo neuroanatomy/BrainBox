@@ -1,32 +1,65 @@
-/* Loading indicator */
-@-webkit-keyframes loading {
-    0% {left: 40%;}
-    50% {left: 60%;}
-    100% {left: 40%;}
+/* Loading indicator
+-----------------------------------------------------------------------------
+   Shown while the volume is being fetched, hidden once the first slice is
+   actually drawn - both driven by AtlasMakerWidget.setViewerState(). Hidden by
+   default: nothing should flash before the viewer has decided what state it is
+   in. Note this element sits inside #atlasmaker, which is position:relative.
+-----------------------------------------------------------------------------*/
+@keyframes atlasmaker-spin {
+    to { transform: rotate(360deg); }
 }
+
 #loadingIndicator {
-    display:none;
-    position:absolute;
-    left:0;
-    top:0;
-    width:100%;
-    height:100%;
-    background:rgba(0,0,0,0.5);
+    display: none; /* setViewerState() switches this to flex */
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 12;
+    box-sizing: border-box;
+    padding: 1rem;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    background: rgba(17, 17, 17, 0.82);
+    color: #fff;
+    font: 14px "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-align: center;
+    pointer-events: none;
 }
+
+#loadingIndicator p {
+    margin: 0;
+    opacity: 0.85;
+}
+
 #loadingIndicator .disc {
-    position:absolute;
-    left:50%;
-    transform:translate( -50% , 0 );
-    width:8px;
-    height:8px;
-    border-radius:8px;
-    background:white;
-    -webkit-animation-name: loading;
-    -webkit-animation-duration: 1s;
-    -webkit-animation-iteration-count: infinite;
-    -webkit-animation-timing-function: ease-in-out;
-    animation-name: loading;
-    animation-duration: 1s;
-    animation-iteration-count: infinite;
-    animation-timing-function: ease-in-out;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    border-top-color: #fff;
+    animation: atlasmaker-spin 0.9s linear infinite;
+}
+
+/* Error state: same overlay, no spinner, and it stays put. */
+#loadingIndicator.error {
+    background: rgba(17, 17, 17, 0.94);
+}
+#loadingIndicator.error .disc {
+    display: none;
+}
+#loadingIndicator.error p {
+    opacity: 1;
+    max-width: 32ch;
+    line-height: 1.45;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #loadingIndicator .disc {
+        animation-duration: 3s;
+    }
 }

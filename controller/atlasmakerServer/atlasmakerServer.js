@@ -1,6 +1,7 @@
 /* eslint-disable max-lines */
 const fs = require('fs');
 const os = require('os');
+const url = require('url');
 const zlib = require('zlib');
 const tracer = require('tracer').console({ format: '[{{file}}:{{line}}]  {{message}}' });
 const jpeg = require('jpeg-js'); // jpeg-js library: https://github.com/eugeneware/jpeg-js
@@ -11,6 +12,11 @@ const keypress = require('keypress');
 const amri = require('./atlasmaker-mri');
 const AsyncLock = require('async-lock');
 const lock = new AsyncLock();
+const EmbedAccessService = require('../../services/EmbedAccessService');
+
+// WebSocket message types that write to an atlas/annotation - never applied on
+// a connection tagged isEmbed, regardless of what the client claims about editMode.
+const embedWriteBlockedTypes = ['paint', 'vectorial', 'save', 'saveMetadata', 'atlas'];
 
 // Get whitelist and blacklist
 const useWhitelist = false;
@@ -230,6 +236,13 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       }
 
       return -1;
+    },
+    _isSendAtlasOutOfEmbedScope: function (sourceUS, User) {
+      if (!sourceUS.isEmbed) {
+        return false;
+      }
+
+      return !sourceUS.embedScope || sourceUS.embedScope.dirname !== User.dirname;
     },
     getUserFromUserId: function (uid) {
       for (const key in me.US) {
@@ -1581,14 +1594,53 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
 
       return { iAtlas, atlasLoadedFlag };
     },
+    _handleSendAtlasRequest: function ({ sourceUS, User, userSocket, firstConnectionFlag }) {
+      // An embed connection may only ever pull data for the single MRI it was
+      // granted a ticket for - never anything else reachable over the same socket.
+      if (me._isSendAtlasOutOfEmbedScope(sourceUS, User)) {
+        tracer.log(`REJECTED sendAtlas for out-of-scope dirname from embed connection ${sourceUS.uid}`);
+
+        return;
+      }
+
+      // receive an atlas from the user
+      // 1. Check if the atlas the user is requesting has not been loaded
+
+      // check whether user is switching atlas.
+      let switchingAtlasFlag = false;
+      if (typeof sourceUS.User !== 'undefined') {
+        if ((sourceUS.User.atlasFilename !== User.atlasFilename) || (sourceUS.User.dirname !== User.dirname)) {
+          switchingAtlasFlag = true;
+        }
+      }
+
+      const { iAtlas, atlasLoadedFlag } = me._findAtlas({ dirname: User.dirname, atlasFilename: User.atlasFilename });
+      User.iAtlas = iAtlas; // value i if it was found, or last available if it wasn't
+
+      // 2. Send the atlas to the user (load it if required)
+      if (atlasLoadedFlag) {
+        if (firstConnectionFlag || switchingAtlasFlag) {
+          // send the new user our data
+          me.sendAtlasToUser(me.Atlases[iAtlas], userSocket, true);
+          sourceUS.User.isMRILoaded = true;
+        }
+      } else {
+        // The atlas requested has not been loaded before:
+        // Load the atlas they requesting
+        me.addAtlas(User)
+          .then(function (atlas) {
+            me.sendAtlasToUser(atlas, userSocket, true);
+            sourceUS.User.isMRILoaded = true;
+          })
+          .catch((err) => console.error('ERROR: Unable to load atlas', err));
+      }
+    },
     // eslint-disable-next-line max-statements
     receiveUserDataMessage: function (data, userSocket) {
       const sourceUS = me.getUserFromUserId(data.uid);
 
       let User;
       const firstConnectionFlag = me._isUserFirstConnection(sourceUS.User);
-      let switchingAtlasFlag = false;
-
 
       if (data.description === 'allUserData') {
         // receiving the complete User data object
@@ -1604,43 +1656,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         }
 
         if (data.description === 'sendAtlas') {
-          // receive an atlas from the user
-          // 1. Check if the atlas the user is requesting has not been loaded
-
-          // check whether user is switching atlas.
-          switchingAtlasFlag = false;
-          if (typeof sourceUS.User !== 'undefined') {
-            if ((sourceUS.User.atlasFilename !== User.atlasFilename) || (sourceUS.User.dirname !== User.dirname)) {
-              switchingAtlasFlag = true;
-            }
-          }
-
-          if (typeof User === 'undefined') {
-            tracer.log(`WARNING: 'User' structure is not defined for ${data.uid}`);
-
-            return;
-          }
-
-          const { iAtlas, atlasLoadedFlag } = me._findAtlas({ dirname: User.dirname, atlasFilename: User.atlasFilename });
-          User.iAtlas = iAtlas; // value i if it was found, or last available if it wasn't
-
-          // 2. Send the atlas to the user (load it if required)
-          if (atlasLoadedFlag) {
-            if (firstConnectionFlag || switchingAtlasFlag) {
-              // send the new user our data
-              me.sendAtlasToUser(me.Atlases[iAtlas], userSocket, true);
-              sourceUS.User.isMRILoaded = true;
-            }
-          } else {
-            // The atlas requested has not been loaded before:
-            // Load the atlas they requesting
-            me.addAtlas(User)
-              .then(function (atlas) {
-                me.sendAtlasToUser(atlas, userSocket, true);
-                sourceUS.User.isMRILoaded = true;
-              })
-              .catch((err) => console.error('ERROR: Unable to load atlas', err));
-          }
+          me._handleSendAtlasRequest({ sourceUS, User, userSocket, firstConnectionFlag });
         } else {
           // receive a specific field of the User data object from the user
           /** @todo If the atlas/mri for the client failed to be sent, `User` is undefined */
@@ -1814,7 +1830,12 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
 
       return isInBlacklist;
     },
-    _handleUserWebSocketMessage: function ({ data, ws }) {
+    _handleUserWebSocketMessage: function ({ data, ws, sourceUS }) {
+      if (sourceUS && sourceUS.isEmbed && embedWriteBlockedTypes.includes(data.type)) {
+        tracer.log(`REJECTED write attempt (${data.type}) from embed-only connection ${sourceUS.uid}`);
+
+        return;
+      }
       switch (data.type) {
       case 'userData':
         me.receiveUserDataMessage(data, ws); // sender);
@@ -1972,7 +1993,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       }
 
       // handle single user Web socket messages
-      me._handleUserWebSocketMessage({ data, ws });
+      me._handleUserWebSocketMessage({ data, ws, sourceUS });
 
       // handle broadcast of messages
       me._handleBroadcastWebSocketMessage({ data, sourceUS });
@@ -2032,10 +2053,28 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       nconnected = me.US.filter(function (o) { return typeof o !== 'undefined'; }).length;
       tracer.log(`${nconnected} users remain connected`);
     },
-    _connectNewUser: function ({ ws }) {
+    _connectNewUser: function ({ ws, req }) {
       me.uidcounter += 1;
 
       const newUS = { 'uid': 'u' + me.uidcounter, 'socket': ws };
+
+      // Tag the connection as embed-only from a server-verified ticket, never from
+      // anything the client sends afterward over the socket itself. An unknown/expired
+      // ticket still tags the connection isEmbed (fail closed): presenting this
+      // parameter can only ever narrow a connection's rights, never widen them.
+      const embedTicket = req && req.url && url.parse(req.url, true).query.embedTicket;
+      if (embedTicket) {
+        newUS.isEmbed = true;
+        newUS.embedScope = null;
+        EmbedAccessService.findWsTicket(nativeDb, embedTicket)
+          .then((ticket) => {
+            if (ticket) {
+              newUS.embedScope = { dirname: ticket.dirname, mriSource: ticket.mriSource };
+            }
+          })
+          .catch((err) => tracer.log('ERROR: embed ticket lookup failed', err));
+      }
+
       me.US.push(newUS);
 
       const nconnected = me.US.filter(function (o) { return typeof o !== 'undefined'; }).length;
@@ -2059,7 +2098,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
 
         return;
       }
-      me._connectNewUser({ ws });
+      me._connectNewUser({ ws, req });
       ws.on('message', function (msg) {
         me._handleWebSocketMessage({ msg, ws });
       });

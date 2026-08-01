@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0">
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
+    <title>{{title}}</title>
+    <style>
+        html, body {
+            background-color: #222;
+            /* A fixed viewport-relative height (not %/min-height) is required here:
+               AtlasMaker's resizeWindow() measures an ancestor's clientHeight to fit
+               the canvas to each plane's aspect ratio. If that ancestor chain's height
+               were itself content-driven (e.g. min-height:100%), switching planes
+               creates a feedback loop - the container height drifts on every switch
+               since the canvas' own new size feeds back into it. 100vh is a true fixed
+               measurement, immune to that. The viewer lays itself out as a flex column
+               inside this box (see embed-layout.css), so the toolbar always stays
+               visible and nothing needs to overflow, whatever height the host chose. */
+            height: 100vh;
+            overflow: hidden;
+            margin: 0;
+            font: 16px/20px "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
+        }
+        #stereotaxic {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="stereotaxic"></div>
+
+<script>
+var params = {{{params}}};
+var mriInfo = {{{mriInfo}}};
+var embedWsTicket = {{{embedWsTicket}}};
+</script>
+<script src="/lib/atlasmaker.js"></script>
+<script src="/js/embed-page.js"></script>
+
+</body>
+</html>

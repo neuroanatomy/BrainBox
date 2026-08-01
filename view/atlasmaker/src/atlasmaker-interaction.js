@@ -81,6 +81,7 @@ export const AtlasMakerInteraction = {
   initToolsDrag: function () {
     const handle = document.getElementById('toolsDragHandle');
     const panel = document.getElementById('tools-side');
+    if (!handle || !panel) { return; }
     let startX, startY, startLeft, startTop;
 
     const onMouseDown = function(e) {
@@ -160,6 +161,7 @@ export const AtlasMakerInteraction = {
   initTextInputResize: function () {
     const handle = document.getElementById('textInputResize');
     const block = document.getElementById('textInputBlock');
+    if (!handle || !block) { return; }
 
     const onMouseDown = function(e) {
       e.preventDefault();
@@ -215,6 +217,27 @@ export const AtlasMakerInteraction = {
      */
   changeView: function (theView) {
     const me = AtlasMakerWidget;
+
+    // Ignore clicks made before the volume's geometry is known. The toolbar is
+    // also visually inert while loading (see embed-layout.css), but the guard
+    // has to live here too: the full page shares this code path. Put the
+    // pressed button back, so the toolbar keeps reflecting the real plane.
+    if(!me.isViewerReady()) {
+      me.setPlaneButton(me.User.view);
+
+      return;
+    }
+
+    // 3D is one of the choices in the same button set as the planes: they all
+    // answer "what am I looking at", so they are mutually exclusive, and
+    // leaving 3D is just picking a plane again.
+    if(theView === '3d') {
+      me.enterRender3D();
+
+      return;
+    }
+    me.exitRender3D();
+
     switch(theView) {
     case 'sag':
       me.User.view = 'sag';
@@ -307,6 +330,7 @@ export const AtlasMakerInteraction = {
      */
   changeSlice: function (x) {
     const me = AtlasMakerWidget;
+    if(!me.isViewerReady()) { return; }
     me.User.slice = x;
     me.sendUserDataMessage(JSON.stringify({ 'slice':me.User.slice }));
     me.drawImages();
@@ -386,8 +410,76 @@ export const AtlasMakerInteraction = {
      * @function toggleFullscreen
      * @returns {void}
      */
+  /**
+   * @function canUseNativeFullscreen
+   * @desc Whether the browser will let us take over the screen for real. Inside
+   *       a cross-origin iframe this additionally requires the host page to
+   *       have set allow="fullscreen" on it, which we can only discover by
+   *       trying - hence the rejection handler in toggleFullscreen().
+   * @returns {boolean} True when the Fullscreen API is usable here
+   */
+  canUseNativeFullscreen: function () {
+    const me = AtlasMakerWidget;
+
+    return Boolean(document.fullscreenEnabled && me.container && me.container.requestFullscreen);
+  },
+
+  /**
+   * @function syncFullscreenButton
+   * @desc Keep the toolbar button in step with reality. The Fullscreen API can
+   *       be left by means we do not control (Esc, the browser's own UI), and
+   *       the toggle helper flips the pressed class on click regardless.
+   * @returns {void}
+   */
+  syncFullscreenButton: function () {
+    const me = AtlasMakerWidget;
+    const button = document.getElementById('fullscreen');
+    if(button) { button.classList.toggle('pressed', me.fullscreen === true); }
+  },
+
+  /**
+   * @function onNativeFullscreenChange
+   * @desc Handler for the browser's fullscreenchange event.
+   * @returns {void}
+   */
+  onNativeFullscreenChange: function () {
+    const me = AtlasMakerWidget;
+    me.fullscreen = document.fullscreenElement === me.container;
+    me.syncFullscreenButton();
+    me.resizeWindow();
+    me.drawImages();
+  },
+
   // eslint-disable-next-line max-statements
   toggleFullscreen: function () {
+    const me = AtlasMakerWidget;
+
+    // The embed is inside an iframe, where the CSS "fullscreen" below is a lie:
+    // position:fixed resolves against the iframe's own viewport, so the viewer
+    // simply rearranges itself inside the same small box while the toolbar ends
+    // up on top of the image. Use the real thing instead - the flex layout
+    // (embed-layout.css) already fills whatever box it is given, so entering
+    // fullscreen needs no repositioning of its own.
+    if(me.embedMode && me.canUseNativeFullscreen()) {
+      if(document.fullscreenElement) {
+        document.exitFullscreen();
+      } else {
+        me.container.requestFullscreen()
+          .catch((err) => {
+            // Typically a host page that framed us without allow="fullscreen".
+            console.warn('Fullscreen refused, falling back to in-frame layout:', err && err.message);
+            me._toggleCssFullscreen();
+          });
+      }
+
+      return;
+    }
+
+    me._toggleCssFullscreen();
+  },
+
+  // eslint-disable-next-line max-statements
+  _toggleCssFullscreen: function () {
     const me = AtlasMakerWidget;
     if(me.fullscreen === false) {
       // Enter fullscreen
@@ -426,7 +518,8 @@ export const AtlasMakerInteraction = {
       toolsSide.style.width = '';
       toolsSide.style.height = '';
       document.getElementById('tools-maximized').style.height = '';
-      document.getElementById('textInputBlock').style.flex = '';
+      const textInputBlock = document.getElementById('textInputBlock');
+      if (textInputBlock) { textInputBlock.style.flex = ''; }
       $('body').attr('data-toolbarDisplay', 'right');
       $('#atlasmaker')
         .detach()
@@ -835,6 +928,11 @@ export const AtlasMakerInteraction = {
     if(e.target.tagName !== 'BODY') { return; }
 
     switch(e.which) {
+    case 27: // escape
+      // The conventional way out; picking a plane is the visible one.
+      me.exitRender3D();
+      me.setPlaneButton(me.User.view);
+      break;
     case 13: // return
       if(me.User.measureLength) {
         let length = 0;
@@ -876,28 +974,26 @@ export const AtlasMakerInteraction = {
   // ==============
   /**
    * @function render3D
+   * @desc Show the 3D rendering of the current annotation.
    * @returns {void}
    */
   render3D: function () {
     const me = AtlasMakerWidget;
+
+    // An embed lives on someone else's page. Opening a popup there is blocked
+    // by default, and sending the visitor to a new tab costs them their place
+    // on the host page - worst of all on a phone. Render in the space the
+    // slices already occupy instead.
+    if(me.embedMode) {
+      me.toggleRender3D();
+
+      return;
+    }
+
     // puts a fresh version of the segmentation in localStorage
     localStorage.brainbox = URL.createObjectURL(new Blob([me.encodeNifti()]));
 
     const newWindow = window.open('', 'Render 3D', 'width=800,height=600');
-    const webxr = `
-      <html>
-      <head>
-      <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
-      <script src="http://localhost/libs/three.js/r111/examples/js/loaders/PLYLoader.js"></script>
-      </head>
-      <body>
-        <a-scene>
-          <a-sky color="#ECECEC"></a-sky>
-        </a-scene>
-        <script>const path = "${me.User.dirname}${me.User.atlasFilename}";</script>
-        <script src="/lib/atlasmaker-tools/render3D.js"></script>
-        </body>
-      </html>`;
     newWindow.document.write(`
         <html>
         <body>
@@ -907,6 +1003,70 @@ export const AtlasMakerInteraction = {
         </html>`
     );
     newWindow.document.close();
+  },
+
+  /**
+   * @function toggleRender3D
+   * @desc Swap the viewer area between the slice canvas and the 3D rendering.
+   *       The renderer is a self-contained app that owns its document (it sets
+   *       document.body.innerHTML and sizes itself from window.innerWidth), so
+   *       it is hosted in a same-origin iframe filling the viewer area: inside
+   *       that frame every one of its assumptions is simply true, and its own
+   *       resize handling makes it follow the outer box for free.
+   * @returns {void}
+   */
+  enterRender3D: function () {
+    const me = AtlasMakerWidget;
+    const box = me.viewerBox || me.container;
+
+    // Idempotent: 3D is a choice in a radio group, so clicking it while it is
+    // already chosen must do nothing rather than tear the view down.
+    if(document.getElementById('render3d-frame')) { return; }
+    if(!me.isViewerReady()) { return; }
+
+    const params = new URLSearchParams({
+      url: me.User.source,
+      atlas: me.User.atlasFilename
+    });
+    const frame = document.createElement('iframe');
+    frame.id = 'render3d-frame';
+    frame.title = '3D rendering';
+    frame.setAttribute('allow', 'fullscreen');
+    frame.src = me.hostname + '/mri/render3d?' + params.toString();
+    box.appendChild(frame);
+    me.container.setAttribute('data-mode', '3d');
+  },
+
+  /**
+   * @function exitRender3D
+   * @desc Go back to the slice view. Safe to call when not in 3D.
+   * @returns {void}
+   */
+  exitRender3D: function () {
+    const me = AtlasMakerWidget;
+    const frame = document.getElementById('render3d-frame');
+    if(!frame) { return; }
+
+    frame.remove();
+    me.container.removeAttribute('data-mode');
+    me.resizeWindow();
+    me.drawImages();
+  },
+
+  /**
+   * @function toggleRender3D
+   * @desc Show 3D, or go back to slices if it is already showing.
+   * @returns {void}
+   */
+  toggleRender3D: function () {
+    const me = AtlasMakerWidget;
+    if(document.getElementById('render3d-frame')) {
+      me.exitRender3D();
+      me.setPlaneButton(me.User.view);
+
+      return;
+    }
+    me.enterRender3D();
   },
 
   /**

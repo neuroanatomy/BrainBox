@@ -11,6 +11,8 @@ const AtlasmakerServer = require('../atlasmakerServer/atlasmakerServer');
 const dataSlices = require('../dataSlices/dataSlices.js');
 const { AccessType, AccessLevel } = require('neuroweblab');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
+const EmbedAccessService = require('../../services/EmbedAccessService');
+const { jsonForScript } = require('../utils/jsonForScript');
 const _ = require('lodash');
 const AsyncLock = require('async-lock');
 const lock = new AsyncLock();
@@ -254,6 +256,59 @@ const downloadMRI = async function (myurl, req) {
       });
   });
 };
+
+/**
+ * Collect the projects relevant to an MRI's access decisions: the projects
+ * referenced by its volume/text annotations, plus any project that lists this
+ * MRI's URL among its files.
+ * @param {Object} nativeDb Native MongoDB driver database instance
+ * @param {Object} json The MRI document
+ * @param {string} myurl The MRI's source URL
+ * @returns {Promise<Array>} The related project documents
+ */
+const getRelatedProjects = async function (nativeDb, json, myurl) {
+  const prj = new Set();
+
+  json.mri.atlas
+    .map((a) => a.project)
+    .filter((p) => !_.isEmpty(p))
+    .forEach(prj.add, prj);
+
+  if (!_.isNil(json.mri.annotations)) {
+    Object.keys(json.mri.annotations).forEach(prj.add, prj);
+  }
+
+  const arr = [...prj].map((o) => nativeDb.collection('project').findOne({
+    shortname: o,
+    backup: { $exists: false }
+  }));
+  const projects = await Promise.all(arr)
+    .catch((err) => {
+      console.log('ERROR Cannot get db information:', err);
+
+      return [];
+    });
+
+  projects.push(...await nativeDb.collection('project').find({
+    $or: [
+      { 'files.list': { $eq: myurl } },
+      { 'files.list.source': { $eq: myurl } }
+    ],
+    backup: { $exists: false }
+  })
+    .toArray());
+
+  return projects;
+};
+
+const isFilePubliclyVisible = function (projects) {
+  return projects.some((project) => BrainboxAccessControlService.canViewFiles(project, 'anyone'));
+};
+
+const hasCustomFileViewAccess = function (json, projects, loggedUser) {
+  return BrainboxAccessControlService.hasAccesstoFileIfAllowedBySomeProjects(json, projects, loggedUser, AccessLevel.VIEW);
+};
+
 // eslint-disable-next-line max-statements
 const mri = async function (req, res) {
   const login = (req.isAuthenticated()) ?
@@ -276,8 +331,8 @@ const mri = async function (req, res) {
     };
     res.render('mri', {
       title: obj.name || 'BrainBox',
-      params: JSON.stringify(req.query),
-      mriInfo: JSON.stringify(obj),
+      params: jsonForScript(req.query),
+      mriInfo: jsonForScript(obj),
       login
     });
   } else {
@@ -286,59 +341,218 @@ const mri = async function (req, res) {
       json.mri.atlas = [];
     }
 
-    const prj = new Set();
-    let arr = [];
-    // Check access to volume annotations
-    json.mri.atlas
-      .map((a) => a.project)
-      .filter((p) => !_.isEmpty(p))
-      .forEach(prj.add, prj);
-
-    // Check access to text annotations
-    if (!_.isNil(json.mri.annotations)) {
-      Object.keys(json.mri.annotations).forEach(prj.add, prj);
-    }
-
-    arr = [...prj].map(async (o) => {
-      const proj = await req.nativeDb.collection('project').findOne({
-        shortname: o,
-        backup: { $exists: false }
-      });
-
-      return proj;
-    });
-    const projects = await Promise.all([...arr])
-      .catch((err) => {
-        console.log('ERROR Cannot get db information:', err);
-      });
-
-    // also query projects that set this MRI as a source
-    projects.push(...await req.nativeDb.collection('project').find({
-      $or: [
-        { 'files.list': { $eq: myurl } },
-        { 'files.list.source': { $eq: myurl } }
-      ],
-      backup: { $exists: false }
-    })
-      .toArray()
-    );
+    const projects = await getRelatedProjects(req.nativeDb, json, myurl);
 
     // set access to volume annotations
     BrainboxAccessControlService.setVolumeAnnotationsAccessByProjects(json, projects, loggedUser);
     // BrainboxAccessControlService.setTextAnnotationsAccessByProjects(json, projects, loggedUser)
 
-    const isPubliclyVisible = projects.some((project) => BrainboxAccessControlService.canViewFiles(project, 'anyone'));
-    const hasCustomViewAccess = BrainboxAccessControlService.hasAccesstoFileIfAllowedBySomeProjects(json, projects, loggedUser, AccessLevel.VIEW);
+    const isPubliclyVisible = isFilePubliclyVisible(projects);
+    const hasCustomViewAccess = hasCustomFileViewAccess(json, projects, loggedUser);
 
     // Send data
     res.render('mri', {
       title: json.name || 'BrainBox',
-      params: JSON.stringify(req.query),
-      mriInfo: JSON.stringify(json),
+      params: jsonForScript(req.query),
+      mriInfo: jsonForScript(json),
       hasPrivilegedAccess: !isPubliclyVisible && hasCustomViewAccess,
       login
     });
   }
+};
+
+// Query parameters the embed viewer understands, and the only ones reflected
+// back into the rendered page.
+const EMBED_QUERY_PARAMS = ['url', 'view', 'slice', 'project', 'annotation', 'embedToken', 'maxHeight', 'brainboxLink'];
+
+/**
+ * @function mriEmbed
+ * @desc Serves the chromeless, read-only viewer used to embed a single brain
+ *       into an external page (e.g. via an <iframe>). Unlike `mri`, this
+ *       route actively denies access (403) instead of silently rendering an
+ *       empty viewer when the caller lacks file-level view access.
+ * @param {Object} req Express request
+ * @param {Object} res Express response
+ * @returns {void}
+ */
+// eslint-disable-next-line max-statements
+const mriEmbed = async function (req, res) {
+  const loggedUser = req.isAuthenticated() ? req.user.username : 'anonymous';
+  const myurl = req.query.url;
+
+  // This route exists to be framed by other sites: say so explicitly rather
+  // than relying on the absence of an X-Frame-Options header elsewhere.
+  res.set('Content-Security-Policy', 'frame-ancestors *');
+
+  if (!myurl) {
+    res.status(400);
+    res.render('embedError', { message: 'No brain was requested.' });
+
+    return;
+  }
+
+  const json = await req.nativeDb.collection('mri').findOne({ source: myurl, backup: { $exists: false } }, { projection: { _id: 0 } })
+    .catch((err) => {
+      console.log('ERROR mriEmbed:', err);
+    });
+
+  if (!json) {
+    res.status(404);
+    res.render('embedError', { message: 'This brain could not be found.' });
+
+    return;
+  }
+
+  if (json.mri && !json.mri.atlas) {
+    json.mri.atlas = [];
+  }
+
+  const projects = await getRelatedProjects(req.nativeDb, json, myurl);
+
+  if (!isFilePubliclyVisible(projects) && !hasCustomFileViewAccess(json, projects, loggedUser)) {
+    res.status(403);
+    res.render('embedError', { message: 'This content is private.' });
+
+    return;
+  }
+
+  BrainboxAccessControlService.setVolumeAnnotationsAccessByProjects(json, projects, loggedUser);
+
+  const embedWsTicket = await EmbedAccessService.mintWsTicket(req.nativeDb, {
+    dirname: json.url,
+    mriSource: myurl
+  });
+
+  res.render('mriEmbed', {
+    title: json.name || 'BrainBox',
+    // Only the parameters the embed actually reads are reflected back into the
+    // page - there is no reason to echo arbitrary attacker-chosen query keys.
+    params: jsonForScript(_.pick(req.query, EMBED_QUERY_PARAMS)),
+    mriInfo: jsonForScript(json),
+    embedWsTicket: jsonForScript(embedWsTicket)
+  });
+};
+
+/**
+ * @function mriRender3D
+ * @desc Serves the chromeless 3D rendering of one annotation. Loaded in an
+ *       iframe filling the embed's viewer area (and usable standalone), so the
+ *       renderer - which owns its whole document - needs no changes to be
+ *       hosted inside another view. Gated by the same file-level access check
+ *       as `mriEmbed`: a private brain must not be renderable in 3D either.
+ * @param {Object} req Express request
+ * @param {Object} res Express response
+ * @returns {void}
+ */
+// eslint-disable-next-line max-statements
+const mriRender3D = async function (req, res) {
+  const loggedUser = req.isAuthenticated() ? req.user.username : 'anonymous';
+  const myurl = req.query.url;
+
+  res.set('Content-Security-Policy', 'frame-ancestors *');
+
+  if (!myurl) {
+    res.status(400);
+    res.render('embedError', { message: 'No brain was requested.' });
+
+    return;
+  }
+
+  const json = await req.nativeDb.collection('mri').findOne({ source: myurl, backup: { $exists: false } }, { projection: { _id: 0 } })
+    .catch((err) => {
+      console.log('ERROR mriRender3D:', err);
+    });
+
+  if (!json) {
+    res.status(404);
+    res.render('embedError', { message: 'This brain could not be found.' });
+
+    return;
+  }
+
+  if (json.mri && !json.mri.atlas) {
+    json.mri.atlas = [];
+  }
+
+  const projects = await getRelatedProjects(req.nativeDb, json, myurl);
+
+  if (!isFilePubliclyVisible(projects) && !hasCustomFileViewAccess(json, projects, loggedUser)) {
+    res.status(403);
+    res.render('embedError', { message: 'This content is private.' });
+
+    return;
+  }
+
+  BrainboxAccessControlService.setVolumeAnnotationsAccessByProjects(json, projects, loggedUser);
+
+  // Resolve the annotation against the ones this viewer is actually allowed to
+  // see, so a filename cannot be used to reach a layer access control hid.
+  const visible = json.mri.atlas.filter((a) => a.access !== 'none');
+  const requested = visible.find((a) => a.filename === req.query.atlas);
+  const atlas = requested || visible[0];
+
+  if (!atlas) {
+    res.status(404);
+    res.render('embedError', { message: 'This brain has no annotation to render.' });
+
+    return;
+  }
+
+  res.render('mriRender3D', {
+    title: json.name || 'BrainBox',
+    path: jsonForScript(json.url + atlas.filename)
+  });
+};
+
+/**
+ * @function apiMriLayers
+ * @desc Lightweight endpoint an embedding page can query to discover which
+ *       annotation layers are available for a given brain, before deciding
+ *       what to embed. Unlike `apiMriGet`, this gates on file-level view
+ *       access before returning anything.
+ * @param {Object} req Express request
+ * @param {Object} res Express response
+ * @returns {void}
+ */
+// eslint-disable-next-line max-statements
+const apiMriLayers = async function (req, res) {
+  const loggedUser = req.isAuthenticated() ? req.user.username : 'anonymous';
+  const myurl = req.query.url;
+
+  if (!myurl) {
+    res.status(400).json({ error: 'Provide a url' });
+
+    return;
+  }
+
+  const json = await req.nativeDb.collection('mri').findOne({ source: myurl, backup: { $exists: false } }, { projection: { _id: 0 } })
+    .catch((err) => {
+      console.log('ERROR apiMriLayers:', err);
+    });
+
+  if (!json) {
+    res.status(404).json({ error: 'Not found' });
+
+    return;
+  }
+
+  if (json.mri && !json.mri.atlas) {
+    json.mri.atlas = [];
+  }
+
+  const projects = await getRelatedProjects(req.nativeDb, json, myurl);
+
+  if (!isFilePubliclyVisible(projects) && !hasCustomFileViewAccess(json, projects, loggedUser)) {
+    res.status(403).json({ error: 'Access denied' });
+
+    return;
+  }
+
+  BrainboxAccessControlService.setVolumeAnnotationsAccessByProjects(json, projects, loggedUser);
+
+  const layers = json.mri.atlas.map((a) => ({ project: a.project, name: a.name, access: a.access }));
+
+  res.json({ layers });
 };
 
 const removeVariablesFromURL = function (myurl) {
@@ -766,6 +980,9 @@ const MriController = function (db, nativeDb) {
   this.apiMriPost = apiMriPost;
   this.apiMriUploadFromURL = apiMriUploadFromURL;
   this.mri = mri;
+  this.mriEmbed = mriEmbed;
+  this.mriRender3D = mriRender3D;
+  this.apiMriLayers = apiMriLayers;
   this.reset = reset;
   atlasmakerServer = new AtlasmakerServer(db, nativeDb);
 };

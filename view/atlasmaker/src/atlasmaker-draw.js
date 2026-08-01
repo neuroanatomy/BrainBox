@@ -16,8 +16,15 @@ export const AtlasMakerDraw = {
      */
   resizeWindow: function () {
     const me = AtlasMakerWidget;
-    const wH = me.container.clientHeight;
-    const wW = me.container.clientWidth;
+
+    // The canvas is fitted to the *viewer box*, which excludes the toolbar.
+    // me.viewerBox is only set by viewers that lay the toolbar out as a
+    // sibling of the canvas within a fixed-height container (the embed - see
+    // css/embed-layout.css). Everywhere else it is null and the container is
+    // measured directly, exactly as before.
+    const box = me.viewerBox || me.container;
+    const wH = box.clientHeight;
+    const wW = box.clientWidth;
     const wAspect = wW/wH;
     const bAspect = me.brainW*me.brainWdim/(me.brainH*me.brainHdim);
 
@@ -30,6 +37,12 @@ export const AtlasMakerDraw = {
       resizable.style.width = '100%';
       resizable.style.height = (100*wAspect/bAspect) + '%';
     }
+
+    // Single notification point for anything that needs to react to the
+    // viewer changing size or shape (the embed reports its content height to
+    // the host page from here). Dispatched on the container so listeners do
+    // not have to monkey-patch this function.
+    me.container.dispatchEvent(new CustomEvent('atlasmaker:resize', { bubbles: false }));
   },
 
   /**
@@ -40,6 +53,11 @@ export const AtlasMakerDraw = {
   configureBrainImage: function () {
     const me = AtlasMakerWidget;
     if(me.User.view === null) { me.User.view = 'sag'; }
+
+    // The screen-to-volume transform only exists once the MRI info has been
+    // fetched. Reaching here before that (a plane clicked while still loading)
+    // used to throw on s2v.sdim and abort whatever called us.
+    if(!me.User.s2v) { return; }
 
     const {s2v} = me.User;
     switch(me.User.view) {

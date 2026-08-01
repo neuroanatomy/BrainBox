@@ -8,6 +8,7 @@ const assert = require('assert');
 const la = require('../../controller/atlasmakerServer/atlasmaker-linalg.js');
 const amri = require('../../controller/atlasmakerServer/atlasmaker-mri.js');
 const atlasmakerServer = require('../../controller/atlasmakerServer/atlasmakerServer.js');
+const EmbedAccessService = require('../../services/EmbedAccessService.js');
 const datadir = './test/data/';
 const U = require('../utils.js');
 const { expect } = require('chai');
@@ -1333,6 +1334,214 @@ describe('UNIT TESTING ATLASMAKER SERVER', function() {
       AMS.unloadUnusedBrains();
 
       assert.ok(AMS.Brains.length < lenBefore);
+    });
+  });
+
+  // =========================================================================
+  // Embed connection enforcement: an embed-tagged connection must never be
+  // able to write, regardless of anything the client claims over the socket.
+  // =========================================================================
+  describe('Embed connection enforcement', function () {
+    describe('_connectNewUser: embed ticket tagging', function () {
+      afterEach(function () {
+        AMS.US = AMS.US.filter(() => false);
+      });
+
+      it('should tag the connection as embed with the ticket scope, for a valid ticket', async function () {
+        const token = await EmbedAccessService.mintWsTicket(U.getNativeDB(), {
+          dirname: '/data/testembed/',
+          mriSource: 'http://example.com/b.nii.gz'
+        });
+        const ws = mockSocket();
+        await AMS._connectNewUser({ ws, req: { url: '/?embedTicket=' + token } });
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        const user = AMS.getUserFromSocket(ws);
+        assert.strictEqual(user.isEmbed, true);
+        assert.deepStrictEqual(user.embedScope, { dirname: '/data/testembed/', mriSource: 'http://example.com/b.nii.gz' });
+      }).timeout(U.mediumTimeout);
+
+      it('should tag the connection as embed but with a null scope, for an unknown ticket', async function () {
+        const ws = mockSocket();
+        await AMS._connectNewUser({ ws, req: { url: '/?embedTicket=not-a-real-ticket' } });
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        const user = AMS.getUserFromSocket(ws);
+        assert.strictEqual(user.isEmbed, true);
+        assert.strictEqual(user.embedScope, null);
+      }).timeout(U.mediumTimeout);
+
+      it('should not tag the connection as embed when no ticket is present', async function () {
+        let undef;
+        const ws = mockSocket();
+        await AMS._connectNewUser({ ws, req: { url: '/' } });
+
+        const user = AMS.getUserFromSocket(ws);
+        assert.strictEqual(user.isEmbed, undef);
+      });
+    });
+
+    /**
+     * Assert that a given WS message type is rejected outright (its receiver
+     * function is never invoked) when sent on an embed-tagged connection.
+     * @param {string} type The WS message type, e.g. 'paint'
+     * @param {string} receiverName The AMS method that would normally handle it
+     * @returns {void}
+     */
+    const assertWriteTypeRejectedForEmbed = function (type, receiverName) {
+      const spy = sinon.spy(AMS, receiverName);
+      const sourceUS = { uid: 'u1', isEmbed: true };
+
+      AMS._handleUserWebSocketMessage({ data: { type, uid: 'u1' }, ws: mockSocket(), sourceUS });
+
+      assert.strictEqual(spy.called, false);
+    };
+
+    describe('_handleUserWebSocketMessage: write rejection', function () {
+      afterEach(function () {
+        sinon.restore();
+        AMS.US = AMS.US.filter(() => false);
+      });
+
+      it('should reject a "paint" message from an embed-tagged connection', function () {
+        assertWriteTypeRejectedForEmbed('paint', 'receivePaintMessage');
+      });
+
+      it('should reject a "vectorial" message from an embed-tagged connection', function () {
+        assertWriteTypeRejectedForEmbed('vectorial', 'receiveVectorialAnnotationMessage');
+      });
+
+      it('should reject a "save" message from an embed-tagged connection', function () {
+        assertWriteTypeRejectedForEmbed('save', 'receiveSaveMessage');
+      });
+
+      it('should reject a "saveMetadata" message from an embed-tagged connection', function () {
+        assertWriteTypeRejectedForEmbed('saveMetadata', 'receiveSaveMetadataMessage');
+      });
+
+      it('should reject an "atlas" message from an embed-tagged connection', function () {
+        assertWriteTypeRejectedForEmbed('atlas', 'receiveAtlasFromUserMessage');
+      });
+
+      it('should still apply a "paint" message from a non-embed connection (negative control)', function () {
+        const atlasKey = 'test_embed_reject_control';
+        AMS.Atlases[atlasKey] = { data: Buffer.alloc(1000).fill(0), dim: [10, 10, 10] };
+        const ws = mockSocket();
+        const userProps = {
+          username: 'painter',
+          atlasFilename: 'test.nii.gz',
+          specimenName: 'test',
+          iAtlas: atlasKey,
+          view: 'axi',
+          slice: 5,
+          x0: -1,
+          y0: -1,
+          penSize: 1,
+          penValue: 1,
+          s2v: { X: 9, dx: -1, x: 0, Y: 0, dy: 1, y: 2, Z: 9, dz: -1, z: 1, sdim: [10, 10, 10] },
+          dim: [10, 10, 10]
+        };
+        const us = addMockUser(ws, userProps);
+
+        AMS._handleUserWebSocketMessage({
+          data: { type: 'paint', uid: us.uid, data: { c: 'me', x: 1, y: 1 } },
+          ws,
+          sourceUS: us
+        });
+
+        assert.strictEqual(us.User.x0, 1, 'non-embed connections must be unaffected by the embed guard');
+        delete AMS.Atlases[atlasKey];
+      });
+
+      it('should still forward non-write message types (e.g. "show") for an embed-tagged connection', function () {
+        const sourceUS = { uid: 'u1', isEmbed: true };
+        // 'show' performs no action either way - this only asserts the guard
+        // does not throw or otherwise misbehave for a type outside its blocklist.
+        assert.doesNotThrow(() => {
+          AMS._handleUserWebSocketMessage({ data: { type: 'show', uid: 'u1' }, ws: mockSocket(), sourceUS });
+        });
+      });
+    });
+
+    describe('Forged editMode does not bypass write rejection', function () {
+      afterEach(function () {
+        sinon.restore();
+        AMS.US = AMS.US.filter(() => false);
+      });
+
+      it('should still reject a paint message after the client claims editMode:1 via allUserData', function () {
+        const ws = mockSocket();
+        const us = addMockUser(ws);
+        us.isEmbed = true;
+        us.embedScope = { dirname: '/scoped/' };
+
+        // The attacker sends a forged 'allUserData' message claiming editMode:1.
+        // receiveUserDataMessage trusts the client for this field (a pre-existing,
+        // out-of-scope gap) - what must NOT happen is that this forged state is
+        // ever consulted to allow a write.
+        AMS.receiveUserDataMessage({
+          uid: us.uid,
+          description: 'allUserData',
+          user: { editMode: 1, username: 'attacker', dirname: '/scoped/' }
+        }, ws);
+        assert.strictEqual(us.User.editMode, 1, 'sanity check: the forged field was in fact stored');
+
+        const paintSpy = sinon.spy(AMS, 'receivePaintMessage');
+
+        AMS._handleUserWebSocketMessage({
+          data: { type: 'paint', uid: us.uid, c: 'lf', x: 1, y: 1 },
+          ws,
+          sourceUS: us
+        });
+
+        assert.strictEqual(paintSpy.called, false, 'paint must be rejected regardless of claimed editMode');
+      });
+    });
+
+    describe('_isSendAtlasOutOfEmbedScope / _handleSendAtlasRequest: read scoping', function () {
+      afterEach(function () {
+        sinon.restore();
+      });
+
+      it('should reject sendAtlas for an embed connection requesting an out-of-scope dirname', function () {
+        const spy = sinon.spy(AMS, '_findAtlas');
+        const sourceUS = { uid: 'u1', isEmbed: true, embedScope: { dirname: '/scoped/' } };
+        const User = { dirname: '/other/', atlasFilename: 'x.nii.gz' };
+
+        AMS._handleSendAtlasRequest({ sourceUS, User, userSocket: mockSocket(), firstConnectionFlag: true });
+
+        assert.strictEqual(spy.called, false);
+      });
+
+      it('should reject sendAtlas for an embed connection with no resolved scope yet', function () {
+        const spy = sinon.spy(AMS, '_findAtlas');
+        const sourceUS = { uid: 'u1', isEmbed: true, embedScope: null };
+        const User = { dirname: '/anything/', atlasFilename: 'x.nii.gz' };
+
+        AMS._handleSendAtlasRequest({ sourceUS, User, userSocket: mockSocket(), firstConnectionFlag: true });
+
+        assert.strictEqual(spy.called, false);
+      });
+
+      it('should allow sendAtlas for an embed connection requesting its own scoped dirname', function () {
+        const spy = sinon.spy(AMS, '_findAtlas');
+        const sourceUS = { uid: 'u1', isEmbed: true, embedScope: { dirname: '/scoped/' }, User: {} };
+        const User = { dirname: '/scoped/', atlasFilename: 'x.nii.gz' };
+
+        AMS._handleSendAtlasRequest({ sourceUS, User, userSocket: mockSocket(), firstConnectionFlag: true });
+
+        assert.strictEqual(spy.called, true);
+      });
+
+      it('should allow sendAtlas for a non-embed connection regardless of dirname', function () {
+        const spy = sinon.spy(AMS, '_findAtlas');
+        const sourceUS = { uid: 'u1', User: {} };
+        const User = { dirname: '/anything/', atlasFilename: 'x.nii.gz' };
+
+        AMS._handleSendAtlasRequest({ sourceUS, User, userSocket: mockSocket(), firstConnectionFlag: true });
+
+        assert.strictEqual(spy.called, true);
+      });
     });
   });
 });

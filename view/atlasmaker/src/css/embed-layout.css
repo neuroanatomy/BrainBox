@@ -1,0 +1,107 @@
+/* Embed layout
+-----------------------------------------------------------------------------
+   The default AtlasMaker layout lets the canvas take the full height of its
+   container and puts the toolbar *below* it in normal flow, relying on the
+   browser window to scroll when the two together are taller than the viewport.
+   An iframe cannot do that: its box is fixed by the host page, so the toolbar
+   would fall outside it (or leave a band of dead space when the plane is short).
+
+   Here the container is a flex column instead: the toolbar takes the height it
+   needs and the canvas gets exactly what is left, whatever size the host chose.
+   resizeWindow() measures #viewer-area (AtlasMakerWidget.viewerBox), so the
+   canvas is letterboxed inside that remaining space rather than overflowing it.
+-----------------------------------------------------------------------------*/
+#atlasmaker.embed-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+#atlasmaker.embed-layout #viewer-area {
+    flex: 1 1 auto;
+    min-height: 0; /* without this a flex item refuses to shrink below its content */
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#atlasmaker.embed-layout #resizable {
+    margin: 0 auto; /* centre the image when the box is wider than the brain */
+}
+#atlasmaker.embed-layout #tools-side {
+    flex: 0 0 auto;
+}
+
+/* The controls are sized for a widget, not for a wall. Left to fill the width,
+   each button becomes a slab - on a 1600px-wide box the four plane buttons are
+   210px each, and in fullscreen on a large monitor they are worse. Cap the row
+   and centre it, so the toolbar keeps the same proportions at every size and
+   simply sits at the bottom of the screen when fullscreen. */
+#atlasmaker.embed-layout #tools-maximized {
+    width: 100%;
+    max-width: 560px;
+    margin: 0 auto;
+}
+
+/* The attribution link is an <a> rather than a <div> so the browser treats it
+   as navigation from a user gesture; .a's sizing assumes a block box. */
+#atlasmaker.embed-layout #brainboxLink {
+    display: block;
+    text-decoration: none;
+}
+
+/* The BrainBox wordmark, lifted from the logo on the landing page so the
+   lettering matches exactly (it is drawn as paths, not set in a font, so no
+   webfont has to be loaded into someone else's page). Unlike .icon it is wide
+   rather than square, so it is sized by height with the width left to follow. */
+#atlasmaker.embed-layout #brainboxLink .wordmark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    height: 11px;
+    width: auto;
+    max-width: calc(100% - 8px);
+    cursor: pointer;
+}
+
+/* AtlasMaker hides the real pointer over the canvas (#canvas has cursor:none)
+   and draws its own square instead, sized to the paint brush. A read-only
+   viewer has no brush, so all that leaves is a pointer that vanishes whenever
+   it crosses the brain. Put the ordinary pointer back and drop the square. */
+#atlasmaker.embed-layout #canvas {
+    cursor: default;
+}
+#atlasmaker.embed-layout #cursor {
+    display: none;
+}
+
+/* The toolbar is inert until the volume is loaded: clicking a plane before
+   AtlasMaker knows the volume's dimensions cannot do anything useful, so it
+   should not look clickable either. See AtlasMakerWidget.setViewerState(). */
+#atlasmaker.embed-layout[data-state="loading"] #tools-side,
+#atlasmaker.embed-layout[data-state="error"] #tools-side {
+    pointer-events: none;
+    opacity: 0.45;
+}
+
+/* 3D render, shown in place of the slice canvas (same region, no popup) */
+#atlasmaker.embed-layout #render3d-frame {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: #000;
+}
+#atlasmaker.embed-layout[data-mode="3d"] #resizable {
+    visibility: hidden;
+}
+
+/* There are no slices to step through in 3D, so the slider should not invite
+   the visitor to try - same rule as the toolbar while loading. */
+#atlasmaker.embed-layout[data-mode="3d"] #sliderBlock {
+    pointer-events: none;
+    opacity: 0.45;
+}

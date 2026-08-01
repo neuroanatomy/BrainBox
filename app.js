@@ -99,6 +99,11 @@ const start = async function () {
   app.engine('mustache', mustacheExpress());
   app.set('views', path.join(dirname, 'templates'));
   app.set('view engine', 'mustache');
+  // mustache-express caches template files by default even outside production
+  // (its own cache check only skips caching when 'view cache' is explicitly
+  // false, unlike Express's own dev/prod-aware default) - set it explicitly
+  // so template edits take effect without a server restart in development.
+  app.set('view cache', app.get('env') === 'production');
   app.use(favicon(dirname + '/public/favicon.png'));
   app.set('trust proxy', 'loopback');
   let loggerOptions = {};

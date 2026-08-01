@@ -31,6 +31,29 @@ export const AtlasMakerWS = {
   },
 
   /**
+   * Update the "Chat (N connected)" status label, if the current toolbar has one.
+   * Lighter toolbars (e.g. the read-only embed viewer) have no chat UI at all.
+   * @param {string} text The text to display
+   * @returns {void}
+   */
+  _setNotificationsText: function (text) {
+    const el = document.getElementById('notifications');
+    if (el) { el.textContent = text; }
+  },
+
+  /**
+   * Append a line to the chat log, if the current toolbar has one.
+   * @param {string} html Sanitised HTML to append
+   * @returns {void}
+   */
+  _appendChatMessage: function (html) {
+    const chatText = document.querySelector('#logChat .text');
+    if (!chatText) { return; }
+    chatText.insertAdjacentHTML('beforeend', html);
+    chatText.scrollTop = chatText.scrollHeight;
+  },
+
+  /**
    * @returns {void}
    */
   initSocketConnection: function () {
@@ -45,6 +68,9 @@ export const AtlasMakerWS = {
       } else {
         host = 'ws://' + me.wshostname;
       }
+      if (me.embedTicket) {
+        host += '?embedTicket=' + encodeURIComponent(me.embedTicket);
+      }
 
       if (me.debug) { console.log('[initSocketConnection] host:', host); }
       if (me.progress) { me.progress.html('Connecting...'); }
@@ -55,7 +81,7 @@ export const AtlasMakerWS = {
         me.socket.onopen = function (msg) {
           if (me.debug) { console.log('[initSocketConnection] connection open', msg); }
           me.progress.html('<img src=\'' + me.hostname + '/img/download.svg\' style=\'vertical-align:middle\'/>MRI');
-          document.getElementById('notifications').textContent = 'Chat (1 connected)';
+          me._setNotificationsText('Chat (1 connected)');
           me.flagConnected = 1;
           me.reconnectionTimeout = 5;
           resolve();
@@ -86,13 +112,13 @@ export const AtlasMakerWS = {
           console.log('Initial random time:', rand);
           setTimeout(function () {
             let timeout = me.reconnectionTimeout;
-            document.getElementById('notifications').textContent = 'Disconnected. Try to reconnect in ' + (timeout-=1) + ' s...';
+            me._setNotificationsText('Disconnected. Try to reconnect in ' + (timeout-=1) + ' s...');
             if (me.timer) {
               clearInterval(me.timer);
             }
             me.timer = setInterval(function () {
               if (timeout < 0) {
-                document.getElementById('notifications').textContent = 'Reconnecting...';
+                me._setNotificationsText('Reconnecting...');
                 me.socket = null;
                 clearInterval(me.timer);
                 setTimeout(function () {
@@ -106,11 +132,11 @@ export const AtlasMakerWS = {
                     })
                     .catch(function () {
                       timeout = me.reconnectionTimeout;
-                      document.getElementById('notifications').textContent = 'Disconnected. Try to reconnect in ' + (timeout-=1) + ' s...';
+                      me._setNotificationsText('Disconnected. Try to reconnect in ' + (timeout-=1) + ' s...');
                     });
                 }, 1000);
               } else {
-                document.getElementById('notifications').textContent = 'Disconnected. Try to reconnect in ' + (timeout-=1) + ' s...';
+                me._setNotificationsText('Disconnected. Try to reconnect in ' + (timeout-=1) + ' s...');
               }
             }, 1000);
           }, rand);
@@ -121,7 +147,7 @@ export const AtlasMakerWS = {
           me.socket.close();
         };
       } catch (ex) {
-        document.getElementById('notifications').textContent = 'Chat (not connected - connection error)';
+        me._setNotificationsText('Chat (not connected - connection error)');
         reject(ex);
       }
     });
@@ -239,8 +265,8 @@ export const AtlasMakerWS = {
             me.sendRequestSliceMessage();
           }
 
-          // remove loading indicator
-          document.getElementById('loadingIndicator').style.display = 'none';
+          // a drawn slice is the first honest proof that the viewer works
+          me.setViewerState({ state: 'ready' });
         };
         img.src = imageUrl;
 
@@ -273,9 +299,7 @@ export const AtlasMakerWS = {
         } else {
           msg = '<b>' + data.user.username + '</b> entered<br />';
         }
-        const chatText = document.querySelector('#logChat .text');
-        chatText.insertAdjacentHTML('beforeend', msg);
-        chatText.scrollTop = chatText.scrollHeight;
+        me._appendChatMessage(msg);
       } catch (e) {
         console.log('data:', data);
         console.log(e);
@@ -308,7 +332,7 @@ export const AtlasMakerWS = {
         nusers+=1;
       }
     }
-    document.getElementById('notifications').textContent = 'Chat (' + nusers + ' connected)';
+    me._setNotificationsText('Chat (' + nusers + ' connected)');
   },
 
   /**
@@ -344,9 +368,7 @@ export const AtlasMakerWS = {
     const link = me.hostname + '/mri?url=' + theSource + '&view=' + theView + '&slice=' + theSlice;
     const theUsername = (data.username === 'Anonymous')?data.uid:data.username;
     const msg = '<a href=\'' +link+'\'><b>'+theUsername+':</b></a> '+data.msg+'<br />';
-    const chatText = document.querySelector('#logChat .text');
-    chatText.insertAdjacentHTML('beforeend', msg);
-    chatText.scrollTop = chatText.scrollHeight;
+    me._appendChatMessage(msg);
   },
 
   /**
@@ -663,11 +685,8 @@ export const AtlasMakerWS = {
         nusers+=1;
       }
     }
-    document.querySelector('#notifications').textContent = 'Chat ('+nusers+' connected)';
-    const chatText = document.querySelector('#logChat .text');
-    chatText.insertAdjacentHTML('beforeend', msg);
-    chatText.scrollTop = chatText.scrollHeight;
-
+    me._setNotificationsText('Chat ('+nusers+' connected)');
+    me._appendChatMessage(msg);
   },
 
   displayDialog: async ({msg, modal, delay, doFadeOut}) => {
@@ -720,11 +739,14 @@ export const AtlasMakerWS = {
         doFadeOut: 0
       });
     } else if (dialogType === 'info') {
-      const prevMsg = document.querySelector('#notifications').textContent;
-      document.querySelector('#notifications').textContent = msg;
-      setTimeout(function() {
-        document.querySelector('#notifications').textContent = prevMsg;
-      }, 2000);
+      const notifications = document.getElementById('notifications');
+      if (notifications) {
+        const prevMsg = notifications.textContent;
+        notifications.textContent = msg;
+        setTimeout(function() {
+          notifications.textContent = prevMsg;
+        }, 2000);
+      }
     } else {
       me.displayDialog({
         msg: `<p>${msg}</p>`,

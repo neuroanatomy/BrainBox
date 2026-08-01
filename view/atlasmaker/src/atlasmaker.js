@@ -3,6 +3,7 @@
 
 import 'structjs';
 import './css/atlasmaker.css';
+import './css/loading-style.css';
 
 import $ from 'jquery';
 
@@ -14,6 +15,7 @@ import {AtlasMakerUI} from './atlasmaker-ui.js';
 import {AtlasMakerWS} from './atlasmaker-ws.js';
 
 import Config from './../../../cfg.json';
+import toolsEmbed from './html/toolsEmbed.html';
 import toolsFull from './html/toolsFull.html';
 import toolsLight from './html/toolsLight.html';
 
@@ -37,6 +39,7 @@ const me = {
 
   // canvas and drawing
   container: null, // [DOM element] where atlasmaker lives
+  viewerBox: null, // [DOM element] area the canvas may occupy, excluding the toolbar. null = use container
   canvas: null, // [canvas] canvas for brain and atlas mri
   context: null, // [CanvasRenderingContext2D], canvas rendering context for brain and atlas mri
   brainOffcn: null, // [canvas] offscreen canvas for brain mri
@@ -72,9 +75,12 @@ const me = {
     prevState:null, // state before configure
     touchStarted:false // touch started flag
   },
+  viewerState: 'loading', // 'loading' | 'ready' | 'error', see setViewerState()
   editMode: 0, // editMode=0 to prevent editing, editMode=1 to accept it
   fullscreen: false, // fullscreen mode?
   useFullTools: true, // use full tools or light version?
+  embedMode: false, // true for the read-only, chromeless embed viewer (overrides useFullTools)
+  embedTicket: null, // string, server-minted ticket proving this connection came from a legitimate embed page
 
   name: null, // string, name given to the current brain mri, ex.: "Lion"
   url: null, // string, path of the mri data and atlas in the server. Starts with /data/
@@ -255,6 +261,71 @@ const me = {
     $.extend(me, AtlasMakerUI);
     $.extend(me, AtlasMakerWS);
   },
+
+  /**
+   * Single owner of the viewer's load lifecycle: 'loading' -> 'ready' | 'error'.
+   * Writes data-state on the container (CSS keys the toolbar's inert look off
+   * it) and drives #loadingIndicator, which until now was styled display:none
+   * and never shown by anything - so every viewer sat on a black rectangle for
+   * the whole load with no feedback at all.
+   * @function setViewerState
+   * @param {object} opts Options
+   * @param {string} opts.state One of 'loading', 'ready', 'error'
+   * @param {string} [opts.message] Text to show next to the spinner
+   * @param {number} [opts.progress] Download progress, 0-100
+   * @returns {void}
+   */
+  setViewerState: function ({ state, message, progress }) {
+    me.viewerState = state;
+
+    if(me.container) {
+      me.container.setAttribute('data-state', state);
+    }
+
+    const indicator = document.getElementById('loadingIndicator');
+    if(!indicator) { return; }
+
+    indicator.style.display = (state === 'loading' || state === 'error') ? 'flex' : 'none';
+    indicator.classList.toggle('error', state === 'error');
+
+    const label = indicator.querySelector('p');
+    if(label) {
+      let text = message || (state === 'error' ? 'This brain could not be loaded.' : 'Loading brain…');
+      if(state === 'loading' && typeof progress === 'number' && isFinite(progress)) {
+        text += ' ' + Math.round(progress) + '%';
+      }
+      label.textContent = text;
+    }
+  },
+
+  /**
+   * Mark the plane the viewer is showing as pressed in the toolbar. Called both
+   * at toolbar-init time (so a viewer opened with ?view=cor does not spend the
+   * whole load claiming to be sagittal) and after the volume is configured.
+   * @function setPlaneButton
+   * @param {string} view One of 'sag', 'cor', 'axi'
+   * @returns {void}
+   */
+  setPlaneButton: function (view) {
+    if(!view) { return; }
+    const plane = document.getElementById('plane');
+    if(!plane) { return; }
+    plane.querySelectorAll('.a').forEach((el) => { el.classList.remove('pressed'); });
+    const button = plane.querySelector('.a[title="' + view + '"]');
+    if(button) { button.classList.add('pressed'); }
+  },
+
+  /**
+   * @function isViewerReady
+   * @desc True once the volume's geometry is known and slices can be drawn.
+   *       Interactions that depend on that geometry must check this: clicking
+   *       a plane before it is known used to throw on User.s2v being undefined.
+   * @returns {boolean} Whether the viewer can be interacted with
+   */
+  isViewerReady: function () {
+    return me.viewerState === 'ready' && Boolean(me.User && me.User.s2v);
+  },
+
   _createOffscreenCanvases: function () {
     // Create offscreen canvases for mri and atlas
     me.brainOffcn = document.createElement('canvas');
@@ -272,8 +343,13 @@ const me = {
       me.container = elem;
       if(me.debug) { console.log('Container: ', me.container); }
     }
-    // Init drawing canvas
-    me.container.innerHTML = '<div id="resizable"><canvas id="canvas" data-long-press-delay="500"></canvas></div>';
+    // Init drawing canvas. In embed mode the canvas lives inside a #viewer-area
+    // wrapper: the toolbar is a sibling of that wrapper, so the wrapper (not the
+    // whole container) is the space the canvas may occupy, and the toolbar can
+    // never be pushed outside the iframe. See resizeWindow() and embed-layout.css.
+    const canvasHTML = '<div id="resizable"><canvas id="canvas" data-long-press-delay="500"></canvas></div>';
+    me.container.innerHTML = me.embedMode ? '<div id="viewer-area">' + canvasHTML + '</div>' : canvasHTML;
+    me.viewerBox = me.embedMode ? me.container.querySelector('#viewer-area') : null;
     me.canvas = me.container.querySelector('canvas');
     me.context = me.canvas.getContext('2d');
     const resizable = me.container.querySelector('#resizable');
@@ -340,22 +416,38 @@ const me = {
     me.canvas.onmouseup = me.mouseup;
 
 
-    // text input
-    Promise.all([
-      me.loadScript('https://unpkg.com/codeflask/build/codeflask.min.js'),
-      me.loadScript('https://cdn.jsdelivr.net/gh/r03ert0/consolita.js@v0.1.1/consolita.js')
-    ]).then(() => {
-      window.onload = () => {
-        // eslint-disable-next-line no-undef
-        Consolita.init('#logScript');
-      };
-    });
+    // text input (scripting console - not available in the read-only embed viewer,
+    // which has no #logScript element and shouldn't expose a JS console anyway)
+    if (!me.embedMode) {
+      Promise.all([
+        me.loadScript('https://unpkg.com/codeflask/build/codeflask.min.js'),
+        me.loadScript('https://cdn.jsdelivr.net/gh/r03ert0/consolita.js@v0.1.1/consolita.js')
+      ]).then(() => {
+        window.onload = () => {
+          // eslint-disable-next-line no-undef
+          Consolita.init('#logScript');
+        };
+      })
+        .catch((err) => {
+          console.warn('Scripting console unavailable:', err && err.type);
+        });
+    }
 
-    // long-press event
+    // long-press event. These CDN scripts are optional enhancements: an embed
+    // runs on someone else's page, where a CDN can be blocked by CSP, an ad
+    // blocker, a corporate proxy or plain offline use. Failing to load one must
+    // degrade quietly, not raise an unhandled rejection.
     me.loadScript('https://cdn.jsdelivr.net/gh/john-doherty/long-press-event@2.1.0/dist/long-press-event.min.js')
       .then(() => {
         me.container.addEventListener('long-press', me.longpress);
+      })
+      .catch((err) => {
+        console.warn('Long-press support unavailable:', err && err.type);
       });
+
+    // event connect: keep our idea of "fullscreen" in step with the browser's,
+    // which the user can leave with Esc or the browser's own UI
+    document.addEventListener('fullscreenchange', me.onNativeFullscreenChange);
 
     // event connect: Connect event to respond to window resizing
     $(window).resize(function() {
@@ -370,12 +462,19 @@ const me = {
     if(typeof me.useFullTools === 'undefined') {
       me.useFullTools = true;
     }
-    if(me.useFullTools) {
+    if(me.embedMode) {
+      tools = toolsEmbed;
+    } else if(me.useFullTools) {
       tools = toolsFull;
     } else {
       tools = toolsLight;
     }
     me.container.insertAdjacentHTML('beforeend', tools);
+
+    // The toolbar exists from here on, so the viewer can finally say what it is
+    // doing. Everything below is inert until the volume arrives.
+    me.setViewerState({ state: 'loading' });
+    me.setPlaneButton(me.User.view);
 
     // event connect: get keyboard events
     $(document).keydown(function(e) { me.keyDown(e); });
@@ -519,7 +618,7 @@ const me = {
     const url = me._removeVariablesFromURL(source);
     me._requestMRIId += 1;
     const myRequestId = me._requestMRIId;
-    $('#loadingIndicator p').text('Loading... ');
+    me.setViewerState({ state: 'loading' });
     const pr = new Promise(function(resolve, reject) {
       const timer = setInterval( function () {
         if(me._requestMRIId !== myRequestId) {
@@ -537,7 +636,7 @@ const me = {
               clearInterval(timer);
               resolve(info);
             } else if(info.success === 'downloading') {
-              $('#loadingIndicator p').text('Loading... '+parseInt(info.cur/info.len*100, 10)+'%');
+              me.setViewerState({ state: 'loading', message: 'Downloading brain…', progress: info.cur/info.len*100 });
             } else {
               console.log('ERROR: requestMRIInfo', info);
               clearInterval(timer);
@@ -681,11 +780,7 @@ const me = {
     }, 500);
 
     // enforce stereotaxic plane setting
-    if(me.User.view !== null) {
-      $('.chose#plane .a').removeClass('pressed');
-      const view=me.User.view.charAt(0).toUpperCase()+me.User.view.slice(1);
-      $('.chose#plane .a:contains(\''+view+'\')').addClass('pressed');
-    }
+    me.setPlaneButton(me.User.view);
 
 
     // pick the first label for segmenting (it has to come after the

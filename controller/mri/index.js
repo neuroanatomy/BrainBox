@@ -12,6 +12,9 @@ const MriRouter = function(db) {
   const controller = new Controller(db);
 
   router.get('', controller.validator, controller.mri);
+  router.get('/embed', controller.validator, controller.mriEmbed);
+  router.get('/layers', controller.validator, controller.apiMriLayers);
+  router.get('/render3d', controller.validator, controller.mriRender3D);
   router.get('/json', controller.validator, authTokenMiddleware, controller.apiMriGet);
   router.post('/json', controller.validatorPost, authTokenMiddleware, controller.apiMriPost);
 

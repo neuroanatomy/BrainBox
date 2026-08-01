@@ -276,38 +276,77 @@ const startWaitingAnimation = () => {
   }, 33);
 };
 
-const startRender3D = () => {
-  const pr = new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', localStorage.brainbox, true);
-    xhr.responseType = 'blob';
-    xhr.onload = () => {
-      const blob = xhr.response;
-      const reader = new FileReader();
-      reader.addEventListener('loadend', (e) => {
-        const niigz = e.currentTarget.result;
-        const brain = configureNifti(niigz);
-        brain.level = level;
+/**
+ * Hand a gzipped NIfTI volume to the meshing worker.
+ * @param {ArrayBuffer} niigz The .nii.gz payload
+ * @returns {void}
+ */
+const meshVolume = (niigz) => {
+  const brain = configureNifti(niigz);
+  brain.level = level;
 
-        snw.postMessage([
-          brain.dim,
-          brain.datatype,
-          brain.pixdim,
-          brain.level,
-          brain.data
-        ]);
-        resolve();
-      });
-      reader.readAsArrayBuffer(blob);
-    };
-    xhr.onerror = (e) => {
-      console.log('load from localStorage failed. Try to load from server');
-      reject(e);
-    };
-    xhr.send();
-  });
+  snw.postMessage([
+    brain.dim,
+    brain.datatype,
+    brain.pixdim,
+    brain.level,
+    brain.data
+  ]);
+};
 
-  return pr;
+/**
+ * Report a failure in place of the endless "computing mesh" animation.
+ * @param {string} message What to tell the user
+ * @returns {void}
+ */
+const showError = (message) => {
+  const splash = document.getElementById('splash');
+  if (!splash) { return; }
+  const label = splash.querySelector('p');
+  if (label) { label.textContent = message; }
+  const spinner = document.getElementById('dot');
+  if (spinner) { spinner.style.display = 'none'; }
+};
+
+/**
+ * Load the volume to render.
+ *
+ * Two sources, in order of preference:
+ *  1. localStorage.brainbox - a blob URL the opener created from the *current*,
+ *     possibly unsaved, in-memory segmentation. Only available when another
+ *     BrainBox document on this origin put it there.
+ *  2. the `path` global - the saved annotation on the server. This is what the
+ *     embed uses: it is read-only, so there is nothing unsaved to carry over,
+ *     and a blob URL created by a different document cannot be relied upon
+ *     across third-party storage partitioning anyway.
+ *
+ * Until now only (1) existed; (2) was a console.log promising a fallback that
+ * was never written, so a document without localStorage.brainbox simply hung.
+ * @returns {Promise} Resolves once the volume has been sent to the worker
+ */
+const startRender3D = async () => {
+  const sources = [];
+  if (typeof localStorage !== 'undefined' && localStorage.brainbox) { sources.push(localStorage.brainbox); }
+  // eslint-disable-next-line no-undef
+  if (typeof path === 'string' && path) { sources.push(path); }
+
+  for (const source of sources) {
+    try {
+      // Sequential on purpose: the second source is a fallback, only worth
+      // fetching once the first has actually failed.
+      // eslint-disable-next-line no-await-in-loop
+      const res = await fetch(source);
+      if (!res.ok) { throw new Error('HTTP ' + res.status); }
+      // eslint-disable-next-line no-await-in-loop
+      meshVolume(await res.arrayBuffer());
+
+      return;
+    } catch (err) {
+      console.log('render3D: could not load', source, err.message);
+    }
+  }
+
+  showError('This annotation could not be loaded.');
 };
 
 const loadHTML = () => {

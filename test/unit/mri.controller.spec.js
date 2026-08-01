@@ -438,4 +438,236 @@ describe('MRI Controller: ', function () {
       sinon.restore();
     }).timeout(U.longTimeout);
   });
+
+  describe('mriEmbed / apiMriLayers (embed access control): ', function () {
+    const publicEmbedURL = 'https://example.com/embed-public-brain.nii.gz';
+    const privateEmbedURL = 'https://example.com/embed-private-brain.nii.gz';
+    const publicEmbedProject = 'embedpublicproject';
+    const privateEmbedProject = 'embedprivateproject';
+    // nativeDb is only populated by the outer before() hook once the suite
+    // starts running, so build the request object lazily per test rather
+    // than capturing it at describe-time (when it is still undefined).
+    const makeAnonReq = (query) => ({ nativeDb, query: query || {}, user: { username: '' }, isAuthenticated: () => false });
+    // The embed routes set a frame-ancestors header before anything else, so
+    // the response mock needs res.set as well as status/render.
+    const makeRenderRes = () => ({ status: sinon.spy(), render: sinon.spy(), set: sinon.spy() });
+
+    before(async function () {
+      await nativeDb.collection('project').insertOne({
+        name: 'Embed Public Project',
+        shortname: publicEmbedProject,
+        owner: 'foo',
+        collaborators: {
+          list: [
+            {
+              userID: 'anyone',
+              username: 'anyone',
+              nickname: 'anyone',
+              access: { collaborators: 'view', annotations: 'view', files: 'view' }
+            }
+          ]
+        },
+        files: { list: [] },
+        annotations: { list: [] }
+      });
+      await nativeDb.collection('project').insertOne({
+        name: 'Embed Private Project',
+        shortname: privateEmbedProject,
+        owner: 'foo',
+        collaborators: {
+          list: [
+            {
+              userID: 'anyone',
+              username: 'anyone',
+              nickname: 'anyone',
+              access: { collaborators: 'none', annotations: 'none', files: 'none' }
+            }
+          ]
+        },
+        files: { list: [] },
+        annotations: { list: [] }
+      });
+      await nativeDb.collection('mri').insertOne({
+        source: publicEmbedURL,
+        name: 'Public Embed Brain',
+        url: '/data/embedpublic/',
+        mri: { atlas: [{ name: 'Default', project: publicEmbedProject, filename: 'Atlas.nii.gz', labels: 'foreground.json' }] }
+      });
+      await nativeDb.collection('mri').insertOne({
+        source: privateEmbedURL,
+        name: 'Private Embed Brain',
+        url: '/data/embedprivate/',
+        mri: { atlas: [{ name: 'Default', project: privateEmbedProject, filename: 'Atlas.nii.gz', labels: 'foreground.json' }] }
+      });
+    });
+
+    after(async function () {
+      await nativeDb.collection('project').deleteMany({ shortname: { $in: [publicEmbedProject, privateEmbedProject] } });
+      await nativeDb.collection('mri').deleteMany({ source: { $in: [publicEmbedURL, privateEmbedURL] } });
+      await nativeDb.collection('embedWsTicket').deleteMany({ mriSource: { $in: [publicEmbedURL, privateEmbedURL] } });
+    });
+
+    describe('apiMriLayers function() ', function () {
+      it('should return 400 when no url is provided', async function () {
+        const req = makeAnonReq();
+        const statusSpy = sinon.spy();
+        const jsonSpy = sinon.spy();
+        const res = { status: sinon.stub().returns({ json: statusSpy }), json: jsonSpy };
+        await mriController.apiMriLayers(req, res);
+        assert.isTrue(res.status.calledWith(400));
+        assert.strictEqual(jsonSpy.callCount, 0);
+      });
+
+      it('should return 404 when the MRI is not in the DB', async function () {
+        const req = makeAnonReq({ url: 'https://example.com/embed-no-such-brain.nii.gz' });
+        const statusSpy = sinon.spy();
+        const jsonSpy = sinon.spy();
+        const res = { status: sinon.stub().returns({ json: statusSpy }), json: jsonSpy };
+        await mriController.apiMriLayers(req, res);
+        assert.isTrue(res.status.calledWith(404));
+        assert.strictEqual(jsonSpy.callCount, 0);
+      });
+
+      it('should return 403 for a private MRI when the caller has no access', async function () {
+        const req = makeAnonReq({ url: privateEmbedURL });
+        const statusSpy = sinon.spy();
+        const jsonSpy = sinon.spy();
+        const res = { status: sinon.stub().returns({ json: statusSpy }), json: jsonSpy };
+        await mriController.apiMriLayers(req, res);
+        assert.isTrue(res.status.calledWith(403));
+        assert.strictEqual(jsonSpy.callCount, 0);
+      });
+
+      it('should return 200 with the layer list for a public MRI', async function () {
+        const req = makeAnonReq({ url: publicEmbedURL });
+        const jsonSpy = sinon.spy();
+        const res = { status: sinon.stub().returns({ json: sinon.spy() }), json: jsonSpy };
+        await mriController.apiMriLayers(req, res);
+        assert.strictEqual(jsonSpy.callCount, 1);
+        const [[{ layers }]] = jsonSpy.args;
+        assert.strictEqual(layers.length, 1);
+        assert.strictEqual(layers[0].project, publicEmbedProject);
+        assert.strictEqual(layers[0].name, 'Default');
+      });
+    });
+
+    describe('mriEmbed function() ', function () {
+      it('should render an error with 400 when no url is provided', async function () {
+        const req = makeAnonReq();
+        const res = makeRenderRes();
+        await mriController.mriEmbed(req, res);
+        assert.isTrue(res.status.calledWith(400));
+        assert.strictEqual(res.render.callCount, 1);
+        assert.strictEqual(res.render.args[0][0], 'embedError');
+      });
+
+      it('should render an error with 404 when the MRI is not in the DB', async function () {
+        const req = makeAnonReq({ url: 'https://example.com/embed-no-such-brain.nii.gz' });
+        const res = makeRenderRes();
+        await mriController.mriEmbed(req, res);
+        assert.isTrue(res.status.calledWith(404));
+        assert.strictEqual(res.render.args[0][0], 'embedError');
+      });
+
+      it('should render an error with 403 for a private MRI when the caller has no access', async function () {
+        const req = makeAnonReq({ url: privateEmbedURL });
+        const res = makeRenderRes();
+        await mriController.mriEmbed(req, res);
+        assert.isTrue(res.status.calledWith(403));
+        assert.strictEqual(res.render.args[0][0], 'embedError');
+      });
+
+      it('should render the embed viewer with a fresh embedWsTicket for a public MRI', async function () {
+        const req = makeAnonReq({ url: publicEmbedURL });
+        const res = makeRenderRes();
+        await mriController.mriEmbed(req, res);
+        assert.strictEqual(res.status.callCount, 0);
+        assert.strictEqual(res.render.callCount, 1);
+        assert.strictEqual(res.render.args[0][0], 'mriEmbed');
+        const [[, locals]] = res.render.args;
+        const ticket = JSON.parse(locals.embedWsTicket);
+        assert.isString(ticket);
+
+        const stored = await nativeDb.collection('embedWsTicket').findOne({ token: ticket });
+        assert.strictEqual(stored.mriSource, publicEmbedURL);
+        assert.strictEqual(stored.dirname, '/data/embedpublic/');
+      });
+
+      it('should declare itself framable', async function () {
+        const req = makeAnonReq({ url: publicEmbedURL });
+        const res = makeRenderRes();
+        await mriController.mriEmbed(req, res);
+        assert.isTrue(res.set.calledWith('Content-Security-Policy', 'frame-ancestors *'));
+      });
+
+      it('should reflect only the query parameters the viewer understands', async function () {
+        const req = makeAnonReq({ url: publicEmbedURL, view: 'cor', slice: '90', evil: 'dropme' });
+        const res = makeRenderRes();
+        await mriController.mriEmbed(req, res);
+        const [[, locals]] = res.render.args;
+        const params = JSON.parse(locals.params);
+        assert.deepStrictEqual(Object.keys(params).sort(), ['slice', 'url', 'view']);
+        assert.notProperty(params, 'evil');
+      });
+
+      it('should not let a query parameter break out of the inline script', async function () {
+        const payload = '</script><img src=x onerror=alert(1)>';
+        // `view` is whitelisted, so this is reflected: it must come back escaped
+        // rather than dropped, which is what protects the MRI metadata too.
+        const req = makeAnonReq({ url: publicEmbedURL, view: payload });
+        const res = makeRenderRes();
+        await mriController.mriEmbed(req, res);
+        const [[, locals]] = res.render.args;
+        assert.notInclude(locals.params.toLowerCase(), '</script');
+        assert.notInclude(locals.params, '<');
+        assert.notInclude(locals.params, '>');
+        // ...and still means exactly what it said
+        assert.strictEqual(JSON.parse(locals.params).view, payload);
+      });
+    });
+
+    describe('mriRender3D function() ', function () {
+      it('should render an error with 400 when no url is provided', async function () {
+        const req = makeAnonReq();
+        const res = makeRenderRes();
+        await mriController.mriRender3D(req, res);
+        assert.isTrue(res.status.calledWith(400));
+        assert.strictEqual(res.render.args[0][0], 'embedError');
+      });
+
+      it('should render an error with 404 when the MRI is not in the DB', async function () {
+        const req = makeAnonReq({ url: 'https://example.com/embed-no-such-brain.nii.gz' });
+        const res = makeRenderRes();
+        await mriController.mriRender3D(req, res);
+        assert.isTrue(res.status.calledWith(404));
+        assert.strictEqual(res.render.args[0][0], 'embedError');
+      });
+
+      it('should return 403 for a private MRI, like the embed itself', async function () {
+        const req = makeAnonReq({ url: privateEmbedURL });
+        const res = makeRenderRes();
+        await mriController.mriRender3D(req, res);
+        assert.isTrue(res.status.calledWith(403));
+        assert.strictEqual(res.render.args[0][0], 'embedError');
+      });
+
+      it('should render the annotation path for a public MRI', async function () {
+        const req = makeAnonReq({ url: publicEmbedURL });
+        const res = makeRenderRes();
+        await mriController.mriRender3D(req, res);
+        assert.strictEqual(res.status.callCount, 0);
+        assert.strictEqual(res.render.args[0][0], 'mriRender3D');
+        const [[, locals]] = res.render.args;
+        assert.strictEqual(JSON.parse(locals.path), '/data/embedpublic/Atlas.nii.gz');
+      });
+
+      it('should ignore an atlas filename that is not one of this brain\'s layers', async function () {
+        const req = makeAnonReq({ url: publicEmbedURL, atlas: '../../../etc/passwd' });
+        const res = makeRenderRes();
+        await mriController.mriRender3D(req, res);
+        const [[, locals]] = res.render.args;
+        assert.strictEqual(JSON.parse(locals.path), '/data/embedpublic/Atlas.nii.gz');
+      });
+    });
+  });
 });
