@@ -63,6 +63,22 @@ Or launch your own collaborative project on [BrainBox](https://brainbox.pasteur.
 **We are looking forward to meeting you!**
 
 
+#### Embed a brain in your page  
+
+Any publicly visible brain can be embedded in your own web page, the way a video is.
+Drop in one line and your visitors get a working viewer — planes, slices, annotations,
+3D — with no account and without leaving your page:
+
+```html
+<script src="https://brainbox.pasteur.fr/embed.js"
+        data-url="http://braincatalogue.org/data/Sloth_bear/MRI-n4.nii.gz"></script>
+```
+
+Embedded viewers are read-only: nobody can paint, erase or annotate through them.
+You can choose the plane, slice and annotation layer to open on, size the viewer to
+your page, or write the `<iframe>` yourself instead of using the loader —
+see the [embedding guide](https://brainbox.pasteur.fr/doc/embed.html).
+
 
 # Developer instructions
 

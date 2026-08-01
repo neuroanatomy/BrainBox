@@ -58,6 +58,8 @@
 5. [Frequently asked questions](#FAQ)
     * [Auto-save](#autoSave)
 6. [How to cite BrainBox](#cite)
+
+[Embedding a brain in your own page](embed.html)
 </div>
 </div>
 
