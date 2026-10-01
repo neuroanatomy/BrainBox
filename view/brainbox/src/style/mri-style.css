@@ -43,7 +43,7 @@ td {
 }
 
 #stereotaxic {
-    width:600px;
+    min-width: 100%;
 }
 select {
     border:none;
@@ -66,8 +66,5 @@ select {
     #annotationsPane, #privilegedAccessInfo {
         max-width:none;
         margin-right: 0px;
-    }
-    #stereotaxic {
-        min-width: 100%;
     }
 }

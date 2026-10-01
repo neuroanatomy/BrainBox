@@ -116,6 +116,7 @@
       <div class="right">
         <Editor
           :title="title"
+          :overlay-tools="fullscreen"
           :class="{fullscreen, reduced}"
         >
           <template #tools>
@@ -159,7 +160,7 @@ import {
   OntologySelector,
   AdjustSettings
 } from 'nwl-components';
-import { ref, onMounted, watch, computed } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 
 import useVisualization from '../store/visualization';
 
@@ -183,21 +184,8 @@ const {
   init: initVisualization
 } = useVisualization();
 
-displayChat.value = false;
-
 const selectedIndex = ref(0);
 const reduced = computed(() => !displayChat.value && !displayScript.value);
-
-watch(fullscreen, () => {
-  if (fullscreen.value && !displayScript.value) {
-    displayChat.value = true;
-  }
-
-  // setTimeout(() => {
-  //   // document.querySelector('#resizable').style = '';
-  //   AtlasMakerWidget.resizeWindow();
-  // }, 100);
-});
 
 const selectVolumeAnnotation = async (index) => {
   selectedIndex.value = index;
@@ -314,6 +302,12 @@ main {
   width: 100%;
 }
 
+/* The docked toolbox should not be wider than the stereotaxic image, which
+   the page fixes at 600px. */
+:deep(.area--docked .tools) {
+  max-width: 600px;
+}
+
 :deep(button), :deep(.group) {
     height: 24px;
     margin: 1px;
@@ -338,6 +332,11 @@ main {
   }
   #stereotaxic {
     min-width: 100%;
+  }
+  /* The image spans the full column width here, so drop the 600px cap and
+     let the docked toolbox follow it (later rule wins over the base cap). */
+  :deep(.area--docked .tools) {
+    max-width: 100%;
   }
 }
 

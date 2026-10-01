@@ -6,6 +6,10 @@
     :fullscreen="fullscreen"
   >
     <template #left>
+      <div
+        id="project-tools"
+        ref="projectTools"
+      />
       <TextAnnotations
         :extract-keys="extractTextKeys"
         :link-prefix="linkPrefix"
@@ -28,6 +32,9 @@
       />
       <Editor
         :title="title"
+        :overlay-tools="fullscreen || !vertical"
+        :tools-target="projectTools"
+        :reduced="reduced"
         :class="{reduced}"
       >
         <template #tools>
@@ -113,6 +120,9 @@ const {
 const linkPrefix = `${baseURL}/mri?url=`;
 const volumeAnnotations = Vue.ref([]);
 const selectedIndex = Vue.ref(null);
+// Target element for the docked toolbox (Editor's toolsTarget): the div
+// between the file list and the label list in the left column.
+const projectTools = Vue.ref(null);
 
 // define a map associating annotations keys to value selectors
 // to extract content within the TextAnnotations component
@@ -376,7 +386,14 @@ const selectVolumeAnnotation = async (selectedAtlas) => {
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const handleLayoutChange = async () => {
+// Split-pane direction, owned by nwl ProjectPage (it emits the new value on
+// every toggle; default matches its vertical default). In horizontal layout
+// the left column becomes a top strip, so the toolbox floats over the
+// content instead of docking there.
+const vertical = Vue.ref(true);
+
+const handleLayoutChange = async (value) => {
+  vertical.value = value;
   await delay(250);
   AtlasMakerWidget.resizeWindow();
 };

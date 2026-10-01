@@ -512,7 +512,4 @@ button img.icon {
     width: 7px;
     height: 7px;
 }
-.text .chat .messages {
-  min-height: 75px;
-}
 </style>
