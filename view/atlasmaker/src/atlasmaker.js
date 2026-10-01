@@ -364,6 +364,26 @@ const me = {
       me.drawImages();
     });
 
+    // Refit the canvas when the container resizes without a window resize
+    // On auto-height layouts each resizeWindow() advances the container only
+    // a few px; iterate to a stable size so it converges in one frame.
+    const containerObserver = new ResizeObserver(() => {
+      if (!me.brainW || !me.brainH) { return; } // volume not loaded yet
+      const measure = () => ({ width: me.container.clientWidth, height: me.container.clientHeight });
+      let size = measure();
+      if (size.width === me._containerSize?.width && size.height === me._containerSize?.height) {
+        return;
+      }
+      for (let i = 0; i < 200; i++) {
+        const prev = size;
+        me.resizeWindow();
+        size = measure();
+        if (prev.width === size.width && prev.height === size.height) { break; }
+      }
+      me._containerSize = size;
+    });
+    containerObserver.observe(me.container);
+
     // event connect: get keyboard events
     document.addEventListener('keydown', (e) => {
       me.keyDown(e);
