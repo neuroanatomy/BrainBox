@@ -7,20 +7,69 @@ import '../style/mri-style.css';
 import '../style/access-style.css';
 import '../style/dropdown-style.css';
 
-import 'jquery-ui/themes/base/core.css';
-import 'jquery-ui/themes/base/theme.css';
-import 'jquery-ui/themes/base/autocomplete.css';
-import 'jquery-ui/ui/core';
-import 'jquery-ui/ui/widgets/autocomplete';
-
 import * as tw from '../twoWayBinding';
 import { getData, setData } from '../../../shared/domData';
-import $ from 'jquery';
+import showHideModule from '../../../shared/showHide.js';
+
+// jQuery's .show() / .hide(), without jQuery
+const { show, hide } = showHideModule;
 
 // let mriInfoOrig;
 let textAnnotationsArray = [];
 let volAnnParam;
 let textAnnParam;
+
+/**
+ * jQuery's $.isEmptyObject: true if the object has no enumerable property, own or inherited
+ * @param {object} obj Any object
+ * @returns {boolean} Whether it is empty
+ */
+const isEmptyObject = (obj) => {
+  // eslint-disable-next-line guard-for-in, no-unreachable-loop
+  for (const name in obj) {
+    return false;
+  }
+
+  return true;
+};
+
+/**
+ * jQuery's $.map over an array: like Array.prototype.map, but null and undefined results are dropped
+ * @param {array|null} arr The array (null gives [], as with $.map)
+ * @param {function} fn The mapping function
+ * @returns {array} The mapped values
+ */
+const jqMap = (arr, fn) => (arr || []).map(fn).filter((v) => v !== null && typeof v !== 'undefined');
+
+/**
+ * jQuery's $(document).on(types, selector, handler): call `handler(event, matched)` for events
+ * whose target is, or is inside, an element matching `selector`
+ * @param {string} types Space-separated event types
+ * @param {string} selector CSS selector of the elements to watch
+ * @param {function} handler Called with the event and the matched element
+ * @returns {void}
+ */
+const onDocument = (types, selector, handler) => {
+  for (const type of types.split(' ')) {
+    document.addEventListener(type, (e) => {
+      const matched = (e.target instanceof Element) ? e.target.closest(selector) : null;
+      if (matched) {
+        handler(e, matched);
+      }
+    });
+  }
+};
+
+/**
+ * Select the n-th row (counting the header) of a table, as $('table... tr').eq(n).addClass('selected')
+ * @param {string} rowsSelector Selector of the table's rows
+ * @param {number} n Row index
+ * @returns {void}
+ */
+const selectRow = (rowsSelector, n) => {
+  const row = document.querySelectorAll(rowsSelector)[n];
+  if (row) { row.classList.add('selected'); }
+};
 
 const receiveMetadata = function (data) {
   console.log('Received metadata update:', data);
@@ -40,27 +89,28 @@ const receiveMetadata = function (data) {
 
 
 // Prevent zoom on double tap
-$('body').on('touchstart', (e) => {
+document.body.addEventListener('touchstart', (e) => {
   const t2 = e.timeStamp;
   const t1 = getData(e.currentTarget, 'lastTouch') || t2;
   const dt = t2 - t1;
-  const fingers = e.originalEvent.touches.length;
+  const fingers = e.touches.length;
   setData(e.currentTarget, {lastTouch: t2});
   if (!dt || dt > 500 || fingers > 1) {
     return; // not double-tap
   }
   e.preventDefault(); // double tap - prevent the zoom
   // also synthesize click events we just swallowed up
-  $(e.currentTarget).trigger('click')
-    .trigger('click');
+  e.currentTarget.click();
+  e.currentTarget.click();
 });
 
-if ($.isEmptyObject(mriInfo)) {
-  $('#stereotaxic').prepend('<h2>ERROR: Cannot read the data.</h2><p>The file is maybe corrupt?</p>');
+if (isEmptyObject(mriInfo)) {
+  const stereotaxic = document.getElementById('stereotaxic');
+  if (stereotaxic) { stereotaxic.insertAdjacentHTML('afterbegin', '<h2>ERROR: Cannot read the data.</h2><p>The file is maybe corrupt?</p>'); }
   console.log('ERROR: Cannot read data. The file is maybe corrupt?');
 
-  $('#annotationsPane').hide();
-  $('#data').show();
+  hide(document.getElementById('annotationsPane'));
+  show(document.getElementById('data'));
 
 } else {
   params.info = mriInfo;
@@ -112,10 +162,10 @@ if ($.isEmptyObject(mriInfo)) {
         table: document.querySelector('table#annotations'),
         infoProxy: infoProxy,
         info: BrainBox.info,
-        trTemplate: $.map([
+        trTemplate: [
           '<tr>',
           ' <td class=\'noEmpty\'></td>', // name
-          ' <td><select>', $.map(BrainBox.labelSets, (o) => '<option>' + o.name + '</option>'), '</select></td>', // value
+          ' <td><select>', jqMap(BrainBox.labelSets, (o) => '<option>' + o.name + '</option>').join(''), '</select></td>', // value
           ' <td class=\'noEmpty\'></td>', // project
           ' <td></td>', // modified
           ' <td>', // access
@@ -127,7 +177,7 @@ if ($.isEmptyObject(mriInfo)) {
           '  </div>',
           ' </td>',
           '</tr>'
-        ], (o) => o).join(''),
+        ].join(''),
         objTemplate: [
           {
             typeOfBinding: 2,
@@ -137,13 +187,13 @@ if ($.isEmptyObject(mriInfo)) {
             typeOfBinding: 2,
             path: 'mri.atlas.#.labels', //value
             format: (e, d) => {
-              $(e).find('select')
-                .prop('selectedIndex', $.map(BrainBox.labelSets, (o) => o.source).indexOf(d));
+              const select = e.querySelector('select');
+              if (select) { select.selectedIndex = jqMap(BrainBox.labelSets, (o) => o.source).indexOf(d); }
             },
             parse: (e) => {
-              const name = $(e).find('select')
-                .val();
-              const i = $.map(BrainBox.labelSets, (o) => o.name).indexOf(name);
+              const select = e.querySelector('select');
+              const name = select ? select.value : undefined; // eslint-disable-line no-undefined
+              const i = jqMap(BrainBox.labelSets, (o) => o.name).indexOf(name);
 
               return BrainBox.labelSets[i].source;
             }
@@ -151,7 +201,7 @@ if ($.isEmptyObject(mriInfo)) {
           {
             typeOfBinding: 1, // project
             path: 'mri.atlas.#.project',
-            format: (e, d) => { $(e).html('<a href="/project/' + d + '">' + d + '</a>'); }
+            format: (e, d) => { e.innerHTML = '<a href="/project/' + d + '">' + d + '</a>'; }
           },
           {
             typeOfBinding: 1,
@@ -162,12 +212,12 @@ if ($.isEmptyObject(mriInfo)) {
             typeOfBinding: 1,
             path: 'mri.atlas.#.access',
             format: (e, d) => {
-              $(e).find('.access')
-                .attr('data-level', ['none', 'view', 'edit', 'add', 'remove'].indexOf(d));
+              const access = e.querySelector('.access');
+              if (access) { access.setAttribute('data-level', ['none', 'view', 'edit', 'add', 'remove'].indexOf(d)); }
             },
             parse: (e) => {
-              const level = $(e).find('.access')
-                .attr('data-level');
+              const access = e.querySelector('.access');
+              const level = access ? access.getAttribute('data-level') : undefined; // eslint-disable-line no-undefined
 
               return ['none', 'view', 'edit', 'add', 'remove'][level];
             }
@@ -178,33 +228,40 @@ if ($.isEmptyObject(mriInfo)) {
         BrainBox.appendAnnotationTableRow(i, volAnnParam);
       }
       // connect pop-down menus
-      $(document).on('change', 'table#annotations select', (e) => {
-        const col = $('table#annotations tr:eq(0) th:eq(' + $(e.currentTarget).closest('td')[0].cellIndex + ')').text();
-        const index = $(e.currentTarget).closest('tr')[0].rowIndex - 1;
+      onDocument('change', 'table#annotations select', (e, select) => {
+        // The column's title: the header row's th in the same position as the select's cell
+        const [header] = document.querySelectorAll('table#annotations tr');
+        const th = header ? header.querySelectorAll('th')[select.closest('td').cellIndex] : null;
+        const col = th ? th.textContent : '';
+        const index = select.closest('tr').rowIndex - 1;
         switch (col) {
         case 'Value': {
           const url = '/labels/' + infoProxy['mri.atlas.' + index + '.labels'];
-          $.getJSON(url, (json) => {
-            AtlasMakerWidget.configureOntology(json);
-            AtlasMakerWidget.changePenColor(0);
-            AtlasMakerWidget.brainImg.img = null; // to force redraw with new colors
-            AtlasMakerWidget.drawImages();
-            AtlasMakerWidget.setViewerState({ state: 'ready' });
-          });
+          // As with $.getJSON, a failed request is ignored
+          fetch(url)
+            .then((res) => (res.ok ? res.json().catch(() => null) : null), () => null)
+            .then((json) => {
+              if (!json) { return; }
+              AtlasMakerWidget.configureOntology(json);
+              AtlasMakerWidget.changePenColor(0);
+              AtlasMakerWidget.brainImg.img = null; // to force redraw with new colors
+              AtlasMakerWidget.drawImages();
+              AtlasMakerWidget.setViewerState({ state: 'ready' });
+            });
           break;
         }
         }
       });
       // volume annotation table: select row
-      $(document).on('click touchstart', '#annotations tr', (e) => {
-        const targetRow = $(e.target).closest('tr');
-        const targetIndex = targetRow.index();
+      onDocument('click touchstart', '#annotations tr', (e) => {
+        const targetRow = e.target.closest('tr');
+        // jQuery's .index(): the row's position among its siblings
+        const targetIndex = [...targetRow.parentNode.children].indexOf(targetRow);
         BrainBox.selectAnnotationTableRow(targetIndex, volAnnParam);
       });
       // volume annotations table: select the first row by default
-      $('table#annotationsg').removeClass('selected');
-      $('table#annotations tr').eq(1)
-        .addClass('selected');
+      // (a line deselecting 'table#annotationsg' was dropped here: the selector matched nothing)
+      selectRow('table#annotations tr', 1);
 
       // Bind text annotations
       //-----------------------
@@ -238,7 +295,7 @@ if ($.isEmptyObject(mriInfo)) {
         {
           typeOfBinding: 1,
           path: '#.project', // project
-          format: (e, d) => { $(e).html('<a href="/project/' + d + '">' + d + '</a>'); }
+          format: (e, d) => { e.innerHTML = '<a href="/project/' + d + '">' + d + '</a>'; }
         },
         {
           typeOfBinding: 1,
@@ -249,12 +306,12 @@ if ($.isEmptyObject(mriInfo)) {
           typeOfBinding: 1,
           path: '#.access',
           format: (e, d) => {
-            $(e).find('.access')
-              .attr('data-level', BrainBox.accessLevels.indexOf(d));
+            const access = e.querySelector('.access');
+            if (access) { access.setAttribute('data-level', BrainBox.accessLevels.indexOf(d)); }
           },
           parse: (e) => {
-            const level = $(e).find('.access')
-              .attr('data-level');
+            const access = e.querySelector('.access');
+            const level = access ? access.getAttribute('data-level') : undefined; // eslint-disable-line no-undefined
 
             return BrainBox.accessLevels[level];
           }
@@ -274,52 +331,23 @@ if ($.isEmptyObject(mriInfo)) {
       }
 
       // text annotations table: select the first row by default
-      $('table#textAnnotations tr').removeClass('selected');
-      $('table#textAnnotations tr').eq(1)
-        .addClass('selected');
+      document.querySelectorAll('table#textAnnotations tr').forEach((tr) => tr.classList.remove('selected'));
+      selectRow('table#textAnnotations tr', 1);
 
       // connect close button in labels set
-      $(document).on('click touchstart', '#labels-close', () => { $('#labelset').hide(); });
+      onDocument('click touchstart', '#labels-close', () => { hide(document.getElementById('labelset')); });
 
-      $('#data').show();
+      show(document.getElementById('data'));
 
-      // WS Autocompletion
-      //-------------------
-      let cb, label;
-      AtlasMakerWidget.receiveFunctions.similarProjectNamesQuery = (data) => {
-        let arr = [];
-        if (label === 'similarProjectNames') { arr = $.map(data.metadata, (o) => ({ label: o.shortname, shortname: o.shortname, name: o.name })); }
-        cb(arr);
-      };
-
-      $('.autocomplete').autocomplete({
-        minLength: 0,
-        source: (req, res) => {
-          // eslint-disable-next-line no-invalid-this
-          const key = $(this.element).attr('data-autocomplete');
-          switch (key) {
-          case 'user.similarProjectNames':
-            AtlasMakerWidget.socket.send(JSON.stringify({ 'type': 'similarProjectNamesQuery', 'metadata': { 'projectName': req.term } }));
-            label = 'similarProjectNames';
-            break;
-          }
-          cb = res;
-        },
-        select: (e, ui) => {
-          const irow = $(e.target).closest('tr')
-            .index();
-          infoProxy['mri.atlas.' + irow + '.project'] = ui.item.name;
-
-          // add user to access objects
-          // projectInfo.collaborators.list[irow].userID=ui.item.nickname;
-        }
-      });
-
+      // (An autocompletion for project names used to be set up here, with jQuery UI, on
+      // '.autocomplete' elements; the page has none, so it never ran, and was removed.)
     })
     .catch((err) => {
-      $('#msgLog').html('ERROR: Can\'t load data. ' + err);
+      const msgLog = document.getElementById('msgLog');
+      if (msgLog) { msgLog.innerHTML = 'ERROR: Can\'t load data. ' + err; }
       console.error(err);
     });
 }
 
-$('#addProject').click(() => { location = '/project/new'; });
+const addProject = document.getElementById('addProject');
+if (addProject) { addProject.addEventListener('click', () => { location = '/project/new'; }); }
