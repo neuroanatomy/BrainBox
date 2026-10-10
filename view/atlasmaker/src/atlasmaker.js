@@ -5,6 +5,8 @@ import 'structjs';
 import './css/atlasmaker.css';
 import './css/loading-style.css';
 
+// jQuery is no longer used in this file, but it is still made global here for the
+// modules and pages that have not been converted yet (see docs/jquery-removal-plan.md)
 import $ from 'jquery';
 
 import {AtlasMakerDraw} from './atlasmaker-draw.js';
@@ -15,11 +17,45 @@ import {AtlasMakerUI} from './atlasmaker-ui.js';
 import {AtlasMakerWS} from './atlasmaker-ws.js';
 
 import Config from './../../../cfg.json';
+import deepExtendModule from '../../shared/deepExtend.js';
 import toolsEmbed from './html/toolsEmbed.html';
 import toolsFull from './html/toolsFull.html';
 import toolsLight from './html/toolsLight.html';
 
 window.$ = $;
+
+const { deepExtend } = deepExtendModule;
+
+/**
+ * The outcome of a request, as jQuery's $.ajax reported it: `ok` for a 2xx answer
+ * whose body could be read (a body sent as JSON must parse), `data` the body
+ * (parsed if JSON, text otherwise), `responseJSON` the parsed body if it was JSON
+ * (also for errors), and `status` 0 when the server could not be reached.
+ * @param {string} url Request URL
+ * @param {object} options fetch() options
+ * @returns {Promise<object>} { ok, status, data, responseJSON }
+ */
+const request = async (url, options) => {
+  let res;
+  try {
+    res = await fetch(url, options);
+  } catch (err) {
+    return { ok: false, status: 0 };
+  }
+  const text = await res.text();
+  if ((res.headers.get('Content-Type') || '').includes('json')) {
+    try {
+      const parsed = JSON.parse(text);
+
+      return { ok: res.ok, status: res.status, data: parsed, responseJSON: parsed };
+    } catch (err) {
+      // jQuery: a JSON body that does not parse is a failure, whatever the status
+      return { ok: false, status: res.status };
+    }
+  }
+
+  return { ok: res.ok, status: res.status, data: text };
+};
 
 /**
  * AtlasMakerWidget base object
@@ -254,12 +290,12 @@ const me = {
     me._registerToolDisplayInformation(me.measureToolDisplayInformation);
   },
   _addAtlasMakerComponents: function () {
-    $.extend(me, AtlasMakerDraw);
-    $.extend(me, AtlasMakerInteraction);
-    $.extend(me, AtlasMakerIO);
-    $.extend(me, AtlasMakerPaint);
-    $.extend(me, AtlasMakerUI);
-    $.extend(me, AtlasMakerWS);
+    Object.assign(me, AtlasMakerDraw);
+    Object.assign(me, AtlasMakerInteraction);
+    Object.assign(me, AtlasMakerIO);
+    Object.assign(me, AtlasMakerPaint);
+    Object.assign(me, AtlasMakerUI);
+    Object.assign(me, AtlasMakerWS);
   },
 
   /**
@@ -374,13 +410,13 @@ const me = {
     // Add precise cursor
     const isTouchArr = [];//["iPad","iPod"];
     const [, curDevice] = navigator.userAgent.split(/[(;]/);
-    if($.inArray(curDevice, isTouchArr)>=0) {
+    if(isTouchArr.indexOf(curDevice)>=0) {
       me.flagUsePreciseCursor=true;
       me.initCursor();
     }
 
-    // get pointer to progress div
-    me.progress=$('a.download_MRI');
+    // get pointer to progress div (there is none in the current pages: me.progress is then null)
+    me.progress=document.querySelector('a.download_MRI');
   },
 
   //====================================================================================
@@ -398,7 +434,9 @@ const me = {
     me._addAtlasMakerComponents();
 
     // check if user is loged in
-    $.get('/loggedIn', function(res) {
+    // (if the request fails, nothing is assumed about the user, as with jQuery's $.get)
+    request('/loggedIn').then(function({ ok, data: res }) {
+      if(!ok) { return; }
       if(res.loggedIn) {
         me.User.username=res.username;
       } else {
@@ -450,7 +488,7 @@ const me = {
     document.addEventListener('fullscreenchange', me.onNativeFullscreenChange);
 
     // event connect: Connect event to respond to window resizing
-    $(window).resize(function() {
+    window.addEventListener('resize', function() {
       me.resizeWindow();
       me.drawImages();
     });
@@ -477,7 +515,7 @@ const me = {
     me.setPlaneButton(me.User.view);
 
     // event connect: get keyboard events
-    $(document).keydown(function(e) { me.keyDown(e); });
+    document.addEventListener('keydown', function(e) { me.keyDown(e); });
 
     // event connect: configure annotation tools
     document.getElementById('tools-minimized').addEventListener('click', function() { me.changeToolbarDisplay('maximize'); });
@@ -505,9 +543,11 @@ const me = {
     me.push(document.getElementById('next'), me.nextSlice);
 
     // event connect: chat message input
-    $('#msg').keypress((e) => { me.onkey(e); });
+    const msg = document.getElementById('msg');
+    if(msg) { msg.addEventListener('keypress', (e) => { me.onkey(e); }); }
 
-    $('#tools-minimized').hide();
+    const toolsMinimized = document.getElementById('tools-minimized');
+    if(toolsMinimized) { toolsMinimized.style.display = 'none'; }
 
     // load tools
     me.loadTools();
@@ -558,7 +598,7 @@ const me = {
   _manualUploadFallback: function (url) {
     return new Promise(function(resolve, reject) {
       const filename = url.split('/').pop();
-      const panel = $(
+      document.body.insertAdjacentHTML('beforeend',
         '<div id="manual-upload-panel" style="' +
         'position:fixed;top:0;left:0;width:100%;height:100%;' +
         'background:rgba(0,0,0,0.7);z-index:10000;display:flex;' +
@@ -574,44 +614,70 @@ const me = {
         '<button id="manual-upload-cancel" style="margin-top:10px;padding:5px 15px;background:#444;color:#eee;border:1px solid #666;border-radius:4px;cursor:pointer">Cancel</button>' +
         '</div></div>'
       );
-      $('body').append(panel);
+      const panel = document.body.lastElementChild;
+      const status = panel.querySelector('#manual-upload-status');
+      const input = panel.querySelector('#manual-mri-upload');
+      const cancel = panel.querySelector('#manual-upload-cancel');
 
-      $('#manual-upload-cancel').on('click', function() {
+      cancel.addEventListener('click', function() {
         panel.remove();
         reject(new Error('Upload cancelled by user'));
       });
 
-      $('#manual-mri-upload').on('change', function(e) {
+      input.addEventListener('change', function(e) {
         const [file] = e.target.files;
         if (!file) { return; }
 
-        $('#manual-upload-status').text('Uploading to server...');
-        $('#manual-mri-upload').prop('disabled', true);
-        $('#manual-upload-cancel').prop('disabled', true);
+        status.textContent = 'Uploading to server...';
+        input.disabled = true;
+        cancel.disabled = true;
 
         const formData = new FormData();
         formData.append('url', url);
         formData.append('mriFile', file, filename);
 
-        $.ajax({
-          url: me.hostname + '/mri/upload-from-url',
-          type: 'POST',
-          data: formData,
-          processData: false,
-          contentType: false
-        })
-          .done(function(info) {
-            panel.remove();
-            resolve(info);
-          })
-          .fail(function(jqXHR) {
-            const msg = (jqXHR.responseJSON && jqXHR.responseJSON.error) || 'Upload failed';
-            $('#manual-upload-status').text('Error: ' + msg);
-            $('#manual-mri-upload').prop('disabled', false);
-            $('#manual-upload-cancel').prop('disabled', false);
+        // fetch sets the multipart Content-Type itself, as jQuery did with contentType: false
+        request(me.hostname + '/mri/upload-from-url', { method: 'POST', body: formData })
+          .then(function(res) {
+            if(res.ok) {
+              panel.remove();
+              resolve(res.data);
+
+              return;
+            }
+            const msg = (res.responseJSON && res.responseJSON.error) || 'Upload failed';
+            status.textContent = 'Error: ' + msg;
+            input.disabled = false;
+            cancel.disabled = false;
           });
       });
     });
+  },
+
+  /**
+   * @function _handleMRIInfoError
+   * @desc A failed request for MRI info: offer the manual upload if the server
+   *       cannot download the file itself, otherwise reject with the server's error
+   * @param {object} opts Options
+   * @param {object} opts.res The failed request's outcome, from request()
+   * @param {string} opts.url The MRI source URL
+   * @param {function} opts.resolve Resolves _requestMRIInfo's promise
+   * @param {function} opts.reject Rejects _requestMRIInfo's promise
+   * @returns {void}
+   */
+  _handleMRIInfoError: function ({ res, url, resolve, reject }) {
+    if (res.responseJSON && res.responseJSON.clientDownloadRequired) {
+      console.log('Server cannot download directly, asking user to download manually');
+      me._manualUploadFallback(url)
+        .then(resolve)
+        .catch(reject);
+
+      return;
+    }
+    const errorMsg = (res.responseJSON && res.responseJSON.error)
+      || 'Download failed (HTTP ' + res.status + ')';
+    console.error('ERROR: requestMRIInfo', errorMsg);
+    reject(new Error(errorMsg));
   },
 
   _requestMRIInfo: function (source) {
@@ -629,8 +695,16 @@ const me = {
           return;
         }
         console.log('polling for data...', url);
-        $.post(me.hostname + '/mri/json', {url})
-          .done(function(info) {
+        // A form-encoded body, as jQuery's $.post sent it
+        request(me.hostname + '/mri/json', { method: 'POST', body: new URLSearchParams({url}) })
+          .then(function(res) {
+            if(!res.ok) {
+              clearInterval(timer);
+              me._handleMRIInfoError({ res, url, resolve, reject });
+
+              return;
+            }
+            const info = res.data;
             if(info.success === true) {
               console.log('requestMRIInfo promise resolved');
               clearInterval(timer);
@@ -642,21 +716,6 @@ const me = {
               clearInterval(timer);
               reject(new Error('requestMRIInfo: ' + (info.error || JSON.stringify(info))));
             }
-          })
-          .fail(function(jqXHR) {
-            clearInterval(timer);
-            if (jqXHR.responseJSON && jqXHR.responseJSON.clientDownloadRequired) {
-              console.log('Server cannot download directly, asking user to download manually');
-              me._manualUploadFallback(url)
-                .then(resolve)
-                .catch(reject);
-
-              return;
-            }
-            const errorMsg = (jqXHR.responseJSON && jqXHR.responseJSON.error)
-              || 'Download failed (HTTP ' + jqXHR.status + ')';
-            console.error('ERROR: requestMRIInfo', errorMsg);
-            reject(new Error(errorMsg));
           });
       }, 2000);
     });
@@ -685,7 +744,7 @@ const me = {
       // call. Here we merge the fields from info2 that are initialised upon
       // download of the mri server-side. The mri field in the original 'info',
       // which contains the newly created text 'annotations', is conserved
-      $.extend(true, info, info2);
+      deepExtend(info, info2);
     }
     info2 = info;
 
