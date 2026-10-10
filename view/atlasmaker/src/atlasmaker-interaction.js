@@ -1,5 +1,5 @@
 /* eslint-disable max-lines */
-/* global AtlasMakerWidget $ */
+/* global AtlasMakerWidget */
 /*! AtlasMaker: Interaction */
 
 /* it seems that this file is not used currently */
@@ -7,10 +7,20 @@
 
 import { getData, setData } from '../../shared/domData.js';
 import pako from 'pako';
+import geometryModule from '../../shared/geometry.js';
 import showHideModule from '../../shared/showHide.js';
 
 // jQuery's .show() / .hide(), without jQuery
 const { show, hide } = showHideModule;
+// jQuery's .css('width'), .offset(), .offset({...}) and .css({...}), without jQuery
+const { cssDimension, offset, setOffset, setStyle } = geometryModule;
+
+// The image canvas, measured as $('#atlasmaker canvas') was: the first canvas in the
+// viewer, and undefined values (giving NaN) when there is none
+const viewerCanvas = () => document.querySelector('#atlasmaker canvas');
+const canvasCss = (dimension) => { const c = viewerCanvas(); return c ? cssDimension(c, dimension) : undefined; };
+const canvasAttr = (name) => { const c = viewerCanvas(); return c ? c.getAttribute(name) : undefined; };
+const canvasOffset = () => offset(viewerCanvas());
 
 /**
  * Forget the position the toolbar was dragged to
@@ -611,17 +621,17 @@ export const AtlasMakerInteraction = {
   // eslint-disable-next-line max-statements
   initCursor: function () {
     const me = AtlasMakerWidget;
-    const W = parseFloat($('#atlasmaker canvas').css('width'));
-    const H = parseFloat($('#atlasmaker canvas').css('height'));
-    const w = parseFloat($('#atlasmaker canvas').attr('width'));
-    const h = parseFloat($('#atlasmaker canvas').attr('height'));
+    const W = parseFloat(canvasCss('width'));
+    const H = parseFloat(canvasCss('height'));
+    const w = parseFloat(canvasAttr('width'));
+    const h = parseFloat(canvasAttr('height'));
 
     me.Crsr.x = parseInt(w/2, 10);
     me.Crsr.y = parseInt(h/2, 10);
 
     me.Crsr.fx = parseInt(w/2, 10)*(W/w);
     me.Crsr.fy = parseInt(h/2, 10)*(H/h);
-    $('#cursor').css({ left:(me.Crsr.x*(W/w)) + 'px', top:(me.Crsr.y*(H/h)) + 'px', width:me.User.penSize*(W/w), height:me.User.penSize*(H/h) });
+    setStyle(document.getElementById('cursor'), { left:(me.Crsr.x*(W/w)) + 'px', top:(me.Crsr.y*(H/h)) + 'px', width:me.User.penSize*(W/w), height:me.User.penSize*(H/h) });
 
     if(me.flagUsePreciseCursor) {
       let finger = document.getElementById('finger');
@@ -651,7 +661,8 @@ export const AtlasMakerInteraction = {
       finger.style.top = me.Crsr.fy + 'px';
     } else {
       // remove precise cursor
-      $('#finger').remove();
+      const finger = document.getElementById('finger');
+      if(finger) { finger.remove(); }
 
       // configure touch events for tablets
       me.canvas.ontouchstart = me.touchstart;
@@ -666,19 +677,21 @@ export const AtlasMakerInteraction = {
      */
   updateCursor: function () {
     const me = AtlasMakerWidget;
-    $('#finger').removeClass('move draw configure');
+    const finger = document.getElementById('finger');
+    if(!finger) { return; }
+    finger.classList.remove('move', 'draw', 'configure');
     switch(me.Crsr.state) {
-    case 'move': $('#finger').addClass('move'); break;
-    case 'draw': $('#finger').addClass('draw'); break;
-    case 'configure': $('#finger').addClass('configure'); break;
+    case 'move': finger.classList.add('move'); break;
+    case 'draw': finger.classList.add('draw'); break;
+    case 'configure': finger.classList.add('configure'); break;
     }
   },
   _eventCoords2ImageCoords: function(ex, ey) {
-    const W = parseFloat($('#atlasmaker canvas').css('width'));
-    const H = parseFloat($('#atlasmaker canvas').css('height'));
-    const w = parseFloat($('#atlasmaker canvas').attr('width'));
-    const h = parseFloat($('#atlasmaker canvas').attr('height'));
-    const o = $('#atlasmaker canvas').offset();
+    const W = parseFloat(canvasCss('width'));
+    const H = parseFloat(canvasCss('height'));
+    const w = parseFloat(canvasAttr('width'));
+    const h = parseFloat(canvasAttr('height'));
+    const o = canvasOffset();
     const wratio = w/W;
     const hratio = h/H;
     const x = parseInt((ex-o.left)*wratio, 10);
@@ -714,7 +727,7 @@ export const AtlasMakerInteraction = {
     e.preventDefault();
     const {x, y, wratio, hratio} = me._eventCoords2ImageCoords(e.pageX, e.pageY);
 
-    $('#cursor').css({
+    setStyle(document.getElementById('cursor'), {
       left: (x/wratio) + 'px',
       top: (y/hratio) + 'px',
       width: me.User.penSize/wratio,
@@ -762,10 +775,10 @@ export const AtlasMakerInteraction = {
     const me = AtlasMakerWidget;
     e.preventDefault();
 
-    // var W = parseFloat($('#atlasmaker canvas').css('width'));
-    // var H = parseFloat($('#atlasmaker canvas').css('height'));
-    // var w = parseFloat($('#atlasmaker canvas').attr('width'));
-    // var h = parseFloat($('#atlasmaker canvas').attr('height'));
+    // var W = parseFloat(canvasCss('width'));
+    // var H = parseFloat(canvasCss('height'));
+    // var w = parseFloat(canvasAttr('width'));
+    // var h = parseFloat(canvasAttr('height'));
     // var o = $('#atlasmaker canvas').offset();
     let touchEvent;
     if(e.originalEvent) {
@@ -783,8 +796,8 @@ export const AtlasMakerInteraction = {
       me.Crsr.cachedX = x;
       me.Crsr.y0 = y;
       me.Crsr.cachedY = y;
-      me.Crsr.fx = $('#finger').offset().left;
-      me.Crsr.fy = $('#finger').offset().top;
+      me.Crsr.fx = offset(document.getElementById('finger')).left;
+      me.Crsr.fy = offset(document.getElementById('finger')).top;
       me.Crsr.touchStarted = true;
       setTimeout(function() {
         if( me.Crsr.cachedX === me.Crsr.x0 && me.Crsr.cachedY === me.Crsr.y0 && !me.Crsr.touchStarted) {
@@ -818,10 +831,10 @@ export const AtlasMakerInteraction = {
     }
     e.preventDefault();
 
-    // var W = parseFloat($('#atlasmaker canvas').css('width'));
-    // var H = parseFloat($('#atlasmaker canvas').css('height'));
-    // var w = parseFloat($('#atlasmaker canvas').attr('width'));
-    // var h = parseFloat($('#atlasmaker canvas').attr('height'));
+    // var W = parseFloat(canvasCss('width'));
+    // var H = parseFloat(canvasCss('height'));
+    // var w = parseFloat(canvasAttr('width'));
+    // var h = parseFloat(canvasAttr('height'));
     // var o = $('#atlasmaker canvas').offset();
     let touchEvent;
     if(e.originalEvent) {
@@ -840,17 +853,17 @@ export const AtlasMakerInteraction = {
       if(me.Crsr.state === 'move'||me.Crsr.state === 'draw') {
         me.Crsr.x += dx;
         me.Crsr.y += dy;
-        $('#cursor').css({ left:me.Crsr.x/wratio, top:me.Crsr.y/hratio, width:me.User.penSize/wratio, height:me.User.penSize/hratio });
+        setStyle(document.getElementById('cursor'), { left:me.Crsr.x/wratio, top:me.Crsr.y/hratio, width:me.User.penSize/wratio, height:me.User.penSize/hratio });
         if(me.Crsr.state === 'draw') { me.move(me.Crsr.x, Math.round(me.Crsr.y*me.brainWdim/me.brainHdim)); }
       }
       me.Crsr.fx += dx/wratio;
       me.Crsr.fy += dy/hratio;
-      $('#finger').offset({ left:me.Crsr.fx, top:me.Crsr.fy });
+      setOffset(document.getElementById('finger'), { left:me.Crsr.fx, top:me.Crsr.fy });
 
       me.Crsr.x0 = x;
       me.Crsr.y0 = y;
     } else {
-      $('#cursor').css({
+      setStyle(document.getElementById('cursor'), {
         left: (x/wratio) + 'px',
         top: (y/hratio) + 'px',
         width: me.User.penSize/wratio,
@@ -1494,8 +1507,8 @@ export const AtlasMakerInteraction = {
   landmarkToolDisplayInformation: function (svgStr) {
     const me = AtlasMakerWidget;
     const {slice} = me.User;
-    const W = parseFloat($('#atlasmaker canvas').css('width'));
-    const w = parseFloat($('#atlasmaker canvas').attr('width'));
+    const W = parseFloat(canvasCss('width'));
+    const w = parseFloat(canvasAttr('width'));
     const zx = W/w;
     const zy = zx*me.brainHdim/me.brainWdim;
     if(typeof me.User.vectorial !== 'undefined') {
@@ -1532,8 +1545,8 @@ export const AtlasMakerInteraction = {
   measureToolDisplayInformation: function (svgStr) {
     const me = AtlasMakerWidget;
     if(me.User.measureLength) {
-      const W = parseFloat($('#atlasmaker canvas').css('width'));
-      const w = parseFloat($('#atlasmaker canvas').attr('width'));
+      const W = parseFloat(canvasCss('width'));
+      const w = parseFloat(canvasAttr('width'));
       const zx = W/w;
       const zy = zx*me.brainHdim/me.brainWdim;
       const p = me.User.measureLength;
