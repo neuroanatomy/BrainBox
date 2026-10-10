@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>BrainBox.widget() host (test fixture)</title>
+</head>
+<body>
+
+<!-- Test fixture for test/integration/brainbox-client.test.js: the smallest page
+     that can call BrainBox.widget(). BrainBox.initBrainBox() mounts the viewer
+     inside #stereotaxic. The test calls window.startWidget() itself, so it can
+     watch the requests the widget makes from the very first one. -->
+
+<div id="stereotaxic" style="position:relative;width:600px;height:600px"></div>
+
+<script src="/lib/atlasmaker.js"></script>
+<script src="/lib/brainbox.js"></script>
+<script>
+window.startWidget = (param) => BrainBox.widget(param);
+</script>
+
+</body>
+</html>

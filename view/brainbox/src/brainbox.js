@@ -1,5 +1,5 @@
 /* eslint-disable max-lines */
-/* global AtlasMakerWidget $ */
+/* global AtlasMakerWidget */
 /*! BrainBox */
 
 /**
@@ -12,6 +12,50 @@ import * as tw from './twoWayBinding.js';
 import Config from './../../../cfg.json';
 
 // var hashOld;
+
+/**
+ * @function fetchOK
+ * @description fetch() that rejects on HTTP errors, as jQuery's $.get/$.getJSON did
+ * @param {string} url Request URL
+ * @returns {Promise<Response>} The response, if its status is 2xx
+ */
+const fetchOK = async (url) => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`GET ${url} failed: ${res.status} ${res.statusText}`);
+  }
+
+  return res;
+};
+
+/**
+ * @function getJSON
+ * @description Replacement for jQuery's $.getJSON: the body must be JSON, or the promise rejects
+ * @param {string} url Request URL
+ * @returns {Promise<object>} The parsed body
+ */
+const getJSON = async (url) => (await fetchOK(url)).json();
+
+/**
+ * @function get
+ * @description Replacement for jQuery's $.get with query parameters. Like $.get,
+ * the body is parsed only if the server says it is JSON, and returned as text
+ * otherwise (e.g. /mri/json answers 'Invalid Url!' as text/html).
+ * @param {string} url Request URL
+ * @param {object} data Query parameters
+ * @returns {Promise<object|string>} The parsed body, or its text
+ */
+const get = async (url, data) => {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(data)) {
+    // $.param sends null and undefined as empty strings
+    query.append(key, (value === null || typeof value === 'undefined') ? '' : value);
+  }
+  const res = await fetchOK(`${url}?${query}`);
+  const type = res.headers.get('Content-Type') || '';
+
+  return type.includes('json') ? res.json() : res.text();
+};
 
 /**
  * @page BrainBox
@@ -295,7 +339,7 @@ export const BrainBox = {
             slice:AtlasMakerWidget.User.slice?AtlasMakerWidget.User.slice:0,
             lastVisited:(new Date()).toJSON()
         };
-        $.extend(obj0, obj1);
+        Object.assign(obj0, obj1);
 
         stored.history.push(obj0);
         localStorage.AtlasMaker=JSON.stringify(stored);
@@ -475,13 +519,15 @@ export const BrainBox = {
      * @returns {object} A promise
      */
   loadLabelsets: function loadLabelsets() {
-    return $.getJSON(BrainBox.hostname + '/api/getLabelsets', function (data) {
+    return getJSON(BrainBox.hostname + '/api/getLabelsets').then(function (data) {
       BrainBox.labelSets = data;
 
       /*
                 If we wanted to filter out the location, we would use:
-                BrainBox.labelSets=$.map(data,function(o){return new URL(o.source).pathname});
+                BrainBox.labelSets=data.map(function(o){return new URL(o.source).pathname});
             */
+
+      return data;
     });
   },
 
@@ -496,12 +542,9 @@ export const BrainBox = {
     const pr = BrainBox.initBrainBox()
       .then(function () { return BrainBox.loadLabelsets(); })
       .then(function () {
-        return $.get({
-          url: BrainBox.hostname + '/mri/json',
-          data: {
-            url: param.url,
-            download: true
-          }
+        return get(BrainBox.hostname + '/mri/json', {
+          url: param.url,
+          download: true
         });
       })
       .then(function (mriInfo) {
