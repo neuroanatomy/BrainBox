@@ -1286,6 +1286,10 @@ export const AtlasMakerInteraction = {
         const length = parseInt(response.length, 10);
         me.info.length = length + ' mm';
         me.displayInformation();
+      })
+      .catch(function(err) {
+        // the stroke is painted and sent anyway; only the length display isn't updated
+        console.warn('Could not log the annotation length:', err.message);
       });
 
     me.annotationLength = 0;

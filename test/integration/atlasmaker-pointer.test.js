@@ -198,6 +198,33 @@ describe('TESTING MOUSE AND TOUCH ON THE VIEWER', function () {
     assert.deepEqual(viewer.pageErrors, []);
   }).timeout(U.longTimeout);
 
+  it('keeps painting, without a page error, when logging the stroke to the server fails', async function () {
+    const { page } = viewer;
+    await page.evaluate(() => {
+      window.__logCalls = 0;
+      AtlasMakerWidget.logToDatabase = () => {
+        window.__logCalls += 1;
+
+        return Promise.reject(new TypeError('Failed to fetch'));
+      };
+      document.querySelector('#paintTool [title="Paint"]').click();
+    });
+    const painted = () => page.evaluate(() => AtlasMakerWidget.atlas.data.reduce((n, v) => n + (v ? 1 : 0), 0));
+    const before = await painted();
+    // away from the previous test's stroke, which the saved atlas still holds
+    const a = await canvasPoint(page, 0.3, 0.7);
+    const b = await canvasPoint(page, 0.5, 0.8);
+    await page.mouse.move(a.x, a.y);
+    await page.mouse.down();
+    await page.mouse.move(b.x, b.y, { steps: 8 });
+    await page.mouse.up();
+    // let the rejection reach the page's unhandled-rejection handler, if nothing catches it
+    await U.delay(200);
+    assert.equal(await page.evaluate(() => window.__logCalls), 1, 'the stroke was logged once');
+    assert.isAbove(await painted(), before, 'the stroke painted voxels');
+    assert.deepEqual(viewer.pageErrors, []);
+  }).timeout(U.longTimeout);
+
   // eslint-disable-next-line max-statements
   it('maps touches to image coordinates, and moves the cursor with the finger', async function () {
     const { page, cdp } = viewer;
