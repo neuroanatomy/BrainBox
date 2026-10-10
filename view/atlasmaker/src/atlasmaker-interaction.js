@@ -7,6 +7,37 @@
 
 import { getData, setData } from '../../shared/domData.js';
 import pako from 'pako';
+import showHideModule from '../../shared/showHide.js';
+
+// jQuery's .show() / .hide(), without jQuery
+const { show, hide } = showHideModule;
+
+/**
+ * Forget the position the toolbar was dragged to
+ * @returns {void}
+ */
+const clearToolsSidePosition = () => {
+  const toolsSide = document.getElementById('tools-side');
+  if(!toolsSide) { return; }
+  toolsSide.style.left = '';
+  toolsSide.style.top = '';
+  toolsSide.style.right = '';
+  toolsSide.style.height = '';
+};
+
+/**
+ * Move the viewer (#atlasmaker) into another element, keeping its listeners,
+ * as jQuery's .detach().appendTo() did - including leaving it detached when
+ * there is no such element
+ * @param {HTMLElement|null} parent Where to move it
+ * @returns {void}
+ */
+const moveAtlasMakerTo = (parent) => {
+  const atlasmaker = document.getElementById('atlasmaker');
+  if(!atlasmaker) { return; }
+  atlasmaker.remove();
+  if(parent) { parent.appendChild(atlasmaker); }
+};
 
 /**
  * @page AtlasMaker: Interaction
@@ -41,9 +72,13 @@ export const AtlasMakerInteraction = {
      */
   loadTools: function () {
     const me = AtlasMakerWidget;
-    $.get('/lib/atlasmaker-tools/tools.json', (res) => {
-      me._loadTools(res);
-    });
+    // As with jQuery's $.get, a failed request is ignored
+    fetch('/lib/atlasmaker-tools/tools.json')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((res) => {
+        if (res) { me._loadTools(res); }
+      })
+      .catch(() => null);
   },
 
   //========================================================================================
@@ -58,21 +93,21 @@ export const AtlasMakerInteraction = {
   changeToolbarDisplay: function (display) {
     switch(display) {
     case 'minimize':
-      $('#tools-maximized').hide();
-      $('#tools-minimized').show();
+      hide(document.getElementById('tools-maximized'));
+      show(document.getElementById('tools-minimized'));
       break;
     case 'maximize':
-      $('#tools-maximized').show();
-      $('#tools-minimized').hide();
+      show(document.getElementById('tools-maximized'));
+      hide(document.getElementById('tools-minimized'));
       break;
     case 'left':
-      $('body').attr('data-toolbarDisplay', 'left');
-      $('#tools-side').css({ left: '', top: '', right: '', height: '' });
+      document.body.setAttribute('data-toolbarDisplay', 'left');
+      clearToolsSidePosition();
       document.getElementById('tools-maximized').style.height = '';
       break;
     case 'right':
-      $('body').attr('data-toolbarDisplay', 'right');
-      $('#tools-side').css({ left: '', top: '', right: '', height: '' });
+      document.body.setAttribute('data-toolbarDisplay', 'right');
+      clearToolsSidePosition();
       document.getElementById('tools-maximized').style.height = '';
       break;
     }
@@ -287,7 +322,7 @@ export const AtlasMakerInteraction = {
       break;
     case 'Adjust':
       me.User.tool = 'adjust';
-      if($('#adjust').length === 0) {
+      if(!document.getElementById('adjust')) {
         me.loadScript('/lib/atlasmaker-tools/adjust.js');
       }
       break;
@@ -318,7 +353,8 @@ export const AtlasMakerInteraction = {
   changePenColor: function (index) {
     const me = AtlasMakerWidget;
     const c = me.ontology.labels[index].color;
-    $('#color').css({ backgroundColor:'rgb(' + c[0] + ', ' + c[1] + ', ' + c[2] + ')' });
+    const colorButton = document.getElementById('color');
+    if(colorButton) { colorButton.style.backgroundColor = 'rgb(' + c[0] + ', ' + c[1] + ', ' + c[2] + ')'; }
     me.User.penValue = me.ontology.labels[index].value;
     me.sendUserDataMessage(JSON.stringify({ 'penValue':me.User.penValue }));
   },
@@ -390,19 +426,19 @@ export const AtlasMakerInteraction = {
   toggleTextInput: function (mode) {
     switch(mode) {
     case 'Chat':
-      $('#textInputBlock').show();
+      show(document.getElementById('textInputBlock'));
       document.getElementById('logScript').classList.add('hidden');
       document.getElementById('logChat').classList.remove('hidden');
       document.querySelector('#logChat #msg').focus();
       break;
     case 'Script':
-      $('#textInputBlock').show();
+      show(document.getElementById('textInputBlock'));
       document.getElementById('logScript').classList.remove('hidden');
       document.getElementById('logChat').classList.add('hidden');
       document.querySelector('#logScript textarea').focus();
       break;
     default:
-      $('#textInputBlock').hide();
+      hide(document.getElementById('textInputBlock'));
     }
   },
 
@@ -486,15 +522,14 @@ export const AtlasMakerInteraction = {
       //-----------------
 
       // add black overlay
-      const black = $('<div id = \'blackOverlay\'>');
-      black.css({ position:'fixed', top:0, left:0, width:'100%', height:'100%', 'z-index':5, 'background-color':'#222' });
-      $('body').append(black);
+      const black = document.createElement('div');
+      black.id = 'blackOverlay';
+      Object.assign(black.style, { position:'fixed', top:'0px', left:'0px', width:'100%', height:'100%', zIndex:'5', backgroundColor:'#222' });
+      document.body.appendChild(black);
 
       // configure display mode
-      $('body').addClass('atlasmaker-fullscreen');
-      $('#atlasmaker')
-        .detach()
-        .appendTo('body');
+      document.body.classList.add('atlasmaker-fullscreen');
+      moveAtlasMakerTo(document.body);
       me.resizeWindow();
       me.drawImages();
 
@@ -506,10 +541,11 @@ export const AtlasMakerInteraction = {
       //----------------
 
       // remove black overlay
-      $('#blackOverlay').remove();
+      const black = document.getElementById('blackOverlay');
+      if(black) { black.remove(); }
 
       // go back to display mode
-      $('body').removeClass('atlasmaker-fullscreen');
+      document.body.classList.remove('atlasmaker-fullscreen');
       const toolsSide = document.getElementById('tools-side');
       toolsSide.style.position = '';
       toolsSide.style.left = '';
@@ -520,11 +556,13 @@ export const AtlasMakerInteraction = {
       document.getElementById('tools-maximized').style.height = '';
       const textInputBlock = document.getElementById('textInputBlock');
       if (textInputBlock) { textInputBlock.style.flex = ''; }
-      $('body').attr('data-toolbarDisplay', 'right');
-      $('#atlasmaker')
-        .detach()
-        .appendTo('#stereotaxic');
-      $('#resizable').css({ width: '', height: '' });
+      document.body.setAttribute('data-toolbarDisplay', 'right');
+      moveAtlasMakerTo(document.getElementById('stereotaxic'));
+      const resizable = document.getElementById('resizable');
+      if(resizable) {
+        resizable.style.width = '';
+        resizable.style.height = '';
+      }
       me.resizeWindow();
       me.drawImages();
       me.fullscreen = false;
@@ -919,7 +957,7 @@ export const AtlasMakerInteraction = {
     const me = AtlasMakerWidget;
     // console.log("key:", e.which);
 
-    if(e.which === 13 && $(e.target).attr('contenteditable')) {
+    if(e.which === 13 && e.target.getAttribute && e.target.getAttribute('contenteditable')) {
       e.preventDefault();
 
       return;
@@ -941,7 +979,8 @@ export const AtlasMakerInteraction = {
         const hdim = me.brainHdim;
         let i;
         for(i = 1; i<p.length; i++) { length += Math.sqrt((wdim*(p[i].x-p[i-1].x))**2 + (hdim*(p[i].y-p[i-1].y))**2); }
-        $('#logChat .text').append('Length: ' + length + '<br/>');
+        const chatText = document.querySelector('#logChat .text');
+        if(chatText) { chatText.insertAdjacentHTML('beforeend', 'Length: ' + length + '<br/>'); }
         me.User.measureLength = null;
         me.displayInformation();
       }
@@ -1083,10 +1122,9 @@ export const AtlasMakerInteraction = {
      */
   upload: function () {
     const me = AtlasMakerWidget;
-    const inp = $('<input>');
-    inp.hide();
-    $('body').append(inp);
-    const input = inp.get(0);
+    const input = document.createElement('input');
+    hide(input);
+    document.body.appendChild(input);
     input.type = 'file';
     input.onchange = function () {
       const [name] = this.files;
@@ -1121,7 +1159,7 @@ export const AtlasMakerInteraction = {
         me.drawImages();
       };
       reader.readAsArrayBuffer(name);
-      inp.remove();
+      input.remove();
     };
     input.click();
   },
