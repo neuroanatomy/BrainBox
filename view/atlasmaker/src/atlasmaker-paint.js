@@ -1,8 +1,37 @@
 /* eslint-disable max-lines */
-/* global AtlasMakerWidget $ */
+/* global AtlasMakerWidget */
 /*! AtlasMaker: Painting commands */
 
 import showIcon from './svg/show.svg';
+
+/**
+ * @function placeCollaboratorPointer
+ * @desc Show another user's cursor at slice coordinates (x, y), creating it inside #resizable on first use
+ * @param {integer} u The number of the user
+ * @param {integer} x X coordinate in slice space
+ * @param {integer} y Y coordinate in slice space
+ * @param {Object} usr The user's object; the cursor element is kept in usr.pointer
+ * @returns {void}
+ */
+const placeCollaboratorPointer = (u, x, y, usr) => {
+  const me = AtlasMakerWidget;
+  const resizable = document.getElementById('resizable');
+  if(!usr.pointer) {
+    const div = document.createElement('div');
+    const icon = new Image();
+    icon.src = showIcon;
+    icon.style.cssText = 'height:100%';
+    div.appendChild(icon);
+    div.style.cssText = 'display:inline-block;height:20px;margin-left:-10px;margin-top:-10px;position:absolute;color:white';
+    div.innerHTML += ((usr.username === 'Anonymous')?u:usr.username);
+    usr.pointer = div;
+    resizable.appendChild(div);
+  }
+  // The content-box size, as jQuery's .width()/.height() measured it (#resizable has no padding or border)
+  const style = getComputedStyle(resizable);
+  usr.pointer.style.left = `${x*parseFloat(style.width)/me.brainW}px`;
+  usr.pointer.style.top = `${y*parseFloat(style.height)/me.brainH}px`;
+};
 
 /**
  * @page AtlasMaker: Painting commands
@@ -31,18 +60,7 @@ export const AtlasMakerPaint = {
         }
         break;
       case 'm':
-        if(!usr.pointer) {
-          const div = document.createElement('div');
-          const icon = new Image();
-          icon.src = showIcon;
-          icon.style.cssText = 'height:100%';
-          div.appendChild(icon);
-          div.style.cssText = 'display:inline-block;height:20px;margin-left:-10px;margin-top:-10px;position:absolute;color:white';
-          div.innerHTML += ((usr.username === 'Anonymous')?u:usr.username);
-          usr.pointer = $(div);
-          $('#resizable').append(usr.pointer); // document.getElementById("resizable").appendChild(div);
-        }
-        usr.pointer.css({left:x*$('#resizable').width()/me.brainW, top:y*$('#resizable').height()/me.brainH});
+        placeCollaboratorPointer(u, x, y, usr);
         break;
       }
     }
@@ -86,26 +104,7 @@ export const AtlasMakerPaint = {
           delete usr.pointer;
         }
       } else {
-        if(!usr.pointer) {
-          const div = document.createElement('div');
-          const icon = new Image();
-          icon.src = showIcon;
-          icon.style.cssText = 'height:100%';
-          div.appendChild(icon);
-          div.style.cssText = 'display:inline-block;height:20px;margin-left:-10px;margin-top:-10px;position:absolute;color:white';
-          div.innerHTML += ((usr.username === 'Anonymous')?u:usr.username);
-          usr.pointer = $(div);
-          $('#resizable').append(usr.pointer); // document.getElementById("resizable").appendChild(div);
-
-          // usr.pointer = $([
-          //     '<div style="display:inline-block;height:20px;margin-left:-10px;margin-top:-10px;position:absolute;color:white">',
-          //     '<img src="' + me.hostname + './svg/show.svg" height="100%"/>',
-          //     ((usr.username === 'Anonymous')?u:usr.username),
-          //     '</div>'
-          //     ].join(''));
-          // $("#resizable").append(usr.pointer);
-        }
-        usr.pointer.css({left:x*$('#resizable').width()/me.brainW, top:y*$('#resizable').height()/me.brainH});
+        placeCollaboratorPointer(u, x, y, usr);
       }
     }
     const val = usr.penValue;
