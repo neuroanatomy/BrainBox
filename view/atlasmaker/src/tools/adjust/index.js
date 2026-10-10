@@ -1,6 +1,17 @@
-/* global AtlasMakerWidget $ */
+/* global AtlasMakerWidget */
 import { getData, setData } from '../../../../shared/domData.js';
 import html from './index.html';
+
+/**
+ * Apply brightness and contrast to the MRI canvas
+ * (`-webkit-filter` is only an alias of `filter` in current browsers)
+ * @param {number} b Brightness, 1 for unchanged
+ * @param {number} c Contrast, 1 for unchanged
+ * @returns {void}
+ */
+const setCanvasFilter = (b, c) => {
+  document.getElementById('canvas').style.filter = 'brightness(' + b + ') contrast(' + c + ')';
+};
 
 // append HTML
 const el = document.createElement('div');
@@ -38,10 +49,7 @@ AtlasMakerWidget.slider(document.getElementById('minLevel'), function (x) {
   const b = (2 * x / 100);
   const maxLevel = document.getElementById('maxLevel');
   const c = (2 * getData(maxLevel, 'val') / 100);
-  $('#canvas').css({
-    'webkit-filter': 'brightness(' + b + ') contrast(' + c + ')',
-    'filter': 'brightness(' + b + ') contrast(' + c + ')'
-  });
+  setCanvasFilter(b, c);
 });
 
 {
@@ -59,10 +67,7 @@ AtlasMakerWidget.slider(document.getElementById('maxLevel'), function (x) {
   const minLevel = document.getElementById('minLevel');
   const b = (2 * getData(minLevel, 'val') / 100);
   const c = (2 * x / 100);
-  $('#canvas').css({
-    'webkit-filter': 'brightness(' + b + ') contrast(' + c + ')',
-    'filter': 'brightness(' + b + ') contrast(' + c + ')'
-  });
+  setCanvasFilter(b, c);
 });
 
 {
@@ -75,15 +80,17 @@ const observer = new MutationObserver(function (mutations) {
   mutations.forEach(function (mutation) {
     if (mutation.attributeName === 'class') {
       console.log('mutation', mutation);
-      const attributeValue = $(mutation.target).prop(mutation.attributeName);
+      // jQuery's .prop('class') was the element's className
+      const attributeValue = mutation.target.className;
       if (attributeValue === 'a sub') {
-        $('#adjust').remove();
+        const panel = document.getElementById('adjust');
+        if (panel) { panel.remove(); }
       }
       observer.disconnect();
       // delete observer;
     }
   });
 });
-observer.observe($('#paintTool [title="Adjust"]')[0], {
+observer.observe(document.querySelector('#paintTool [title="Adjust"]'), {
   attributes: true
 });
