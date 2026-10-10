@@ -2,6 +2,7 @@
  * Measuring and positioning elements with exactly the semantics of the jQuery 3.7.1
  * calls they replace, for code moving off jQuery:
  *  - cssDimension(el, 'width')   <- $(el).css('width')
+ *  - contentSize(el, 'width')    <- $(el).width()
  *  - offset(el)                  <- $(el).offset()
  *  - setOffset(el, {left, top})  <- $(el).offset({left, top})
  *  - setStyle(el, props)         <- $(el).css(props)
@@ -55,20 +56,27 @@ const boxModelAdjustment = (elem, dimension, box, isBorderBox, styles, computedV
 };
 
 /**
- * jQuery's getWidthOrHeight, as called by .css('width') (no `extra`, and a browser
- * with reliable box-sizing: the computed value is used as it is)
+ * jQuery's getWidthOrHeight, for a browser with reliable box-sizing. Without `extra`
+ * (.css('width')) the computed value is used as it is; with extra = 'content'
+ * (.width()) a border-box value has its padding and border taken off.
  * @param {HTMLElement} elem The element
  * @param {string} dimension 'width' or 'height'
+ * @param {string} [extra] undefined, or 'content'
  * @returns {string} The size, e.g. '700px'
  */
-const getWidthOrHeight = (elem, dimension) => {
+// eslint-disable-next-line max-statements
+const getWidthOrHeight = (elem, dimension, extra) => {
   const styles = elem.ownerDocument.defaultView.getComputedStyle(elem);
   const offsetProp = `offset${dimension[0].toUpperCase()}${dimension.slice(1)}`;
   let val = styles[dimension];
-  let isBorderBox = false;
-  let valueIsBorderBox = false;
+  // To avoid forcing a reflow, jQuery only fetches boxSizing if it needs it
+  let isBorderBox = Boolean(extra) && styles.boxSizing === 'border-box';
+  let valueIsBorderBox = isBorderBox;
   if (rnumnonpx.test(val)) {
-    return val;
+    if (!extra) {
+      return val;
+    }
+    val = 'auto';
   }
   // Fall back to offsetWidth/offsetHeight when the value is "auto" (e.g. inside a hidden
   // ancestor, or an inline element), if the element is visible and connected
@@ -81,16 +89,17 @@ const getWidthOrHeight = (elem, dimension) => {
   }
   val = parseFloat(val) || 0;
 
-  return `${val + boxModelAdjustment(elem, dimension, isBorderBox ? 'border' : 'content', valueIsBorderBox, styles, val)}px`;
+  return `${val + boxModelAdjustment(elem, dimension, extra || (isBorderBox ? 'border' : 'content'), valueIsBorderBox, styles, val)}px`;
 };
 
 /**
  * $(elem).css('width') / .css('height')
  * @param {HTMLElement} elem The element
  * @param {string} dimension 'width' or 'height'
+ * @param {string} [extra] undefined for .css(), 'content' for .width()/.height()
  * @returns {string} The size, e.g. '700px'
  */
-const cssDimension = (elem, dimension) => {
+const cssDimension = (elem, dimension, extra) => {
   const styles = elem.ownerDocument.defaultView.getComputedStyle(elem);
   // An element hidden by its own display is measured as if shown, as jQuery does
   if (rdisplayswap.test(styles.display) &&
@@ -100,7 +109,7 @@ const cssDimension = (elem, dimension) => {
       old[name] = elem.style[name];
       elem.style[name] = cssShow[name];
     }
-    const size = getWidthOrHeight(elem, dimension);
+    const size = getWidthOrHeight(elem, dimension, extra);
     for (const name of Object.keys(cssShow)) {
       elem.style[name] = old[name];
     }
@@ -108,7 +117,24 @@ const cssDimension = (elem, dimension) => {
     return size;
   }
 
-  return getWidthOrHeight(elem, dimension);
+  return getWidthOrHeight(elem, dimension, extra);
+};
+
+/**
+ * $(elem).width() / .height(): the content size, as a number
+ * @param {HTMLElement|null} elem The element (undefined for null, as for an empty selection)
+ * @param {string} dimension 'width' or 'height'
+ * @returns {number|undefined} The size in pixels
+ */
+const contentSize = (elem, dimension) => {
+  if (!elem) {
+    return;
+  }
+  const val = cssDimension(elem, dimension, 'content');
+  const num = parseFloat(val);
+
+  // eslint-disable-next-line consistent-return
+  return isFinite(num) ? num || 0 : val;
 };
 
 /**
@@ -223,4 +249,4 @@ const setOffset = (elem, options) => {
   setStyle(elem, props);
 };
 
-module.exports = { cssDimension, offset, position, setOffset, setStyle };
+module.exports = { cssDimension, contentSize, offset, position, setOffset, setStyle };

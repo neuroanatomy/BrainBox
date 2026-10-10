@@ -44,7 +44,7 @@ const FIXTURE = `
  * style attribute in between, and return both results.
  * @param {Object} page The puppeteer page
  * @param {string} id The element's id
- * @param {string} kind 'width', 'height', 'offset', 'setOffset' or 'setStyle'
+ * @param {string} kind 'width', 'height', 'contentWidth', 'contentHeight', 'offset', 'setOffset' or 'setStyle'
  * @param {*} arg The argument for setters
  * @returns {Promise<Object>} { jquery, ours }
  */
@@ -55,6 +55,8 @@ const compare = (page, id, kind, arg) => page.evaluate((elemId, what, argument) 
   const outcome = () => ({ style: el.getAttribute('style'), offset: $(el).offset() });
   const run = {
     width: [() => $(el).css('width'), () => G.cssDimension(el, 'width')],
+    contentWidth: [() => $(el).width(), () => G.contentSize(el, 'width')],
+    contentHeight: [() => $(el).height(), () => G.contentSize(el, 'height')],
     height: [() => $(el).css('height'), () => G.cssDimension(el, 'height')],
     offset: [() => $(el).offset(), () => G.offset(el)],
     setOffset: [
@@ -124,6 +126,17 @@ describe('TESTING geometry.js AGAINST jQuery, IN A BROWSER', function () {
     const ids = ['plain', 'padded', 'borderbox', 'percent', 'inline', 'inHidden', 'ownNone', 'absSet', 'fixed', 'transformed', 'canvas'];
     for (const id of ids) {
       for (const dim of ['width', 'height']) {
+        // eslint-disable-next-line no-await-in-loop
+        const { jquery, ours } = await compare(page, id, dim);
+        assert.strictEqual(ours, jquery, `${dim} of #${id}`);
+      }
+    }
+  }).timeout(U.mediumTimeout);
+
+  it('measures content width and height as $(el).width() / .height() do', async function () {
+    const ids = ['plain', 'padded', 'borderbox', 'percent', 'inline', 'inHidden', 'ownNone', 'absSet', 'fixed', 'transformed', 'canvas', 'geo'];
+    for (const id of ids) {
+      for (const dim of ['contentWidth', 'contentHeight']) {
         // eslint-disable-next-line no-await-in-loop
         const { jquery, ours } = await compare(page, id, dim);
         assert.strictEqual(ours, jquery, `${dim} of #${id}`);

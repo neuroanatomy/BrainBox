@@ -1,11 +1,5 @@
 /* eslint-disable max-lines */
-/* global infoProxy projectInfo annotationsAccessLevel BrainBox AtlasMakerWidget $ */
-
-import 'jquery-ui/themes/base/core.css';
-import 'jquery-ui/themes/base/theme.css';
-import 'jquery-ui/themes/base/autocomplete.css';
-import 'jquery-ui/ui/core';
-import 'jquery-ui/ui/widgets/autocomplete';
+/* global infoProxy projectInfo annotationsAccessLevel BrainBox AtlasMakerWidget */
 
 import '../style/style.css';
 import '../style/textAnnotations.css';
@@ -14,8 +8,108 @@ import '../style/project-style.css';
 
 import { getData, setData } from '../../../shared/domData.js';
 import freeform from '../tools/freeform.js';
+import geometryModule from '../../../shared/geometry.js';
 import hidden from '../tools/hidden.js';
 import multiple from '../tools/multiple.js';
+import showHideModule from '../../../shared/showHide.js';
+
+// jQuery's .show()/.hide(), .width() and .css({...}), without jQuery
+const { hide } = showHideModule;
+const { contentSize, setStyle } = geometryModule;
+
+/**
+ * jQuery's $.isEmptyObject: true if the object has no enumerable property, own or inherited
+ * @param {object} obj Any object
+ * @returns {boolean} Whether it is empty
+ */
+const isEmptyObject = (obj) => {
+  // eslint-disable-next-line guard-for-in, no-unreachable-loop
+  for (const name in obj) {
+    return false;
+  }
+
+  return true;
+};
+
+/**
+ * jQuery's $(elem).index(): the element's position among its siblings, -1 for none
+ * @param {Element|null} elem The element
+ * @returns {number} Its index
+ */
+const jqIndex = (elem) => ((elem && elem.parentNode) ? [...elem.parentNode.children].indexOf(elem) : -1);
+
+/**
+ * $.getJSON(url, params): rejects on HTTP errors and on a body that is not JSON
+ * @param {string} url Request URL
+ * @param {object} params Query parameters
+ * @returns {Promise<object>} The parsed body
+ */
+const getJSON = async (url, params) => {
+  const res = await fetch(`${url}?${new URLSearchParams(params)}`);
+  if (!res.ok) {
+    throw new Error(`GET ${url} failed: ${res.status} ${res.statusText}`);
+  }
+
+  return res.json();
+};
+
+/**
+ * jQuery's $(document).on(types, selector, handler) (or on another root): call
+ * `handler(event, matched)` for events whose target is, or is inside, an element of
+ * `root` matching `selector`
+ * @param {EventTarget} root Where to listen
+ * @param {string} types Space-separated event types
+ * @param {string} selector CSS selector of the elements to watch
+ * @param {function} handler Called with the event and the matched element
+ * @returns {void}
+ */
+const delegate = (root, types, selector, handler) => {
+  for (const type of types.split(' ')) {
+    root.addEventListener(type, (e) => {
+      const matched = (e.target instanceof Element) ? e.target.closest(selector) : null;
+      if (matched && matched !== root && (root === document || root.contains(matched))) {
+        handler(e, matched);
+      }
+    });
+  }
+};
+
+/**
+ * jQuery's $(elem).trigger('click'): run the element's click handlers. Like jQuery, a link
+ * is not followed, other elements get their native click (as a checkbox toggles), and
+ * elements without one (SVG) get the event only.
+ * @param {Element} elem The element
+ * @returns {void}
+ */
+const triggerClick = (elem) => {
+  if (!(elem instanceof Element)) { return; }
+  const isLink = elem.nodeName.toLowerCase() === 'a';
+  if (!isLink && typeof elem.click === 'function') {
+    elem.click();
+
+    return;
+  }
+  const stopLink = (e) => { e.preventDefault(); };
+  if (isLink) { window.addEventListener('click', stopLink); }
+  elem.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+  if (isLink) { window.removeEventListener('click', stopLink); }
+};
+
+/**
+ * jQuery's $(elem).blur() for a delegated blur handler (which jQuery listens to as
+ * 'focusout'): a focused element really loses focus; otherwise the focusout is only
+ * simulated. Either way the handlers run once.
+ * @param {Element} elem The element
+ * @returns {void}
+ */
+const triggerBlur = (elem) => {
+  if (elem === document.activeElement && typeof elem.blur === 'function') {
+    elem.blur();
+
+    return;
+  }
+  elem.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+};
 
 const projShortname = projectInfo.shortname;
 const numFilesQuery = 20;
@@ -71,7 +165,7 @@ const appendFilesToProject = function (list) {
 };
 
 const queryFiles = function () {
-  $.getJSON('/project/json/' + projectInfo.shortname + '/files', {
+  getJSON('/project/json/' + projectInfo.shortname + '/files', {
     start: projectInfo.files.list.length,
     length: numFilesQuery
   })
@@ -82,7 +176,7 @@ const queryFiles = function () {
       } else {
         console.log('All files downloaded. Length:', projectInfo.files.list.length);
       }
-    });
+    }, () => null); // as with $.getJSON, a failed request is ignored
 };
 
 /**
@@ -115,7 +209,7 @@ const loadProjectFile = function (index) {
        */
     const info = projectInfo.files.list[index];
 
-    if ($.isEmptyObject(info) === false) {
+    if (isEmptyObject(info) === false) {
       // check if the mri contains the required annotations
       let iarr; // index of the object in the data array
       for (let irow = 0; irow < annotations.volume.length; irow++) {
@@ -238,25 +332,25 @@ const resizeButton = function (p) {
     setData(resizeButtonElem, { flag: 1, x0: p.x, y0: p.y });
   } else if (getData(resizeButtonElem, 'flag') === 1) {
     const d = getData(resizeButtonElem, 'x0') - p.x;
-    $('#left').css({ 'flex-basis': $('#left').width() - d });
+    const left = document.getElementById('left');
+    setStyle(left, { flexBasis: contentSize(left, 'width') - d });
     setData(resizeButtonElem, { x0: p.x, y0: p.y });
     AtlasMakerWidget.resizeWindow();
   }
 };
 
 // Prevent zoom on double tap
-$('body').on('touchstart', function preventZoom(e) {
+document.body.addEventListener('touchstart', function preventZoom(e) {
   const t2 = e.timeStamp;
   const t1 = getData(e.target, 'lastTouch') || t2;
   const dt = t2 - t1;
-  const fingers = e.originalEvent.touches.length;
+  const fingers = e.touches.length;
   setData(e.target, {lastTouch: t2});
   if (!dt || dt > 500 || fingers > 1) { return; } // not double-tap
   e.preventDefault(); // double tap - prevent the zoom
   // also synthesize click events we just swallowed up
-  $(e.target)
-    .trigger('click')
-    .trigger('click');
+  triggerClick(e.target);
+  triggerClick(e.target);
 });
 
 // collect the project's text annotations
@@ -264,7 +358,7 @@ for (const k of projectInfo.annotations.list) {
   if (k.type === 'text' ||
     k.type === 'hidden text' ||
     k.type === 'multiple choices') {
-    $('#projectFiles thead tr').append(`<th>${k.name}</th>`);
+    document.querySelectorAll('#projectFiles thead tr').forEach((tr) => tr.insertAdjacentHTML('beforeend', `<th>${k.name}</th>`));
     annotations.text.push(k);
   }
 }
@@ -276,20 +370,34 @@ for (const k of projectInfo.annotations.list) {
   }
 }
 
-$('#projectName').text(projectInfo.name);
+{
+  // As $(...).text(name): nothing if there is no such element, or if name is undefined
+  const projectName = document.getElementById('projectName');
+  if (projectName && typeof projectInfo.name !== 'undefined') { projectName.textContent = projectInfo.name; }
+}
 
 const resizeButtonElem = document.getElementById('resizeButton');
 setData(resizeButtonElem, { flag: -1, x0: 0, y0: 0 });
-$('#resizeButton').on('mousedown touchstart', function (e) { e.preventDefault(); setData(e.target, { flag: 0, x0: e.pageX, y0: e.pageY }); });
-$('body').on('mousemove', function (e) { resizeButton({ x: e.pageX, y: e.pageY }); });
-$('body').on('touchmove', function (e) { resizeButton({ x: e.originalEvent.changedTouches[0].pageX, y: e.originalEvent.changedTouches[0].pageY }); });
-$('body').on('mouseup touchend', function () { setData(resizeButtonElem, { flag: -1 }); });
+if (resizeButtonElem) {
+  for (const type of ['mousedown', 'touchstart']) {
+    resizeButtonElem.addEventListener(type, function (e) { e.preventDefault(); setData(e.target, { flag: 0, x0: e.pageX, y0: e.pageY }); });
+  }
+}
+document.body.addEventListener('mousemove', function (e) { resizeButton({ x: e.pageX, y: e.pageY }); });
+document.body.addEventListener('touchmove', function (e) { resizeButton({ x: e.changedTouches[0].pageX, y: e.changedTouches[0].pageY }); });
+for (const type of ['mouseup', 'touchend']) {
+  document.body.addEventListener(type, function () { setData(resizeButtonElem, { flag: -1 }); });
+}
 
-$('#addProject').click(function () { location.assign('/project/new'); });
-$('#settings').click(function () {
-  const { pathname } = location;
-  if (pathname.slice(-1) === '/') { location.assign(pathname + 'settings'); } else { location.assign(pathname + '/settings'); }
-});
+const addProjectButton = document.getElementById('addProject');
+if (addProjectButton) { addProjectButton.addEventListener('click', function () { location.assign('/project/new'); }); }
+const settingsButton = document.getElementById('settings');
+if (settingsButton) {
+  settingsButton.addEventListener('click', function () {
+    const { pathname } = location;
+    if (pathname.slice(-1) === '/') { location.assign(pathname + 'settings'); } else { location.assign(pathname + '/settings'); }
+  });
+}
 
 const receiveMetadata = function (data) {
   const { shortname } = projectInfo;
@@ -334,10 +442,9 @@ BrainBox.initBrainBox()
       typeOfBinding: 1,
       path: 'files.list.#.source',
       format: function (e, d) {
-        $(e).find('a')
-          .prop('href', location.origin + '/mri?url=' + d);
-        $(e).find('a')
-          .html(d.split('/').pop());
+        e.querySelectorAll('a').forEach((a) => { a.href = location.origin + '/mri?url=' + d; });
+        const text = d.split('/').pop();
+        e.querySelectorAll('a').forEach((a) => { a.innerHTML = text; });
       }
     });
 
@@ -394,7 +501,7 @@ BrainBox.initBrainBox()
     // Start with the 1st #numFilesQuery files, load and
     // display the 1st file, configure the tools position, and keep querying for the
     // rest of the files
-    return $.getJSON('/project/json/' + projectInfo.shortname + '/files', {
+    return getJSON('/project/json/' + projectInfo.shortname + '/files', {
       start: 0,
       length: numFilesQuery
     });
@@ -417,9 +524,15 @@ BrainBox.initBrainBox()
   })
   // configure the UI
   .then(function () {
-    $('#tools-side').detach()
-      .appendTo('#tools');
-    $(document).on('click touchstart', '#labels-close', function () { $('#labelset').hide(); });
+    // Move the viewer's toolbar into the page's tools panel (as .detach().appendTo(): left
+    // detached if there is no such panel)
+    const toolsSide = document.getElementById('tools-side');
+    if (toolsSide) {
+      toolsSide.remove();
+      const tools = document.getElementById('tools');
+      if (tools) { tools.appendChild(toolsSide); }
+    }
+    delegate(document, 'click touchstart', '#labels-close', function () { hide(document.getElementById('labelset')); });
   })
   // query all files
   .then(function () {
@@ -431,51 +544,61 @@ BrainBox.initBrainBox()
 
 // Listen to changes that trigger a metadata save
 //------------------------------------------------
-// send data when focus is lost (on blur)
-$(document).on('blur', '#projectFiles table tbody td', function (e) {
-  const index = $(e.target).closest('tr')
-    .index();
+// send data when focus is lost (on blur: jQuery delegated it as 'focusout', which bubbles)
+delegate(document, 'focusout', '#projectFiles table tbody td', function (e) {
+  const index = jqIndex(e.target.closest('tr'));
   JSON.stringify(infoProxy); // update content of projectInfo object from proxy by calling all getters
   AtlasMakerWidget.sendSaveMetadataMessage(projectInfo.files.list[index]);
 });
 // blur when [enter] is clicked, to trigger data sending
-$(document).on('keydown', '#projectFiles table tbody td', function (e) {
-  if (e.which === 13 && $(e.target).attr('contenteditable')) {
+delegate(document, 'keydown', '#projectFiles table tbody td', function (e) {
+  if (e.which === 13 && e.target.getAttribute('contenteditable')) {
     e.preventDefault();
-    $(e.target).blur();
+    triggerBlur(e.target);
   }
 });
 // blur when <select> changes value to trigger data sending
-$('#projectFiles table tbody').on('change', 'select', function (e) {
-  $(e.target).blur();
-});
+{
+  // Bound on the tbody that exists now, as $('#projectFiles table tbody').on(...) was
+  const filesBody = document.querySelector('#projectFiles table tbody');
+  if (filesBody) {
+    delegate(filesBody, 'change', 'select', function (e) {
+      triggerBlur(e.target);
+    });
+  }
+}
+
+/**
+ * Empty the volume annotations table, as $('table#volAnnotations tbody').html('')
+ * @returns {void}
+ */
+const clearVolumeAnnotationsTable = () => {
+  document.querySelectorAll('table#volAnnotations tbody').forEach((tbody) => { tbody.innerHTML = ''; });
+};
 
 // Listen to changes in selected table row
 //----------------------------------------
 // listen to changes in file selection by clicking on the file table
-$(document).on('click touchstart', '#projectFiles tbody tr', function (e) {
-  const table = $(e.target).closest('table');
-  const currentIndex = $(table).find('tr.selected')
-    .index();
+delegate(document, 'click touchstart', '#projectFiles tbody tr', function (e) {
+  const table = e.target.closest('table');
+  const currentIndex = jqIndex(table ? table.querySelector('tr.selected') : null);
   const selRow = e.target.closest('tr');
-  const index = $(selRow).index();
+  const index = jqIndex(selRow);
 
   if (index >= 0 && currentIndex !== index) {
-    $(table).find('tr')
-      .removeClass('selected');
-    $(selRow).addClass('selected');
+    if (table) { table.querySelectorAll('tr').forEach((tr) => tr.classList.remove('selected')); }
+    selRow.classList.add('selected');
     // remove table with previous annotations
-    $('table#volAnnotations tbody').html('');
+    clearVolumeAnnotationsTable();
     // load and bind new file
     loadProjectFile(index).catch(function () { /* handled in loadProjectFile */ });
   }
 });
 
 // listen to changes in file selection by pressing the up/down arrows
-$(document).on('keydown', function (e) {
-  const table = $('#projectFiles tbody');
-  let index = $(table).find('tr.selected')
-    .index();
+document.addEventListener('keydown', function (e) {
+  const table = document.querySelector('#projectFiles tbody');
+  let index = jqIndex(table ? table.querySelector('tr.selected') : null);
 
   if (e.keyCode !== 38 && e.keyCode !== 40) {
     return;
@@ -489,13 +612,14 @@ $(document).on('keydown', function (e) {
     index = (index + 1) % projectInfo.files.list.length;
     break;
   }
-  $(table).find('tr')
-    .removeClass('selected');
-  $(table).find('tr:eq(' + index + ')')
-    .addClass('selected');
+  if (table) {
+    table.querySelectorAll('tr').forEach((tr) => tr.classList.remove('selected'));
+    const row = table.querySelectorAll('tr')[index];
+    if (row) { row.classList.add('selected'); }
+  }
 
   // remove table with previous annotations
-  $('table#volAnnotations tbody').html('');
+  clearVolumeAnnotationsTable();
 
   // load and bind new file
   loadProjectFile(index).catch(function () { /* handled in loadProjectFile */ });
@@ -503,17 +627,15 @@ $(document).on('keydown', function (e) {
 
 // listen to changes in selected volume annotation
 // eslint-disable-next-line max-statements
-$(document).on('click touchstart', '#volAnnotations tbody tr', function (e) {
-  const table = $(e.target).closest('tbody');
-  const targetRow = $(e.target).closest('tr');
-  const targetIndex = targetRow.index();
-  const currentIndex = $(table).find('tr.selected')
-    .index();
+delegate(document, 'click touchstart', '#volAnnotations tbody tr', function (e) {
+  const table = e.target.closest('tbody');
+  const targetRow = e.target.closest('tr');
+  const targetIndex = jqIndex(targetRow);
+  const currentIndex = jqIndex(table ? table.querySelector('tr.selected') : null);
 
   if (targetIndex >= 0 && currentIndex !== targetIndex) {
-    $(table).find('tr')
-      .removeClass('selected');
-    targetRow.addClass('selected');
+    if (table) { table.querySelectorAll('tr').forEach((tr) => tr.classList.remove('selected')); }
+    targetRow.classList.add('selected');
 
     let iarr;
     let found = false;
