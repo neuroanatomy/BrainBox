@@ -323,6 +323,23 @@ const waitForDOMReady = async function (testPage, url) {
   await waitUntilHTMLRendered(testPage);
 };
 
+/**
+ * Everything outside our own server is unreachable from a sandboxed test run,
+ * and a hanging request for a Google font, an analytics script or a CDN file
+ * keeps the 'load' event from firing, so page.goto() times out long before
+ * the page is ready. Fail those fast instead. Call once per page, before goto.
+ * @param {Object} page A puppeteer page
+ * @returns {Promise} Resolves once interception is set up
+ */
+const blockExternalRequests = async (page) => {
+  await page.setRequestInterception(true);
+  page.on('request', (req) => {
+    const url = req.url();
+    const isLocal = url.startsWith(serverURL) || url.includes('127.0.0.1:3001') || url.includes('localhost:3001') || url.startsWith('data:');
+    if (isLocal) { req.continue(); } else { req.abort(); }
+  });
+};
+
 const isDomElementVisible = (element) => {
   if (!element.ownerDocument || !element.ownerDocument.defaultView) { return true; }
   const style = element.ownerDocument.defaultView.getComputedStyle(element);
@@ -441,6 +458,7 @@ module.exports = {
   insertProject,
   removeProject,
   delay,
+  blockExternalRequests,
   compareImages,
   comparePageScreenshots,
   waitUntilHTMLRendered,

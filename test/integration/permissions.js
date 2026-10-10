@@ -76,7 +76,7 @@ describe('TESTING PERMISSIONS', function () {
     describe('Disallow seeing private project annotations on MRI pages', function() {
       let browser, page;
 
-      before(async () => {
+      before(async function() {
         const project = U.createProjectWithPermission('testwithprivateannotation', { files: 'none' });
         project.files.list = [{ source: U.serverURL + '/test_data/bert_brain.nii.gz', name: 'Bert'}];
         project.collaborators.list.find((c) => c.userID === 'anyone').access.files = 'none';
@@ -84,9 +84,10 @@ describe('TESTING PERMISSIONS', function () {
 
         browser = await puppeteer.launch({ headless: true, ignoreHTTPSErrors: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
         page = await browser.newPage();
+        await U.blockExternalRequests(page);
       });
 
-      it('Do not let see private annotations on a MRI page', async () => {
+      it('Do not let see private annotations on a MRI page', async function() {
         const response = await page.goto(`${U.serverURL}/mri?file=${U.serverURL}/test_data/bert_brain.nii.gz`);
         assert.equal(response.status(), 200);
         await page.waitForSelector('#annotations');
@@ -94,13 +95,13 @@ describe('TESTING PERMISSIONS', function () {
         assert.equal(annotationsTableLength, 0);
       });
 
-      after(() => {
+      after(function() {
         browser.close();
         U.removeProject('testwithprivateannotation');
       });
     });
 
-    ['unlogged', 'logged'].forEach((userStatus) => {
+    for (const userStatus of ['unlogged', 'logged']) {
 
       it(`Disallows accessing a private project (${userStatus})`, async function () {
         const res = await get('/project/' + U.privateProjectTest.shortname, userStatus);
@@ -132,7 +133,7 @@ describe('TESTING PERMISSIONS', function () {
         const res = await del('/project/json/' + U.privateProjectTest.shortname, userStatus);
         assert.oneOf(res.statusCode, forbiddenStatusCodes);
       });
-    });
+    }
   });
 
   // eslint-disable-next-line max-statements
@@ -187,7 +188,7 @@ describe('TESTING PERMISSIONS', function () {
     });
 
     // eslint-disable-next-line max-statements
-    ['logged', 'token'].forEach((userStatus) => {
+    for (const userStatus of ['logged', 'token']) {
 
       it(`Checks that collaborators cannot edit a project if files is set to none (${userStatus})`, async function() {
         const project = _.cloneDeep(projects.collaboratorseditfilesnone);
@@ -529,12 +530,15 @@ describe('TESTING PERMISSIONS', function () {
         assert.isBelow(projectFromDB.files.list.length, initialProjectState.files.list.length);
       });
 
+      // `cookies` is filled by the root before() hook; it must be read when this suite's hooks run, not when the loop runs
+      // eslint-disable-next-line no-loop-func
       describe('Test view permissions of logged users', function() {
         let browser, page;
 
         before(async function() {
           browser = await puppeteer.launch({ headless: true, ignoreHTTPSErrors: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
           page = await browser.newPage();
+          await U.blockExternalRequests(page);
           page.setCookie(...cookies);
         });
 
@@ -568,7 +572,7 @@ describe('TESTING PERMISSIONS', function () {
 
       });
 
-    });
+    }
   });
 
 

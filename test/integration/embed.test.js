@@ -30,21 +30,7 @@ const PLANE_PAIRS = PLANES.flatMap((from) => PLANES.filter((to) => to.view !== f
 // short for the image, which is where the old layout put the toolbar off-screen.
 const HOST_BOX_SIZES = [{ width: 512, height: 670 }, { width: 512, height: 300 }];
 
-/**
- * Everything outside our own server is unreachable from a sandboxed test run,
- * and a hanging request for a Google font or a CDN script will time out
- * page.goto() long before the page is ready. Fail those fast instead.
- * @param {Object} page A puppeteer page
- * @returns {Promise} Resolves once interception is set up
- */
-const blockExternalRequests = async (page) => {
-  await page.setRequestInterception(true);
-  page.on('request', (req) => {
-    const url = req.url();
-    const isLocal = url.startsWith(U.serverURL) || url.includes('127.0.0.1:3001') || url.includes('localhost:3001') || url.startsWith('data:');
-    if (isLocal) { req.continue(); } else { req.abort(); }
-  });
-};
+const { blockExternalRequests } = U;
 
 /**
  * Read geometry and viewer state from inside a frame.
@@ -760,8 +746,10 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
     }).timeout(U.mediumTimeout);
 
     it('passes its data-* options through to the viewer', async function () {
-      const second = page.frames().find((f) => f.url().includes('view=axi'));
-      assert.isDefined(second, 'the second viewer never loaded');
+      // The <iframe> elements exist as soon as embed.js runs, but each frame
+      // starts at about:blank; wait for it to navigate rather than looking once.
+      const second = await page.waitForFrame((f) => f.url().includes('view=axi'), { timeout: U.mediumTimeout })
+        .catch(() => { throw new Error('the second viewer never loaded'); });
       await waitForSlice(second);
       await U.delay(1000);
 
@@ -772,7 +760,8 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
     }).timeout(U.longTimeout);
 
     it('sizes each viewer from its own messages', async function () {
-      const first = page.frames().find((f) => f.url().includes('view=cor'));
+      const first = await page.waitForFrame((f) => f.url().includes('view=cor'), { timeout: U.mediumTimeout })
+        .catch(() => { throw new Error('the first viewer never loaded'); });
       await waitForSlice(first);
       await U.delay(2000);
 

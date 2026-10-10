@@ -44,6 +44,7 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
       page.on('console', (msg) => {
         console.log(`PAGE ${msg.type().toUpperCase()}: ${msg.text()}`);
       });
+      await U.blockExternalRequests(page);
       await page.setViewport({ width: pageWidth, height: pageHeight });
       await page.goto(U.serverURL);
       await page.waitForSelector('h2');
