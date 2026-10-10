@@ -3,14 +3,6 @@
 import { getData, setData } from '../../shared/domData.js';
 
 /**
- * @function unwrap
- * @description Unwrap a jQuery object to a raw DOM element, if needed
- * @param {object} el The object to unwrap
- * @returns {object} The unwrapped object
- */
-const unwrap = (el) => ((el && el.jquery) ? el[0] : el);
-
-/**
  * @page AtlasMaker: User Interface Elements
  */
 export const AtlasMakerUI = {
@@ -23,7 +15,6 @@ export const AtlasMakerUI = {
      * @returns {void}
      */
   slider: function (elem, callback) {
-    elem = unwrap(elem);
     if (!elem) { return; }
     setData(elem, { drag: false, val: 0, max: 100 });
 
@@ -68,7 +59,6 @@ export const AtlasMakerUI = {
      * @returns {void}
      */
   chose: function (elem, callback) {
-    elem = unwrap(elem);
     if (!elem) { return; }
     const ch = elem.querySelectorAll('.a');
     ch.forEach((d) => {
@@ -93,7 +83,6 @@ export const AtlasMakerUI = {
      * @returns {void}
      */
   chose3state: function (elem, callback) {
-    elem = unwrap(elem);
     if (!elem) { return; }
     const ch = elem.querySelectorAll('.a');
     ch.forEach((d) => {
@@ -120,7 +109,6 @@ export const AtlasMakerUI = {
      * @returns {void}
      */
   toggle: function (elem, callback) {
-    elem = unwrap(elem);
     if (!elem) { return; }
     elem.addEventListener('click', () => {
       elem.classList.toggle('pressed');
@@ -138,7 +126,6 @@ export const AtlasMakerUI = {
      * @returns {void}
      */
   push: function (elem, callback) {
-    elem = unwrap(elem);
     if (!elem) { return; }
     let lastClickTime = 0;
     elem.addEventListener('click', () => {

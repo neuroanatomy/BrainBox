@@ -5,7 +5,8 @@
 /*
   view/shared/geometry.js replaces jQuery's .css('width'), .offset(), .offset({...}) and
   .css({...}) in atlasmaker-interaction.js. These need a layout engine, so they are compared
-  with jQuery itself in a real browser: the MRI page, where jQuery 3.7.1 is still global.
+  with jQuery itself in a real browser: the MRI page, with jQuery 3.7.1 (a dev dependency,
+  no longer used by BrainBox itself) loaded into it.
   Each case runs jQuery and geometry.js on the same element - restoring its style in between -
   and requires the same result.
 */
@@ -102,7 +103,9 @@ describe('TESTING geometry.js AGAINST jQuery, IN A BROWSER', function () {
     await page.setViewport({ width: 1200, height: 900 });
     await U.blockExternalRequests(page);
     await page.goto(`${U.serverURL}/mri?url=${U.localBertURL}`, { waitUntil: 'domcontentloaded' });
-    await page.waitForFunction(() => window.$ && window.$.fn && window.AtlasMakerWidget && window.AtlasMakerWidget.brainImg && window.AtlasMakerWidget.brainImg.img, { timeout: U.longTimeout });
+    await page.waitForFunction(() => window.AtlasMakerWidget && window.AtlasMakerWidget.brainImg && window.AtlasMakerWidget.brainImg.img, { timeout: U.longTimeout });
+    // The page no longer has jQuery: bring in the one to compare with
+    await page.addScriptTag({ path: require.resolve('jquery/dist/jquery.js') });
     await page.addScriptTag({ content: `(function(){ var module = { exports: {} };\n${GEOMETRY_SOURCE}\nwindow.__geometry = module.exports; })();` });
     await page.evaluate((html) => document.body.insertAdjacentHTML('afterbegin', html), FIXTURE);
   });
@@ -118,7 +121,7 @@ describe('TESTING geometry.js AGAINST jQuery, IN A BROWSER', function () {
     }
   });
 
-  it('uses the jQuery version this page bundles', async function () {
+  it('compares with jQuery 3.7.1, the version BrainBox used', async function () {
     assert.strictEqual(await page.evaluate(() => $.fn.jquery), '3.7.1');
   });
 

@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> 
     <title>A page with a BrainBox widget</title>
 
-    <link rel="stylesheet" href="/stylesheets/atlasmaker.css" />
-    <link rel="stylesheet" href="/stylesheets/ui.css" />
-    <link rel="stylesheet" href="/stylesheets/loading-style.css" />
     <style>
      #stereotaxic {
         width:400px;
@@ -50,8 +47,9 @@
 
 </div>
 
-<script src='/lib/jquery-3.1.1.min.js'></script>
-<script src="/js/brainbox.js"></script>
+<!-- The viewer (with its styles), then BrainBox -->
+<script src="/lib/atlasmaker.js"></script>
+<script src="/lib/brainbox.js"></script>
 
 <script>
 BrainBox.widget({

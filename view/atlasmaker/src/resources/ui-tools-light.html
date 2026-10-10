@@ -75,35 +75,35 @@
     </div>
 </div>
 
-<script src='../../downloads/jquery-3.2.1.min.js'></script>
-<script src='../atlasmaker-ui.js'></script>
-<script>
+<!-- atlasmaker-ui.js is an ES module: serve this folder over http to try the controls -->
+<script type='module'>
+    import { AtlasMakerUI } from '../atlasmaker-ui.js';
     const mui = AtlasMakerUI;
-    mui.push($("#display-minimize"),()=>console.log("minimize"));
-    mui.push($("#display-left"),()=>console.log("left"));
-    mui.push($("#display-right"),()=>console.log("right"));
+    mui.push(document.getElementById("display-minimize"),()=>console.log("minimize"));
+    mui.push(document.getElementById("display-left"),()=>console.log("left"));
+    mui.push(document.getElementById("display-right"),()=>console.log("right"));
 
-    mui.slider($("#slice"),()=>{});
-    mui.push($("#prev"),()=>console.log("prev"));
-    mui.push($("#next"),()=>console.log("next"));
+    mui.slider(document.getElementById("slice"),()=>{});
+    mui.push(document.getElementById("prev"),()=>console.log("prev"));
+    mui.push(document.getElementById("next"),()=>console.log("next"));
 
-    mui.chose($("#plane"),()=>console.log("plane"));
+    mui.chose(document.getElementById("plane"),()=>console.log("plane"));
 
-    mui.chose($("#paint"),()=>console.log("paint"));
+    mui.chose(document.getElementById("paint"),()=>console.log("paint"));
 
-    mui.chose($("#penSize"),()=>console.log("size"));
-    mui.toggle($("#precise"),()=>console.log("precise"));
-    mui.toggle($("#fullscreen"),()=>console.log("full"));
-    mui.toggle($("#bubble"),()=>console.log("chat"));
-    mui.push($("#3drender"),()=>console.log("3d"));
-    mui.push($("#link"),()=>console.log("link"));
-    mui.push($("#upload"),()=>console.log("upload"));
-    mui.push($("#download"),()=>console.log("download"));
+    mui.chose(document.getElementById("penSize"),()=>console.log("size"));
+    mui.toggle(document.getElementById("precise"),()=>console.log("precise"));
+    mui.toggle(document.getElementById("fullscreen"),()=>console.log("full"));
+    mui.toggle(document.getElementById("bubble"),()=>console.log("chat"));
+    mui.push(document.getElementById("3drender"),()=>console.log("3d"));
+    mui.push(document.getElementById("link"),()=>console.log("link"));
+    mui.push(document.getElementById("upload"),()=>console.log("upload"));
+    mui.push(document.getElementById("download"),()=>console.log("download"));
 
-    mui.push($("#color"),()=>console.log("color"));
-    mui.toggle($("#fill"),()=>console.log("fill"));
-    mui.push($("#undo"),()=>console.log("undo"));
-    mui.push($("#save"),()=>console.log("save"));
+    mui.push(document.getElementById("color"),()=>console.log("color"));
+    mui.toggle(document.getElementById("fill"),()=>console.log("fill"));
+    mui.push(document.getElementById("undo"),()=>console.log("undo"));
+    mui.push(document.getElementById("save"),()=>console.log("save"));
 </script>
 
 </body>

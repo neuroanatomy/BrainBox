@@ -5,10 +5,6 @@ import 'structjs';
 import './css/atlasmaker.css';
 import './css/loading-style.css';
 
-// jQuery is no longer used in this file, but it is still made global here for the
-// modules and pages that have not been converted yet (see docs/jquery-removal-plan.md)
-import $ from 'jquery';
-
 import {AtlasMakerDraw} from './atlasmaker-draw.js';
 import {AtlasMakerIO} from './atlasmaker-io.js';
 import {AtlasMakerInteraction} from './atlasmaker-interaction.js';
@@ -21,8 +17,6 @@ import deepExtendModule from '../../shared/deepExtend.js';
 import toolsEmbed from './html/toolsEmbed.html';
 import toolsFull from './html/toolsFull.html';
 import toolsLight from './html/toolsLight.html';
-
-window.$ = $;
 
 const { deepExtend } = deepExtendModule;
 
