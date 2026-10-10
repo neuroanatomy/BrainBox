@@ -63,7 +63,7 @@ describe('TESTING OTHER USERS\' CURSORS', function () {
   before(async function () {
     // eslint-disable-next-line no-invalid-this
     this.timeout(U.longTimeout * 2);
-    browser = await puppeteer.launch({ headless: true, ignoreHTTPSErrors: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     page = await browser.newPage();
     await page.setViewport({ width: 1200, height: 900 });
     await U.blockExternalRequests(page);
@@ -168,7 +168,7 @@ describe('TESTING OTHER USERS\' CURSORS', function () {
       this.timeout(U.longTimeout * 2);
       const connected = () => window.AtlasMakerWidget && AtlasMakerWidget.brainImg && AtlasMakerWidget.brainImg.img && AtlasMakerWidget.flagConnected === 1;
       await page.waitForFunction(connected, { timeout: U.longTimeout });
-      browserB = await puppeteer.launch({ headless: true, ignoreHTTPSErrors: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+      browserB = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
       pageB = await browserB.newPage();
       await pageB.setViewport({ width: 1200, height: 900 });
       await U.blockExternalRequests(pageB);

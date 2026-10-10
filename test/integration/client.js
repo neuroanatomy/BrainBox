@@ -36,7 +36,7 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
     });
 
     it('Browser opens', async function () {
-      browser = await puppeteer.launch({ headless: true, ignoreHTTPSErrors: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+      browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     }).timeout(U.shortTimeout);
 
     it('Can access index page', async function () {

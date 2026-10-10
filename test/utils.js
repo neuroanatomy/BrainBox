@@ -302,7 +302,7 @@ const waitUntilHTMLRendered = async function (page, timeout = 30000) {
     }
     lastHTMLSize = currentHTMLSize;
     // eslint-disable-next-line no-await-in-loop
-    await page.waitForTimeout(checkDurationMsecs);
+    await delay(checkDurationMsecs);
   }
 };
 

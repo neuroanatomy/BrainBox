@@ -95,7 +95,7 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
     nativeDb = U.getNativeDB();
     browser = await puppeteer.launch({
       headless: true,
-      ignoreHTTPSErrors: true,
+      acceptInsecureCerts: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
@@ -660,12 +660,12 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
     }).timeout(U.longTimeout);
 
     it('fills the screen in fullscreen, with the controls still a strip at the bottom', async function () {
-      // Chrome's old headless mode has no Fullscreen API at all, so this one
-      // test needs its own browser in the new headless mode. The rest of the
-      // suite stays on the shared browser the other tests use.
+      // This test has its own browser because it once needed Chrome's new
+      // headless mode (the old one had no Fullscreen API). Since puppeteer 22
+      // that is the only headless mode, so the shared browser would do too.
       const fullscreenBrowser = await puppeteer.launch({
-        headless: 'new',
-        ignoreHTTPSErrors: true,
+        headless: true,
+        acceptInsecureCerts: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox']
       });
       const page = await fullscreenBrowser.newPage();

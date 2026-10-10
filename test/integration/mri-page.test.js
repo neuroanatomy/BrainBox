@@ -78,7 +78,7 @@ describe('TESTING THE MRI PAGE SCRIPT (mri-page.js)', function () {
   before(async function () {
     // eslint-disable-next-line no-invalid-this
     this.timeout(U.longTimeout);
-    browser = await puppeteer.launch({ headless: true, ignoreHTTPSErrors: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     labelSets = (await chai.request(U.serverURL).get('/api/getLabelsets')).body;
   });
 

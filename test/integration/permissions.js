@@ -82,7 +82,7 @@ describe('TESTING PERMISSIONS', function () {
         project.collaborators.list.find((c) => c.userID === 'anyone').access.files = 'none';
         await U.insertProject(project);
 
-        browser = await puppeteer.launch({ headless: true, ignoreHTTPSErrors: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+        browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
         page = await browser.newPage();
         await U.blockExternalRequests(page);
       });
@@ -536,7 +536,7 @@ describe('TESTING PERMISSIONS', function () {
         let browser, page;
 
         before(async function() {
-          browser = await puppeteer.launch({ headless: true, ignoreHTTPSErrors: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+          browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
           page = await browser.newPage();
           await U.blockExternalRequests(page);
           page.setCookie(...cookies);

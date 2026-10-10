@@ -98,7 +98,7 @@ describe('TESTING geometry.js AGAINST jQuery, IN A BROWSER', function () {
   before(async function () {
     // eslint-disable-next-line no-invalid-this
     this.timeout(U.longTimeout * 2);
-    browser = await puppeteer.launch({ headless: true, ignoreHTTPSErrors: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     page = await browser.newPage();
     await page.setViewport({ width: 1200, height: 900 });
     await U.blockExternalRequests(page);

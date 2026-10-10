@@ -105,7 +105,7 @@ describe('TESTING THE PROJECT PAGE SCRIPT (project-page.js)', function () {
     this.timeout(U.longTimeout);
     await U.removeProject(SHORTNAME);
     await U.insertProject(project());
-    browser = await puppeteer.launch({ headless: true, ignoreHTTPSErrors: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
   });
 
   beforeEach(async function () {

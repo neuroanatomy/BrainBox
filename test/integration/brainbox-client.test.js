@@ -78,7 +78,7 @@ describe('TESTING THE CLIENT-SIDE BRAINBOX OBJECT', function () {
   before(async function () {
     // eslint-disable-next-line no-invalid-this
     this.timeout(U.longTimeout);
-    browser = await puppeteer.launch({ headless: true, ignoreHTTPSErrors: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     const res = await chai.request(U.serverURL).get('/api/getLabelsets');
     serverLabelSets = res.body;
   });

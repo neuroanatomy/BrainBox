@@ -111,7 +111,7 @@ describe('TESTING MOUSE AND TOUCH ON THE VIEWER', function () {
   before(async function () {
     // eslint-disable-next-line no-invalid-this
     this.timeout(U.longTimeout);
-    browser = await puppeteer.launch({ headless: true, ignoreHTTPSErrors: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
   });
 
   beforeEach(async function () {
