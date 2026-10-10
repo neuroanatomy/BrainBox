@@ -38,7 +38,8 @@ const openHost = async (browser, override = () => null) => {
   await page.setRequestInterception(true);
   page.on('request', (req) => {
     const url = req.url();
-    if (!url.startsWith(U.serverURL)) {
+    // BrainBox builds its URLs from cfg.json's hostname, which may be localhost rather than U.serverURL
+    if (!U.isLocalURL(url)) {
       req.abort();
 
       return;
@@ -73,7 +74,6 @@ const assertWidgetRequests = (requests) => {
 describe('TESTING THE CLIENT-SIDE BRAINBOX OBJECT', function () {
   let browser;
   let serverLabelSets;
-  let brainWasInDB;
 
   before(async function () {
     // eslint-disable-next-line no-invalid-this
@@ -81,22 +81,18 @@ describe('TESTING THE CLIENT-SIDE BRAINBOX OBJECT', function () {
     browser = await puppeteer.launch({ headless: true, ignoreHTTPSErrors: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     const res = await chai.request(U.serverURL).get('/api/getLabelsets');
     serverLabelSets = res.body;
-    // widget() downloads the test brain if needed; only remove it afterwards if we added it
-    const mri = await chai.request(U.serverURL).get('/mri/json')
-      .query({ url: U.localBertURL });
-    brainWasInDB = mri.status === 200;
   });
 
   after(async function () {
     // eslint-disable-next-line no-invalid-this
     this.timeout(U.longTimeout);
     if (browser) { await browser.close(); }
-    if (!brainWasInDB) {
-      const res = await chai.request(U.serverURL).get('/mri/json')
-        .query({ url: U.localBertURL });
-      if (res.status === 200 && res.body.url) {
-        await U.removeMRI({ dirPath: './public' + res.body.url, srcURL: U.localBertURL });
-      }
+    // Like the other suites using the test brain, leave it removed: workflow-ws.js expects to download it afresh.
+    // (It may have been there before us: inserting U.projectTest, in test/runner.js, starts downloading it.)
+    const res = await chai.request(U.serverURL).get('/mri/json')
+      .query({ url: U.localBertURL });
+    if (res.body && res.body.url) {
+      await U.removeMRI({ dirPath: './public' + res.body.url, srcURL: U.localBertURL });
     }
   });
 
@@ -163,6 +159,7 @@ describe('TESTING THE CLIENT-SIDE BRAINBOX OBJECT', function () {
             labelSets: BrainBox.labelSets,
             source: BrainBox.info && BrainBox.info.source,
             link: link ? link.getAttribute('href') : null,
+            hostname: BrainBox.hostname,
             view: AtlasMakerWidget.User.view
           };
         }, U.localBertURL);
@@ -170,7 +167,9 @@ describe('TESTING THE CLIENT-SIDE BRAINBOX OBJECT', function () {
         assert.strictEqual(result.resolvedWith, 'object', 'widget() resolves with what configureBrainBox resolves');
         assert.deepEqual(result.labelSets, serverLabelSets);
         assert.strictEqual(result.source, U.localBertURL);
-        assert.strictEqual(result.link, `${U.serverURL}/mri?url=${U.localBertURL}`);
+        // The link points at the configured host (cfg.json), whichever name that uses for our server
+        assert.isTrue(U.isLocalURL(result.hostname), `unexpected hostname ${result.hostname}`);
+        assert.strictEqual(result.link, `${result.hostname}/mri?url=${U.localBertURL}`);
         assert.strictEqual(result.view, 'cor');
 
         assertWidgetRequests(requests);

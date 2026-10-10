@@ -54,7 +54,7 @@ describe('TESTING WEBSOCKET WORKFLOW', function () {
   });
 
   describe('WS connection', function () {
-    it('Can send little data', () => {
+    it('Can send little data', function() {
       u1.send(msgEcho);
     });
 
@@ -78,7 +78,10 @@ describe('TESTING WEBSOCKET WORKFLOW', function () {
       assert(mri.success === true, 'Unexpected MRI structure');
     }).timeout(U.mediumTimeout);
 
-    it('Can send larger data', () => {
+    it('Can send larger data', function() {
+      // As the real client does (atlasmaker.js): without it, the server takes our 'sendAtlas'
+      // for a repeat request and sends nothing if the atlas is still loaded from an earlier test.
+      msgAllUserData.user.isMRILoaded = false;
       msgAllUserData.user.dirname = mri.url;
       msgAllUserData.user.mri = mri.filename;
       msgAllUserData.user.atlasFilename = mri.mri.atlas[0].filename;
@@ -86,8 +89,9 @@ describe('TESTING WEBSOCKET WORKFLOW', function () {
       u1.send(JSON.stringify(msgAllUserData));
     });
 
-    it('Can request data and receive', (done) => {
-      u1.on('message', (data) => {
+    it('Can request data and receive', function(done) {
+      // The server answers with two messages (voxel data, then vectorial data); done() only once
+      u1.once('message', (data) => {
         if(Buffer.isBuffer(data)) {
           assert(true);
         } else {

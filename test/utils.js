@@ -324,6 +324,15 @@ const waitForDOMReady = async function (testPage, url) {
 };
 
 /**
+ * Whether a URL points at our own test server. The pages build their URLs from
+ * cfg.json's hostname, which is http://localhost:3001 in CI (cfg.json.example)
+ * and may be http://127.0.0.1:3001 locally, so both count.
+ * @param {string} url A URL requested by a page
+ * @returns {boolean} True for our server (or a data: URL)
+ */
+const isLocalURL = (url) => url.startsWith(serverURL) || url.includes('127.0.0.1:3001') || url.includes('localhost:3001') || url.startsWith('data:');
+
+/**
  * Everything outside our own server is unreachable from a sandboxed test run,
  * and a hanging request for a Google font, an analytics script or a CDN file
  * keeps the 'load' event from firing, so page.goto() times out long before
@@ -334,9 +343,7 @@ const waitForDOMReady = async function (testPage, url) {
 const blockExternalRequests = async (page) => {
   await page.setRequestInterception(true);
   page.on('request', (req) => {
-    const url = req.url();
-    const isLocal = url.startsWith(serverURL) || url.includes('127.0.0.1:3001') || url.includes('localhost:3001') || url.startsWith('data:');
-    if (isLocal) { req.continue(); } else { req.abort(); }
+    if (isLocalURL(req.url())) { req.continue(); } else { req.abort(); }
   });
 };
 
@@ -459,6 +466,7 @@ module.exports = {
   removeProject,
   delay,
   blockExternalRequests,
+  isLocalURL,
   compareImages,
   comparePageScreenshots,
   waitUntilHTMLRendered,
