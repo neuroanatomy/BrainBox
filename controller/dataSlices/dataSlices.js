@@ -238,44 +238,38 @@ const getProjectFilesSlice = async (req, projShortname, start, length, namesFlag
   if (project && project.files) {
     ({ list } = project.files);
   }
-  const arr = [];
-
   start = Math.min(start, list.length);
   length = Math.min(length, list.length - start);
-  for (let i = start; i < start + length; i++) {
-    arr.push(req.nativeDb.collection('mri').findOne({ source: list[i], backup: { $exists: false } }, { projection: { _id: 0 } }));
-  }
+  const sources = list.slice(start, start + length);
+  const onlyNames = (namesFlag === true);
 
+  // a single query for the whole slice (mri.source is indexed, see app.js)
   let mris;
   try {
-    mris = await Promise.all(arr);
+    mris = await req.nativeDb.collection('mri')
+      .find(
+        { source: { $in: sources }, backup: { $exists: false } },
+        { projection: onlyNames ? { _id: 0, source: 1, name: 1 } : { _id: 0 } }
+      )
+      .toArray();
   } catch (err) {
     throw new Error(err);
   }
+  const mriBySource = new Map(mris.map((mri) => [mri.source, mri]));
 
-  const newList = [];
-  for (let j = 0; j < mris.length; j++) {
-    if (mris[j]) {
-      // mri file present in DB
-      // check j-th mri annotation access
-      BrainboxAccessControlService.setVolumeAnnotationsAccessByProjects(mris[j], [project], loggedUser);
-
-      // append to list
-      if (typeof namesFlag !== 'undefined' && namesFlag === true) {
-        newList[j] = { source: mris[j].source, name: mris[j].name };
-      } else {
-        newList[j] = mris[j];
-      }
-    } else {
+  return sources.map((source) => {
+    const mri = mriBySource.get(source);
+    if (!mri) {
       // mri file not present in DB (probably not yet downloaded)
-      newList[j] = {
-        source: list[start + j],
-        name: ''
-      };
+      return { source, name: '' };
     }
-  }
+    if (onlyNames) {
+      return { source: mri.source, name: mri.name };
+    }
+    BrainboxAccessControlService.setVolumeAnnotationsAccessByProjects(mri, [project], loggedUser);
 
-  return newList;
+    return mri;
+  });
 };
 
 /**

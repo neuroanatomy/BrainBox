@@ -123,6 +123,66 @@ describe('Data Slices ', function() {
       const result = await dataSlices.getProjectFilesSlice(req, 'nonexistentproject', 0, 2);
       assert.isUndefined(result);
     });
+
+    describe('with files that are in the mri collection, and files that are not', function () {
+      const shortname = 'filesslicetest';
+      const src = (i) => `https://example.org/filesslicetest/${i}.nii.gz`;
+      const req = {
+        user: { username: 'foo' },
+        isAuthenticated: () => true,
+        nativeDb: null
+      };
+      const mri = (i, name, backup) => ({
+        source: src(i),
+        name,
+        url: `/data/filesslicetest${i}/`,
+        mri: { atlas: [{ name: 'Default', project: shortname, access: 'edit', type: 'volume', filename: 'Atlas.nii.gz', labels: 'foreground.json' }] },
+        ...(backup ? { backup: true } : {})
+      });
+
+      before(async function () {
+        req.nativeDb = nativeDb;
+        await nativeDb.collection('project').insertOne({
+          ...U.projectTest,
+          shortname,
+          // src(1) is listed twice
+          files: { list: [src(0), src(1), src(2), src(3), src(1)] }
+        });
+        await nativeDb.collection('mri').insertMany([mri(1, 'old one', true), mri(1, 'one'), mri(3, 'three')]);
+      });
+
+      after(async function () {
+        await nativeDb.collection('project').deleteMany({ shortname });
+        await nativeDb.collection('mri').deleteMany({ source: { $in: [0, 1, 2, 3].map(src) } });
+      });
+
+      it('gives the source and name of each file, in the order of the list', async function () {
+        const result = await dataSlices.getProjectFilesSlice(req, shortname, 0, 10, true);
+        assert.deepEqual(result, [
+          { source: src(0), name: '' },
+          { source: src(1), name: 'one' },
+          { source: src(2), name: '' },
+          { source: src(3), name: 'three' },
+          { source: src(1), name: 'one' }
+        ]);
+      });
+
+      it('gives the requested slice', async function () {
+        const result = await dataSlices.getProjectFilesSlice(req, shortname, 1, 2, true);
+        assert.deepEqual(result, [{ source: src(1), name: 'one' }, { source: src(2), name: '' }]);
+        assert.deepEqual(await dataSlices.getProjectFilesSlice(req, shortname, 10, 2, true), []);
+      });
+
+      it('gives the whole entry of the files in the mri collection without the names flag', async function () {
+        const result = await dataSlices.getProjectFilesSlice(req, shortname, 0, 4);
+        assert.deepEqual(result[0], { source: src(0), name: '' });
+        assert.notProperty(result[1], '_id');
+        assert.notProperty(result[1], 'backup');
+        assert.strictEqual(result[1].name, 'one');
+        assert.strictEqual(result[3].url, '/data/filesslicetest3/');
+        assert.strictEqual(result[3].mri.atlas[0].access, 'remove', 'the access the project gives the user');
+      });
+    });
   });
 
   describe('getFilesSlice function() ', function() {

@@ -1,7 +1,7 @@
 /* global project, filesTotal, loggedUser */
 
 import 'nwl-components/dist/style.css';
-import { createApp, reactive } from 'vue';
+import { createApp, ref } from 'vue';
 import { SettingsPage } from 'nwl-components';
 import config from '../nwl-components-config';
 
@@ -39,73 +39,117 @@ const fetchBatch = async (start, attempt = 0) => {
   }
 };
 
-// Files received so far: kept out of Vue's reactivity, they can be thousands
-const files = [];
-const state = reactive({ received: 0, loading: false, loaded: false, error: null });
+// The files received so far. SettingsPage watches this array, and shows each
+// file as soon as it is added to it
+const files = ref([]);
+
+// The number of files received, sent to the server when saving: if it is not
+// the number of files stored, the server keeps the stored list instead of the
+// partial one. SettingsPage keeps a shallow copy of `project`, which shares
+// this object, so the count it sends is always the current one
+const filesLoaded = { count: 0 };
+project.filesLoaded = filesLoaded;
+
+let loading = false;
 
 /**
- * Fetch the batches of files from the last one received, until a batch is not full
+ * The section of the page with the files: the files table's parent, which also
+ * holds the "Files" heading
+ * @returns {HTMLElement|null} The section
+ */
+const filesSection = () => {
+  const table = document.getElementById('files');
+
+  return table ? table.parentElement : null;
+};
+
+/**
+ * Write the loading progress, or an error with a Retry button, in the status
+ * shown after the "Files" heading
+ * @param {HTMLElement} span The status
+ * @param {Object} status {received, total} while loading, {error} if a batch failed
+ * @param {Function} retry Called by the Retry button
+ * @returns {void}
+ */
+const writeFilesStatus = (span, status, retry) => {
+  if (status.error) {
+    span.textContent = ` (could not load all the files: ${status.error}) `;
+    const button = document.createElement('button');
+    button.textContent = 'Retry';
+    button.addEventListener('click', retry);
+    span.appendChild(button);
+  } else {
+    span.textContent = ` (loading… ${status.received} / ${status.total})`;
+  }
+};
+
+/**
+ * Show the loading status after the "Files" heading, and keep the files from
+ * being edited until they are all loaded
+ * @param {Object} status {received, total} while loading, {error} if a batch failed, null when done
+ * @param {Function} retry Called by the Retry button
+ * @returns {void}
+ */
+const showFilesStatus = (status, retry) => {
+  const section = filesSection();
+  const heading = section && section.querySelector('h2');
+  if (!heading) { return; }
+  const span = heading.querySelector('.filesStatus');
+  if (!status) {
+    if (span) { span.remove(); }
+    section.classList.remove('filesLoading');
+
+    return;
+  }
+  section.classList.add('filesLoading');
+  writeFilesStatus(span || heading.appendChild(Object.assign(document.createElement('span'), { className: 'filesStatus' })), status, retry);
+};
+
+/**
+ * Fetch the batches of files from the last one received, until a batch is not
+ * full, adding each to the list shown as soon as it arrives
  * @returns {Promise<void>} Resolves once all the files have been received
  */
 const fetchRemainingFiles = async () => {
   let list;
   do {
+    showFilesStatus({ received: files.value.length, total: Math.max(filesTotal, files.value.length) });
     // eslint-disable-next-line no-await-in-loop
-    list = await fetchBatch(files.length);
-    files.push(...list);
-    state.received = files.length;
+    list = await fetchBatch(files.value.length);
+    files.value.push(...list);
+    filesLoaded.count = files.value.length;
   } while (list.length === BATCH_LENGTH);
 };
 
 /**
- * Load the project's files. The settings are only shown once the list is complete:
- * saving a partial list would remove the files that had not arrived yet.
+ * Load the project's files, from the last one received
  * @returns {Promise<void>} Resolves once the files are loaded, or failed to load
  */
 const loadFiles = async () => {
-  if (state.loading) { return; }
-  state.loading = true;
-  state.error = null;
+  if (loading) { return; }
+  loading = true;
   try {
     // a new project, or one without files, has nothing to fetch
     if (filesTotal > 0) {
       await fetchRemainingFiles();
     }
-    project.files.list = files;
-    project.filesLoaded = files.length; // checked by the server when saving
-    state.loaded = true;
+    showFilesStatus(null);
   } catch (err) {
-    state.error = err.message;
+    showFilesStatus({ error: err.message }, loadFiles);
   } finally {
-    state.loading = false;
+    loading = false;
   }
 };
 
 const PageContents = {
   template: `
-    <SettingsPage v-if="state.loaded" :project="project" />
-    <div v-else class="app">
-      <div class="filesLoading">
-        <p>Loading files… {{ state.received }} / {{ total }}</p>
-        <progress :value="state.received" :max="total"></progress>
-        <p v-if="state.error" class="filesLoadingError">
-          Could not load the files: {{ state.error }}.
-          <button @click="retry">Retry</button>
-        </p>
-      </div>
-    </div>
+    <SettingsPage :project="project" :files="files" />
   `,
   setup() {
     return {
       project,
-      state,
-      retry: loadFiles
+      files
     };
-  },
-  computed: {
-    total() {
-      return Math.max(filesTotal, state.received);
-    }
   },
   mounted() {
     loadFiles();

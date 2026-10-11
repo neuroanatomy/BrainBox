@@ -2,10 +2,11 @@
 
 /*
   Browser tests for the project settings page script (view/brainbox/src/pages/project-settings-page.js):
-  the project's files are fetched in batches of 100, with a progress indicator, and the settings
-  only appear once all of them have arrived, so that a partial list can never be saved. A batch
-  that fails is retried, and then a Retry button lets the user resume. Saving is recorded instead
-  of being carried out.
+  the settings are shown right away, and the project's files are added as they arrive, in batches
+  of 100, with the progress in the Files heading. Saving tells the server how many files had been
+  received, so that it does not replace the stored list with a partial one. A batch that fails is
+  retried, and then a Retry button lets the user resume. Saving is recorded instead of being
+  carried out.
 */
 
 const puppeteer = require('puppeteer');
@@ -83,7 +84,14 @@ const openSettingsPage = async (browser, respond = () => null) => {
 };
 
 const numFiles = (page) => page.$eval('#numFiles', (el) => Number(el.textContent));
-const waitForSettings = (page) => page.waitForSelector('#numFiles', { timeout: U.longTimeout });
+const waitForAllFiles = (page) => page.waitForFunction((n) => {
+  const el = document.querySelector('#numFiles');
+  const heading = document.querySelector('#files') && document.querySelector('#files').parentElement.querySelector('h2');
+
+  return el && Number(el.textContent) === n && heading && heading.textContent.trim() === 'Files';
+}, { timeout: U.longTimeout }, NFILES);
+const filesHeading = (page) => page.evaluate(() => document.querySelector('#files').parentElement.querySelector('h2').textContent.replace(/\s+/g, ' ').trim());
+const filesLocked = (page) => page.evaluate(() => document.querySelector('#files').parentElement.classList.contains('filesLoading'));
 const clickButton = (page, text) => page.evaluate((t) => {
   const button = [...document.querySelectorAll('button')].find((b) => b.textContent.trim() === t);
   button.click();
@@ -132,7 +140,7 @@ describe('TESTING THE PROJECT SETTINGS PAGE SCRIPT (project-settings-page.js)', 
 
   it('asks only for the names of the files, 100 at a time', async function () {
     opened = await openSettingsPage(browser);
-    await waitForSettings(opened.page);
+    await waitForAllFiles(opened.page);
     const queries = opened.filesRequests.map((url) => Object.fromEntries(new URL(url).searchParams));
     assert.deepEqual(queries, [0, 100, 200].map((start) => ({ start: String(start), length: '100', names: 'true' })));
   }).timeout(U.longTimeout);
@@ -140,22 +148,36 @@ describe('TESTING THE PROJECT SETTINGS PAGE SCRIPT (project-settings-page.js)', 
   it('tells the server how many files it received', async function () {
     opened = await openSettingsPage(browser);
     const { page } = opened;
-    await waitForSettings(page);
+    await waitForAllFiles(page);
     await clickButton(page, 'Save Changes');
     await page.waitForFunction(() => document.body.textContent.includes('Project settings updated.'), { timeout: U.mediumTimeout });
-    assert.strictEqual(opened.saved[0].filesLoaded, NFILES);
+    assert.deepEqual(opened.saved[0].filesLoaded, { count: NFILES });
   }).timeout(U.longTimeout);
 
-  it('shows the loading progress, and the settings only once all the files have arrived', async function () {
+  // eslint-disable-next-line max-statements
+  it('shows the settings right away, the files as they arrive, and the progress in the Files heading', async function () {
     opened = await openSettingsPage(browser, (req) => (startOf(req.url()) === 200 ? 'hold' : null));
     const { page } = opened;
     await page.waitForFunction(() => document.body.textContent.includes('200 / 250'), { timeout: U.longTimeout });
-    assert.isNull(await page.$('#numFiles'), 'no settings while files are loading');
-    assert.deepEqual(await page.$eval('progress', (el) => [el.value, el.max]), [200, NFILES]);
+    assert.strictEqual(await numFiles(page), 200, 'the files received so far are shown');
+    assert.strictEqual(await filesHeading(page), 'Files (loading… 200 / 250)');
+    assert.isTrue(await filesLocked(page), 'the files cannot be edited while they load');
+    assert.include(await page.evaluate(() => document.body.textContent), 'Collaborators', 'the other settings are shown');
     opened.held.forEach((req) => req.continue());
-    await waitForSettings(page);
-    assert.strictEqual(await numFiles(page), NFILES);
-    assert.isNull(await page.$('progress'), 'the progress bar is gone');
+    await waitForAllFiles(page);
+    assert.strictEqual(await filesHeading(page), 'Files');
+    assert.isFalse(await filesLocked(page));
+    assert.deepEqual(opened.pageErrors, []);
+  }).timeout(U.longTimeout);
+
+  it('tells the server when it saves before all the files have arrived', async function () {
+    opened = await openSettingsPage(browser, (req) => (startOf(req.url()) === 200 ? 'hold' : null));
+    const { page } = opened;
+    await page.waitForFunction(() => document.body.textContent.includes('200 / 250'), { timeout: U.longTimeout });
+    await clickButton(page, 'Save Changes');
+    await page.waitForFunction(() => document.body.textContent.includes('Project settings updated.'), { timeout: U.mediumTimeout });
+    assert.deepEqual(opened.saved[0].filesLoaded, { count: 200 });
+    opened.held.forEach((req) => req.continue());
   }).timeout(U.longTimeout);
 
   it('retries a batch that failed', async function () {
@@ -169,8 +191,7 @@ describe('TESTING THE PROJECT SETTINGS PAGE SCRIPT (project-settings-page.js)', 
 
       return null;
     });
-    await waitForSettings(opened.page);
-    assert.strictEqual(await numFiles(opened.page), NFILES);
+    await waitForAllFiles(opened.page);
     assert.deepEqual(opened.filesRequests.map((url) => startOf(url)), [0, 100, 100, 200]);
   }).timeout(U.longTimeout);
 
@@ -178,13 +199,13 @@ describe('TESTING THE PROJECT SETTINGS PAGE SCRIPT (project-settings-page.js)', 
     let failing = true;
     opened = await openSettingsPage(browser, (req) => (failing && startOf(req.url()) === 200 ? serverError : null));
     const { page } = opened;
-    await page.waitForFunction(() => [...document.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Retry'), { timeout: U.longTimeout });
-    assert.include(await page.evaluate(() => document.body.textContent), '200 / 250');
-    assert.isNull(await page.$('#numFiles'), 'no settings with an incomplete list of files');
+    await page.waitForFunction(() => [...document.querySelectorAll('h2 button')].some((b) => b.textContent.trim() === 'Retry'), { timeout: U.longTimeout });
+    assert.match(await filesHeading(page), /^Files \(could not load all the files: .*\) Retry$/);
+    assert.strictEqual(await numFiles(page), 200);
     failing = false;
     await clickButton(page, 'Retry');
-    await waitForSettings(page);
-    assert.strictEqual(await numFiles(page), NFILES);
+    await waitForAllFiles(page);
+    assert.strictEqual(await filesHeading(page), 'Files');
     assert.deepEqual(opened.filesRequests.filter((url) => startOf(url) < 200).map((url) => startOf(url)), [0, 100], 'the first batches are not asked again');
     assert.deepEqual(opened.pageErrors, []);
   }).timeout(U.longTimeout);

@@ -82,6 +82,15 @@ const start = async function () {
   const db = app.db.mongoDB();
   const nativeDb = app.db.nativeMongoDB();
 
+  // Files and projects are looked up by source and shortname: without these
+  // indexes each lookup scans the whole collection, backups included.
+  // createIndex does nothing if the index exists; building it does not block
+  // the server's start
+  Promise.all([
+    nativeDb.collection('mri').createIndex({ source: 1 }),
+    nativeDb.collection('project').createIndex({ shortname: 1 })
+  ]).catch((err) => console.error('ERROR: could not create the database indexes', err.message));
+
   //========================================================================================
   // Allow CORS
   //========================================================================================

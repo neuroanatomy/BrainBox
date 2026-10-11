@@ -131,14 +131,14 @@ describe('TESTING THE /project ROUTE', function () {
     });
 
     it('saves the files sent when the client had received the whole list', async function () {
-      const res = await save({ ...project(2), filesLoaded: 5 });
+      const res = await save({ ...project(2), filesLoaded: { count: 5 } });
       assert.isTrue(res.body.success);
       assert.notInclude(res.body.message, 'files');
       assert.deepEqual(await storedSources(), [source(0), source(1)]);
     });
 
     it('keeps the stored files, and saves the rest, when the client had not received the whole list', async function () {
-      const res = await save({ ...project(2), description: 'changed', filesLoaded: 2 });
+      const res = await save({ ...project(2), description: 'changed', filesLoaded: { count: 2 } });
       assert.isTrue(res.body.success);
       assert.include(res.body.message, 'files');
       const stored = await U.queryProject(shortname);
@@ -147,7 +147,7 @@ describe('TESTING THE /project ROUTE', function () {
     });
 
     it('does not store the number of files loaded', async function () {
-      await save({ ...project(5), filesLoaded: 5 });
+      await save({ ...project(5), filesLoaded: { count: 5 } });
       assert.notProperty(await U.queryProject(shortname), 'filesLoaded');
     });
 
@@ -156,7 +156,7 @@ describe('TESTING THE /project ROUTE', function () {
       assert.equal(res.statusCode, 200);
       const projectInfo = JSON.parse(res.text.match(/const project = (.*);\n/)[1]);
       assert.deepEqual(projectInfo.files.list, []);
-      assert.strictEqual(projectInfo.filesLoaded, 0);
+      assert.deepEqual(projectInfo.filesLoaded, { count: 0 });
       assert.match(res.text, /const filesTotal = 5;/);
     });
   });

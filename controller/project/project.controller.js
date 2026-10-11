@@ -387,10 +387,10 @@ const settings = async function (req, res) {
   }
 
   // empty the files.list: it will be filled progressively from the client, which
-  // reports in filesLoaded how many files it received (see postProject)
+  // reports in filesLoaded.count how many files it received (see postProject)
   const filesTotal = json.files.list.length;
   json.files.list = [];
-  json.filesLoaded = 0;
+  json.filesLoaded = { count: 0 };
 
   // deep-copying initial object
   const filteredJSON = _.cloneDeep(json);
@@ -594,11 +594,11 @@ const postProject = async function (req, res) {
         return;
       }
       // The settings page loads the files in batches, and says how many it received
-      // (filesLoaded). If that is not the whole stored list, the list it sends is
-      // incomplete: keep the stored one, so that files are not lost
+      // (filesLoaded.count). If that is not the whole stored list, the list it sends
+      // is incomplete: keep the stored one, so that files are not lost
       const ignoredChanges = [];
       const filesIncomplete = typeof object.filesLoaded !== 'undefined' &&
-        object.filesLoaded !== oldProject.files.list.length;
+        !(object.filesLoaded && object.filesLoaded.count === oldProject.files.list.length);
       delete object.filesLoaded;
       if (filesIncomplete) {
         console.log(`incomplete file list (${object.files.list.length} received, ${oldProject.files.list.length} stored): keeping the stored one`);
