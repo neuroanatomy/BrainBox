@@ -48,6 +48,12 @@ const AdminPage = {
     const selectedText = ref([]);
     const selectProject = ref('');
 
+    const damaged = ref(null); // null until searched
+    const damagedLoading = ref(false);
+    const damagedError = ref('');
+    const damagedResult = ref('');
+    const damagedExpanded = ref({});
+
     const message = ref('');
     const serverResult = ref('');
 
@@ -60,6 +66,58 @@ const AdminPage = {
         orphansError.value = err.message;
       }
       orphansLoading.value = false;
+    };
+
+    const loadDamaged = async () => {
+      damagedLoading.value = true;
+      damagedError.value = '';
+      try {
+        damaged.value = (await fetchJSON('/admin/json/projects/damaged')).list;
+      } catch (err) {
+        damagedError.value = err.message;
+      }
+      damagedLoading.value = false;
+    };
+
+    const toggleDamaged = (project) => {
+      damagedExpanded.value = { ...damagedExpanded.value, [project]: !damagedExpanded.value[project] };
+    };
+
+    // What is wrong with a damaged project
+    const problems = (p) => [
+      ...(p.suspected ? ['incomplete save'] : []),
+      ...(p.missing && !p.suspected ? ['files removed'] : []),
+      ...(p.currentVersions > 1 ? [`${p.currentVersions} current versions`] : [])
+    ];
+
+    const restoreFiles = async (p, e) => {
+      // eslint-disable-next-line no-alert
+      if (!window.confirm(`Add back to "${p.project}" the ${e.stillMissing} file(s) that the save of ${formatDate(e.modified)} removed?`)) {
+        return;
+      }
+      damagedResult.value = '';
+      try {
+        const { restored, files } = await postJSON('/admin/json/projects/restore-files', { project: p.project, version: e.version });
+        damagedResult.value = `${p.project}: restored ${restored} file(s), it has ${files} now.`;
+        await loadDamaged();
+      } catch (err) {
+        damagedError.value = err.message;
+      }
+    };
+
+    const fixCurrent = async (p) => {
+      // eslint-disable-next-line no-alert
+      if (!window.confirm(`"${p.project}" has ${p.currentVersions} current versions: keep the most recent one, and make the others backups?`)) {
+        return;
+      }
+      damagedResult.value = '';
+      try {
+        const { backups } = await postJSON('/admin/json/projects/fix-current', { project: p.project });
+        damagedResult.value = `${p.project}: kept the most recent version, ${backups} other(s) made backups.`;
+        await loadDamaged();
+      } catch (err) {
+        damagedError.value = err.message;
+      }
     };
 
     const loadMRI = async () => {
@@ -181,6 +239,16 @@ const AdminPage = {
       selectedText,
       selectProject,
       volumeProjects,
+      damaged,
+      damagedLoading,
+      damagedError,
+      damagedResult,
+      damagedExpanded,
+      loadDamaged,
+      toggleDamaged,
+      problems,
+      restoreFiles,
+      fixCurrent,
       message,
       serverResult,
       loadOrphans,

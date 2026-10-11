@@ -55,6 +55,51 @@
       <p v-if="orphansResult" class="result">[[orphansResult]]</p>
     </section>
 
+    <section id="projects">
+      <h2>Damaged projects</h2>
+      <p class="help">
+        Projects that lost files, or that have several current versions. Every save of a project's
+        settings keeps the previous version, so the files a save removed can be added back. The
+        settings page used to load the files 100 at a time, and saving it before they had all
+        arrived kept only those received: such saves are flagged as incomplete. Other removals may
+        have been deliberate. Searching reads every version of every project.
+      </p>
+      <Button @click="loadDamaged" :disabled="damagedLoading">[[damagedLoading ? 'Searching…' : (damaged ? 'Search again' : 'Search')]]</Button>
+      <p v-if="damagedError" class="error">[[damagedError]]</p>
+      <p v-else-if="damaged && !damagedLoading && damaged.length === 0">None found.</p>
+      <Table v-if="damaged && damaged.length">
+        <thead>
+          <tr><th>Project</th><th>Files</th><th>Missing</th><th>Problem</th><th>Saves</th><th></th></tr>
+        </thead>
+        <tbody>
+          <template v-for="p in damaged" :key="p.project">
+            <tr>
+              <td><a :href="'/project/' + p.project + '/settings'" target="_blank"><code>[[p.project]]</code></a></td>
+              <td>[[p.files]]</td>
+              <td>[[p.missing]]</td>
+              <td><span v-for="t in problems(p)" :key="t" class="tag" :class="{ notice: t === 'files removed' }">[[t]]</span></td>
+              <td><a v-if="p.events.length" href="#" class="toggle" @click.prevent="toggleDamaged(p.project)">[[p.events.length]] [[damagedExpanded[p.project] ? '▴' : '▾']]</a></td>
+              <td class="actions"><Button v-if="p.currentVersions > 1" className="danger" @click="fixCurrent(p)">Keep the latest version</Button></td>
+            </tr>
+            <tr v-if="damagedExpanded[p.project]" class="details">
+              <td colspan="6">
+                <ul>
+                  <li v-for="e in p.events" :key="e.version">
+                    [[formatDate(e.modified)]] by [[e.modifiedBy || '?']]: [[e.before]] → [[e.after]] files,
+                    [[e.stillMissing]] still missing<span v-if="e.annotated">, [[e.annotated]] with annotations</span>
+                    <span v-if="e.incomplete" class="tag">incomplete save</span>
+                    <Button @click="restoreFiles(p, e)" :disabled="p.currentVersions > 1">Restore [[e.stillMissing]] file(s)</Button>
+                    <div class="help examples">e.g. [[e.examples.join(', ')]]</div>
+                  </li>
+                </ul>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </Table>
+      <p v-if="damagedResult" class="result">[[damagedResult]]</p>
+    </section>
+
     <section id="mri">
       <h2>Annotations of an MRI</h2>
       <form @submit.prevent="loadMRI()">
@@ -168,6 +213,27 @@ tr.details td {
 tr.details ul {
     margin: 4px 0;
     padding-left: 16px;
+}
+tr.details li {
+    margin: 6px 0;
+}
+tr.details li .tag {
+    margin-left: 6px;
+}
+tr.details li button {
+    margin-left: 8px;
+    padding: 2px 8px;
+}
+.examples {
+    font-size: 12px;
+    word-break: break-all;
+}
+.tag.notice {
+    color: #fc6;
+    border-color: #a83;
+}
+.tag + .tag {
+    margin-left: 4px;
 }
 form {
     display: flex;

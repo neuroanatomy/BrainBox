@@ -1,7 +1,9 @@
+/* eslint-disable max-lines */
 const notifier = require('../../notifier');
 const { body, validationResult } = require('express-validator');
 const { isAdmin, requestUsername } = require('./admins');
 const annotations = require('./admin.annotations');
+const projects = require('./admin.projects');
 
 /**
  * Let through admins, and requests from authorised IP addresses
@@ -233,6 +235,70 @@ const removeMRIAnnotations = async (req, res) => {
   }
 };
 
+/**
+ * List the damaged projects: files removed by a save that are still missing,
+ * several current versions
+ * @param {object} req Request object
+ * @param {object} res Response object
+ * @returns {void}
+ */
+const getDamagedProjects = async (req, res) => {
+  try {
+    const list = await projects.findDamagedProjects(req.nativeDb);
+    res.json({ success: true, list });
+  } catch (err) {
+    serverError(res, err);
+  }
+};
+
+/**
+ * Answer with the result of a fix, or its error
+ * @param {object} res Response object
+ * @param {Promise<object>} fix The fix
+ * @returns {Promise<void>} Resolves once answered
+ */
+const sendFixResult = async (res, fix) => {
+  try {
+    const { status, error, ...result } = await fix;
+    if (error) {
+      return res.status(status).json({ success: false, error });
+    }
+    res.json({ success: true, ...result });
+  } catch (err) {
+    serverError(res, err);
+  }
+};
+
+/**
+ * Add back to a project the files that a save removed. req.body contains the
+ * project and the version saved that removed them
+ * @param {object} req Request object
+ * @param {object} res Response object
+ * @returns {void}
+ */
+const restoreProjectFiles = (req, res) => {
+  const { project, version } = req.body;
+  if (typeof project !== 'string' || project === '' || typeof version !== 'string') {
+    return res.status(400).json({ success: false, error: 'Provide the project and the version' });
+  }
+  sendFixResult(res, projects.restoreFiles({ nativeDb: req.nativeDb, project, version, username: requestUsername(req) }));
+};
+
+/**
+ * Keep only the most recent of the current versions of a project. The project
+ * is in req.body.project
+ * @param {object} req Request object
+ * @param {object} res Response object
+ * @returns {void}
+ */
+const fixProjectCurrentVersions = (req, res) => {
+  const { project } = req.body;
+  if (typeof project !== 'string' || project === '') {
+    return res.status(400).json({ success: false, error: 'Provide the project' });
+  }
+  sendFixResult(res, projects.fixCurrentVersions({ nativeDb: req.nativeDb, project, username: requestUsername(req) }));
+};
+
 module.exports = {
   validator,
   requireAdmin,
@@ -242,5 +308,8 @@ module.exports = {
   getOrphans,
   removeOrphans,
   getMRI,
-  removeMRIAnnotations
+  removeMRIAnnotations,
+  getDamagedProjects,
+  restoreProjectFiles,
+  fixProjectCurrentVersions
 };

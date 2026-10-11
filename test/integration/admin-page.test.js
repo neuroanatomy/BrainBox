@@ -10,6 +10,18 @@ const admins = require('../../controller/admin/admins');
 
 const goneProject = 'adminpagegone';
 const source = 'http://admin-page-test.localhost/brain.nii.gz';
+const damagedProject = 'adminpagedamaged';
+const damagedSource = (i) => `http://admin-page-test.localhost/damaged/${i}.nii.gz`;
+const damagedFiles = Array.from({ length: 150 }, (_x, i) => damagedSource(i));
+const projectVersion = (list, modified, backup) => ({
+  ...U.projectTest,
+  shortname: damagedProject,
+  brainboxURL: `/project/${damagedProject}`,
+  files: { list },
+  modified,
+  modifiedBy: 'someone',
+  ...(backup ? { backup: true } : {})
+});
 
 const volume = (filename, project) => ({
   name: '',
@@ -57,6 +69,13 @@ describe('TESTING THE ADMIN PAGE', function () {
         }
       });
 
+    // a project whose last save kept only the first 100 of its 150 files
+    await U.getNativeDB().collection('project')
+      .insertMany([
+        projectVersion(damagedFiles, '2024-01-01T00:00:00.000Z', true),
+        projectVersion(damagedFiles.slice(0, 100), '2024-06-07T14:29:59.623Z', false)
+      ]);
+
     browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     page = await browser.newPage();
     await U.blockExternalRequests(page);
@@ -73,6 +92,10 @@ describe('TESTING THE ADMIN PAGE', function () {
       .deleteMany({ source });
     await U.getNativeDB().collection('log')
       .deleteMany({ key: 'adminRemoveAnnotations', 'value.source': source });
+    await U.getNativeDB().collection('project')
+      .deleteMany({ shortname: damagedProject });
+    await U.getNativeDB().collection('log')
+      .deleteMany({ key: 'adminRestoreProjectFiles', 'value.project': damagedProject });
     agent.close();
     await U.removeUser(U.testingCredentials.username);
   });
@@ -106,5 +129,33 @@ describe('TESTING THE ADMIN PAGE', function () {
       .findOne({ source, backup: { $exists: false } });
     assert.deepEqual(mri.mri.atlas.map((a) => a.filename), ['Atlas.nii.gz', 'live1.nii.gz']);
     assert.equal(mri.modifiedBy, U.testingCredentials.username);
+  }).timeout(U.longTimeout);
+
+  // eslint-disable-next-line max-statements
+  it('finds a project damaged by an incomplete save, and restores its files', async function () {
+    await page.click('#projects button');
+    const row = await page.waitForFunction((project) => [...document.querySelectorAll('#projects tbody tr')]
+      .find((tr) => tr.querySelector('code') && tr.querySelector('code').textContent === project), { timeout: U.mediumTimeout }, damagedProject);
+    const cells = await row.evaluate((tr) => [...tr.cells].map((td) => td.textContent.replace(/\s+/g, ' ').trim()));
+    assert.deepEqual(cells.slice(0, 4), [damagedProject, '100', '50', 'incomplete save']);
+
+    await row.evaluate((tr) => tr.querySelector('a.toggle').click());
+    const event = await page.waitForSelector('#projects tr.details li', { timeout: U.shortTimeout });
+    const text = await event.evaluate((el) => el.textContent.replace(/\s+/g, ' '));
+    assert.include(text, '2024-06-07');
+    assert.include(text, 'someone');
+    assert.include(text, '150 → 100 files');
+    assert.include(text, '50 still missing');
+
+    await page.click('#projects tr.details li button');
+    await page.waitForSelector('#projects .result', { timeout: U.mediumTimeout });
+    assert.include(await page.$eval('#projects .result', (el) => el.textContent), `${damagedProject}: restored 50 file(s), it has 150 now.`);
+
+    const project = await U.queryProject(damagedProject);
+    assert.deepEqual(project.files.list, damagedFiles);
+    assert.equal(project.modifiedBy, U.testingCredentials.username);
+    // the list is searched again, without the project
+    await page.waitForFunction((p) => ![...document.querySelectorAll('#projects tbody code')].some((el) => el.textContent === p)
+      && document.querySelector('#projects button').textContent.trim() === 'Search again', { timeout: U.mediumTimeout }, damagedProject);
   }).timeout(U.longTimeout);
 });
