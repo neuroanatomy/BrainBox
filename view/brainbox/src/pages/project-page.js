@@ -5,6 +5,7 @@ import '../style/style.css';
 import '../style/textAnnotations.css';
 import '../style/ui.css';
 import '../style/project-style.css';
+import '../style/tables.css';
 
 import { getData, setData } from '../../../shared/domData.js';
 import freeform from '../tools/freeform.js';

@@ -6,6 +6,7 @@ import '../style/ui.css';
 import '../style/mri-style.css';
 import '../style/access-style.css';
 import '../style/dropdown-style.css';
+import '../style/tables.css';
 
 import * as tw from '../twoWayBinding';
 import { getData, setData } from '../../../shared/domData';

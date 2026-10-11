@@ -1,0 +1,8 @@
+/*
+  Space between the columns of every table. nwl-components' Table pads its
+  cells by 2px 0 only, and the other tables have no padding at all.
+  `html` outranks the Table's scoped `table[data-v-…] td`.
+*/
+html table :is(th, td):not(:last-child) {
+    padding-right: 1em;
+}

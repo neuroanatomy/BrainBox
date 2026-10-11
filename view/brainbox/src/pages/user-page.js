@@ -1,5 +1,6 @@
 /* globals nickname, loggedUser */
 import 'nwl-components/dist/style.css';
+import '../style/tables.css';
 import { Tab, Table, Tabs, UserPage } from 'nwl-components';
 import { computed, createApp, ref } from 'vue';
 import config from '../nwl-components-config';

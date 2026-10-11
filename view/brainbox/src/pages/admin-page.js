@@ -1,5 +1,6 @@
 /* global loggedUser */
 import 'nwl-components/dist/style.css';
+import '../style/tables.css';
 import { Button, Footer, Header, Table, Wrapper } from 'nwl-components';
 import { computed, createApp, onMounted, ref } from 'vue';
 import config from '../nwl-components-config';

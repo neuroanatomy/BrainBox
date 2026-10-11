@@ -1,6 +1,7 @@
 /*global AtlasMakerWidget mriInfo params embedWsTicket*/
 import '../style/ui.css';
 import '../../../atlasmaker/src/css/embed-layout.css';
+import '../style/tables.css';
 
 import embedSizing from '../../../shared/embedSizing.js';
 

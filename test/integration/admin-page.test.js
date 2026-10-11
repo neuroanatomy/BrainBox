@@ -112,6 +112,13 @@ describe('TESTING THE ADMIN PAGE', function () {
     assert.deepEqual(filenames, ['Atlas.nii.gz', 'gone1.nii.gz', 'gone2.nii.gz', 'live1.nii.gz']);
   }).timeout(U.longTimeout);
 
+  it('leaves space between the columns of its tables', async function () {
+    const gaps = await page.$$eval('table tr', (rows) => rows.flatMap((tr) => [...tr.cells].slice(0, -1)
+      .map((td) => parseFloat(getComputedStyle(td).paddingRight) + parseFloat(getComputedStyle(td.nextElementSibling).paddingLeft))));
+    assert.isNotEmpty(gaps);
+    assert.isTrue(gaps.every((gap) => gap >= 8), `gaps: ${gaps}`);
+  });
+
   it('selects the annotations of a project and removes them', async function () {
     await page.select('#mri select', goneProject);
     const checked = await page.$$eval('#mri input[type=checkbox]:checked', (els) => els.map((el) => el.value));
