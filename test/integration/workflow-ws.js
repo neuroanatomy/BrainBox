@@ -71,9 +71,14 @@ describe('TESTING WEBSOCKET WORKFLOW', function () {
       assert(body.success === 'downloading');
 
       // wait until getting the data, and check it's ok
-      await U.delay(U.shortTimeout);
-      res = await chai.request(U.serverURL).get('/mri/json')
-        .query({url: U.localBertURL});
+      const deadline = Date.now() + U.shortTimeout;
+      do {
+        // eslint-disable-next-line no-await-in-loop
+        await U.delay(250);
+        // eslint-disable-next-line no-await-in-loop
+        res = await chai.request(U.serverURL).get('/mri/json')
+          .query({url: U.localBertURL});
+      } while (res.body.success !== true && Date.now() < deadline);
       mri = res.body;
       assert(mri.success === true, 'Unexpected MRI structure');
     }).timeout(U.mediumTimeout);

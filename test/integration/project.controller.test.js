@@ -12,21 +12,7 @@ describe('TESTING THE /project ROUTE', function () {
 
   before(async function () {
     // add one MRI
-    let shouldContinue = true;
-    while (shouldContinue) {
-      // eslint-disable-next-line no-await-in-loop
-      const res = await chai.request(U.serverURL).post('/mri/json')
-        .send({
-          url: U.localBertURL,
-          token: U.testToken + U.userFoo.nickname
-        });
-      const { body } = res;
-      // console.log(body);
-      shouldContinue = (body.success !== true);
-
-      // eslint-disable-next-line no-await-in-loop
-      await U.delay(U.shortTimeout);
-    }
+    await U.waitForTestBrain();
   });
 
   describe('Get project information', function () {

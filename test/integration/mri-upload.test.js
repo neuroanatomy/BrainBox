@@ -15,22 +15,7 @@ describe('TESTING MRI UPLOAD AND RESET', function () {
 
   before(async function () {
     // Download test MRI so it's in the DB
-    let shouldContinue = true;
-    while (shouldContinue) {
-      // eslint-disable-next-line no-await-in-loop
-      const res = await chai.request(U.serverURL).post('/mri/json')
-        .send({
-          url: U.localBertURL,
-          token: U.testToken + U.userFoo.nickname
-        });
-      const {body} = res;
-      shouldContinue = (body.success !== true);
-
-      if (shouldContinue) {
-        // eslint-disable-next-line no-await-in-loop
-        await U.delay(U.shortTimeout);
-      }
-    }
+    await U.waitForTestBrain();
 
     // Fetch MRI info for use in tests
     const res = await chai.request(U.serverURL).get('/mri/json')

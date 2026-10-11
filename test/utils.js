@@ -247,6 +247,28 @@ const delay = async function (delayTimeout) {
   });
 };
 
+/**
+ * Ask the server for the test brain (U.localBertURL) as user foo, which starts its
+ * download, and keep asking until it is there. Polls often, so that a brain that
+ * is already downloaded, or quick to download, costs no waiting.
+ * @param {number} [timeout] How long to wait, in ms
+ * @returns {Promise<Object>} The server's last answer
+ */
+const waitForTestBrain = async function (timeout = 20 * 1000) {
+  const deadline = Date.now() + timeout;
+  for (;;) {
+    // eslint-disable-next-line no-await-in-loop
+    const res = await chai.request(serverURL).post('/mri/json')
+      .send({ url: localBertURL, token: testToken + userFoo.nickname });
+    if (res.body && res.body.success === true) { return res; }
+    if (Date.now() > deadline) {
+      throw new Error('the test brain was not ready after ' + timeout + ' ms: ' + JSON.stringify(res.body));
+    }
+    // eslint-disable-next-line no-await-in-loop
+    await delay(250);
+  }
+};
+
 const removeMRI = async function ({ dirPath, srcURL }) {
   rimraf.sync(dirPath, {}, (err) => console.log(new Error(err)));
   const res = await nativeDb.collection('mri').deleteMany({ source: srcURL });
@@ -465,6 +487,7 @@ module.exports = {
   insertProject,
   removeProject,
   delay,
+  waitForTestBrain,
   blockExternalRequests,
   isLocalURL,
   compareImages,

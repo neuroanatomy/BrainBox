@@ -13,21 +13,7 @@ describe('TESTING THE /user ROUTE', function () {
   describe('Obtaining user information', function () {
     it('Add test MRI', async function () {
       await chai.request(U.serverURL).get('/----1');
-      let shouldContinue = true;
-      while(shouldContinue) {
-        // eslint-disable-next-line no-await-in-loop
-        const res = await chai.request(U.serverURL).post('/mri/json')
-          .send({
-            url: U.localBertURL,
-            token: U.testToken + U.userFoo.nickname
-          });
-        const {body} = res;
-        // console.log(body);
-        shouldContinue = (body.success !== true);
-
-        // eslint-disable-next-line no-await-in-loop
-        await U.delay(U.shortTimeout);
-      }
+      await U.waitForTestBrain();
       await chai.request(U.serverURL).get('/----1_end');
     }).timeout(U.longTimeout);
 

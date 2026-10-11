@@ -81,9 +81,27 @@ const clickPlane = (ctx, label) => ctx.evaluate((name) => {
 }, label);
 
 const waitForSlice = (ctx) => ctx.waitForFunction(
-  () => window.AtlasMakerWidget && window.AtlasMakerWidget.brainImg && window.AtlasMakerWidget.brainImg.img,
+  () => window.AtlasMakerWidget && window.AtlasMakerWidget.brainImg && window.AtlasMakerWidget.brainImg.img &&
+    window.AtlasMakerWidget.isViewerReady(),
   { timeout: U.longTimeout }
 );
+
+const waitForPlane = (ctx, view) => ctx.waitForFunction(
+  (v) => window.AtlasMakerWidget.brainImg.view === v,
+  { timeout: U.mediumTimeout },
+  view
+);
+
+/**
+ * Wait until the page settles into a state, polling instead of sleeping a fixed time.
+ * Gives up quietly after a while: the assertions that follow then say what is wrong.
+ * @param {Object} ctx A puppeteer page or frame
+ * @param {Function} condition Evaluated in the page, with ...args
+ * @param {...*} args Arguments for condition
+ * @returns {Promise<void>} Resolves once condition holds, or after U.shortTimeout
+ */
+const settle = (ctx, condition, ...args) => ctx.waitForFunction(condition, { timeout: U.shortTimeout, polling: 100 }, ...args)
+  .then(() => null, () => null);
 
 describe('TESTING THE EMBEDDABLE VIEWER', function () {
   let browser;
@@ -101,16 +119,7 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
 
     // Make the test brain available. It is listed in U.projectTest, which
     // grants 'anyone' file view access, so the embed is publicly viewable.
-    let ready = false;
-    for (let i = 0; i < 10 && !ready; i += 1) {
-      // eslint-disable-next-line no-await-in-loop
-      const res = await chai.request(U.serverURL).post('/mri/json')
-        .send({ url: U.localBertURL, token: U.testToken + U.userFoo.nickname });
-      ready = res.body && res.body.success === true;
-      // eslint-disable-next-line no-await-in-loop
-      if (!ready) { await U.delay(U.shortTimeout); }
-    }
-    assert.isTrue(ready, 'the test brain could not be prepared');
+    await U.waitForTestBrain();
 
     // A brain nobody may see, for the access-control cases.
     await nativeDb.collection('project').insertOne({
@@ -193,7 +202,6 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
         assert.isTrue(loading.loadingVisible, 'the viewer should say it is loading');
 
         await waitForSlice(page);
-        await U.delay(1000);
         const ready = await readViewer(page);
         assert.strictEqual(ready.state, 'ready');
         assert.isFalse(ready.loadingVisible, 'the overlay should go away once there is something to see');
@@ -237,7 +245,6 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
       await blockExternalRequests(page);
       await page.goto(embedURL('&view=cor'), { waitUntil: 'domcontentloaded' });
       await waitForSlice(page);
-      await U.delay(1000);
     });
 
     after(async function () {
@@ -250,9 +257,9 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
     PLANE_PAIRS.forEach(([from, to]) => {
       it(`updates the image and the toolbar going ${from.view} -> ${to.view}`, async function () {
         assert.isTrue(await clickPlane(page, from.label));
-        await page.waitForFunction((v) => window.AtlasMakerWidget.brainImg.view === v, { timeout: U.mediumTimeout }, from.view);
+        await waitForPlane(page, from.view);
         assert.isTrue(await clickPlane(page, to.label));
-        await page.waitForFunction((v) => window.AtlasMakerWidget.brainImg.view === v, { timeout: U.mediumTimeout }, to.view);
+        await waitForPlane(page, to.view);
 
         const viewer = await readViewer(page);
         assert.strictEqual(viewer.view, to.view);
@@ -279,7 +286,6 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
         assert.strictEqual(during.view, 'cor', 'the click should be inert, not half-applied');
 
         await waitForSlice(page);
-        await U.delay(1000);
         assert.isTrue(await clickPlane(page, 'Sag'));
         await page.waitForFunction(() => window.AtlasMakerWidget.brainImg.view === 'sag', { timeout: U.mediumTimeout });
         assert.deepStrictEqual(errors, []);
@@ -304,13 +310,21 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
         try {
           await page.goto(embedURL('&view=cor'), { waitUntil: 'domcontentloaded' });
           await waitForSlice(page);
-          await U.delay(1000);
 
           for (const label of ['Sag', 'Cor', 'Axi']) {
             // eslint-disable-next-line no-await-in-loop
             await clickPlane(page, label);
             // eslint-disable-next-line no-await-in-loop
-            await U.delay(1500);
+            await waitForPlane(page, label.toLowerCase());
+            // eslint-disable-next-line no-await-in-loop
+            await settle(page, () => {
+              const tools = document.querySelector('#tools-side').getBoundingClientRect();
+              const canvas = document.querySelector('#canvas').getBoundingClientRect();
+              const area = document.querySelector('#viewer-area').getBoundingClientRect();
+
+              return Math.round(tools.bottom) <= window.innerHeight + 1 && canvas.height > 0 &&
+                Math.round(canvas.height) <= Math.round(area.height) + 1;
+            });
             // eslint-disable-next-line no-await-in-loop
             const viewer = await readViewer(page);
             assert.isAtMost(Math.round(viewer.tools.bottom), viewer.innerHeight + 1,
@@ -340,15 +354,9 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
       try {
         await page.goto(hostURL(), { waitUntil: 'domcontentloaded' });
 
-        let frame = null;
-        for (let i = 0; i < 40 && !frame; i += 1) {
-          // eslint-disable-next-line no-await-in-loop
-          await U.delay(250);
-          frame = page.frames().find((f) => f.url().includes('/mri/embed'));
-        }
-        assert.isNotNull(frame, 'the host page never embedded the viewer');
+        const frame = await page.waitForFrame((f) => f.url().includes('/mri/embed'), { timeout: U.mediumTimeout })
+          .catch(() => { throw new Error('the host page never embedded the viewer'); });
         await waitForSlice(frame);
-        await U.delay(1500);
 
         const iframeHeight = () => page.evaluate(() => Math.round(document.getElementById('brainbox-embed').getBoundingClientRect().height));
         const expectedHeight = () => frame.evaluate(() => {
@@ -364,9 +372,13 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
           // eslint-disable-next-line no-await-in-loop
           await clickPlane(frame, label);
           // eslint-disable-next-line no-await-in-loop
-          await U.delay(1800);
+          await waitForPlane(frame, label.toLowerCase());
           // eslint-disable-next-line no-await-in-loop
-          heights[label] = { applied: await iframeHeight(), expected: await expectedHeight() };
+          const expected = await expectedHeight();
+          // eslint-disable-next-line no-await-in-loop
+          await settle(page, (h) => Math.abs(document.getElementById('brainbox-embed').getBoundingClientRect().height - h) <= 2, expected);
+          // eslint-disable-next-line no-await-in-loop
+          heights[label] = { applied: await iframeHeight(), expected };
         }
         for (const label of Object.keys(heights)) {
           assert.closeTo(heights[label].applied, heights[label].expected, 2,
@@ -403,7 +415,6 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
       try {
         await page.goto(embedURL(), { waitUntil: 'domcontentloaded' });
         await waitForSlice(page);
-        await U.delay(500);
 
         // AtlasMaker hides the pointer over the canvas and draws a brush-sized
         // square instead. With nothing to paint, that just makes the pointer
@@ -477,8 +488,9 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
               }
             }));
             socket.send(JSON.stringify({ type: 'userData', description: 'sendAtlas' }));
-            // No atlas should come back for a brain outside this ticket's scope.
-            setTimeout(() => { finish(); }, U.shortTimeout);
+            // No atlas should come back for a brain outside this ticket's scope. The server
+            // rejects the request as soon as it reads it, so a short wait is enough.
+            setTimeout(() => { finish(); }, 2000);
           });
 
           socket.on('message', (data) => {
@@ -543,7 +555,6 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
       try {
         await page.goto(embedURL('&view=cor'), { waitUntil: 'domcontentloaded' });
         await waitForSlice(page);
-        await U.delay(1000);
         const before = await readViewer(page);
 
         assert.isTrue(await clickPlane(page, '3D'));
@@ -556,7 +567,6 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
         assert.isAtMost(Math.round(during.tools.bottom), during.innerHeight + 1, 'the toolbar must stay usable in 3D');
 
         // Back to the plane it came from.
-        await U.delay(500);
         assert.isTrue(await clickPlane(page, 'Cor'));
         await page.waitForFunction(() => !document.querySelector('#render3d-frame'), { timeout: U.mediumTimeout })
           .catch(() => { throw new Error('the 3D view could not be dismissed'); });
@@ -577,7 +587,6 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
       try {
         await page.goto(embedURL('&view=cor'), { waitUntil: 'domcontentloaded' });
         await waitForSlice(page);
-        await U.delay(1000);
 
         // Sag/Cor/Axi/3D are mutually exclusive: exactly one is ever pressed.
         const pressedCount = await page.evaluate(() => document.querySelectorAll('#plane .pressed').length);
@@ -605,7 +614,6 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
       try {
         await page.goto(embedURL('&view=cor'), { waitUntil: 'domcontentloaded' });
         await waitForSlice(page);
-        await U.delay(1000);
 
         await clickPlane(page, '3D');
         await page.waitForFunction(() => Boolean(document.querySelector('#render3d-frame')), { timeout: U.mediumTimeout });
@@ -613,9 +621,8 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
 
         // A radio choice, not a toggle: clicking 3D again must not tear the
         // view down and rebuild it.
-        await U.delay(500);
         await clickPlane(page, '3D');
-        await U.delay(1000);
+        await U.delay(500);
         const viewer = await readViewer(page);
         assert.isTrue(viewer.hasRender3DFrame, 're-choosing 3D must not dismiss it');
         assert.strictEqual(await page.evaluate(() => document.querySelector('#render3d-frame').src), firstFrame,
@@ -634,7 +641,6 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
       try {
         await page.goto(embedURL('&view=cor'), { waitUntil: 'domcontentloaded' });
         await waitForSlice(page);
-        await U.delay(1000);
 
         const toolbar = await page.evaluate(() => {
           const row = document.getElementById('tools-maximized');
@@ -674,14 +680,15 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
       try {
         await page.goto(embedURL('&view=cor'), { waitUntil: 'domcontentloaded' });
         await waitForSlice(page);
-        await U.delay(1000);
 
         // A real click, not element.click(): requestFullscreen needs a genuine
         // user gesture, and this is also the path a visitor takes.
         await page.click('#fullscreen');
         await page.waitForFunction(() => document.fullscreenElement !== null, { timeout: U.mediumTimeout })
           .catch(() => { throw new Error('the viewer never entered fullscreen'); });
-        await U.delay(1000);
+        await settle(page, () => window.AtlasMakerWidget.fullscreen === true &&
+          Math.abs(document.getElementById('tools-maximized').getBoundingClientRect().bottom - window.innerHeight) <= 2 &&
+          document.querySelector('#canvas').getBoundingClientRect().height > 600);
 
         const state = await page.evaluate(() => {
           const row = document.getElementById('tools-maximized').getBoundingClientRect();
@@ -702,6 +709,39 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
         assert.isAtMost(state.toolbarWidth, 560, 'the controls must not stretch across the screen');
         assert.closeTo(state.toolbarBottom, state.innerHeight, 2, 'the controls belong at the bottom of the screen');
         assert.isAbove(state.canvasHeight, 600, 'the image should take the space the controls do not');
+      } finally {
+        await fullscreenBrowser.close();
+      }
+    }).timeout(U.longTimeout);
+
+    it('stays fullscreen when the visitor clicks the button as soon as the brain shows', async function () {
+      // atlasmaker.js used to re-apply the fullscreen setting 500 ms after
+      // configuring the brain, from the live flag, which a click before then had
+      // already set: the viewer went fullscreen and straight back out.
+      const fullscreenBrowser = await puppeteer.launch({
+        headless: true,
+        acceptInsecureCerts: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
+      const page = await fullscreenBrowser.newPage();
+      await page.setViewport({ width: 1440, height: 900 });
+      await blockExternalRequests(page);
+      try {
+        await page.goto(embedURL('&view=cor'), { waitUntil: 'domcontentloaded' });
+        await waitForSlice(page);
+
+        await page.click('#fullscreen');
+        await page.waitForFunction(() => document.fullscreenElement !== null, { timeout: U.mediumTimeout })
+          .catch(() => { throw new Error('the viewer never entered fullscreen'); });
+        // longer than the 500 ms the old timer waited
+        await U.delay(1000);
+
+        const state = await page.evaluate(() => ({
+          fullscreen: document.fullscreenElement !== null,
+          flag: window.AtlasMakerWidget.fullscreen
+        }));
+        assert.isTrue(state.fullscreen, 'the viewer should still be fullscreen');
+        assert.isTrue(state.flag, 'the widget should still know it is fullscreen');
       } finally {
         await fullscreenBrowser.close();
       }
@@ -751,7 +791,6 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
       const second = await page.waitForFrame((f) => f.url().includes('view=axi'), { timeout: U.mediumTimeout })
         .catch(() => { throw new Error('the second viewer never loaded'); });
       await waitForSlice(second);
-      await U.delay(1000);
 
       const viewer = await readViewer(second);
       assert.strictEqual(viewer.view, 'axi', 'data-view should reach the viewer');
@@ -763,7 +802,8 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
       const first = await page.waitForFrame((f) => f.url().includes('view=cor'), { timeout: U.mediumTimeout })
         .catch(() => { throw new Error('the first viewer never loaded'); });
       await waitForSlice(first);
-      await U.delay(2000);
+      await settle(page, () => [...document.querySelectorAll('iframe.brainbox-embed')]
+        .every((el) => Math.round(el.getBoundingClientRect().height) !== 420));
 
       const heights = await page.evaluate(() => [...document.querySelectorAll('iframe.brainbox-embed')]
         .map((el) => Math.round(el.getBoundingClientRect().height)));
@@ -784,7 +824,6 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
       try {
         await page.goto(embedURL('&view=cor'), { waitUntil: 'domcontentloaded' });
         await waitForSlice(page);
-        await U.delay(1000);
 
         const link = await page.evaluate(() => {
           const el = document.getElementById('brainboxLink');
@@ -810,7 +849,6 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
       try {
         await page.goto(embedURL('&view=cor'), { waitUntil: 'domcontentloaded' });
         await waitForSlice(page);
-        await U.delay(1000);
         await clickPlane(page, 'Axi');
         await page.waitForFunction(() => window.AtlasMakerWidget.brainImg.view === 'axi', { timeout: U.mediumTimeout });
 
@@ -828,7 +866,6 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
       try {
         await page.goto(embedURL('&brainboxLink=0'), { waitUntil: 'domcontentloaded' });
         await waitForSlice(page);
-        await U.delay(500);
         const present = await page.evaluate(() => Boolean(document.getElementById('brainboxLink')));
         assert.isFalse(present, 'brainboxLink=0 should remove the link');
       } finally {

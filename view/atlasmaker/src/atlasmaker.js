@@ -108,6 +108,7 @@ const me = {
   viewerState: 'loading', // 'loading' | 'ready' | 'error', see setViewerState()
   editMode: 0, // editMode=0 to prevent editing, editMode=1 to accept it
   fullscreen: false, // fullscreen mode?
+  _fullscreenRequestTimer: null, // pending fullscreen request from configureAtlasMaker
   useFullTools: true, // use full tools or light version?
   embedMode: false, // true for the read-only, chromeless embed viewer (overrides useFullTools)
   embedTicket: null, // string, server-minted ticket proving this connection came from a legitimate embed page
@@ -680,18 +681,29 @@ const me = {
     const myRequestId = me._requestMRIId;
     me.setViewerState({ state: 'loading' });
     const pr = new Promise(function(resolve, reject) {
-      const timer = setInterval( function () {
-        if(me._requestMRIId !== myRequestId) {
-          clearInterval(timer);
-          console.log('requestMRIInfo cancelled: a newer request superseded this one');
-          reject(new Error('source changed'));
+      let timer = null;
+      // A newer request cancels this one, also while one of its polls is in flight
+      const isSuperseded = function () {
+        if(me._requestMRIId === myRequestId) {
+          return false;
+        }
+        clearInterval(timer);
+        console.log('requestMRIInfo cancelled: a newer request superseded this one');
+        reject(new Error('source changed'));
 
+        return true;
+      };
+      const poll = function () {
+        if(isSuperseded()) {
           return;
         }
         console.log('polling for data...', url);
         // A form-encoded body, as jQuery's $.post sent it
         request(me.hostname + '/mri/json', { method: 'POST', body: new URLSearchParams({url}) })
           .then(function(res) {
+            if(isSuperseded()) {
+              return;
+            }
             if(!res.ok) {
               clearInterval(timer);
               me._handleMRIInfoError({ res, url, resolve, reject });
@@ -711,7 +723,10 @@ const me = {
               reject(new Error('requestMRIInfo: ' + (info.error || JSON.stringify(info))));
             }
           });
-      }, 2000);
+      };
+      // Ask at once, then every 2 s while the server is still downloading the brain
+      timer = setInterval(poll, 2000);
+      poll();
     });
 
     return pr;
@@ -807,6 +822,14 @@ const me = {
    */
   // eslint-disable-next-line max-statements
   configureAtlasMaker: async function (info, index) {
+    // The caller asks for fullscreen by setting me.fullscreen=true before calling
+    // us. Read that request now: once configuration starts, me.fullscreen follows
+    // what the user does (the toolbar button, Esc leaving native fullscreen).
+    const wantFullscreen = me.fullscreen === true && !me._isFullscreen();
+    if(wantFullscreen) {
+      me.fullscreen = false; // not fullscreen yet: a click before the request is served enters it
+    }
+
     // configure MRI and ontology
     const info2 = await me._configureMRI(info, index);
     info = info2;
@@ -823,14 +846,15 @@ const me = {
     // configure vectorial layer
     // [HERE]
 
-    /** @todo better implementation of this hack to enforce fullscreen setting after the server gets me.User settings */
-    setTimeout(() => {
-      console.log('====> Request fullscreen');
-      if(me.fullscreen === true) { // WARNING: HACK... would be better to implement enter/exit fullscreen
-        me.fullscreen=false;
+    // Serve the fullscreen request once the server has my settings. Toggling
+    // fullscreen in the meantime cancels it (see toggleFullscreen).
+    clearTimeout(me._fullscreenRequestTimer);
+    if(wantFullscreen) {
+      me._fullscreenRequestTimer = setTimeout(() => {
+        console.log('====> Request fullscreen');
         me.toggleFullscreen();
-      }
-    }, 500);
+      }, 500);
+    }
 
     // enforce stereotaxic plane setting
     me.setPlaneButton(me.User.view);

@@ -496,9 +496,24 @@ export const AtlasMakerInteraction = {
     me.drawImages();
   },
 
+  /**
+   * @function _isFullscreen
+   * @returns {boolean} True when the viewer is already fullscreen, natively or in the CSS layout
+   */
+  _isFullscreen: function () {
+    const me = AtlasMakerWidget;
+
+    return (Boolean(me.container) && document.fullscreenElement === me.container) ||
+      document.body.classList.contains('atlasmaker-fullscreen');
+  },
+
   // eslint-disable-next-line max-statements
   toggleFullscreen: function () {
     const me = AtlasMakerWidget;
+
+    // The user's choice (or the request itself) supersedes a pending fullscreen request
+    clearTimeout(me._fullscreenRequestTimer);
+    me._fullscreenRequestTimer = null;
 
     // The embed is inside an iframe, where the CSS "fullscreen" below is a lie:
     // position:fixed resolves against the iframe's own viewport, so the viewer

@@ -28,28 +28,11 @@ describe('TESTING THE /mri ROUTE', function () {
   });
 
   it('POST /mri/json with url should start a download', async function () {
-    let shouldContinue = true;
-    let body, res;
-    while (shouldContinue) {
-      // eslint-disable-next-line no-await-in-loop
-      res = await chai.request(U.serverURL).post('/mri/json')
-        .send({
-          url: U.localBertURL,
-          token: U.testToken + U.userFoo.nickname
-        });
-      ({body} = res);
-      // console.log(body);
-      shouldContinue = (body.success !== true);
-
-      // eslint-disable-next-line no-await-in-loop
-      await U.delay(U.shortTimeout);
-    }
-    // console.log(body.success, shouldContinue, body);
+    const res = await U.waitForTestBrain();
     assert.equal(res.statusCode, 200);
   }).timeout(U.longTimeout);
 
   it('POST /mri/json with url should return MRI info once the file is downloaded', async function () {
-    await U.delay(U.shortTimeout);
     const res = await chai.request(U.serverURL).post('/mri/json')
       .send({
         url: U.localBertURL,

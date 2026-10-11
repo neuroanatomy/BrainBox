@@ -240,6 +240,34 @@ describe('TESTING THE VIEWER CORE (atlasmaker.js)', function () {
       assert.strictEqual(new URLSearchParams(post.postData).get('url'), FAKE_SOURCE);
     }).timeout(U.longTimeout);
 
+    it('asks the server right away, without waiting for the first polling interval', async function () {
+      let firstPost = null;
+      viewer = await openViewer(browser, (req) => {
+        if (!isMRIInfoPost(req)) { return null; }
+        if (firstPost === null) { firstPost = Date.now(); }
+
+        return json(200, { success: true, source: FAKE_SOURCE, url: '/data/fake/' });
+      });
+      const start = Date.now();
+      await startRequest(viewer.page);
+      assert.deepEqual(await requestOutcome(viewer.page), { resolved: { success: true, source: FAKE_SOURCE, url: '/data/fake/' } });
+      assert.isBelow(firstPost - start, 1000, 'the first poll is sent at once');
+    }).timeout(U.longTimeout);
+
+    it('drops a request superseded by a newer one, even when its answer arrives afterwards', async function () {
+      viewer = await openViewer(browser, (req) => (isMRIInfoPost(req)
+        ? json(200, { success: true, source: FAKE_SOURCE, url: '/data/fake/' })
+        : null));
+      const outcomes = await viewer.page.evaluate((source) => {
+        const settle = (pr) => pr.then((info) => ({ resolved: info.url }), (err) => ({ rejected: err.message }));
+        const first = settle(AtlasMakerWidget._requestMRIInfo(source));
+        const second = settle(AtlasMakerWidget._requestMRIInfo(source));
+
+        return Promise.all([first, second]);
+      }, FAKE_SOURCE);
+      assert.deepEqual(outcomes, [{ rejected: 'source changed' }, { resolved: '/data/fake/' }]);
+    }).timeout(U.longTimeout);
+
     for (const { name, answer, message } of FAILURES) {
       // `browser` is set by the before() hook; it is read when the test runs, not when the loop runs
       // eslint-disable-next-line no-loop-func
