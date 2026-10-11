@@ -115,7 +115,7 @@
       "qs": "^6.16.0"
     },
     "neuroweblab": {
-      "bcrypt": "^6.0.0"
+      "bcrypt": "npm:bcryptjs@^3.0.3"
     },
     "serialize-javascript": "^7.0.5",
     "braces": "^3.0.3"
