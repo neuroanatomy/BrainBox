@@ -10,7 +10,8 @@ const U = require('../utils.js');
 
 describe('Project Controller: ', function () {
   let db; // monk
-  let nativeDb; // native mongodb
+  let nativeDb;
+  // native mongodb
   before(function () {
     db = U.getDB();
     nativeDb = U.getNativeDB();
@@ -84,8 +85,9 @@ describe('Project Controller: ', function () {
       assert.strictEqual(failure.callCount, 0);
       assert.strictEqual(success.args[0].length, 2);
       assert.strictEqual(success.args[0][0], 'project');
-      expect(success.args[0][1]).to.have.keys(['annotationsAccessLevel', 'loggedUser', 'projectInfo', 'projectName', 'title']);
+      expect(success.args[0][1]).to.have.keys(['annotationsAccessLevel', 'loggedUser', 'login', 'projectInfo', 'projectName', 'title']);
       expect(success.args[0][1].title).to.equal('Unit Test');
+      expect(success.args[0][1].login).to.equal('<a href=\'/user/anyone\'>anyone</a> (<a href=\'/logout\'>Log Out</a>)');
       const projectInfo = JSON.parse(success.args[0][1].projectInfo);
       expect(projectInfo).to.deep.include({
         name: 'Unit Test',
@@ -131,6 +133,7 @@ describe('Project Controller: ', function () {
       nativeDb.collection('project').insert(projectObject)
         .then(() => done());
     });
+
     after(function (done) {
       // db.get('project').remove({ shortname: 'testing' })
       nativeDb.collection('project').deleteMany({ shortname: 'testing' })
@@ -374,6 +377,7 @@ describe('Project Controller: ', function () {
         .then(() => done());
       // });
     });
+
     it('should throw error if user is not authenticated', async function () {
       const req = {
         body: {
@@ -436,6 +440,7 @@ describe('Project Controller: ', function () {
       nativeDb.collection('project').insert(projectObject)
         .then(() => done());
     });
+
     after(function (done) {
       // db.get('project').remove({ shortname: 'testing' })
       nativeDb.collection('project').deleteMany({ shortname: 'testing' })
@@ -519,6 +524,7 @@ describe('Project Controller: ', function () {
       nativeDb.collection('project').insert(projectObject)
         .then(() => done());
     });
+
     after(function (done) {
       // db.get('project').remove({ shortname: 'testing' })
       nativeDb.collection('project').deleteMany({ shortname: 'testing' })
