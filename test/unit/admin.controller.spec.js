@@ -1,5 +1,6 @@
 const assert = require('assert');
 const adminController = require('../../controller/admin/admin.controller');
+const admins = require('../../controller/admin/admins');
 require('mocha-sinon');
 const sinon = require('sinon');
 
@@ -36,6 +37,64 @@ describe('Admin Controller: ', function() {
       await adminController.validator(req, res, () => {});
       assert.strictEqual(resSpy.callCount, 0);
       sinon.restore();
+    });
+  });
+
+  describe('Admins', function () {
+    let previousAdmins;
+    const resStub = () => {
+      const res = {};
+      res.status = sinon.stub().returns(res);
+      res.json = sinon.stub().returns(res);
+
+      return res;
+    };
+
+    before(function () {
+      previousAdmins = admins.getAdmins();
+      admins.setAdmins(['admin1', 'admin2']);
+    });
+
+    after(function () {
+      admins.setAdmins(previousAdmins);
+    });
+
+    it('isAdmin should only accept usernames in the list', function () {
+      assert.strictEqual(admins.isAdmin('admin1'), true);
+      assert.strictEqual(admins.isAdmin('someone'), false);
+      assert.strictEqual(admins.isAdmin(''), false);
+      assert.strictEqual(admins.isAdmin(null), false);
+      // eslint-disable-next-line no-undefined
+      assert.strictEqual(admins.isAdmin(undefined), false);
+    });
+
+    it('validator should let admins through from any address', function () {
+      const req = { user: { username: 'admin2' }, connection: { remoteAddress: '10.0.0.1' } };
+      const next = sinon.spy();
+      adminController.validator(req, resStub(), next);
+      assert.strictEqual(next.callCount, 1);
+    });
+
+    it('requireAdmin should answer 401 to anonymous users', function () {
+      const res = resStub();
+      const next = sinon.spy();
+      adminController.requireAdmin({}, res, next);
+      assert.strictEqual(next.callCount, 0);
+      assert.strictEqual(res.status.firstCall.args[0], 401);
+    });
+
+    it('requireAdmin should answer 403 to users who are not admins', function () {
+      const res = resStub();
+      const next = sinon.spy();
+      adminController.requireAdmin({ user: { username: 'someone' } }, res, next);
+      assert.strictEqual(next.callCount, 0);
+      assert.strictEqual(res.status.firstCall.args[0], 403);
+    });
+
+    it('requireAdmin should let admins through', function () {
+      const next = sinon.spy();
+      adminController.requireAdmin({ user: { username: 'admin1' } }, resStub(), next);
+      assert.strictEqual(next.callCount, 1);
     });
   });
 

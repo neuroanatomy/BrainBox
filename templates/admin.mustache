@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
+    <title>{{title}}</title>
+    <link rel="stylesheet" href="/fonts/roboto/roboto.css" type="text/css">
+</head>
+
+<body>
+
+<script type="text/html" id="template">
+<Wrapper>
+  <Header>
+    <span class="title">Admin</span>
+  </Header>
+  <main>
+    <section id="orphans">
+      <h2>Annotations of projects that do not exist</h2>
+      <p class="help">
+        Volume and text annotations whose project has been deleted (before deleting a project
+        also removed its annotations) or never existed.
+      </p>
+      <Button @click="loadOrphans" :disabled="orphansLoading">[[orphansLoading ? 'Searching…' : 'Search again']]</Button>
+      <p v-if="orphansError" class="error">[[orphansError]]</p>
+      <p v-else-if="!orphansLoading && orphans.length === 0">None found.</p>
+      <Table v-if="orphans.length">
+        <thead>
+          <tr><th>Project</th><th>Volume annotations</th><th>MRIs with text annotations</th><th>MRIs</th><th></th></tr>
+        </thead>
+        <tbody>
+          <template v-for="o in orphans" :key="o.project">
+            <tr>
+              <td><code>[[o.project]]</code></td>
+              <td>[[o.volume]]</td>
+              <td>[[o.text]]</td>
+              <td><a href="#" @click.prevent="toggle(o.project)">[[o.mris.length]] [[expanded[o.project] ? '▴' : '▾']]</a></td>
+              <td class="actions"><Button className="danger" @click="removeOrphans(o)">Remove all</Button></td>
+            </tr>
+            <tr v-if="expanded[o.project]" class="details">
+              <td colspan="5">
+                <ul>
+                  <li v-for="m in o.mris" :key="m.source">
+                    <a href="#" @click.prevent="inspect(m.source)">Inspect</a> ·
+                    <a :href="mriLink(m.source)" target="_blank">[[m.name || m.source]]</a>
+                    — [[m.volume]] volume<span v-if="m.text">, text</span>
+                  </li>
+                </ul>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </Table>
+      <p v-if="orphansResult" class="result">[[orphansResult]]</p>
+    </section>
+
+    <section id="mri">
+      <h2>Annotations of an MRI</h2>
+      <form @submit.prevent="loadMRI()">
+        <input v-model="mriURL" type="url" placeholder="Source URL of the MRI, e.g. http://files.figshare.com/2284784/MRI_n4.nii.gz" required>
+        <Button :disabled="mriLoading">[[mriLoading ? 'Loading…' : 'Show']]</Button>
+      </form>
+      <p v-if="mriError" class="error">[[mriError]]</p>
+      <template v-if="mri">
+        <p>
+          <a :href="mriLink(mri.source)" target="_blank">[[mri.name || mri.source]]</a>:
+          [[mri.volume.length]] volume annotations, [[mri.text.length]] projects with text annotations.
+        </p>
+        <p v-if="mri.usersConnected" class="warning">
+          [[mri.usersConnected]] user(s) have this MRI open: annotations can be removed only when nobody is using it.
+        </p>
+
+        <h3>Volume annotations</h3>
+        <div class="toolbar">
+          Select
+          <select v-model="selectProject" @change="selectByProject">
+            <option value="">all of project…</option>
+            <option v-for="p in volumeProjects" :key="p.key" :value="p.key">[[p.label]] ([[p.count]])</option>
+          </select>
+          <a href="#" @click.prevent="selectedVolume = []">none</a>
+        </div>
+        <Table>
+          <thead>
+            <tr><th></th><th>Name</th><th>Project</th><th>Owner</th><th>Created</th><th>Modified</th><th>Labels</th><th>Vector items</th><th>Filename</th></tr>
+          </thead>
+          <tbody>
+            <tr v-for="a in mri.volume" :key="a.filename" :class="{ selected: selectedVolume.includes(a.filename) }">
+              <td><input type="checkbox" :value="a.filename" v-model="selectedVolume"></td>
+              <td>[[a.name || '(no name)']]</td>
+              <td><code>[[a.project || '(none)']]</code> <span v-if="a.projectExists === false" class="tag">missing</span></td>
+              <td>[[a.owner]]</td>
+              <td>[[formatDate(a.created)]]</td>
+              <td>[[formatDate(a.modified)]]</td>
+              <td>[[a.labels]]</td>
+              <td>[[a.vectorial]]</td>
+              <td><code>[[a.filename]]</code></td>
+            </tr>
+          </tbody>
+        </Table>
+
+        <h3>Text annotations</h3>
+        <p v-if="mri.text.length === 0">None.</p>
+        <Table v-else>
+          <thead><tr><th></th><th>Project</th><th>Fields</th></tr></thead>
+          <tbody>
+            <tr v-for="t in mri.text" :key="t.project" :class="{ selected: selectedText.includes(t.project) }">
+              <td><input type="checkbox" :value="t.project" v-model="selectedText"></td>
+              <td><code>[[t.project || '(none)']]</code> <span v-if="t.projectExists === false" class="tag">missing</span></td>
+              <td>[[t.keys.join(', ')]]</td>
+            </tr>
+          </tbody>
+        </Table>
+
+        <Button className="danger" @click="removeSelected" :disabled="!selectedVolume.length && !selectedText.length">
+          Remove selected ([[selectedVolume.length]] volume, [[selectedText.length]] text)
+        </Button>
+        <p class="help">The current version of the MRI is kept as a backup, and the removal is logged. The voxel data files stay on disk.</p>
+        <p v-if="mriResult" class="result">[[mriResult]]</p>
+      </template>
+    </section>
+
+    <section id="server">
+      <h2>Server</h2>
+      <form @submit.prevent="broadcast">
+        <input v-model="message" type="text" placeholder="Message shown to all connected users" required>
+        <Button>Broadcast</Button>
+      </form>
+      <p><Button @click="saveAll">Save all open atlases</Button></p>
+      <p v-if="serverResult" class="result">[[serverResult]]</p>
+    </section>
+  </main>
+  <Footer/>
+</Wrapper>
+</script>
+<style>
+section {
+    background: #333;
+    padding: 20px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+}
+section h2 {
+    font-size: 14px;
+    margin: 0 0 10px;
+}
+section h3 {
+    font-size: 14px;
+    font-weight: normal;
+    margin: 20px 0 8px;
+}
+section a {
+    color: #fff;
+}
+section table {
+    margin-left: 0;
+    margin-top: 10px;
+}
+section th, section td {
+    padding: 2px 8px 2px 0;
+}
+section td.actions {
+    text-align: right;
+}
+tr.details td {
+    background: #2a2a2a;
+}
+tr.details ul {
+    margin: 4px 0;
+    padding-left: 16px;
+}
+form {
+    display: flex;
+    gap: 5px;
+}
+input[type=url], input[type=text] {
+    flex: 1;
+    color: #fff;
+    background: #222;
+    font: inherit;
+    padding: 9px;
+    border: 1px solid #777;
+    border-radius: 3px;
+    outline: none;
+}
+input[type=url]::placeholder, input[type=text]::placeholder {
+    color: #888;
+}
+input[type=checkbox] {
+    accent-color: #888;
+}
+select {
+    color: #fff;
+    background: #222;
+    font: inherit;
+    border: 1px solid #777;
+    border-radius: 3px;
+    padding: 2px 4px;
+}
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+button.danger {
+    border-color: #c55;
+    color: #f99;
+}
+button.danger:hover {
+    background: #633;
+}
+.help {
+    color: #aaa;
+}
+.error, .tag {
+    color: #f77;
+}
+.warning {
+    color: #fc6;
+}
+.result {
+    color: #8d8;
+}
+.tag {
+    font-size: 11px;
+    border: 1px solid #c55;
+    border-radius: 3px;
+    padding: 0 3px;
+}
+code {
+    font-size: 12px;
+}
+</style>
+
+<div id="app"></div>
+
+<script>
+const loggedUser = {{{loggedUser}}};
+</script>
+<script src="/js/admin-page.js"></script>
+
+</body>
+</html>

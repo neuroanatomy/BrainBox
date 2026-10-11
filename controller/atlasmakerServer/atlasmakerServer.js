@@ -2175,6 +2175,11 @@ notifier.on('saveAllAtlases', () => {
 notifier.on('broadcastMessage', (msg) => {
   atlasmakerServer.broadcastServerMessage({ msg, dialogType: 'modal' });
 });
+// The callback receives the number of connected users who have open the MRI with that source
+notifier.on('usersOnMRI', (source, callback) => {
+  const users = atlasmakerServer ? atlasmakerServer.US.filter((us) => us.User && us.User.source === source) : [];
+  callback(users.length);
+});
 module.exports = AtlasmakerServer;
 
 // Exit handler

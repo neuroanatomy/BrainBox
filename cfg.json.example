@@ -4,5 +4,6 @@
     "secure": false,
     "ssl_key": "./key.pem",
     "ssl_cert": "./cert.pem",
-    "ssl_chain": null
+    "ssl_chain": null,
+    "admins": ["demo_admin"]
 }

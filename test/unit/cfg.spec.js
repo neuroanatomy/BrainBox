@@ -32,4 +32,15 @@ describe('cfg.json validation', function () {
     assert.isString(cfg.wshostname);
     assert.isBoolean(cfg.secure);
   });
+
+  it('admins, if present, should be a list of usernames', function () {
+    if (typeof cfg.admins === 'undefined') {
+      return;
+    }
+    assert.isArray(cfg.admins);
+    for (const name of cfg.admins) {
+      assert.isString(name);
+      assert.isNotEmpty(name);
+    }
+  });
 });

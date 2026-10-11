@@ -7,6 +7,7 @@ const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = (env, argv) => ({
   entry: {
+    'admin-page': './view/brainbox/src/pages/admin-page.js',
     'ask-for-login-page': './view/brainbox/src/pages/ask-for-login-page.js',
     'embed-page': './view/brainbox/src/pages/embed-page.js',
     'index-page': './view/brainbox/src/pages/index-page.js',
