@@ -10,6 +10,28 @@
     #files td:first-child {
         word-break: break-all;
     }
+    .filesLoading {
+        max-width: 480px;
+        margin: 0 auto;
+        padding: 80px 16px 0;
+        text-align: center;
+    }
+    .filesLoading progress {
+        width: 100%;
+        accent-color: #2a7ae2;
+    }
+    .filesLoadingError, .filesLoadingError * {
+        color: #f77;
+    }
+    .filesLoading button {
+        background: transparent;
+        color: #fff;
+        border: 1px solid #777;
+        border-radius: 3px;
+        margin-left: 5px;
+        padding: 5px 10px;
+        cursor: pointer;
+    }
     </style>
     <link rel="stylesheet" href="https://unpkg.com/nwl-components@0.0.2/dist/style.css" />
     <link rel="stylesheet" href="/fonts/roboto/roboto.css" type="text/css">
@@ -21,6 +43,7 @@
 
 <script>
 const project = {{{projectInfo}}};
+const filesTotal = {{filesTotal}};
 const loggedUser = {{{loggedUser}}};
 </script>
 

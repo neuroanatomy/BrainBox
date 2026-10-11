@@ -4,6 +4,7 @@ const chai = require('chai');
 const { assert } = chai;
 const chaiHttp = require('chai-http');
 chai.use(chaiHttp);
+const _ = require('lodash');
 const U = require('../utils.js');
 
 describe('TESTING THE /project ROUTE', function () {
@@ -96,6 +97,67 @@ describe('TESTING THE /project ROUTE', function () {
       const { body } = res;
       const dirPath = './public' + body.url;
       await U.removeMRI({ dirPath, srcURL: U.localBertURL });
+    });
+  });
+
+  describe('Saving the files of a project', function () {
+    const shortname = 'filesguardtest';
+    const source = (i) => `https://example.org/filesguardtest/${i}.nii.gz`;
+    const files = (n) => Array.from({ length: n }, (_x, i) => ({ source: source(i), name: '' }));
+    const project = (n) => ({
+      ..._.cloneDeep(U.projectTest),
+      shortname,
+      brainboxURL: `/project/${shortname}`,
+      files: { list: files(n) }
+    });
+    const save = (data) => chai.request(U.serverURL).post(`/project/json/${shortname}?token=${U.testToken}foo`)
+      .send({ data });
+    const storedSources = async () => (await U.queryProject(shortname)).files.list;
+
+    beforeEach(async function () {
+      await U.removeProject(shortname);
+      const res = await U.insertProject(project(5));
+      assert.isTrue(res.body.success, JSON.stringify(res.body));
+    });
+
+    after(async function () {
+      await U.removeProject(shortname);
+    });
+
+    it('saves the files sent when the request does not say how many were loaded', async function () {
+      const res = await save(project(2));
+      assert.isTrue(res.body.success);
+      assert.deepEqual(await storedSources(), [source(0), source(1)]);
+    });
+
+    it('saves the files sent when the client had received the whole list', async function () {
+      const res = await save({ ...project(2), filesLoaded: 5 });
+      assert.isTrue(res.body.success);
+      assert.notInclude(res.body.message, 'files');
+      assert.deepEqual(await storedSources(), [source(0), source(1)]);
+    });
+
+    it('keeps the stored files, and saves the rest, when the client had not received the whole list', async function () {
+      const res = await save({ ...project(2), description: 'changed', filesLoaded: 2 });
+      assert.isTrue(res.body.success);
+      assert.include(res.body.message, 'files');
+      const stored = await U.queryProject(shortname);
+      assert.deepEqual(stored.files.list, files(5).map((f) => f.source));
+      assert.strictEqual(stored.description, 'changed');
+    });
+
+    it('does not store the number of files loaded', async function () {
+      await save({ ...project(5), filesLoaded: 5 });
+      assert.notProperty(await U.queryProject(shortname), 'filesLoaded');
+    });
+
+    it('gives the settings page the number of files to load, and none of the files', async function () {
+      const res = await chai.request(U.serverURL).get(`/project/${shortname}/settings`);
+      assert.equal(res.statusCode, 200);
+      const projectInfo = JSON.parse(res.text.match(/const project = (.*);\n/)[1]);
+      assert.deepEqual(projectInfo.files.list, []);
+      assert.strictEqual(projectInfo.filesLoaded, 0);
+      assert.match(res.text, /const filesTotal = 5;/);
     });
   });
 });

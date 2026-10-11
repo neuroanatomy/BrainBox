@@ -386,8 +386,11 @@ const settings = async function (req, res) {
     };
   }
 
-  // empty the files.list: it will be filled progressively from the client
+  // empty the files.list: it will be filled progressively from the client, which
+  // reports in filesLoaded how many files it received (see postProject)
+  const filesTotal = json.files.list.length;
   json.files.list = [];
+  json.filesLoaded = 0;
 
   // deep-copying initial object
   const filteredJSON = _.cloneDeep(json);
@@ -428,6 +431,7 @@ const settings = async function (req, res) {
     projectShortname: filteredJSON.shortname,
     owner: filteredJSON.owner,
     projectInfo: JSON.stringify(filteredJSON),
+    filesTotal,
     loggedUser: JSON.stringify(req.user || null)
   };
 
@@ -589,17 +593,28 @@ const postProject = async function (req, res) {
 
         return;
       }
-      // insert MRI names if provided
-      console.log('insert mri names');
-      await insertMRInames(req, res, object.files.list);
+      // The settings page loads the files in batches, and says how many it received
+      // (filesLoaded). If that is not the whole stored list, the list it sends is
+      // incomplete: keep the stored one, so that files are not lost
+      const ignoredChanges = [];
+      const filesIncomplete = typeof object.filesLoaded !== 'undefined' &&
+        object.filesLoaded !== oldProject.files.list.length;
+      delete object.filesLoaded;
+      if (filesIncomplete) {
+        console.log(`incomplete file list (${object.files.list.length} received, ${oldProject.files.list.length} stored): keeping the stored one`);
+        object.files.list = oldProject.files.list;
+      } else {
+        // insert MRI names if provided
+        console.log('insert mri names');
+        await insertMRInames(req, res, object.files.list);
 
-      // reformat file list
-      console.log('reformat file list');
-      for (k = 0; k < object.files.list.length; k++) {
-        object.files.list[k] = object.files.list[k].source;
+        // reformat file list
+        console.log('reformat file list');
+        for (k = 0; k < object.files.list.length; k++) {
+          object.files.list[k] = object.files.list[k].source;
+        }
       }
 
-      const ignoredChanges = [];
       [AccessType.COLLABORATORS, AccessType.FILES, AccessType.ANNOTATIONS].forEach((type) => {
         const checkAccessType = AccessControlService.hasAccess(type);
         const canAdd = checkAccessType(AccessLevel.ADD);
@@ -625,11 +640,15 @@ const postProject = async function (req, res) {
       if (ignoredChanges.length > 0) {
         successMessage += ` Some changes (on ${ignoredChanges.join(', ')}) were ignored due to a lack of permissions.`;
       }
+      if (filesIncomplete) {
+        successMessage += ' The list of files was not saved because it had not been completely loaded: reload the page to edit it.';
+      }
 
       res.json({ success: true, message: successMessage });
     } else {
       // new project, insert
       console.log('inserting...');
+      delete obj.filesLoaded;
       console.log('insert mri names');
       await insertMRInames(req, res, obj.files.list);
 

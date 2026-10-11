@@ -1,44 +1,114 @@
-/* global project, loggedUser */
+/* global project, filesTotal, loggedUser */
 
 import 'nwl-components/dist/style.css';
-import { createApp, ref } from 'vue';
+import { createApp, reactive } from 'vue';
 import { SettingsPage } from 'nwl-components';
 import config from '../nwl-components-config';
 
-let cursorFiles = 0;
-const queryFiles = async (files) => {
-  const res = await fetch(`/project/json/${project.shortname}/files?start=${cursorFiles}&length=100&name=true`);
-  const list = await res.json();
-  if(list.length) {
-    files.push(...list);
-    cursorFiles += 100;
+const BATCH_LENGTH = 100;
+const RETRY_DELAYS = [500, 1000]; // ms before trying a failed batch again
 
-    if(list.length === 100) {
-      return queryFiles(files);
+const delay = (ms) => new Promise((resolve) => { setTimeout(resolve, ms); });
+
+/**
+ * Fetch a batch of the project's files (only their source and name),
+ * trying again after each of the RETRY_DELAYS if the request fails.
+ * @param {number} start Index of the first file
+ * @param {number} attempt Number of attempts already made
+ * @returns {Promise<Array>} The files
+ */
+const fetchBatch = async (start, attempt = 0) => {
+  try {
+    const res = await fetch(`/project/json/${project.shortname}/files?start=${start}&length=${BATCH_LENGTH}&names=true`);
+    if (!res.ok) {
+      throw new Error(`the server answered with status ${res.status}`);
     }
-  }
+    const list = await res.json();
+    if (!Array.isArray(list)) {
+      throw new Error('the server did not send a list of files');
+    }
 
-  return files;
+    return list;
+  } catch (err) {
+    if (attempt >= RETRY_DELAYS.length) {
+      throw err;
+    }
+    await delay(RETRY_DELAYS[attempt]);
+
+    return fetchBatch(start, attempt + 1);
+  }
+};
+
+// Files received so far: kept out of Vue's reactivity, they can be thousands
+const files = [];
+const state = reactive({ received: 0, loading: false, loaded: false, error: null });
+
+/**
+ * Fetch the batches of files from the last one received, until a batch is not full
+ * @returns {Promise<void>} Resolves once all the files have been received
+ */
+const fetchRemainingFiles = async () => {
+  let list;
+  do {
+    // eslint-disable-next-line no-await-in-loop
+    list = await fetchBatch(files.length);
+    files.push(...list);
+    state.received = files.length;
+  } while (list.length === BATCH_LENGTH);
+};
+
+/**
+ * Load the project's files. The settings are only shown once the list is complete:
+ * saving a partial list would remove the files that had not arrived yet.
+ * @returns {Promise<void>} Resolves once the files are loaded, or failed to load
+ */
+const loadFiles = async () => {
+  if (state.loading) { return; }
+  state.loading = true;
+  state.error = null;
+  try {
+    // a new project, or one without files, has nothing to fetch
+    if (filesTotal > 0) {
+      await fetchRemainingFiles();
+    }
+    project.files.list = files;
+    project.filesLoaded = files.length; // checked by the server when saving
+    state.loaded = true;
+  } catch (err) {
+    state.error = err.message;
+  } finally {
+    state.loading = false;
+  }
 };
 
 const PageContents = {
   template: `
-    <SettingsPage :project="project" :files="files" />
+    <SettingsPage v-if="state.loaded" :project="project" />
+    <div v-else class="app">
+      <div class="filesLoading">
+        <p>Loading files… {{ state.received }} / {{ total }}</p>
+        <progress :value="state.received" :max="total"></progress>
+        <p v-if="state.error" class="filesLoadingError">
+          Could not load the files: {{ state.error }}.
+          <button @click="retry">Retry</button>
+        </p>
+      </div>
+    </div>
   `,
   setup() {
-    const files = ref([]);
-
     return {
       project,
-      files
+      state,
+      retry: loadFiles
     };
   },
+  computed: {
+    total() {
+      return Math.max(filesTotal, state.received);
+    }
+  },
   mounted() {
-    const fetchFiles = async () => {
-      const files = await queryFiles([]);
-      this.files.push(...files);
-    };
-    fetchFiles();
+    loadFiles();
   }
 };
 const app = createApp(PageContents);
