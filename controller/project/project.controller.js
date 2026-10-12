@@ -11,6 +11,7 @@ const { JSDOM } = require('jsdom');
 const { ForbiddenAccessError } = require('../../errors.js');
 const { jsonForScript } = require('../utils/jsonForScript');
 const { publicLoggedUser } = require('../user/publicUser');
+const { isLabelset, changedLabelsets, setLayerLabelset } = require('./atlas-labels.js');
 const { window } = (new JSDOM('', {
   features: {
     FetchExternalResources: false, // disables resource loading over HTTP / filesystem
@@ -537,6 +538,35 @@ const insertMRInames = function (req, res, list) {
 };
 
 /**
+ * @function updateAtlasLabelsets
+ * @desc Give the atlases of the volume layers whose label set changed the new
+ *       label set, in every MRI where the layer has an atlas
+ * @param {Object} req Req object from express
+ * @param {Object} oldProject The stored project
+ * @param {Object} savedProject The project saved
+ * @returns {Promise<Array<string>>} Messages for the user
+ */
+const updateAtlasLabelsets = async function (req, oldProject, savedProject) {
+  const messages = [];
+  for (const { name, values } of changedLabelsets(oldProject.annotations, savedProject.annotations)) {
+    if (!isLabelset(values)) {
+      messages.push(`The label set "${values}" of layer "${name}" does not exist: its annotations keep their label set.`);
+      continue;
+    }
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      const changed = await setLayerLabelset(req.nativeDb, { project: savedProject.shortname, name, values, username: req.user.username });
+      console.log(`label set of layer ${name} changed to ${values} in ${changed.length} MRIs`);
+    } catch (err) {
+      console.error(err);
+      messages.push(`The annotations of layer "${name}" could not be given the new label set: ${err.message}.`);
+    }
+  }
+
+  return messages;
+};
+
+/**
  * @function postProject
  * @desc Receives data for creating a new project or updating the settings of an existing one
  * @param {Object} req Req object from express
@@ -638,6 +668,10 @@ const postProject = async function (req, res) {
       await req.nativeDb.collection('project').updateMany({ shortname: object.shortname }, { $set: { backup: true } });
       await req.nativeDb.collection('project').insertOne(object);
 
+      // the atlases of a volume layer keep the label set they were created with:
+      // give them the layer's new one
+      const labelsetMessages = await updateAtlasLabelsets(req, oldProject, object);
+
       console.log('success: true');
       let successMessage = 'Project settings updated.';
       if (ignoredChanges.length > 0) {
@@ -645,6 +679,9 @@ const postProject = async function (req, res) {
       }
       if (filesIncomplete) {
         successMessage += ' The list of files was not saved because it had not been completely loaded: reload the page to edit it.';
+      }
+      if (labelsetMessages.length > 0) {
+        successMessage += ' ' + labelsetMessages.join(' ');
       }
 
       res.json({ success: true, message: successMessage });

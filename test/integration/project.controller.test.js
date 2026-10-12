@@ -160,4 +160,112 @@ describe('TESTING THE /project ROUTE', function () {
       assert.match(res.text, /const filesTotal = 5;/);
     });
   });
+
+  // eslint-disable-next-line max-statements
+  describe('Changing the label set of a volume layer', function () {
+    const shortname = 'labelsetchangetest';
+    const otherProject = 'labelsetchangeother';
+    const sources = [
+      'https://example.org/labelsetchangetest/1.nii.gz',
+      'https://example.org/labelsetchangetest/2.nii.gz',
+      'https://example.org/labelsetchangetest/3.nii.gz'
+    ];
+    const layer = (name, values) => ({ type: 'volume', values, display: 'true', name });
+    const project = (annotations) => ({
+      ..._.cloneDeep(U.projectTest),
+      shortname,
+      brainboxURL: `/project/${shortname}`,
+      files: { list: sources.map((source) => ({ source, name: '' })) },
+      annotations: { list: annotations }
+    });
+    const atlas = (projectName, name, labels) => ({
+      name,
+      project: projectName,
+      type: 'volume',
+      filename: `${projectName}-${name}.nii.gz`,
+      labels,
+      owner: 'foo',
+      access: 'edit'
+    });
+    const save = (data) => chai.request(U.serverURL).post(`/project/json/${shortname}?token=${U.testToken}foo`)
+      .send({ data });
+    const currentMRI = (source) => U.getNativeDB().collection('mri')
+      .findOne({ source, backup: { $exists: false } });
+    const atlasOf = (mri, projectName, name) => mri.mri.atlas.find((a) => a.project === projectName && a.name === name);
+
+    beforeEach(async function () {
+      await U.removeProject(shortname);
+      await U.getNativeDB().collection('mri')
+        .deleteMany({ source: { $in: sources } });
+      const res = await U.insertProject(project([layer('Regions', 'freestyle.json'), layer('Mask', 'foreground.json')]));
+      assert.isTrue(res.body.success, JSON.stringify(res.body));
+      // the first two MRIs were opened in the project: their atlases were created with the
+      // project's label sets. The first one is also in another project, with a layer of the same name
+      await U.getNativeDB().collection('mri')
+        .insertMany([
+          {
+            source: sources[0],
+            url: '/data/labelsetchangetest0/',
+            mri: { atlas: [atlas(shortname, 'Regions', 'freestyle.json'), atlas(shortname, 'Mask', 'foreground.json'), atlas(otherProject, 'Regions', 'freestyle.json')] }
+          },
+          {
+            source: sources[1],
+            url: '/data/labelsetchangetest1/',
+            mri: { atlas: [atlas(shortname, 'Regions', 'freestyle.json')] }
+          },
+          { source: sources[2], url: '/data/labelsetchangetest2/', mri: { atlas: [] } }
+        ]);
+    });
+
+    after(async function () {
+      await U.removeProject(shortname);
+      await U.getNativeDB().collection('mri')
+        .deleteMany({ source: { $in: sources } });
+    });
+
+    it('gives the new label set to the layer\'s atlas in each MRI of the project', async function () {
+      const res = await save(project([layer('Regions', 'cerebellum.json'), layer('Mask', 'foreground.json')]));
+      assert.isTrue(res.body.success, JSON.stringify(res.body));
+      assert.strictEqual((await U.queryProject(shortname)).annotations.list[0].values, 'cerebellum.json');
+      for (const source of sources.slice(0, 2)) {
+        // eslint-disable-next-line no-await-in-loop
+        const mri = await currentMRI(source);
+        assert.strictEqual(atlasOf(mri, shortname, 'Regions').labels, 'cerebellum.json', source);
+      }
+    });
+
+    it('changes neither the other layers nor the layers of the same name in other projects', async function () {
+      await save(project([layer('Regions', 'cerebellum.json'), layer('Mask', 'foreground.json')]));
+      const mri = await currentMRI(sources[0]);
+      assert.strictEqual(atlasOf(mri, shortname, 'Mask').labels, 'foreground.json');
+      assert.strictEqual(atlasOf(mri, otherProject, 'Regions').labels, 'freestyle.json');
+      assert.lengthOf(mri.mri.atlas, 3);
+    });
+
+    it('keeps the previous version of each MRI changed as a backup, and does not touch the others', async function () {
+      await save(project([layer('Regions', 'cerebellum.json'), layer('Mask', 'foreground.json')]));
+      const versions = await U.getNativeDB().collection('mri')
+        .find({ source: sources[0] })
+        .toArray();
+      assert.lengthOf(versions, 2);
+      const backup = versions.find((v) => v.backup);
+      assert.strictEqual(atlasOf(backup, shortname, 'Regions').labels, 'freestyle.json');
+      assert.lengthOf(await U.getNativeDB().collection('mri')
+        .find({ source: sources[2] })
+        .toArray(), 1);
+    });
+
+    it('does not create a new version of the MRIs when no label set changed', async function () {
+      await save(project([layer('Regions', 'freestyle.json'), layer('Mask', 'foreground.json')]));
+      assert.lengthOf(await U.getNativeDB().collection('mri')
+        .find({ source: { $in: sources } })
+        .toArray(), 3);
+    });
+
+    it('does not give the atlases a label set that does not exist', async function () {
+      await save(project([layer('Regions', '../../cfg.json'), layer('Mask', 'foreground.json')]));
+      const mri = await currentMRI(sources[0]);
+      assert.strictEqual(atlasOf(mri, shortname, 'Regions').labels, 'freestyle.json');
+    });
+  });
 });
