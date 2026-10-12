@@ -26,7 +26,7 @@ public/js/user-page.js
 public/lib/.DS_Store
 public/lib/atlasmaker-tools
 public/lib/atlasmaker.js
-public/lib/atlasmaker.js.map
+public/lib/*.map
 public/lib/brainbox.js
 scripts/atlasmaker-resources.js
 test/images/
