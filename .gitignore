@@ -26,6 +26,7 @@ public/js/user-page.js
 public/lib/.DS_Store
 public/lib/atlasmaker-tools
 public/lib/atlasmaker.js
+public/lib/atlasmaker.js.map
 public/lib/brainbox.js
 scripts/atlasmaker-resources.js
 test/images/
@@ -45,6 +46,7 @@ cert.pem
 key.pem
 public/_img-all/
 public/js/
+public/lib/
 view/atlasmaker/_resources/
 view/atlasmaker/src/html/_img-all/
 view/atlasmaker/src/tools/and_label.js
@@ -52,3 +54,5 @@ view/brainbox/_resources/
 /.nyc_output
 coverage
 .eslintcache
+docs/
+CLAUDE.md
