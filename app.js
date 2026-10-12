@@ -11,7 +11,6 @@ const compression = require('compression');
 const path = require('path');
 const favicon = require('serve-favicon');
 const logger = require('morgan');
-const tracer = require('tracer').console({ format: '[{{file}}:{{line}}]  {{message}}' });
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const mustacheExpress = require('mustache-express');
@@ -24,15 +23,7 @@ global.authTokenMiddleware = nwl.authTokenMiddleware;
 const AtlasmakerServer = require('./controller/atlasmakerServer/atlasmakerServer');
 const routes = require('./controller/routes/routes');
 
-let MONGO_DB;
-const DOCKER_DB = process.env.DB_PORT;
-const DOCKER_DEVELOP = process.env.DEVELOP;
-
-if (DOCKER_DB) {
-  MONGO_DB = DOCKER_DB.replace('tcp://', '') + '/brainbox';
-} else {
-  MONGO_DB = process.env.MONGODB || 'localhost:27017/brainbox';
-}
+const MONGO_DB = process.env.MONGODB || 'localhost:27017/brainbox';
 
 /** @todo Handle the case when MongoDB is not installed */
 // var db = monk(MONGO_DB);
@@ -40,22 +31,6 @@ if (DOCKER_DB) {
 /* jslint nomen: true */
 const dirname = __dirname; // Local directory
 /* jslint nomen: false */
-
-if (DOCKER_DEVELOP === '1') {
-  // eslint-disable-next-line global-require
-  const livereload = require('livereload');
-  // Create a livereload server
-  const hotServer = livereload.createServer({
-    // Reload on changes to these file extensions.
-    exts: ['json', 'mustache'],
-    // Print debug info
-    debug: true
-  });
-
-  // Specify the folder to watch for file-changes.
-  hotServer.watch(__dirname);
-  tracer.log(`Watching: ${__dirname}`);
-}
 
 // eslint-disable-next-line max-statements
 const start = async function () {
@@ -124,11 +99,6 @@ const start = async function () {
   app.use(logger(':remote-addr :method :url :status :response-time ms - :res[content-length]', loggerOptions));//app.use(logger('dev'));
   app.use(cookieParser());
   app.use(express.static(path.join(dirname, 'public')));
-
-  if (DOCKER_DEVELOP === '1') {
-    // eslint-disable-next-line global-require
-    app.use(require('connect-livereload')());
-  }
 
   //========================================================================================
   // App-wide variables
