@@ -85,46 +85,28 @@ see the [embedding guide](https://brainbox.pasteur.fr/doc/embed.html).
 If you want to work on BrainBox's code, you'll need a local installation:
 
 
-## Non docker developer install instructions
+## Install
 
-1. install and start `mongo` database
-2. clone the repo and `cd` to the brainbox directory
-4. [create a new OAuth application](https://github.com/settings/applications/new) for your local brainbox url (http://localhost:3001 by default). Authorization callback URL: http://localhost:3001/auth/github/callback (this may differ between your development/production instances)
-5. drop the `.example` from `github-keys.json.example` and paste the keys you created into
-6. drop the `.example` from `controller/atlasmakerServer/blacklist.json.example`
-7. drop the `.example` from `controller/atlasmakerServer/whitelist.json.example`
-8. drop the `.example` from `cfg.json.example`
-10. `npm install`
-11. `npm run prepare`
-12. `npm run build`
-13. `npm start`
-14. To check that your code style is like the one we use,  enter `npm run lint`, or you can type `eslint` before committing, to do that install `eslint` globally using `npm i -g eslint` (our code style rules are in the file `.eslintrc`).
+Requirements:
+- Node.js 26
+- MongoDB, installed and running locally (by default BrainBox uses `localhost:27017/brainbox`; set the `MONGODB` environment variable to use another database)
 
-
-## Using Docker to install and run BrainBox
-These installation instructions may need to be updated.  
-
-1. `git clone` this repository or download it
-2. `mv BrainBox brainbox` to rename the directory
-3. `cd` to brainbox
-4. [create a new OAuth application](https://github.com/settings/applications/new) for your local brainbox url (http://localhost:3001 by default). Authorization callback URL: http://localhost:3001/auth/github/callback (this may differ between your development/production instances)
-5. drop the `.example` from `github-keys.json.example` and paste the keys you created into
-6. drop the `.example` from `controller/atlasmakerServer/blacklist.json.example`
-7. drop the `.example` from `controller/atlasmakerServer/whitelist.json.example`
-8. drop the `.example` from `cfg.json.example`
-7. make sure Docker is installed
-8. `docker-compose up`
-9. Then open `http://localhost:3001` in your browser.
-
-If you wish to set up a development environment, make sure to set DEVELOP to "1" and uncomment the 35729 port mapping to have a livereload server running. 
+1. clone the repo and `cd` to the brainbox directory
+2. [create a new OAuth application](https://github.com/settings/applications/new) for your local brainbox url (http://localhost:3001 by default). Authorization callback URL: http://localhost:3001/auth/github/callback (this may differ between your development/production instances)
+3. drop the `.example` from `github-keys.json.example` and paste the keys you created into
+4. drop the `.example` from `controller/atlasmakerServer/blacklist.json.example`
+5. drop the `.example` from `controller/atlasmakerServer/whitelist.json.example`
+6. drop the `.example` from `cfg.json.example`
+7. `npm install`
+8. `npm run prepare`
+9. `npm run build`
+10. `npm start`, then open `http://localhost:3001` in your browser
+11. To check that your code style is like the one we use, enter `npm run lint` (our code style rules are in the file `.eslintrc.js`).
 
 ## Tests
 
-For Docker users, run `npm test`.
+The tests need MongoDB running locally, ports 3001 and 8080 free, and puppeteer able to run on your system (see its [documentation](https://pptr.dev) if it doesn't). They use the `brainbox_test` database.
 
-For non-Docker users you will need to ensure puppeteer can run correctly on your local system (please refer to the [documentation](https://github.com/GoogleChrome/puppeteer) for information).
-
-Ensure that you are using mongodb<=4.2 (due to an incompatibility between monk and mongodb 4.4 which prevents to exclude a field in a find request) and node>=12.10 (to enable the recursive option to rmdir).
-Run the command `npm mocha-test`.
+Run `npm test` for the whole suite with coverage, or `npm run test-unit` / `npm run test-integration` for one part.
 
 Depending on your local developing settings, if you develop using secure web sockets, you may need to indicate Node the location of your Certification Authority using `export NODE_EXTRA_CA_CERTS="/path/to/rootCA.pem"`
