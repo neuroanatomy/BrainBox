@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 'use strict';
 
 const chai = require('chai');
@@ -5,6 +6,10 @@ const { assert } = chai;
 const chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 const _ = require('lodash');
+const fs = require('fs');
+const path = require('path');
+const zlib = require('zlib');
+const amri = require('../../controller/atlasmakerServer/atlasmaker-mri.js');
 const U = require('../utils.js');
 
 describe('TESTING THE /project ROUTE', function () {
@@ -266,6 +271,91 @@ describe('TESTING THE /project ROUTE', function () {
       await save(project([layer('Regions', '../../cfg.json'), layer('Mask', 'foreground.json')]));
       const mri = await currentMRI(sources[0]);
       assert.strictEqual(atlasOf(mri, shortname, 'Regions').labels, 'freestyle.json');
+    });
+  });
+
+  describe('Checking a label set change before saving it', function () {
+    const shortname = 'labelsetchecktest';
+    const sources = [
+      'https://example.org/labelsetchecktest/1.nii.gz',
+      'https://example.org/labelsetchecktest/2.nii.gz',
+      'https://example.org/labelsetchecktest/3.nii.gz'
+    ];
+    const dirs = ['labelsetchecktest1', 'labelsetchecktest2', 'labelsetchecktest3'];
+    const project = () => ({
+      ..._.cloneDeep(U.projectTest),
+      shortname,
+      brainboxURL: `/project/${shortname}`,
+      files: { list: sources.map((source) => ({ source, name: '' })) },
+      annotations: { list: [{ type: 'volume', values: 'freestyle.json', display: 'true', name: 'Regions' }] }
+    });
+    const atlas = (projectName) => ({ name: 'Regions', project: projectName, type: 'volume', filename: 'regions.nii.gz', labels: 'freestyle.json' });
+    const writeAtlas = async (dir, values) => {
+      const mri = await amri.createNifti({ dim: [4, 4, 4], pixdim: [1, 1, 1], dir: [[1, 0, 0], [0, 1, 0], [0, 0, 1]], ori: [0, 0, 0] });
+      const nii = Buffer.alloc(352 + 64);
+      mri.hdr.copy(nii);
+      values.forEach((v, i) => { nii[352 + (i * 3)] = v; });
+      await fs.promises.mkdir(path.join('public/data', dir), { recursive: true });
+      // eslint-disable-next-line no-sync
+      await fs.promises.writeFile(path.join('public/data', dir, 'regions.nii.gz'), zlib.gzipSync(nii));
+    };
+    const check = (query) => chai.request(U.serverURL).get(`/project/json/${shortname}/labelset-check`)
+      .query(query);
+    const cleanUp = async () => {
+      await U.removeProject(shortname);
+      await U.getNativeDB().collection('mri')
+        .deleteMany({ source: { $in: sources } });
+      await Promise.all(dirs.map((dir) => fs.promises.rm(path.join('public/data', dir), { recursive: true, force: true })));
+    };
+
+    before(async function () {
+      await cleanUp();
+      const res = await U.insertProject(project());
+      assert.isTrue(res.body.success, JSON.stringify(res.body));
+      // two MRIs annotated (values 3 and 12, and 3 and 7), one with an atlas but no file yet,
+      // and a layer of the same name in another project, which must not count
+      await U.getNativeDB().collection('mri')
+        .insertMany([
+          { source: sources[0], url: `/data/${dirs[0]}/`, mri: { atlas: [atlas(shortname)] } },
+          { source: sources[1], url: `/data/${dirs[1]}/`, mri: { atlas: [atlas(shortname)] } },
+          { source: sources[2], url: `/data/${dirs[2]}/`, mri: { atlas: [atlas('labelsetcheckother')] } }
+        ]);
+      await writeAtlas(dirs[0], [3, 12, 12]);
+      await writeAtlas(dirs[2], [200]);
+    });
+
+    after(async function () {
+      await cleanUp();
+    });
+
+    it('gives the values the layer\'s annotations use, and those the new label set has no label for', async function () {
+      const res = await check({ layer: 'Regions', values: 'corpus_callosum.json' });
+      assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+      assert.deepEqual(res.body, {
+        layer: 'Regions',
+        values: 'corpus_callosum.json',
+        labelset: { name: 'Corpus Callosum: 5 segments', count: 5, max: 5 },
+        atlases: 2,
+        annotated: 1,
+        used: [3, 12],
+        unlabelled: [12]
+      });
+    });
+
+    it('gives no value without a label when the new label set has them all', async function () {
+      const { body } = await check({ layer: 'Regions', values: 'cerebellum.json' });
+      assert.deepEqual(body.unlabelled, []);
+    });
+
+    it('refuses an unknown label set, and a missing layer', async function () {
+      assert.equal((await check({ layer: 'Regions', values: '../../cfg.json' })).statusCode, 400);
+      assert.equal((await check({ values: 'cerebellum.json' })).statusCode, 400);
+    });
+
+    it('answers 404 for a project that does not exist', async function () {
+      const res = await chai.request(U.serverURL).get('/project/json/nosuchprojectlabelset/labelset-check')
+        .query({ layer: 'Regions', values: 'cerebellum.json' });
+      assert.equal(res.statusCode, 404);
     });
   });
 });

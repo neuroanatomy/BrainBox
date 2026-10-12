@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 'use strict';
 
 /*
@@ -45,29 +46,38 @@ const project = () => ({
 
 const PAGE = `${U.serverURL}/project/${SHORTNAME}/settings`;
 const isFilesRequest = (url) => url.includes(`/project/json/${SHORTNAME}/files`);
+const isCheckRequest = (url) => url.includes(`/project/json/${SHORTNAME}/labelset-check`);
 const isSaveRequest = (req) => req.method() === 'POST' && req.url().endsWith(`/project/json/${SHORTNAME}`);
 const startOf = (url) => Number(new URL(url).searchParams.get('start'));
 
 /**
  * Open the settings page. `respond(req)` may answer a request for a batch of files itself,
  * return 'hold' to keep it waiting (it is then added to `held`), or nothing to let it through.
- * Saving is answered with a canned success, and its payload recorded in `saved`.
+ * Saving is answered with a canned success, and its payload recorded in `saved`. The checks of
+ * a label set change are answered by `check(layer, values)`, and recorded in `checks`.
  * @param {Object} browser A puppeteer browser
  * @param {Function} respond Optional handler for the requests for files
- * @returns {Object} The page, its errors, and the requests for files, held and saved
+ * @param {Function} check Optional handler for the label set checks
+ * @returns {Object} The page, its errors, the requests for files, held and saved, and the checks
  */
-const openSettingsPage = async (browser, respond = () => null) => {
+// eslint-disable-next-line max-statements
+const openSettingsPage = async (browser, respond = () => null, check = () => ({ unlabelled: [] })) => {
   const page = await browser.newPage();
   await page.setViewport({ width: 1400, height: 1000 });
   const pageErrors = [];
   const filesRequests = [];
   const held = [];
   const saved = [];
+  const checks = [];
   page.on('pageerror', (err) => pageErrors.push(err.message));
   await page.setRequestInterception(true);
   page.on('request', (req) => {
     const url = req.url();
-    if (!U.isLocalURL(url)) { req.abort(); } else if (isSaveRequest(req)) {
+    if (!U.isLocalURL(url)) { req.abort(); } else if (isCheckRequest(url)) {
+      const { layer, values } = Object.fromEntries(new URL(url).searchParams);
+      checks.push({ layer, values });
+      req.respond({ status: 200, contentType: 'application/json', body: JSON.stringify({ layer, values, ...check(layer, values) }) });
+    } else if (isSaveRequest(req)) {
       saved.push(JSON.parse(req.postData()).data);
       req.respond({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, message: 'Project settings updated.' }) });
     } else if (isFilesRequest(url)) {
@@ -80,7 +90,7 @@ const openSettingsPage = async (browser, respond = () => null) => {
   });
   await page.goto(PAGE, { waitUntil: 'domcontentloaded' });
 
-  return { page, pageErrors, filesRequests, held, saved };
+  return { page, pageErrors, filesRequests, held, saved, checks };
 };
 
 const numFiles = (page) => page.$eval('#numFiles', (el) => Number(el.textContent));
@@ -96,6 +106,19 @@ const clickButton = (page, text) => page.evaluate((t) => {
   const button = [...document.querySelectorAll('button')].find((b) => b.textContent.trim() === t);
   button.click();
 }, text);
+const chooseLabelset = (page, values) => page.evaluate((v) => {
+  const select = [...document.querySelectorAll('select')].find((el) => [...el.options].some((o) => o.value === 'foreground.json'));
+  select.value = v;
+  select.dispatchEvent(new Event('input', { bubbles: true }));
+  select.dispatchEvent(new Event('change', { bubbles: true }));
+}, values);
+const waitForLabelsets = (page) => page.waitForFunction(() => [...document.querySelectorAll('select option')].some((o) => o.value === 'cerebellum.json'), { timeout: U.longTimeout });
+const used = {
+  annotated: 2,
+  used: [1, 3, 12],
+  unlabelled: [3, 12],
+  labelset: { name: 'Foreground', count: 1, max: 1 }
+};
 const serverError = { status: 500, contentType: 'application/json', body: JSON.stringify({ error: 'boom' }) };
 
 describe('TESTING THE PROJECT SETTINGS PAGE SCRIPT (project-settings-page.js)', function () {
@@ -209,4 +232,78 @@ describe('TESTING THE PROJECT SETTINGS PAGE SCRIPT (project-settings-page.js)', 
     assert.deepEqual(opened.filesRequests.filter((url) => startOf(url) < 200).map((url) => startOf(url)), [0, 100], 'the first batches are not asked again');
     assert.deepEqual(opened.pageErrors, []);
   }).timeout(U.longTimeout);
+
+  describe('changing the label set of a volume layer', function () {
+    let dialogs;
+    const answerDialogs = (page, accept) => {
+      dialogs = [];
+      page.on('dialog', async (dialog) => {
+        dialogs.push(dialog.message());
+        await (accept ? dialog.accept() : dialog.dismiss());
+      });
+    };
+    const saveAndWait = async (page) => {
+      await clickButton(page, 'Save Changes');
+      await page.waitForFunction(() => document.body.textContent.includes('Project settings updated.'), { timeout: U.mediumTimeout });
+    };
+
+    it('does not check anything when no label set changed', async function () {
+      opened = await openSettingsPage(browser);
+      const { page } = opened;
+      answerDialogs(page, true);
+      await waitForAllFiles(page);
+      await saveAndWait(page);
+      assert.deepEqual(opened.checks, []);
+      assert.deepEqual(dialogs, []);
+      assert.strictEqual(opened.saved.length, 1);
+    }).timeout(U.longTimeout);
+
+    it('saves without asking when the new label set has a label for every value used', async function () {
+      opened = await openSettingsPage(browser);
+      const { page } = opened;
+      answerDialogs(page, false);
+      await waitForAllFiles(page);
+      await waitForLabelsets(page);
+      await chooseLabelset(page, 'cerebellum.json');
+      await saveAndWait(page);
+      assert.deepEqual(opened.checks, [{ layer: 'Vol', values: 'cerebellum.json' }]);
+      assert.deepEqual(dialogs, []);
+      assert.strictEqual(opened.saved.length, 1);
+      assert.strictEqual(opened.saved[0].annotations.list[0].values, 'cerebellum.json');
+    }).timeout(U.longTimeout);
+
+    it('asks first when some values used have no label in the new label set, and does not save if the user declines', async function () {
+      opened = await openSettingsPage(browser, () => null, (layer, values) => ({ ...used, values }));
+      const { page } = opened;
+      answerDialogs(page, false);
+      await waitForAllFiles(page);
+      await waitForLabelsets(page);
+      await chooseLabelset(page, 'cerebrum.json');
+      await clickButton(page, 'Save Changes');
+      await U.delay(500);
+      assert.lengthOf(dialogs, 1);
+      assert.include(dialogs[0], 'Layer "Vol" already has annotations, in 2 MRIs, that use values up to 12.');
+      assert.include(dialogs[0], 'the annotation values 3, 12 will no longer show as separate colours');
+      assert.include(dialogs[0], 'Are you sure');
+      assert.deepEqual(opened.saved, []);
+      assert.deepEqual(opened.pageErrors, []);
+    }).timeout(U.longTimeout);
+
+    it('saves if the user confirms', async function () {
+      opened = await openSettingsPage(browser, () => null, (layer, values) => ({ ...used, values }));
+      const { page } = opened;
+      answerDialogs(page, true);
+      await waitForAllFiles(page);
+      await waitForLabelsets(page);
+      await chooseLabelset(page, 'cerebrum.json');
+      await saveAndWait(page);
+      assert.lengthOf(dialogs, 1);
+      assert.strictEqual(opened.saved.length, 1);
+      assert.strictEqual(opened.saved[0].annotations.list[0].values, 'cerebrum.json');
+      // saved: the next save does not ask again
+      await saveAndWait(page);
+      assert.lengthOf(dialogs, 1);
+      assert.lengthOf(opened.checks, 1);
+    }).timeout(U.longTimeout);
+  });
 });

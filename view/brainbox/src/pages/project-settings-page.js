@@ -5,6 +5,9 @@ import '../style/tables.css';
 import { createApp, ref } from 'vue';
 import { SettingsPage } from 'nwl-components';
 import config from '../nwl-components-config';
+import labelsetWarningModule from '../../../shared/labelsetWarning.js';
+
+const { changedVolumeLabelsets, labelsetWarning } = labelsetWarningModule;
 
 const BATCH_LENGTH = 100;
 const RETRY_DELAYS = [500, 1000]; // ms before trying a failed batch again
@@ -141,6 +144,64 @@ const loadFiles = async () => {
     loading = false;
   }
 };
+
+// The volume layers' label sets as last saved: when one changes, saving
+// first checks that the new label set has a label for every value the
+// layer's annotations use, and asks for a confirmation if it does not.
+// SettingsPage's copy of `project` shares its `annotations`, so
+// project.annotations.list is always the list being edited
+const copyAnnotations = () => JSON.parse(JSON.stringify((project.annotations && project.annotations.list) || []));
+let savedAnnotations = copyAnnotations();
+let confirmedSave = false;
+
+/**
+ * Ask the server what each label set change would do to the layer's annotations
+ * @param {Array<{name: string, values: string}>} changes The layers whose label set changed
+ * @returns {Promise<Array<object|null>>} The answers, null for a request that failed
+ */
+const checkLabelsets = (changes) => Promise.all(changes.map(async ({ name, values }) => {
+  try {
+    const res = await fetch(`/project/json/${project.shortname}/labelset-check?layer=${encodeURIComponent(name)}&values=${encodeURIComponent(values)}`);
+
+    return res.ok ? await res.json() : null;
+  } catch (err) {
+    console.warn('Could not check the label set of layer', name, err);
+
+    return null;
+  }
+}));
+
+/**
+ * The "Save Changes" button an element is in, if it is
+ * @param {EventTarget} target A click's target
+ * @returns {HTMLElement|null} The button
+ */
+const saveButtonOf = (target) => {
+  const button = (target instanceof Element) ? target.closest('button') : null;
+
+  return (button && button.textContent.trim() === 'Save Changes') ? button : null;
+};
+
+// SettingsPage (nwl-components) saves as soon as its button is clicked, and has
+// no hook to run before: catch the click before it gets to the button
+document.addEventListener('click', async (event) => {
+  const button = saveButtonOf(event.target);
+  if (!button) { return; }
+  const changes = changedVolumeLabelsets(savedAnnotations, project.annotations && project.annotations.list);
+  if (confirmedSave || changes.length === 0) {
+    confirmedSave = false;
+    savedAnnotations = copyAnnotations();
+
+    return;
+  }
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  const warning = labelsetWarning((await checkLabelsets(changes)).filter(Boolean));
+  // eslint-disable-next-line no-alert
+  if (warning && !window.confirm(warning)) { return; }
+  confirmedSave = true;
+  button.click();
+}, true);
 
 const PageContents = {
   template: `
