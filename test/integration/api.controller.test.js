@@ -27,6 +27,13 @@ describe('TESTING THE /api ROUTE', function () {
     res.body.forEach((item) => assert.containsAllKeys(item, ['name', 'nickname']));
   });
 
+  it('GET /api/userNameQuery/ sends only the name and nickname of each user, not their _id', async function () {
+    const res = await chai.request(U.serverURL).get('/api/userNameQuery?q=foo');
+    assert.equal(res.statusCode, 200);
+    assert.isNotEmpty(res.body);
+    res.body.forEach((item) => assert.sameMembers(Object.keys(item), ['name', 'nickname']));
+  });
+
   it('GET /api/getAtlasBackups/ without any parameter should return status 400', async function () {
     const res = await chai.request(U.serverURL).get('/api/getAtlasBackups');
     assert.equal(res.statusCode, 400);

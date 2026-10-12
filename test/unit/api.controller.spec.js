@@ -80,6 +80,7 @@ describe('API Controller: ', function () {
       await new Promise((resolve) => setTimeout(resolve, 10));
 
       assert.strictEqual(collectionStub.calledWith('user'), true);
+      chaiAssert.deepEqual(findStub.args[0][1].projection, { _id: 0, name: 1, nickname: 1 });
       assert.strictEqual(sendSpy.callCount, 1);
       chaiAssert.deepEqual(sendSpy.args[0][0], mockUsers);
     });

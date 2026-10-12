@@ -904,7 +904,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           nativeDb.collection('user')
             .find(
               { 'nickname': { '$regex': escapeRegex(data.metadata.nickname) } },
-              { projection: { nickname: 1, name: 1 }, limit: 10 })
+              { projection: { _id: 0, nickname: 1, name: 1 }, limit: 10 })
             .toArray()
             .then(function (obj) {
               resolve(obj);
@@ -914,7 +914,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           nativeDb.collection('user')
             .find(
               { 'name': { '$regex': escapeRegex(data.metadata.name) } },
-              { projection: { nickname: 1, name: 1 }, limit: 10 })
+              { projection: { _id: 0, nickname: 1, name: 1 }, limit: 10 })
             .toArray()
             .then(function (obj) {
               resolve(obj);

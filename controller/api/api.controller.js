@@ -37,7 +37,7 @@ const userNameQuery = (req, res) => {
         {nickname: {$regex:escapeRegex(query.q)}},
         {name: {$regex:escapeRegex(query.q)}}
       ]},
-      { projection: { name: 1, nickname: 1 }, limit: 10 }
+      { projection: { _id: 0, name: 1, nickname: 1 }, limit: 10 }
     )
     .toArray()
     .then((list) => {
