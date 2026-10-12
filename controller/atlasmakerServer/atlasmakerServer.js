@@ -55,6 +55,9 @@ const bufferTag = function (str, sz) {
  */
 const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+// The instance the notifier handlers (admin broadcast, save all atlases, users
+// on an MRI) talk to: the one serving the WebSocket clients. Other instances,
+// like the MRI controller's, have no connected users.
 let atlasmakerServer;
 
 const AtlasmakerServer = function (db, nativeDb) {
@@ -2121,6 +2124,7 @@ free memory: ${os.freemem()}
 `);
 
       setInterval(function () { tracer.log('date:', new Date()); }, me.timeMarkInterval).unref(); // time mark
+      atlasmakerServer = me;
       me._initKeyPressHandler();
       me._initColorMap();
 
@@ -2162,7 +2166,9 @@ free memory: ${os.freemem()}
       }
     }
   };
-  atlasmakerServer = me;
+  if (!atlasmakerServer) {
+    atlasmakerServer = me;
+  }
 
   return me;
 };

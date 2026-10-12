@@ -8,6 +8,11 @@ chai.use(chaiHttp);
 const U = require('../utils.js');
 const admins = require('../../controller/admin/admins');
 const notifier = require('../../notifier');
+const fs = require('fs');
+const WebSocket = require('ws');
+
+const Config = JSON.parse(fs.readFileSync('./cfg.json'));
+const wshost = (Config.secure ? 'wss://' : 'ws://') + 'localhost:8080';
 
 const goneProject = 'admintestgone';
 const source1 = 'http://admin-test.localhost/brain1.nii.gz';
@@ -141,6 +146,57 @@ describe('TESTING THE /admin ROUTE', function () {
       assert.equal(res.statusCode, 200);
       assert.isTrue(res.body.success);
     });
+
+    it('sends the broadcast message to the connected users', async function () {
+      const socket = new WebSocket(wshost);
+      try {
+        await new Promise((resolve, reject) => {
+          socket.once('open', resolve);
+          socket.once('error', reject);
+        });
+        const received = new Promise((resolve) => {
+          socket.on('message', (data) => {
+            if (Buffer.isBuffer(data) && data[0] !== 0x7b) { return; } // binary data, not JSON
+            const msg = JSON.parse(data);
+            if (msg.type === 'serverMessage') { resolve(msg); }
+          });
+        });
+        await chai.request(U.serverURL).post('/admin/broadcast-message')
+          .query({ token: adminToken })
+          .send({ msg: 'Testing the broadcast' });
+        const msg = await Promise.race([
+          received,
+          new Promise((resolve) => { setTimeout(resolve, U.shortTimeout / 2); })
+        ]);
+        assert.isDefined(msg, 'the connected user received no message');
+        assert.equal(msg.msg, 'Testing the broadcast');
+        assert.equal(msg.dialogType, 'modal');
+      } finally {
+        socket.close();
+      }
+    }).timeout(U.shortTimeout);
+
+    it('counts the users connected to an MRI', async function () {
+      const socket = new WebSocket(wshost);
+      try {
+        await new Promise((resolve, reject) => {
+          socket.once('open', resolve);
+          socket.once('error', reject);
+        });
+        socket.send(JSON.stringify({
+          type: 'userData',
+          description: 'allUserData',
+          user: { username: 'anonymous', source: source1 }
+        }));
+        // let the server read the user data
+        await new Promise((resolve) => { setTimeout(resolve, 500); });
+        const res = await chai.request(U.serverURL).get('/admin/json/mri')
+          .query({ token: adminToken, url: source1 });
+        assert.equal(res.body.usersConnected, 1);
+      } finally {
+        socket.close();
+      }
+    }).timeout(U.shortTimeout);
 
     it('does not let other users broadcast a message', async function () {
       const res = await chai.request(U.serverURL).post('/admin/broadcast-message')
