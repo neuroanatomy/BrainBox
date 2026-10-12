@@ -4,6 +4,8 @@ const { body, validationResult } = require('express-validator');
 const { isAdmin, requestUsername } = require('./admins');
 const annotations = require('./admin.annotations');
 const projects = require('./admin.projects');
+const { jsonForScript } = require('../utils/jsonForScript');
+const { publicLoggedUser } = require('../user/publicUser');
 
 /**
  * Let through admins, and requests from authorised IP addresses
@@ -130,7 +132,7 @@ const adminPage = (req, res) => {
   }
   res.render('admin', {
     title: 'BrainBox: Admin',
-    loggedUser: JSON.stringify(req.user || null)
+    loggedUser: jsonForScript(publicLoggedUser(req.user))
   });
 };
 

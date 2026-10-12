@@ -2,6 +2,8 @@
 /* eslint-disable radix */
 const dateFormat = require('dateformat');
 const dataSlices = require('../dataSlices/dataSlices.js');
+const { jsonForAttribute, jsonForScript } = require('../utils/jsonForScript');
+const { PUBLIC_USER_FIELDS, publicUser, publicLoggedUser } = require('./publicUser');
 
 const validator = function (req, res, next) {
 
@@ -27,12 +29,15 @@ const user = async function (req, res) {
   // store return path in case of login
   req.session.returnTo = req.originalUrl;
 
-  // const json = await req.db.get('user').findOne({ nickname: requestedUser })
-  const json = await req.nativeDb.collection('user').findOne({ nickname: requestedUser }, { projection: { _id: 0 } })
-    .catch(function (err) {
-      console.log('ERROR:', err);
-      res.status(400).send('Error');
-    });
+  let json;
+  try {
+    json = await req.nativeDb.collection('user').findOne({ nickname: requestedUser });
+  } catch (err) {
+    console.log('ERROR:', err);
+    res.status(500).send('Error');
+
+    return;
+  }
   if (json) {
     const context = {
       username: json.name,
@@ -40,9 +45,9 @@ const user = async function (req, res) {
       joined: dateFormat(json.joined, 'dddd d mmm yyyy, HH:MM'),
       avatar: json.avatarURL,
       title: requestedUser,
-      userInfo: JSON.stringify(json),
+      userInfo: jsonForAttribute(publicUser(json)),
       tab: req.query.tab || 'mri',
-      loggedUser: JSON.stringify(req.user || null)
+      loggedUser: jsonForScript(publicLoggedUser(req.user))
     };
     res.render('user', context);
   } else {
@@ -51,19 +56,27 @@ const user = async function (req, res) {
 };
 
 const apiUser = async function (req, res) {
-  let json = await req.nativeDb.collection('user').findOne({ nickname: req.params.userName, backup: { $exists: false } }, { projection: { _id: 0 } });
-  if (json) {
-    if (req.query.var) {
-      const arr = req.query.var.split('/');
-      for (const i in arr) {
-        if ({}.hasOwnProperty.call(arr, i)) {
-          json = json[arr[i]];
-        }
-      }
-    }
-    res.send(json);
-  } else {
+  let json;
+  try {
+    json = await req.nativeDb.collection('user').findOne({ nickname: req.params.userName, backup: { $exists: false } });
+  } catch (err) {
+    console.log('ERROR:', err);
+    res.status(500).send({ error: 'Server error' });
+
+    return;
+  }
+  if (!json) {
     res.send();
+
+    return;
+  }
+  const info = publicUser(json);
+  const field = req.query.var;
+  if (field) {
+    // ?var=name: a single public field; an empty response for any other name
+    res.send(PUBLIC_USER_FIELDS.includes(field) ? info[field] : null);
+  } else {
+    res.send(info);
   }
 };
 

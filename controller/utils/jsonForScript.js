@@ -35,4 +35,17 @@ const jsonForScript = function (value) {
   return JSON.stringify(value).replace(UNSAFE, (c) => ESCAPES[c]);
 };
 
-module.exports = { jsonForScript };
+/**
+ * Like `jsonForScript`, for a single-quoted HTML attribute (such as a Vue
+ * `:prop='...'` binding in a template held in a <script type="text/html">).
+ * `'` would end the attribute, and `&` would start an entity that the template
+ * compiler decodes back into a quote, so both become JSON escapes as well.
+ *
+ * @param {*} value Any JSON-serialisable value
+ * @returns {string} A string safe inside '...' in an inline template
+ */
+const jsonForAttribute = function (value) {
+  return jsonForScript(value).replace(/['&]/g, (c) => (c === '\'' ? '\\u0027' : '\\u0026'));
+};
+
+module.exports = { jsonForScript, jsonForAttribute };

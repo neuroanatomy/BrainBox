@@ -104,6 +104,131 @@ describe('User Controller: ', function () {
     });
   });
 
+  // eslint-disable-next-line max-statements
+  describe('user documents only leave the server through the allow-list (T004)', function () {
+    const PUBLIC_FIELDS = ['nickname', 'name', 'avatarURL', 'url', 'brainboxURL', 'joined'];
+    const secretHash = '$2b$10$UNIT.TEST.PASSHASH.must.never.leave.the.server';
+    const localUser = {
+      strategy: 'local',
+      nickname: 'unit-local-user',
+      name: 'Unit Local',
+      url: 'https://unit.example',
+      brainboxURL: '/user/unit-local-user',
+      avatarURL: 'https://unit.example/a.png',
+      joined: '2026-10-12T00:00:00.000Z',
+      passhash: secretHash,
+      email: 'unit-local@example.org'
+    };
+    const makeReq = (userName, extra) => ({
+      params: { userName },
+      session: {},
+      originalUrl: '/user/' + userName,
+      db,
+      nativeDb,
+      query: {},
+      ...extra
+    });
+    const makeRes = () => {
+      const res = { render: sinon.spy(), send: sinon.spy() };
+      res.status = sinon.stub().returns(res);
+
+      return res;
+    };
+    const failingDb = {
+      collection: () => ({ findOne: () => Promise.reject(new Error('simulated DB failure')) })
+    };
+    const apiUserVar = async (v) => {
+      const res = makeRes();
+      await userController.apiUser(makeReq(localUser.nickname, { query: { var: v } }), res);
+
+      return res.send.args;
+    };
+    const renderContext = async (userName, extra) => {
+      const res = makeRes();
+      await userController.user(makeReq(userName, extra), res);
+      assert.strictEqual(res.render.callCount, 1);
+
+      return res.render.args[0][1];
+    };
+
+    before(async function () {
+      await U.insertUser({ ...localUser });
+    });
+
+    after(async function () {
+      await U.removeUser(localUser.nickname);
+    });
+
+    it('apiUser sends only the public fields, never the passhash', async function () {
+      const res = makeRes();
+      await userController.apiUser(makeReq(localUser.nickname), res);
+      assert.strictEqual(res.send.callCount, 1);
+      const [[sent]] = res.send.args;
+      assert.deepStrictEqual(Object.keys(sent).sort(), [...PUBLIC_FIELDS].sort());
+      assert.strictEqual(sent.name, localUser.name);
+      assert.ok(!JSON.stringify(sent).includes(secretHash));
+    });
+
+    it('apiUser ?var= only reaches the public fields', async function () {
+      const privateVars = ['passhash', 'email', 'strategy', '_id', 'name/constructor'];
+      const sent = await Promise.all(privateVars.map(apiUserVar));
+      sent.forEach((args, i) => {
+        assert.deepStrictEqual(args, [[null]], `?var=${privateVars[i]} must send nothing`);
+      });
+      assert.deepStrictEqual(await apiUserVar('name'), [[localUser.name]]);
+    });
+
+    it('apiUser answers 500 instead of rejecting when the DB fails', async function () {
+      const res = makeRes();
+      await userController.apiUser(makeReq('x', { nativeDb: failingDb }), res);
+      assert.ok(res.status.calledWith(500));
+      assert.strictEqual(res.send.callCount, 1);
+    });
+
+    it('the user page embeds only the public fields of the requested user', async function () {
+      const context = await renderContext(localUser.nickname, { user: null });
+      const userInfo = JSON.parse(context.userInfo);
+      assert.deepStrictEqual(Object.keys(userInfo).sort(), [...PUBLIC_FIELDS].sort());
+      assert.ok(!context.userInfo.includes(secretHash));
+      assert.ok(!context.userInfo.includes(localUser.email));
+    });
+
+    it('the user page embeds only the username and public fields of the logged user', async function () {
+      const sessionUser = { ...localUser, username: localUser.nickname, _id: 'abc' };
+      const { loggedUser } = await renderContext(localUser.nickname, { user: sessionUser });
+      assert.ok(!loggedUser.includes(secretHash));
+      const parsed = JSON.parse(loggedUser);
+      assert.strictEqual(parsed.username, localUser.nickname);
+      assert.deepStrictEqual(Object.keys(parsed).sort(), ['username', ...PUBLIC_FIELDS].sort());
+    });
+
+    it('the user page renders loggedUser as null for anonymous visitors', async function () {
+      const { loggedUser } = await renderContext(localUser.nickname, {});
+      assert.strictEqual(loggedUser, 'null');
+    });
+
+    it('the user page cannot be broken out of by a user name', async function () {
+      const nickname = 'unit-quote-user';
+      const name = 'O\'Brien &quot; </script> <b>';
+      await U.insertUser({ nickname, name });
+      try {
+        const { userInfo } = await renderContext(nickname, {});
+        assert.ok(!(/['&<>]/).test(userInfo), userInfo);
+        assert.strictEqual(JSON.parse(userInfo).name, name);
+      } finally {
+        await U.removeUser(nickname);
+      }
+    });
+
+    it('the user page answers 500 instead of rejecting when the DB fails', async function () {
+      const res = makeRes();
+      await userController.user(makeReq('x', { nativeDb: failingDb }), res);
+      assert.ok(res.status.calledWith(500));
+      assert.strictEqual(res.send.callCount, 1);
+      assert.strictEqual(res.render.callCount, 0);
+    });
+  });
+
   describe('apiUserAll function() ', function () {
     it('should ask for page parameter if not provided', async function () {
       const req = {

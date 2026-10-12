@@ -1,5 +1,5 @@
 const { assert } = require('chai');
-const { jsonForScript } = require('../../controller/utils/jsonForScript');
+const { jsonForScript, jsonForAttribute } = require('../../controller/utils/jsonForScript');
 
 // Built from char codes, never written literally: a literal U+2028 in a source
 // file is an invisible line terminator that breaks the expression holding it.
@@ -46,5 +46,12 @@ describe('jsonForScript: ', function () {
     assert.strictEqual(JSON.parse(jsonForScript('a-ticket-string')), 'a-ticket-string');
     assert.deepStrictEqual(JSON.parse(jsonForScript({})), {});
     assert.deepStrictEqual(JSON.parse(jsonForScript([])), []);
+  });
+
+  it('jsonForAttribute should not let a value end a single-quoted attribute or start an entity', function () {
+    const value = { name: 'O\'Brien &quot;x&#39; </script>' };
+    const out = jsonForAttribute(value);
+    assert.notMatch(out, /['&<>]/);
+    assert.deepStrictEqual(JSON.parse(out), value);
   });
 });

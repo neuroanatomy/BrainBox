@@ -9,6 +9,8 @@ const _ = require('lodash');
 const createDOMPurify = require('dompurify');
 const { JSDOM } = require('jsdom');
 const { ForbiddenAccessError } = require('../../errors.js');
+const { jsonForScript } = require('../utils/jsonForScript');
+const { publicLoggedUser } = require('../user/publicUser');
 const { window } = (new JSDOM('', {
   features: {
     FetchExternalResources: false, // disables resource loading over HTTP / filesystem
@@ -211,7 +213,7 @@ const project = async function (req, res) {
       projectInfo: JSON.stringify(json),
       projectName: json.name,
       annotationsAccessLevel: AccessControlService.getUserOrPublicAccessLevel(json, loggedUser, AccessType.ANNOTATIONS),
-      loggedUser: JSON.stringify(req.user || null),
+      loggedUser: jsonForScript(publicLoggedUser(req.user)),
       login
     });
   } else {
@@ -428,14 +430,12 @@ const settings = async function (req, res) {
     filteredJSON.annotations.list = [];
   }
 
-  console.log(JSON.stringify(req.user || null));
-
   const context = {
     projectShortname: filteredJSON.shortname,
     owner: filteredJSON.owner,
     projectInfo: JSON.stringify(filteredJSON),
     filesTotal,
-    loggedUser: JSON.stringify(req.user || null)
+    loggedUser: jsonForScript(publicLoggedUser(req.user))
   };
 
   res.render('projectSettings', context);
@@ -470,7 +470,7 @@ const newProject = function (req, res) {
   } else {
     const context = {
       title: 'BrainBox: New Project',
-      loggedUser: JSON.stringify(req.user || null)
+      loggedUser: jsonForScript(publicLoggedUser(req.user))
     };
     res.render('projectNew', context);
   }
