@@ -30,6 +30,7 @@ describe('TESTING AN MRI UPLOAD/DOWNLOAD WORKFLOW', function () {
       const res = await U.queryUser('bar');
       assert.isNull(res);
     });
+
     it('Can insert a test user in the DB', async function () {
       await U.insertUser(U.userBar);
     });
@@ -44,9 +45,11 @@ describe('TESTING AN MRI UPLOAD/DOWNLOAD WORKFLOW', function () {
       assert.equal(res.nickname, U.userBar.nickname);
       assert.equal(res.url, U.userBar.url);
     });
+
     it('Removes test user from the DB', async function () {
       await U.removeUser(U.userBar.nickname);
     });
+
     it('Does not find the removed user', async function () {
       const res = await U.queryUser('bar');
       assert.isNull(res);

@@ -5,6 +5,7 @@ const U = require('../utils.js');
 describe('UNIT TESTING DATABASE', function () {
   // let db; // monk
   let nativeDb; // native mongodb
+
   before(function () {
     // db = U.getDB();
     nativeDb = U.getNativeDB();
