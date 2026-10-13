@@ -3,17 +3,20 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version-file: .nvmrc
       - uses: supercharge/mongodb-github-action@1.3.0
         with:
           mongodb-version: 4.2
       - run: npm install
+        timeout-minutes: 8
       # npm 11 may skip puppeteer's postinstall (allowScripts), so fetch Chrome explicitly
       - run: npx puppeteer browsers install chrome
+        timeout-minutes: 4
       - name: Instantiate github-keys.json
         run: 'echo "{ \"clientID\": \"clientID\", \"clientSecret\": \"clientSecret\", \"callbackURL\": \"http://localhost:3001/auth/github/callback\"}" > github-keys.json'
       - name: Instantiate blacklist
@@ -45,6 +48,48 @@ jobs:
         with:
           name: screenshots
           path: test/screenshots/
+
+  # Canary: the same tests on the next Node major (NODE-POLICY.md). Non-blocking:
+  # a failure here is an early warning, not a release gate. No coverage upload.
+  test-node-current:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: current
+      - uses: supercharge/mongodb-github-action@1.3.0
+        with:
+          mongodb-version: 4.2
+      - run: npm install
+        timeout-minutes: 8
+      # npm 11 may skip puppeteer's postinstall (allowScripts), so fetch Chrome explicitly
+      - run: npx puppeteer browsers install chrome
+        timeout-minutes: 4
+      - name: Instantiate github-keys.json
+        run: 'echo "{ \"clientID\": \"clientID\", \"clientSecret\": \"clientSecret\", \"callbackURL\": \"http://localhost:3001/auth/github/callback\"}" > github-keys.json'
+      - name: Instantiate blacklist
+        run: echo {} > controller/atlasmakerServer/blacklist.json
+      - name: Instantiate whitelist
+        run: echo "{}" > controller/atlasmakerServer/whitelist.json
+      - name: Instantiate websocket configuration file
+        run: cp cfg.json.example cfg.json
+      - run: npm run build
+      - name: Run server
+        run: timeout 3 npm start || code=$?; if [[ $code -ne 124 && $code -ne 0 ]]; then exit $code; fi
+      - name: Run unit tests
+        run: npm run test-unit
+      - name: Run integration tests
+        run: npm run test-integration
+      - name: Archive screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-node-current
+          path: test/screenshots/
+
   deploy:
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'

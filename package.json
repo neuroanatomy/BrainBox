@@ -2,6 +2,9 @@
   "name": "brainbox",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=26"
+  },
   "scripts": {
     "start": "nodemon ./bin/www",
     "debug": "node --inspect-brk ./bin/www",
