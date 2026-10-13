@@ -11,7 +11,7 @@ const puppeteer = require('puppeteer');
 chai.use(chaiHttp);
 const U = require('../utils.js');
 
-const PUBLIC_FIELDS = ['nickname', 'name', 'avatarURL', 'url', 'brainboxURL', 'joined'];
+const PUBLIC_FIELDS = ['nickname', 'name', 'avatarURL', 'url', 'joined'];
 
 const secretHash = '$2b$10$INTEGRATION.TEST.PASSHASH.never.leaves';
 const exposed = {

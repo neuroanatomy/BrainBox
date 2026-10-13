@@ -8,10 +8,13 @@
  *
  * - nickname, name, avatarURL, joined: shown by nwl-components' UserPage
  *   (`usernameField` is `nickname` in BrainBox)
- * - url, brainboxURL: public profile links, part of the GET /user/json/:userName
- *   response (asserted by test/integration/user.controller.test.js)
+ * - url: public profile link, part of the GET /user/json/:userName response
+ *   (asserted by test/integration/user.controller.test.js)
+ *
+ * Not `brainboxURL`: NeuroWebLab < 0.2.0 wrote it on GitHub users ('/user/<nickname>'),
+ * 0.2.0 no longer does, and no page or client code reads it.
  */
-const PUBLIC_USER_FIELDS = Object.freeze(['nickname', 'name', 'avatarURL', 'url', 'brainboxURL', 'joined']);
+const PUBLIC_USER_FIELDS = Object.freeze(['nickname', 'name', 'avatarURL', 'url', 'joined']);
 
 /**
  * @param {Object} doc A user document, or a session user
@@ -33,8 +36,9 @@ const publicUser = function (doc) {
 
 /**
  * The logged user as the pages may see it: `username` (read by the
- * nwl-components header) plus the public fields. NeuroWebLab stores the whole
- * user document in the session (with `passhash` for a local user).
+ * nwl-components header) plus the public fields. Since NeuroWebLab 0.2.0 the
+ * session user is already reduced to `{username, nickname, name, avatarURL,
+ * url, joined}`; the allow-list stays, so that no other field can reach a page.
  *
  * @param {Object} reqUser `req.user`
  * @returns {Object|null} null when nobody is logged in

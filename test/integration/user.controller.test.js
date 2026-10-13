@@ -80,7 +80,9 @@ describe('TESTING THE /user ROUTE', function () {
       assert.equal(body.name, expected.name);
       assert.equal(body.nickname, expected.nickname);
       assert.equal(body.url, expected.url);
-      assert.equal(body.brainboxURL, expected.brainboxURL);
+      // old user documents still have brainboxURL; it is not a public field any more
+      assert.isString(expected.brainboxURL);
+      assert.notProperty(body, 'brainboxURL');
     });
 
     it('Remove test MRI from db and disk', async function () {

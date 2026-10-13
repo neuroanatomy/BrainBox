@@ -106,7 +106,7 @@ describe('User Controller: ', function () {
 
   // eslint-disable-next-line max-statements
   describe('user documents only leave the server through the allow-list (T004)', function () {
-    const PUBLIC_FIELDS = ['nickname', 'name', 'avatarURL', 'url', 'brainboxURL', 'joined'];
+    const PUBLIC_FIELDS = ['nickname', 'name', 'avatarURL', 'url', 'joined'];
     const secretHash = '$2b$10$UNIT.TEST.PASSHASH.must.never.leave.the.server';
     const localUser = {
       strategy: 'local',
