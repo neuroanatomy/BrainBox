@@ -22,6 +22,11 @@ const canvasCss = (dimension) => { const c = viewerCanvas(); return c ? cssDimen
 const canvasAttr = (name) => { const c = viewerCanvas(); return c ? c.getAttribute(name) : undefined; };
 const canvasOffset = () => offset(viewerCanvas());
 
+// Text to put in an SVG/HTML string as character data
+const escapeXML = (str) => String(str).replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;');
+
 /**
  * Forget the position the toolbar was dragged to
  * @returns {void}
@@ -1440,31 +1445,41 @@ export const AtlasMakerInteraction = {
     const vectorial = JSON.parse(JSON.stringify(me.User.vectorial));
     const dialog = document.querySelector('#landmarksDialog');
 
+    const tbody = dialog.querySelector('tbody');
+
+    // rows are built with textContent: labels are shared with other users, never markup
     const displayTable = () => {
-      const html = [];
+      tbody.innerHTML = '';
       for(let i=0; i<vectorial.length; i++) {
         const ann = vectorial[i];
         if(ann.type !== 'text') { continue; }
         const worldCoords = me.mulMatVec(me.User.v2w, ann.position).map((v) => parseInt(v*10, 10)/10.0);
-        html.push(`
-          <tr data-row=${i}>
-            <td contentEditable class="noEmptyWithPlaceholder" placeholder="Enter landmark label"
-            >${ann.text}</td>
-            <td contentEditable class="noEmpty"
-            >${ann.position.slice(0, 3).join(', ')}</td>
-            <td contentEditable class="noEmpty"
-            >${worldCoords.join(', ')}</td>
-          </tr>`);
+        const tr = document.createElement('tr');
+        tr.dataset.row = i;
+        const label = document.createElement('td');
+        label.contentEditable = 'true';
+        label.className = 'noEmptyWithPlaceholder';
+        label.setAttribute('placeholder', 'Enter landmark label');
+        label.textContent = ann.text === null || typeof ann.text === 'undefined' ? '' : ann.text;
+        const voxel = document.createElement('td');
+        voxel.className = 'noEmpty';
+        voxel.textContent = ann.position.slice(0, 3).join(', ');
+        const world = document.createElement('td');
+        world.className = 'noEmpty';
+        world.textContent = worldCoords.join(', ');
+        tr.append(label, voxel, world);
+        tbody.appendChild(tr);
       }
-      dialog.querySelector('tbody').innerHTML = html.join('\n');
-      dialog.querySelector('tbody tr').classList.add('selected');
+      if(tbody.rows.length > 0) {
+        tbody.rows[0].classList.add('selected');
+      }
       dialog.style.display = 'inline-block';
     };
     const exit = () => {
       for(const l of listeners) {
-        dialog.querySelector(l.sel).removeEventListener('click', l.func);
-        dialog.style.display = 'none';
+        dialog.querySelector(l.sel).removeEventListener(l.ev || 'click', l.func);
       }
+      dialog.style.display = 'none';
     };
     const listeners = [
       {
@@ -1501,8 +1516,9 @@ export const AtlasMakerInteraction = {
       {
         sel: '#removeLandmark',
         func: () => {
-          const i = dialog.querySelector('tr.selected').dataset.row;
-          vectorial.splice(i, 1);
+          const tr = tbody.querySelector('tr.selected');
+          if(!tr) { return; }
+          vectorial.splice(parseInt(tr.dataset.row, 10), 1);
           displayTable();
         }
       },
@@ -1511,15 +1527,26 @@ export const AtlasMakerInteraction = {
         ev: 'click',
         func: (ev) => {
           const tr = ev.target.closest('tr');
-          for(const row of tr.closest('tbody').rows) {
+          if(!tr) { return; }
+          for(const row of tbody.rows) {
             row.classList.remove('selected');
           }
           tr.classList.add('selected');
         }
+      },
+      {
+        // keep the edited labels: they are what Save sends
+        sel: 'tbody',
+        ev: 'input',
+        func: (ev) => {
+          const tr = ev.target.closest('tr');
+          if(!tr) { return; }
+          vectorial[parseInt(tr.dataset.row, 10)].text = tr.cells[0].textContent.trim();
+        }
       }
     ];
     for(const l of listeners) {
-      dialog.querySelector(l.sel).addEventListener('click', l.func);
+      dialog.querySelector(l.sel).addEventListener(l.ev || 'click', l.func);
     }
     displayTable();
   },
@@ -1540,7 +1567,7 @@ export const AtlasMakerInteraction = {
 `
 <g transform='translate(${zx*x},${zy*y}) scale(0.85)'>
 <path class='landmark' fill='#ffffff' stroke='#00000080' d="m 0,0 c 0,0 6,-6 9,-11 3,-5 0,-15 -9,-15 -9,0 -12,10 -9,15 3,5 9,11 9,11 z"></path>
-<text fill='white' x=10 y='-10'>${text}</text>
+<text fill='white' x=10 y='-10'>${escapeXML(text === null || typeof text === 'undefined' ? '' : text)}</text>
 </g>
 `;
           //   <circle class='landmark' fill='#00ff00' cx=${zx*x} cy=${zy*y} r=3 />
