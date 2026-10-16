@@ -78,7 +78,7 @@ describe('TESTING MRI UPLOAD AND RESET', function () {
       const res = await chai.request(U.serverURL).post('/mri/upload')
         .field('url', U.localBertURL)
         .field('atlasName', 'UploadTestAtlas')
-        .field('atlasProject', 'UploadTestProject')
+        .field('atlasProject', 'testproject')
         .field('atlasLabelSet', 'cerebrum.json')
         .field('token', U.testToken + U.userFoo.nickname)
         .attach('atlas', path.join(__dirname, '../data/bert_aseg.nii.gz'));
@@ -88,7 +88,7 @@ describe('TESTING MRI UPLOAD AND RESET', function () {
 
       // Verify the uploaded atlas appears in the MRI's atlas list
       const atlasEntry = res.body.mri.atlas.find(
-        (a) => a.name === 'UploadTestAtlas' && a.project === 'UploadTestProject'
+        (a) => a.name === 'UploadTestAtlas' && a.project === 'testproject'
       );
       assert.exists(atlasEntry, 'Uploaded atlas should appear in the atlas list');
       assert.equal(atlasEntry.labels, 'cerebrum.json');
@@ -102,7 +102,7 @@ describe('TESTING MRI UPLOAD AND RESET', function () {
         .query({url: U.localBertURL});
       assert.equal(res.statusCode, 200);
       const atlasEntry = res.body.mri.atlas.find(
-        (a) => a.name === 'UploadTestAtlas' && a.project === 'UploadTestProject'
+        (a) => a.name === 'UploadTestAtlas' && a.project === 'testproject'
       );
       assert.exists(atlasEntry, 'Uploaded atlas should persist in DB');
     });
@@ -111,7 +111,7 @@ describe('TESTING MRI UPLOAD AND RESET', function () {
       const res = await chai.request(U.serverURL).post('/mri/upload')
         .field('url', U.localBertURL)
         .field('atlasName', 'UploadTestAtlas')
-        .field('atlasProject', 'UploadTestProject')
+        .field('atlasProject', 'testproject')
         .field('atlasLabelSet', 'cerebellum.json')
         .field('token', U.testToken + U.userFoo.nickname)
         .attach('atlas', path.join(__dirname, '../data/bert_aseg.nii.gz'));
@@ -119,7 +119,7 @@ describe('TESTING MRI UPLOAD AND RESET', function () {
 
       // Should have exactly one atlas with this name/project, not two
       const matching = res.body.mri.atlas.filter(
-        (a) => a.name === 'UploadTestAtlas' && a.project === 'UploadTestProject'
+        (a) => a.name === 'UploadTestAtlas' && a.project === 'testproject'
       );
       assert.equal(matching.length, 1, 'Duplicate atlas entries should not exist');
       assert.equal(matching[0].labels, 'cerebellum.json', 'Atlas should have updated labelSet');

@@ -3,6 +3,8 @@
 const fs = require('fs');
 const { body, validationResult } = require('express-validator');
 const amri = require('../atlasmakerServer/atlasmaker-mri');
+const { AccessType } = require('neuroweblab');
+const { projectAccessLevel } = require('../atlasmakerServer/metadata-save-access');
 const AsyncLock = require('async-lock');
 const lock = new AsyncLock();
 
@@ -57,6 +59,52 @@ const validator = async function (req, res, next) {
 
 };
 
+const accessLevels = ['none', 'view', 'edit', 'add', 'remove'];
+
+/**
+ * Remove the files multer received, for a request that is refused
+ * @param {Object} req Express request
+ * @returns {Promise<void>} Once they are removed
+ */
+const removeUploadedFiles = async function (req) {
+  for (const file of req.files || []) {
+    // eslint-disable-next-line no-await-in-loop
+    await fs.promises.rm(file.path, { force: true });
+  }
+};
+
+/**
+ * Whether the user of a token may add a layer to a project, or replace one of
+ * its layers: as on the WebSocket server, the project decides the access to
+ * its layers, and writing to one needs 'edit' on its annotations
+ * @param {Object} req Express request
+ * @param {Object} res Express response
+ * @param {string} username The token's user
+ * @returns {Promise<string|null>} The user's access to the project's
+ * annotations, or null if the request was refused (and answered)
+ */
+const projectAccessForUpload = async function (req, res, username) {
+  const { atlasProject } = req.body;
+  const project = await req.nativeDb.collection('project').findOne({ shortname: atlasProject, backup: { $exists: false } });
+  if (!project) {
+    console.log(`REJECTED upload by ${username}: no project ${atlasProject}`);
+    await removeUploadedFiles(req);
+    res.status(404).json({ error: `There is no project '${atlasProject}'` });
+
+    return null;
+  }
+  const level = projectAccessLevel(project, username, AccessType.ANNOTATIONS);
+  if (accessLevels.indexOf(level) < accessLevels.indexOf('edit')) {
+    console.log(`REJECTED upload by ${username}: '${level}' access to the annotations of ${atlasProject}`);
+    await removeUploadedFiles(req);
+    res.status(403).json({ error: `Your access to the annotations of the project '${atlasProject}' is '${level}': you may not add or replace its layers` });
+
+    return null;
+  }
+
+  return level;
+};
+
 // eslint-disable-next-line max-statements
 const otherValidations = async function (req, res, next) {
 
@@ -73,9 +121,14 @@ const otherValidations = async function (req, res, next) {
     if (obj.expiryDate.getTime() > now.getTime()) {
       const json = await req.nativeDb.collection('mri').findOne({ source: req.body.url, backup: { $exists: false } });
       if (json && req.files.length > 0) {
+        const access = await projectAccessForUpload(req, res, obj.username);
+        if (access === null) {
+          return;
+        }
         req.atlasUpload = {
           mri: json,
-          username: obj.username
+          username: obj.username,
+          access
         };
         next();
 
@@ -100,7 +153,7 @@ const otherValidations = async function (req, res, next) {
 
 // eslint-disable-next-line max-statements
 const upload = async function (req, res) {
-  const { username } = req.atlasUpload;
+  const { username, access } = req.atlasUpload;
   const { url, atlasName, atlasProject, atlasLabelSet } = req.body;
   const { mri } = req.atlasUpload;
   const { files } = req;
@@ -182,7 +235,8 @@ const upload = async function (req, res) {
   const atlasMetadata = {
     name: atlasName,
     project: atlasProject,
-    access: 'edit',
+    // as the WebSocket server gives a new layer: the user's access to the project
+    access,
     created: date.toJSON(),
     modified: date.toJSON(),
     filename: filename, // automatically generated filename
@@ -195,7 +249,8 @@ const upload = async function (req, res) {
   console.log('final volume annotation entry:');
   console.log('atlasMetadata:', atlasMetadata);
 
-  // remove previous atlases with the same atlasName and atlasProject
+  // remove previous atlases with the same atlasName and atlasProject (the
+  // user may edit them: the project decides the access to its layers)
   let i;
   for (i = mri.mri.atlas.length - 1; i >= 0; i--) {
     if (mri.mri.atlas[i].name === atlasName && mri.mri.atlas[i].project === atlasProject) {
