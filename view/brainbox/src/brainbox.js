@@ -67,7 +67,6 @@ export const BrainBox = {
   info: {},
   labelSets: null,
   annotationType: ['volume', 'text', 'multiple choices', 'hidden text'],
-  accessLevels: ['none', 'view', 'edit', 'add', 'remove'],
 
   /*
         JavaScript implementation of Java's hashCode method from
@@ -222,13 +221,7 @@ export const BrainBox = {
       AtlasMakerWidget.configureAtlasMaker(BrainBox.info, index)
         .then(function (info2) {
           BrainBox.info = info2;
-
-
-          // check 'edit' access
-          const accessStr = BrainBox.info.mri.atlas[index].access;
-          let accessLvl = BrainBox.accessLevels.indexOf(accessStr);
-          if (accessLvl < 0 || accessLvl > BrainBox.accessLevels.length - 1) { accessLvl = 0; }
-          if (accessLvl >= 2) { AtlasMakerWidget.editMode = 1; } else { AtlasMakerWidget.editMode = 0; }
+          // configureAtlasMaker has set AtlasMakerWidget.editMode from the atlas' access
           resolve({ success: true });
 
 

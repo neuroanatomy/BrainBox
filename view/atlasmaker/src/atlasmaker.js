@@ -106,7 +106,8 @@ const me = {
     touchStarted:false // touch started flag
   },
   viewerState: 'loading', // 'loading' | 'ready' | 'error', see setViewerState()
-  editMode: 0, // editMode=0 to prevent editing, editMode=1 to accept it
+  editMode: 0, // editMode=0 to prevent editing, editMode=1 to accept it. Set by configureAtlasMaker from the atlas' access
+  accessLevels: ['none', 'view', 'edit', 'add', 'remove'], // access levels, from lowest to highest
   fullscreen: false, // fullscreen mode?
   _fullscreenRequestTimer: null, // pending fullscreen request from configureAtlasMaker
   useFullTools: true, // use full tools or light version?
@@ -871,7 +872,21 @@ const me = {
     // sendUserDataMessage calls, because it also sends ws messages)
     me.changePenColor( 0 );
 
+    // allow painting only on an atlas the user may edit, whatever the path that
+    // configured it (page load, change of file or of annotation layer). The embed
+    // viewer is never editable.
+    me.editMode = (!me.embedMode && me.canEdit(info.mri.atlas[index].access)) ? 1 : 0;
+
     return info;
+  },
+
+  /**
+   * Whether an access level allows editing an atlas
+   * @param {string} access One of me.accessLevels
+   * @return {boolean} True for 'edit' or higher
+   */
+  canEdit: function (access) {
+    return me.accessLevels.indexOf(access) >= me.accessLevels.indexOf('edit');
   }
 };
 

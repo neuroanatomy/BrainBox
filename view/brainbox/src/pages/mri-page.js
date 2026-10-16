@@ -214,13 +214,13 @@ if (isEmptyObject(mriInfo)) {
             path: 'mri.atlas.#.access',
             format: (e, d) => {
               const access = e.querySelector('.access');
-              if (access) { access.setAttribute('data-level', ['none', 'view', 'edit', 'add', 'remove'].indexOf(d)); }
+              if (access) { access.setAttribute('data-level', AtlasMakerWidget.accessLevels.indexOf(d)); }
             },
             parse: (e) => {
               const access = e.querySelector('.access');
               const level = access ? access.getAttribute('data-level') : undefined; // eslint-disable-line no-undefined
 
-              return ['none', 'view', 'edit', 'add', 'remove'][level];
+              return AtlasMakerWidget.accessLevels[level];
             }
           }
         ]
@@ -308,13 +308,13 @@ if (isEmptyObject(mriInfo)) {
           path: '#.access',
           format: (e, d) => {
             const access = e.querySelector('.access');
-            if (access) { access.setAttribute('data-level', BrainBox.accessLevels.indexOf(d)); }
+            if (access) { access.setAttribute('data-level', AtlasMakerWidget.accessLevels.indexOf(d)); }
           },
           parse: (e) => {
             const access = e.querySelector('.access');
             const level = access ? access.getAttribute('data-level') : undefined; // eslint-disable-line no-undefined
 
-            return BrainBox.accessLevels[level];
+            return AtlasMakerWidget.accessLevels[level];
           }
         }
       ];

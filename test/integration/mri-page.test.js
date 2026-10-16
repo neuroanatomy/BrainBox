@@ -197,6 +197,66 @@ describe('TESTING THE MRI PAGE SCRIPT (mri-page.js)', function () {
     assert.strictEqual(state.selected[0], true);
   }).timeout(U.longTimeout);
 
+  // Only configureBrainBox (page load) used to set editMode: selecting another
+  // layer kept the previous layer's, so a view-only layer could be painted on
+  // (from PR #342, 754c7ac, Nicolas Traut)
+  it('allows painting only on the layers the user may edit, when switching layers', async function () {
+    opened = await openPage(browser);
+    const { page } = opened;
+    // A second layer, of a project where the user may only view the annotations
+    await page.evaluate(() => {
+      const me = AtlasMakerWidget;
+      const { atlas } = BrainBox.info.mri;
+      atlas.push({ ...atlas[0], name: 'view only', access: 'view' });
+      const tbody = document.querySelector('table#annotations tbody');
+      tbody.insertAdjacentHTML('beforeend', tbody.rows[0].outerHTML);
+      tbody.rows[1].classList.remove('selected');
+
+      let configured;
+      const { configureAtlasMaker } = me;
+      me.configureAtlasMaker = function (info, index) {
+        configured = configureAtlasMaker.call(this, info, index);
+
+        return configured;
+      };
+      window.__select = async (row) => {
+        tbody.rows[row].querySelector('td').click();
+        await configured;
+      };
+      // Painting and erasing go through paintxy, and set mouseIsDown
+      const painted = [];
+      me.paintxy = (...args) => { painted.push(args); };
+      window.__tryToPaint = () => {
+        me.User.mouseIsDown = false;
+        painted.length = 0;
+        me._paintToolDown(10, 10);
+        me._eraseToolDown(10, 10);
+        const res = { painted: painted.length, mouseIsDown: me.User.mouseIsDown };
+        me.User.mouseIsDown = false;
+
+        return res;
+      };
+    });
+    const editModes = await page.evaluate(async () => {
+      const me = AtlasMakerWidget;
+      const { atlas } = BrainBox.info.mri;
+      const res = [{ layer: atlas[0].access, editMode: me.editMode }];
+      await window.__select(1);
+      res.push({ layer: atlas[1].access, editMode: me.editMode, ...window.__tryToPaint() });
+      await window.__select(0);
+      res.push({ layer: atlas[0].access, editMode: me.editMode });
+
+      return res;
+    });
+    assert.include(['edit', 'add', 'remove'], editModes[0].layer, 'the first layer is editable');
+    assert.deepEqual(editModes, [
+      { layer: editModes[0].layer, editMode: 1 },
+      { layer: 'view', editMode: 0, painted: 0, mouseIsDown: false },
+      { layer: editModes[0].layer, editMode: 1 }
+    ]);
+    assert.deepEqual(opened.pageErrors, []);
+  }).timeout(U.longTimeout);
+
   it('reports unreadable data when the page gets no MRI information', async function () {
     // Serve the page with an empty mriInfo, as the template would for a file that cannot be read
     const html = (await chai.request(U.serverURL).get('/mri')
