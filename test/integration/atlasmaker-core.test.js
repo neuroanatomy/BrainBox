@@ -229,10 +229,19 @@ describe('TESTING THE VIEWER CORE (atlasmaker.js)', function () {
           : json(200, { success: true, source: FAKE_SOURCE, url: '/data/fake/' });
       });
       const { page, requests } = viewer;
+      // Record what the indicator says. Sampling it is not enough: the viewer may still be
+      // receiving slices of the brain it has just opened, and each one marks it ready again,
+      // which can replace the progress before a sample sees it
+      await page.evaluate(() => {
+        window.__indicatorTexts = [];
+        const label = document.querySelector('#loadingIndicator p');
+        new MutationObserver((records) => records.forEach((r) => r.addedNodes.forEach((n) => window.__indicatorTexts.push(n.textContent))))
+          .observe(label, { childList: true, characterData: true, subtree: true });
+      });
       await startRequest(page);
-      await page.waitForFunction(() => (/Downloading brain… 50%/).test(document.querySelector('#loadingIndicator p').textContent), { timeout: U.shortTimeout });
       const outcome = await requestOutcome(page);
       assert.deepEqual(outcome, { resolved: { success: true, source: FAKE_SOURCE, url: '/data/fake/' } });
+      assert.include(await page.evaluate(() => window.__indicatorTexts), 'Downloading brain… 50%');
       assert.strictEqual(polls, 2, 'polls until the server has it');
 
       const post = requests.find((r) => r.method === 'POST' && r.url.endsWith('/mri/json') && (r.postData || '').includes('some_brain'));
