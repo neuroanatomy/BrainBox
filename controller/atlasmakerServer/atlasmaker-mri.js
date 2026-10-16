@@ -469,7 +469,11 @@ const readMGZ = (mriPath) => {
       */
 
       const bufs = [];
-      const readable = fs.createReadStream(mriPath).pipe(zlib.createGunzip());
+      const file = fs.createReadStream(mriPath);
+      // pipe() does not forward the file's errors (a missing file, for example):
+      // without this listener they would be uncaught and stop the server
+      file.on('error', reject);
+      const readable = file.pipe(zlib.createGunzip());
       readable.on('data', function (d) { bufs.push(d); });
       readable.on('error', function (err) {
         if (err.code === 'Z_DATA_ERROR') {
@@ -479,37 +483,42 @@ const readMGZ = (mriPath) => {
         }
       });
       readable.on('end', function () {
-        const mgh = Buffer.concat(bufs);
-        const mri = {};
-        const hdr = {};
+        // a truncated or corrupted file can throw here, outside the outer try
+        try {
+          const mgh = Buffer.concat(bufs);
+          const mri = {};
+          const hdr = {};
 
-        // read header
-        if (!_readMGZHeader({ mgh, mri, hdr })) {
-          reject(new Error('Failed to read MGZ header'));
+          // read header
+          if (!_readMGZHeader({ mgh, mri, hdr })) {
+            reject(new Error('Failed to read MGZ header'));
 
-          return;
+            return;
+          }
+
+          // compute the transformation from voxel space to screen space
+          computeS2VTransformation(mri);
+
+          // test if the transformation looks incorrect. Reset it if it does
+          //testS2VTransformation(mri);
+
+          // read binary data
+          if (!_readMGZData({ mgh, mri, hdr })) {
+            reject(new Error('Failed to read MGZ binary data'));
+
+            return;
+          }
+
+          // compute volume stats
+          _computeVolumeStats({ mri });
+
+          resolve(mri);
+        } catch (e) {
+          reject(new Error('ERROR Cannot read mgz file', { cause: e }));
         }
-
-        // compute the transformation from voxel space to screen space
-        computeS2VTransformation(mri);
-
-        // test if the transformation looks incorrect. Reset it if it does
-        //testS2VTransformation(mri);
-
-        // read binary data
-        if (!_readMGZData({ mgh, mri, hdr })) {
-          reject(new Error('Failed to read MGZ binary data'));
-
-          return;
-        }
-
-        // compute volume stats
-        _computeVolumeStats({ mri });
-
-        resolve(mri);
       });
     } catch (e) {
-      reject(new Error('ERROR Cannot uncompress mgz file: ', e));
+      reject(new Error('ERROR Cannot uncompress mgz file', { cause: e }));
     }
   });
 

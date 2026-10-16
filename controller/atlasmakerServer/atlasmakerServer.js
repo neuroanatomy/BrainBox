@@ -206,8 +206,12 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       for (const iAtlas in me.Atlases) {
         if ({}.hasOwnProperty.call(me.Atlases, iAtlas)) {
           console.log(`me.saveAtlasAtIndex(${iAtlas})`);
-          // eslint-disable-next-line no-await-in-loop
-          await me.saveAtlasAtIndex(iAtlas);
+          try {
+            // eslint-disable-next-line no-await-in-loop
+            await me.saveAtlasAtIndex(iAtlas);
+          } catch (err) {
+            tracer.log(`ERROR: Can't save atlas ${iAtlas}`, err);
+          }
         }
       }
     },
@@ -263,6 +267,24 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       }
 
       return null;
+    },
+
+    /**
+     * The connection that sent a message, if it has already sent its User
+     * structure. Messages that need it are ignored otherwise.
+     * @param {string} uid Id of the connection
+     * @param {string} messageType Type of the message, for the log
+     * @returns {object|null} The connection, or null
+     */
+    _getUserWithUserData: function (uid, messageType) {
+      const sourceUS = me.getUserFromUserId(uid);
+      if (!sourceUS || typeof sourceUS.User === 'undefined') {
+        tracer.log(`WARNING: Ignoring '${messageType}' message from ${uid}: no User structure yet`);
+
+        return null;
+      }
+
+      return sourceUS;
     },
 
     /*
@@ -327,7 +349,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       try {
         await me.saveAtlasAtIndex(iAtlas);
       } catch (err) {
-        throw new Error('Saving atlas failed');
+        throw new Error('Saving atlas failed', { cause: err });
       }
 
       me.removeAtlasAtIndex(iAtlas);
@@ -345,12 +367,12 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       try {
         await me._saveAtlasVoxelData(atlas);
       } catch (err) {
-        throw new Error('Can\'t save atlas voxel data', err);
+        throw new Error('Can\'t save atlas voxel data', { cause: err });
       }
       try {
         await me._saveAtlasVectorialData(atlas);
       } catch (err) {
-        throw new Error('Can\'t save atlas vectorial data', err);
+        throw new Error('Can\'t save atlas vectorial data', { cause: err });
       }
     },
 
@@ -376,7 +398,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           mri = await nativeDb.collection('mri')
             .findOne({ source: atlas.source, backup: { $exists: 0 } }, { projection: { _id: 0 } });
         } catch (err) {
-          throw new Error('Can\'t find entry for atlas voxel data in DB', err);
+          throw new Error('Can\'t find entry for atlas voxel data in DB', { cause: err });
         }
 
         if (mri === null) {
@@ -839,6 +861,11 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
      */
     updateVectorialAnnotations: function (data, User) {
       const atlas = me.Atlases[User.iAtlas];
+      if (typeof atlas === 'undefined') {
+        tracer.log('ERROR: No atlas to add vectorial annotations to');
+
+        return;
+      }
       atlas.vectorial = data;
     },
 
@@ -1120,7 +1147,10 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
     },
     receivePaintMessage: function (data) {
       const msg = data.data;
-      const sourceUS = me.getUserFromUserId(data.uid); // user data
+      const sourceUS = me._getUserWithUserData(data.uid, 'paint'); // user data
+      if (!sourceUS) {
+        return;
+      }
       const { c, x, y } = msg; // command, x coordinate, y coordinate
       const undoLayer = me.getCurrentUndoLayer(sourceUS.User); // current undoLayer for user
 
@@ -1128,7 +1158,10 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
     },
     receiveVectorialAnnotationMessage: function (message) {
       const { data } = message;
-      const sourceUS = me.getUserFromUserId(message.uid); // source user data
+      const sourceUS = me._getUserWithUserData(message.uid, 'vectorial'); // source user data
+      if (!sourceUS) {
+        return;
+      }
       me.updateVectorialAnnotations(data, sourceUS.User);
     },
     sendSliceToUser: function (brain, view, slice, userSocket) {
@@ -1147,14 +1180,12 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       const slice = parseInt(data.slice, 10); // user slice
 
       // get User object
-      const sourceUS = me.getUserFromUserId(data.uid);
-
-      // get brainPath from User object
-      if (!sourceUS.User) {
-        console.error('sourceUS.User object still not created, do not try to get brain slice');
-
+      const sourceUS = me._getUserWithUserData(data.uid, 'requestSlice');
+      if (!sourceUS) {
         return;
       }
+
+      // get brainPath from User object
       const brainPath = sourceUS.User.dirname + sourceUS.User.mri;
 
       // update User object
@@ -1174,7 +1205,10 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
     receiveRequestSlice2Message: function (data, userSocket) {
       const { view } = data; // user view
       const slice = parseInt(data.slice, 10); // user slice
-      const sourceUS = me.getUserFromUserId(data.uid);
+      const sourceUS = me._getUserWithUserData(data.uid, 'requestSlice2');
+      if (!sourceUS) {
+        return;
+      }
       const brainPath = sourceUS.User.dirname + sourceUS.User.mri;
       const { dirname, atlasFilename } = sourceUS.User;
       let atlas;
@@ -1200,7 +1234,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           } catch (e) {
             tracer.log('ERROR: Cannot send slice to user', e);
           }
-        });
+        })
+        .catch((err) => tracer.log('ERROR: Cannot get brain', err));
     },
     broadcastMessage: function (msg, uid) {
       let n = 0;
@@ -1221,7 +1256,10 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       }
     },
     receiveSaveMessage: async function (data) {
-      const sourceUS = me.getUserFromUserId(data.uid);
+      const sourceUS = me._getUserWithUserData(data.uid, 'save');
+      if (!sourceUS) {
+        return;
+      }
       const { dirname, atlasFilename } = sourceUS.User;
       const time = new Date();
 
@@ -1233,7 +1271,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       try {
         await me.saveAtlasAtIndex(iAtlas);
       } catch (err) {
-        throw new Error('Atlas saving failed');
+        throw new Error('Atlas saving failed', { cause: err });
       }
       tracer.log('Atlas saved');
 
@@ -1265,7 +1303,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       const sourceUS = me.getUserFromUserId(data.uid);
       let json = data.metadata;
       json.modified = (new Date()).toJSON();
-      json.modifiedBy = (sourceUS.User && sourceUS.User.username) ? sourceUS.User.username : 'anonymous';
+      json.modifiedBy = (sourceUS && sourceUS.User && sourceUS.User.username) ? sourceUS.User.username : 'anonymous';
 
       // eslint-disable-next-line max-statements
       await lock.acquire('mri', async function () {
@@ -1328,13 +1366,16 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       });
 
       // Save current atlas
-      const sourceUS = me.getUserFromUserId(data.uid);
+      const sourceUS = me._getUserWithUserData(data.uid, 'atlas');
+      if (!sourceUS) {
+        return;
+      }
       const { iAtlas } = sourceUS.User;
       const atlas = me.Atlases[iAtlas];
       try {
         await me.saveAtlasAtIndex(iAtlas);
       } catch (err) {
-        throw new Error('Save atlas failed');
+        throw new Error('Save atlas failed', { cause: err });
       }
 
       tracer.log('    Replace current atlas with new atlas');
@@ -1366,7 +1407,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       try {
         await Promise.all(results);
       } catch (err) {
-        throw new Error('Can\'t unload atlases', err);
+        // called without waiting for it, when a user loads an atlas: log only
+        tracer.log('ERROR: Can\'t unload atlases', err);
       }
     },
     _sendAtlasVoxelDataToUser: function (atlasdata, userSocket, flagCompress) {
@@ -1560,7 +1602,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
             me.Atlases[iAtlas] = theAtlas;
             User.iAtlas = iAtlas; // `a${me.Atlases.indexOf(theAtlas)}`;
             theAtlas.timer = setInterval(function () {
-              me.saveAtlasAtIndex(User.iAtlas);
+              me.saveAtlasAtIndex(User.iAtlas)
+                .catch((err) => tracer.log('ERROR: Periodic atlas backup failed', err));
             }, me.backupInterval);
 
             resolve(theAtlas);
@@ -1641,6 +1684,11 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
     // eslint-disable-next-line max-statements
     receiveUserDataMessage: function (data, userSocket) {
       const sourceUS = me.getUserFromUserId(data.uid);
+      if (!sourceUS) {
+        tracer.log(`WARNING: Ignoring 'userData' message from unknown connection ${data.uid}`);
+
+        return;
+      }
 
       let User;
       const firstConnectionFlag = me._isUserFirstConnection(sourceUS.User);
@@ -1648,6 +1696,11 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       if (data.description === 'allUserData') {
         // receiving the complete User data object
         User = data.user;
+        if (typeof User !== 'object' || User === null) {
+          tracer.log(`WARNING: 'allUserData' without a user object from ${data.uid}`);
+
+          return;
+        }
         User.uid = data.uid;
       } else {
         ({ User } = sourceUS);
@@ -1663,7 +1716,14 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         } else {
           // receive a specific field of the User data object from the user
           /** @todo If the atlas/mri for the client failed to be sent, `User` is undefined */
-          const changes = JSON.parse(data.description);
+          let changes;
+          try {
+            changes = JSON.parse(data.description);
+          } catch (err) {
+            tracer.log(`WARNING: Ignoring 'userData' message with an invalid description from ${data.uid}`);
+
+            return;
+          }
           for (const i in changes) {
             if ({}.hasOwnProperty.call(changes, i)) {
               User[i] = changes[i];
@@ -1719,6 +1779,11 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
     },
     declareAutocompleteClient: function (data/*, userSocket*/) {
       const sourceUS = me.getUserFromUserId(data.uid);
+      if (!sourceUS) {
+        tracer.log(`WARNING: Ignoring 'autocompleteClient' message from unknown connection ${data.uid}`);
+
+        return;
+      }
 
       sourceUS.User = {
         autocompleteClient: true,
@@ -1859,13 +1924,16 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         me.receiveRequestSlice2Message(data, ws); // sender);
         break;
       case 'save':
-        me.receiveSaveMessage(data, ws);
+        me.receiveSaveMessage(data, ws)
+          .catch((err) => tracer.log('ERROR: save message failed', err));
         break;
       case 'saveMetadata':
-        me.receiveSaveMetadataMessage(data, ws); // sender);
+        me.receiveSaveMetadataMessage(data, ws) // sender);
+          .catch((err) => tracer.log('ERROR: saveMetadata message failed', err));
         break;
       case 'atlas':
-        me.receiveAtlasFromUserMessage(data, ws); // sender);
+        me.receiveAtlasFromUserMessage(data, ws) // sender);
+          .catch((err) => tracer.log('ERROR: atlas message failed', err));
         break;
       case 'echo':
         tracer.log(`ECHO: "${data.msg}" from user ${data.username} (${data.uid})`);
@@ -1972,17 +2040,35 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         }
       }
     },
+    // eslint-disable-next-line max-statements
     _handleWebSocketMessage: function ({ msg, ws }) {
       // var sender = ws;
       const sourceUS = me.getUserFromSocket(ws);
       let data = {};
+
+      if (sourceUS === -1) {
+        tracer.log('WARNING: Ignoring message from a socket that is not connected');
+
+        return;
+      }
 
       // Handle binary data: a user uploaded an atlas file
       if (msg instanceof Buffer) {
         data.data = msg;
         data.type = 'atlas';
       } else {
-        data = JSON.parse(msg);
+        try {
+          data = JSON.parse(msg);
+        } catch (err) {
+          tracer.log(`WARNING: Ignoring message that is not JSON from ${sourceUS.uid}`);
+
+          return;
+        }
+        if (typeof data !== 'object' || data === null) {
+          tracer.log(`WARNING: Ignoring message that is not an object from ${sourceUS.uid}`);
+
+          return;
+        }
       }
       data.uid = sourceUS.uid;
 
@@ -2039,7 +2125,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           try {
             await me.unloadAtlas(sourceUS.User.dirname, sourceUS.User.atlasFilename, sourceUS.specimenName);
           } catch (err) {
-            throw new Error('Can\'t unload atlas', err);
+            // log, and still remove the user
+            tracer.log('ERROR: Can\'t unload atlas', err);
           }
         }
       } else {
@@ -2103,13 +2190,18 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       }
       me._connectNewUser({ ws, req });
       ws.on('message', function (msg) {
-        me._handleWebSocketMessage({ msg, ws });
+        // an exception here would stop the server
+        try {
+          me._handleWebSocketMessage({ msg, ws });
+        } catch (err) {
+          tracer.log('ERROR: Can\'t handle WebSocket message', err);
+        }
       });
       ws.on('close', async function () {
         try {
           await me._disconnectUser({ ws });
         } catch (err) {
-          throw new Error('Can\'t disconnect user', err);
+          tracer.log('ERROR: Can\'t disconnect user', err);
         }
       });
     },
