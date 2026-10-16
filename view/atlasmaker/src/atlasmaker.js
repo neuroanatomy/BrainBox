@@ -165,6 +165,8 @@ const me = {
   flagConnected: 0, // boolean, is the user is currently connected to the server?
   reconnectionTimeout: 5, // reconnection timeout starts at 5 seconds, used in case of websocket cuts
   flagLoadingImg: {loading:false}, // is an image is loading?
+  drawScheduled: false, // is a redraw waiting for the next animation frame? (drawImages)
+  drawPending: null, // the atlas view and slice that redraw will show
   isMRILoaded: false, // is the currently requested MRI already loaded in the server?
 
   clickDownTools: [], // array, functions handling clicks made by different tools: show, paint, erase, ...

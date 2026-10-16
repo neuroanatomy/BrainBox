@@ -160,27 +160,53 @@ export const AtlasMakerDraw = {
   },
 
   /**
-   * Draw the current brain image, atlas image and information overlay
+   * Draw the current brain image, atlas image and information overlay at the
+   * next animation frame, and ask the server for the user's slice now if it is
+   * not the one shown. Painting, other users' strokes, the slice slider and the
+   * slices that arrive each ask for a redraw, often more than once per frame,
+   * and each redraw goes over every pixel of the slice although only the last
+   * one is seen: the calls made before a frame give one redraw
+   * (from PR #342, bb8e33b, Nicolas Traut).
    * @function drawImages
    * @returns {void}
    */
   drawImages: function () {
     const me = AtlasMakerWidget;
+    // the atlas slice a draw made now would show, before a slice request changes it
+    me.drawPending = { view: me.flagLoadingImg.view, slice: me.flagLoadingImg.slice };
+    if(!me.drawScheduled) {
+      me.drawScheduled = true;
+      window.requestAnimationFrame(() => {
+        me.drawScheduled = false;
+        me.drawImagesNow();
+      });
+    }
+
+    if(!me.brainImg.img || me.brainImg.view !== me.User.view || me.brainImg.slice !== me.User.slice) {
+      me.sendRequestSliceMessage();
+    }
+  },
+
+  /**
+   * Draw the current brain image, atlas image and information overlay right
+   * away. Called by drawImages at the next frame
+   * @function drawImagesNow
+   * @returns {void}
+   */
+  drawImagesNow: function () {
+    const me = AtlasMakerWidget;
+    const { view, slice } = me.drawPending || me.flagLoadingImg;
     if(me.brainImg.img
-           && me.flagLoadingImg.view
+           && view
            // eslint-disable-next-line no-undefined
-           && me.flagLoadingImg.slice !== undefined) {
+           && slice !== undefined) {
       me.context.clearRect(0, 0, me.context.canvas.width, me.canvas.height);
       me.displayInformation();
 
       // me.nearestNeighbour(me.context);
 
       me.context.drawImage(me.brainImg.img, 0, 0, me.brainW, me.brainH*me.brainHdim/me.brainWdim);
-      me.drawAtlasImage(me.flagLoadingImg.view, me.flagLoadingImg.slice);
-    }
-
-    if(!me.brainImg.img || me.brainImg.view !== me.User.view || me.brainImg.slice !== me.User.slice) {
-      me.sendRequestSliceMessage();
+      me.drawAtlasImage(view, slice);
     }
   },
 
