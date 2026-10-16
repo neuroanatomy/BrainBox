@@ -118,6 +118,14 @@ const start = async function () {
   const server = http.createServer(app).listen(3001, () => { console.log('Listening http on port 3001'); });
   const atlasmakerServer = new AtlasmakerServer(db, nativeDb);
   atlasmakerServer.dataDirectory = dirname + '/public';
+  // NeuroWebLab's session middleware (express-session), so that the WebSocket
+  // server knows who opened a connection from its session cookie
+  const sessionLayer = app._router.stack.find((layer) => layer.name === 'session');
+  if (sessionLayer) {
+    atlasmakerServer.sessionParser = sessionLayer.handle;
+  } else {
+    console.error('ERROR: no session middleware: the WebSocket server will treat every user as anonymous');
+  }
 
   if (Config.secure) {
     const options = {

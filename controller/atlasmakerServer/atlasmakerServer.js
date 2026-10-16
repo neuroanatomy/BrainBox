@@ -13,10 +13,17 @@ const amri = require('./atlasmaker-mri');
 const AsyncLock = require('async-lock');
 const lock = new AsyncLock();
 const EmbedAccessService = require('../../services/EmbedAccessService');
+const { usernameFromCookie, atlasAccessLevel, canEdit } = require('./atlas-write-access');
 
 // WebSocket message types that write to an atlas/annotation - never applied on
 // a connection tagged isEmbed, regardless of what the client claims about editMode.
 const embedWriteBlockedTypes = ['paint', 'vectorial', 'save', 'saveMetadata', 'atlas'];
+
+// WebSocket message types that write to the atlas the user has open: applied
+// only if the user, as the HTTP session says, has 'edit' access to that atlas.
+const atlasWriteTypes = ['paint', 'vectorial', 'save', 'atlas'];
+// how long an access decision is used before it is checked again (access can change)
+const writeAccessMaxAge = 10 * 1000;
 
 // Get whitelist and blacklist
 const useWhitelist = false;
@@ -76,6 +83,10 @@ const AtlasmakerServer = function (db, nativeDb) {
     recordWS: false,
     recordedWSTraffic: [],
     colormap: [{ r: 0, g: 0, b: 0 }],
+    // the app's session middleware, to know who opened a connection (set by app.js)
+    sessionParser: null,
+    // 'enforce': refuse writes without edit access; 'log': only log them
+    writeAccessMode: process.env.WS_ACCESS_CHECK === 'log' ? 'log' : 'enforce',
 
     traceLog: function (f, l) {
       if (typeof l === 'undefined' || me.debug > l) {
@@ -1354,6 +1365,10 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           // DEBUG: tracer.log("inserted mri:", JSON.stringify(json));
         }
       });
+
+      // the atlases' access may have changed (and a project page saves the
+      // layers it creates only after opening them)
+      me.refreshWriteAccessToMRI(json.source);
     },
     receiveAtlasFromUserMessage: async function (data) {
       const atlasData = await new Promise((resolve, reject) => {
@@ -1663,6 +1678,9 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       const { iAtlas, atlasLoadedFlag } = me._findAtlas({ dirname: User.dirname, atlasFilename: User.atlasFilename });
       User.iAtlas = iAtlas; // value i if it was found, or last available if it wasn't
 
+      // check now whether the user may edit it, before the first stroke
+      me.refreshWriteAccess(sourceUS, { dirname: User.dirname, filename: User.atlasFilename, source: User.source });
+
       // 2. Send the atlas to the user (load it if required)
       if (atlasLoadedFlag) {
         if (firstConnectionFlag || switchingAtlasFlag) {
@@ -1898,11 +1916,163 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
 
       return isInBlacklist;
     },
-    _handleUserWebSocketMessage: function ({ data, ws, sourceUS }) {
-      if (sourceUS && sourceUS.isEmbed && embedWriteBlockedTypes.includes(data.type)) {
-        tracer.log(`REJECTED write attempt (${data.type}) from embed-only connection ${sourceUS.uid}`);
+    //========================================================================================
+    // Write access
+    //========================================================================================
+    /**
+     * The atlas a write message from this connection would change
+     * @param {object} sourceUS The connection
+     * @param {string} type The message type
+     * @returns {object|null} { dirname, filename, source }, or null if there is none
+     */
+    _writeTarget: function (sourceUS, type) {
+      const { User } = sourceUS;
+      if (!User) {
+        return null;
+      }
+      let atlas;
+      if (type === 'save') {
+        const iAtlas = me.indexOfAtlasAtPath(User.dirname, User.atlasFilename);
+        atlas = (typeof iAtlas === 'undefined') ? null : me.Atlases[iAtlas];
+      } else if ({}.hasOwnProperty.call(me.Atlases, User.iAtlas)) {
+        atlas = me.Atlases[User.iAtlas];
+      }
+      if (!atlas) {
+        return null;
+      }
 
-        return;
+      return { dirname: atlas.dirname, filename: atlas.filename, source: User.source };
+    },
+
+    /**
+     * Check again whether a connection may edit an atlas: the user from the
+     * session cookie sent when the socket was opened (read again each time, so
+     * a logout counts), the access from the database
+     * @param {object} sourceUS The connection
+     * @param {object} target { dirname, filename, source } of the atlas
+     * @returns {Promise<boolean>} True if the connection may edit the atlas
+     */
+    refreshWriteAccess: function (sourceUS, target) {
+      if (!sourceUS.writeAccess) {
+        sourceUS.writeAccess = {};
+      }
+      const key = target.dirname + target.filename;
+      let entry = sourceUS.writeAccess[key];
+      if (!entry) {
+        entry = { allowed: false, checkedAt: 0, pending: null };
+        sourceUS.writeAccess[key] = entry;
+      }
+      entry.target = target;
+      if (entry.pending) {
+        return entry.pending;
+      }
+      entry.pending = (async () => {
+        try {
+          const username = await usernameFromCookie(me.sessionParser, sourceUS.cookie);
+          const level = await atlasAccessLevel(nativeDb, { username, ...target });
+          entry.allowed = canEdit(level);
+          entry.description = `${username || 'anonymous'} has '${level}' access`;
+        } catch (err) {
+          tracer.log(`ERROR: Can't check the access of ${sourceUS.uid} to ${key}`, err);
+          entry.allowed = false;
+          entry.description = 'access unknown';
+        }
+        entry.checkedAt = Date.now();
+        entry.refusalLogged = false;
+        entry.pending = null;
+
+        return entry.allowed;
+      })();
+
+      return entry.pending;
+    },
+
+    /**
+     * Check again the access of every connection to the atlases of an MRI,
+     * after its document changed
+     * @param {string} source The MRI's source
+     * @returns {void}
+     */
+    refreshWriteAccessToMRI: function (source) {
+      for (const US of me.US) {
+        if (US && US.writeAccess) {
+          for (const entry of Object.values(US.writeAccess)) {
+            if (entry.target && entry.target.source === source) {
+              me.refreshWriteAccess(US, entry.target);
+            }
+          }
+        }
+      }
+    },
+
+    /**
+     * Whether a write message from a connection may be applied. Decides from
+     * the last check (made when the atlas was opened, and again when it is
+     * older than writeAccessMaxAge), so messages are handled in order
+     * @param {object} sourceUS The connection
+     * @param {string} type The message type
+     * @returns {boolean} True if the message may be applied
+     */
+    _mayWrite: function (sourceUS, type) {
+      const target = me._writeTarget(sourceUS, type);
+      if (!target) {
+        me._logRefusedWrite(sourceUS, type, null, 'no atlas open');
+
+        return me.writeAccessMode === 'log';
+      }
+      const key = target.dirname + target.filename;
+      let entry = sourceUS.writeAccess && sourceUS.writeAccess[key];
+      if (!entry || (!entry.pending && Date.now() - entry.checkedAt > writeAccessMaxAge)) {
+        me.refreshWriteAccess(sourceUS, target);
+        entry = sourceUS.writeAccess[key];
+      }
+      if (entry.checkedAt && entry.allowed) {
+        return true;
+      }
+      // log once per check, not for every stroke
+      if (!entry.refusalLogged) {
+        me._logRefusedWrite(sourceUS, type, key, entry.checkedAt ? entry.description : 'access not checked yet');
+        entry.refusalLogged = true;
+      }
+
+      return me.writeAccessMode === 'log';
+    },
+    _logRefusedWrite: function (sourceUS, type, atlasPath, reason) {
+      const what = (me.writeAccessMode === 'log') ? 'WOULD REJECT' : 'REJECTED';
+      tracer.log(`${what} write (${type}) to ${atlasPath || 'no atlas'} from ${sourceUS.uid}: ${reason}`);
+    },
+
+    /**
+     * Whether a message from a connection must be refused: writes from embed
+     * connections, and writes to an atlas the user may not edit
+     * @param {object} sourceUS The connection
+     * @param {string} type The message type
+     * @returns {boolean} True if the message must be refused
+     */
+    _isRefused: function (sourceUS, type) {
+      if (!sourceUS) {
+        return false;
+      }
+      if (sourceUS.isEmbed && embedWriteBlockedTypes.includes(type)) {
+        tracer.log(`REJECTED write attempt (${type}) from embed-only connection ${sourceUS.uid}`);
+
+        return true;
+      }
+
+      return atlasWriteTypes.includes(type) && !me._mayWrite(sourceUS, type);
+    },
+
+    /**
+     * Apply a message from a connection
+     * @param {object} params Parameters
+     * @param {object} params.data The message
+     * @param {object} params.ws The socket
+     * @param {object} params.sourceUS The connection
+     * @returns {boolean} False if the message was refused (and must not be broadcast)
+     */
+    _handleUserWebSocketMessage: function ({ data, ws, sourceUS }) {
+      if (me._isRefused(sourceUS, data.type)) {
+        return false;
       }
       switch (data.type) {
       case 'userData':
@@ -1968,6 +2138,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       default:
         break;
       }
+
+      return true;
     },
     _fitsBroadcastExclusionCriteria: function ({ sourceUS, targetUS }) {
       let exclude = false;
@@ -2081,8 +2253,10 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         }
       }
 
-      // handle single user Web socket messages
-      me._handleUserWebSocketMessage({ data, ws, sourceUS });
+      // handle single user Web socket messages; refused writes are not broadcast either
+      if (me._handleUserWebSocketMessage({ data, ws, sourceUS }) === false) {
+        return;
+      }
 
       // handle broadcast of messages
       me._handleBroadcastWebSocketMessage({ data, sourceUS });
@@ -2147,6 +2321,12 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       me.uidcounter += 1;
 
       const newUS = { 'uid': 'u' + me.uidcounter, 'socket': ws };
+
+      // The session cookie the browser sent with the upgrade request: who the
+      // user is, for the write access checks (never the username the client sends)
+      if (req && req.headers && typeof req.headers.cookie === 'string') {
+        newUS.cookie = req.headers.cookie;
+      }
 
       // Tag the connection as embed-only from a server-verified ticket, never from
       // anything the client sends afterward over the socket itself. An unknown/expired

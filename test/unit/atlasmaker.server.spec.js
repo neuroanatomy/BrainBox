@@ -1435,7 +1435,7 @@ describe('UNIT TESTING ATLASMAKER SERVER', function() {
 
       it('should still apply a "paint" message from a non-embed connection (negative control)', function () {
         const atlasKey = 'test_embed_reject_control';
-        AMS.Atlases[atlasKey] = { data: Buffer.alloc(1000).fill(0), dim: [10, 10, 10] };
+        AMS.Atlases[atlasKey] = { data: Buffer.alloc(1000).fill(0), dim: [10, 10, 10], dirname: '/data/control/', filename: 'test.nii.gz' };
         const ws = mockSocket();
         const userProps = {
           username: 'painter',
@@ -1452,6 +1452,8 @@ describe('UNIT TESTING ATLASMAKER SERVER', function() {
           dim: [10, 10, 10]
         };
         const us = addMockUser(ws, userProps);
+        // an editor, as checked when the atlas was opened
+        us.writeAccess = { '/data/control/test.nii.gz': { allowed: true, checkedAt: Date.now(), pending: null } };
 
         AMS._handleUserWebSocketMessage({
           data: { type: 'paint', uid: us.uid, data: { c: 'me', x: 1, y: 1 } },

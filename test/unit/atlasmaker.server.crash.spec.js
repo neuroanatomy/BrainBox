@@ -235,11 +235,14 @@ describe('UNIT TESTING ATLASMAKER SERVER: bad input and failures do not crash th
 
     it('a save message whose save fails does not leave a rejection', async function () {
       const sourceUS = addUser({ dirname: '/d/', atlasFilename: 'a.nii.gz' });
+      // an editor, as checked when the atlas was opened
+      sourceUS.writeAccess = { '/d/a.nii.gz': { allowed: true, checkedAt: Date.now(), pending: null } };
       AMS.Atlases.a1 = { dirname: '/d/', filename: 'a.nii.gz' };
       sinon.stub(AMS, 'saveAtlasAtIndex').rejects(new Error('disk full'));
       const reasons = await unhandledRejectionsOf(() => {
         AMS._handleUserWebSocketMessage({ data: { type: 'save', uid: sourceUS.uid }, ws: sourceUS.socket, sourceUS });
       });
+      expect(AMS.saveAtlasAtIndex.called).to.equal(true);
       expect(reasons).to.deep.equal([]);
     });
 
