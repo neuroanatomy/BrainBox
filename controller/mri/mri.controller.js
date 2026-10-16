@@ -12,6 +12,7 @@ const dataSlices = require('../dataSlices/dataSlices.js');
 const { AccessType, AccessLevel } = require('neuroweblab');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 const EmbedAccessService = require('../../services/EmbedAccessService');
+const { projectsForMetadata, mayChangeMri } = require('../atlasmakerServer/metadata-save-access');
 const { jsonForScript } = require('../utils/jsonForScript');
 const _ = require('lodash');
 const AsyncLock = require('async-lock');
@@ -555,6 +556,24 @@ const apiMriLayers = async function (req, res) {
   res.json({ layers });
 };
 
+/**
+ * Whether the server has the image of an MRI: its file, and its dimensions
+ * (otherwise POST /mri/json downloads it)
+ * @param {Object} req Express request
+ * @param {Object} json The stored MRI document
+ * @param {string} myurl The MRI's source URL
+ * @returns {boolean} True if it has
+ */
+const hasMriImage = function (req, json, myurl) {
+  const hash = crypto.createHash('md5').update(myurl)
+    .digest('hex');
+  const filename = json.filename || url.parse(myurl).pathname.split('/').pop();
+  const filepath = req.dirname + '/public/data/' + hash + '/' + sanitize(filename);
+
+  // eslint-disable-next-line no-sync
+  return fs.existsSync(filepath) && Boolean(json.dim);
+};
+
 const removeVariablesFromURL = function (myurl) {
   return myurl.split('&')[0];
 };
@@ -583,11 +602,6 @@ const apiMriPost = async function (req, res) {
   myurl = removeVariablesFromURL(myurl);
   console.log('url:', myurl);
 
-  const hash = crypto
-    .createHash('md5')
-    .update(myurl)
-    .digest('hex');
-
   // It's fine to post(/mri/json) without being authenticated
   // if (!req.isAuthenticated()) {
   //     return res.status(403).send({error: "Provide authentication"}).end();
@@ -611,19 +625,10 @@ const apiMriPost = async function (req, res) {
       // If the json object is empty, request download
       console.log('No DB entry for MRI: download');
       doDownload = true;
-    } else {
-      // If the json object exists, but there's no file, download
-      const filename = json.filename || url.parse(myurl).pathname.split('/').pop();
-      const filepath = req.dirname + '/public/data/' + hash + '/' + sanitize(filename);
-      // eslint-disable-next-line no-sync
-      if (!fs.existsSync(filepath)) {
-        console.log('No MRI file in server: download');
-        doDownload = true;
-      } else if (!json.dim) {
-        // If the json object exists, there's a file, but no .dim object, download
-        // If(debug>1) console.log("No dim[] field in DB entry: download");
-        doDownload = true;
-      }
+    } else if (!hasMriImage(req, json, myurl)) {
+      // If the json object exists, but there's no file, or no .dim object, download
+      console.log('No MRI file in server: download');
+      doDownload = true;
     }
   }
 
@@ -891,6 +896,25 @@ const apiMriUploadFromURL = async function (req, res) {
     return;
   }
 
+  // Anyone may give an MRI its image the first time (the server could not
+  // download it), but only its owner, or a user who may edit the files of a
+  // project that lists it, may replace an image the server has
+  let json = await req.nativeDb.collection('mri').findOne({ source: myurl, backup: { $exists: false } }, { projection: { _id: 0 } });
+  if (json && hasMriImage(req, json, myurl)) {
+    const username = req.isAuthenticated() ? req.user.username : null;
+    const projects = username ? await projectsForMetadata(req.nativeDb, myurl, [json]) : new Map();
+    if (!mayChangeMri({ stored: json, username, projects })) {
+      console.log(`REJECTED upload-from-url of ${myurl} by ${username || 'anonymous'}: the MRI already has its image`);
+      await fs.promises.rm(req.file.path, { force: true });
+      res.status(username ? 403 : 401).json({
+        success: false,
+        error: username ? 'You may not replace the image of this MRI' : 'Log in to replace the image of this MRI'
+      });
+
+      return;
+    }
+  }
+
   const hash = crypto.createHash('md5').update(myurl)
     .digest('hex');
   const filename = sanitize(url.parse(myurl).pathname.split('/').pop());
@@ -924,8 +948,6 @@ const apiMriUploadFromURL = async function (req, res) {
       username = ip;
     }
 
-    // Check for existing DB entry
-    let json = await req.nativeDb.collection('mri').findOne({ source: myurl, backup: { $exists: false } }, { projection: { _id: 0 } });
     if (!json) {
       json = {
         source: myurl,

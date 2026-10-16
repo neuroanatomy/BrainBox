@@ -117,6 +117,24 @@ const projectListsFile = (project, source) => {
 };
 
 /**
+ * Whether a user may change an MRI itself (its name, its image): its owner, or a
+ * user who may edit the files of a project that lists it
+ * @param {object} params Parameters
+ * @param {object} params.stored The stored MRI document
+ * @param {string|null} params.username The server-verified username, or null
+ * @param {Map} params.projects shortname -> project (see projectsForMetadata)
+ * @returns {boolean} True if the user may
+ */
+const mayChangeMri = ({ stored, username, projects }) => {
+  if (!username) {
+    return false;
+  }
+
+  return stored.owner === username || [...projects.values()].some((p) => projectListsFile(p, stored.source) &&
+    mayEditLevel(projectAccessLevel(p, username, AccessType.FILES)));
+};
+
+/**
  * The text of a text annotation, to tell a real change from a page that only
  * initialised the entry or updated its date
  * @param {object} entry The annotation
@@ -334,8 +352,7 @@ const mergeMetadata = ({ stored, incoming, username, projects }) => {
     projects,
     isOwner,
     who: username || 'anonymous',
-    canRename: isOwner || [...projects.values()].some((p) => projectListsFile(p, stored.source) &&
-      mayEditLevel(projectAccessLevel(p, username, AccessType.FILES))),
+    canRename: mayChangeMri({ stored, username, projects }),
     refuse: (path, reason, userReason, notify = true) => refused.push({ path, reason, userReason, notify })
   };
 
@@ -398,4 +415,4 @@ const savedView = (doc, incoming) => {
   return JSON.parse(JSON.stringify(view)); // without the fields that are not stored
 };
 
-module.exports = { mergeMetadata, projectsForMetadata, savedView, projectAccessLevel };
+module.exports = { mergeMetadata, projectsForMetadata, savedView, projectAccessLevel, mayChangeMri };
