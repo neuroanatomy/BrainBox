@@ -12,7 +12,7 @@ const dataSlices = require('../dataSlices/dataSlices.js');
 const { AccessType, AccessLevel } = require('neuroweblab');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 const EmbedAccessService = require('../../services/EmbedAccessService');
-const { projectsForMetadata, mayChangeMri } = require('../atlasmakerServer/metadata-save-access');
+const { projectsForMetadata, mayChangeMri, projectAccessLevel } = require('../atlasmakerServer/metadata-save-access');
 const { jsonForScript } = require('../utils/jsonForScript');
 const _ = require('lodash');
 const AsyncLock = require('async-lock');
@@ -300,6 +300,35 @@ const getRelatedProjects = async function (nativeDb, json, myurl) {
     .toArray());
 
   return projects;
+};
+
+/**
+ * Leave out of an MRI document what a user cannot see, as the MRI page does:
+ * the layers of the projects whose annotations are hidden from the user (the
+ * others get the user's access), and, as GET /mri/json does, their text
+ * annotations
+ * @param {Object} nativeDb Native MongoDB driver database instance
+ * @param {Object} json The MRI document, changed here
+ * @param {string} myurl The MRI's source URL
+ * @param {string} loggedUser The username, or 'anonymous'
+ * @returns {Promise<void>} Once it is filtered
+ */
+const filterMriForUser = async function (nativeDb, json, myurl, loggedUser) {
+  if (json.mri && !json.mri.atlas) {
+    json.mri.atlas = [];
+  }
+  if (!json.mri) {
+    return;
+  }
+  const projects = await getRelatedProjects(nativeDb, json, myurl);
+  BrainboxAccessControlService.setVolumeAnnotationsAccessByProjects(json, projects, loggedUser);
+  if (_.isPlainObject(json.mri.annotations)) {
+    for (const project of projects.filter(_.isObject)) {
+      if (project.shortname in json.mri.annotations && projectAccessLevel(project, loggedUser, AccessType.ANNOTATIONS) === 'none') {
+        delete json.mri.annotations[project.shortname];
+      }
+    }
+  }
 };
 
 const isFilePubliclyVisible = function (projects) {
@@ -681,6 +710,14 @@ const apiMriPost = async function (req, res) {
       res.json(downloadQueue[myurl]);
     }
   } else {
+    if (!json) {
+      res.status(404).json({ error: 'Not found' });
+
+      return;
+    }
+    // what the user cannot see is left out, also of a single variable
+    await filterMriForUser(req.nativeDb, json, myurl, req.isAuthenticated() ? req.user.username : 'anonymous');
+
     // Return a specific variable, or the complete json object
     if (doReturnAll === false) {
       console.log('Send only the requested variable to the client.');
