@@ -98,6 +98,7 @@ export const AtlasMakerWS = {
         me.receiveFunctions.disconnect = me.receiveDisconnectMessage;
         me.receiveFunctions.serverMessage = me.receiveServerMessage;
         me.receiveFunctions.vectorial = me.receiveVectorialAnnotationMessage;
+        me.receiveFunctions.writeRefused = me.receiveWriteRefusedMessage;
 
         me.receiveFunctions.requestSlice = function (data) { console.log('requestSlice', data); };
         me.receiveFunctions.requestSlice2 = function (data) { console.log('requestSlice2', data); };
@@ -169,7 +170,12 @@ export const AtlasMakerWS = {
 
     // Message: interaction message
     const data = JSON.parse(msg.data);
-    me.receiveFunctions[data.type](data);
+    const receive = me.receiveFunctions[data.type];
+    if (typeof receive === 'function') {
+      receive(data);
+    } else if (me.debug) {
+      console.log('Ignoring message of unknown type', data.type);
+    }
   },
 
   /**
@@ -755,6 +761,37 @@ export const AtlasMakerWS = {
         delay: 2000,
         doFadeOut: true
       });
+    }
+  },
+
+  writeRefusedMessage: 'You can\'t edit this layer: your changes are not saved. Reload the page or log in again.',
+
+  /**
+   * The server refused a write (paint, save...): what this page shows is not
+   * what the others see and it will not be saved. Stop editing, and say so
+   * until the page is reloaded. The strokes already drawn stay on screen
+   * (reloading the page shows the saved layer)
+   * @param {object} data { write, atlas, reason }: atlas is the layer's
+   * dirname and filename, or null if the refusal is not about one layer
+   * @returns {void}
+   */
+  receiveWriteRefusedMessage: function (data) {
+    const me = AtlasMakerWidget;
+    const shownAtlas = me.User ? me.User.dirname + me.User.atlasFilename : null;
+    if (data.atlas && data.atlas !== shownAtlas) {
+      // about a layer this page no longer shows
+      return;
+    }
+    console.warn('The server refused a write (' + data.write + '): ' + data.reason);
+    me.editMode = 0;
+    me.writeRefused = { write: data.write, atlas: data.atlas, reason: data.reason };
+
+    const text = me.writeRefusedMessage;
+    me._appendChatMessage('<b>' + DOMPurify.sanitize(text) + '</b><br />');
+    if (!me._writeRefusedDialogShown) {
+      me._writeRefusedDialogShown = true;
+      me.displayDialog({ msg: '<p>' + DOMPurify.sanitize(text) + '</p>', modal: true, delay: 0, doFadeOut: false })
+        .finally(() => { me._writeRefusedDialogShown = false; });
     }
   },
 

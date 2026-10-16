@@ -106,7 +106,8 @@ const me = {
     touchStarted:false // touch started flag
   },
   viewerState: 'loading', // 'loading' | 'ready' | 'error', see setViewerState()
-  editMode: 0, // editMode=0 to prevent editing, editMode=1 to accept it. Set by configureAtlasMaker from the atlas' access
+  editMode: 0, // editMode=0 to prevent editing, editMode=1 to accept it. Set by configureAtlasMaker from the atlas' access, and to 0 when the server refuses a write
+  writeRefused: null, // the last write the server refused: { write, atlas, reason } (see receiveWriteRefusedMessage)
   accessLevels: ['none', 'view', 'edit', 'add', 'remove'], // access levels, from lowest to highest
   fullscreen: false, // fullscreen mode?
   _fullscreenRequestTimer: null, // pending fullscreen request from configureAtlasMaker

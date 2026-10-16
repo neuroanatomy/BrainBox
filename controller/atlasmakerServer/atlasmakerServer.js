@@ -1972,10 +1972,13 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           const level = await atlasAccessLevel(nativeDb, { username, ...target });
           entry.allowed = canEdit(level);
           entry.description = `${username || 'anonymous'} has '${level}' access`;
+          // what the user is told: about their own access only
+          entry.reason = `your access to this layer is '${level}'`;
         } catch (err) {
           tracer.log(`ERROR: Can't check the access of ${sourceUS.uid} to ${key}`, err);
           entry.allowed = false;
           entry.description = 'access unknown';
+          entry.reason = 'your access to this layer could not be checked';
         }
         entry.checkedAt = Date.now();
         entry.refusalLogged = false;
@@ -2050,9 +2053,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
     _mayWrite: function (sourceUS, type) {
       const target = me._writeTarget(sourceUS, type);
       if (!target) {
-        me._logRefusedWrite(sourceUS, type, null, 'no atlas open');
-
-        return me.writeAccessMode === 'log';
+        return me._refuseWriteWithoutAtlas(sourceUS, type);
       }
       const key = target.dirname + target.filename;
       let entry = sourceUS.writeAccess && sourceUS.writeAccess[key];
@@ -2063,17 +2064,75 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       if (entry.checkedAt && entry.allowed) {
         return true;
       }
-      // log once per check, not for every stroke
+      // log and tell the user once per check, not for every stroke
       if (!entry.refusalLogged) {
-        me._logRefusedWrite(sourceUS, type, key, entry.checkedAt ? entry.description : 'access not checked yet');
+        me._logRefusedWrite(sourceUS, {
+          type,
+          atlasPath: key,
+          reason: entry.checkedAt ? entry.description : 'access not checked yet',
+          userReason: entry.checkedAt ? entry.reason : 'your access to this layer has not been checked yet'
+        });
         entry.refusalLogged = true;
       }
 
       return me.writeAccessMode === 'log';
     },
-    _logRefusedWrite: function (sourceUS, type, atlasPath, reason) {
+
+    /**
+     * A write from a connection that has no atlas open: refused (logged every
+     * time, the user told once)
+     * @param {object} sourceUS The connection
+     * @param {string} type The message type
+     * @returns {boolean} True if the message may be applied anyway ("log" mode)
+     */
+    _refuseWriteWithoutAtlas: function (sourceUS, type) {
+      me._logRefusedWrite(sourceUS, {
+        type,
+        atlasPath: null,
+        reason: 'no atlas open',
+        userReason: sourceUS.noAtlasRefusalSent ? null : 'no layer is open'
+      });
+      sourceUS.noAtlasRefusalSent = true;
+
+      return me.writeAccessMode === 'log';
+    },
+
+    /**
+     * Log a refused write, and tell the user (not in "log" mode)
+     * @param {object} sourceUS The connection
+     * @param {object} refusal The refusal
+     * @param {string} refusal.type The message type
+     * @param {string|null} refusal.atlasPath The atlas it would have changed
+     * @param {string} refusal.reason Why, for the log
+     * @param {string|null} refusal.userReason Why, for the user (about them only), or null not to tell them
+     * @returns {void}
+     */
+    _logRefusedWrite: function (sourceUS, { type, atlasPath, reason, userReason }) {
       const what = (me.writeAccessMode === 'log') ? 'WOULD REJECT' : 'REJECTED';
       tracer.log(`${what} write (${type}) to ${atlasPath || 'no atlas'} from ${sourceUS.uid}: ${reason}`);
+      if (userReason && me.writeAccessMode !== 'log') {
+        me._sendWriteRefused(sourceUS, { write: type, atlas: atlasPath, reason: userReason });
+      }
+    },
+
+    /**
+     * Tell a connection that a write it sent was refused, so that the page stops
+     * showing changes nobody else sees and that are not saved (not in "log"
+     * mode, where the write is applied). Browsers that do not know the message
+     * type ignore it
+     * @param {object} sourceUS The connection
+     * @param {object} notice The notice
+     * @param {string} notice.write The type of the message refused ('paint', 'save', ...)
+     * @param {string|null} notice.atlas The atlas it would have changed (its dirname and filename), if any
+     * @param {string} notice.reason Why, about this user only
+     * @returns {void}
+     */
+    _sendWriteRefused: function (sourceUS, { write, atlas, reason }) {
+      try {
+        sourceUS.socket.send(JSON.stringify({ type: 'writeRefused', write, atlas, reason }));
+      } catch (err) {
+        tracer.log(`ERROR: Can't tell ${sourceUS.uid} that a write was refused`, err);
+      }
     },
 
     /**
@@ -2089,6 +2148,11 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       }
       if (sourceUS.isEmbed && embedWriteBlockedTypes.includes(type)) {
         tracer.log(`REJECTED write attempt (${type}) from embed-only connection ${sourceUS.uid}`);
+        if (!sourceUS.embedRefusalSent) {
+          // refused whatever the mode: an embedded viewer is never editable
+          me._sendWriteRefused(sourceUS, { write: type, atlas: null, reason: 'an embedded viewer cannot edit' });
+          sourceUS.embedRefusalSent = true;
+        }
 
         return true;
       }

@@ -390,6 +390,75 @@ describe('UNIT TESTING WEBSOCKET WRITE ACCESS', function () {
       expect(appliedWrites(sourceUS)).to.deep.equal(allWrites);
     });
 
+    /**
+     * The writeRefused notices sent to a connection
+     * @param {object} sourceUS The connection
+     * @returns {Array} The notices
+     */
+    const notices = (sourceUS) => sourceUS.socket.send.args
+      .map(([msg]) => JSON.parse(msg))
+      .filter((msg) => msg.type === 'writeRefused');
+
+    it('tells a user whose writes are refused, once and not for every stroke', async function () {
+      const sourceUS = await openAtlas({ cookie: 'connect.sid=bar', username: 'bar', filename: 'project.nii.gz' });
+      expect(appliedWrites(sourceUS)).to.deep.equal([]);
+      appliedWrites(sourceUS);
+      expect(notices(sourceUS)).to.deep.equal([
+        {
+          type: 'writeRefused',
+          write: 'paint',
+          atlas: dirname + 'project.nii.gz',
+          reason: 'your access to this layer is \'view\''
+        }
+      ]);
+    });
+
+    it('does not tell an anonymous user who the server thinks they are', async function () {
+      const sourceUS = await openAtlas({ username: 'foo', filename: 'project.nii.gz' });
+      appliedWrites(sourceUS);
+      expect(notices(sourceUS)).to.have.length(1);
+      expect(JSON.stringify(notices(sourceUS))).not.to.match(/anonymous|foo/);
+    });
+
+    it('tells the user again after a new check of the access', async function () {
+      const sourceUS = await openAtlas({ filename: 'viewonly.nii.gz' });
+      appliedWrites(sourceUS);
+      sourceUS.writeAccess[dirname + 'viewonly.nii.gz'].checkedAt -= 60 * 1000;
+      appliedWrites(sourceUS); // starts a new check
+      await sourceUS.writeAccess[dirname + 'viewonly.nii.gz'].pending;
+      appliedWrites(sourceUS);
+      expect(notices(sourceUS)).to.have.length(2);
+    });
+
+    it('tells nothing to a user whose writes are applied', async function () {
+      const sourceUS = await openAtlas({ cookie: 'connect.sid=editor', filename: 'project.nii.gz' });
+      expect(appliedWrites(sourceUS)).to.deep.equal(allWrites);
+      expect(notices(sourceUS)).to.deep.equal([]);
+    });
+
+    it('tells nothing in "log" mode, where the writes are applied', async function () {
+      const sourceUS = await openAtlas({ filename: 'viewonly.nii.gz' });
+      AMS.writeAccessMode = 'log';
+      appliedWrites(sourceUS);
+      expect(notices(sourceUS)).to.deep.equal([]);
+    });
+
+    it('tells, once, a connection that writes without an atlas open', function () {
+      const ws = mockSocket();
+      AMS._connectNewUser({ ws, req: { url: '/', headers: {} } });
+      const sourceUS = AMS.getUserFromSocket(ws);
+      sourceUS.User = { iAtlas: 'a404', dirname, atlasFilename: 'public.nii.gz', source };
+      appliedWrites(sourceUS);
+      expect(notices(sourceUS)).to.deep.equal([{ type: 'writeRefused', write: 'paint', atlas: null, reason: 'no layer is open' }]);
+    });
+
+    it('tells, once, an embed connection that writes', async function () {
+      const sourceUS = await openAtlas({ filename: 'public.nii.gz' });
+      sourceUS.isEmbed = true;
+      expect(appliedWrites(sourceUS)).to.deep.equal([]);
+      expect(notices(sourceUS)).to.deep.equal([{ type: 'writeRefused', write: 'paint', atlas: null, reason: 'an embedded viewer cannot edit' }]);
+    });
+
     it('the session cookie of the upgrade request is kept with the connection', function () {
       const ws = mockSocket();
       AMS._connectNewUser({ ws, req: { url: '/', headers: { cookie: 'connect.sid=editor' } } });
