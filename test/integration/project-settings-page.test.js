@@ -233,6 +233,31 @@ describe('TESTING THE PROJECT SETTINGS PAGE SCRIPT (project-settings-page.js)', 
     assert.deepEqual(opened.pageErrors, []);
   }).timeout(U.longTimeout);
 
+  it('lets the user click the empty URL cell of a file added with "+"', async function () {
+    opened = await openSettingsPage(browser);
+    const { page } = opened;
+    await waitForAllFiles(page);
+    await page.click('button[title="Add file"]');
+    await page.waitForFunction(() => [...document.querySelectorAll('#files span[contenteditable]')].some((el) => el.textContent === ''), { timeout: U.mediumTimeout });
+    const cell = await page.evaluate(() => {
+      const el = [...document.querySelectorAll('#files span[contenteditable]')].find((s) => s.textContent === '');
+      el.id = 'newFileURL';
+      el.scrollIntoView({ block: 'center' });
+      const r = el.getBoundingClientRect();
+      const x = r.left + (r.width / 2);
+      const y = r.top + (r.height / 2);
+
+      return { width: r.width, height: r.height, x, y, hit: document.elementFromPoint(x, y) === el, placeholder: getComputedStyle(el, '::before').content };
+    });
+    assert.isAbove(cell.width, 20, 'the empty URL cell has a width');
+    assert.isAbove(cell.height, 10, 'the empty URL cell has a height');
+    assert.isTrue(cell.hit, 'the empty URL cell is what is under the pointer at its centre');
+    assert.strictEqual(cell.placeholder, '"File URL"');
+    await page.mouse.click(cell.x, cell.y);
+    assert.isTrue(await page.evaluate(() => document.activeElement && document.activeElement.id === 'newFileURL'), 'clicking the cell focuses it');
+    assert.deepEqual(opened.pageErrors, []);
+  }).timeout(U.longTimeout);
+
   describe('changing the label set of a volume layer', function () {
     let dialogs;
     const answerDialogs = (page, accept) => {
