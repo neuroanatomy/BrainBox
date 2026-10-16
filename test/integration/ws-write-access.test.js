@@ -182,6 +182,35 @@ const paintOnViewOnlyLayer = async (browser) => {
   return { before, after, pageErrors };
 };
 
+/**
+ * On the MRI page, as an anonymous visitor, save the MRI document renamed, as
+ * a page that lets anyone change the name would
+ * @param {object} browser A puppeteer browser
+ * @returns {Promise<object>} { before, after, pageErrors }: the editMode before, and the state once the server answered
+ */
+const renameOnMRIPage = async (browser) => {
+  const page = await browser.newPage();
+  const pageErrors = [];
+  page.on('pageerror', (err) => pageErrors.push(err.message));
+  await page.goto(`${U.serverURL}/mri?url=${U.localBertURL}`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.AtlasMakerWidget && AtlasMakerWidget.isViewerReady(), { timeout: U.longTimeout });
+  const before = await page.evaluate(() => {
+    AtlasMakerWidget.editMode = 1;
+    AtlasMakerWidget.sendSaveMetadataMessage({ ...BrainBox.info, name: 'Renamed on the MRI page' });
+
+    return AtlasMakerWidget.editMode;
+  });
+  await page.waitForFunction(() => AtlasMakerWidget.writeRefused !== null, { timeout: U.mediumTimeout });
+  const after = await page.evaluate(() => ({
+    editMode: AtlasMakerWidget.editMode,
+    writeRefused: AtlasMakerWidget.writeRefused,
+    chat: document.querySelector('#logChat .text').textContent,
+    modal: [...document.querySelectorAll('body > div')].filter((el) => el.style.position === 'fixed' && el.querySelector('button')).length
+  }));
+
+  return { before, after, pageErrors };
+};
+
 // eslint-disable-next-line max-statements
 describe('TESTING WEBSOCKET WRITE ACCESS', function () {
   let mri;
@@ -383,6 +412,23 @@ describe('TESTING WEBSOCKET WRITE ACCESS', function () {
       assert.strictEqual(after.editMode, 0);
       assert.include(after.chat, message);
       assert.deepEqual(after.dialog, [message + 'OK'], 'a dialog says it until the user closes it');
+      assert.deepEqual(pageErrors, []);
+    } finally {
+      await browser.close();
+    }
+  });
+
+  it('the page of a user whose change to the MRI\'s information is refused says so, and goes on editing', async function () {
+    // eslint-disable-next-line no-invalid-this
+    this.timeout(U.longTimeout);
+    const browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    try {
+      const { before, after, pageErrors } = await renameOnMRIPage(browser);
+      assert.deepEqual(after.writeRefused, { write: 'saveMetadata', atlas: null, reason: 'you may not rename this MRI' });
+      assert.strictEqual(after.editMode, before, 'the layer is still editable');
+      assert.include(after.chat, 'Some of your changes to this brain\'s information were not saved: you may not rename this MRI.');
+      assert.strictEqual(after.modal, 0, 'no dialog waits for the user');
+      assert.notStrictEqual((await storedMRI()).name, 'Renamed on the MRI page');
       assert.deepEqual(pageErrors, []);
     } finally {
       await browser.close();

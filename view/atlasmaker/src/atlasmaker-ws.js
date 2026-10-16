@@ -765,6 +765,7 @@ export const AtlasMakerWS = {
   },
 
   writeRefusedMessage: 'You can\'t edit this layer: your changes are not saved. Reload the page or log in again.',
+  metadataRefusedMessage: 'Some of your changes to this brain\'s information were not saved',
 
   /**
    * The server refused a write (paint, save...): what this page shows is not
@@ -777,6 +778,11 @@ export const AtlasMakerWS = {
    */
   receiveWriteRefusedMessage: function (data) {
     const me = AtlasMakerWidget;
+    if (data.write === 'saveMetadata') {
+      me._receiveMetadataRefused(data);
+
+      return;
+    }
     const shownAtlas = me.User ? me.User.dirname + me.User.atlasFilename : null;
     if (data.atlas && data.atlas !== shownAtlas) {
       // about a layer this page no longer shows
@@ -793,6 +799,22 @@ export const AtlasMakerWS = {
       me.displayDialog({ msg: '<p>' + DOMPurify.sanitize(text) + '</p>', modal: true, delay: 0, doFadeOut: false })
         .finally(() => { me._writeRefusedDialogShown = false; });
     }
+  },
+
+  /**
+   * The server did not save some changes to the MRI's information (its name,
+   * a layer's settings, text annotations): say which, without stopping the
+   * editing of the layer shown (its strokes are still saved)
+   * @param {object} data { write: 'saveMetadata', atlas: null, reason }
+   * @returns {void}
+   */
+  _receiveMetadataRefused: function (data) {
+    const me = AtlasMakerWidget;
+    console.warn('The server did not save some changes to the metadata: ' + data.reason);
+    me.writeRefused = { write: data.write, atlas: data.atlas, reason: data.reason };
+    const text = me.metadataRefusedMessage + ': ' + data.reason + '.';
+    me._appendChatMessage('<b>' + DOMPurify.sanitize(text) + '</b><br />');
+    me.displayDialog({ msg: '<p>' + DOMPurify.sanitize(text) + '</p>', modal: false, delay: 5000, doFadeOut: true });
   },
 
   /**
