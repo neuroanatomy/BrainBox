@@ -134,7 +134,6 @@ export const AtlasMakerDraw = {
     const text = me.container.querySelector('#text-layer');
     const vector = me.container.querySelector('#vector-layer');
     let txtStr;
-    let svgStr;
 
     me.info.slice = me.User.slice;
 
@@ -146,10 +145,16 @@ export const AtlasMakerDraw = {
     }
     text.innerHTML = txtStr;
 
-    // call registered displayInformation functions
-    svgStr = '';
-    for(const func of me.displayInformationFunctions) {
-      svgStr = func(svgStr);
+    // call registered displayInformation functions. They scale voxel
+    // coordinates by the canvas size and the voxel dimensions, which are only
+    // known once configureBrainImage has run: before that (e.g., the vectorial
+    // annotations arrive before the atlas data) they gave NaN coordinates, or
+    // threw without the MRI geometry, so the layer stays empty
+    let svgStr = '';
+    if(me.brainW) {
+      for(const func of me.displayInformationFunctions) {
+        svgStr = func(svgStr);
+      }
     }
     vector.innerHTML = svgStr;
   },
