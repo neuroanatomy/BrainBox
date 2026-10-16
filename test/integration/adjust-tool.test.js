@@ -20,6 +20,8 @@ const ADJUST = '#paintTool [title="Adjust"]';
 const SHOW = '#paintTool [title="Show"]';
 // The thumb position is read back from style.left, which the browser keeps to ~6 significant digits
 const TOLERANCE = 1e-4;
+// A slider set back from the canvas filter, which the browser also keeps to ~6 significant digits
+const FILTER_TOLERANCE = 1e-2;
 
 /**
  * Drag a slider's thumb to a fraction of its track: press on the slider, move, release.
@@ -149,5 +151,26 @@ describe('TESTING THE ADJUST TOOL', function () {
     assert.closeTo(await page.evaluate(() => AtlasMakerWidget.alphaLevel), x / 100, TOLERANCE, 'the new panel\'s sliders work');
     await page.click(SHOW);
     await page.waitForFunction(() => !document.getElementById('adjust'), { timeout: U.shortTimeout });
+  }).timeout(U.longTimeout);
+
+  // from PR #342, 28356b4, Nicolas Traut
+  it('shows the image\'s brightness and contrast when picked again, and keeps one when the other is moved', async function () {
+    await openAdjust(page);
+    const a = await dragSlider(page, 'alphaLevel', 0.2);
+    const b = await dragSlider(page, 'minLevel', 0.3);
+    const c = await dragSlider(page, 'maxLevel', 0.75);
+    await page.click(SHOW);
+    await page.waitForFunction(() => !document.getElementById('adjust'), { timeout: U.shortTimeout });
+
+    await openAdjust(page);
+    const [a2, b2, c2] = await thumbs(page);
+    assert.closeTo(a2, a, TOLERANCE, 'transparency as set');
+    assert.closeTo(b2, b, FILTER_TOLERANCE, 'brightness as set');
+    assert.closeTo(c2, c, FILTER_TOLERANCE, 'contrast as set');
+
+    const c3 = await dragSlider(page, 'maxLevel', 0.6);
+    const filter = await canvasFilter(page);
+    assert.closeTo(filter.brightness, 2 * b / 100, TOLERANCE, 'brightness is kept');
+    assert.closeTo(filter.contrast, 2 * c3 / 100, TOLERANCE);
   }).timeout(U.longTimeout);
 });

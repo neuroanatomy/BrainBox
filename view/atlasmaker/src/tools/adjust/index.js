@@ -13,6 +13,29 @@ const setCanvasFilter = (b, c) => {
   document.getElementById('canvas').style.filter = 'brightness(' + b + ') contrast(' + c + ')';
 };
 
+/**
+ * The brightness and contrast the MRI canvas has now: the panel is created
+ * anew each time the tool is picked, and its sliders start from them
+ * @returns {object} { b, c }, 1 for unchanged
+ */
+const getCanvasFilter = () => {
+  const m = document.getElementById('canvas').style.filter.match(/brightness\(([\d.]+)\)\s*contrast\(([\d.]+)\)/);
+
+  return m ? { b: parseFloat(m[1]), c: parseFloat(m[2]) } : { b: 1, c: 1 };
+};
+
+/**
+ * Set a slider's value and move its thumb there
+ * @param {string} id The slider's id
+ * @param {number} val The value, from 0 to 100
+ * @returns {void}
+ */
+const setSlider = (id, val) => {
+  const elem = document.getElementById(id);
+  setData(elem, { max: 100, val });
+  elem.querySelector('.thumb').style.left = val + '%';
+};
+
 // append HTML
 const el = document.createElement('div');
 el.id = 'adjust';
@@ -34,11 +57,7 @@ AtlasMakerWidget.slider(document.getElementById('alphaLevel'), function (x) {
   AtlasMakerWidget.drawImages();
 });
 
-{
-  const alphaLevelElem = document.getElementById('alphaLevel');
-  setData(alphaLevelElem, { max: 100, val: 50 });
-  alphaLevelElem.querySelector('.thumb').style.left = (AtlasMakerWidget.alphaLevel * 100) + '%';
-}
+setSlider('alphaLevel', AtlasMakerWidget.alphaLevel * 100);
 
 // Brightness
 AtlasMakerWidget.slider(document.getElementById('minLevel'), function (x) {
@@ -52,11 +71,7 @@ AtlasMakerWidget.slider(document.getElementById('minLevel'), function (x) {
   setCanvasFilter(b, c);
 });
 
-{
-  const minLevelElem = document.getElementById('minLevel');
-  setData(minLevelElem, { max: 100, val: 50 });
-  minLevelElem.querySelector('.thumb').style.left = '50%';
-}
+setSlider('minLevel', getCanvasFilter().b * 100 / 2);
 
 // Contrast
 AtlasMakerWidget.slider(document.getElementById('maxLevel'), function (x) {
@@ -70,11 +85,7 @@ AtlasMakerWidget.slider(document.getElementById('maxLevel'), function (x) {
   setCanvasFilter(b, c);
 });
 
-{
-  const maxLevelElem = document.getElementById('maxLevel');
-  setData(maxLevelElem, { max: 100, val: 50 });
-  maxLevelElem.querySelector('.thumb').style.left = '50%';
-}
+setSlider('maxLevel', getCanvasFilter().c * 100 / 2);
 
 const observer = new MutationObserver(function (mutations) {
   mutations.forEach(function (mutation) {
