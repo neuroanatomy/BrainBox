@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 /* global AtlasMakerWidget BrainBox */
 'use strict';
 
@@ -40,8 +41,22 @@ const project = {
   collaborators: {
     list: [{ userID: 'anyone', nickname: 'anyone', access: { collaborators: 'view', annotations: 'view', files: 'view' } }]
   },
-  files: { list: [{ source: U.localBertURL }] },
-  annotations: { list: [{ type: 'volume', name: 'WS layer', values: 'foreground.json' }] }
+  files: { list: [U.localBertURL] },
+  annotations: { list: [{ type: 'volume', name: 'WS layer', values: 'foreground.json' }, { type: 'volume', name: 'WS layer 2', values: 'foreground.json' }] }
+};
+
+// a project whose files anyone can see, but not its annotations
+const hiddenShortname = 'wswriteaccesshidden';
+const hiddenFilename = 'ws-write-access-hidden.nii.gz';
+const hiddenProject = {
+  name: 'WS write access test, hidden annotations',
+  shortname: hiddenShortname,
+  owner: 'foo',
+  collaborators: {
+    list: [{ userID: 'anyone', nickname: 'anyone', access: { collaborators: 'none', annotations: 'none', files: 'view' } }]
+  },
+  files: { list: [U.localBertURL] },
+  annotations: { list: [{ type: 'volume', name: 'Hidden layer', values: 'foreground.json' }] }
 };
 
 /**
@@ -94,6 +109,42 @@ const openAtlas = (mri, { cookie, username, writeAtOnce }) => new Promise((resol
 
 const paint = (socket) => socket.send(JSON.stringify({ type: 'paint', data: { c: 'mf', x: 3, y: 4 } }));
 const save = (socket) => socket.send(JSON.stringify({ type: 'save' }));
+const saveMetadata = (socket, metadata) => socket.send(JSON.stringify({ type: 'saveMetadata', metadata, method: 'append' }));
+
+/**
+ * The stored MRI document
+ * @returns {Promise<object>} The document
+ */
+const storedMRI = () => U.getNativeDB().collection('mri')
+  .findOne({ source: U.localBertURL, backup: { $exists: false } }, { projection: { _id: 0 } });
+
+/**
+ * The copy of the MRI document a project page gets, as the user with this cookie
+ * @param {string} projectName The project
+ * @param {string} cookie The Cookie header, if any
+ * @returns {Promise<object>} The document
+ */
+const projectPageCopy = async (projectName, cookie) => {
+  const res = await fetch(`${U.serverURL}/project/json/${projectName}/files?start=0&length=20`, cookie ? { headers: { Cookie: cookie } } : {});
+  const files = await res.json();
+
+  return files.find((f) => f.source === U.localBertURL);
+};
+
+/**
+ * Add the layer of a volume annotation, as a project page does for every visitor
+ * @param {object} doc The MRI document
+ * @param {object} params { project, name, access }: access is the user's access to the project's annotations
+ * @returns {string} The layer's file name
+ */
+const addLayerAsProjectPage = (doc, { project: projectShortname, name, access }) => {
+  const filename = Math.random().toString(36)
+    .slice(2) + '.nii.gz';
+  const date = new Date().toJSON();
+  doc.mri.atlas.push({ name, project: projectShortname, created: date, modified: date, modifiedBy: 'Anonymous', filename, labels: 'foreground.json', owner: 'Anonymous', type: 'volume', access });
+
+  return filename;
+};
 
 /**
  * On the MRI page, as an anonymous visitor, open the test layer (view only)
@@ -131,6 +182,7 @@ const paintOnViewOnlyLayer = async (browser) => {
   return { before, after, pageErrors };
 };
 
+// eslint-disable-next-line max-statements
 describe('TESTING WEBSOCKET WRITE ACCESS', function () {
   let mri;
   let observer;
@@ -162,11 +214,20 @@ describe('TESTING WEBSOCKET WRITE ACCESS', function () {
     this.timeout(U.longTimeout * 2);
     const db = U.getNativeDB();
     await U.waitForTestBrain(U.longTimeout);
-    await db.collection('project').deleteMany({ shortname });
-    await db.collection('project').insertOne(JSON.parse(JSON.stringify(project)));
+    await db.collection('project').deleteMany({ shortname: { $in: [shortname, hiddenShortname] } });
+    await db.collection('project').insertMany(JSON.parse(JSON.stringify([project, hiddenProject])));
     await db.collection('mri').updateOne(
       { source: U.localBertURL, backup: { $exists: false } },
-      { $push: { 'mri.atlas': { filename: atlasFilename, project: shortname, name: 'WS layer', type: 'volume', labels: 'foreground.json' } } }
+      {
+        $push: {
+          'mri.atlas': {
+            $each: [
+              { filename: atlasFilename, project: shortname, name: 'WS layer', type: 'volume', labels: 'foreground.json' },
+              { filename: hiddenFilename, project: hiddenShortname, name: 'Hidden layer', type: 'volume', labels: 'foreground.json' }
+            ]
+          }
+        }
+      }
     );
     mri = await db.collection('mri').findOne({ source: U.localBertURL, backup: { $exists: false } });
     await db.collection('sessions').deleteMany({ _id: sid });
@@ -190,8 +251,9 @@ describe('TESTING WEBSOCKET WRITE ACCESS', function () {
     }
     await U.delay(1000); // the server unloads (and saves) the atlas
     const db = U.getNativeDB();
-    await db.collection('mri').updateMany({ source: U.localBertURL }, { $pull: { 'mri.atlas': { filename: atlasFilename } } });
-    await db.collection('project').deleteMany({ shortname });
+    await db.collection('mri').updateMany({ source: U.localBertURL }, { $pull: { 'mri.atlas': { $or: [{ filename: atlasFilename }, { project: { $in: [shortname, hiddenShortname] } }] } } });
+    await db.collection('mri').updateMany({ source: U.localBertURL }, typeof mri.name === 'string' ? { $set: { name: mri.name } } : { $unset: { name: '' } });
+    await db.collection('project').deleteMany({ shortname: { $in: [shortname, hiddenShortname] } });
     await db.collection('sessions').deleteMany({ _id: sid });
     await fs.promises.rm(path.join(__dirname, '../../public', mri.url, atlasFilename), { force: true });
   });
@@ -235,6 +297,74 @@ describe('TESTING WEBSOCKET WRITE ACCESS', function () {
     const { relayed, saved } = await paintAndSave({ username: 'foo', cookie: sessionCookie(sid), writeAtOnce });
     assert.isTrue(relayed, 'the paint must reach the other users');
     assert.isTrue(saved, 'the save must be applied');
+  });
+
+  it('refuses the paint and save of a user who first detaches the layer from its project and makes it editable', async function () {
+    // eslint-disable-next-line no-invalid-this
+    this.timeout(U.mediumTimeout);
+    const writeAtOnce = async (socket) => {
+      const doc = await storedMRI();
+      const layer = doc.mri.atlas.find((a) => a.filename === atlasFilename);
+      layer.project = '';
+      layer.access = 'edit';
+      saveMetadata(socket, doc);
+      paint(socket);
+      save(socket);
+    };
+    const { relayed, saved } = await paintAndSave({ username: 'Anonymous', writeAtOnce });
+    assert.isFalse(relayed, 'the paint must not reach the other users');
+    assert.isFalse(saved, 'the save must not be applied');
+    const layer = (await storedMRI()).mri.atlas.find((a) => a.filename === atlasFilename);
+    assert.strictEqual(layer.project, shortname);
+    assert.notProperty(layer, 'access');
+  });
+
+  it('a project page that does not show a layer keeps it when it saves the MRI document', async function () {
+    // eslint-disable-next-line no-invalid-this
+    this.timeout(U.mediumTimeout);
+    const doc = await projectPageCopy(hiddenShortname);
+    assert.notInclude(doc.mri.atlas.map((a) => a.filename), hiddenFilename, 'an anonymous visitor does not see the layer');
+    const created = addLayerAsProjectPage(doc, { project: hiddenShortname, name: 'Hidden layer', access: 'none' });
+    const visitor = await openAtlas(mri, { username: 'Anonymous' });
+    sockets.push(visitor.socket);
+    saveMetadata(visitor.socket, doc);
+    await U.delay(1000);
+    const filenames = (await storedMRI()).mri.atlas.map((a) => a.filename);
+    assert.include(filenames, hiddenFilename, 'the layer the visitor cannot see is kept');
+    assert.notInclude(filenames, created, 'nor can the visitor add one to that project');
+    assert.deepEqual(visitor.messages.filter((m) => m.type === 'writeRefused'), [], 'and the visitor is not told anything');
+  });
+
+  it('a viewer\'s project page creates the layer of a volume annotation', async function () {
+    // eslint-disable-next-line no-invalid-this
+    this.timeout(U.mediumTimeout);
+    const doc = await projectPageCopy(shortname);
+    const created = addLayerAsProjectPage(doc, { project: shortname, name: 'WS layer 2', access: 'view' });
+    const visitor = await openAtlas(mri, { username: 'Anonymous' });
+    sockets.push(visitor.socket);
+    saveMetadata(visitor.socket, doc);
+    await U.delay(1000);
+    const stored = await storedMRI();
+    const layer = stored.mri.atlas.find((a) => a.filename === created);
+    assert.include(layer, { project: shortname, name: 'WS layer 2', access: 'view' });
+    assert.include(stored.mri.atlas.map((a) => a.filename), hiddenFilename);
+    assert.deepEqual(visitor.messages.filter((m) => m.type === 'writeRefused'), []);
+  });
+
+  it('the MRI can be renamed by the owner of a project that lists it, not by an anonymous visitor, who is told', async function () {
+    // eslint-disable-next-line no-invalid-this
+    this.timeout(U.mediumTimeout);
+    const visitor = await openAtlas(mri, { username: 'foo' });
+    const owner = await openAtlas(mri, { username: 'foo', cookie: sessionCookie(sid) });
+    sockets.push(visitor.socket, owner.socket);
+    saveMetadata(visitor.socket, { ...await storedMRI(), name: 'Renamed by a visitor' });
+    await U.delay(500);
+    assert.strictEqual((await storedMRI()).name, mri.name);
+    assert.deepEqual(visitor.messages.filter((m) => m.type === 'writeRefused'), [{ type: 'writeRefused', write: 'saveMetadata', atlas: null, reason: 'you may not rename this MRI' }]);
+    saveMetadata(owner.socket, { ...await storedMRI(), name: 'Renamed by its project\'s owner' });
+    await U.delay(500);
+    assert.strictEqual((await storedMRI()).name, 'Renamed by its project\'s owner');
+    assert.deepEqual(owner.messages.filter((m) => m.type === 'writeRefused'), []);
   });
 
   it('the MRI page of a user who paints on a layer they may only view says so and stops editing', async function () {

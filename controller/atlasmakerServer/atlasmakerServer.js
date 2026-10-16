@@ -6,6 +6,7 @@ const zlib = require('zlib');
 const tracer = require('tracer').console({ format: '[{{file}}:{{line}}]  {{message}}' });
 const jpeg = require('jpeg-js'); // jpeg-js library: https://github.com/eugeneware/jpeg-js
 const merge = require('merge');
+const _ = require('lodash');
 const path = require('path');
 const keypress = require('keypress');
 
@@ -14,6 +15,7 @@ const AsyncLock = require('async-lock');
 const lock = new AsyncLock();
 const EmbedAccessService = require('../../services/EmbedAccessService');
 const { usernameFromCookie, atlasAccessLevel, canEdit } = require('./atlas-write-access');
+const { mergeMetadata, projectsForMetadata, savedView } = require('./metadata-save-access');
 
 // WebSocket message types that write to an atlas/annotation - never applied on
 // a connection tagged isEmbed, regardless of what the client claims about editMode.
@@ -1296,6 +1298,17 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
 
       /** @todo Log the save */
     },
+
+    /**
+     * Save an MRI document a user sent. In "enforce" mode (the default) the
+     * client's copy is merged into the stored document, keeping what the user
+     * may not change (see metadata-save-access.js), and the user is told once
+     * what was not saved. In "log" mode (WS_ACCESS_CHECK=log) what would be
+     * refused is logged, and the document is saved as before. Once saved, the
+     * other users on the same project page or atlas are sent what was saved
+     * @param {object} data The message: { uid, metadata, method, patch }
+     * @returns {Promise<void>}
+     */
     // eslint-disable-next-line max-statements
     receiveSaveMetadataMessage: async function (data) {
       if (me.debug > 1) {
@@ -1311,16 +1324,28 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
        *       method will be used
        */
 
+      if (!_.isPlainObject(data.metadata) || typeof data.metadata.source !== 'string') {
+        throw new Error('saveMetadata without an MRI source');
+      }
       const sourceUS = me.getUserFromUserId(data.uid);
-      let json = data.metadata;
-      json.modified = (new Date()).toJSON();
-      json.modifiedBy = (sourceUS && sourceUS.User && sourceUS.User.username) ? sourceUS.User.username : 'anonymous';
+      const enforce = (me.writeAccessMode !== 'log');
+      // the user as the session says, not as the client says
+      const username = await usernameFromCookie(me.sessionParser, sourceUS ? sourceUS.cookie : null);
+      // sanitise json
+      const json = JSON.parse(DOMPurify.sanitize(JSON.stringify(data.metadata))); // sanitize works on strings, not objects
+      const { source } = json;
+      if (me.debug > 1) {
+        tracer.log('metadata:', JSON.stringify(json));
+      }
 
+      let saved = null;
+      let refused = [];
       // eslint-disable-next-line max-statements
       await lock.acquire('mri', async function () {
+        const stored = await nativeDb.collection('mri').findOne({ source, backup: { $exists: false } }, { projection: { _id: 0 } });
+        let incoming = json;
         if (data.method === 'patch') {
           // deal with patches
-
           const addingORremovingLayerOrAnnotations = data.patch.some((operation) => {
             if (operation.path === null) { return false; }
 
@@ -1330,45 +1355,101 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           if (addingORremovingLayerOrAnnotations) {
             throw new Error('Refusing to apply patch - cannot directly remove or add annotation layers on MRI files');
           }
+          // apply the patch to the stored document
+          incoming = _.cloneDeep(stored);
+          jsonpatch.applyPatch(incoming, data.patch);
+          incoming = JSON.parse(DOMPurify.sanitize(JSON.stringify(incoming)));
+        }
 
-          // get original object from db
-          let ret = await nativeDb.collection('mri').findOne({ source: json.source, backup: { $exists: false } }, { projection: { _id: 0 } });
-          // apply patch
-          jsonpatch.applyPatch(ret, data.patch);
-          // sanitise
-          ret = JSON.parse(DOMPurify.sanitize(JSON.stringify(ret))); // sanitize works on strings, not objects
-          // mark previous as backup
-          await nativeDb.collection('mri').updateMany({ source: json.source }, { $set: { backup: true } });
-          // insert new
-          await nativeDb.collection('mri').insertOne(ret);
+        if (stored) {
+          const projects = await projectsForMetadata(nativeDb, source, [stored, incoming]);
+          let doc;
+          ({ doc, refused } = mergeMetadata({ stored, incoming, username, projects }));
+          saved = enforce ? doc : me._legacyMetadataDocument({ data, stored, incoming, sourceUS });
         } else {
-          // deal with the complete object
-
-          // sanitise json
-          json = JSON.parse(DOMPurify.sanitize(JSON.stringify(json))); // sanitize works on strings, not objects
-          // DEBUG:
-          if (me.debug > 1) {
-            tracer.log('metadata:', JSON.stringify(json));
-          }
-
-          // mark previous one as backup
-          const ret = await nativeDb.collection('mri').findOne({ source: json.source, backup: { $exists: false } });
-          // DEBUG: tracer.log("original mri:", JSON.stringify(ret));
-
-          if (data.method === 'overwrite') {
-            json = merge.recursive(ret, json);
-          }
-          delete json._id;
-
-          await nativeDb.collection('mri').updateMany({ source: json.source }, { $set: { backup: true } });
-          await nativeDb.collection('mri').insertOne(json);
-          // DEBUG: tracer.log("inserted mri:", JSON.stringify(json));
+          refused = [{ path: 'source', reason: 'no such MRI', userReason: 'this MRI is not in the database', notify: true }];
+          saved = enforce ? null : me._legacyMetadataDocument({ data, stored, incoming, sourceUS });
+        }
+        if (saved) {
+          // mark previous one as backup, insert new
+          await nativeDb.collection('mri').updateMany({ source }, { $set: { backup: true } });
+          await nativeDb.collection('mri').insertOne(saved);
+          delete saved._id;
         }
       });
 
+      me._logRefusedMetadata(sourceUS, { source, refused });
+
+      if (saved && sourceUS) {
+        // the other users see what was saved, from the sender's copy
+        const metadata = enforce ? savedView(saved, json) : data.metadata;
+        me._handleBroadcastWebSocketMessage({ data: { ...data, metadata }, sourceUS });
+      }
+
       // the atlases' access may have changed (and a project page saves the
       // layers it creates only after opening them)
-      me.refreshWriteAccessToMRI(json.source);
+      me.refreshWriteAccessToMRI(source);
+    },
+
+    /**
+     * The document saveMetadata stored before its changes were checked (still
+     * used in "log" mode): the client's copy ('append'), merged into the stored
+     * one ('overwrite'), or the stored one patched ('patch')
+     * @param {object} params Parameters
+     * @param {object} params.data The message
+     * @param {object|null} params.stored The stored document
+     * @param {object} params.incoming The client's copy (sanitised), or the patched document
+     * @param {object} params.sourceUS The connection
+     * @returns {object} The document to store
+     */
+    _legacyMetadataDocument: function ({ data, stored, incoming, sourceUS }) {
+      if (data.method === 'patch') {
+        return incoming;
+      }
+      let json = _.cloneDeep(incoming);
+      json.modified = (new Date()).toJSON();
+      json.modifiedBy = (sourceUS && sourceUS.User && sourceUS.User.username) ? sourceUS.User.username : 'anonymous';
+      if (data.method === 'overwrite' && stored) {
+        json = merge.recursive(_.cloneDeep(stored), json);
+      }
+      delete json._id;
+
+      return json;
+    },
+
+    /**
+     * Log the changes of a saveMetadata that were not applied, and tell the
+     * user, once per reason, those they asked for (not in "log" mode)
+     * @param {object} sourceUS The connection
+     * @param {object} params Parameters
+     * @param {string} params.source The MRI's source
+     * @param {Array} params.refused The changes not applied (see mergeMetadata)
+     * @returns {void}
+     */
+    // eslint-disable-next-line max-statements
+    _logRefusedMetadata: function (sourceUS, { source, refused }) {
+      const uid = sourceUS ? sourceUS.uid : 'unknown connection';
+      const describe = (list) => list.map((r) => `${r.path}: ${r.reason}`).join('; ');
+      const notified = refused.filter((r) => r.notify);
+      const ignored = refused.filter((r) => !r.notify);
+      if (notified.length > 0) {
+        const what = (me.writeAccessMode === 'log') ? 'WOULD REJECT' : 'REJECTED';
+        tracer.log(`${what} changes in saveMetadata of ${source} from ${uid}: ${describe(notified)}`);
+      }
+      if (ignored.length > 0) {
+        tracer.log(`IGNORED changes in saveMetadata of ${source} from ${uid}: ${describe(ignored)}`);
+      }
+      if (!sourceUS || me.writeAccessMode === 'log' || notified.length === 0) {
+        return;
+      }
+      if (!sourceUS.metadataRefusalsSent) {
+        sourceUS.metadataRefusalsSent = new Set();
+      }
+      const reasons = [...new Set(notified.map((r) => r.userReason))].filter((r) => !sourceUS.metadataRefusalsSent.has(r));
+      if (reasons.length > 0) {
+        reasons.forEach((r) => sourceUS.metadataRefusalsSent.add(r));
+        me._sendWriteRefused(sourceUS, { write: 'saveMetadata', atlas: null, reason: reasons.join('; ') });
+      }
     },
     receiveAtlasFromUserMessage: async function (data) {
       const atlasData = await new Promise((resolve, reject) => {
@@ -2166,7 +2247,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
      * @param {object} params.data The message
      * @param {object} params.ws The socket
      * @param {object} params.sourceUS The connection
-     * @returns {boolean} False if the message was refused (and must not be broadcast)
+     * @returns {boolean} False if the message must not be broadcast now (refused, or a saveMetadata, broadcast once saved)
      */
     _handleUserWebSocketMessage: function ({ data, ws, sourceUS }) {
       if (me._isRefused(sourceUS, data.type)) {
@@ -2208,7 +2289,9 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
             }
           });
         }
-        break;
+
+        // broadcast once saved, as it was saved (see receiveSaveMetadataMessage)
+        return false;
       }
       case 'atlas':
         me.receiveAtlasFromUserMessage(data, ws) // sender);
