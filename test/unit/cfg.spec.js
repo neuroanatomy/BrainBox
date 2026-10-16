@@ -33,6 +33,14 @@ describe('cfg.json validation', function () {
     assert.isBoolean(cfg.secure);
   });
 
+  it('app_port and ws_port, if present, should be port numbers', function () {
+    for (const key of ['app_port', 'ws_port']) {
+      if (typeof cfg[key] !== 'undefined') {
+        assert.isTrue(Number.isInteger(cfg[key]) && cfg[key] > 0 && cfg[key] < 65536, `${key} must be a port number`);
+      }
+    }
+  });
+
   it('admins, if present, should be a list of usernames', function () {
     if (typeof cfg.admins === 'undefined') {
       return;

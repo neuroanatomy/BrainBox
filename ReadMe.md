@@ -96,7 +96,7 @@ Requirements:
 3. drop the `.example` from `github-keys.json.example` and paste the keys you created into
 4. drop the `.example` from `controller/atlasmakerServer/blacklist.json.example`
 5. drop the `.example` from `controller/atlasmakerServer/whitelist.json.example`
-6. drop the `.example` from `cfg.json.example`
+6. drop the `.example` from `cfg.json.example`. The web server listens on `app_port` (3001 if absent) and the WebSocket server on `ws_port` (8080 if absent); `hostname` and `wshostname` are the addresses browsers use to reach them (`wshostname` without `ws://`/`wss://`, which comes from `secure`)
 7. `npm install`
 8. `npm run prepare`
 9. `npm run build`

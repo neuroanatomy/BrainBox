@@ -32,6 +32,17 @@ const MONGO_DB = process.env.MONGODB || 'localhost:27017/brainbox';
 const dirname = __dirname; // Local directory
 /* jslint nomen: false */
 
+/**
+ * The ports of the web server and of the WebSocket server: `app_port` and `ws_port` in
+ * cfg.json, or 3001 and 8080 if they are not set
+ * @param {Object} config The configuration (cfg.json)
+ * @returns {Object} appPort and wsPort
+ */
+const serverPorts = (config) => ({
+  appPort: config.app_port ?? 3001,
+  wsPort: config.ws_port ?? 8080
+});
+
 // eslint-disable-next-line max-statements
 const start = async function () {
   const app = express();
@@ -115,7 +126,8 @@ const start = async function () {
   // Configure server and web socket
   //========================================================================================
 
-  const server = http.createServer(app).listen(3001, () => { console.log('Listening http on port 3001'); });
+  const { appPort, wsPort } = serverPorts(Config);
+  const server = http.createServer(app).listen(appPort, () => { console.log(`Listening http on port ${appPort}`); });
   const atlasmakerServer = new AtlasmakerServer(db, nativeDb);
   atlasmakerServer.dataDirectory = dirname + '/public';
   // NeuroWebLab's session middleware (express-session), so that the WebSocket
@@ -140,11 +152,11 @@ const start = async function () {
     atlasmakerServer.server = http.createServer(app);
   }
 
-  atlasmakerServer.server.listen(8080, () => {
+  atlasmakerServer.server.listen(wsPort, () => {
     if (Config.secure) {
-      console.log('Listening wss on port 8080');
+      console.log(`Listening wss on port ${wsPort}`);
     } else {
-      console.log('Listening ws on port 8080');
+      console.log(`Listening ws on port ${wsPort}`);
     }
     atlasmakerServer.initSocketConnection();
   });
@@ -189,4 +201,4 @@ const start = async function () {
   return { app, server, atlasmakerServer };
 };
 
-module.exports = { start };
+module.exports = { start, serverPorts };
