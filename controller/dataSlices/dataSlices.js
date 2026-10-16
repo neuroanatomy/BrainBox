@@ -2,7 +2,7 @@
 console.log('dataSlices.js');
 const dateFormat = require('dateformat');
 
-const { ForbiddenAccessError } = require('../../errors');
+const { ForbiddenAccessError, NotFoundError } = require('../../errors');
 const { AccessLevel } = require('neuroweblab');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 
@@ -203,6 +203,8 @@ const getUserProjectsSlice = function getUserProjectsSlice(req, requestedUser, s
  * @param {integer} start Start index of the file slice
  * @param {integer} length Number of files to include in the slice
  * @param {boolean} namesFlag Whether to append only the name of each MRI or the complete structure
+ * @returns {Promise<Array>} The files. Rejects with a NotFoundError if there is no such project,
+ * and with a ForbiddenAccessError if the user can't view its files
  */
 // eslint-disable-next-line max-statements
 const getProjectFilesSlice = async (req, projShortname, start, length, namesFlag) => {
@@ -219,11 +221,10 @@ const getProjectFilesSlice = async (req, projShortname, start, length, namesFlag
     throw new Error(err);
   }
 
-  // return if project is empty
   if (!project) {
-    console.log('project is empty');
+    console.log(`project ${projShortname} not found`);
 
-    return;
+    throw new NotFoundError(`No project ${projShortname}`);
   }
 
   // check access

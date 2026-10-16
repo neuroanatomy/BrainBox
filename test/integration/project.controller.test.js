@@ -166,6 +166,43 @@ describe('TESTING THE /project ROUTE', function () {
     });
   });
 
+  describe('Getting the files of a project that does not exist, or has none', function () {
+    const missing = 'filesmissingtest';
+    const empty = 'filesemptytest';
+    const getFiles = (shortname) => chai.request(U.serverURL)
+      .get(`/project/json/${shortname}/files`)
+      .query({ start: 0, length: 10 });
+
+    before(async function () {
+      await U.removeProject(missing);
+      await U.removeProject(empty);
+      const res = await U.insertProject({
+        ..._.cloneDeep(U.projectTest),
+        shortname: empty,
+        brainboxURL: `/project/${empty}`,
+        files: { list: [] }
+      });
+      assert.isTrue(res.body.success, JSON.stringify(res.body));
+    });
+
+    after(async function () {
+      await U.removeProject(empty);
+    });
+
+    it('answers 404 with a JSON error for a project that does not exist', async function () {
+      const res = await getFiles(missing);
+      assert.equal(res.statusCode, 404);
+      assert.equal(res.type, 'application/json');
+      assert.include(res.body.error, missing);
+    });
+
+    it('answers an empty list for a project that exists and has no files', async function () {
+      const res = await getFiles(empty);
+      assert.equal(res.statusCode, 200);
+      assert.deepEqual(res.body, []);
+    });
+  });
+
   // eslint-disable-next-line max-statements
   describe('Changing the label set of a volume layer', function () {
     const shortname = 'labelsetchangetest';

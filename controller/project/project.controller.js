@@ -8,7 +8,7 @@ const { AccessType, AccessLevel, AccessControlService } = require('neuroweblab')
 const _ = require('lodash');
 const createDOMPurify = require('dompurify');
 const { JSDOM } = require('jsdom');
-const { ForbiddenAccessError } = require('../../errors.js');
+const { ForbiddenAccessError, NotFoundError } = require('../../errors.js');
 const { jsonForScript } = require('../utils/jsonForScript');
 const { publicLoggedUser } = require('../user/publicUser');
 const { isLabelset, changedLabelsets, setLayerLabelset } = require('./atlas-labels.js');
@@ -332,6 +332,8 @@ const apiProjectFiles = async function (req, res) {
   } catch (err) {
     if (err instanceof ForbiddenAccessError) {
       res.status(403).send({ error: err.message });
+    } else if (err instanceof NotFoundError) {
+      res.status(404).send({ error: err.message });
     } else {
       res.status(500).send({ error: err.message });
     }

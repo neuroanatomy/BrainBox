@@ -1,5 +1,6 @@
 const { assert } = require('chai');
 const dataSlices = require('../../controller/dataSlices/dataSlices');
+const { NotFoundError } = require('../../errors');
 require('mocha-sinon');
 const U = require('../utils.js');
 
@@ -108,7 +109,7 @@ describe('Data Slices ', function() {
       assert.isArray(result);
     });
 
-    it('should return undefined for a non-existent project', async function() {
+    it('should reject with a NotFoundError for a non-existent project', async function() {
       const req = {
         user: {
           username: 'foo'
@@ -120,8 +121,14 @@ describe('Data Slices ', function() {
         db: db,
         nativeDb: nativeDb
       };
-      const result = await dataSlices.getProjectFilesSlice(req, 'nonexistentproject', 0, 2);
-      assert.isUndefined(result);
+      let error;
+      try {
+        await dataSlices.getProjectFilesSlice(req, 'nonexistentproject', 0, 2);
+      } catch (err) {
+        error = err;
+      }
+      assert.instanceOf(error, NotFoundError);
+      assert.include(error.message, 'nonexistentproject');
     });
 
     describe('with files that are in the mri collection, and files that are not', function () {
