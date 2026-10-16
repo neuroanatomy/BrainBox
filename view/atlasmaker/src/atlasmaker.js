@@ -722,6 +722,13 @@ const me = {
               clearInterval(timer);
               reject(new Error('requestMRIInfo: ' + (info.error || JSON.stringify(info))));
             }
+          })
+          // Anything else that fails (e.g. the answer cannot be read) also ends
+          // the polling, instead of leaving the request pending forever
+          .catch(function (err) {
+            console.error('ERROR: requestMRIInfo', err);
+            clearInterval(timer);
+            reject(new Error('requestMRIInfo: ' + err.message));
           });
       };
       // Ask at once, then every 2 s while the server is still downloading the brain

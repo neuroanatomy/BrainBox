@@ -292,6 +292,40 @@ describe('TESTING THE VIEWER CORE (atlasmaker.js)', function () {
       await startRequest(viewer.page);
       assert.deepEqual(await requestOutcome(viewer.page), { rejected: 'Download failed (HTTP 0)' });
     }).timeout(U.longTimeout);
+
+    it('rejects, and stops polling, when the server\'s answer cannot be read', async function () {
+      viewer = await openViewer(browser);
+      const { page } = viewer;
+      const outcome = await page.evaluate(async (source) => {
+        // The connection drops while the answer is read
+        const realFetch = window.fetch;
+        window.fetch = (url, options) => (String(url).endsWith('/mri/json')
+          ? Promise.resolve({ ok: true, status: 200, headers: new Headers({ 'Content-Type': 'application/json' }), text: () => Promise.reject(new TypeError('network error')) })
+          : realFetch(url, options));
+        // Which of the polling timers are still running
+        const running = new Set();
+        const { setInterval: realSetInterval, clearInterval: realClearInterval } = window;
+        window.setInterval = (...args) => {
+          const id = realSetInterval(...args);
+          if (args[1] === 2000) { running.add(id); } // the polling's period
+
+          return id;
+        };
+        window.clearInterval = (id) => {
+          running.delete(id);
+          realClearInterval(id);
+        };
+        // Pending forever counts as a failure, without waiting for the test's timeout
+        const pending = new Promise((resolve) => { setTimeout(() => resolve({ pending: true }), 3000); });
+        const settled = AtlasMakerWidget._requestMRIInfo(source)
+          .then((info) => ({ resolved: info }), (err) => ({ rejected: err.message }));
+        const result = await Promise.race([settled, pending]);
+
+        return { ...result, runningTimers: running.size };
+      }, FAKE_SOURCE);
+      assert.deepEqual(outcome, { rejected: 'requestMRIInfo: network error', runningTimers: 0 });
+      assert.deepEqual(viewer.pageErrors, []);
+    }).timeout(U.longTimeout);
   });
 
   describe('the manual upload fallback', function () {
