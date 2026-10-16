@@ -47,7 +47,7 @@ const project = {
  * @param {object} options { cookie, username }
  * @returns {Promise<object>} { socket, messages }: the JSON messages received
  */
-const openAtlas = (mri, { cookie, username }) => new Promise((resolve, reject) => {
+const openAtlas = (mri, { cookie, username, writeAtOnce }) => new Promise((resolve, reject) => {
   const socket = new WebSocket(wshost, cookie ? { headers: { Cookie: cookie } } : {});
   const messages = [];
   socket.on('error', reject);
@@ -82,8 +82,15 @@ const openAtlas = (mri, { cookie, username }) => new Promise((resolve, reject) =
       }
     }));
     socket.send(JSON.stringify({ type: 'userData', description: 'sendAtlas' }));
+    if (writeAtOnce) {
+      // before the server has checked the access
+      writeAtOnce(socket);
+    }
   });
 });
+
+const paint = (socket) => socket.send(JSON.stringify({ type: 'paint', data: { c: 'mf', x: 3, y: 4 } }));
+const save = (socket) => socket.send(JSON.stringify({ type: 'save' }));
 
 describe('TESTING WEBSOCKET WRITE ACCESS', function () {
   let mri;
@@ -97,11 +104,13 @@ describe('TESTING WEBSOCKET WRITE ACCESS', function () {
    * @returns {Promise<object>} { relayed, saved }
    */
   const paintAndSave = async (options) => {
+    const from = observer.messages.length;
     const writer = await openAtlas(mri, options);
     sockets.push(writer.socket);
-    const from = observer.messages.length;
-    writer.socket.send(JSON.stringify({ type: 'paint', data: { c: 'mf', x: 3, y: 4 } }));
-    writer.socket.send(JSON.stringify({ type: 'save' }));
+    if (!options.writeAtOnce) {
+      paint(writer.socket);
+      save(writer.socket);
+    }
     await U.delay(1000);
     const relayed = observer.messages.slice(from).some((m) => m.type === 'paint' && m.data && m.data.x === 3);
     const saved = writer.messages.some((m) => m.type === 'serverMessage' && (/Atlas saved/).test(m.msg));
@@ -176,6 +185,15 @@ describe('TESTING WEBSOCKET WRITE ACCESS', function () {
     // eslint-disable-next-line no-invalid-this
     this.timeout(U.mediumTimeout);
     const { relayed, saved } = await paintAndSave({ username: 'foo', cookie: sessionCookie(sid) });
+    assert.isTrue(relayed, 'the paint must reach the other users');
+    assert.isTrue(saved, 'the save must be applied');
+  });
+
+  it('applies the paint and save the owner sends right after opening the atlas, before the access is checked', async function () {
+    // eslint-disable-next-line no-invalid-this
+    this.timeout(U.mediumTimeout);
+    const writeAtOnce = (socket) => { paint(socket); save(socket); };
+    const { relayed, saved } = await paintAndSave({ username: 'foo', cookie: sessionCookie(sid), writeAtOnce });
     assert.isTrue(relayed, 'the paint must reach the other users');
     assert.isTrue(saved, 'the save must be applied');
   });

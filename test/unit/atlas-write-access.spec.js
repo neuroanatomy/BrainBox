@@ -62,15 +62,16 @@ const mockSocket = () => ({ send: sinon.spy(), close: sinon.spy(), readyState: 1
 let AMS;
 
 /**
-   * A connection that opened an atlas, as a client does: connect (with the
-   * cookie, if any), send its User, ask for the atlas
+   * A connection that is opening an atlas, as a client does: connect (with the
+   * cookie, if any), send its User, ask for the atlas. The access check this
+   * starts is not over yet (and sendAtlasToUser stays stubbed)
    * @param {object} params Parameters
    * @param {string} params.cookie The Cookie header of the upgrade request
    * @param {string} params.username What the client says its name is
    * @param {string} params.filename The atlas
-   * @returns {Promise<object>} The connection
+   * @returns {object} The connection
    */
-const openAtlas = async ({ cookie, username = 'Anonymous', filename }) => {
+const startOpeningAtlas = ({ cookie, username = 'Anonymous', filename }) => {
   const ws = mockSocket();
   const headers = cookie ? { cookie } : {};
   AMS._connectNewUser({ ws, req: { url: '/', headers } });
@@ -83,6 +84,17 @@ const openAtlas = async ({ cookie, username = 'Anonymous', filename }) => {
     user: { username, dirname, atlasFilename: filename, source, mri: 'brain.nii.gz', iAtlas: 'a1', slice: 0, view: 'sag', x0: -1, y0: -1 }
   }, ws);
   AMS.receiveUserDataMessage({ uid: sourceUS.uid, description: 'sendAtlas' }, ws);
+
+  return sourceUS;
+};
+
+/**
+   * The same, once the access has been checked
+   * @param {object} params As for startOpeningAtlas
+   * @returns {Promise<object>} The connection
+   */
+const openAtlas = async ({ cookie, username = 'Anonymous', filename }) => {
+  const sourceUS = startOpeningAtlas({ cookie, username, filename });
   await sourceUS.writeAccess[dirname + filename].pending;
   sinon.restore();
 
@@ -270,7 +282,7 @@ describe('UNIT TESTING WEBSOCKET WRITE ACCESS', function () {
       expect(appliedWrites(sourceUS)).to.deep.equal([]);
     });
 
-    it('refuses writes until the access has been checked', function () {
+    it('a write decided before the access has been checked is refused (the messages handler holds it until then)', function () {
       const ws = mockSocket();
       AMS._connectNewUser({ ws, req: { url: '/', headers: {} } });
       const sourceUS = AMS.getUserFromSocket(ws);
@@ -278,6 +290,61 @@ describe('UNIT TESTING WEBSOCKET WRITE ACCESS', function () {
       sourceUS.User = { iAtlas: 'a1', dirname, atlasFilename: 'public.nii.gz', source };
       expect(appliedWrites(sourceUS)).to.deep.equal([]);
       expect(sourceUS.writeAccess[dirname + 'public.nii.gz'].pending).to.be.a('promise');
+    });
+
+    it('holds the writes an editor sends before the access check ends, then applies them in order', async function () {
+      const sourceUS = startOpeningAtlas({ cookie: 'connect.sid=editor', filename: 'project.nii.gz' });
+      const paint = sinon.stub(AMS, 'receivePaintMessage');
+      const save = sinon.stub(AMS, 'receiveSaveMessage').resolves();
+      const broadcast = sinon.stub(AMS, '_handleBroadcastWebSocketMessage');
+      const send = (data) => AMS._handleWebSocketMessage({ msg: JSON.stringify(data), ws: sourceUS.socket });
+      send({ type: 'paint', data: { c: 'mf', x: 1, y: 1 } });
+      send({ type: 'show', data: { x: 1, y: 1 } }); // not a write, but after one
+      send({ type: 'paint', data: { c: 'lf', x: 2, y: 1 } });
+      send({ type: 'save' });
+      expect(paint.called || save.called || broadcast.called).to.equal(false);
+      await sourceUS.writeAccess[dirname + 'project.nii.gz'].pending;
+      expect(paint.callCount).to.equal(2);
+      expect(save.callCount).to.equal(1);
+      expect(broadcast.args.map(([{ data }]) => data.type)).to.deep.equal(['paint', 'show', 'paint', 'save']);
+      expect(sourceUS.messageQueue).to.equal(null);
+    });
+
+    it('holds the writes of a user without access until the check ends, then refuses them', async function () {
+      const sourceUS = startOpeningAtlas({ cookie: 'connect.sid=bar', filename: 'project.nii.gz' });
+      const paint = sinon.stub(AMS, 'receivePaintMessage');
+      const broadcast = sinon.stub(AMS, '_handleBroadcastWebSocketMessage');
+      AMS._handleWebSocketMessage({ msg: JSON.stringify({ type: 'paint', data: { c: 'mf', x: 1, y: 1 } }), ws: sourceUS.socket });
+      AMS._handleWebSocketMessage({ msg: JSON.stringify({ type: 'show', data: { x: 1, y: 1 } }), ws: sourceUS.socket });
+      await sourceUS.writeAccess[dirname + 'project.nii.gz'].pending;
+      expect(paint.called).to.equal(false);
+      expect(broadcast.args.map(([{ data }]) => data.type)).to.deep.equal(['show']);
+    });
+
+    it('the writes sent after a save of the MRI document that lists the atlas wait for it', async function () {
+      // a project page opens a new layer, saves the MRI document that lists it, and paints
+      const sourceUS = await openAtlas({ cookie: 'connect.sid=editor', filename: 'newlayer2.nii.gz' });
+      expect(appliedWrites(sourceUS)).to.deep.equal([]);
+      const db = U.getNativeDB();
+      const doc = await db.collection('mri').findOne({ source, backup: { $exists: false } }, { projection: { _id: 0 } });
+      doc.mri.atlas.push({ filename: 'newlayer2.nii.gz', project: shortname, name: 'Layer' });
+      const paint = sinon.stub(AMS, 'receivePaintMessage');
+      sinon.stub(AMS, '_handleBroadcastWebSocketMessage');
+      AMS._handleWebSocketMessage({ msg: JSON.stringify({ type: 'saveMetadata', metadata: doc, method: 'append' }), ws: sourceUS.socket });
+      AMS._handleWebSocketMessage({ msg: JSON.stringify({ type: 'paint', data: { c: 'mf', x: 1, y: 1 } }), ws: sourceUS.socket });
+      expect(paint.called).to.equal(false);
+      await sourceUS.metadataSave;
+      await sourceUS.writeAccess[dirname + 'newlayer2.nii.gz'].pending;
+      expect(paint.calledOnce).to.equal(true);
+    });
+
+    it('drops the held messages of a connection that closed', async function () {
+      const sourceUS = startOpeningAtlas({ cookie: 'connect.sid=editor', filename: 'project.nii.gz' });
+      const paint = sinon.stub(AMS, 'receivePaintMessage');
+      AMS._handleWebSocketMessage({ msg: JSON.stringify({ type: 'paint', data: { c: 'mf', x: 1, y: 1 } }), ws: sourceUS.socket });
+      AMS.US = [];
+      await sourceUS.writeAccess[dirname + 'project.nii.gz'].pending;
+      expect(paint.called).to.equal(false);
     });
 
     it('checks again after a while: a logout or a lost access is seen', async function () {

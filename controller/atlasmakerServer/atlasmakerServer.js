@@ -2006,6 +2006,40 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
     },
 
     /**
+     * What a write message from a connection must wait for before it is
+     * decided: it is not allowed yet, but the access is being checked (the
+     * atlas was just opened, or the last check is old), or the connection is
+     * saving the MRI document, which may list the atlas. Without this, the
+     * first strokes of an editor could be refused
+     * @param {object} sourceUS The connection
+     * @param {string} type The message type
+     * @returns {Promise|null} The promise to wait for, or null to decide now
+     */
+    _writeAccessPending: function (sourceUS, type) {
+      if (!atlasWriteTypes.includes(type) || sourceUS.isEmbed) {
+        return null;
+      }
+      const target = me._writeTarget(sourceUS, type);
+      if (!target) {
+        return null;
+      }
+      const key = target.dirname + target.filename;
+      let entry = sourceUS.writeAccess && sourceUS.writeAccess[key];
+      if (entry && entry.checkedAt && entry.allowed) {
+        return null;
+      }
+      if (sourceUS.metadataSave) {
+        return sourceUS.metadataSave;
+      }
+      if (!entry || (!entry.pending && Date.now() - entry.checkedAt > writeAccessMaxAge)) {
+        me.refreshWriteAccess(sourceUS, target);
+        entry = sourceUS.writeAccess[key];
+      }
+
+      return entry.pending;
+    },
+
+    /**
      * Whether a write message from a connection may be applied. Decides from
      * the last check (made when the atlas was opened, and again when it is
      * older than writeAccessMaxAge), so messages are handled in order
@@ -2097,10 +2131,21 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         me.receiveSaveMessage(data, ws)
           .catch((err) => tracer.log('ERROR: save message failed', err));
         break;
-      case 'saveMetadata':
-        me.receiveSaveMetadataMessage(data, ws) // sender);
+      case 'saveMetadata': {
+        // the writes that follow wait for it if the user may not write yet:
+        // a project page saves the layers it creates after opening them
+        const save = me.receiveSaveMetadataMessage(data, ws) // sender);
           .catch((err) => tracer.log('ERROR: saveMetadata message failed', err));
+        if (sourceUS) {
+          sourceUS.metadataSave = save;
+          save.then(() => {
+            if (sourceUS.metadataSave === save) {
+              sourceUS.metadataSave = null;
+            }
+          });
+        }
         break;
+      }
       case 'atlas':
         me.receiveAtlasFromUserMessage(data, ws) // sender);
           .catch((err) => tracer.log('ERROR: atlas message failed', err));
@@ -2253,13 +2298,47 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         }
       }
 
-      // handle single user Web socket messages; refused writes are not broadcast either
-      if (me._handleUserWebSocketMessage({ data, ws, sourceUS }) === false) {
+      // a write waiting for an access check holds back the messages that follow it
+      if (sourceUS.messageQueue) {
+        sourceUS.messageQueue.push(data);
+
         return;
       }
+      me._handleMessages({ queue: [data], ws, sourceUS });
+    },
 
-      // handle broadcast of messages
-      me._handleBroadcastWebSocketMessage({ data, sourceUS });
+    /**
+     * Handle, in order, messages from a connection. A write that cannot be
+     * decided yet (see _writeAccessPending) and the messages after it wait in
+     * sourceUS.messageQueue until it can
+     * @param {object} params Parameters
+     * @param {Array} params.queue The messages
+     * @param {object} params.ws The socket
+     * @param {object} params.sourceUS The connection
+     * @returns {void}
+     */
+    _handleMessages: function ({ queue, ws, sourceUS }) {
+      while (queue.length > 0) {
+        const pending = me._writeAccessPending(sourceUS, queue[0].type);
+        if (pending) {
+          sourceUS.messageQueue = queue;
+          pending.then(() => {
+            sourceUS.messageQueue = null;
+            if (me.US.includes(sourceUS)) {
+              me._handleMessages({ queue, ws, sourceUS });
+            }
+          });
+
+          return;
+        }
+        const data = queue.shift();
+
+        // handle single user Web socket messages; refused writes are not broadcast either
+        if (me._handleUserWebSocketMessage({ data, ws, sourceUS }) !== false) {
+          // handle broadcast of messages
+          me._handleBroadcastWebSocketMessage({ data, sourceUS });
+        }
+      }
     },
     // eslint-disable-next-line max-statements
     _disconnectUser: async function ({ ws }) {
