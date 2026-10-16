@@ -347,6 +347,8 @@ if (isEmptyObject(mriInfo)) {
       const msgLog = document.getElementById('msgLog');
       if (msgLog) { msgLog.innerHTML = 'ERROR: Can\'t load data. ' + err; }
       console.error(err);
+      // Say it in the viewer too, instead of "Loading brain…" forever
+      AtlasMakerWidget.setViewerState({ state: 'error', message: 'This brain could not be loaded: ' + ((err && err.message) || err) });
     });
 }
 

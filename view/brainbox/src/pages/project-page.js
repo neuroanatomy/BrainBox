@@ -201,6 +201,13 @@ const saveAnnotations = function (param) {
 const loadProjectFile = function (index) {
   // eslint-disable-next-line max-statements
   const pr = new Promise((resolve, reject) => {
+    if (!projectInfo.files.list[index]) {
+      const err = new Error('This project has no files.');
+      AtlasMakerWidget.setViewerState({ state: 'error', message: err.message });
+      reject(err);
+
+      return;
+    }
     const url = projectInfo.files.list[index].source;
     const params = { url: url, view: 'cor', slice: 180, fullscreen: false };
     AtlasMakerWidget.setViewerState({ state: 'loading' });
@@ -304,7 +311,7 @@ const loadProjectFile = function (index) {
         })
         .catch(function (err) {
           console.error(err);
-          AtlasMakerWidget.setViewerState({ state: 'error', message: err.message });
+          AtlasMakerWidget.setViewerState({ state: 'error', message: 'This brain could not be loaded: ' + err.message });
           const textLayer = AtlasMakerWidget.container.querySelector('#text-layer');
           if (textLayer) {
             textLayer.innerHTML = '<text x=\'5\' y=\'15\' fill=\'white\'>ERROR: ' + err.message + '</text>';
@@ -314,6 +321,7 @@ const loadProjectFile = function (index) {
     } else {
       const msg = AtlasMakerWidget.container.querySelector('#text-layer');
       msg.innerHTML = '<text x=\'5\' y=\'15\' fill=\'white\'>ERROR: File is unreadable</text>';
+      AtlasMakerWidget.setViewerState({ state: 'error', message: 'This brain could not be loaded: the file is maybe corrupt?' });
       reject(new Error('ERROR: Cannot read data. The file is maybe corrupt?'));
     }
   });
@@ -521,7 +529,9 @@ BrainBox.initBrainBox()
   // load the 1st file
   .then(function () {
 
-    return loadProjectFile(0);
+    // A file that cannot be loaded is shown as an error in the viewer: the rest
+    // of the page is still set up, so that another file can be chosen
+    return loadProjectFile(0).catch(function () { /* handled in loadProjectFile */ });
   })
   // configure the UI
   .then(function () {
@@ -541,6 +551,10 @@ BrainBox.initBrainBox()
   })
   .catch((err) => {
     console.error(err);
+    // Say it in the viewer, instead of "Loading brain…" forever
+    if (AtlasMakerWidget.viewerState === 'loading') {
+      AtlasMakerWidget.setViewerState({ state: 'error', message: 'This project could not be loaded: ' + err.message });
+    }
   });
 
 // Listen to changes that trigger a metadata save

@@ -154,6 +154,12 @@ const initResources = async () => {
     res.send('<html><body><h1>403 Forbidden</h1><p>Rate limited</p></body></html>');
   });
 
+  // Test-only route: a brain file that downloads fine but cannot be read
+  app.get('/test_data/unreadable_brain.mgz', (req, res) => {
+    res.set('Content-Type', 'application/octet-stream');
+    res.send(Buffer.from('this is not a gzipped mgz file'));
+  });
+
   db = app.db.mongoDB();
   nativeDb = app.db.nativeMongoDB();
 };

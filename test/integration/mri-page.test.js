@@ -6,10 +6,11 @@
   Browser tests for the MRI page script (view/brainbox/src/pages/mri-page.js): the volume
   annotations table (one row per annotation, a label-set menu, project link, access level,
   first row selected), changing an annotation's label set, selecting a row, the error shown
-  when the page gets no MRI information, a failed load, the double-tap handling on touch
-  screens, and the "add project" button.
+  when the page gets no MRI information, a failed load (shown in the viewer instead of an
+  endless "loading"), the double-tap handling on touch screens, and the "add project" button.
 */
 
+const crypto = require('crypto');
 const puppeteer = require('puppeteer');
 const chai = require('chai');
 const { assert } = chai;
@@ -18,6 +19,8 @@ chai.use(chaiHttp);
 const U = require('../utils.js');
 
 const MRI_PAGE = `${U.serverURL}/mri?url=${U.localBertURL}`;
+// Downloads fine, but is not an MRI (test-only route, test/utils.js)
+const UNREADABLE_URL = `${U.serverURL}/test_data/unreadable_brain.mgz`;
 
 /**
  * Open the MRI page. `respond(req)` may answer a local request itself (or return
@@ -25,9 +28,11 @@ const MRI_PAGE = `${U.serverURL}/mri?url=${U.localBertURL}`;
  * @param {Object} browser A puppeteer browser
  * @param {Function} [respond] req => canned answer, or null
  * @param {boolean} [waitForTables] Wait until the page has filled its tables
+ * @param {string} [url] The page to open
  * @returns {Promise<Object>} { page, requests, pageErrors }
  */
-const openPage = async (browser, respond = () => null, waitForTables = true) => {
+// eslint-disable-next-line max-params
+const openPage = async (browser, respond = () => null, waitForTables = true, url = MRI_PAGE) => {
   const page = await browser.newPage();
   await page.setViewport({ width: 1200, height: 900, hasTouch: true });
   const requests = [];
@@ -44,7 +49,7 @@ const openPage = async (browser, respond = () => null, waitForTables = true) => 
     const answer = respond(req);
     if (answer) { req.respond(answer); } else { req.continue(); }
   });
-  await page.goto(MRI_PAGE, { waitUntil: 'domcontentloaded' });
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
   if (waitForTables) {
     await page.waitForFunction(
       () => window.AtlasMakerWidget && AtlasMakerWidget.isViewerReady() && document.querySelector('table#annotations tbody tr'),
@@ -54,6 +59,19 @@ const openPage = async (browser, respond = () => null, waitForTables = true) => 
 
   return { page, requests, pageErrors };
 };
+
+// What the viewer's loading indicator says
+const loadingIndicator = (page) => page.evaluate(() => {
+  const el = document.getElementById('loadingIndicator');
+
+  return {
+    shown: getComputedStyle(el).display !== 'none',
+    error: el.classList.contains('error'),
+    spinner: getComputedStyle(el.querySelector('.disc')).display !== 'none',
+    text: el.querySelector('p').textContent,
+    state: AtlasMakerWidget.viewerState
+  };
+});
 
 const annotationRows = (page) => page.$$eval('table#annotations tbody tr', (rows) => rows.map((tr) => {
   const select = tr.querySelector('select');
@@ -96,6 +114,10 @@ describe('TESTING THE MRI PAGE SCRIPT (mri-page.js)', function () {
     if (res.body && res.body.url) {
       await U.removeMRI({ dirPath: './public' + res.body.url, srcURL: U.localBertURL });
     }
+    // The failed download leaves its file in the server's data directory
+    const hash = crypto.createHash('md5').update(UNREADABLE_URL)
+      .digest('hex');
+    await U.removeMRI({ dirPath: './public/data/' + hash, srcURL: UNREADABLE_URL });
   });
 
   it('lists the volume annotations, with a menu of every label set, and selects the first', async function () {
@@ -211,9 +233,23 @@ describe('TESTING THE MRI PAGE SCRIPT (mri-page.js)', function () {
     const errors = [];
     page.on('console', (msg) => { if (msg.type() === 'error') { errors.push(msg.text()); } });
     await page.waitForFunction(() => window.AtlasMakerWidget && AtlasMakerWidget.flagConnected === 1, { timeout: U.longTimeout });
-    await U.delay(1000);
+    await page.waitForFunction(() => AtlasMakerWidget.viewerState !== 'loading', { timeout: U.shortTimeout });
     assert.isEmpty(await page.$$('table#annotations tbody tr'), 'nothing was filled in');
     assert.deepEqual(opened.pageErrors, [], 'the failure is caught');
+    const indicator = await loadingIndicator(page);
+    assert.deepInclude(indicator, { shown: true, error: true, spinner: false, state: 'error' }, 'the viewer says it failed');
+    assert.match(indicator.text, /^This brain could not be loaded: /);
+  }).timeout(U.longTimeout);
+
+  it('shows why in the viewer, instead of loading forever, when the brain cannot be read', async function () {
+    opened = await openPage(browser, () => null, false, `${U.serverURL}/mri?url=${UNREADABLE_URL}`);
+    const { page } = opened;
+    // The server downloads the file, fails to read it, and says so at the next poll (2 s later)
+    await page.waitForFunction(() => window.AtlasMakerWidget && AtlasMakerWidget.viewerState !== 'loading', { timeout: U.mediumTimeout });
+    const indicator = await loadingIndicator(page);
+    assert.deepInclude(indicator, { shown: true, error: true, spinner: false, state: 'error' });
+    assert.match(indicator.text, /^This brain could not be loaded: ./, 'with the server\'s reason');
+    assert.deepEqual(opened.pageErrors, []);
   }).timeout(U.longTimeout);
 
   // eslint-disable-next-line max-statements
