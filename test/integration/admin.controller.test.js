@@ -196,13 +196,51 @@ describe('TESTING THE /admin ROUTE', function () {
       }
     }).timeout(U.shortTimeout);
 
+    // Apache connects to the app over loopback (::1 in production) and adds X-Forwarded-For
+    const proxyHeaders = { 'X-Forwarded-For': '203.0.113.7', 'X-Forwarded-Host': 'brainbox.example.org' };
+
     it('does not let other users broadcast a message', async function () {
-      // From 127.0.0.1: the server also lets through requests from ::1 (admin.controller.js,
-      // authorizedIP), which is where 'localhost' goes on some systems
-      const res = await chai.request(U.testDataURL).post('/admin/broadcast-message')
+      const res = await chai.request(U.serverURL).post('/admin/broadcast-message')
+        .set(proxyHeaders)
         .query({ token: otherToken })
         .send({ msg: 'Testing' });
       assert.equal(res.statusCode, 403);
+    });
+
+    it('does not let anonymous visitors coming through the proxy save or broadcast', async function () {
+      for (const url of [U.serverURL, U.testDataURL]) {
+        // eslint-disable-next-line no-await-in-loop
+        const broadcast = await chai.request(url).post('/admin/broadcast-message')
+          .set(proxyHeaders)
+          .send({ msg: 'Testing' });
+        assert.equal(broadcast.statusCode, 403, url);
+        assert.deepEqual(broadcast.body, { error: 'Unauthorized address' });
+        // eslint-disable-next-line no-await-in-loop
+        const save = await chai.request(url).post('/admin/save-all-atlases')
+          .set(proxyHeaders);
+        assert.equal(save.statusCode, 403, url);
+      }
+    });
+
+    it('lets admins coming through the proxy broadcast a message', async function () {
+      const res = await chai.request(U.serverURL).post('/admin/broadcast-message')
+        .set(proxyHeaders)
+        .query({ token: adminToken })
+        .send({ msg: 'Testing' });
+      assert.equal(res.statusCode, 200);
+    });
+
+    it('lets scripts on the server call the app directly, without a proxy', async function () {
+      for (const url of [U.serverURL, U.testDataURL]) {
+        // eslint-disable-next-line no-await-in-loop
+        const broadcast = await chai.request(url).post('/admin/broadcast-message')
+          .send({ msg: 'Testing' });
+        assert.equal(broadcast.statusCode, 200, url);
+        // eslint-disable-next-line no-await-in-loop
+        const save = await chai.request(url).post('/admin/save-all-atlases');
+        assert.equal(save.statusCode, 200, url);
+        assert.isTrue(save.body.success);
+      }
     });
   });
 

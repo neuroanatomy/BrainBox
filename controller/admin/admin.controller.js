@@ -7,9 +7,37 @@ const projects = require('./admin.projects');
 const { jsonForScript } = require('../utils/jsonForScript');
 const { publicLoggedUser } = require('../user/publicUser');
 
+const LOOPBACK_ADDRESSES = ['127.0.0.1', '::1', '::ffff:127.0.0.1'];
+const FORWARDING_HEADERS = ['x-forwarded-for', 'forwarded', 'x-forwarded-host'];
+
 /**
- * Let through admins, and requests from authorised IP addresses
- * (scripts running on the server)
+ * Address of the direct peer of the request (the front proxy, when there is one)
+ * @param {object} req Request object
+ * @returns {string|undefined} The address
+ */
+const peerAddress = (req) => {
+  const socket = req.socket || req.connection;
+
+  return socket ? socket.remoteAddress : undefined; // eslint-disable-line no-undefined
+};
+
+/**
+ * Whether the request comes from the server itself: its direct peer is a
+ * loopback address and it did not go through a proxy. The front proxy
+ * (Apache) also connects from a loopback address, but it adds X-Forwarded-For
+ * @param {object} req Request object
+ * @returns {boolean} True for a direct local request
+ */
+const isDirectLocalRequest = (req) => {
+  const headers = req.headers || {};
+
+  return LOOPBACK_ADDRESSES.includes(peerAddress(req))
+    && FORWARDING_HEADERS.every((name) => typeof headers[name] === 'undefined');
+};
+
+/**
+ * Let through admins, and requests made on the server itself (scripts
+ * calling the app's port directly, not through the front proxy)
  * @param {object} req Request object
  * @param {object} res Response object
  * @param {function} next Next middleware
@@ -20,21 +48,16 @@ const validator = (req, res, next) => {
     return next();
   }
 
-  const authorizedIP = ['1']; // hardcoded authorized IPs
-  let ip;
-  if (req.connection.remoteAddress) {
-    ip = req.connection.remoteAddress;
-  } else if (req.socket._peername) {
-    ip = req.socket._peername.address;
-  }
-
-  ip = ip.split(':').pop();
-  console.log({ ip });
-
-  if (authorizedIP.includes(ip)) {
+  if (isDirectLocalRequest(req)) {
     return next();
   }
 
+  const headers = req.headers || {};
+  console.log('admin: refused', req.method, req.originalUrl, {
+    peer: peerAddress(req),
+    forwardedFor: headers['x-forwarded-for'],
+    user: requestUsername(req)
+  });
   res.status(403).send({ error: 'Unauthorized address' })
     .end();
 };
