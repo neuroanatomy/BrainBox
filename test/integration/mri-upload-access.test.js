@@ -17,6 +17,18 @@ const F = require('../mri-access-fixtures.js');
 
 const atlasFile = path.join(__dirname, '../data/bert_aseg.nii.gz');
 
+// Another project's layer and text annotations, hidden from everyone but its owner
+const otherShortname = 'mriuploadotherhidden';
+const otherFilename = 'mri-upload-other-hidden.nii.gz';
+const otherProject = {
+  name: otherShortname,
+  shortname: otherShortname,
+  owner: 'foo',
+  collaborators: { list: [{ userID: 'anyone', nickname: 'anyone', username: 'anyone', access: { collaborators: 'none', annotations: 'none', files: 'view' } }] },
+  files: { list: [U.localBertURL] },
+  annotations: { list: [] }
+};
+
 /**
  * Upload a layer for the test brain with a user's token
  * @param {object} params { username, project, name }
@@ -45,13 +57,25 @@ describe('POST /mri/upload: who may add or replace a layer with a token', functi
   before(async function () {
     await U.waitForTestBrain();
     await F.setUp();
+    const db = U.getNativeDB();
+    await db.collection('project').deleteMany({ shortname: otherShortname });
+    await db.collection('project').insertOne({ ...otherProject });
+    await db.collection('mri').updateOne({ source: U.localBertURL, backup: { $exists: false } }, {
+      $push: { 'mri.atlas': { filename: otherFilename, project: otherShortname, name: 'Other', type: 'volume', labels: 'foreground.json', access: 'edit' } },
+      $set: { [`mri.annotations.${otherShortname}`]: { Note: { type: 'text', data: 'not for everyone' } } }
+    });
     mri = await F.storedMRI();
   });
 
   after(async function () {
     const layers = await projectLayers();
     await U.getNativeDB().collection('mri')
-      .updateMany({ source: U.localBertURL }, { $pull: { 'mri.atlas': { project: { $in: [F.shortname, 'nosuchprojectmriroutes'] } } } });
+      .updateMany({ source: U.localBertURL }, {
+        $pull: { 'mri.atlas': { project: { $in: [F.shortname, 'nosuchprojectmriroutes', otherShortname] } } },
+        $unset: { [`mri.annotations.${otherShortname}`]: '' }
+      });
+    await U.getNativeDB().collection('project')
+      .deleteMany({ shortname: otherShortname });
     for (const layer of layers) {
       // eslint-disable-next-line no-await-in-loop
       await fs.promises.rm(path.join(__dirname, '../../public', mri.url, layer.filename), { force: true });
@@ -86,6 +110,17 @@ describe('POST /mri/upload: who may add or replace a layer with a token', functi
     assert.lengthOf(layers, 1);
     assert.equal(layers[0].owner, F.users.editor);
     assert.equal(layers[0].access, 'edit');
+  });
+
+  it('answers the uploader the MRI without the layers and text annotations hidden from them', async function () {
+    const res = await upload({ username: F.users.editor });
+    assert.equal(res.statusCode, 200);
+    const layer = res.body.mri.atlas.find((a) => a.project === F.shortname);
+    assert.equal(layer.access, 'edit', 'the new layer, with the uploader\'s access');
+    assert.isUndefined(res.body.mri.atlas.find((a) => a.filename === otherFilename), 'no hidden layer');
+    assert.notProperty(res.body.mri.annotations || {}, otherShortname, 'no hidden text annotations');
+    const stored = await F.storedMRI();
+    assert.isDefined(stored.mri.atlas.find((a) => a.filename === otherFilename), 'the hidden layer is still stored');
   });
 
   it('does not let a viewer replace that layer (403), which is kept', async function () {

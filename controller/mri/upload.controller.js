@@ -5,6 +5,7 @@ const { body, validationResult } = require('express-validator');
 const amri = require('../atlasmakerServer/atlasmaker-mri');
 const { AccessType } = require('neuroweblab');
 const { projectAccessLevel } = require('../atlasmakerServer/metadata-save-access');
+const { filterMriForUser } = require('./mri-access');
 const AsyncLock = require('async-lock');
 const lock = new AsyncLock();
 
@@ -265,11 +266,15 @@ const upload = async function (req, res) {
     await req.nativeDb.collection('mri').updateMany({ source: req.body.url, backup: { $exists: false } }, { $set: { backup: true } });
     // insert new version
     await req.nativeDb.collection('mri').insertOne(mri);
-
-    // return the full mri object ???
-    res.status(200).json(mri)
-      .end();
   });
+
+  // answer the MRI as the uploader may see it, as POST /mri/json does: without
+  // the layers and text annotations of projects whose annotations are hidden
+  // from them
+  const answer = JSON.parse(JSON.stringify(mri));
+  await filterMriForUser(req.nativeDb, answer, req.body.url, username);
+  res.status(200).json(answer)
+    .end();
 };
 
 /** 'token' was used by the /mri/upload route, which is now
