@@ -756,20 +756,30 @@ describe('UNIT TESTING ATLASMAKER SERVER', function() {
       AMS.US = AMS.US.filter(() => false);
     });
 
-    it('should broadcast paint volume data to users on the same atlas', function () {
+    // eslint-disable-next-line max-statements
+    it('should broadcast paint volume data to the user and to the users on the same atlas who may see it', function () {
       const ws1 = mockSocket();
       const ws2 = mockSocket();
-      addMockUser(ws1, { iAtlas: 'a1' });
-      const User = { iAtlas: 'a1' };
-      addMockUser(ws2, { iAtlas: 'a1' });
+      const ws3 = mockSocket();
+      const ws4 = mockSocket();
+      AMS.Atlases.a1 = { dirname: '/data/x/', filename: 'paintvol.nii.gz' };
+      const target = { dirname: '/data/x/', filename: 'paintvol.nii.gz' };
+      const source = addMockUser(ws1, { iAtlas: 'a1' });
+      source.User.uid = source.uid;
+      // opened the atlas and may see it
+      addMockUser(ws2, { iAtlas: 'a1' }).readAccess = { '/data/x/paintvol.nii.gz': { readable: true, checkedAt: Date.now(), target } };
+      // may not see it
+      addMockUser(ws3, { iAtlas: 'a1' }).readAccess = { '/data/x/paintvol.nii.gz': { readable: false, checkedAt: Date.now(), refusalLogged: true, target } };
+      // says it is on the atlas, but never opened it
+      addMockUser(ws4, { iAtlas: 'a1' });
 
-      AMS.broadcastPaintVolumeMessage({ data: [[0, 1]] }, User);
+      AMS.broadcastPaintVolumeMessage({ data: [[0, 1]] }, source.User);
 
-      // both sockets should receive the message (broadcastPaintVolumeMessage
-      // sends to everyone on the same iAtlas, including the source)
-      assert.ok(ws1.send.callCount + ws2.send.callCount >= 1);
-      const sent = JSON.parse(ws1.send.firstCall.args[0]);
-      assert.strictEqual(sent.type, 'paintvol');
+      assert.strictEqual(JSON.parse(ws1.send.firstCall.args[0]).type, 'paintvol');
+      assert.strictEqual(JSON.parse(ws2.send.firstCall.args[0]).type, 'paintvol');
+      assert.strictEqual(ws3.send.callCount, 0);
+      assert.strictEqual(ws4.send.callCount, 0);
+      delete AMS.Atlases.a1;
     });
 
     it('should not send to users on a different atlas', function () {
@@ -1044,9 +1054,10 @@ describe('UNIT TESTING ATLASMAKER SERVER', function() {
       AMS.Atlases[atlasKey] = { data: vol, dim: dim };
 
       const ws = mockSocket();
-      addMockUser(ws, { iAtlas: atlasKey });
+      const { uid } = addMockUser(ws, { iAtlas: atlasKey });
 
       const User = {
+        uid,
         username: 'undoer',
         atlasFilename: 'undo.nii.gz',
         specimenName: 'test',

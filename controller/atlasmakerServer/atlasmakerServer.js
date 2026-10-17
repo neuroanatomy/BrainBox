@@ -14,7 +14,7 @@ const amri = require('./atlasmaker-mri');
 const AsyncLock = require('async-lock');
 const lock = new AsyncLock();
 const EmbedAccessService = require('../../services/EmbedAccessService');
-const { usernameFromCookie, atlasAccessLevel, canEdit } = require('./atlas-write-access');
+const { usernameFromCookie, atlasAccessLevel, atlasReadAccess, canEdit } = require('./atlas-write-access');
 const { mergeMetadata, projectsForMetadata, savedView } = require('./metadata-save-access');
 
 // WebSocket message types that write to an atlas/annotation - never applied on
@@ -26,6 +26,12 @@ const embedWriteBlockedTypes = ['paint', 'vectorial', 'save', 'saveMetadata', 'a
 const atlasWriteTypes = ['paint', 'vectorial', 'save', 'atlas'];
 // how long an access decision is used before it is checked again (access can change)
 const writeAccessMaxAge = 10 * 1000;
+// WebSocket message types relayed to the other users that carry the content of
+// the sender's atlas: relayed only to users who may see that atlas
+const atlasContentTypes = ['paint', 'vectorial', 'atlas'];
+// what other users are not told about a user's state: the layer they have open
+// (its file name is the only protection of the layer's file until /data is checked)
+const privateUserFields = ['atlasFilename', 'iAtlas'];
 
 // Get whitelist and blacklist
 const useWhitelist = false;
@@ -547,14 +553,21 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       }
     },
 
+    // eslint-disable-next-line max-statements
     broadcastPaintVolumeMessage: function (msg, User) {
       try {
         let n = 0;
         const msg2 = JSON.stringify({ 'type': 'paintvol', 'data': msg });
+        const atlas = me.Atlases[User.iAtlas];
+        const target = atlas ? { dirname: atlas.dirname, filename: atlas.filename } : null;
         for (const i in me.US) {
           if ({}.hasOwnProperty.call(me.US, i)) {
             if (typeof me.US[i].User !== 'undefined' &&
               me.US[i].User.iAtlas !== User.iAtlas) {
+              continue;
+            }
+            // the user who undid, and the others only if they may see the atlas
+            if (me.US[i].uid !== User.uid && !(target && me._mayRelayAtlas(me.US[i], target))) {
               continue;
             }
             me.US[i].socket.send(msg2);
@@ -1235,7 +1248,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       me.getBrainAtPath(brainPath)
         .then(function (brain) {
           const iAtlas = me.indexOfAtlasAtPath(dirname, atlasFilename);
-          if (typeof iAtlas !== 'undefined') {
+          // the atlas is drawn only for a user who may see it (as the last check says)
+          if (typeof iAtlas !== 'undefined' && me._mayRead(sourceUS, { dirname, filename: atlasFilename, source: sourceUS.User.source }, 'requestSlice2')) {
             atlas = me.Atlases[iAtlas];
           }
 
@@ -1736,6 +1750,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
 
       return { iAtlas, atlasLoadedFlag };
     },
+    // eslint-disable-next-line max-statements
     _handleSendAtlasRequest: function ({ sourceUS, User, userSocket, firstConnectionFlag }) {
       // An embed connection may only ever pull data for the single MRI it was
       // granted a ticket for - never anything else reachable over the same socket.
@@ -1760,23 +1775,35 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       User.iAtlas = iAtlas; // value i if it was found, or last available if it wasn't
 
       // check now whether the user may edit it, before the first stroke
-      me.refreshWriteAccess(sourceUS, { dirname: User.dirname, filename: User.atlasFilename, source: User.source });
+      const target = { dirname: User.dirname, filename: User.atlasFilename, source: User.source };
+      me.refreshWriteAccess(sourceUS, target);
+
+      // and whether they may see it: the atlas is sent only once that is known
+      const readCheck = me.refreshReadAccess(sourceUS, target);
+      const sendIfReadable = (atlas) => readCheck.then(() => {
+        if (sourceUS.User.dirname !== target.dirname || sourceUS.User.atlasFilename !== target.filename) {
+          // the user has opened another atlas since
+          return;
+        }
+        if (!me._mayRead(sourceUS, target, 'sendAtlas')) {
+          return;
+        }
+        me.sendAtlasToUser(atlas, userSocket, true);
+        sourceUS.User.isMRILoaded = true;
+      });
 
       // 2. Send the atlas to the user (load it if required)
       if (atlasLoadedFlag) {
         if (firstConnectionFlag || switchingAtlasFlag) {
           // send the new user our data
-          me.sendAtlasToUser(me.Atlases[iAtlas], userSocket, true);
-          sourceUS.User.isMRILoaded = true;
+          sendIfReadable(me.Atlases[iAtlas])
+            .catch((err) => console.error('ERROR: Unable to send atlas', err));
         }
       } else {
         // The atlas requested has not been loaded before:
         // Load the atlas they requesting
         me.addAtlas(User)
-          .then(function (atlas) {
-            me.sendAtlasToUser(atlas, userSocket, true);
-            sourceUS.User.isMRILoaded = true;
-          })
+          .then(sendIfReadable)
           .catch((err) => console.error('ERROR: Unable to load atlas', err));
       }
     },
@@ -1901,7 +1928,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           if (me.US[i].socket === newUS.socket) {
             continue;
           }
-          const msg = JSON.stringify({ type: 'userData', user: me.US[i].User, uid: me.US[i].uid, description: 'allUserData' });
+          const msg = JSON.stringify(me._publicUserData({ type: 'userData', user: me.US[i].User, uid: me.US[i].uid, description: 'allUserData' }));
           newUS.socket.send(msg);
           n += 1;
         }
@@ -1997,6 +2024,168 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
 
       return isInBlacklist;
     },
+    //========================================================================================
+    // Read access
+    //========================================================================================
+    /**
+     * Who a connection reads as: for an embed connection, the user its page was
+     * rendered for (in its ticket: a framed page may not send the site's
+     * cookie); else the user of the session cookie sent when the socket was
+     * opened (read again each time, so a logout counts)
+     * @param {object} sourceUS The connection
+     * @returns {Promise<string|null>} The username, or null for an anonymous visitor
+     */
+    _readerUsername: function (sourceUS) {
+      if (sourceUS.isEmbed && sourceUS.embedScope && typeof sourceUS.embedScope.username === 'string') {
+        return Promise.resolve(sourceUS.embedScope.username);
+      }
+
+      return usernameFromCookie(me.sessionParser, sourceUS.cookie);
+    },
+
+    /**
+     * Check again whether a connection may see an atlas (its content, as the
+     * HTTP API hides the layers of projects whose annotations the user cannot see)
+     * @param {object} sourceUS The connection
+     * @param {object} target { dirname, filename, source } of the atlas
+     * @returns {Promise<boolean>} True if the connection may see the atlas
+     */
+    refreshReadAccess: function (sourceUS, target) {
+      if (!sourceUS.readAccess) {
+        sourceUS.readAccess = {};
+      }
+      const key = target.dirname + target.filename;
+      let entry = sourceUS.readAccess[key];
+      if (!entry) {
+        entry = { readable: false, checkedAt: 0, pending: null };
+        sourceUS.readAccess[key] = entry;
+      }
+      entry.target = target;
+      if (entry.pending) {
+        return entry.pending;
+      }
+      entry.pending = (async () => {
+        try {
+          const username = await me._readerUsername(sourceUS);
+          const { hidden, level } = await atlasReadAccess(nativeDb, { username, ...target });
+          entry.readable = !hidden;
+          entry.description = `${username || 'anonymous'} has '${level}' access to the annotations of its project`;
+          // what the user is told: about their own access only
+          entry.reason = `your access to the annotations of its project is '${level}'`;
+        } catch (err) {
+          tracer.log(`ERROR: Can't check whether ${sourceUS.uid} may see ${key}`, err);
+          entry.readable = false;
+          entry.description = 'access unknown';
+          entry.reason = 'your access to this layer could not be checked';
+        }
+        entry.checkedAt = Date.now();
+        entry.refusalLogged = false;
+        entry.pending = null;
+
+        return entry.readable;
+      })();
+
+      return entry.pending;
+    },
+
+    /**
+     * Whether an atlas may be sent to a connection, as the last check says
+     * (checked again in the background when it is old). A refusal is logged
+     * once per check, and the user told once per check for a sendAtlas (not in
+     * "log" mode, where the atlas is sent)
+     * @param {object} sourceUS The connection
+     * @param {object} target { dirname, filename, source } of the atlas
+     * @param {string} what What would be sent ('sendAtlas', 'requestSlice2', 'relay')
+     * @returns {boolean} True if it may be sent
+     */
+    // eslint-disable-next-line max-statements
+    _mayRead: function (sourceUS, target, what) {
+      const key = target.dirname + target.filename;
+      const entry = sourceUS.readAccess && sourceUS.readAccess[key];
+      if (!entry || (!entry.pending && Date.now() - entry.checkedAt > writeAccessMaxAge)) {
+        me.refreshReadAccess(sourceUS, target)
+          .catch((err) => tracer.log('ERROR: read access check', err));
+      }
+      if (entry && entry.checkedAt && entry.readable) {
+        return true;
+      }
+      const reason = (entry && entry.checkedAt) ? entry.description : 'access not checked yet';
+      const logged = entry ? entry.refusalLogged : sourceUS.uncheckedReadLogged && sourceUS.uncheckedReadLogged[key];
+      if (!logged) {
+        const word = (me.writeAccessMode === 'log') ? 'WOULD REJECT' : 'REJECTED';
+        tracer.log(`${word} read (${what}) of ${key} by ${sourceUS.uid}: ${reason}`);
+        if (entry) {
+          entry.refusalLogged = true;
+        } else {
+          sourceUS.uncheckedReadLogged = { ...sourceUS.uncheckedReadLogged, [key]: true };
+        }
+        if (what === 'sendAtlas' && entry && entry.checkedAt && me.writeAccessMode !== 'log') {
+          me._sendReadRefused(sourceUS, { atlas: key, reason: entry.reason });
+        }
+      }
+
+      return me.writeAccessMode === 'log';
+    },
+
+    /**
+     * Whether the content of an atlas (a stroke, an undo...) another user
+     * changed may be relayed to a connection: only if the connection has opened
+     * it and may see it
+     * @param {object} targetUS The connection
+     * @param {object} target { dirname, filename } of the atlas
+     * @returns {boolean} True if it may be relayed
+     */
+    _mayRelayAtlas: function (targetUS, target) {
+      const key = target.dirname + target.filename;
+      const entry = targetUS.readAccess && targetUS.readAccess[key];
+      if (!entry) {
+        // the connection has not opened this atlas
+        return me.writeAccessMode === 'log';
+      }
+
+      return me._mayRead(targetUS, entry.target, 'relay');
+    },
+
+    /**
+     * Tell a connection that the atlas it asked for is not sent: the user may
+     * not see it. Browsers that do not know the message type ignore it
+     * @param {object} sourceUS The connection
+     * @param {object} notice { atlas, reason }: the atlas' dirname and filename, and why (about this user only)
+     * @returns {void}
+     */
+    _sendReadRefused: function (sourceUS, { atlas, reason }) {
+      try {
+        sourceUS.socket.send(JSON.stringify({ type: 'readRefused', atlas, reason }));
+      } catch (err) {
+        tracer.log(`ERROR: Can't tell ${sourceUS.uid} that a read was refused`, err);
+      }
+    },
+
+    /**
+     * A userData message as the other users get it: without the layer the
+     * user has open
+     * @param {object} data A userData message
+     * @returns {object} A copy without privateUserFields
+     */
+    _publicUserData: function (data) {
+      const copy = { ...data };
+      if (copy.user && typeof copy.user === 'object') {
+        copy.user = _.omit(copy.user, privateUserFields);
+      }
+      if (typeof copy.description === 'string' && copy.description.startsWith('{')) {
+        try {
+          const changes = JSON.parse(copy.description);
+          if (changes && typeof changes === 'object' && privateUserFields.some((f) => f in changes)) {
+            copy.description = JSON.stringify(_.omit(changes, privateUserFields));
+          }
+        } catch (err) {
+          // not JSON: relayed as it is (the receivers ignore it)
+        }
+      }
+
+      return copy;
+    },
+
     //========================================================================================
     // Write access
     //========================================================================================
@@ -2367,6 +2556,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
 
       return include;
     },
+    // eslint-disable-next-line max-statements
     _handleBroadcastWebSocketMessage: function ({ data, sourceUS }) {
       // do not broadcast the following messages
       if (data.type === 'requestSlice' ||
@@ -2390,12 +2580,20 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           continue;
         }
 
+        // the content of an atlas goes only to the users who may see it
+        if (atlasContentTypes.includes(data.type)) {
+          const target = me._writeTarget(sourceUS, data.type);
+          if (!target || !me._mayRelayAtlas(targetUS, target)) {
+            continue;
+          }
+        }
+
         // do broadcast
         if (data.type === 'atlas') {
           me.sendAtlasToUser(data, client, false);
         } else {
           // sanitise data
-          const cleanData = DOMPurify.sanitize(JSON.stringify(data));
+          const cleanData = DOMPurify.sanitize(JSON.stringify(data.type === 'userData' ? me._publicUserData(data) : data));
           try {
             client.send(cleanData);
           } catch (err) {
@@ -2566,6 +2764,10 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           .then((ticket) => {
             if (ticket) {
               newUS.embedScope = { dirname: ticket.dirname, mriSource: ticket.mriSource };
+              // the user the page was rendered for (tickets minted before this was kept have none)
+              if (typeof ticket.username === 'string') {
+                newUS.embedScope.username = ticket.username;
+              }
             }
           })
           .catch((err) => tracer.log('ERROR: embed ticket lookup failed', err));

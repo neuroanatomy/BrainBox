@@ -370,7 +370,8 @@ const mriEmbed = async function (req, res) {
 
   const embedWsTicket = await EmbedAccessService.mintWsTicket(req.nativeDb, {
     dirname: json.url,
-    mriSource: myurl
+    mriSource: myurl,
+    username: req.isAuthenticated() ? req.user.username : null
   });
 
   res.render('mriEmbed', {

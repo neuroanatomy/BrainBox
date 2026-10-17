@@ -99,6 +99,7 @@ export const AtlasMakerWS = {
         me.receiveFunctions.serverMessage = me.receiveServerMessage;
         me.receiveFunctions.vectorial = me.receiveVectorialAnnotationMessage;
         me.receiveFunctions.writeRefused = me.receiveWriteRefusedMessage;
+        me.receiveFunctions.readRefused = me.receiveReadRefusedMessage;
 
         me.receiveFunctions.requestSlice = function (data) { console.log('requestSlice', data); };
         me.receiveFunctions.requestSlice2 = function (data) { console.log('requestSlice2', data); };
@@ -799,6 +800,30 @@ export const AtlasMakerWS = {
       me.displayDialog({ msg: '<p>' + DOMPurify.sanitize(text) + '</p>', modal: true, delay: 0, doFadeOut: false })
         .finally(() => { me._writeRefusedDialogShown = false; });
     }
+  },
+
+  readRefusedMessage: 'You can\'t see this layer',
+
+  /**
+   * The server did not send the layer asked for: the user may not see it (e.g.
+   * they logged out, or their access changed, since the page was loaded). The
+   * page shows the brain without the layer; say why, and stop editing
+   * @param {object} data { atlas, reason }: atlas is the layer's dirname and filename
+   * @returns {void}
+   */
+  receiveReadRefusedMessage: function (data) {
+    const me = AtlasMakerWidget;
+    const shownAtlas = me.User ? me.User.dirname + me.User.atlasFilename : null;
+    if (data.atlas && data.atlas !== shownAtlas) {
+      // about a layer this page no longer shows
+      return;
+    }
+    console.warn('The server did not send the layer: ' + data.reason);
+    me.editMode = 0;
+    me.readRefused = { atlas: data.atlas, reason: data.reason };
+    const text = me.readRefusedMessage + ': ' + data.reason + '. Reload the page or log in again.';
+    me._appendChatMessage('<b>' + DOMPurify.sanitize(text) + '</b><br />');
+    me.displayDialog({ msg: '<p>' + DOMPurify.sanitize(text) + '</p>', modal: true, delay: 0, doFadeOut: false });
   },
 
   /**

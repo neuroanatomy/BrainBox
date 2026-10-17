@@ -12,14 +12,17 @@ const WS_TICKET_DURATION = 6 * 3600 * 1000; // 6h
  * @param {Object} scope The scope to bind the ticket to
  * @param {string} scope.dirname Directory path of the MRI on the server
  * @param {string} scope.mriSource Source URL of the MRI
+ * @param {string|null} [scope.username] The user the embed page was rendered
+ *        for (null if anonymous): who the connection sees layers as
  * @returns {Promise<string>} The minted ticket token
  */
-const mintWsTicket = async function (nativeDb, { dirname, mriSource }) {
+const mintWsTicket = async function (nativeDb, { dirname, mriSource, username = null }) {
   const now = new Date();
   const ticket = {
     token: crypto.randomBytes(24).toString('hex'),
     dirname,
     mriSource,
+    username,
     createdAt: now,
     expiryDate: new Date(now.getTime() + WS_TICKET_DURATION)
   };
