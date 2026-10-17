@@ -188,7 +188,9 @@ const queryFiles = function () {
  */
 const saveAnnotations = function (param) {
   JSON.stringify(param.infoProxy); // update BrainBox.info from infoProxy
-  AtlasMakerWidget.sendSaveMetadataMessage(BrainBox.info);
+  // held until the connection is back if it is closed (see sendSaveMetadataMessage)
+  AtlasMakerWidget.sendSaveMetadataMessage(BrainBox.info)
+    .catch((err) => console.error('The annotations could not be saved', err));
   // hashOld = BrainBox.hash(JSON.stringify(BrainBox.info));
 };
 
@@ -563,7 +565,8 @@ BrainBox.initBrainBox()
 delegate(document, 'focusout', '#projectFiles table tbody td', function (e) {
   const index = jqIndex(e.target.closest('tr'));
   JSON.stringify(infoProxy); // update content of projectInfo object from proxy by calling all getters
-  AtlasMakerWidget.sendSaveMetadataMessage(projectInfo.files.list[index]);
+  AtlasMakerWidget.sendSaveMetadataMessage(projectInfo.files.list[index])
+    .catch((err) => console.error('The file\'s information could not be saved', err));
 });
 // blur when [enter] is clicked, to trigger data sending
 delegate(document, 'keydown', '#projectFiles table tbody td', function (e) {

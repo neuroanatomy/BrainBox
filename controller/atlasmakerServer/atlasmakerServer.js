@@ -2467,8 +2467,13 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         break;
       case 'saveMetadata': {
         // the writes that follow wait for it if the user may not write yet:
-        // a project page saves the layers it creates after opening them
-        const save = me.receiveSaveMetadataMessage(data, ws) // sender);
+        // a project page saves the layers it creates after opening them.
+        // It waits for the connection's previous save, so that the saves are
+        // stored in the order they were sent (a page sends those it held
+        // while disconnected all at once)
+        const previous = sourceUS && sourceUS.metadataSave;
+        const receive = () => me.receiveSaveMetadataMessage(data, ws); // sender);
+        const save = (previous ? previous.then(receive) : receive())
           .catch((err) => tracer.log('ERROR: saveMetadata message failed', err));
         if (sourceUS) {
           sourceUS.metadataSave = save;

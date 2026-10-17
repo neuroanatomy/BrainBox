@@ -237,4 +237,26 @@ describe('UNIT TESTING SAVEMETADATA OVER THE WEBSOCKET', function () {
     expect(doc.modifiedBy).to.equal('foo');
     expect(notices(sourceUS)).to.deep.equal([]);
   });
+
+  it('stores the saves of a connection in the order they were sent, even when the first one takes longer to check', async function () {
+    // a page sends the saves it held while disconnected all at once
+    // (found while porting PR #342, 9db9de4, Nicolas Traut)
+    let calls = 0;
+    const parser = fakeSessionParser(sessions);
+    AMS.sessionParser = (req, res, next) => {
+      calls += 1;
+      const delay = (calls === 1) ? 50 : 0; // the first session lookup is the slowest
+      setTimeout(() => parser(req, res, next), delay);
+    };
+    const owner = connect('connect.sid=mowner', 'mowner');
+    const first = await storedDoc();
+    first.name = 'First';
+    const second = await storedDoc();
+    second.name = 'Second';
+    AMS._handleWebSocketMessage({ msg: JSON.stringify({ type: 'saveMetadata', metadata: first, method: 'append', rnd: 'x' }), ws: owner.socket });
+    AMS._handleWebSocketMessage({ msg: JSON.stringify({ type: 'saveMetadata', metadata: second, method: 'append', rnd: 'y' }), ws: owner.socket });
+    await owner.metadataSave;
+    await new Promise((resolve) => { setTimeout(resolve, 100); });
+    expect((await storedDoc()).name).to.equal('Second');
+  });
 });

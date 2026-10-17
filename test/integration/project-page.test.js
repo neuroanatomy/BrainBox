@@ -81,7 +81,11 @@ const openProjectPage = async (browser) => {
 
       return new Promise(() => null);
     };
-    AtlasMakerWidget.sendSaveMetadataMessage = (info) => { window.__saved.push(JSON.parse(JSON.stringify(info))); };
+    AtlasMakerWidget.sendSaveMetadataMessage = (info) => {
+      window.__saved.push(JSON.parse(JSON.stringify(info)));
+
+      return Promise.resolve();
+    };
     AtlasMakerWidget.configureAtlasMaker = (info, index) => {
       window.__configured.push(index);
 

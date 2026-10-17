@@ -210,6 +210,72 @@ const renameOnMRIPage = async (browser) => {
   return { before, after, pageErrors };
 };
 
+/**
+ * On the MRI page, as an anonymous visitor: the server closes the connection;
+ * while the page reconnects, rename the default layer twice (the same
+ * document, held once), and try to rename the MRI (refused once sent)
+ * (found while porting PR #342, 9db9de4, Nicolas Traut)
+ * @param {object} browser A puppeteer browser
+ * @returns {Promise<object>} { whileDisconnected, after, pageErrors }
+ */
+const editWhileDisconnected = async (browser) => {
+  const AMS = U.getAtlasmakerServer();
+  const known = new Set(AMS.US);
+  const page = await browser.newPage();
+  const pageErrors = [];
+  page.on('pageerror', (err) => pageErrors.push(err.message));
+  await page.goto(`${U.serverURL}/mri?url=${U.localBertURL}`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.AtlasMakerWidget && AtlasMakerWidget.isViewerReady() && AtlasMakerWidget.flagConnected === 1, { timeout: U.longTimeout });
+  await page.evaluate(() => {
+    const me = AtlasMakerWidget;
+    window.__sentSaves = 0;
+    // reconnect in about 3 s instead of up to 12 s
+    me.reconnectionTimeout = 0;
+    const { onclose } = me.socket;
+    me.socket.onclose = () => {
+      const { random } = Math;
+      Math.random = () => 0;
+      try { onclose(); } finally { Math.random = random; }
+    };
+    const { createSocket } = me;
+    me.createSocket = (host) => {
+      const socket = createSocket(host);
+      const send = socket.send.bind(socket);
+      socket.send = (text) => {
+        if (JSON.parse(text).type === 'saveMetadata') { window.__sentSaves += 1; }
+        send(text);
+      };
+
+      return socket;
+    };
+  });
+  // the server closes the page's connection
+  AMS.US.filter((us) => !known.has(us)).forEach((us) => us.socket.close());
+  await page.waitForFunction(() => AtlasMakerWidget.flagConnected === 0, { timeout: U.shortTimeout });
+  const whileDisconnected = await page.evaluate(() => {
+    const me = AtlasMakerWidget;
+    const info = JSON.parse(JSON.stringify(BrainBox.info));
+    const layer = info.mri.atlas.find((a) => a.filename === 'Atlas.nii.gz');
+    layer.name = 'Held 1';
+    me.sendSaveMetadataMessage(info);
+    layer.name = 'Held 2';
+    me.sendSaveMetadataMessage(info);
+    me.sendSaveMetadataMessage({ ...JSON.parse(JSON.stringify(info)), name: 'Renamed while disconnected' });
+    const notice = document.getElementById('metadataPending');
+
+    return { held: me._pendingMetadataSaves.length, notice: notice ? notice.textContent : null };
+  });
+  await page.waitForFunction(() => AtlasMakerWidget.flagConnected === 1 && AtlasMakerWidget._pendingMetadataSaves.length === 0, { timeout: U.mediumTimeout });
+  await page.waitForFunction(() => AtlasMakerWidget.writeRefused !== null, { timeout: U.mediumTimeout });
+  const after = await page.evaluate(() => ({
+    sent: window.__sentSaves,
+    notice: document.getElementById('metadataPending') !== null,
+    writeRefused: AtlasMakerWidget.writeRefused
+  }));
+
+  return { whileDisconnected, after, pageErrors };
+};
+
 // eslint-disable-next-line max-statements
 describe('TESTING WEBSOCKET WRITE ACCESS', function () {
   let mri;
@@ -431,6 +497,31 @@ describe('TESTING WEBSOCKET WRITE ACCESS', function () {
       assert.deepEqual(pageErrors, []);
     } finally {
       await browser.close();
+    }
+  });
+
+  it('a change to the MRI\'s information made while the connection is down is saved once it is back, and a refused one is told', async function () {
+    // eslint-disable-next-line no-invalid-this
+    this.timeout(U.longTimeout);
+    const browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    const layerName = () => storedMRI().then((doc) => doc.mri.atlas.find((a) => a.filename === 'Atlas.nii.gz').name);
+    const originalName = await layerName();
+    const mriName = (await storedMRI()).name;
+    try {
+      const { whileDisconnected, after, pageErrors } = await editWhileDisconnected(browser);
+      assert.deepEqual(whileDisconnected, { held: 2, notice: 'Not connected: your changes will be saved when the connection is back' });
+      assert.deepEqual(after, {
+        sent: 2,
+        notice: false,
+        writeRefused: { write: 'saveMetadata', atlas: null, reason: 'you may not rename this MRI' }
+      });
+      assert.strictEqual(await layerName(), 'Held 2');
+      assert.strictEqual((await storedMRI()).name, mriName);
+      assert.deepEqual(pageErrors, []);
+    } finally {
+      await browser.close();
+      await U.getNativeDB().collection('mri')
+        .updateMany({ source: U.localBertURL }, { $set: { 'mri.atlas.$[layer].name': originalName } }, { arrayFilters: [{ 'layer.filename': 'Atlas.nii.gz' }] });
     }
   });
 });
