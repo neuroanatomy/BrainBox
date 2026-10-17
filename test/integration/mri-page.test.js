@@ -88,6 +88,7 @@ const annotationRows = (page) => page.$$eval('table#annotations tbody tr', (rows
   };
 }));
 
+// eslint-disable-next-line max-statements
 describe('TESTING THE MRI PAGE SCRIPT (mri-page.js)', function () {
   let browser;
   let opened;
@@ -310,6 +311,32 @@ describe('TESTING THE MRI PAGE SCRIPT (mri-page.js)', function () {
     assert.deepInclude(indicator, { shown: true, error: true, spinner: false, state: 'error' });
     assert.match(indicator.text, /^This brain could not be loaded: ./, 'with the server\'s reason');
     assert.deepEqual(opened.pageErrors, []);
+  }).timeout(U.longTimeout);
+
+  it('says in the viewer that a brain whose files the visitor cannot see is private', async function () {
+    const privateURL = `${U.serverURL}/test_data/mri-page-private.nii.gz`;
+    const shortname = 'mripageprivatefiles';
+    const db = U.getNativeDB();
+    await db.collection('project').deleteMany({ shortname });
+    await db.collection('project').insertOne({
+      name: shortname,
+      shortname,
+      owner: 'foo',
+      collaborators: { list: [{ userID: 'anyone', nickname: 'anyone', username: 'anyone', access: { collaborators: 'none', annotations: 'none', files: 'none' } }] },
+      files: { list: [privateURL] },
+      annotations: { list: [] }
+    });
+    try {
+      opened = await openPage(browser, () => null, false, `${U.serverURL}/mri?url=${privateURL}`);
+      const { page } = opened;
+      await page.waitForFunction(() => window.AtlasMakerWidget && AtlasMakerWidget.viewerState !== 'loading', { timeout: U.shortTimeout });
+      const indicator = await loadingIndicator(page);
+      assert.deepInclude(indicator, { shown: true, error: true, spinner: false, state: 'error' });
+      assert.strictEqual(indicator.text, 'This brain could not be loaded: This brain is private, log in if you have access to it');
+      assert.deepEqual(opened.pageErrors, []);
+    } finally {
+      await db.collection('project').deleteMany({ shortname });
+    }
   }).timeout(U.longTimeout);
 
   // eslint-disable-next-line max-statements

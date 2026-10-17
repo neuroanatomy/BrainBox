@@ -12,7 +12,8 @@ const dataSlices = require('../dataSlices/dataSlices.js');
 const { AccessType, AccessLevel } = require('neuroweblab');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 const EmbedAccessService = require('../../services/EmbedAccessService');
-const { projectsForMetadata, mayChangeMri, projectAccessLevel } = require('../atlasmakerServer/metadata-save-access');
+const { projectsForMetadata, mayChangeMri } = require('../atlasmakerServer/metadata-save-access');
+const { getRelatedProjects, filterMriForUser, isFilePubliclyVisible, hasCustomFileViewAccess, mayViewMriFiles, privateMriError } = require('./mri-access');
 const { jsonForScript } = require('../utils/jsonForScript');
 const _ = require('lodash');
 const AsyncLock = require('async-lock');
@@ -256,87 +257,6 @@ const downloadMRI = async function (myurl, req) {
           });
       });
   });
-};
-
-/**
- * Collect the projects relevant to an MRI's access decisions: the projects
- * referenced by its volume/text annotations, plus any project that lists this
- * MRI's URL among its files.
- * @param {Object} nativeDb Native MongoDB driver database instance
- * @param {Object} json The MRI document
- * @param {string} myurl The MRI's source URL
- * @returns {Promise<Array>} The related project documents
- */
-const getRelatedProjects = async function (nativeDb, json, myurl) {
-  const prj = new Set();
-
-  json.mri.atlas
-    .map((a) => a.project)
-    .filter((p) => !_.isEmpty(p))
-    .forEach(prj.add, prj);
-
-  if (!_.isNil(json.mri.annotations)) {
-    Object.keys(json.mri.annotations).forEach(prj.add, prj);
-  }
-
-  const arr = [...prj].map((o) => nativeDb.collection('project').findOne({
-    shortname: o,
-    backup: { $exists: false }
-  }));
-  const projects = await Promise.all(arr)
-    .catch((err) => {
-      console.log('ERROR Cannot get db information:', err);
-
-      return [];
-    });
-
-  projects.push(...await nativeDb.collection('project').find({
-    $or: [
-      { 'files.list': { $eq: myurl } },
-      { 'files.list.source': { $eq: myurl } }
-    ],
-    backup: { $exists: false }
-  })
-    .toArray());
-
-  return projects;
-};
-
-/**
- * Leave out of an MRI document what a user cannot see, as the MRI page does:
- * the layers of the projects whose annotations are hidden from the user (the
- * others get the user's access), and, as GET /mri/json does, their text
- * annotations
- * @param {Object} nativeDb Native MongoDB driver database instance
- * @param {Object} json The MRI document, changed here
- * @param {string} myurl The MRI's source URL
- * @param {string} loggedUser The username, or 'anonymous'
- * @returns {Promise<void>} Once it is filtered
- */
-const filterMriForUser = async function (nativeDb, json, myurl, loggedUser) {
-  if (json.mri && !json.mri.atlas) {
-    json.mri.atlas = [];
-  }
-  if (!json.mri) {
-    return;
-  }
-  const projects = await getRelatedProjects(nativeDb, json, myurl);
-  BrainboxAccessControlService.setVolumeAnnotationsAccessByProjects(json, projects, loggedUser);
-  if (_.isPlainObject(json.mri.annotations)) {
-    for (const project of projects.filter(_.isObject)) {
-      if (project.shortname in json.mri.annotations && projectAccessLevel(project, loggedUser, AccessType.ANNOTATIONS) === 'none') {
-        delete json.mri.annotations[project.shortname];
-      }
-    }
-  }
-};
-
-const isFilePubliclyVisible = function (projects) {
-  return projects.some((project) => BrainboxAccessControlService.canViewFiles(project, 'anyone'));
-};
-
-const hasCustomFileViewAccess = function (json, projects, loggedUser) {
-  return BrainboxAccessControlService.hasAccesstoFileIfAllowedBySomeProjects(json, projects, loggedUser, AccessLevel.VIEW);
 };
 
 // eslint-disable-next-line max-statements
@@ -641,6 +561,20 @@ const apiMriPost = async function (req, res) {
       console.log('ERROR:', err);
       res.json({ success: false });
     });
+  if (res.headersSent) {
+    return;
+  }
+
+  // An MRI whose files the user cannot see is refused, as /mri/embed does
+  // (also before it is downloaded: a project may list it before it has a document)
+  const loggedUser = req.isAuthenticated() ? req.user.username : 'anonymous';
+  if (!mayViewMriFiles(myurl, await getRelatedProjects(req.nativeDb, json, myurl), loggedUser)) {
+    console.log(`REJECTED POST /mri/json of ${myurl} by ${loggedUser}: may not see its files`);
+    res.status(403).json(privateMriError(loggedUser));
+
+    return;
+  }
+
   // Determine whether we need to download the data from the source
   let doDownload = false;
 
@@ -716,7 +650,7 @@ const apiMriPost = async function (req, res) {
       return;
     }
     // what the user cannot see is left out, also of a single variable
-    await filterMriForUser(req.nativeDb, json, myurl, req.isAuthenticated() ? req.user.username : 'anonymous');
+    await filterMriForUser(req.nativeDb, json, myurl, loggedUser);
 
     // Return a specific variable, or the complete json object
     if (doReturnAll === false) {
@@ -787,6 +721,13 @@ const apiMriGet = async function (req, res) {
       res.status(404).json({});
     }
   } else {
+    // An MRI whose files the user cannot see is refused, as /mri/embed does
+    if (!mayViewMriFiles(myurl, await getRelatedProjects(req.nativeDb, json, myurl), loggedUser)) {
+      console.log(`REJECTED GET /mri/json of ${myurl} by ${loggedUser}: may not see its files`);
+      res.status(403).json(privateMriError(loggedUser));
+
+      return;
+    }
     // If the json object exists, and has annotations, configure the access to them
     console.log('check access rights');
     if (json.mri && !json.mri.atlas) {
