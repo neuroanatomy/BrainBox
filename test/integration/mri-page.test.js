@@ -313,30 +313,21 @@ describe('TESTING THE MRI PAGE SCRIPT (mri-page.js)', function () {
     assert.deepEqual(opened.pageErrors, []);
   }).timeout(U.longTimeout);
 
+  // The page itself refuses a private brain (test/integration/mri-page-private.test.js);
+  // /mri/json refuses it too, e.g. to a page opened before the visitor lost access
   it('says in the viewer that a brain whose files the visitor cannot see is private', async function () {
-    const privateURL = `${U.serverURL}/test_data/mri-page-private.nii.gz`;
-    const shortname = 'mripageprivatefiles';
-    const db = U.getNativeDB();
-    await db.collection('project').deleteMany({ shortname });
-    await db.collection('project').insertOne({
-      name: shortname,
-      shortname,
-      owner: 'foo',
-      collaborators: { list: [{ userID: 'anyone', nickname: 'anyone', username: 'anyone', access: { collaborators: 'none', annotations: 'none', files: 'none' } }] },
-      files: { list: [privateURL] },
-      annotations: { list: [] }
-    });
-    try {
-      opened = await openPage(browser, () => null, false, `${U.serverURL}/mri?url=${privateURL}`);
-      const { page } = opened;
-      await page.waitForFunction(() => window.AtlasMakerWidget && AtlasMakerWidget.viewerState !== 'loading', { timeout: U.shortTimeout });
-      const indicator = await loadingIndicator(page);
-      assert.deepInclude(indicator, { shown: true, error: true, spinner: false, state: 'error' });
-      assert.strictEqual(indicator.text, 'This brain could not be loaded: This brain is private, log in if you have access to it');
-      assert.deepEqual(opened.pageErrors, []);
-    } finally {
-      await db.collection('project').deleteMany({ shortname });
-    }
+    const privateAnswer = {
+      status: 403,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: false, error: 'This brain is private, log in if you have access to it' })
+    };
+    opened = await openPage(browser, (req) => (req.url().includes('/mri/json') ? privateAnswer : null), false);
+    const { page } = opened;
+    await page.waitForFunction(() => window.AtlasMakerWidget && AtlasMakerWidget.viewerState !== 'loading', { timeout: U.shortTimeout });
+    const indicator = await loadingIndicator(page);
+    assert.deepInclude(indicator, { shown: true, error: true, spinner: false, state: 'error' });
+    assert.strictEqual(indicator.text, 'This brain could not be loaded: This brain is private, log in if you have access to it');
+    assert.deepEqual(opened.pageErrors, []);
   }).timeout(U.longTimeout);
 
   // eslint-disable-next-line max-statements

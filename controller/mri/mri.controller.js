@@ -275,6 +275,22 @@ const mri = async function (req, res) {
     .catch((err) => {
       console.log('err 241:', err);
     });
+  const projects = await getRelatedProjects(req.nativeDb, json || null, myurl);
+
+  // An MRI whose files the user cannot see is refused, as /mri/json does
+  // (also one that has no document yet, but that projects list)
+  if (!mayViewMriFiles(myurl, projects, loggedUser, json)) {
+    console.log(`REJECTED GET /mri of ${myurl} by ${loggedUser}: may not see its files`);
+    res.status(403).render('askForLogin', {
+      title: 'BrainBox: private brain',
+      message: 'This brain is private',
+      askToLogIn: loggedUser === 'anonymous',
+      login
+    });
+
+    return;
+  }
+
   if (!json) {
     const obj = {
       source: myurl
@@ -290,8 +306,6 @@ const mri = async function (req, res) {
     if (json.mri && !json.mri.atlas) {
       json.mri.atlas = [];
     }
-
-    const projects = await getRelatedProjects(req.nativeDb, json, myurl);
 
     // set access to volume annotations
     BrainboxAccessControlService.setVolumeAnnotationsAccessByProjects(json, projects, loggedUser);
@@ -318,9 +332,9 @@ const EMBED_QUERY_PARAMS = ['url', 'view', 'slice', 'project', 'annotation', 'em
 /**
  * @function mriEmbed
  * @desc Serves the chromeless, read-only viewer used to embed a single brain
- *       into an external page (e.g. via an <iframe>). Unlike `mri`, this
- *       route actively denies access (403) instead of silently rendering an
- *       empty viewer when the caller lacks file-level view access.
+ *       into an external page (e.g. via an <iframe>). Like `mri`, this
+ *       route denies access (403) when the caller lacks file-level view
+ *       access; unlike it, it also refuses an MRI that no project lists.
  * @param {Object} req Express request
  * @param {Object} res Express response
  * @returns {void}
