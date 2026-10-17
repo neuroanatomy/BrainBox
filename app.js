@@ -23,6 +23,7 @@ global.authTokenMiddleware = nwl.authTokenMiddleware;
 const AtlasmakerServer = require('./controller/atlasmakerServer/atlasmakerServer');
 const routes = require('./controller/routes/routes');
 const { dataAccessMiddleware } = require('./controller/mri/data-access');
+const { createDataAccessLogIndexes, dataAccessRecorder } = require('./controller/mri/data-access-log'); // temporary: T005 5g /data check — remove after enforcing
 
 const MONGO_DB = process.env.MONGODB || 'localhost:27017/brainbox';
 
@@ -75,6 +76,7 @@ const start = async function () {
   // createIndex does nothing if the index exists; building it does not block
   // the server's start
   Promise.all([
+    createDataAccessLogIndexes(nativeDb), // temporary: T005 5g /data check — remove after enforcing
     nativeDb.collection('mri').createIndex({ source: 1 }),
     nativeDb.collection('mri').createIndex({ url: 1 }),
     nativeDb.collection('project').createIndex({ shortname: 1 })
@@ -113,7 +115,7 @@ const start = async function () {
   app.use(logger(':remote-addr :method :url :status :response-time ms - :res[content-length]', loggerOptions));//app.use(logger('dev'));
   app.use(cookieParser());
   // only those who may see them get the files of an MRI (/data/<md5>/<file>)
-  app.use(dataAccessMiddleware({ nativeDb }));
+  app.use(dataAccessMiddleware({ nativeDb, record: dataAccessRecorder(nativeDb) })); // temporary: T005 5g /data check — remove after enforcing (the record option)
   app.use(express.static(path.join(dirname, 'public')));
 
   //========================================================================================

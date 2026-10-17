@@ -165,6 +165,56 @@
       </template>
     </section>
 
+    <!-- temporary: T005 5g /data check — remove after enforcing (the whole section) -->
+    <section id="data-access">
+      <h2>/data access check (temporary, T005 5g)</h2>
+      <p class="help">
+        Requests for files under /data that the access check refused, or would refuse in log mode
+        (DATA_ACCESS_CHECK), one row per user, file, reason and hour, kept 30 days. This section goes
+        away once the check enforces.
+      </p>
+      <Button @click="loadDataAccess()" :disabled="dataAccess.loading">[[dataAccess.loading ? 'Loading…' : 'Refresh']]</Button>
+      <p v-if="dataAccess.error" class="error">[[dataAccess.error]]</p>
+      <template v-if="dataAccess.data">
+        <p class="mode">
+          Mode: <strong>[[dataAccess.data.mode]]</strong>
+          ([[dataAccess.data.mode === 'enforce' ? 'refused files answer 404' : 'only recorded, the files are served']])
+        </p>
+        <p v-if="dataAccess.data.total === 0">Nothing recorded.</p>
+        <template v-else>
+          <h3>Totals by reason</h3>
+          <Table class="totals">
+            <thead><tr><th>Reason</th><th>Requests</th><th>Rows</th></tr></thead>
+            <tbody>
+              <tr v-for="t in dataAccess.data.totals" :key="t.reason"><td>[[t.reason]]</td><td>[[t.requests]]</td><td>[[t.entries]]</td></tr>
+            </tbody>
+          </Table>
+          <h3>Latest ([[dataAccess.page * dataAccess.data.limit + 1]]–[[dataAccess.page * dataAccess.data.limit + dataAccess.data.list.length]] of [[dataAccess.data.total]])</h3>
+          <Table class="entries">
+            <thead>
+              <tr><th>Last seen</th><th>User</th><th>File</th><th>MRI</th><th>Reason</th><th>Count</th><th>Referer</th></tr>
+            </thead>
+            <tbody>
+              <tr v-for="e in dataAccess.data.list" :key="e.hour + e.user + e.md5 + e.file + e.reason + e.mode">
+                <td>[[formatTime(e.lastSeen)]]</td>
+                <td>[[e.user]]</td>
+                <td><code>[[e.md5 ? e.md5 + '/' : '']][[e.file]]</code></td>
+                <td><a v-if="e.source" :href="mriLink(e.source)" target="_blank">[[e.source]]</a></td>
+                <td>[[e.reason]]<span v-if="e.mode !== dataAccess.data.mode" class="tag">[[e.mode]]</span></td>
+                <td>[[e.count]]</td>
+                <td class="examples">[[e.referer || '']]</td>
+              </tr>
+            </tbody>
+          </Table>
+          <p>
+            <Button @click="loadDataAccess(dataAccess.page - 1)" :disabled="dataAccess.loading || dataAccess.page === 0">Newer</Button>
+            <Button @click="loadDataAccess(dataAccess.page + 1)" :disabled="dataAccess.loading || (dataAccess.page + 1) * dataAccess.data.limit >= dataAccess.data.total">Older</Button>
+          </p>
+        </template>
+      </template>
+    </section>
+    <!-- end of temporary: T005 5g /data check -->
+
     <section id="server">
       <h2>Server</h2>
       <form @submit.prevent="broadcast">

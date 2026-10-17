@@ -28,6 +28,7 @@ const postJSON = (url, data) => fetchJSON(url, { method: 'POST', body: JSON.stri
 const mriLink = (source) => '/mri?url=' + encodeURIComponent(source);
 
 const formatDate = (date) => (date ? String(date).slice(0, 10) : '');
+const formatTime = (date) => (date ? `${String(date).slice(0, 16)} UTC`.replace('T', ' ') : ''); // temporary: T005 5g /data check — remove after enforcing
 
 const AdminPage = {
   template: '#template',
@@ -57,6 +58,18 @@ const AdminPage = {
 
     const message = ref('');
     const serverResult = ref('');
+
+    // temporary: T005 5g /data check — remove after enforcing (from here to the end of loadDataAccess)
+    const dataAccess = ref({ data: null, loading: false, error: '', page: 0 });
+    const loadDataAccess = async (page = dataAccess.value.page) => {
+      dataAccess.value = { ...dataAccess.value, loading: true, error: '' };
+      try {
+        dataAccess.value = { ...dataAccess.value, data: await fetchJSON('/admin/json/data-access?page=' + page), page };
+      } catch (err) {
+        dataAccess.value = { ...dataAccess.value, error: err.message };
+      }
+      dataAccess.value = { ...dataAccess.value, loading: false };
+    }; // end of temporary: T005 5g /data check
 
     const loadOrphans = async () => {
       orphansLoading.value = true;
@@ -222,6 +235,7 @@ const AdminPage = {
 
     onMounted(() => {
       loadOrphans();
+      loadDataAccess(); // temporary: T005 5g /data check — remove after enforcing
       if (mriURL.value) { loadMRI(); }
     });
 
@@ -250,6 +264,8 @@ const AdminPage = {
       problems,
       restoreFiles,
       fixCurrent,
+      dataAccess, // temporary: T005 5g /data check — remove after enforcing
+      loadDataAccess, // temporary: T005 5g /data check — remove after enforcing
       message,
       serverResult,
       loadOrphans,
@@ -262,6 +278,7 @@ const AdminPage = {
       broadcast,
       saveAll,
       mriLink,
+      formatTime, // temporary: T005 5g /data check — remove after enforcing
       formatDate
     };
   }

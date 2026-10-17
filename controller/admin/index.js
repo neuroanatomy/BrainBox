@@ -1,5 +1,6 @@
 const express = require('express');
 const controller = require('./admin.controller');
+const { getDataAccessLog } = require('../mri/data-access-log'); // temporary: T005 5g /data check — remove after enforcing
 const router = new express.Router();
 
 /* global authTokenMiddleware */
@@ -11,6 +12,7 @@ router.post('/json/mri/remove-annotations', authTokenMiddleware, controller.requ
 router.get('/json/projects/damaged', authTokenMiddleware, controller.requireAdmin, controller.getDamagedProjects);
 router.post('/json/projects/restore-files', authTokenMiddleware, controller.requireAdmin, controller.restoreProjectFiles);
 router.post('/json/projects/fix-current', authTokenMiddleware, controller.requireAdmin, controller.fixProjectCurrentVersions);
+router.get('/json/data-access', authTokenMiddleware, controller.requireAdmin, getDataAccessLog); // temporary: T005 5g /data check — remove after enforcing
 
 router.post('/save-all-atlases', authTokenMiddleware, controller.validator, controller.saveAllAtlases);
 router.post('/broadcast-message', authTokenMiddleware, controller.validator, controller.broadcastMessage);

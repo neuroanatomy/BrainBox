@@ -162,6 +162,7 @@ const requestUsername = async (req) => {
  * @param {number} [params.ttl] How long a folder's MRI and projects are kept, in ms
  * @param {number} [params.maxEntries] How many folders are kept
  * @param {function} [params.log] Where refusals are logged
+ * @param {function} [params.record] Also records refusals (not awaited) // temporary: T005 5g /data check — remove after enforcing
  * @returns {function} The middleware, with clearCache()
  */
 const dataAccessMiddleware = ({
@@ -169,7 +170,8 @@ const dataAccessMiddleware = ({
   mode = () => dataAccessMode(process.env.DATA_ACCESS_CHECK),
   ttl = 10 * 1000,
   maxEntries = 1000,
-  log = (line) => console.log(line)
+  log = (line) => console.log(line),
+  record = () => null // temporary: T005 5g /data check — remove after enforcing
 }) => {
   // md5 -> { time, promise }: the folder's MRI and projects, shared by all users
   const cache = new Map();
@@ -202,10 +204,12 @@ const dataAccessMiddleware = ({
     const match = rel.match(dataFilePattern);
     let username = 'anonymous';
     let decision;
+    let source = null; // temporary: T005 5g /data check — remove after enforcing
     try {
       username = await requestUsername(req);
       if (match) {
         const { mri, projects } = await folder(match[1].toLowerCase());
+        source = mri ? mri.source : null; // temporary: T005 5g /data check — remove after enforcing
         decision = decideDataAccess({ mri, projects, username, filename: match[2] });
       } else {
         decision = { allow: false, reason: 'not a file of an MRI folder' };
@@ -219,6 +223,20 @@ const dataAccessMiddleware = ({
     }
     const enforce = mode() === 'enforce';
     log(`DATA_ACCESS ${enforce ? 'REFUSED' : 'WOULD REFUSE'} ${req.method} /${rel} (user: ${username}, reason: ${decision.reason})`);
+    // temporary: T005 5g /data check — remove after enforcing (the record, for the admin page; never awaited, never throws)
+    try {
+      record({
+        user: username,
+        md5: match ? match[1].toLowerCase() : null,
+        file: match ? match[2] : rel,
+        source,
+        reason: decision.reason,
+        mode: enforce ? 'enforce' : 'log',
+        referer: (req.headers && (req.headers.referer || req.headers.referrer)) || null
+      });
+    } catch (err) {
+      console.error('ERROR: could not record a DATA_ACCESS refusal', err.message);
+    } // end of temporary: T005 5g /data check
 
     // refused: as a file that does not exist (leave the app's router, Express answers its own 404)
     return enforce ? next('router') : next();

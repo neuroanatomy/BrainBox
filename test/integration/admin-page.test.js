@@ -7,6 +7,8 @@ chai.use(chaiHttp);
 const puppeteer = require('puppeteer');
 const U = require('../utils.js');
 const admins = require('../../controller/admin/admins');
+const { collectionName } = require('../../controller/mri/data-access-log'); // temporary: T005 5g /data check — remove after enforcing
+const { dataAccessMode } = require('../../controller/mri/data-access'); // temporary: T005 5g /data check — remove after enforcing
 
 const goneProject = 'adminpagegone';
 const source = 'http://admin-page-test.localhost/brain.nii.gz';
@@ -164,5 +166,41 @@ describe('TESTING THE ADMIN PAGE', function () {
     // the list is searched again, without the project
     await page.waitForFunction((p) => ![...document.querySelectorAll('#projects tbody code')].some((el) => el.textContent === p)
       && document.querySelector('#projects button').textContent.trim() === 'Search again', { timeout: U.mediumTimeout }, damagedProject);
+  }).timeout(U.longTimeout);
+
+  // temporary: T005 5g /data check — remove after enforcing (this test)
+  it('shows the record of the /data access check', async function () {
+    const user = 'adminpagedataaccess';
+    await U.getNativeDB().collection(collectionName)
+      .insertOne({
+        hour: new Date('2099-01-01T10:00:00Z'),
+        user,
+        md5: '0123456789abcdef0123456789abcdef',
+        file: 'secret.nii.gz',
+        source: 'http://admin-page-test.localhost/data.nii.gz',
+        reason: 'hidden layer of project adminpagex',
+        mode: 'log',
+        count: 7,
+        firstSeen: new Date('2099-01-01T10:01:00Z'),
+        lastSeen: new Date('2099-01-01T10:02:00Z'),
+        referer: 'http://example.test/page'
+      });
+    try {
+      await page.goto(`${U.serverURL}/admin`);
+      await page.waitForFunction((u) => [...document.querySelectorAll('#data-access tbody td')].some((td) => td.textContent === u),
+        { timeout: U.mediumTimeout }, user);
+      const text = await page.$eval('#data-access', (el) => el.textContent.replace(/\s+/g, ' '));
+      assert.include(text, '/data access check (temporary, T005 5g)');
+      assert.include(text, `Mode: ${dataAccessMode(process.env.DATA_ACCESS_CHECK)}`);
+      assert.include(text, 'Totals by reason');
+      const row = await page.$eval('#data-access table.entries tbody tr', (tr) => [...tr.cells].map((td) => td.textContent.trim()));
+      assert.deepEqual(row, [
+        '2099-01-01 10:02 UTC', user, '0123456789abcdef0123456789abcdef/secret.nii.gz',
+        'http://admin-page-test.localhost/data.nii.gz', 'hidden layer of project adminpagex', '7', 'http://example.test/page'
+      ]);
+    } finally {
+      await U.getNativeDB().collection(collectionName)
+        .deleteMany({ user });
+    }
   }).timeout(U.longTimeout);
 });
