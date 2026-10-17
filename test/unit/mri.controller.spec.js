@@ -306,6 +306,11 @@ describe('MRI Controller: ', function () {
   });
 
   describe('apiMriPost function() ', function () {
+    before(async function () {
+      // a new MRI document, whose owner this request sets
+      await nativeDb.collection('mri').deleteMany({ source: U.localBertURL });
+    });
+
     after(async function () {
       // await db.get('mri').remove({ source: U.localBertURL });
       await nativeDb.collection('mri').deleteMany({ source: U.localBertURL });
@@ -323,9 +328,11 @@ describe('MRI Controller: ', function () {
         user: {
           username: ''
         },
+        // an anonymous visitor who sends a username as X-Forwarded-For
         headers: {
           'x-forwarded-for': U.userFoo.nickname
         },
+        ip: '203.0.113.7',
         dirname,
         isAuthenticated: function () {
           return Boolean(this.user.username);
@@ -359,6 +366,10 @@ describe('MRI Controller: ', function () {
       assert.strictEqual(jsonSpy.args[jsonSpy.callCount - 1][0].success, true);
       assert.strictEqual(jsonSpy.args[jsonSpy.callCount - 1][0].source, U.localBertURL);
       assert.notProperty(jsonSpy.args[jsonSpy.callCount - 1][0], '_id', 'API response must not include _id');
+      // the owner is the address Express trusts, never the header's username
+      const stored = await nativeDb.collection('mri').findOne({ source: U.localBertURL, backup: { $exists: false } });
+      assert.strictEqual(stored.owner, 'ip:203.0.113.7');
+      assert.strictEqual(stored.modifiedBy, 'ip:203.0.113.7');
       sinon.restore();
     }).timeout(U.longTimeout);
 

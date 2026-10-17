@@ -5,7 +5,7 @@
 // (and then paint on it), and a page that did not show some layers deleted them.
 
 const { expect } = require('chai');
-const { mergeMetadata, savedView } = require('../../controller/atlasmakerServer/metadata-save-access.js');
+const { mergeMetadata, savedView, mayChangeMri } = require('../../controller/atlasmakerServer/metadata-save-access.js');
 
 const source = 'https://example.org/metadata-save-access-spec.nii.gz';
 
@@ -183,6 +183,15 @@ describe('UNIT TESTING WHAT A METADATA SAVE MAY CHANGE', function () {
   it('the MRI may be renamed by its owner and by those who may edit the files of a project that lists it', function () {
     const res = whoMay((d) => { d.name = 'Renamed'; }, (doc) => doc.name === 'Renamed');
     expect(res).to.deep.equal({ applied: ['mriOwner', 'projectOwner', 'filesEditor'], told: ['annotationsEditor', 'viewer', 'anonymous'] });
+  });
+
+  it('an MRI an anonymous visitor added belongs to nobody, even to a user named after the address', function () {
+    for (const owner of ['ip:203.0.113.7', '203.0.113.7']) {
+      const ipOwned = { ...copy(), owner };
+      expect(mayChangeMri({ stored: ipOwned, username: owner, projects: new Map() })).to.equal(false);
+      const incoming = { ...copy(), owner, name: 'Renamed' };
+      expect(mergeMetadata({ stored: ipOwned, incoming, username: owner, projects }).doc.name).to.equal(stored.name);
+    }
   });
 
   it('the MRI\'s owner cannot be changed, by anyone', function () {

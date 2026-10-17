@@ -28,6 +28,7 @@
  *   annotations; those of a project that does not exist, by the MRI's owner.
  *   They are never removed.
  */
+const net = require('net');
 const _ = require('lodash');
 const { AccessType } = require('neuroweblab');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
@@ -117,6 +118,20 @@ const projectListsFile = (project, source) => {
 };
 
 /**
+ * Whether a user owns an MRI document: is the user named in its `owner` field
+ * (the user who added it). An anonymous visitor owns nothing. An MRI that an
+ * anonymous visitor added is owned by their address ('ip:' and the address;
+ * before 2026-10, the address alone, or the X-Forwarded-For header): no user
+ * owns it, even one whose username is that address (local usernames may
+ * contain dots)
+ * @param {Object|null} stored The MRI document
+ * @param {string|null} username The server-verified username, null or 'anonymous'
+ * @returns {boolean} True if the user owns it
+ */
+const ownsMri = (stored, username) => typeof username === 'string' && username !== '' && username !== 'anonymous' &&
+  !username.startsWith('ip:') && net.isIP(username) === 0 && _.get(stored, 'owner') === username;
+
+/**
  * Whether a user may change an MRI itself (its name, its image): its owner, or a
  * user who may edit the files of a project that lists it
  * @param {object} params Parameters
@@ -130,7 +145,7 @@ const mayChangeMri = ({ stored, username, projects }) => {
     return false;
   }
 
-  return stored.owner === username || [...projects.values()].some((p) => projectListsFile(p, stored.source) &&
+  return ownsMri(stored, username) || [...projects.values()].some((p) => projectListsFile(p, stored.source) &&
     mayEditLevel(projectAccessLevel(p, username, AccessType.FILES)));
 };
 
@@ -346,7 +361,7 @@ const mergeAnnotations = (ctx, annotations, sentAnnotations) => {
 // eslint-disable-next-line max-statements
 const mergeMetadata = ({ stored, incoming, username, projects }) => {
   const refused = [];
-  const isOwner = Boolean(username) && stored.owner === username;
+  const isOwner = ownsMri(stored, username);
   const ctx = {
     username,
     projects,
@@ -415,4 +430,4 @@ const savedView = (doc, incoming) => {
   return JSON.parse(JSON.stringify(view)); // without the fields that are not stored
 };
 
-module.exports = { mergeMetadata, projectsForMetadata, savedView, projectAccessLevel, mayChangeMri };
+module.exports = { mergeMetadata, projectsForMetadata, savedView, projectAccessLevel, mayChangeMri, ownsMri };

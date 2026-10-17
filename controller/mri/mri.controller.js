@@ -13,7 +13,7 @@ const { AccessType, AccessLevel } = require('neuroweblab');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 const EmbedAccessService = require('../../services/EmbedAccessService');
 const { projectsForMetadata, mayChangeMri } = require('../atlasmakerServer/metadata-save-access');
-const { getRelatedProjects, filterMriForUser, isFilePubliclyVisible, hasCustomFileViewAccess, mayViewMriFiles, mayEmbedMri, privateMriError } = require('./mri-access');
+const { getRelatedProjects, filterMriForUser, isFilePubliclyVisible, hasCustomFileViewAccess, mayViewMriFiles, mayEmbedMri, privateMriError, anonymousOwner } = require('./mri-access');
 const { jsonForScript } = require('../utils/jsonForScript');
 const _ = require('lodash');
 const AsyncLock = require('async-lock');
@@ -196,23 +196,7 @@ const downloadMRI = async function (myurl, req) {
         atlasmakerServer.getBrainAtPath('/data/' + hash + '/' + filename)
           .then((mri) => {
             // Create json file for new dataset
-            let ip = '';
-            if (typeof req.headers['x-forwarded-for'] !== 'undefined') {
-              ip = req.headers['x-forwarded-for'];
-            } else if (req.connection.remoteAddress !== 'undefined') {
-              ip = req.connection.remoteAddress;
-            } else if (req.socket.remoteAddress !== 'undefined') {
-              ip = req.socket.remoteAddress;
-            } else if (req.connection.socket.remoteAddress !== 'undefined') {
-              ip = req.connection.socket.remoteAddress;
-            }
-
-            let username;
-            if (req.isAuthenticated()) {
-              ({ username } = req.user);
-            } else {
-              username = ip;
-            }
+            const username = req.isAuthenticated() ? req.user.username : anonymousOwner(req);
 
             let json = mridb;
             if (!json) {
@@ -927,19 +911,7 @@ const apiMriUploadFromURL = async function (req, res) {
   try {
     const mriData = await atlasmakerServer.getBrainAtPath('/data/' + hash + '/' + filename);
 
-    let ip = '';
-    if (typeof req.headers['x-forwarded-for'] !== 'undefined') {
-      ip = req.headers['x-forwarded-for'];
-    } else if (req.connection.remoteAddress !== 'undefined') {
-      ip = req.connection.remoteAddress;
-    }
-
-    let username;
-    if (req.isAuthenticated()) {
-      ({ username } = req.user);
-    } else {
-      username = ip;
-    }
+    const username = req.isAuthenticated() ? req.user.username : anonymousOwner(req);
 
     if (!json) {
       json = {

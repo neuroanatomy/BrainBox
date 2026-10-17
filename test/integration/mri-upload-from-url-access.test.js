@@ -15,6 +15,7 @@ const chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 const U = require('../utils.js');
 const F = require('../mri-access-fixtures.js');
+const { isMriOwner } = require('../../controller/mri/mri-access.js');
 
 const brainFile = path.join(__dirname, '../../public/test_data/bert_brain.nii.gz');
 const otherFile = path.join(__dirname, '../data/bert_aseg.nii.gz');
@@ -25,13 +26,16 @@ const dataDir = (source) => path.join(__dirname, '../../public/data', crypto.cre
 
 /**
  * Upload a file as the MRI of a source
- * @param {object} params { source, file, cookie }
+ * @param {object} params { source, file, cookie, forwardedFor (an X-Forwarded-For header) }
  * @returns {Promise<object>} The response
  */
-const uploadFromURL = ({ source = U.localBertURL, file, cookie }) => {
+const uploadFromURL = ({ source = U.localBertURL, file, cookie, forwardedFor }) => {
   const req = chai.request(U.serverURL).post('/mri/upload-from-url');
   if (cookie) {
     req.set('Cookie', cookie);
+  }
+  if (forwardedFor) {
+    req.set('X-Forwarded-For', forwardedFor);
   }
 
   return req.field('url', source)
@@ -40,6 +44,10 @@ const uploadFromURL = ({ source = U.localBertURL, file, cookie }) => {
 
 const firstSource = U.testDataURL + '/test_data/mri-routes-first-upload.nii.gz';
 const listedSource = U.testDataURL + '/test_data/mri-routes-listed-not-downloaded.nii.gz';
+const forgedSource = U.testDataURL + '/test_data/mri-routes-forged-owner.nii.gz';
+const proxiedSource = U.testDataURL + '/test_data/mri-routes-proxied-owner.nii.gz';
+const loggedInSource = U.testDataURL + '/test_data/mri-routes-logged-in-owner.nii.gz';
+const ownerSources = [forgedSource, proxiedSource, loggedInSource];
 
 describe('POST /mri/upload-from-url: who may give an MRI its image', function () {
   // eslint-disable-next-line no-invalid-this
@@ -84,6 +92,10 @@ describe('POST /mri/upload-from-url: who may give an MRI its image', function ()
     );
     await U.removeMRI({ dirPath: dataDir(firstSource), srcURL: firstSource });
     await U.removeMRI({ dirPath: dataDir(listedSource), srcURL: listedSource });
+    for (const source of ownerSources) {
+      // eslint-disable-next-line no-await-in-loop
+      await U.removeMRI({ dirPath: dataDir(source), srcURL: source });
+    }
     await F.tearDown();
   });
 
@@ -150,6 +162,33 @@ describe('POST /mri/upload-from-url: who may give an MRI its image', function ()
       assert.deepEqual(stored.dim, mri.dim);
       assert.equal(stored.owner, 'foo');
       assert.equal(stored.name, 'listed');
+    });
+  });
+
+  describe('the owner of an MRI added by its first upload', function () {
+    it('is not the username an anonymous visitor sends as X-Forwarded-For', async function () {
+      const res = await uploadFromURL({ source: forgedSource, file: brainFile, forwardedFor: F.users.mriowner });
+      assert.equal(res.statusCode, 200);
+      const stored = await F.storedMRI(forgedSource);
+      assert.notEqual(stored.owner, F.users.mriowner);
+      assert.match(stored.owner, /^ip:/);
+      assert.isFalse(isMriOwner(stored, F.users.mriowner));
+      assert.equal(stored.modifiedBy, stored.owner);
+    });
+
+    it('is the address the proxy added, for an anonymous visitor behind it', async function () {
+      // as Apache forwards it: what the client sent, then the client's address
+      const res = await uploadFromURL({ source: proxiedSource, file: brainFile, forwardedFor: `${F.users.mriowner}, 203.0.113.7` });
+      assert.equal(res.statusCode, 200);
+      assert.equal((await F.storedMRI(proxiedSource)).owner, 'ip:203.0.113.7');
+    });
+
+    it('is the logged-in user, whatever X-Forwarded-For says', async function () {
+      const res = await uploadFromURL({ source: loggedInSource, file: brainFile, cookie: F.cookie(F.users.editor), forwardedFor: F.users.mriowner });
+      assert.equal(res.statusCode, 200);
+      const stored = await F.storedMRI(loggedInSource);
+      assert.equal(stored.owner, F.users.editor);
+      assert.isTrue(isMriOwner(stored, F.users.editor));
     });
   });
 });

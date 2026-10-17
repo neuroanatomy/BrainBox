@@ -4,10 +4,11 @@
  * Who may see an MRI over HTTP: its files (the MRI page, /mri/embed,
  * /mri/json) and, within it, the layers and text annotations of each project.
  */
+const net = require('net');
 const _ = require('lodash');
 const { AccessType, AccessLevel } = require('neuroweblab');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
-const { projectAccessLevel } = require('../atlasmakerServer/metadata-save-access');
+const { projectAccessLevel, ownsMri } = require('../atlasmakerServer/metadata-save-access');
 
 /**
  * Collect the projects relevant to an MRI's access decisions: the projects
@@ -104,17 +105,29 @@ const listsMri = (project, source) => {
 };
 
 /**
- * Whether a user owns an MRI document: is the user named in its `owner` field
- * (the user who added it). An anonymous visitor owns nothing: an MRI that an
- * anonymous visitor added is owned by their IP address, which no username is
+ * Whether a user owns an MRI document (see ownsMri): is the user named in its
+ * `owner` field. An anonymous visitor owns nothing, and nobody owns an MRI an
+ * anonymous visitor added
  * @param {Object|null} json The MRI document
  * @param {string|null} loggedUser The server-verified username, or 'anonymous'
  * @returns {boolean} True if the user owns it
  */
-const isMriOwner = function (json, loggedUser) {
-  const owner = _.get(json, 'owner');
+const isMriOwner = (json, loggedUser) => ownsMri(json, loggedUser);
 
-  return typeof loggedUser === 'string' && loggedUser !== '' && loggedUser !== 'anonymous' && owner === loggedUser;
+/**
+ * The owner of an MRI that an anonymous visitor adds: 'ip:' and the visitor's
+ * address, so that it is never a username. The address is req.ip, which Express
+ * takes from X-Forwarded-For only as far as the proxies it trusts ('trust
+ * proxy', app.js) added it, never the header as the client sent it. When req.ip
+ * is not an address (a trusted local client sent a value that is not one), the
+ * peer's address
+ * @param {Object} req The request
+ * @returns {string} The owner
+ */
+const anonymousOwner = (req) => {
+  const ip = net.isIP(req.ip || '') ? req.ip : _.get(req, 'socket.remoteAddress');
+
+  return `ip:${ip || 'unknown'}`;
 };
 
 /**
@@ -173,6 +186,7 @@ module.exports = {
   hasCustomFileViewAccess,
   listsMri,
   isMriOwner,
+  anonymousOwner,
   mayViewMriFiles,
   mayEmbedMri,
   privateMriError

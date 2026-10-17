@@ -4,7 +4,7 @@
 // MRI document always may; an anonymous visitor never by ownership
 
 const { assert } = require('chai');
-const { isMriOwner, mayViewMriFiles, mayEmbedMri } = require('../../controller/mri/mri-access.js');
+const { isMriOwner, anonymousOwner, mayViewMriFiles, mayEmbedMri } = require('../../controller/mri/mri-access.js');
 
 const source = 'https://example.com/mri-access-spec.nii.gz';
 const anyone = (files) => ({ userID: 'anyone', access: { collaborators: 'none', annotations: 'none', files } });
@@ -28,6 +28,28 @@ describe('mri-access: who may see an MRI', function () {
       assert.isFalse(isMriOwner(mri(null), null));
       assert.isFalse(isMriOwner(null, 'alice'));
       assert.isFalse(isMriOwner({}, 'alice'));
+    });
+
+    it('is never true for an MRI an anonymous visitor added, whatever the username', function () {
+      // the owner the server stores now: 'ip:' and the visitor's address
+      assert.isFalse(isMriOwner(mri('ip:203.0.113.7'), 'ip:203.0.113.7'));
+      // the owner it stored before: the address alone, which a local account could be named
+      assert.isFalse(isMriOwner(mri('203.0.113.7'), '203.0.113.7'));
+      assert.isFalse(isMriOwner(mri('2001:db8::7'), '2001:db8::7'));
+    });
+  });
+
+  describe('anonymousOwner', function () {
+    it('is the client address Express trusts (req.ip), marked as an address, never a header the client sent', function () {
+      const req = { ip: '203.0.113.7', headers: { 'x-forwarded-for': 'alice' }, socket: { remoteAddress: '::1' } };
+      assert.strictEqual(anonymousOwner(req), 'ip:203.0.113.7');
+      assert.isFalse(isMriOwner(mri(anonymousOwner(req)), 'alice'));
+    });
+
+    it('is the peer address when req.ip is not an address (a local client sending its own X-Forwarded-For)', function () {
+      const req = { ip: 'alice', headers: { 'x-forwarded-for': 'alice' }, socket: { remoteAddress: '::1' } };
+      assert.strictEqual(anonymousOwner(req), 'ip:::1');
+      assert.strictEqual(anonymousOwner({ headers: { 'x-forwarded-for': 'alice' } }), 'ip:unknown');
     });
   });
 
