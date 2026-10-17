@@ -316,8 +316,12 @@ describe('TESTING THE MRI PAGE SCRIPT (mri-page.js)', function () {
   // The page itself refuses a private brain (test/integration/mri-page-private.test.js);
   // /mri/json refuses it too, e.g. to a page opened before the visitor lost access
   it('says in the viewer that a brain whose files the visitor cannot see is private', async function () {
+    // With the CORS header of every answer of the real server (app.js): with CI's cfg.json the
+    // page (127.0.0.1) calls the server as localhost, a different origin, and the browser drops
+    // an answer without it (fetch fails, "HTTP 0")
     const privateAnswer = {
       status: 403,
+      headers: { 'Access-Control-Allow-Origin': '*' },
       contentType: 'application/json',
       body: JSON.stringify({ success: false, error: 'This brain is private, log in if you have access to it' })
     };
