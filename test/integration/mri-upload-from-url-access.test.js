@@ -38,13 +38,14 @@ const uploadFromURL = ({ source = U.localBertURL, file, cookie }) => {
     .attach('mriFile', file, path.basename(source));
 };
 
+const firstSource = U.testDataURL + '/test_data/mri-routes-first-upload.nii.gz';
+const listedSource = U.testDataURL + '/test_data/mri-routes-listed-not-downloaded.nii.gz';
+
 describe('POST /mri/upload-from-url: who may give an MRI its image', function () {
   // eslint-disable-next-line no-invalid-this
   this.timeout(U.longTimeout);
 
   let brainPath, mri, originalOwner;
-  const firstSource = 'http://127.0.0.1:3001/test_data/mri-routes-first-upload.nii.gz';
-  const listedSource = 'http://127.0.0.1:3001/test_data/mri-routes-listed-not-downloaded.nii.gz';
 
   /**
    * Try to replace the test brain's image with another file, as a user

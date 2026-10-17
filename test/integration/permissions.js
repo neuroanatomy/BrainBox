@@ -78,7 +78,7 @@ describe('TESTING PERMISSIONS', function () {
 
       before(async function() {
         const project = U.createProjectWithPermission('testwithprivateannotation', { files: 'none' });
-        project.files.list = [{ source: U.serverURL + '/test_data/bert_brain.nii.gz', name: 'Bert'}];
+        project.files.list = [{ source: U.testDataURL + '/test_data/bert_brain.nii.gz', name: 'Bert'}];
         project.collaborators.list.find((c) => c.userID === 'anyone').access.files = 'none';
         await U.insertProject(project);
 
@@ -88,7 +88,7 @@ describe('TESTING PERMISSIONS', function () {
       });
 
       it('Do not let see private annotations on a MRI page', async function() {
-        const response = await page.goto(`${U.serverURL}/mri?file=${U.serverURL}/test_data/bert_brain.nii.gz`);
+        const response = await page.goto(`${U.serverURL}/mri?file=${U.testDataURL}/test_data/bert_brain.nii.gz`);
         assert.equal(response.status(), 200);
         await page.waitForSelector('#annotations');
         const annotationsTableLength = (await page.$$('#annotations tbody tr')).length;

@@ -15,10 +15,10 @@ chai.use(chaiHttp);
 const U = require('../utils.js');
 const F = require('../mri-access-fixtures.js');
 
-const privateURL = `${U.serverURL}/test_data/mri-owner-private.nii.gz`;
-const ipOwnedURL = `${U.serverURL}/test_data/mri-owner-ip-owned.nii.gz`;
-const anonymousOwnedURL = `${U.serverURL}/test_data/mri-owner-anonymous-owned.nii.gz`;
-const unlistedURL = `${U.serverURL}/test_data/mri-owner-in-no-project.nii.gz`;
+const privateURL = `${U.testDataURL}/test_data/mri-owner-private.nii.gz`;
+const ipOwnedURL = `${U.testDataURL}/test_data/mri-owner-ip-owned.nii.gz`;
+const anonymousOwnedURL = `${U.testDataURL}/test_data/mri-owner-anonymous-owned.nii.gz`;
+const unlistedURL = `${U.testDataURL}/test_data/mri-owner-in-no-project.nii.gz`;
 const allURLs = [privateURL, ipOwnedURL, anonymousOwnedURL, unlistedURL];
 const shortname = 'mriownerprivatefiles';
 const hiddenLayer = 'mri-owner-hidden-layer.nii.gz';

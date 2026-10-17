@@ -13,9 +13,9 @@ chai.use(chaiHttp);
 const U = require('../utils.js');
 const F = require('../mri-access-fixtures.js');
 
-const privateURL = `${U.serverURL}/test_data/mri-page-private-refused.nii.gz`;
-const notDownloadedURL = `${U.serverURL}/test_data/mri-page-private-not-downloaded.nii.gz`;
-const unlistedURL = `${U.serverURL}/test_data/mri-page-in-no-project.nii.gz`;
+const privateURL = `${U.testDataURL}/test_data/mri-page-private-refused.nii.gz`;
+const notDownloadedURL = `${U.testDataURL}/test_data/mri-page-private-not-downloaded.nii.gz`;
+const unlistedURL = `${U.testDataURL}/test_data/mri-page-in-no-project.nii.gz`;
 const shortname = 'mripageprivaterefused';
 const brainName = 'Private page test brain';
 const hiddenLayer = 'mri-page-private-layer.nii.gz';
@@ -117,7 +117,7 @@ describe('The MRI page refuses an MRI whose files the user cannot see', function
   });
 
   it('shows an MRI that has no document and that no project lists, so that it can be downloaded', async function () {
-    const res = await getPage({ url: `${U.serverURL}/test_data/mri-page-not-yet-added.nii.gz` });
+    const res = await getPage({ url: `${U.testDataURL}/test_data/mri-page-not-yet-added.nii.gz` });
     assert.equal(res.statusCode, 200);
   });
 });

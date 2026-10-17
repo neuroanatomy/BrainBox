@@ -62,8 +62,8 @@ const openViewer = async (browser, respond = () => null) => {
 };
 
 const isMRIInfoPost = (req) => req.method() === 'POST' && req.url().includes('/mri/json') && (req.postData() || '').includes(encodeURIComponent(FAKE_SOURCE));
-// Like every answer of the real server (app.js): with CI's cfg.json the page (127.0.0.1) calls
-// the server as localhost, a different origin, and the browser drops answers without it
+// Like every answer of the real server (app.js), so that the canned answers would also reach a
+// page served from another origin (test/integration/cross-origin.test.js)
 const CORS = { 'Access-Control-Allow-Origin': '*' };
 const json = (status, body) => ({ status, headers: CORS, contentType: 'application/json', body: JSON.stringify(body) });
 const text = (status, contentType, body) => ({ status, headers: CORS, contentType, body });

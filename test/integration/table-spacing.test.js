@@ -17,7 +17,7 @@ const PAGES = {
   user: { url: `${U.serverURL}/user/foo`, waitFor: '#projects tbody tr' },
   project: { url: `${U.serverURL}/project/${U.projectTest.shortname}`, waitFor: '#projectFiles thead th' },
   settings: { url: `${U.serverURL}/project/${U.projectTest.shortname}/settings`, waitFor: '#access tbody tr' },
-  mri: { url: `${U.serverURL}/mri?url=${U.serverURL}/test_data/none.nii.gz`, waitFor: '#annotations thead th' }
+  mri: { url: `${U.serverURL}/mri?url=${U.testDataURL}/test_data/none.nii.gz`, waitFor: '#annotations thead th' }
 };
 
 /**

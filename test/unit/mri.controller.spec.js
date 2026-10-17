@@ -395,7 +395,7 @@ describe('MRI Controller: ', function () {
     });
 
     it('should reject a download when remote server returns HTML instead of a binary file', async function () {
-      const htmlErrorURL = U.serverURL + '/test_data/html_error_page.nii.gz';
+      const htmlErrorURL = U.testDataURL + '/test_data/html_error_page.nii.gz';
       const makeReq = () => ({
         db,
         nativeDb,

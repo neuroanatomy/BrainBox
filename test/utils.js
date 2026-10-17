@@ -15,8 +15,19 @@ chai.use(chaiHttp);
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-const serverURL = 'http://127.0.0.1:3001';
-const localBertURL = serverURL + '/test_data/bert_brain.nii.gz';
+// The pages are built with cfg.json (webpack), so they call the server at its hostname and
+// open the WebSocket at its wshostname. The tests open the pages and call the API at the same
+// addresses, so a local run and CI (cfg.json.example) exercise the same origins, whatever the
+// developer's cfg.json says (http://localhost:3001 or http://127.0.0.1:3001).
+const Config = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'cfg.json')));
+const serverURL = Config.hostname.replace(/\/+$/, '');
+const wsURL = (Config.secure ? 'wss://' : 'ws://') + Config.wshostname;
+// The test brains are files the server downloads from itself, by their URL (the MRI's source).
+// Those URLs stay at 127.0.0.1 whatever the hostname: the server refuses project files at
+// 'localhost' (not a valid URL for validator's isURL), and a source does not depend on the
+// address the pages use. Also for requests that must come from 127.0.0.1, not ::1.
+const testDataURL = `http://127.0.0.1:${brainboxApp.serverPorts(Config).appPort}`;
+const localBertURL = testDataURL + '/test_data/bert_brain.nii.gz';
 const cheetahURL = 'https://zenodo.org/record/44846/files/MRI.nii.gz?download=1';
 const testToken = 'qwertyuiopasdfghjklzxcvbnm';
 const testTokenDuration = 2 * (1000 * 3600); // 2h
@@ -30,7 +41,7 @@ const userFoo = {
   nickname: 'foo',
   url: 'https://foo.bar',
   brainboxURL: '/user/foo',
-  avatarURL: serverURL + '/test_data/foo.png',
+  avatarURL: testDataURL + '/test_data/foo.png',
   joined: (new Date()).toJSON()
 };
 const userBar = {
@@ -38,7 +49,7 @@ const userBar = {
   nickname: 'bar',
   url: 'https://bar.foo',
   brainboxURL: '/user/foo',
-  avatarURL: serverURL + '/test_data/bar.png',
+  avatarURL: testDataURL + '/test_data/bar.png',
   joined: (new Date()).toJSON()
 };
 const userFooB = {
@@ -46,7 +57,7 @@ const userFooB = {
   username: 'foo',
   url: 'https://foo.bar',
   brainboxURL: '/user/foo',
-  avatarURL: serverURL + '/test_data/foo.png',
+  avatarURL: testDataURL + '/test_data/foo.png',
   joined: (new Date()).toJSON()
 };
 const userBarB = {
@@ -54,7 +65,7 @@ const userBarB = {
   username: 'bar',
   url: 'https://bar.foo',
   brainboxURL: '/user/foo',
-  avatarURL: serverURL + '/test_data/bar.png',
+  avatarURL: testDataURL + '/test_data/bar.png',
   joined: (new Date()).toJSON()
 };
 const projectTest = {
@@ -81,7 +92,7 @@ const projectTest = {
   },
   files: {
     list: [
-      { source: serverURL + '/test_data/bert_brain.nii.gz', name: 'bert_brain' },
+      { source: testDataURL + '/test_data/bert_brain.nii.gz', name: 'bert_brain' },
       { source: 'https://zenodo.org/record/44855/files/MRI-n4.nii.gz', name: 'MRI-n4' },
       { source: 'http://files.figshare.com/2284784/MRI_n4.nii.gz', name: 'MRI_n4' },
       { source: 'https://dl.dropbox.com/s/cny5b3so267bv94/p32-f18-uchar.nii.gz', name: 'p32-f18-uchar' },
@@ -353,13 +364,12 @@ const waitForDOMReady = async function (testPage, url) {
 };
 
 /**
- * Whether a URL points at our own test server. The pages build their URLs from
- * cfg.json's hostname, which is http://localhost:3001 in CI (cfg.json.example)
- * and may be http://127.0.0.1:3001 locally, so both count.
+ * Whether a URL points at our own test server: at the address the pages use
+ * (cfg.json's hostname, as serverURL), or at the address of the test data.
  * @param {string} url A URL requested by a page
  * @returns {boolean} True for our server (or a data: URL)
  */
-const isLocalURL = (url) => url.startsWith(serverURL) || url.includes('127.0.0.1:3001') || url.includes('localhost:3001') || url.startsWith('data:');
+const isLocalURL = (url) => [serverURL, testDataURL].some((base) => url === base || url.startsWith(base + '/')) || url.startsWith('data:');
 
 /**
  * Everything outside our own server is unreachable from a sandboxed test run,
@@ -469,6 +479,8 @@ const createProjectWithPermission = function (name, accessProp) {
 
 module.exports = {
   serverURL,
+  wsURL,
+  testDataURL,
   cheetahURL,
   localBertURL,
   userFoo,

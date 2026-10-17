@@ -21,7 +21,7 @@ const U = require('../utils.js');
 const SHORTNAME = 'projectpagetest';
 const FILES = [
   { source: U.localBertURL, name: 'bert_brain' },
-  { source: `${U.serverURL}/test_data/not_a_brain.nii.gz`, name: 'second' }
+  { source: `${U.testDataURL}/test_data/not_a_brain.nii.gz`, name: 'second' }
 ];
 const project = () => ({
   name: 'Project page test',

@@ -15,9 +15,9 @@ const F = require('../mri-access-fixtures.js');
 // anyone) see its files. An MRI that no project lists stays open to anyone
 // who has its URL; one that several projects list is visible if any of them
 // lets the user see it.
-const privateURL = `${U.serverURL}/test_data/mri-json-private.nii.gz`;
-const unlistedURL = `${U.serverURL}/test_data/mri-json-in-no-project.nii.gz`;
-const notDownloadedURL = `${U.serverURL}/test_data/mri-json-private-not-downloaded.nii.gz`;
+const privateURL = `${U.testDataURL}/test_data/mri-json-private.nii.gz`;
+const unlistedURL = `${U.testDataURL}/test_data/mri-json-in-no-project.nii.gz`;
+const notDownloadedURL = `${U.testDataURL}/test_data/mri-json-private-not-downloaded.nii.gz`;
 const privateShortname = 'mrijsonprivatefiles';
 const publicShortname = 'mrijsonpublicfiles';
 const hash = (source) => crypto.createHash('md5').update(source)

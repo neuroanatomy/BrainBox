@@ -1,7 +1,6 @@
 /* eslint-disable max-lines, max-statements */
 'use strict';
 
-const fs = require('fs');
 const chai = require('chai');
 const { assert } = chai;
 const chaiHttp = require('chai-http');
@@ -9,9 +8,8 @@ chai.use(chaiHttp);
 const puppeteer = require('puppeteer');
 const WebSocket = require('ws');
 const U = require('../utils.js');
-const Config = JSON.parse(fs.readFileSync('./cfg.json'));
 
-const wshost = (Config.secure ? 'wss://' : 'ws://') + 'localhost:8080';
+const wshost = U.wsURL;
 const embedURL = (query) => U.serverURL + '/mri/embed?url=' + encodeURIComponent(U.localBertURL) + (query || '');
 const hostURL = (query) => U.serverURL + '/test_data/embed-host.html?url=' + encodeURIComponent(U.localBertURL) + (query || '');
 

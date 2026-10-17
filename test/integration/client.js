@@ -124,7 +124,7 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
       const files = await page.waitForSelector('#files');
       assert.equal(5, await files.$$eval('tbody tr', ((nodes) => nodes.length)));
       assert.deepEqual([
-        'http://127.0.0.1:3001/test_data/bert_brain.nii.gz',
+        U.localBertURL,
         'https://zenodo.org/record/44855/files/MRI-n4.nii.gz',
         'http://files.figshare.com/2284784/MRI_n4.nii.gz',
         'https://dl.dropbox.com/s/cny5b3so267bv94/p32-f18-uchar.nii.gz',

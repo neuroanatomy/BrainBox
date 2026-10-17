@@ -9,7 +9,6 @@
 // the one its page was rendered for. Other users are not told which layer a
 // user has open, and strokes are relayed only to users who may see the layer.
 
-const fs = require('fs');
 const chai = require('chai');
 const { assert } = chai;
 const chaiHttp = require('chai-http');
@@ -19,8 +18,7 @@ const puppeteer = require('puppeteer');
 const U = require('../utils.js');
 const F = require('../mri-access-fixtures.js');
 
-const Config = JSON.parse(fs.readFileSync('./cfg.json'));
-const wshost = (Config.secure ? 'wss://' : 'ws://') + 'localhost:8080';
+const wshost = U.wsURL;
 
 // a layer of the fixtures' project, whose annotations only its collaborators see
 const hiddenFilename = 'ws-read-access-hidden.nii.gz';

@@ -38,7 +38,7 @@ const openHost = async (browser, override = () => null) => {
   await page.setRequestInterception(true);
   page.on('request', (req) => {
     const url = req.url();
-    // BrainBox builds its URLs from cfg.json's hostname, which may be localhost rather than U.serverURL
+    // BrainBox builds its URLs from cfg.json's hostname, which is U.serverURL
     if (!U.isLocalURL(url)) {
       req.abort();
 

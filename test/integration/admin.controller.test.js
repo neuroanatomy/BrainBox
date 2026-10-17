@@ -8,11 +8,9 @@ chai.use(chaiHttp);
 const U = require('../utils.js');
 const admins = require('../../controller/admin/admins');
 const notifier = require('../../notifier');
-const fs = require('fs');
 const WebSocket = require('ws');
 
-const Config = JSON.parse(fs.readFileSync('./cfg.json'));
-const wshost = (Config.secure ? 'wss://' : 'ws://') + 'localhost:8080';
+const wshost = U.wsURL;
 
 const goneProject = 'admintestgone';
 const source1 = 'http://admin-test.localhost/brain1.nii.gz';
@@ -199,7 +197,9 @@ describe('TESTING THE /admin ROUTE', function () {
     }).timeout(U.shortTimeout);
 
     it('does not let other users broadcast a message', async function () {
-      const res = await chai.request(U.serverURL).post('/admin/broadcast-message')
+      // From 127.0.0.1: the server also lets through requests from ::1 (admin.controller.js,
+      // authorizedIP), which is where 'localhost' goes on some systems
+      const res = await chai.request(U.testDataURL).post('/admin/broadcast-message')
         .query({ token: otherToken })
         .send({ msg: 'Testing' });
       assert.equal(res.statusCode, 403);

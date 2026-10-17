@@ -18,7 +18,7 @@ const U = require('../utils.js');
 const SHORTNAME = 'projectpageerrortest';
 const PAGE = `${U.serverURL}/project/${SHORTNAME}`;
 // Downloads fine, but is not an MRI (test-only route, test/utils.js)
-const UNREADABLE_URL = `${U.serverURL}/test_data/unreadable_brain.mgz`;
+const UNREADABLE_URL = `${U.testDataURL}/test_data/unreadable_brain.mgz`;
 
 const project = (files) => ({
   name: 'Project page error test',

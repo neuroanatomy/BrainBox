@@ -17,8 +17,7 @@ const WebSocket = require('ws');
 const puppeteer = require('puppeteer');
 const U = require('../utils.js');
 
-const Config = JSON.parse(fs.readFileSync('./cfg.json'));
-const wshost = (Config.secure ? 'wss://' : 'ws://') + 'localhost:8080';
+const wshost = U.wsURL;
 
 const shortname = 'wswriteaccesstest';
 const atlasFilename = 'ws-write-access-test.nii.gz';
