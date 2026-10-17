@@ -200,6 +200,22 @@ describe('WebSocket: layers are sent only to the users who may see them', functi
     assert.isFalse(atlas);
   });
 
+  it('sends the MRI\'s owner its layers without a project, and a project\'s layers as the project decides', async function () {
+    const mris = U.getNativeDB().collection('mri');
+    const query = { source: U.localBertURL, backup: { $exists: false } };
+    const { owner } = await mris.findOne(query, { projection: { owner: 1 } });
+    await mris.updateOne(query, { $set: { owner: F.users.mriowner } });
+    try {
+      const cookie = F.cookie(F.users.mriowner);
+      const ownLayer = await openLayer(await open({ cookie }), mri, { filename: publicFilename });
+      assert.isTrue(ownLayer.atlas);
+      const projectLayer = await openLayer(await open({ cookie }), mri, { filename: hiddenFilename });
+      assert.isFalse(projectLayer.atlas);
+    } finally {
+      await mris.updateOne(query, { $set: { owner } });
+    }
+  });
+
   it('sends it to a collaborator who may view, or edit, the annotations', async function () {
     const viewer = await openLayer(await open({ cookie: F.cookie(F.users.viewer) }), mri, { filename: hiddenFilename });
     assert.isTrue(viewer.atlas);

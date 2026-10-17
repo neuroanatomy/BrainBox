@@ -104,22 +104,56 @@ const listsMri = (project, source) => {
 };
 
 /**
- * Whether a user may see an MRI's files. An MRI that no project lists is
- * public: anyone who has its URL may open it. An MRI that projects list is
- * visible as /mri/embed decides it: if one of the projects relevant to it lets
- * anyone see its files, or one of the projects listing it lets the user see
- * them (several projects: any one is enough)
+ * Whether a user owns an MRI document: is the user named in its `owner` field
+ * (the user who added it). An anonymous visitor owns nothing: an MRI that an
+ * anonymous visitor added is owned by their IP address, which no username is
+ * @param {Object|null} json The MRI document
+ * @param {string|null} loggedUser The server-verified username, or 'anonymous'
+ * @returns {boolean} True if the user owns it
+ */
+const isMriOwner = function (json, loggedUser) {
+  const owner = _.get(json, 'owner');
+
+  return typeof loggedUser === 'string' && loggedUser !== '' && loggedUser !== 'anonymous' && owner === loggedUser;
+};
+
+/**
+ * Whether a user may see an MRI's files. Its owner always may. An MRI that no
+ * project lists is public: anyone who has its URL may open it. An MRI that
+ * projects list is visible as /mri/embed decides it: if one of the projects
+ * relevant to it lets anyone see its files, or one of the projects listing it
+ * lets the user see them (several projects: any one is enough)
  * @param {string} source The MRI's source URL
  * @param {Array} projects The projects relevant to it (getRelatedProjects)
  * @param {string} loggedUser The username, or 'anonymous'
+ * @param {Object|null} [json] The MRI document (null if there is none)
  * @returns {boolean} True if the user may see the MRI's files
  */
-const mayViewMriFiles = function (source, projects, loggedUser) {
-  if (!projects.some((p) => listsMri(p, source))) {
+const mayViewMriFiles = function (source, projects, loggedUser, json = null) {
+  if (isMriOwner(json, loggedUser) || !projects.some((p) => listsMri(p, source))) {
     return true;
   }
 
   return isFilePubliclyVisible(projects) || hasCustomFileViewAccess({ source }, projects, loggedUser);
+};
+
+/**
+ * Whether a user may see an MRI in the embed (/mri/embed, /mri/render3d,
+ * /mri/layers): if one of the projects relevant to it lets anyone see its
+ * files, or one of the projects listing it lets the user see them, or the user
+ * owns it and a project lists it. An MRI that no project lists is not embedded
+ * unless a project relevant to it lets anyone see its files
+ * @param {Object} json The MRI document
+ * @param {Array} projects The projects relevant to it (getRelatedProjects)
+ * @param {string} loggedUser The username, or 'anonymous'
+ * @returns {boolean} True if the user may see it in the embed
+ */
+const mayEmbedMri = function (json, projects, loggedUser) {
+  if (isFilePubliclyVisible(projects) || hasCustomFileViewAccess(json, projects, loggedUser)) {
+    return true;
+  }
+
+  return isMriOwner(json, loggedUser) && projects.some((p) => listsMri(p, json.source));
 };
 
 /**
@@ -138,6 +172,8 @@ module.exports = {
   isFilePubliclyVisible,
   hasCustomFileViewAccess,
   listsMri,
+  isMriOwner,
   mayViewMriFiles,
+  mayEmbedMri,
   privateMriError
 };

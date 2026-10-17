@@ -13,7 +13,7 @@ const { AccessType, AccessLevel } = require('neuroweblab');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 const EmbedAccessService = require('../../services/EmbedAccessService');
 const { projectsForMetadata, mayChangeMri } = require('../atlasmakerServer/metadata-save-access');
-const { getRelatedProjects, filterMriForUser, isFilePubliclyVisible, hasCustomFileViewAccess, mayViewMriFiles, privateMriError } = require('./mri-access');
+const { getRelatedProjects, filterMriForUser, isFilePubliclyVisible, hasCustomFileViewAccess, mayViewMriFiles, mayEmbedMri, privateMriError } = require('./mri-access');
 const { jsonForScript } = require('../utils/jsonForScript');
 const _ = require('lodash');
 const AsyncLock = require('async-lock');
@@ -359,7 +359,7 @@ const mriEmbed = async function (req, res) {
 
   const projects = await getRelatedProjects(req.nativeDb, json, myurl);
 
-  if (!isFilePubliclyVisible(projects) && !hasCustomFileViewAccess(json, projects, loggedUser)) {
+  if (!mayEmbedMri(json, projects, loggedUser)) {
     res.status(403);
     res.render('embedError', { message: 'This content is private.' });
 
@@ -427,7 +427,7 @@ const mriRender3D = async function (req, res) {
 
   const projects = await getRelatedProjects(req.nativeDb, json, myurl);
 
-  if (!isFilePubliclyVisible(projects) && !hasCustomFileViewAccess(json, projects, loggedUser)) {
+  if (!mayEmbedMri(json, projects, loggedUser)) {
     res.status(403);
     res.render('embedError', { message: 'This content is private.' });
 
@@ -493,7 +493,7 @@ const apiMriLayers = async function (req, res) {
 
   const projects = await getRelatedProjects(req.nativeDb, json, myurl);
 
-  if (!isFilePubliclyVisible(projects) && !hasCustomFileViewAccess(json, projects, loggedUser)) {
+  if (!mayEmbedMri(json, projects, loggedUser)) {
     res.status(403).json({ error: 'Access denied' });
 
     return;
@@ -569,7 +569,7 @@ const apiMriPost = async function (req, res) {
   // An MRI whose files the user cannot see is refused, as /mri/embed does
   // (also before it is downloaded: a project may list it before it has a document)
   const loggedUser = req.isAuthenticated() ? req.user.username : 'anonymous';
-  if (!mayViewMriFiles(myurl, await getRelatedProjects(req.nativeDb, json, myurl), loggedUser)) {
+  if (!mayViewMriFiles(myurl, await getRelatedProjects(req.nativeDb, json, myurl), loggedUser, json)) {
     console.log(`REJECTED POST /mri/json of ${myurl} by ${loggedUser}: may not see its files`);
     res.status(403).json(privateMriError(loggedUser));
 
@@ -723,7 +723,7 @@ const apiMriGet = async function (req, res) {
     }
   } else {
     // An MRI whose files the user cannot see is refused, as /mri/embed does
-    if (!mayViewMriFiles(myurl, await getRelatedProjects(req.nativeDb, json, myurl), loggedUser)) {
+    if (!mayViewMriFiles(myurl, await getRelatedProjects(req.nativeDb, json, myurl), loggedUser, json)) {
       console.log(`REJECTED GET /mri/json of ${myurl} by ${loggedUser}: may not see its files`);
       res.status(403).json(privateMriError(loggedUser));
 
