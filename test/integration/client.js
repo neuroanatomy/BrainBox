@@ -121,7 +121,10 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
       assert.equal('Cerebrum', await annotations.$eval('tbody tr td:first-child input', ((node) => node.value)));
       assert.equal('cerebellum.json', await annotations.$eval('tbody tr td:nth-child(3) select', ((node) => node.value)));
 
+      // the files are fetched after the page is drawn (project-settings-page.js):
+      // wait until they are all loaded, the files section is no longer marked as loading
       const files = await page.waitForSelector('#files');
+      await page.waitForFunction(() => !document.querySelector('#files').parentElement.classList.contains('filesLoading'), { timeout: U.mediumTimeout });
       assert.equal(5, await files.$$eval('tbody tr', ((nodes) => nodes.length)));
       assert.deepEqual([
         U.localBertURL,
