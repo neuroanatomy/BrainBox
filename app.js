@@ -22,6 +22,7 @@ global.authTokenMiddleware = nwl.authTokenMiddleware;
 
 const AtlasmakerServer = require('./controller/atlasmakerServer/atlasmakerServer');
 const routes = require('./controller/routes/routes');
+const { dataAccessMiddleware } = require('./controller/mri/data-access');
 
 const MONGO_DB = process.env.MONGODB || 'localhost:27017/brainbox';
 
@@ -68,12 +69,14 @@ const start = async function () {
   const db = app.db.mongoDB();
   const nativeDb = app.db.nativeMongoDB();
 
-  // Files and projects are looked up by source and shortname: without these
-  // indexes each lookup scans the whole collection, backups included.
+  // Files and projects are looked up by source and shortname, and the files
+  // under /data by their folder (url): without these indexes each lookup scans
+  // the whole collection, backups included.
   // createIndex does nothing if the index exists; building it does not block
   // the server's start
   Promise.all([
     nativeDb.collection('mri').createIndex({ source: 1 }),
+    nativeDb.collection('mri').createIndex({ url: 1 }),
     nativeDb.collection('project').createIndex({ shortname: 1 })
   ]).catch((err) => console.error('ERROR: could not create the database indexes', err.message));
 
@@ -109,6 +112,8 @@ const start = async function () {
   }
   app.use(logger(':remote-addr :method :url :status :response-time ms - :res[content-length]', loggerOptions));//app.use(logger('dev'));
   app.use(cookieParser());
+  // only those who may see them get the files of an MRI (/data/<md5>/<file>)
+  app.use(dataAccessMiddleware({ nativeDb }));
   app.use(express.static(path.join(dirname, 'public')));
 
   //========================================================================================
