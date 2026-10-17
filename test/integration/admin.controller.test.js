@@ -159,9 +159,10 @@ describe('TESTING THE /admin ROUTE', function () {
             if (msg.type === 'serverMessage') { resolve(msg); }
           });
         });
-        await chai.request(U.serverURL).post('/admin/broadcast-message')
+        const res = await chai.request(U.serverURL).post('/admin/broadcast-message')
           .query({ token: adminToken })
           .send({ msg: 'Testing the broadcast' });
+        assert.isAtLeast(res.body.users, 1, 'the answer says how many users got the message');
         const msg = await Promise.race([
           received,
           new Promise((resolve) => { setTimeout(resolve, U.shortTimeout / 2); })

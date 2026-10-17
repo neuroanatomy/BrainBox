@@ -234,9 +234,11 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         }
       }
     },
+    // Returns the number of users the message was sent to
     broadcastServerMessage: ({ msg, dialogType }) => {
       console.log(`Ready to broadcast [${msg}]`);
-      me.broadcastMessage({
+
+      return me.broadcastMessage({
         type: 'serverMessage',
         dialogType: dialogType,
         msg
@@ -1281,6 +1283,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       if (me.debug) {
         tracer.log('    message broadcasted to ' + n + ' users', msg);
       }
+
+      return n;
     },
     receiveSaveMessage: async function (data) {
       const sourceUS = me._getUserWithUserData(data.uid, 'save');
@@ -2883,8 +2887,12 @@ const notifier = require('../../notifier');
 notifier.on('saveAllAtlases', () => {
   atlasmakerServer.saveAllAtlases();
 });
-notifier.on('broadcastMessage', (msg) => {
-  atlasmakerServer.broadcastServerMessage({ msg, dialogType: 'modal' });
+// The callback receives the number of connected users the message was sent to
+notifier.on('broadcastMessage', (msg, callback) => {
+  const users = atlasmakerServer ? atlasmakerServer.broadcastServerMessage({ msg, dialogType: 'modal' }) : 0;
+  if (typeof callback === 'function') {
+    return callback(users);
+  }
 });
 // The callback receives the number of connected users who have open the MRI with that source
 notifier.on('usersOnMRI', (source, callback) => {

@@ -803,8 +803,9 @@ describe('UNIT TESTING ATLASMAKER SERVER', function() {
       const ws1 = mockSocket();
       addMockUser(ws1, {});
 
-      AMS.broadcastServerMessage({ msg: 'hello world', dialogType: 'info' });
+      const users = AMS.broadcastServerMessage({ msg: 'hello world', dialogType: 'info' });
 
+      assert.strictEqual(users, 1, 'returns the number of users it was sent to');
       assert.strictEqual(ws1.send.callCount, 1);
       const sent = JSON.parse(ws1.send.firstCall.args[0]);
       assert.strictEqual(sent.type, 'serverMessage');

@@ -74,8 +74,9 @@ const saveAllAtlases = (req, res) => {
 };
 
 /**
- * Broadcast a server message to all connected users. Message is
- * in req.body.msg
+ * Broadcast a server message to all connected users (the pages with a
+ * viewer: MRI, project and embedded viewer pages), and say to how many it
+ * was sent. Message is in req.body.msg
  * @param {object} req Request object
  * @param {object} res Response object
  * @returns {void}
@@ -94,8 +95,9 @@ const broadcastMessage = async (req, res) => {
   }
   // const msg = req.sanitize(req.body.msg); // why does this not work?
   const { msg } = req.body;
-  notifier.emit('broadcastMessage', msg);
-  res.send({ msg: 'Will broadcast message ' + msg, success: true });
+  let users = 0;
+  notifier.emit('broadcastMessage', msg, (n) => { users = n; });
+  res.send({ msg: `Message sent to ${users} connected user${users === 1 ? '' : 's'}: ${msg}`, users, success: true });
 };
 
 /**

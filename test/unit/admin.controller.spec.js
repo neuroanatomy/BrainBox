@@ -1,6 +1,7 @@
 const assert = require('assert');
 const adminController = require('../../controller/admin/admin.controller');
 const admins = require('../../controller/admin/admins');
+const notifier = require('../../notifier');
 require('mocha-sinon');
 const sinon = require('sinon');
 
@@ -221,9 +222,18 @@ describe('Admin Controller: ', function() {
         status: sinon.stub().returns({ send: sinon.stub().returns({ end: endSpy })}),
         send: sinon.spy()
       };
-      await adminController.broadcastMessage(req, res);
-      assert.notStrictEqual(res.send.args, [[{ msg: 'Will broadcast message Testing', success: true }]]);
+      // the WebSocket server answers that it sent the message to 3 users
+      const listeners = notifier.listeners('broadcastMessage');
+      notifier.removeAllListeners('broadcastMessage');
+      notifier.on('broadcastMessage', (msg, callback) => { callback(3); });
+      try {
+        await adminController.broadcastMessage(req, res);
+      } finally {
+        notifier.removeAllListeners('broadcastMessage');
+        listeners.forEach((listener) => notifier.on('broadcastMessage', listener));
+      }
       assert.strictEqual(res.send.callCount, 1);
+      assert.deepStrictEqual(res.send.firstCall.args[0], { msg: 'Message sent to 3 connected users: Testing', users: 3, success: true });
       sinon.restore();
     });
   });
