@@ -71,8 +71,18 @@ describe('TESTING THE ADMIN BROADCAST MESSAGE IN THE VIEWER', function () {
   });
 
   after(async function () {
+    // eslint-disable-next-line no-invalid-this
+    this.timeout(U.longTimeout);
     admins.setAdmins(previousAdmins);
-    await browser.close();
+    if (browser) { await browser.close(); }
+    // Like the other suites using the test brain, remove it once the browser is closed:
+    // the project page adds the project's layer to it and saves it, and the next suite
+    // (client.js) expects a test brain with only its own layer.
+    const res = await chai.request(U.serverURL).get('/mri/json')
+      .query({ url: U.localBertURL });
+    if (res.body && res.body.url) {
+      await U.removeMRI({ dirPath: './public' + res.body.url, srcURL: U.localBertURL });
+    }
   });
 
   it('shows the message to a user who has the MRI page open', async function () {
