@@ -207,7 +207,6 @@ const closeResources = async () => {
 
 const getServer = () => server;
 const getAtlasmakerServer = () => atlasmakerServer;
-const getDB = () => db;
 const getNativeDB = () => nativeDb;
 
 const currentDirectory = function () {
@@ -494,7 +493,6 @@ module.exports = {
   closeResources,
   getServer,
   getAtlasmakerServer,
-  getDB, // monk
   getNativeDB, // native mongodb
   removeMRI,
   currentDirectory,

@@ -213,7 +213,7 @@ describe('UNIT TESTING WEBSOCKET WRITE ACCESS', function () {
     const sessions = { 'connect.sid=editor': { username: 'editor' }, 'connect.sid=bar': { username: 'bar' } };
 
     before(function () {
-      AMS = atlasmakerServer(U.getDB(), U.getNativeDB());
+      AMS = atlasmakerServer(U.getNativeDB());
     });
 
     beforeEach(function () {

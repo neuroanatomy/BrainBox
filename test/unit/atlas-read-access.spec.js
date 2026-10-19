@@ -107,7 +107,7 @@ describe('UNIT TESTING WEBSOCKET READ ACCESS', function () {
     let AMS;
 
     before(function () {
-      AMS = atlasmakerServer(U.getDB(), U.getNativeDB());
+      AMS = atlasmakerServer(U.getNativeDB());
     });
 
     it('leaves the open layer out of a user\'s data', function () {

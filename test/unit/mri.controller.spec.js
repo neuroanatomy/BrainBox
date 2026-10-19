@@ -8,13 +8,12 @@ const sinon = require('sinon');
 const U = require('../utils');
 const dirname = require('path').resolve(__dirname, '../..');
 
-let db, mriController, nativeDb;
+let mriController, nativeDb;
 
 describe('MRI Controller: ', function () {
   before(function () {
-    db = U.getDB();
     nativeDb = U.getNativeDB();
-    mriController = new MriController(db, nativeDb);
+    mriController = new MriController(nativeDb);
   });
 
   describe('Validator function() ', function () {
@@ -107,7 +106,6 @@ describe('MRI Controller: ', function () {
   describe('MRI function() ', function () {
     it('should return the MRI information when correct input is given', async function () {
       const req = {
-        db,
         nativeDb,
         query: {
           url: 'https://s3.amazonaws.com/fcp-indi/data/Projects/ABIDE_Initiative/Outputs/freesurfer/5.1/CMU_a_0050642/mri/T1.mgz'
@@ -144,7 +142,6 @@ describe('MRI Controller: ', function () {
   describe('apiMriGet function() ', function () {
     it('should fetch the MRI as directed when the URL is correct', async function () {
       const req = {
-        db,
         nativeDb,
         query: {
           url: 'https://s3.amazonaws.com/fcp-indi/data/Projects/ABIDE_Initiative/Outputs/freesurfer/5.1/CMU_a_0050642/mri/T1.mgz',
@@ -180,7 +177,6 @@ describe('MRI Controller: ', function () {
 
     it('should return a paginated list of files if url is empty', async function () {
       const req = {
-        db,
         nativeDb,
         query: {
           url: '',
@@ -211,7 +207,6 @@ describe('MRI Controller: ', function () {
 
     it('should throw an error when the url is invalid', async function () {
       const req = {
-        db,
         nativeDb,
         query: {
           url: 'inValidUrl',
@@ -245,7 +240,6 @@ describe('MRI Controller: ', function () {
 
     it('should throw an error when the URL is not in DB and downloads set to false', async function () {
       const req = {
-        db,
         nativeDb,
         query: {
           url: 'https://s3.amazonaws.com/fcp-indi/data/1234assccdf',
@@ -276,7 +270,6 @@ describe('MRI Controller: ', function () {
 
     it('should ask for page parameter if not provided', async function () {
       const req = {
-        db,
         nativeDb,
         query: {
           download: 'true',
@@ -312,14 +305,12 @@ describe('MRI Controller: ', function () {
     });
 
     after(async function () {
-      // await db.get('mri').remove({ source: U.localBertURL });
       await nativeDb.collection('mri').deleteMany({ source: U.localBertURL });
     });
 
     // eslint-disable-next-line max-statements
     it('should work correctly and make the right calls when input is correct', async function () {
       const req = {
-        db,
         nativeDb,
         body: {},
         query: {
@@ -375,7 +366,6 @@ describe('MRI Controller: ', function () {
 
     it('should throw an error when input is incorrect', async function () {
       const req = {
-        db,
         nativeDb,
         body: {},
         query: {
@@ -408,7 +398,6 @@ describe('MRI Controller: ', function () {
     it('should reject a download when remote server returns HTML instead of a binary file', async function () {
       const htmlErrorURL = U.testDataURL + '/test_data/html_error_page.nii.gz';
       const makeReq = () => ({
-        db,
         nativeDb,
         body: {},
         query: { url: htmlErrorURL },

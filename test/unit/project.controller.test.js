@@ -9,11 +9,9 @@ const { expect } = require('chai');
 const U = require('../utils.js');
 
 describe('Project Controller: ', function () {
-  let db; // monk
-  let nativeDb;
-  // native mongodb
+  let nativeDb; // native mongodb
+
   before(function () {
-    db = U.getDB();
     nativeDb = U.getNativeDB();
   });
 
@@ -47,13 +45,11 @@ describe('Project Controller: ', function () {
   describe('project function() ', function () {
     before(function (done) {
       const testProject = projectObject;
-      // db.get('project').insert(testProject)
       nativeDb.collection('project').insert(testProject)
         .then(() => done());
     });
 
     after(function (done) {
-      // db.get('project').remove({ shortname: 'testing' })
       nativeDb.collection('project').deleteMany({ shortname: 'testing' })
         .then(() => done());
     });
@@ -71,7 +67,6 @@ describe('Project Controller: ', function () {
         isAuthenticated: function () {
           return Boolean(this.user.username);
         },
-        db: db,
         nativeDb: nativeDb
       };
       const success = sinon.spy();
@@ -110,7 +105,6 @@ describe('Project Controller: ', function () {
         isAuthenticated: function () {
           return Boolean(this.user.username);
         },
-        db: db,
         nativeDb: nativeDb
       };
       const success = sinon.spy();
@@ -129,13 +123,11 @@ describe('Project Controller: ', function () {
   describe('apiProject function() ', function () {
 
     before(function (done) {
-      // db.get('project').insert(projectObject)
       nativeDb.collection('project').insert(projectObject)
         .then(() => done());
     });
 
     after(function (done) {
-      // db.get('project').remove({ shortname: 'testing' })
       nativeDb.collection('project').deleteMany({ shortname: 'testing' })
         .then(() => done());
     });
@@ -154,7 +146,6 @@ describe('Project Controller: ', function () {
         isAuthenticated: function () {
           return Boolean(this.user.username);
         },
-        db: db,
         nativeDb: nativeDb
       };
       const success = sinon.spy();
@@ -183,7 +174,6 @@ describe('Project Controller: ', function () {
         isAuthenticated: function () {
           return Boolean(this.user.username);
         },
-        db: db,
         nativeDb: nativeDb
       };
       const resSpy = sinon.spy();
@@ -208,7 +198,6 @@ describe('Project Controller: ', function () {
         params: {
           projectName: 'testproject'
         },
-        db: db,
         nativeDb: nativeDb,
         user: {
           username: 'anyone'
@@ -237,7 +226,6 @@ describe('Project Controller: ', function () {
         params: {
           projectName: 'testproject'
         },
-        db: db,
         nativeDb: nativeDb,
         user: {
           username: 'anyone'
@@ -265,7 +253,6 @@ describe('Project Controller: ', function () {
         params: {
           projectName: 'testproject'
         },
-        db: db,
         nativeDb: nativeDb,
         user: {
           username: 'anyone'
@@ -288,7 +275,6 @@ describe('Project Controller: ', function () {
   describe('newProject function() ', function () {
     it('should render the new project screen correctly for an anonymous user', async function () {
       const req = {
-        db: db,
         nativeDb: nativeDb,
         user: {
         },
@@ -319,7 +305,6 @@ describe('Project Controller: ', function () {
 
     it('should render the new project page correctly for a logged in user', async function () {
       const req = {
-        db: db,
         nativeDb: nativeDb,
         user: {
           username: 'anyone'
@@ -351,31 +336,12 @@ describe('Project Controller: ', function () {
 
   describe('postProject function() ', function () {
 
-    // should not be useful since anyone user should already exists
-    // before(function (done) {
-    //   db.get('user').insert({
-    //     'name': 'Any Brainbox User',
-    //     'nickname': 'anyone',
-    //     'url': '',
-    //     'brainboxURL': '/user/anyone',
-    //     'avatarURL': '',
-    //     'joined': '2020-05-01T08:26:35.348Z'
-    //   })
-    //     .then(() => done());
-    // });
-
     after(function (done) {
-      // anyone user should not be removed
-      // db.get('user').remove({
-      //   nickname: 'anyone'
-      // })
-      //   .then(() => {
-      // db.get('project').remove({
+      // the anyone user should not be removed
       nativeDb.collection('project').deleteMany({
         shortname: 'testing'
       })
         .then(() => done());
-      // });
     });
 
     it('should throw error if user is not authenticated', async function () {
@@ -385,7 +351,6 @@ describe('Project Controller: ', function () {
             name: 'Testing'
           }
         },
-        db: db,
         nativeDb: nativeDb,
         user: {
         },
@@ -416,7 +381,6 @@ describe('Project Controller: ', function () {
         isAuthenticated: function () {
           return Boolean(this.user.username);
         },
-        db: db,
         nativeDb: nativeDb,
         session: {
           returnTo: ''
@@ -436,13 +400,11 @@ describe('Project Controller: ', function () {
 
   describe('deleteProject function() ', function () {
     before(function (done) {
-      // db.get('project').insert(projectObject)
       nativeDb.collection('project').insert(projectObject)
         .then(() => done());
     });
 
     after(function (done) {
-      // db.get('project').remove({ shortname: 'testing' })
       nativeDb.collection('project').deleteMany({ shortname: 'testing' })
         .then(() => done());
     });
@@ -474,7 +436,6 @@ describe('Project Controller: ', function () {
         params: {
           projectName: 'general'
         },
-        db: db,
         nativeDb: nativeDb,
         isAuthenticated: function () {
           return Boolean(this.user.username);
@@ -504,7 +465,6 @@ describe('Project Controller: ', function () {
         isAuthenticated: function () {
           return Boolean(this.user.username);
         },
-        db: db,
         nativeDb: nativeDb
       };
       const res = {
@@ -520,13 +480,11 @@ describe('Project Controller: ', function () {
   describe('settings function() ', function () {
     before(function (done) {
       delete projectObject._id;
-      // db.get('project').insert(projectObject)
       nativeDb.collection('project').insert(projectObject)
         .then(() => done());
     });
 
     after(function (done) {
-      // db.get('project').remove({ shortname: 'testing' })
       nativeDb.collection('project').deleteMany({ shortname: 'testing' })
         .then(() => done());
     });
@@ -536,7 +494,6 @@ describe('Project Controller: ', function () {
         user: {
           username: 'foo'
         },
-        db: db,
         nativeDb: nativeDb,
         isAuthenticated: function () {
           return Boolean(this.user.username);
@@ -566,7 +523,6 @@ describe('Project Controller: ', function () {
         user: {
           username: 'foo'
         },
-        db: db,
         nativeDb: nativeDb,
         isAuthenticated: function () {
           return Boolean(this.user.username);
@@ -598,7 +554,6 @@ describe('Project Controller: ', function () {
         user: {
           username: 'foo'
         },
-        db: db,
         nativeDb: nativeDb,
         isAuthenticated: function () {
           return Boolean(this.user.username);

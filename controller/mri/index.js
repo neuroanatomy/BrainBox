@@ -6,10 +6,10 @@ const uploadController = require('./upload.controller');
 
 const multer = require('multer');
 
-const MriRouter = function(db) {
+const MriRouter = function() {
 
   const router = new express.Router();
-  const controller = new Controller(db);
+  const controller = new Controller();
 
   router.get('', controller.validator, controller.mri);
   router.get('/embed', controller.validator, controller.mriEmbed);

@@ -56,7 +56,7 @@ const addMockUser = (ws, userProps) => {
 // eslint-disable-next-line max-statements
 describe('UNIT TESTING ATLASMAKER SERVER', function() {
   before(function () {
-    AMS = atlasmakerServer(U.getDB(), U.getNativeDB());
+    AMS = atlasmakerServer(U.getNativeDB());
   });
 
   describe('MRI IO', function () {
@@ -218,6 +218,13 @@ describe('UNIT TESTING ATLASMAKER SERVER', function() {
       };
       const result = await AMS.querySimilarProjectNames(data);
       assert.ok(result.filter((e) => e.name === U.projectTest.name).length);
+    });
+
+    it('A server built from the native db alone queries the database', async function () {
+      const ams = atlasmakerServer(U.getNativeDB());
+      const data = { type: 'projectNameQuery', metadata: { name: U.projectTest.shortname } };
+      const result = await ams.queryProjectName(data);
+      assert.strictEqual(result.name, U.projectTest.name);
     });
   });
 

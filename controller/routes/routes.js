@@ -29,7 +29,7 @@ module.exports = (app) => {
     });
   });
 
-  app.use('/mri', new Mri(app.db.mongoDB));
+  app.use('/mri', new Mri());
   app.use('/project', project);
   app.use('/user', user);
   app.use('/api', api);

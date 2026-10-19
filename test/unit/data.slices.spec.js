@@ -5,10 +5,9 @@ require('mocha-sinon');
 const U = require('../utils.js');
 
 describe('Data Slices ', function() {
-  let db, nativeDb;
+  let nativeDb;
 
   before(function() {
-    db=U.getDB();
     nativeDb=U.getNativeDB();
   });
 
@@ -22,7 +21,6 @@ describe('Data Slices ', function() {
           // eslint-disable-next-line no-unneeded-ternary
           return this.user.username ? true : false;
         },
-        db: db,
         nativeDb: nativeDb
       };
       const requestedUser = 'foo';
@@ -44,7 +42,6 @@ describe('Data Slices ', function() {
           // eslint-disable-next-line no-unneeded-ternary
           return this.user.username ? true : false;
         },
-        db: db,
         nativeDb: nativeDb
       };
       const requestedUser = 'foo';
@@ -63,7 +60,6 @@ describe('Data Slices ', function() {
           // eslint-disable-next-line no-unneeded-ternary
           return this.user.username ? true : false;
         },
-        db: db,
         nativeDb: nativeDb
       };
       const requestedUser = 'foo';
@@ -82,7 +78,6 @@ describe('Data Slices ', function() {
           // eslint-disable-next-line no-unneeded-ternary
           return this.user.username ? true : false;
         },
-        db: db,
         nativeDb: nativeDb
       };
       const requestedUser = 'general';
@@ -102,7 +97,6 @@ describe('Data Slices ', function() {
           // eslint-disable-next-line no-unneeded-ternary
           return this.user.username ? true : false;
         },
-        db: db,
         nativeDb: nativeDb
       };
       const result = await dataSlices.getProjectFilesSlice(req, 'testproject', 0, 2);
@@ -118,7 +112,6 @@ describe('Data Slices ', function() {
           // eslint-disable-next-line no-unneeded-ternary
           return this.user.username ? true : false;
         },
-        db: db,
         nativeDb: nativeDb
       };
       let error;
@@ -202,7 +195,6 @@ describe('Data Slices ', function() {
           // eslint-disable-next-line no-unneeded-ternary
           return this.user.username ? true : false;
         },
-        db: db,
         nativeDb: nativeDb
       };
       const files = await dataSlices.getFilesSlice(req, 0, 4);
@@ -220,7 +212,6 @@ describe('Data Slices ', function() {
           // eslint-disable-next-line no-unneeded-ternary
           return this.user.username ? true : false;
         },
-        db: db,
         nativeDb: nativeDb
       };
       const files = await dataSlices.getProjectsSlice(req, 0, 10);
@@ -236,7 +227,6 @@ describe('Data Slices ', function() {
           // eslint-disable-next-line no-unneeded-ternary
           return this.user.username ? true : false;
         },
-        db: db,
         nativeDb: nativeDb
       };
       const files = await dataSlices.getProjectsSlice(req, 0, 0);

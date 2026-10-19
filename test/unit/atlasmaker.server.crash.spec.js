@@ -103,7 +103,7 @@ const failingTypes = async (getSource) => {
 
 describe('UNIT TESTING ATLASMAKER SERVER: bad input and failures do not crash the server', function () {
   before(function () {
-    AMS = atlasmakerServer(U.getDB(), U.getNativeDB());
+    AMS = atlasmakerServer(U.getNativeDB());
   });
 
   beforeEach(function () {

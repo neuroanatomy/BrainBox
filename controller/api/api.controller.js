@@ -95,7 +95,6 @@ const getAtlasBackups = (req, res) => {
           // ...from backup logs
           for(i=0; i<obj2.length; i++) {
             promiseArray.push(
-              // db.get('log').aggregate([
               nativeDb.collection('log').aggregate([
                 { $match: {key:'saveAtlasBackup', 'value.atlasDirectory': dataDir, 'value.atlasFilename': obj2[i].filename}},
                 { $project: {_id:0, filename:'$value.atlasFilename', timestamp:'$value.timestamp'}}

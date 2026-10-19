@@ -27,9 +27,6 @@ const { createDataAccessLogIndexes, dataAccessRecorder } = require('./controller
 
 const MONGO_DB = process.env.MONGODB || 'localhost:27017/brainbox';
 
-/** @todo Handle the case when MongoDB is not installed */
-// var db = monk(MONGO_DB);
-
 /* jslint nomen: true */
 const dirname = __dirname; // Local directory
 /* jslint nomen: false */
@@ -67,7 +64,6 @@ const start = async function () {
     projectsCollection: 'project',
     annotationsCollection: 'mri'
   });
-  const db = app.db.mongoDB();
   const nativeDb = app.db.nativeMongoDB();
 
   // Files and projects are looked up by source and shortname, and the files
@@ -123,7 +119,6 @@ const start = async function () {
   //========================================================================================
   app.use((req, res, next) => {
     req.dirname = dirname;
-    req.db = db; // monk
     req.nativeDb = nativeDb; // native mongodb driver
 
     next();
@@ -135,7 +130,7 @@ const start = async function () {
 
   const { appPort, wsPort } = serverPorts(Config);
   const server = http.createServer(app).listen(appPort, () => { console.log(`Listening http on port ${appPort}`); });
-  const atlasmakerServer = new AtlasmakerServer(db, nativeDb);
+  const atlasmakerServer = new AtlasmakerServer(nativeDb);
   atlasmakerServer.dataDirectory = dirname + '/public';
   // NeuroWebLab's session middleware (express-session), so that the WebSocket
   // server knows who opened a connection from its session cookie

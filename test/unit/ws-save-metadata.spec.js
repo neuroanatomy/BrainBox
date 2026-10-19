@@ -117,7 +117,7 @@ describe('UNIT TESTING SAVEMETADATA OVER THE WEBSOCKET', function () {
   };
 
   before(function () {
-    AMS = atlasmakerServer(U.getDB(), U.getNativeDB());
+    AMS = atlasmakerServer(U.getNativeDB());
   });
 
   beforeEach(async function () {

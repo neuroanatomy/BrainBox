@@ -960,7 +960,7 @@ const apiMriUploadFromURL = async function (req, res) {
   }
 };
 
-const MriController = function (db, nativeDb) {
+const MriController = function (nativeDb) {
   this.validator = validator;
   this.validatorPost = validatorPost;
   this.apiMriGet = apiMriGet;
@@ -971,7 +971,7 @@ const MriController = function (db, nativeDb) {
   this.mriRender3D = mriRender3D;
   this.apiMriLayers = apiMriLayers;
   this.reset = reset;
-  atlasmakerServer = new AtlasmakerServer(db, nativeDb);
+  atlasmakerServer = new AtlasmakerServer(nativeDb);
 };
 
 module.exports = MriController;
