@@ -6,6 +6,8 @@
   ascending and a second reverses, aria-sort on the header, and Enter on the header's button
   sorts too. The projects are inserted directly in the database, in an order that is not the
   sorted order of any column. No MRI is downloaded.
+  A project name that is one long word wraps inside its cell (nwl-components >= 1.5.2): the
+  projects table is never wider than its .content panel.
 */
 
 const puppeteer = require('puppeteer');
@@ -41,6 +43,9 @@ const project = ([shortname, numFiles, numCollaborators, modified]) => ({
   files: { list: Array.from({ length: numFiles }, (_x, i) => ({ source: `https://example.org/${shortname}/${i}.nii.gz`, name: `f${i}` })) },
   annotations: { list: [] }
 });
+
+// a project whose name (the page shows the short name) is a 60-character word, for the overflow check
+const LONG = ['sortpage'.padEnd(60, 'w'), 1, 1, '2026-04-01T10:00:00Z'];
 
 const pad = (n) => String(n).padStart(2, '0');
 // local YYYY-MM-DD, as the page shows it; the test runs in the browser's time zone
@@ -184,5 +189,25 @@ describe('User page: sortable columns', function () {
     await page.keyboard.press('Enter');
     assert.equal((await firstRow())[2], '4');
     assert.equal(await ariaSort('Collaborators'), 'descending');
+  });
+
+  it('keeps the projects table within its .content panel when a name is a 60-character word', async function () {
+    const [name] = LONG;
+    await U.getNativeDB().collection('project')
+      .insertOne(project(LONG));
+    await page.setViewport({ width: 800, height: 1000 });
+    await page.goto(`${U.serverURL}/user/${owner}`, { waitUntil: 'load' });
+    await page.waitForFunction((n) => document.querySelectorAll('#projects tbody tr').length === n, { timeout: U.mediumTimeout }, PROJECTS.length + 1);
+    const { table, content, text } = await page.$eval('#projects', (el) => {
+      const t = el.tagName === 'TABLE' ? el : el.querySelector('table');
+
+      return {
+        table: t.getBoundingClientRect().width,
+        content: t.closest('.content').getBoundingClientRect().width,
+        text: t.innerText
+      };
+    });
+    assert.include(text, name);
+    assert.isAtMost(table, content, `the table is ${table}px wide, its .content panel ${content}px`);
   });
 });
