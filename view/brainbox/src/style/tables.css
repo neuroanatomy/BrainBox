@@ -1,8 +1,12 @@
 /*
-  Space between the columns of every table. nwl-components' Table pads its
-  cells by 2px 0 only, and the other tables have no padding at all.
-  `html` outranks the Table's scoped `table[data-v-…] td`.
+  Space between the columns of the plain tables, the ones that are not an
+  nwl-components Table: nwl-components (>= 1.5.1) spaces its Table's columns
+  itself, with the same 1em.
+  - project page: the files and the volume annotations
+  - MRI page: the MRI's info, and its volume and text annotations
+  - atlasmaker tools (project, MRI and embed pages): the landmarks dialog
+  - project settings page: nwl-components' import files dialog
 */
-html table :is(th, td):not(:last-child) {
+:is(#projectFiles table, #volAnnotations, #annotationsPane table, #landmarksDialog table, .dialog .scrollable table) :is(th, td):not(:last-child) {
     padding-right: 1em;
 }
