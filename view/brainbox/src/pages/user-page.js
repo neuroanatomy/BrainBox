@@ -19,13 +19,21 @@ const localDate = (iso, dateTime = false) => {
   return dateTime ? `${date} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}` : date;
 };
 
+// What the Name column shows, and sorts by: the project's display name, or its
+// short name when the display name is missing or empty
+const shownName = (project) => {
+  const name = typeof project.projectName === 'string' ? project.projectName.trim() : '';
+
+  return name === '' ? project.project : project.projectName;
+};
+
 const PageContents = {
   template: '#template',
   setup() {
     const projects = ref([]);
     // unsorted until a header is clicked: the server's order
     const sort = useSortable(projects, {
-      Name: { key: 'project' },
+      Name: { key: 'shownName' },
       Files: { key: 'numFiles', type: 'number' },
       Collaborators: { key: 'numCollaborators', type: 'number' },
       Owner: { key: 'owner' },
@@ -53,7 +61,7 @@ const PageContents = {
       url.search = new URLSearchParams(params).toString();
       const res = await (await fetch(url)).json();
       if (res.success & (res.list.length > 0)) {
-        this.projects.push(...res.list);
+        this.projects.push(...res.list.map((project) => ({ ...project, shownName: shownName(project) })));
         cursorProjects += 100;
         fetchProjects();
       }

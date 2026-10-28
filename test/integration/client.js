@@ -166,7 +166,8 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
       const projectName = await page.evaluate(
         () => document.querySelector('#projects tbody tr td:first-child').innerText
       );
-      assert.include(projectName, U.projectTest.shortname);
+      // the display name, not the short name
+      assert.include(projectName, U.projectTest.name);
 
     }).timeout(U.noTimeout);
 
