@@ -9,7 +9,9 @@
   The Name column shows the project's display name, or its short name when the display name
   is missing or empty, sorts by what it shows, and links by the short name.
   A project name that is one long word wraps inside its cell (nwl-components >= 1.5.2): the
-  projects table is never wider than its .content panel.
+  projects table is never wider than its .content panel. Only the Name cell breaks inside a
+  word (nwl-components >= 1.5.3, class nwl-break-anywhere): a 16-character owner name stays
+  on one line when the panel is narrow.
 */
 
 const puppeteer = require('puppeteer');
@@ -53,6 +55,13 @@ const project = ([shortname, numFiles, numCollaborators, modified, name]) => ({
 // a project whose name is a 60-character word, for the overflow check
 const LONG_NAME = 'sortpage'.padEnd(60, 'w');
 const LONG = [LONG_NAME, 1, 1, '2026-04-01T10:00:00Z', LONG_NAME];
+// a 16-character owner, like "danielemarinazzo", of a project the page's user collaborates on
+const LONG_OWNER = 'sortpagelongownr';
+const LONG_OWNED = {
+  ...project(['sortpagelongowned', 1, 1, '2026-04-02T10:00:00Z', 'Long owner study']),
+  owner: LONG_OWNER,
+  collaborators: { list: [anyone, { userID: owner, access: anyone.access }] }
+};
 
 const pad = (n) => String(n).padStart(2, '0');
 // local YYYY-MM-DD, as the page shows it; the test runs in the browser's time zone
@@ -223,5 +232,21 @@ describe('User page: sortable columns', function () {
     });
     assert.include(text, name);
     assert.isAtMost(table, content, `the table is ${table}px wide, its .content panel ${content}px`);
+  });
+
+  it('keeps a 16-character owner name on one line when the panel is narrow', async function () {
+    await U.getNativeDB().collection('project')
+      .insertOne(LONG_OWNED);
+    await page.setViewport({ width: 700, height: 1000 });
+    await page.goto(`${U.serverURL}/user/${owner}`, { waitUntil: 'load' });
+    await page.waitForFunction((n) => document.querySelectorAll('#projects tbody tr').length === n, { timeout: U.mediumTimeout }, PROJECTS.length + 2);
+    const lines = await page.$$eval('#projects tbody tr', (trs, o) => {
+      const a = trs.map((tr) => tr.cells[3].querySelector('a')).find((el) => el.textContent.trim() === o);
+      const range = document.createRange();
+      range.selectNodeContents(a);
+
+      return new Set([...range.getClientRects()].filter((r) => r.width > 0).map((r) => Math.round(r.top))).size;
+    }, LONG_OWNER);
+    assert.equal(lines, 1, `the owner ${LONG_OWNER} is on ${lines} lines`);
   });
 });
