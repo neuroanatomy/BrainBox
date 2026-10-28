@@ -22,11 +22,11 @@
                 <Table id="projects">
                     <thead>
                         <tr>
-                            <th @click="sortBy('Name')" class="sortable">Name[[sortIndicator('Name')]]</th>
-                            <th @click="sortBy('Files')" class="sortable">Files[[sortIndicator('Files')]]</th>
-                            <th @click="sortBy('Collaborators')" class="sortable">Collaborators[[sortIndicator('Collaborators')]]</th>
-                            <th @click="sortBy('Owner')" class="sortable">Owner[[sortIndicator('Owner')]]</th>
-                            <th @click="sortBy('Last modified')" class="sortable">Last modified[[sortIndicator('Last modified')]]</th>
+                            <sortable-th :sort="sort" column="Name">Name</sortable-th>
+                            <sortable-th :sort="sort" column="Files">Files</sortable-th>
+                            <sortable-th :sort="sort" column="Collaborators">Collaborators</sortable-th>
+                            <sortable-th :sort="sort" column="Owner">Owner</sortable-th>
+                            <sortable-th :sort="sort" column="Last modified">Last modified</sortable-th>
                         </tr>
                     </thead>
                     <tbody>
@@ -68,13 +68,6 @@
 }
 .settings:hover {
     opacity: 1;
-}
-.sortable {
-    cursor: pointer;
-    user-select: none;
-}
-.sortable:hover {
-    background-color: rgba(0, 0, 0, 0.05);
 }
 </style>
 
