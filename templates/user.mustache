@@ -46,7 +46,7 @@
                                 [[project.owner]]
                             </a>
                         </td>
-                        <td>[[project.modified]]</td>
+                        <td :title="localDate(project.modified, true) || null">[[localDate(project.modified)]]</td>
                     </tr>
                     </tbody>
                 </Table>

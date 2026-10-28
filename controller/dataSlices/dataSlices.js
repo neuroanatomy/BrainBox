@@ -183,7 +183,8 @@ const getUserProjectsSlice = function getUserProjectsSlice(req, requestedUser, s
             numFiles: o.files.list.length,
             numCollaborators: o.collaborators.list.length,
             owner: o.owner,
-            modified: dateFormat(o.modified, 'd mmm yyyy, HH:MM')
+            // the stored ISO date: the user page formats it, and sorts by it
+            modified: o.modified
           };
         });
 

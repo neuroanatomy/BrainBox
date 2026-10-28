@@ -5,6 +5,20 @@ import { SortableTh, Tab, Table, Tabs, UserPage, useSortable } from 'nwl-compone
 import { createApp, ref } from 'vue';
 import config from '../nwl-components-config';
 
+const pad = (n) => String(n).padStart(2, '0');
+
+// An ISO date as a local YYYY-MM-DD (dateTime: YYYY-MM-DD HH:MM:SS), '' when
+// missing or not a date
+const localDate = (iso, dateTime = false) => {
+  const d = new Date(iso);
+  if (!iso || isNaN(d)) {
+    return '';
+  }
+  const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+  return dateTime ? `${date} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}` : date;
+};
+
 const PageContents = {
   template: '#template',
   setup() {
@@ -21,7 +35,8 @@ const PageContents = {
     return {
       projects,
       sort,
-      sortedProjects: sort.sortedRows
+      sortedProjects: sort.sortedRows,
+      localDate
     };
   },
   mounted() {

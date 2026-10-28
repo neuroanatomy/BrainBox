@@ -42,6 +42,14 @@ const project = ([shortname, numFiles, numCollaborators, modified]) => ({
   annotations: { list: [] }
 });
 
+const pad = (n) => String(n).padStart(2, '0');
+// local YYYY-MM-DD, as the page shows it; the test runs in the browser's time zone
+const localDay = (iso) => {
+  const d = new Date(iso);
+
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
 const removeAll = () => U.getNativeDB().collection('project')
   .deleteMany({ shortname: { $regex: '^sortpage' } });
 
@@ -95,6 +103,15 @@ describe('User page: sortable columns', function () {
     }
   });
 
+  it('the projects JSON sends the last modification as an ISO date', async function () {
+    const res = await fetch(`${U.serverURL}/user/json/${owner}/projects?start=0&length=100`);
+    const { list } = await res.json();
+    assert.deepEqual(
+      list.map((p) => [p.project, p.modified]),
+      PROJECTS.map(([name, , , modified]) => [name, new Date(modified).toISOString()])
+    );
+  });
+
   it('lists the projects in the server\'s order before any click', async function () {
     await page.goto(`${U.serverURL}/user/${owner}`, { waitUntil: 'load' });
     await page.waitForFunction((n) => document.querySelectorAll('#projects tbody tr').length === n, { timeout: U.mediumTimeout }, PROJECTS.length);
@@ -111,6 +128,19 @@ describe('User page: sortable columns', function () {
     headers.forEach((h) => {
       assert.isTrue(h.icon, `no sort icon on ${h.text}`);
       assert.equal(h.sort, 'none', h.text);
+    });
+  });
+
+  it('shows the last modification as a local YYYY-MM-DD, with the date and time in a tooltip', async function () {
+    const cells = await page.$$eval('#projects tbody tr', (trs) => trs.map((tr) => ({
+      text: tr.cells[4].textContent.trim(),
+      title: tr.cells[4].getAttribute('title')
+    })));
+    cells.forEach((cell, i) => {
+      const [, , , modified] = PROJECTS[i];
+      assert.equal(cell.text, localDay(modified));
+      assert.match(cell.title, /^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d$/u);
+      assert.isTrue(cell.title.startsWith(localDay(modified)), cell.title);
     });
   });
 
@@ -134,10 +164,14 @@ describe('User page: sortable columns', function () {
   });
 
   it('sorts by last modified as dates, oldest first then newest first', async function () {
+    const dates = () => page.$$eval('#projects tbody tr', (trs) => trs.map((tr) => tr.cells[4].textContent.trim()));
+    const byDate = PROJECTS.map(([, , , modified]) => localDay(modified)).sort();
     await clickHeader('Last modified');
-    assert.equal((await firstRow())[0], 'sortpagea');
+    assert.deepEqual(await names(), ['sortpagea', 'sortpagec', 'sortpageb', 'sortpaged']);
+    assert.deepEqual(await dates(), byDate);
     await clickHeader('Last modified');
     assert.deepEqual(await names(), ['sortpaged', 'sortpageb', 'sortpagec', 'sortpagea']);
+    assert.deepEqual(await dates(), [...byDate].reverse());
   });
 
   it('sorts with the keyboard: Enter on a header', async function () {
