@@ -31,7 +31,7 @@ Add them as `data-` attributes on the script tag.
 | `data-view` | Plane to open on: `sag`, `cor` or `axi` |
 | `data-slice` | Slice to open on (default: the middle of the volume) |
 | `data-project` | Shortname of the project owning the annotation to show |
-| `data-annotation` | Name of the annotation layer to show |
+| `data-annotation` | Name of the annotation layer to show, or `none` to show the bare MRI (no annotation layer, no 3D button). Without it, the first annotation is shown |
 | `data-max-height` | Largest height, in pixels, the viewer may take |
 | `data-brainbox-link` | `0` to hide the BrainBox button |
 | `data-width` | Width of the viewer (default `100%`) |

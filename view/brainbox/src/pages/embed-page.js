@@ -3,7 +3,10 @@ import '../style/ui.css';
 import '../../../atlasmaker/src/css/embed-layout.css';
 import '../style/tables.css';
 
+import embedAnnotation from '../../../shared/embedAnnotation.js';
 import embedSizing from '../../../shared/embedSizing.js';
+
+const { findAnnotationItemIndex, NO_ATLAS } = embedAnnotation;
 
 // Message type embedding pages listen for to auto-size their <iframe>.
 // The iframe's own box is controlled entirely by the host page's CSS, not by
@@ -17,23 +20,6 @@ import embedSizing from '../../../shared/embedSizing.js';
 // embed-layout.css), so a host that ignores these messages still gets a usable
 // widget. This is an enhancement, not a requirement.
 const EMBED_RESIZE_MESSAGE_TYPE = 'brainbox:embed-resize';
-
-/**
- * Find the index of the atlas/annotation the host page asked for via the
- * `project`/`annotation` query params, defaulting to the first available one.
- * @param {Object} mri The mri.atlas-bearing object from mriInfo
- * @param {string} project Project shortname requested by the embedding page
- * @param {string} annotation Annotation name requested by the embedding page
- * @returns {number} The index into mri.atlas to load
- */
-const findAnnotationItemIndex = function (mri, project, annotation) {
-  if (!mri || !mri.atlas || !project || !annotation) {
-    return 0;
-  }
-  const index = mri.atlas.findIndex((a) => a.project === project && a.name === annotation);
-
-  return index >= 0 ? index : 0;
-};
 
 /**
  * @function isDisabled
@@ -148,6 +134,14 @@ if (!mriInfo || !mriInfo.mri) {
 
   AtlasMakerWidget.initAtlasMaker(atlasmakerContainer);
   AtlasMakerWidget.editMode = 0; // never editable, unconditionally - defense in depth
+
+  // annotation=none: the 3D view renders the annotation surface, so without an
+  // atlas it has nothing to show. Remove its button rather than offer a view
+  // that would ask the server for an atlas.
+  if (index === NO_ATLAS) {
+    const button3d = document.querySelector('#plane [title="3d"]');
+    if (button3d) { button3d.parentNode.remove(); }
+  }
 
   // Attribution link: shown unless the embedding page opts out with
   // brainboxLink=0. Its href is refreshed on every plane change, and again

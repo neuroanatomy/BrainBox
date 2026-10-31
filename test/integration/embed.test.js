@@ -188,6 +188,70 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
     }).timeout(U.mediumTimeout);
   });
 
+  describe('E1b: annotation=none shows the bare MRI', function () {
+    let page;
+    let withAtlas;
+    const errors = [];
+    const sentTypes = [];
+
+    before(async function () {
+      // eslint-disable-next-line no-invalid-this
+      this.timeout(U.longTimeout);
+      page = await browser.newPage();
+      await page.setViewport({ width: 512, height: 670 });
+      await blockExternalRequests(page);
+      page.on('pageerror', (err) => errors.push(err.message.split('\n')[0]));
+      page.on('console', (msg) => { if (msg.type() === 'error') { errors.push(msg.text()); } });
+      // record what the page asks of the WebSocket server
+      const cdp = await page.createCDPSession();
+      await cdp.send('Network.enable');
+      cdp.on('Network.webSocketFrameSent', ({ response }) => {
+        try {
+          const msg = JSON.parse(response.payloadData);
+          sentTypes.push(msg.type === 'userData' ? 'userData:' + (msg.description === 'sendAtlas' ? 'sendAtlas' : 'other') : msg.type);
+        } catch (err) { /* binary or non-JSON frame */ }
+      });
+      await page.goto(embedURL('&annotation=none&view=cor'), { waitUntil: 'domcontentloaded' });
+      await waitForSlice(page);
+
+      withAtlas = await browser.newPage();
+      await blockExternalRequests(withAtlas);
+      await withAtlas.goto(embedURL('&view=cor'), { waitUntil: 'domcontentloaded' });
+      await waitForSlice(withAtlas);
+    });
+
+    after(async function () {
+      if (page) { await page.close(); }
+      if (withAtlas) { await withAtlas.close(); }
+    });
+
+    it('draws a slice with no atlas, no atlas request and no errors', async function () {
+      const viewer = await readViewer(page);
+      assert.strictEqual(viewer.state, 'ready');
+      assert.isAbove(viewer.canvas.width, 0);
+      assert.deepStrictEqual(errors, []);
+      assert.notInclude(sentTypes, 'userData:sendAtlas');
+      assert.include(sentTypes, 'requestSlice');
+      const state = await page.evaluate(() => ({
+        atlas: window.AtlasMakerWidget.atlas || null,
+        atlasFilename: window.AtlasMakerWidget.User.atlasFilename,
+        editMode: window.AtlasMakerWidget.editMode
+      }));
+      assert.isNull(state.atlas);
+      assert.isNotOk(state.atlasFilename);
+      assert.strictEqual(state.editMode, 0);
+    }).timeout(U.mediumTimeout);
+
+    it('removes the 3D button, which needs an atlas', async function () {
+      assert.isNull(await page.$('#plane [title="3d"]'));
+      assert.isNotNull(await page.$('#plane [title="cor"]'));
+    });
+
+    it('leaves the default (no annotation parameter) unchanged: it still has the 3D button', async function () {
+      assert.isNotNull(await withAtlas.$('#plane [title="3d"]'));
+    });
+  });
+
   describe('E2: loading and error states', function () {
     it('shows a loading overlay, then hides it once a slice is drawn', async function () {
       const page = await browser.newPage();

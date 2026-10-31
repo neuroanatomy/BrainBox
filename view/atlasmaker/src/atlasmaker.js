@@ -771,14 +771,16 @@ const me = {
     // Get data from AtlasMaker object
     me.name = info2.name||'Untitled'; // 1
     me.url = info2.url; // 2; NII
-    me.atlasFilename = info2.mri.atlas[index].filename; // 3; NII
-    me.atlasName = info2.mri.atlas[index].name;
+    // index < 0 means "no atlas": the MRI alone (embed with annotation=none)
+    const atlasInfo = index >= 0 ? info2.mri.atlas[index] : null;
+    me.atlasFilename = atlasInfo ? atlasInfo.filename : null; // 3; NII
+    me.atlasName = atlasInfo ? atlasInfo.name : null;
 
     // get local file path from url
     me.User.dirname = me.url; // REPEATED (2); NII
     me.User.mri = info2.filename; // NII
     me.User.specimenName = me.name; // REPEATED (1)
-    me.User.atlasFilename = info2.mri.atlas[index].filename; // REPEATED (3); NII
+    me.User.atlasFilename = me.atlasFilename; // REPEATED (3); NII
     me.User.isMRILoaded = false; // NII
 
     // @todo it's silly to have to put vol dim twice...
@@ -844,6 +846,10 @@ const me = {
     // configure MRI and ontology
     const info2 = await me._configureMRI(info, index);
     info = info2;
+
+    if(index < 0) {
+      return me._configureWithoutAtlas(info, wantFullscreen);
+    }
     const res = await fetch(me.hostname + '/labels/' + info.mri.atlas[index].labels);
     const labels = await res.json();
     me.configureOntology(labels);
@@ -879,6 +885,34 @@ const me = {
     // configured it (page load, change of file or of annotation layer). The embed
     // viewer is never editable.
     me.editMode = (!me.embedMode && me.canEdit(info.mri.atlas[index].access)) ? 1 : 0;
+
+    return info;
+  },
+
+  /**
+   * Finish configuring the viewer for the MRI alone: no labels are fetched, no
+   * atlas is requested from the server and nothing is painted over the slices.
+   * The slices themselves do not depend on the atlas, so the first one is
+   * requested here (with an atlas it is the arrival of the atlas that does it).
+   * @param {object} info Object with mri information
+   * @param {boolean} wantFullscreen Whether the caller asked for fullscreen
+   * @return {object} The mri information
+   */
+  _configureWithoutAtlas: function (info, wantFullscreen) {
+    me.atlas = null;
+    me.ontology = {name: '', labels: [], valueToIndex: []};
+    me.editMode = 0;
+    me.sendUserDataMessage('allUserData');
+
+    clearTimeout(me._fullscreenRequestTimer);
+    if(wantFullscreen) {
+      me._fullscreenRequestTimer = setTimeout(() => { me.toggleFullscreen(); }, 500);
+    }
+
+    me.setPlaneButton(me.User.view);
+    me.configureBrainImage();
+    me.resizeWindow();
+    me.drawImages();
 
     return info;
   },

@@ -134,7 +134,7 @@ export const AtlasMakerWS = {
                   me.initSocketConnection()
                     .then(function () {
                       me.sendUserDataMessage('allUserData');
-                      me.sendUserDataMessage('sendAtlas');
+                      if (me.User.atlasFilename) { me.sendUserDataMessage('sendAtlas'); }
                       clearInterval(me.timer);
                     })
                     .catch(function () {

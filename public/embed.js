@@ -19,7 +19,7 @@
  *   data-view           sag | cor | axi
  *   data-slice          initial slice number
  *   data-project        project shortname of the annotation layer
- *   data-annotation     annotation layer name
+ *   data-annotation     annotation layer name, or "none" for the bare MRI
  *   data-max-height     cap, in px, on the height the viewer may ask for
  *   data-brainbox-link  "0" hides the BrainBox button
  *   data-width          CSS width of the box     (default 100%)
