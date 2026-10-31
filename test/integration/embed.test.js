@@ -201,7 +201,11 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
       await page.setViewport({ width: 512, height: 670 });
       await blockExternalRequests(page);
       page.on('pageerror', (err) => errors.push(err.message.split('\n')[0]));
-      page.on('console', (msg) => { if (msg.type() === 'error') { errors.push(msg.text()); } });
+      // blockExternalRequests aborts requests to other hosts, which Chrome logs
+      // as a failed resource load: that is the test harness, not the viewer
+      page.on('console', (msg) => {
+        if (msg.type() === 'error' && !msg.text().startsWith('Failed to load resource')) { errors.push(msg.text()); }
+      });
       // record what the page asks of the WebSocket server
       const cdp = await page.createCDPSession();
       await cdp.send('Network.enable');
