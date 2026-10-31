@@ -246,6 +246,28 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
       assert.strictEqual(state.editMode, 0);
     }).timeout(U.mediumTimeout);
 
+    it('still loads when the WebSocket opens late (the user data must wait for it)', async function () {
+      const slow = await browser.newPage();
+      try {
+        await slow.setViewport({ width: 512, height: 670 });
+        await blockExternalRequests(slow);
+        // hand the page's onopen handler its event 1.5 s after the real one,
+        // as on a slow network: a send made before that is dropped
+        await slow.evaluateOnNewDocument(() => {
+          const NativeWebSocket = window.WebSocket;
+          window.WebSocket = class extends NativeWebSocket {
+            set onopen(fn) { super.onopen = (ev) => setTimeout(() => fn.call(this, ev), 1500); }
+            get onopen() { return super.onopen; }
+          };
+        });
+        await slow.goto(embedURL('&annotation=none&view=cor'), { waitUntil: 'domcontentloaded' });
+        await waitForSlice(slow);
+        assert.strictEqual((await readViewer(slow)).state, 'ready');
+      } finally {
+        await slow.close();
+      }
+    }).timeout(U.mediumTimeout);
+
     it('removes the 3D button, which needs an atlas', async function () {
       assert.isNull(await page.$('#plane [title="3d"]'));
       assert.isNotNull(await page.$('#plane [title="cor"]'));

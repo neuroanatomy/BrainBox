@@ -162,6 +162,7 @@ const me = {
   socket: null, // [WebSocket]
   receiveFunctions: [], // array, functions receiving messages from the websocket
   sendFunctions: [], // array, functions to send messages through the websocket
+  socketReady: null, // promise, resolved once the WebSocket is open (set by initAtlasMaker)
   flagConnected: 0, // boolean, is the user is currently connected to the server?
   reconnectionTimeout: 5, // reconnection timeout starts at 5 seconds, used in case of websocket cuts
   flagLoadingImg: {loading:false}, // is an image is loading?
@@ -577,6 +578,9 @@ const me = {
         });
     });
 
+    // kept so that code that must send at once can wait for the connection
+    me.socketReady = pr;
+
     return pr;
   },
 
@@ -898,7 +902,13 @@ const me = {
    * @param {boolean} wantFullscreen Whether the caller asked for fullscreen
    * @return {object} The mri information
    */
-  _configureWithoutAtlas: function (info, wantFullscreen) {
+  _configureWithoutAtlas: async function (info, wantFullscreen) {
+    // With an atlas, fetching the labels gives the socket time to open. Here
+    // nothing waits, and a message sent before it opens is silently dropped
+    // (sendUserDataMessage returns while not connected): the server would
+    // never hear of this user and never send a slice.
+    if(me.socketReady) { await me.socketReady; }
+
     me.atlas = null;
     me.ontology = {name: '', labels: [], valueToIndex: []};
     me.editMode = 0;
