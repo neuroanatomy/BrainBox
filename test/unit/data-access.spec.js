@@ -36,9 +36,9 @@ const decide = (projects, username, filename, owner = 'alice') => decideDataAcce
 
 describe('data-access: who may download the files under /data', function () {
   describe('dataAccessMode', function () {
-    it('logs only, unless DATA_ACCESS_CHECK is "enforce"', function () {
-      assert.equal(dataAccessMode(), 'log');
-      assert.equal(dataAccessMode(''), 'log');
+    it('refuses, unless DATA_ACCESS_CHECK is "log"', function () {
+      assert.equal(dataAccessMode(), 'enforce');
+      assert.equal(dataAccessMode(''), 'enforce');
       assert.equal(dataAccessMode('log'), 'log');
       assert.equal(dataAccessMode('enforce'), 'enforce');
     });

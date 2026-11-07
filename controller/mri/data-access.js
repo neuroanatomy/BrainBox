@@ -20,9 +20,8 @@
  * - a folder with no MRI document is served as before.
  *
  * The user is the one of the session cookie or of a `?token=`. A refused file
- * gets the same 404 as a file that does not exist. With DATA_ACCESS_CHECK unset
- * (or anything but 'enforce'), refusals are only logged ("WOULD REFUSE") and the
- * file is served, so that a deploy can show who would be refused.
+ * gets the same 404 as a file that does not exist. With DATA_ACCESS_CHECK=log,
+ * refusals are only logged ("WOULD REFUSE") and the file is served.
  */
 const path = require('path');
 const _ = require('lodash');
@@ -42,7 +41,7 @@ const layerBackupPattern = /^\d+_(.+)$/;
  * @param {string} [value] The value of DATA_ACCESS_CHECK
  * @returns {string} 'enforce' (refuse) or 'log' (log and serve)
  */
-const dataAccessMode = (value) => (value === 'enforce' ? 'enforce' : 'log');
+const dataAccessMode = (value) => (value === 'log' ? 'log' : 'enforce');
 
 /**
  * Where a request goes under public/, as express.static (send) resolves it

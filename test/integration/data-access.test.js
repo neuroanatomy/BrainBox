@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 'use strict';
 
 // The files under /data/<md5>/ are served by express.static, behind an access
@@ -98,6 +99,7 @@ const anonymous = {};
 const as = (user) => ({ cookie: F.cookie(F.users[user]) });
 const byToken = (user) => ({ token: F.token(F.users[user]) });
 
+// eslint-disable-next-line max-statements
 describe('Access check on the files under /data', function () {
   // eslint-disable-next-line no-invalid-this
   this.timeout(U.longTimeout);
@@ -295,6 +297,22 @@ describe('Access check on the files under /data', function () {
     it('logs nothing for a file it would serve', async function () {
       assert.equal((await get(fileURL(publicURL, publicLayer))).statusCode, 200);
       assert.isFalse(logged.some((line) => line.startsWith('DATA_ACCESS')));
+    });
+  });
+
+  describe('with DATA_ACCESS_CHECK unset', function () {
+    beforeEach(function () {
+      delete process.env.DATA_ACCESS_CHECK;
+    });
+
+    afterEach(function () {
+      process.env.DATA_ACCESS_CHECK = 'enforce';
+    });
+
+    it('refuses as with DATA_ACCESS_CHECK=enforce', async function () {
+      assert.equal((await get(fileURL(publicURL, privateLayer))).statusCode, 404);
+      assert.equal((await get(fileURL(privateURL, image), as('nonmember'))).statusCode, 404);
+      assert.equal((await get(fileURL(publicURL, publicLayer))).statusCode, 200);
     });
   });
 });

@@ -179,7 +179,7 @@ describe('TESTING THE ADMIN PAGE', function () {
         file: 'secret.nii.gz',
         source: 'http://admin-page-test.localhost/data.nii.gz',
         reason: 'hidden layer of project adminpagex',
-        mode: 'log',
+        mode: dataAccessMode(process.env.DATA_ACCESS_CHECK),
         count: 7,
         firstSeen: new Date('2099-01-01T10:01:00Z'),
         lastSeen: new Date('2099-01-01T10:02:00Z'),
