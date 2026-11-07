@@ -2714,9 +2714,10 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
     },
 
     /**
-     * Handle, in order, messages from a connection. A write that cannot be
-     * decided yet (see _writeAccessPending) and the messages after it wait in
-     * sourceUS.messageQueue until it can
+     * Handle, in order, messages from a connection. While the ticket of an
+     * embed connection is being read, or a write cannot be decided yet (see
+     * _writeAccessPending), the message and those after it wait in
+     * sourceUS.messageQueue
      * @param {object} params Parameters
      * @param {Array} params.queue The messages
      * @param {object} params.ws The socket
@@ -2725,7 +2726,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
      */
     _handleMessages: function ({ queue, ws, sourceUS }) {
       while (queue.length > 0) {
-        const pending = me._writeAccessPending(sourceUS, queue[0].type);
+        const pending = sourceUS.embedTicketLookup || me._writeAccessPending(sourceUS, queue[0].type);
         if (pending) {
           sourceUS.messageQueue = queue;
           pending.then(() => {
@@ -2739,10 +2740,15 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         }
         const data = queue.shift();
 
-        // handle single user Web socket messages; refused writes are not broadcast either
-        if (me._handleUserWebSocketMessage({ data, ws, sourceUS }) !== false) {
-          // handle broadcast of messages
-          me._handleBroadcastWebSocketMessage({ data, sourceUS });
+        // an exception here would stop the server, and lose the messages after it
+        try {
+          // handle single user Web socket messages; refused writes are not broadcast either
+          if (me._handleUserWebSocketMessage({ data, ws, sourceUS }) !== false) {
+            // handle broadcast of messages
+            me._handleBroadcastWebSocketMessage({ data, sourceUS });
+          }
+        } catch (err) {
+          tracer.log('ERROR: Can\'t handle WebSocket message', err);
         }
       }
     },
@@ -2821,7 +2827,9 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       if (embedTicket) {
         newUS.isEmbed = true;
         newUS.embedScope = null;
-        EmbedAccessService.findWsTicket(nativeDb, embedTicket)
+        // what the page sends first can arrive before the answer: _handleMessages
+        // holds the messages of this connection until then. It never rejects
+        newUS.embedTicketLookup = EmbedAccessService.findWsTicket(nativeDb, embedTicket)
           .then((ticket) => {
             if (ticket) {
               newUS.embedScope = { dirname: ticket.dirname, mriSource: ticket.mriSource };
@@ -2831,7 +2839,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
               }
             }
           })
-          .catch((err) => tracer.log('ERROR: embed ticket lookup failed', err));
+          .catch((err) => tracer.log('ERROR: embed ticket lookup failed', err))
+          .then(() => { newUS.embedTicketLookup = null; });
       }
 
       me.US.push(newUS);
