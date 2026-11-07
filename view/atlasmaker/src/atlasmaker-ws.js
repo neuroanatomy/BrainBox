@@ -115,6 +115,8 @@ export const AtlasMakerWS = {
 
         me.socket.onclose = function () {
           me.flagConnected = 0;
+          // the answer to a request on its way cannot arrive any more
+          me.flagLoadingImg.loading = false;
 
           // Try to reconnect: wait a random initial time, to prevent an avalanche
           // of reconnections in case of server crash
@@ -138,6 +140,11 @@ export const AtlasMakerWS = {
                     .then(function () {
                       me.sendUserDataMessage('allUserData');
                       if (me.User.atlasFilename) { me.sendUserDataMessage('sendAtlas'); }
+                      // The arrival of the atlas draws the slice. Without one nothing else asks
+                      // for it, and an embed's may not come: the server refuses sendAtlas until
+                      // it has read the new connection's ticket. After the user data, which the
+                      // server needs for the request
+                      if (!me.User.atlasFilename || me.embedTicket) { me.drawImages(); }
                       clearInterval(me.timer);
                     })
                     .catch(function () {
