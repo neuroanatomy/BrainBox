@@ -4,6 +4,8 @@
 import * as DOMPurify from 'dompurify';
 import * as pako from 'pako';
 
+const isUnknown = (value) => value === null || typeof value === 'undefined';
+
 /**
  * @page AtlasMaker: WebSockets
  */
@@ -104,6 +106,7 @@ export const AtlasMakerWS = {
         me.receiveFunctions.vectorial = me.receiveVectorialAnnotationMessage;
         me.receiveFunctions.writeRefused = me.receiveWriteRefusedMessage;
         me.receiveFunctions.readRefused = me.receiveReadRefusedMessage;
+        me.receiveFunctions.sliceFailed = me.receiveSliceFailedMessage;
 
         me.receiveFunctions.requestSlice = function (data) { console.log('requestSlice', data); };
         me.receiveFunctions.requestSlice2 = function (data) { console.log('requestSlice2', data); };
@@ -540,6 +543,9 @@ export const AtlasMakerWS = {
     const me = AtlasMakerWidget;
     if(me.flagConnected === 0) { return; }
     if(me.flagLoadingImg.loading === true) { return; }
+    // Unknown until configureBrainImage (a redraw can come before it, e.g. when
+    // the window is resized), whose redraw makes the request
+    if(isUnknown(me.User.view) || isUnknown(me.User.slice)) { return; }
     try {
       me.socket.send(JSON.stringify({
 
@@ -559,6 +565,28 @@ export const AtlasMakerWS = {
 
     } catch (ex) {
       console.log('ERROR: Unable to sendRequestSliceMessage', ex);
+    }
+  },
+
+  /**
+   * The server could not give the slice on its way. There is one request at a
+   * time, so me.flagLoadingImg is that request: without an answer, no other
+   * request would go out. It is asked again only for another slice than the
+   * one that failed, which cannot go on without the user changing slice.
+   * @returns {void}
+   */
+  receiveSliceFailedMessage: function () {
+    const me = AtlasMakerWidget;
+    const { loading, view, slice } = me.flagLoadingImg;
+    // nothing on its way: the answer to a request for the previous brain
+    if(loading !== true) { return; }
+    me.flagLoadingImg.loading = false;
+
+    // Object.is: a NaN slice is the same slice, not a new one to ask for
+    if(!Object.is(view, me.User.view) || !Object.is(slice, me.User.slice)) {
+      me.sendRequestSliceMessage();
+    } else if(!me.brainImg.img) {
+      me.setViewerState({ state: 'error' });
     }
   },
 

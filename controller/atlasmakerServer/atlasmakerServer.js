@@ -21,6 +21,9 @@ const { mergeMetadata, projectsForMetadata, savedView } = require('./metadata-sa
 // a connection tagged isEmbed, regardless of what the client claims about editMode.
 const embedWriteBlockedTypes = ['paint', 'vectorial', 'save', 'saveMetadata', 'atlas'];
 
+// The views a slice can be drawn in
+const sliceViews = ['sag', 'cor', 'axi'];
+
 // WebSocket message types that write to the atlas the user has open: applied
 // only if the user, as the HTTP session says, has 'edit' access to that atlas.
 const atlasWriteTypes = ['paint', 'vectorial', 'save', 'atlas'];
@@ -1198,16 +1201,58 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         const bin = Buffer.concat([jpegImageData.data, me.jpgTag], length);
         userSocket.send(bin, { binary: true, mask: false });
       } catch (e) {
-        tracer.log('ERROR: Cannot send slice to user');
+        tracer.log('ERROR: Cannot send slice to user', e);
+        me._sendSliceFailed(userSocket, 'cannot draw the slice');
       }
+    },
+
+    /**
+     * Tell a user that their slice request gave no slice: the viewer waits for
+     * an answer before it asks for another one
+     * @param {object} userSocket The socket of the user who asked
+     * @param {string} reason Why, for debugging
+     * @returns {void}
+     */
+    _sendSliceFailed: function (userSocket, reason) {
+      try {
+        userSocket.send(JSON.stringify({ type: 'sliceFailed', reason }));
+      } catch (err) {
+        tracer.log('ERROR: Can\'t tell a user that a slice request failed', err);
+      }
+    },
+
+    /**
+     * The connection of a slice request, if a slice can be drawn for it.
+     * If not, the request is answered with a sliceFailed
+     * @param {object} params Parameters
+     * @param {object} params.data The message
+     * @param {number} params.slice The slice asked for, as a number
+     * @param {object} params.userSocket The socket of the user who asked
+     * @returns {object} The connection, or null
+     */
+    _getSliceRequester: function ({ data, slice, userSocket }) {
+      const sourceUS = me._getUserWithUserData(data.uid, data.type);
+      if (!sourceUS) {
+        me._sendSliceFailed(userSocket, 'no user data yet');
+
+        return null;
+      }
+      if (!sliceViews.includes(data.view) || !Number.isInteger(slice)) {
+        tracer.log(`WARNING: Refused '${data.type}' message from ${data.uid}: bad view or slice`);
+        me._sendSliceFailed(userSocket, 'bad view or slice');
+
+        return null;
+      }
+
+      return sourceUS;
     },
     receiveRequestSliceMessage: function (data, userSocket) {
       // get slice information from message
       const { view } = data; // user view
-      const slice = parseInt(data.slice, 10); // user slice
+      const slice = parseInt(data.slice, 10); // user slice: a string in a link's &slice=
 
-      // get User object
-      const sourceUS = me._getUserWithUserData(data.uid, 'requestSlice');
+      // get User object, for a view and slice that can be drawn
+      const sourceUS = me._getSliceRequester({ data, slice, userSocket });
       if (!sourceUS) {
         return;
       }
@@ -1227,12 +1272,15 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         .then(function (theData) {
           me.sendSliceToUser(theData, view, slice, userSocket);
         })
-        .catch((err) => console.error(err));
+        .catch((err) => {
+          console.error(err);
+          me._sendSliceFailed(userSocket, 'cannot load the brain');
+        });
     },
     receiveRequestSlice2Message: function (data, userSocket) {
       const { view } = data; // user view
       const slice = parseInt(data.slice, 10); // user slice
-      const sourceUS = me._getUserWithUserData(data.uid, 'requestSlice2');
+      const sourceUS = me._getSliceRequester({ data, slice, userSocket });
       if (!sourceUS) {
         return;
       }
@@ -1261,9 +1309,13 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
             userSocket.send(bin, { binary: true, mask: false });
           } catch (e) {
             tracer.log('ERROR: Cannot send slice to user', e);
+            me._sendSliceFailed(userSocket, 'cannot draw the slice');
           }
         })
-        .catch((err) => tracer.log('ERROR: Cannot get brain', err));
+        .catch((err) => {
+          tracer.log('ERROR: Cannot get brain', err);
+          me._sendSliceFailed(userSocket, 'cannot load the brain');
+        });
     },
     broadcastMessage: function (msg, uid) {
       let n = 0;
@@ -2569,6 +2621,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       // do not broadcast the following messages
       if (data.type === 'requestSlice' ||
         data.type === 'requestSlice2' ||
+        data.type === 'sliceFailed' ||
         (data.type === 'userData' && data.description === 'sendAtlas')) {
 
         return;
