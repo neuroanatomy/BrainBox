@@ -171,7 +171,7 @@ const initResources = async () => {
     res.send(Buffer.from('this is not a gzipped mgz file'));
   });
 
-  db = app.db.mongoDB();
+  ({ db } = app);
   nativeDb = app.db.nativeMongoDB();
 };
 

@@ -45,7 +45,7 @@ describe('Project Controller: ', function () {
   describe('project function() ', function () {
     before(function (done) {
       const testProject = projectObject;
-      nativeDb.collection('project').insert(testProject)
+      nativeDb.collection('project').insertOne(testProject)
         .then(() => done());
     });
 
@@ -123,7 +123,7 @@ describe('Project Controller: ', function () {
   describe('apiProject function() ', function () {
 
     before(function (done) {
-      nativeDb.collection('project').insert(projectObject)
+      nativeDb.collection('project').insertOne(projectObject)
         .then(() => done());
     });
 
@@ -400,7 +400,7 @@ describe('Project Controller: ', function () {
 
   describe('deleteProject function() ', function () {
     before(function (done) {
-      nativeDb.collection('project').insert(projectObject)
+      nativeDb.collection('project').insertOne(projectObject)
         .then(() => done());
     });
 
@@ -480,7 +480,7 @@ describe('Project Controller: ', function () {
   describe('settings function() ', function () {
     before(function (done) {
       delete projectObject._id;
-      nativeDb.collection('project').insert(projectObject)
+      nativeDb.collection('project').insertOne(projectObject)
         .then(() => done());
     });
 

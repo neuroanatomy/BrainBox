@@ -16,7 +16,7 @@
  *
  * Fixes follow the same versioning rule, and are recorded in the log collection.
  */
-const { ObjectId } = require('mongodb');
+const { ObjectId } = require('neuroweblab');
 const lock = require('../projectLock.js');
 
 const BATCH_LENGTH = 100; // files per batch in the settings page
