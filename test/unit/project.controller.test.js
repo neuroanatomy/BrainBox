@@ -200,7 +200,8 @@ describe('Project Controller: ', function () {
           collaborators: {
             list: [
               { userID: 'anyone', access: access('none', 'none', 'none') },
-              { userID: 'member', access: access('none', 'view', 'view') }
+              { userID: 'member', access: access('none', 'view', 'view') },
+              { userID: 'filesonly', access: access('none', 'view', 'none') }
             ]
           },
           files: { list: [{ source: 'https://example.org/a.nii.gz', name: 'a' }] }
@@ -232,6 +233,35 @@ describe('Project Controller: ', function () {
         expect(project.collaborators.list.map((c) => c.userID)).to.deep.equal(['anyone']);
         expect(project.files.list).to.have.lengthOf(1);
         expect(project.annotations.list).to.have.lengthOf(1);
+      });
+
+      // the project page's projectInfo, for a user
+      const pageAs = async (username) => {
+        const render = sinon.spy();
+        await projectController.project({
+          params: { projectName: shortname },
+          user: { username },
+          session: {},
+          originalUrl: '/project/' + shortname,
+          isAuthenticated: () => true,
+          nativeDb
+        }, { render, status: sinon.stub().returns({ send: sinon.spy() }) });
+        sinon.restore();
+
+        return render.callCount === 1 ? JSON.parse(render.args[0][1].projectInfo) : null;
+      };
+
+      it('gets a project page without the other collaborators, with the annotations they may see', async function () {
+        const projectInfo = await pageAs('member');
+        expect(projectInfo).to.not.equal(null);
+        expect(projectInfo.collaborators.list.map((c) => c.userID)).to.deep.equal(['anyone']);
+        expect(projectInfo.annotations.list).to.have.lengthOf(1);
+      });
+
+      it('gets a project page without the annotations when they may not view them', async function () {
+        const projectInfo = await pageAs('filesonly');
+        expect(projectInfo).to.not.equal(null);
+        expect(projectInfo.annotations.list).to.deep.equal([]);
       });
     });
   });

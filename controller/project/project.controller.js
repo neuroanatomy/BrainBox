@@ -181,6 +181,28 @@ const isProjectObject = async function (req, res, object) {
 };
 
 /**
+ * The project as a user may see it: the collaborators only if they may view them (else
+ * only 'anyone'), the files and annotations only if they may view them (else empty lists).
+ * The stored project is not changed: the filtered lists go in new objects
+ * @param {Object} json The stored project
+ * @param {string} loggedUser The user's name, or 'anonymous'
+ * @returns {Object} A copy of the project, filtered
+ */
+const projectForUser = function (json, loggedUser) {
+  const filteredJSON = Object.assign({}, json);
+  if (!AccessControlService.canViewCollaborators(json, loggedUser)) {
+    filteredJSON.collaborators = { ...json.collaborators, list: json.collaborators.list.filter((collaborator) => collaborator.userID === 'anyone') };
+  }
+  [AccessType.FILES, AccessType.ANNOTATIONS].forEach((type) => {
+    if (!AccessControlService.hasAccess(type, AccessLevel.VIEW, json, loggedUser)) {
+      filteredJSON[type] = { ...json[type], list: [] };
+    }
+  });
+
+  return filteredJSON;
+};
+
+/**
  * @function project
  * @desc Render the project page GUI
  * @param {Object} req Req object from express
@@ -208,10 +230,11 @@ const project = async function (req, res) {
 
       return;
     }
-    json.files.list = [];
+    // as the JSON API gives it; the files are loaded by the page, page by page
+    const projectInfo = { ...projectForUser(json, loggedUser), files: { ...json.files, list: [] } };
     res.render('project', {
       title: json.name,
-      projectInfo: JSON.stringify(json),
+      projectInfo: JSON.stringify(projectInfo),
       projectName: json.name,
       annotationsAccessLevel: AccessControlService.getUserOrPublicAccessLevel(json, loggedUser, AccessType.ANNOTATIONS),
       loggedUser: jsonForScript(publicLoggedUser(req.user)),
@@ -246,17 +269,7 @@ const apiProject = async function (req, res) {
       return;
     }
 
-    // the filtered lists go in new objects: json, the stored project, keeps every
-    // collaborator for the access checks that follow
-    let filteredJSON = Object.assign({}, json);
-    if (!AccessControlService.canViewCollaborators(json, loggedUser)) {
-      filteredJSON.collaborators = { ...json.collaborators, list: json.collaborators.list.filter((collaborator) => collaborator.userID === 'anyone') };
-    }
-    [AccessType.FILES, AccessType.ANNOTATIONS].forEach((type) => {
-      if (!AccessControlService.hasAccess(type, AccessLevel.VIEW, json, loggedUser)) {
-        filteredJSON[type] = { ...json[type], list: [] };
-      }
-    });
+    let filteredJSON = projectForUser(json, loggedUser);
 
     if (req.query.var) {
       const arr = req.query.var.split('/');
