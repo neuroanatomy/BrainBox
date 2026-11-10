@@ -9,6 +9,7 @@ import '../style/dropdown-style.css';
 import '../style/tables.css';
 
 import * as tw from '../twoWayBinding';
+import { cellText, makeSortable, rowIndex } from '../sortableTable.js';
 import { getData, setData } from '../../../shared/domData';
 import showHideModule from '../../../shared/showHide.js';
 
@@ -59,6 +60,36 @@ const onDocument = (types, selector, handler) => {
       }
     });
   }
+};
+
+/**
+ * The label set's name shown by the menu in a cell, as a sort key
+ * @param {number} col The cell's column
+ * @returns {function} tr => the name of the option selected in that column's menu
+ */
+const selectedOptionText = (col) => (tr) => {
+  const select = tr.cells[col] ? tr.cells[col].querySelector('select') : null;
+
+  return (select && select.selectedIndex >= 0) ? select.options[select.selectedIndex].textContent : null;
+};
+
+/**
+ * Make the Name, Value, Project and Modified columns of an annotations table sortable
+ * (Access is not): by what their cells show, Modified by its date
+ * @param {HTMLTableElement|null} table The table
+ * @param {function} value The Value column's sort key
+ * @param {function} modified i => the modification date of the annotation at index i of the table's data
+ * @returns {void}
+ */
+const makeAnnotationsSortable = (table, value, modified) => {
+  if (!table) { return; }
+  makeSortable(table, [
+    { key: cellText(0) },
+    { key: value },
+    { key: cellText(2) },
+    { key: (tr) => modified(rowIndex(tr)), type: 'date' },
+    null
+  ]);
 };
 
 /**
@@ -234,7 +265,8 @@ if (isEmptyObject(mriInfo)) {
         const [header] = document.querySelectorAll('table#annotations tr');
         const th = header ? header.querySelectorAll('th')[select.closest('td').cellIndex] : null;
         const col = th ? th.textContent : '';
-        const index = select.closest('tr').rowIndex - 1;
+        // the annotation's index in mri.atlas, wherever a sort shows its row
+        const index = rowIndex(select.closest('tr'));
         switch (col) {
         case 'Value': {
           const url = '/labels/' + infoProxy['mri.atlas.' + index + '.labels'];
@@ -254,15 +286,17 @@ if (isEmptyObject(mriInfo)) {
         }
       });
       // volume annotation table: select row
+      // (by its index in mri.atlas, wherever a sort shows it; the header row, whose
+      // buttons sort the table, selects nothing)
       onDocument('click touchstart', '#annotations tr', (e) => {
-        const targetRow = e.target.closest('tr');
-        // jQuery's .index(): the row's position among its siblings
-        const targetIndex = [...targetRow.parentNode.children].indexOf(targetRow);
+        const targetIndex = rowIndex(e.target.closest('tr'));
+        if (targetIndex < 0) { return; }
         BrainBox.selectAnnotationTableRow(targetIndex, volAnnParam);
       });
       // volume annotations table: select the first row by default
       // (a line deselecting 'table#annotationsg' was dropped here: the selector matched nothing)
       selectRow('table#annotations tr', 1);
+      makeAnnotationsSortable(volAnnParam.table, selectedOptionText(1), (i) => (volAnnParam.info.mri.atlas[i] || {}).modified);
 
       // Bind text annotations
       //-----------------------
@@ -334,6 +368,7 @@ if (isEmptyObject(mriInfo)) {
       // text annotations table: select the first row by default
       document.querySelectorAll('table#textAnnotations tr').forEach((tr) => tr.classList.remove('selected'));
       selectRow('table#textAnnotations tr', 1);
+      makeAnnotationsSortable(textAnnParam.table, cellText(1), (i) => (textAnnotationsArray[i] || {}).modified);
 
       // connect close button in labels set
       onDocument('click touchstart', '#labels-close', () => { hide(document.getElementById('labelset')); });

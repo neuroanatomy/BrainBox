@@ -212,6 +212,7 @@ describe('TESTING THE MRI PAGE SCRIPT (mri-page.js)', function () {
       const tbody = document.querySelector('table#annotations tbody');
       tbody.insertAdjacentHTML('beforeend', tbody.rows[0].outerHTML);
       tbody.rows[1].classList.remove('selected');
+      tbody.rows[1].dataset.index = '1'; // the row of atlas[1] (rows carry their layer's index)
 
       let configured;
       const { configureAtlasMaker } = me;

@@ -406,19 +406,18 @@ export const BrainBox = {
 
   /**
      * @function selectAnnotationTableRow
-     * @param {number} index Row index
+     * @desc Select the row of an annotation, wherever a sort shows it (each row carries
+     *       its data index in data-index, see appendAnnotationTableRow)
+     * @param {number} index The annotation's index in its data array
      * @param {object} param Binding param
      * @returns {void}
      */
   selectAnnotationTableRow: function selectAnnotationTableRow(index, param) {
     const { table } = param;
-
+    const dataIndex = (row) => parseInt(row.dataset.index, 10);
 
     const selectedRow = table.querySelector('tr.selected');
-    const currentIndex = selectedRow
-      ? [...selectedRow.parentNode.children].indexOf(selectedRow)
-      : -1;
-
+    const currentIndex = selectedRow ? dataIndex(selectedRow) : -1;
 
     if (index >= 0 && currentIndex !== index) {
       console.log('bb>>  change selected annotation');
@@ -427,9 +426,9 @@ export const BrainBox = {
         row.classList.remove('selected');
       });
 
-      const rows = table.querySelectorAll('tbody tr');
-      if (rows[index]) {
-        rows[index].classList.add('selected');
+      const row = [...table.querySelectorAll('tbody tr')].find((tr) => dataIndex(tr) === index);
+      if (row) {
+        row.classList.add('selected');
       }
 
       AtlasMakerWidget.configureAtlasMaker(BrainBox.info, index);
@@ -438,13 +437,20 @@ export const BrainBox = {
 
   /**
      * @function appendAnnotationTableRow
-     * @param {number} irow Row index
+     * @desc Append a row bound to the data at index irow, marked with that index
+     *       (data-index): a sorted table shows its rows in another order
+     * @param {number} irow The row's index in the data array
      * @param {object} param Binding object
      * @returns {void}
      */
   appendAnnotationTableRow: function appendAnnotationTableRow(irow, param) {
     const tbody = param.table.querySelector('tbody') || param.table;
     tbody.insertAdjacentHTML('beforeend', param.trTemplate);
+    // the row just appended: the table's last
+    const rows = param.table.querySelectorAll('tr');
+    const tr = rows[rows.length - 1];
+    tr.dataset.index = irow;
+    const cells = tr.querySelectorAll('td');
 
     for (let icol = 0; icol < param.objTemplate.length; icol++) {
       switch (param.objTemplate[icol].typeOfBinding) {
@@ -453,7 +459,7 @@ export const BrainBox = {
           param.infoProxy,
           param.info,
           param.objTemplate[icol].path.replace('#', irow),
-          param.table.querySelectorAll('tr')[irow + 1].querySelectorAll('td')[icol],
+          cells[icol],
           param.objTemplate[icol].format
         );
         break;
@@ -462,7 +468,7 @@ export const BrainBox = {
           param.infoProxy,
           param.info,
           param.objTemplate[icol].path.replace('#', irow),
-          param.table.querySelectorAll('tr')[irow + 1].querySelectorAll('td')[icol],
+          cells[icol],
           param.objTemplate[icol].format,
           param.objTemplate[icol].parse
         );

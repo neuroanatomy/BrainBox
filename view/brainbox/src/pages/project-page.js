@@ -7,6 +7,7 @@ import '../style/ui.css';
 import '../style/project-style.css';
 import '../style/tables.css';
 
+import { cellText, makeSortable, rowIndex } from '../sortableTable.js';
 import { getData, setData } from '../../../shared/domData.js';
 import freeform from '../tools/freeform.js';
 import geometryModule from '../../../shared/geometry.js';
@@ -124,6 +125,7 @@ let file;
 let trTemplate;
 let objTemplate;
 let aParam;
+let filesTable; // the files table's sorting (makeSortable)
 // let hashOld;
 
 // eslint-disable-next-line max-statements
@@ -162,6 +164,10 @@ const appendFilesToProject = function (list) {
   }
   for (let i = 0; i < list.length; i++) {
     BrainBox.appendAnnotationTableRow(i0 + i, aParam);
+    // a row loaded after a sort goes to its sorted place
+    if (filesTable) {
+      filesTable.place(aParam.table.querySelector(`tbody tr[data-index="${i0 + i}"]`));
+    }
   }
 };
 
@@ -374,6 +380,25 @@ for (const k of projectInfo.annotations.list) {
   }
 }
 
+// The files table sorts by Name, File and each text annotation, by what their cells show
+// (a multiple choice by its value): rows carry their file's index in projectInfo.files.list
+{
+  const filesTableElem = document.querySelector('#projectFiles table');
+  if (filesTableElem) {
+    // the value of the menu in a cell
+    const selectValue = (col) => (tr) => {
+      const select = tr.cells[col] ? tr.cells[col].querySelector('select') : null;
+
+      return select ? select.value : null;
+    };
+    filesTable = makeSortable(filesTableElem, [
+      { key: cellText(0) },
+      { key: cellText(1) },
+      ...annotations.text.map((a, g) => ({ key: (a.type === 'multiple choices') ? selectValue(2 + g) : cellText(2 + g) }))
+    ]);
+  }
+}
+
 // collect the project's volume annotations
 for (const k of projectInfo.annotations.list) {
   if (k.type === 'volume') {
@@ -563,7 +588,7 @@ BrainBox.initBrainBox()
 //------------------------------------------------
 // send data when focus is lost (on blur: jQuery delegated it as 'focusout', which bubbles)
 delegate(document, 'focusout', '#projectFiles table tbody td', function (e) {
-  const index = jqIndex(e.target.closest('tr'));
+  const index = rowIndex(e.target.closest('tr'));
   JSON.stringify(infoProxy); // update content of projectInfo object from proxy by calling all getters
   AtlasMakerWidget.sendSaveMetadataMessage(projectInfo.files.list[index])
     .catch((err) => console.error('The file\'s information could not be saved', err));
@@ -599,9 +624,10 @@ const clearVolumeAnnotationsTable = () => {
 // listen to changes in file selection by clicking on the file table
 delegate(document, 'click touchstart', '#projectFiles tbody tr', function (e) {
   const table = e.target.closest('table');
-  const currentIndex = jqIndex(table ? table.querySelector('tr.selected') : null);
+  // the files' indices in projectInfo.files.list, not the rows' positions
+  const currentIndex = rowIndex(table ? table.querySelector('tr.selected') : null);
   const selRow = e.target.closest('tr');
-  const index = jqIndex(selRow);
+  const index = rowIndex(selRow);
 
   if (index >= 0 && currentIndex !== index) {
     if (table) { table.querySelectorAll('tr').forEach((tr) => tr.classList.remove('selected')); }
@@ -613,10 +639,12 @@ delegate(document, 'click touchstart', '#projectFiles tbody tr', function (e) {
   }
 });
 
-// listen to changes in file selection by pressing the up/down arrows
+// listen to changes in file selection by pressing the up/down arrows: the previous or
+// next row in the displayed order (sorted or not), wrapping around
 document.addEventListener('keydown', function (e) {
   const table = document.querySelector('#projectFiles tbody');
-  let index = jqIndex(table ? table.querySelector('tr.selected') : null);
+  const rows = table ? [...table.querySelectorAll('tr')] : [];
+  let position = jqIndex(table ? table.querySelector('tr.selected') : null);
 
   if (e.keyCode !== 38 && e.keyCode !== 40) {
     return;
@@ -624,23 +652,23 @@ document.addEventListener('keydown', function (e) {
 
   switch (e.keyCode) {
   case 38: // up
-    index = (index + projectInfo.files.list.length - 1) % projectInfo.files.list.length;
+    position = (position + rows.length - 1) % rows.length;
     break;
   case 40: // down
-    index = (index + 1) % projectInfo.files.list.length;
+    position = (position + 1) % rows.length;
     break;
   }
+  const row = rows[position];
   if (table) {
-    table.querySelectorAll('tr').forEach((tr) => tr.classList.remove('selected'));
-    const row = table.querySelectorAll('tr')[index];
+    rows.forEach((tr) => tr.classList.remove('selected'));
     if (row) { row.classList.add('selected'); }
   }
 
   // remove table with previous annotations
   clearVolumeAnnotationsTable();
 
-  // load and bind new file
-  loadProjectFile(index).catch(function () { /* handled in loadProjectFile */ });
+  // load and bind new file (no row: loadProjectFile says there is no file)
+  loadProjectFile(row ? rowIndex(row) : position).catch(function () { /* handled in loadProjectFile */ });
 });
 
 // listen to changes in selected volume annotation

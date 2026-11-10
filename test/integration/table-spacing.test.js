@@ -52,7 +52,8 @@ const crampedCells = (page, selector) => page.$$eval(selector, (tables, minGap) 
  * The spacing of every cell of every table of the page: its padding right and left in ems, whether it
  * is the last of its row, whether its table is an nwl-components Table (one of nwlTables),
  * and the stylesheets' 1em padding-right rules that match it, split into nwl-components'
- * scoped rules (their selector has a data-v-… attribute) and the others (BrainBox's).
+ * rules (their selector has a data-v-… attribute, or, for SortableTh's headers since 1.6.0,
+ * the unscoped th.nwl-sortable) and the others (BrainBox's).
  * @param {Object} page A puppeteer page
  * @param {Array<string>} nwlTables Selectors of the page's nwl-components Tables
  * @returns {Promise<Array>} One entry per cell
@@ -69,6 +70,7 @@ const cellSpacing = (page, nwlTables) => page.evaluate((nwlSelectors) => {
     try { collect(sheet.cssRules); } catch (e) { /* cross-origin sheet */ }
   }
   const nwl = new Set(nwlSelectors.flatMap((sel) => [...document.querySelectorAll(sel)]));
+  const isNwl = (sel) => sel.includes('[data-v-') || sel.includes('th.nwl-sortable');
   const cells = [];
   document.querySelectorAll('table').forEach((table, t) => {
     for (const tr of table.querySelectorAll('tr')) {
@@ -82,8 +84,8 @@ const cellSpacing = (page, nwlTables) => page.evaluate((nwlSelectors) => {
           leftEms: parseFloat(style.paddingLeft) / parseFloat(style.fontSize),
           last: i === tr.cells.length - 1,
           nwl: nwl.has(table),
-          nwlRules: matching.filter((sel) => sel.includes('[data-v-')).length,
-          appRules: matching.filter((sel) => !sel.includes('[data-v-')).length
+          nwlRules: matching.filter(isNwl).length,
+          appRules: matching.filter((sel) => !isNwl(sel)).length
         });
       });
     }
