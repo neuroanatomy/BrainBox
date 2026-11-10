@@ -246,13 +246,15 @@ const apiProject = async function (req, res) {
       return;
     }
 
+    // the filtered lists go in new objects: json, the stored project, keeps every
+    // collaborator for the access checks that follow
     let filteredJSON = Object.assign({}, json);
     if (!AccessControlService.canViewCollaborators(json, loggedUser)) {
-      filteredJSON.collaborators.list = filteredJSON.collaborators.list.filter((collaborator) => collaborator.userID === 'anyone');
+      filteredJSON.collaborators = { ...json.collaborators, list: json.collaborators.list.filter((collaborator) => collaborator.userID === 'anyone') };
     }
     [AccessType.FILES, AccessType.ANNOTATIONS].forEach((type) => {
       if (!AccessControlService.hasAccess(type, AccessLevel.VIEW, json, loggedUser)) {
-        filteredJSON[type].list = [];
+        filteredJSON[type] = { ...json[type], list: [] };
       }
     });
 

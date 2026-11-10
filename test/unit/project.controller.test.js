@@ -185,6 +185,55 @@ describe('Project Controller: ', function () {
       expect(resSpy.args[0]).to.have.lengthOf(0);
       sinon.restore();
     });
+
+    describe('a member who may not see the collaborators', function () {
+      const shortname = 'testing-member-no-collaborators';
+      const access = (collaborators, files, annotations) => ({ collaborators, files, annotations });
+
+      before(async function () {
+        // a copy of the fixture, without the _id the insert above gave it
+        const project = JSON.parse(JSON.stringify(projectObject));
+        delete project._id;
+        await nativeDb.collection('project').insertOne({
+          ...project,
+          shortname,
+          collaborators: {
+            list: [
+              { userID: 'anyone', access: access('none', 'none', 'none') },
+              { userID: 'member', access: access('none', 'view', 'view') }
+            ]
+          },
+          files: { list: [{ source: 'https://example.org/a.nii.gz', name: 'a' }] }
+        });
+      });
+
+      after(async function () {
+        await nativeDb.collection('project').deleteMany({ shortname });
+      });
+
+      const getAs = async (username) => {
+        const json = sinon.spy();
+        const status = sinon.stub().returns({ json: sinon.spy() });
+        await projectController.apiProject({
+          params: { projectName: shortname },
+          query: {},
+          user: { username },
+          isAuthenticated: () => true,
+          nativeDb
+        }, { json, status });
+        sinon.restore();
+
+        return json.callCount === 1 ? json.args[0][0] : null;
+      };
+
+      it('still gets the files and annotations their own access lets them see, without the collaborators', async function () {
+        const project = await getAs('member');
+        expect(project).to.not.equal(null);
+        expect(project.collaborators.list.map((c) => c.userID)).to.deep.equal(['anyone']);
+        expect(project.files.list).to.have.lengthOf(1);
+        expect(project.annotations.list).to.have.lengthOf(1);
+      });
+    });
   });
 
   describe('apiProjectFiles function() ', function () {
