@@ -204,7 +204,9 @@ describe('Project Controller: ', function () {
               { userID: 'filesonly', access: access('none', 'view', 'none') }
             ]
           },
-          files: { list: [{ source: 'https://example.org/a.nii.gz', name: 'a' }] }
+          files: { list: [{ source: 'https://example.org/a.nii.gz', name: 'a' }] },
+          // saved last by a collaborator the members may not see
+          modifiedBy: 'hiddencollaborator'
         });
       });
 
@@ -262,6 +264,26 @@ describe('Project Controller: ', function () {
         const projectInfo = await pageAs('filesonly');
         expect(projectInfo).to.not.equal(null);
         expect(projectInfo.annotations.list).to.deep.equal([]);
+      });
+
+      it('is not told who saved the project last, by the JSON route or the project page', async function () {
+        expect(await getAs('member')).to.not.have.property('modifiedBy');
+        expect(await pageAs('member')).to.not.have.property('modifiedBy');
+      });
+
+      it('is not told who saved the project last by the settings page', async function () {
+        const render = sinon.spy();
+        await projectController.settings({
+          params: { projectName: shortname },
+          user: { username: 'member' },
+          session: {},
+          originalUrl: '/project/' + shortname + '/settings',
+          isAuthenticated: () => true,
+          nativeDb
+        }, { render, status: sinon.stub().returns({ send: sinon.spy() }) });
+        sinon.restore();
+        expect(render.callCount).to.equal(1);
+        expect(JSON.parse(render.args[0][1].projectInfo)).to.not.have.property('modifiedBy');
       });
     });
   });

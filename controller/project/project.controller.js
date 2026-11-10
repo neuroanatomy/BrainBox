@@ -181,7 +181,7 @@ const isProjectObject = async function (req, res, object) {
 };
 
 /**
- * The project as a user may see it: the collaborators only if they may view them (else
+ * The project as a user may see it: the collaborators and modifiedBy only if they may view them (else
  * only 'anyone'), the files and annotations only if they may view them (else empty lists).
  * The stored project is not changed: the filtered lists go in new objects
  * @param {Object} json The stored project
@@ -192,6 +192,8 @@ const projectForUser = function (json, loggedUser) {
   const filteredJSON = Object.assign({}, json);
   if (!AccessControlService.canViewCollaborators(json, loggedUser)) {
     filteredJSON.collaborators = { ...json.collaborators, list: json.collaborators.list.filter((collaborator) => collaborator.userID === 'anyone') };
+    // who saved last is a collaborator too
+    delete filteredJSON.modifiedBy;
   }
   [AccessType.FILES, AccessType.ANNOTATIONS].forEach((type) => {
     if (!AccessControlService.hasAccess(type, AccessLevel.VIEW, json, loggedUser)) {
@@ -442,6 +444,7 @@ const settings = async function (req, res) {
     }
   } else {
     filteredJSON.collaborators.list = json.collaborators.list.filter((collaborator) => collaborator.userID === 'anyone');
+    delete filteredJSON.modifiedBy;
   }
 
   if (!AccessControlService.canViewAnnotations(json, loggedUser)) {
