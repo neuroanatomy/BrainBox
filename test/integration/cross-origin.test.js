@@ -60,7 +60,8 @@ describe('The API called from a page of another origin', function () {
   });
 
   it('reads an error answer', async function () {
-    assert.deepEqual(await call('/project/json/no-such-project-cross-origin/files'), { status: 403 });
+    // a malformed project name (hyphens): 400 since 2026-11-11 (shared suite 2.13; was 403)
+    assert.deepEqual(await call('/project/json/no-such-project-cross-origin/files'), { status: 400 });
     assert.deepEqual(await call('/no-such-route-cross-origin'), { status: 404 });
   });
 });

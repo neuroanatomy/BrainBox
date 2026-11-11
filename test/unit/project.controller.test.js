@@ -34,11 +34,11 @@ describe('Project Controller: ', function () {
       });
       const res = httpMocks.createResponse();
       await projectController.validator(req, res, () => { /* do nothing */ });
-      assert.strictEqual(res.statusCode, 403);
+      assert.strictEqual(res.statusCode, 400);
       const resData = res._getData();
-      assert(Array.isArray(resData));
-      assert(resData.length);
-      assert.strictEqual(resData[0].msg, 'incorrect project name');
+      assert.strictEqual(resData.error, 'incorrect project name');
+      assert(Array.isArray(resData.errors));
+      assert.strictEqual(resData.errors[0].msg, 'incorrect project name');
     });
   });
 
@@ -549,7 +549,7 @@ describe('Project Controller: ', function () {
       };
       await projectController.deleteProject(req, res);
       assert.strictEqual(res.status.callCount, 1);
-      assert.deepStrictEqual(res.status.args, [[500]]);
+      assert.deepStrictEqual(res.status.args, [[404]]);
       assert.strictEqual(jsonSpy.callCount, 1);
       assert.deepStrictEqual(jsonSpy.args, [[{ success: false, message: 'Unable to delete. Project does not exist in the database' }]]);
       sinon.restore();

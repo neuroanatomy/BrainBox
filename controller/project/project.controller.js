@@ -32,7 +32,8 @@ const validator = async function (req, res, next) {
   // .matches("localpath|filename|source|url|dim|pixdim"); //todo: decent regexp
   const errors = validationResult(req).array();
   if (errors.length) {
-    res.status(403).send(errors)
+    // a malformed project name is the client's error (shared suite 2.13, 2026-11-11; was 403)
+    res.status(400).send({ error: errors.map((e) => e.msg).join(', '), errors })
       .end();
   } else {
     return next();
@@ -118,25 +119,12 @@ const isProjectObject = async function (req, res, object) {
     throw (new Error('User \'anyone\' is not present'));
   }
 
-  // check that collaborator's access values are valid
-  flag = true;
-  for (const collaborator of arr) {
-    if (validatorNPM.matches(collaborator.access.collaborators, 'none|view|edit|add|remove') === false) {
-      // console.log("collaborators",collaborator);
-      flag = false;
-      break;
-    }
-    if (validatorNPM.matches(collaborator.access.annotations, 'none|view|edit|add|remove') === false) {
-      // console.log("annotations",collaborator);
-      flag = false;
-      break;
-    }
-    if (validatorNPM.matches(collaborator.access.files, 'none|view|edit|add|remove') === false) {
-      // console.log("files",collaborator);
-      flag = false;
-      break;
-    }
-  }
+  // check that collaborator's access values are valid: exactly one of the
+  // levels (an unanchored regex let "viewer" pass; shared suite 2.8, 2026-11-11)
+  const accessLevels = ['none', 'view', 'edit', 'add', 'remove'];
+  const validAccess = (access) => Boolean(access) && ['collaborators', 'annotations', 'files']
+    .every((type) => accessLevels.includes(access[type]));
+  flag = arr.every((collaborator) => validAccess(collaborator.access));
   if (flag === false) {
     throw (new Error('Access values are invalid'));
   }
@@ -601,7 +589,8 @@ const postProject = async function (req, res) {
 
   if (loggedUser === 'anonymous') {
     console.log('ERROR not Authenticated');
-    res.status(403).json({ error: 'error', message: 'User not authenticated' });
+    // 401: who are you? (shared suite 2.1, 2026-11-11; was 403)
+    res.status(401).json({ error: 'error', message: 'User not authenticated' });
 
     return;
   }
@@ -614,7 +603,8 @@ const postProject = async function (req, res) {
   } catch (err) {
     console.log('ERROR');
     console.log({ clean, obj });
-    res.status(500).send({ error: err.message });
+    // an invalid document is the client's error (shared suite 2.13, 2026-11-11; was 500)
+    res.status(400).send({ error: err.message });
 
     return;
   }
@@ -628,7 +618,7 @@ const postProject = async function (req, res) {
       object = await isProjectObject(req, res, obj);
     } catch (err) {
       console.error(err.message);
-      res.status(500).send({ error: err.message });
+      res.status(400).send({ error: err.message });
 
       return;
     }
@@ -759,7 +749,8 @@ const deleteProject = async function (req, res) {
 
       if (!oldProject) {
         console.log('WARNING: project does not exist');
-        res.status(500).json({ success: false, message: 'Unable to delete. Project does not exist in the database' });
+        // shared suite 2.23, 2026-11-11 (was 500)
+        res.status(404).json({ success: false, message: 'Unable to delete. Project does not exist in the database' });
 
         return;
       }
