@@ -12,6 +12,7 @@ const { ForbiddenAccessError, NotFoundError } = require('../../errors.js');
 const { jsonForScript } = require('../utils/jsonForScript');
 const { publicLoggedUser } = require('../user/publicUser');
 const { isLabelset, changedLabelsets, setLayerLabelset } = require('./atlas-labels.js');
+const { fileSource, listChanged, listOf, listTypes, sortRows, usersToCheck } = require('./project-rows.js');
 const { window } = (new JSDOM('', {
   features: {
     FetchExternalResources: false, // disables resource loading over HTTP / filesystem
@@ -19,6 +20,10 @@ const { window } = (new JSDOM('', {
   }
 }));
 const DOMPurify = createDOMPurify(window);
+
+// the sanitising of the body (postProject), also applied to stored values compared with it
+const sanitizeValue = (value) => (typeof value === 'undefined' ? value : JSON.parse(DOMPurify.sanitize(JSON.stringify(value))));
+const text = (v) => ((v === null || typeof v === 'undefined') ? '' : v);
 
 // a new project's shortname: letters, numbers and hyphens (shared suite 2.6, 2026-11-11)
 const shortnamePattern = /^[a-zA-Z0-9-]+$/;
@@ -48,25 +53,46 @@ const validator = async function (req, res, next) {
  * @func isProjectObject
  * @param {Object} req Express req object
  * @param {Object} res Express res object
- * @param {Object} object Project definition object, its owner already set by the server
- * @param {Object} params { shortname: the name in the URL, isNew: true if no project is stored under it }
- * @returns {Promise} true if the project is valid
+ * @param {Object} object Project definition object, its owner already set by the server; its
+ *   lists lose their blank new rows
+ * @param {Object} params { shortname: the name in the URL, oldProject: the stored project or
+ *   null, oldLists: its lists sanitised as the body ({collaborators, files, annotations}) }
+ * @returns {Promise<Object>} { project: the project, dropped: the blank new rows dropped, by list }
  * @todo object.annotations??
  */
 // eslint-disable-next-line max-statements, complexity
-const isProjectObject = async function (req, res, object, { shortname, isNew }) {
+const isProjectObject = async function (req, res, object, { shortname, oldProject, oldLists }) {
   // var goodOwner = false;
   // var goodCollaborators = false;
 
-  // eslint-disable-next-line max-statements, complexity
-  let arr;
   const allowed = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,_- \'–:;'.split('');
+  const isNew = !oldProject;
+
+  // the rows equal to stored ones are accepted as they are, even if they would not pass the
+  // checks below; blank new rows are dropped (shared suite 2.14, 2026-11-11; every row was
+  // checked, and a blank one refused)
+  const stored = {};
+  const dropped = {};
+  for (const type of listTypes) {
+    stored[type] = new Set();
+    if (object[type] && Array.isArray(object[type].list)) {
+      ({ kept: object[type].list, stored: stored[type], dropped: dropped[type] } = sortRows(type, object[type].list, oldLists[type]));
+    }
+  }
 
   // 1. Synchronous checks
   //----------------------
   // files
+  const storedFileNames = [];
   if (object.files) {
-    for (const file of object.files.list) {
+    for (const [i, file] of object.files.list.entries()) {
+      if (stored.files.has(i)) {
+        // a stored file: its name may have been stored before the characters were checked
+        if (_.isPlainObject(file) && typeof file.name === 'string' && !validatorNPM.isWhitelisted(file.name, allowed)) {
+          storedFileNames.push(file);
+        }
+        continue;
+      }
       if (typeof file.source !== 'string') {
         throw (new Error('File source not specified'));
       }
@@ -83,15 +109,19 @@ const isProjectObject = async function (req, res, object, { shortname, isNew }) 
   }
   console.log('> files ok');
 
+  // a stored name or description is kept as it is, as stored rows are: a save keeps the stored
+  // fields the client does not send (shared suite 2.17), and these may be older than the checks
+  const isStoredText = (field) => Boolean(oldProject) && _.isEqual(object[field], sanitizeValue(oldProject[field]));
+
   // description
-  if (object.description && !validatorNPM.isWhitelisted(object.description, allowed)) {
+  if (object.description && !isStoredText('description') && !validatorNPM.isWhitelisted(object.description, allowed)) {
     throw (new Error('Invalid project description'));
     // delete object.description;
   }
   console.log('> description ok');
 
   // name
-  if (object.name && !validatorNPM.isWhitelisted(object.name, allowed)) {
+  if (object.name && !isStoredText('name') && !validatorNPM.isWhitelisted(object.name, allowed)) {
     throw (new Error('Invalid name'));
     //delete object.name;
   }
@@ -114,11 +144,11 @@ const isProjectObject = async function (req, res, object, { shortname, isNew }) 
   }
 
   // convenience array for collaborator checks
-  arr = object.collaborators.list;
+  const arr = object.collaborators.list;
   // check that the 'anyone' user is present
   let flag = false;
   for (const collaborator of arr) {
-    if (collaborator.userID === 'anyone') {
+    if (collaborator && collaborator.userID === 'anyone') {
       flag = true;
       break;
     }
@@ -132,7 +162,8 @@ const isProjectObject = async function (req, res, object, { shortname, isNew }) 
   const accessLevels = ['none', 'view', 'edit', 'add', 'remove'];
   const validAccess = (access) => Boolean(access) && ['collaborators', 'annotations', 'files']
     .every((type) => accessLevels.includes(access[type]));
-  flag = arr.every((collaborator) => validAccess(collaborator.access));
+  // stored rows are not checked (2.14)
+  flag = arr.every((collaborator, i) => stored.collaborators.has(i) || validAccess(collaborator && collaborator.access));
   if (flag === false) {
     throw (new Error('Access values are invalid'));
   }
@@ -154,26 +185,28 @@ const isProjectObject = async function (req, res, object, { shortname, isNew }) 
   // 2. Asynchronous checks
   //-----------------------
 
-  arr = [];
-  arr.push(req.nativeDb.collection('user').findOne({ nickname: object.owner }));
-  for (const collaborator of object.collaborators.list) {
-    arr.push(req.nativeDb.collection('user').findOne({ nickname: collaborator.userID }));
-  }
-  const users = await Promise.all(arr);
-  let notFound = false;
-  for (const user of users) {
-    if (user === null) {
-      notFound = true;
-      break;
+  // the names of stored files that the checks above would refuse: kept if they are the names
+  // stored in the files' MRI documents (2.14)
+  const mris = await Promise.all(storedFileNames.map(({ source }) => req.nativeDb.collection('mri')
+    .findOne({ source, backup: { $exists: false } }, { projection: { name: 1, _id: 0 } })));
+  storedFileNames.forEach((file, i) => {
+    if (!mris[i] || sanitizeValue(text(mris[i].name)) !== file.name) {
+      throw (new Error(`Invalid file name "${file.name}"`));
     }
-  }
-  if (notFound === true) {
+  });
+
+  // the users must exist: a new project's owner, and the collaborators the stored project
+  // does not have (shared suite 2.9, 2026-11-11; every row was checked on every save, so
+  // a row of a user removed since blocked the save)
+  const names = usersToCheck(object, oldProject, stored.collaborators);
+  const users = await Promise.all(names.map((nickname) => req.nativeDb.collection('user').findOne({ nickname })));
+  if (users.some((user) => user === null)) {
     throw (new Error('Users are invalid, one or more do not exist'));
   }
 
   // All checks are successful, resolve the promisse
   //console.log({success:true, message:"All checks ok. Project object looks valid"});
-  return object;
+  return { project: object, dropped };
 };
 
 /**
@@ -582,6 +615,15 @@ const updateAtlasLabelsets = async function (req, oldProject, savedProject) {
   return messages;
 };
 
+// the blank new rows that isProjectObject dropped, for the message (shared suite 2.14)
+const droppedMessage = (dropped) => {
+  const parts = Object.entries(dropped || {})
+    .filter(([, n]) => n > 0)
+    .map(([type, n]) => `${n} ${type}`);
+
+  return parts.length > 0 ? ` Empty rows were not saved (${parts.join(', ')}).` : '';
+};
+
 /**
  * @function postProject
  * @desc Receives data for creating a new project or updating the settings of an existing one
@@ -616,7 +658,6 @@ const postProject = async function (req, res) {
 
     return;
   }
-  let k;
   // the stored project is found by the URL's shortname, which the body must equal (shared suite 2.6)
   const shortname = req.params.projectName;
   if (obj && typeof obj === 'object') {
@@ -638,13 +679,21 @@ const postProject = async function (req, res) {
 
       return;
     }
+    // the stored lists, sanitised as the body, to compare the rows sent with
+    const oldLists = _.fromPairs(listTypes.map((type) => [type, sanitizeValue(listOf(oldProject, type))]));
     let object;
+    let dropped;
     try {
+      if (oldProject && _.isPlainObject(obj)) {
+        // the stored top-level fields the client doesn't send are kept (shared suite 2.17,
+        // 2026-11-11; they were lost). A copy: the stored project is compared with below
+        obj = { ..._.cloneDeep(oldProject), ...obj };
+      }
       if (obj && typeof obj === 'object') {
         // the owner is never the client's: the stored one, or the creator (shared suite 2.5, 2026-11-11)
         obj.owner = oldProject ? oldProject.owner : loggedUser;
       }
-      object = await isProjectObject(req, res, obj, { shortname, isNew: !oldProject });
+      ({ project: object, dropped } = await isProjectObject(req, res, obj, { shortname, oldProject, oldLists }));
     } catch (err) {
       console.error(err.message);
       res.status(400).send({ error: err.message });
@@ -670,33 +719,37 @@ const postProject = async function (req, res) {
       const filesIncomplete = typeof object.filesLoaded !== 'undefined' &&
         !(object.filesLoaded && object.filesLoaded.count === oldProject.files.list.length);
       delete object.filesLoaded;
+      // the files sent, whose names go in their MRI documents
+      let sentFiles = [];
       if (filesIncomplete) {
         console.log(`incomplete file list (${object.files.list.length} received, ${oldProject.files.list.length} stored): keeping the stored one`);
         object.files.list = oldProject.files.list;
       } else {
-        // insert MRI names if provided
-        console.log('insert mri names');
-        await insertMRInames(req, res, object.files.list);
-
-        // reformat file list
-        console.log('reformat file list');
-        for (k = 0; k < object.files.list.length; k++) {
-          object.files.list[k] = object.files.list[k].source;
-        }
+        // files are stored as their source
+        sentFiles = object.files.list;
+        object.files.list = sentFiles.map(fileSource);
       }
 
-      [AccessType.COLLABORATORS, AccessType.FILES, AccessType.ANNOTATIONS].forEach((type) => {
-        const checkAccessType = AccessControlService.hasAccess(type);
-        const canAdd = checkAccessType(AccessLevel.ADD);
-        const canRemove = checkAccessType(AccessLevel.REMOVE);
+      // a longer list needs add on it, a shorter one remove, and a row changed in place edit
+      // (shared suite 2.4, 2026-11-11; only the lengths were checked): else the stored list is kept
+      listTypes.forEach((type) => {
+        const can = (level) => AccessControlService.hasAccess(type, level, oldProject, loggedUser);
+        const oldList = oldProject[type].list;
         if (
-          (object[type].list.length > oldProject[type].list.length && !canAdd(oldProject, loggedUser)) ||
-          (object[type].list.length < oldProject[type].list.length && !canRemove(oldProject, loggedUser))
+          (object[type].list.length > oldList.length && !can(AccessLevel.ADD)) ||
+          (object[type].list.length < oldList.length && !can(AccessLevel.REMOVE)) ||
+          (listChanged(type, object[type].list, oldLists[type]) && !can(AccessLevel.EDIT))
         ) {
           ignoredChanges.push(type);
-          object[type].list = oldProject[type].list;
+          object[type].list = oldList;
         }
       });
+
+      // insert the MRI names provided, for the files the project keeps (they were written
+      // for every file sent, even when the list was then kept as stored)
+      console.log('insert mri names');
+      const keptSources = new Set(object.files.list.map(fileSource));
+      await insertMRInames(req, res, sentFiles.filter((file) => _.isPlainObject(file) && keptSources.has(file.source)));
 
       console.log('updating...');
       await req.nativeDb.collection('project').updateMany({ shortname: object.shortname }, { $set: { backup: true } });
@@ -714,6 +767,7 @@ const postProject = async function (req, res) {
       if (filesIncomplete) {
         successMessage += ' The list of files was not saved because it had not been completely loaded: reload the page to edit it.';
       }
+      successMessage += droppedMessage(dropped);
       if (labelsetMessages.length > 0) {
         successMessage += ' ' + labelsetMessages.join(' ');
       }
@@ -724,18 +778,15 @@ const postProject = async function (req, res) {
       console.log('inserting...');
       delete object.filesLoaded;
       console.log('insert mri names');
-      await insertMRInames(req, res, object.files.list);
+      await insertMRInames(req, res, object.files.list.filter(_.isPlainObject));
 
-      // reformat file list
-      console.log('reformat file list');
-      for (k = 0; k < object.files.list.length; k++) {
-        object.files.list[k] = object.files.list[k].source;
-      }
+      // files are stored as their source
+      object.files.list = object.files.list.map(fileSource);
 
       await req.nativeDb.collection('project').insertOne(object);
 
       console.log('success: true');
-      res.json({ success: true, message: 'New project inserted' });
+      res.json({ success: true, message: 'New project inserted' + droppedMessage(dropped) });
     }
     console.log('leave lock block');
   });

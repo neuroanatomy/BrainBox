@@ -6,6 +6,7 @@ require('mocha-sinon');
 const sinon = require('sinon');
 const projectObject = require('../data/model_objects/project');
 const { expect } = require('chai');
+const _ = require('lodash');
 const U = require('../utils.js');
 
 describe('Project Controller: ', function () {
@@ -501,6 +502,37 @@ describe('Project Controller: ', function () {
     });
 
     // the settings page sends back the projectInfo it was given, edited (shared suite 2.5, 2.6, 2.18)
+    const settingsAs = async (shortname, username) => {
+      const render = sinon.spy();
+      await projectController.settings({
+        params: { projectName: shortname },
+        user: { username },
+        session: {},
+        originalUrl: '/project/' + shortname + '/settings',
+        isAuthenticated: () => true,
+        nativeDb
+      }, { render, status: sinon.stub().returns({ send: sinon.spy() }) });
+      sinon.restore();
+
+      return JSON.parse(render.args[0][1].projectInfo);
+    };
+    const saveAs = async (shortname, username, data) => {
+      const json = sinon.spy();
+      const send = sinon.spy();
+      await projectController.postProject({
+        params: { projectName: shortname },
+        user: { username },
+        body: { data },
+        session: {},
+        isAuthenticated: () => true,
+        nativeDb
+      }, { json, status: sinon.stub().returns({ json, send }) });
+      sinon.restore();
+
+      return json.args.concat(send.args).map((args) => args[0]);
+    };
+    const storedProject = (shortname) => nativeDb.collection('project').findOne({ shortname, backup: { $exists: false } });
+
     describe('what the settings page sends', function () {
       const shortname = 'testing-settings-page';
 
@@ -508,55 +540,136 @@ describe('Project Controller: ', function () {
         await nativeDb.collection('project').deleteMany({ shortname });
       });
 
-      const settingsAs = async (username) => {
-        const render = sinon.spy();
-        await projectController.settings({
-          params: { projectName: shortname },
-          user: { username },
-          session: {},
-          originalUrl: '/project/' + shortname + '/settings',
-          isAuthenticated: () => true,
-          nativeDb
-        }, { render, status: sinon.stub().returns({ send: sinon.spy() }) });
-        sinon.restore();
-
-        return JSON.parse(render.args[0][1].projectInfo);
-      };
-      const saveAs = async (username, data) => {
-        const json = sinon.spy();
-        const send = sinon.spy();
-        await projectController.postProject({
-          params: { projectName: shortname },
-          user: { username },
-          body: { data },
-          session: {},
-          isAuthenticated: () => true,
-          nativeDb
-        }, { json, status: sinon.stub().returns({ json, send }) });
-        sinon.restore();
-
-        return json.args.concat(send.args).map((args) => args[0]);
-      };
-      const stored = () => nativeDb.collection('project').findOne({ shortname, backup: { $exists: false } });
-
       it('creates a project with a hyphen in its shortname, owned and last modified by its creator', async function () {
-        const page = await settingsAs('foo');
+        const page = await settingsAs(shortname, 'foo');
         page.name = 'Settings page';
         page.annotations.list = [{ type: 'volume', name: 'Layer', values: 'foreground.json' }];
-        expect(await saveAs('foo', page)).to.deep.equal([{ success: true, message: 'New project inserted' }]);
-        const project = await stored();
+        expect(await saveAs(shortname, 'foo', page)).to.deep.equal([{ success: true, message: 'New project inserted' }]);
+        const project = await storedProject(shortname);
         expect(project).to.include({ shortname, owner: 'foo', modifiedBy: 'foo' });
         expect(Date.parse(project.modified)).to.be.above(Date.now() - 60000);
         expect(project).to.not.have.property('filesLoaded');
       });
 
       it('saves it again, keeping the stored owner whatever the page sends', async function () {
-        const page = await settingsAs('foo');
+        const page = await settingsAs(shortname, 'foo');
         page.name = 'Settings page, saved again';
         page.owner = 'bar';
-        const [answer] = await saveAs('foo', page);
+        const [answer] = await saveAs(shortname, 'foo', page);
         expect(answer).to.include({ success: true });
-        expect(await stored()).to.include({ name: 'Settings page, saved again', owner: 'foo', modifiedBy: 'foo' });
+        expect(await storedProject(shortname)).to.include({ name: 'Settings page, saved again', owner: 'foo', modifiedBy: 'foo' });
+      });
+    });
+
+    // the page loads the files 100 at a time, and says how many it received (filesLoaded); BrainBox only (2.21)
+    describe('the settings page saving its files, loaded in batches', function () {
+      const shortname = 'testing-settings-files';
+      const sources = [
+        'https://example.org/testing-settings-files/0.nii.gz',
+        'https://example.org/testing-settings-files/1.nii.gz',
+        'https://example.org/testing-settings-files/2.nii.gz'
+      ];
+      const source = (i) => sources[i];
+      // as GET /project/json/:p/files?names=true gives them: the names of the MRI documents
+      const loadedFiles = () => [{ source: source(0), name: 'Scan (2019)' }, { source: source(1), name: '' }, { source: source(2), name: '' }];
+
+      beforeEach(async function () {
+        await nativeDb.collection('project').deleteMany({ shortname });
+        await nativeDb.collection('mri').deleteMany({ source: { $in: sources } });
+        await nativeDb.collection('project').insertOne({
+          ..._.cloneDeep(_.omit(U.projectTest, ['collaborators'])),
+          shortname,
+          brainboxURL: '/project/' + shortname,
+          owner: 'foo',
+          description: 'Stored description',
+          collaborators: { list: [{ userID: 'anyone', nickname: 'anyone', access: { collaborators: 'view', annotations: 'edit', files: 'view' } }] },
+          files: { list: sources }
+        });
+        // a name stored before the characters of file names were checked
+        await nativeDb.collection('mri').insertOne({ source: source(0), name: 'Scan (2019)', mri: { atlas: [] } });
+      });
+
+      after(async function () {
+        await nativeDb.collection('project').deleteMany({ shortname });
+        await nativeDb.collection('mri').deleteMany({ source: { $in: sources } });
+      });
+
+      it('keeps the stored files when the page saves before they all arrived, and saves the rest', async function () {
+        const page = await settingsAs(shortname, 'foo');
+        page.files.list = loadedFiles().slice(0, 1);
+        page.filesLoaded = { count: 1 };
+        page.name = 'Saved while loading';
+        const [answer] = await saveAs(shortname, 'foo', page);
+        expect(answer).to.include({ success: true });
+        expect(answer.message).to.include('not been completely loaded');
+        expect(answer.message).to.not.include('ignored');
+        const project = await storedProject(shortname);
+        expect(project.files.list).to.deep.equal(sources);
+        expect(project).to.include({ name: 'Saved while loading', description: 'Stored description' });
+        expect(project).to.not.have.property('filesLoaded');
+      });
+
+      it('saves the complete list, with a stored file name that the checks would refuse (2.14)', async function () {
+        const page = await settingsAs(shortname, 'foo');
+        page.files.list = loadedFiles().slice(0, 2);
+        page.filesLoaded = { count: 3 };
+        const [answer] = await saveAs(shortname, 'foo', page);
+        expect(answer).to.include({ success: true });
+        expect((await storedProject(shortname)).files.list).to.deep.equal(sources.slice(0, 2));
+        const mri = await nativeDb.collection('mri').findOne({ source: source(0), backup: { $exists: false } });
+        expect(mri.name).to.equal('Scan (2019)');
+      });
+
+      it('refuses that name given to another file', async function () {
+        const page = await settingsAs(shortname, 'foo');
+        page.files.list = loadedFiles();
+        page.files.list[1].name = 'Scan (2019)';
+        page.filesLoaded = { count: 3 };
+        const [answer] = await saveAs(shortname, 'foo', page);
+        expect(answer).to.deep.equal({ error: 'Invalid file name "Scan (2019)"' });
+        expect((await storedProject(shortname)).files.list).to.deep.equal(sources);
+      });
+    });
+
+    // rows saved long ago, of a shape or with values that today's checks refuse (2.9, 2.14)
+    describe('the settings page saving a project with an old row', function () {
+      const shortname = 'testing-old-row';
+      // named by nickname only, without collaborators access, of a user removed since
+      const oldRow = { nickname: 'testing-gone-user', access: { annotations: 'view', files: 'view' } };
+
+      before(async function () {
+        await nativeDb.collection('project').deleteMany({ shortname });
+        await nativeDb.collection('project').insertOne({
+          ..._.cloneDeep(_.omit(U.projectTest, ['collaborators', 'files'])),
+          shortname,
+          brainboxURL: '/project/' + shortname,
+          owner: 'foo',
+          collaborators: { list: [{ userID: 'anyone', nickname: 'anyone', access: { collaborators: 'view', annotations: 'edit', files: 'view' } }, oldRow] },
+          files: { list: [] }
+        });
+      });
+
+      after(async function () {
+        await nativeDb.collection('project').deleteMany({ shortname });
+      });
+
+      it('saves, keeping the row as it is', async function () {
+        const page = await settingsAs(shortname, 'foo');
+        page.name = 'Saved with an old row';
+        const [answer] = await saveAs(shortname, 'foo', page);
+        expect(answer).to.include({ success: true });
+        const project = await storedProject(shortname);
+        expect(project.name).to.equal('Saved with an old row');
+        expect(project.collaborators.list[1]).to.include({ nickname: oldRow.nickname });
+        expect(project.collaborators.list[1].access).to.deep.equal(oldRow.access);
+      });
+
+      it('checks the row once it is changed', async function () {
+        const page = await settingsAs(shortname, 'foo');
+        page.collaborators.list[1].access.files = 'edit';
+        const [answer] = await saveAs(shortname, 'foo', page);
+        expect(answer).to.deep.equal({ error: 'Access values are invalid' });
+        expect((await storedProject(shortname)).collaborators.list[1].access).to.deep.equal(oldRow.access);
       });
     });
   });
