@@ -162,7 +162,8 @@ describe('Project Controller: ', function () {
       sinon.restore();
     });
 
-    it('should return nothing with invalid input', async function () {
+    // 404 {error} since 2026-11-11, as the page and the files route (shared suite 1.6; was 200 with an empty body)
+    it('should answer 404 with a JSON error with invalid input', async function () {
       const req = {
         params: {
           projectName: ''
@@ -177,13 +178,17 @@ describe('Project Controller: ', function () {
         },
         nativeDb: nativeDb
       };
-      const resSpy = sinon.spy();
+      const json = sinon.spy();
+      const send = sinon.spy();
       const res = {
-        send: resSpy
+        status: sinon.stub().returns({ json }),
+        send
       };
       await projectController.apiProject(req, res);
-      assert.strictEqual(resSpy.callCount, 1);
-      expect(resSpy.args[0]).to.have.lengthOf(0);
+      assert.deepStrictEqual(res.status.args, [[404]]);
+      assert.strictEqual(json.callCount, 1);
+      assert.strictEqual(typeof json.args[0][0].error, 'string');
+      assert.strictEqual(send.callCount, 0);
       sinon.restore();
     });
 

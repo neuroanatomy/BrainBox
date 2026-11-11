@@ -270,6 +270,12 @@ const isProjectObject = async function (req, res, object, { shortname, oldProjec
   return { project: object, dropped };
 };
 
+/*
+ * No view right on a project (shared suite 1.5, 2026-11-11): 401 logged out
+ * ("who are you?"), 403 logged in, by session or by token
+ */
+const noViewStatus = (req) => (req.isAuthenticated() ? 403 : 401);
+
 /**
  * The project as a user may see it: the collaborators and modifiedBy only if they may view them (else
  * only 'anyone'), the files and annotations only if they may view them (else empty lists).
@@ -318,7 +324,7 @@ const project = async function (req, res) {
   if (json) {
     // check that the logged user has access to view this project
     if (!AccessControlService.hasFilesAccess(AccessLevel.VIEW, json, loggedUser)) {
-      res.status(401).send('Authorization required');
+      res.status(noViewStatus(req)).send('Authorization required');
 
       return;
     }
@@ -356,7 +362,7 @@ const apiProject = async function (req, res) {
   if (json) {
     // check that the logged user has access to view this project
     if (!AccessControlService.hasFilesAccess(AccessLevel.VIEW, json, loggedUser)) {
-      res.status(401).json({ error: 'Authorization required' });
+      res.status(noViewStatus(req)).json({ error: 'Authorization required' });
 
       return;
     }
@@ -370,7 +376,8 @@ const apiProject = async function (req, res) {
     res.json(filteredJSON);
 
   } else {
-    res.send();
+    // as the page and the files route (shared suite 1.6, 2026-11-11; was 200 with an empty body)
+    res.status(404).json({ error: `No project ${req.params.projectName}` });
   }
 };
 
@@ -438,7 +445,7 @@ const apiProjectFiles = async function (req, res) {
     res.send(list);
   } catch (err) {
     if (err instanceof ForbiddenAccessError) {
-      res.status(403).send({ error: err.message });
+      res.status(noViewStatus(req)).send({ error: err.message });
     } else if (err instanceof NotFoundError) {
       res.status(404).send({ error: err.message });
     } else {
@@ -466,8 +473,7 @@ const settings = async function (req, res) {
   if (json) {
     // check that the logged user has access to view this project
     if (!AccessControlService.hasFilesAccess(AccessLevel.VIEW, json, loggedUser)) {
-      console.log('Hello');
-      res.status(401).send('Authorization required');
+      res.status(noViewStatus(req)).send('Authorization required');
 
       return;
     }

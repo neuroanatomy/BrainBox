@@ -201,6 +201,55 @@ describe('TESTING THE /project ROUTE', function () {
       assert.equal(res.statusCode, 200);
       assert.deepEqual(res.body, []);
     });
+
+    // 404 {error} since 2026-11-11, as the page and the files route (shared suite 1.6; was 200 with an empty body)
+    it('answers 404 with a JSON error for the JSON of a project that does not exist', async function () {
+      const res = await chai.request(U.serverURL).get(`/project/json/${missing}`);
+      assert.equal(res.statusCode, 404);
+      assert.equal(res.type, 'application/json');
+      assert.include(res.body.error, missing);
+    });
+  });
+
+  // shared suite 1.5, 2026-11-11: 401 logged out, 403 logged in (was 401 for all, and 403 for all on /files)
+  describe('Refusing a project to a visitor who may not view its files', function () {
+    const shortname = 'noviewstatustest';
+    const routes = [`/project/${shortname}`, `/project/${shortname}/settings`, `/project/json/${shortname}`, `/project/json/${shortname}/files?start=0&length=10`];
+    let agent;
+
+    before(async function () {
+      await U.removeProject(shortname);
+      const project = _.cloneDeep({ ...U.projectTest, shortname, brainboxURL: `/project/${shortname}` });
+      project.collaborators.list[0].access = { collaborators: 'none', annotations: 'none', files: 'none' };
+      const res = await U.insertProject(project);
+      assert.isTrue(res.body.success, JSON.stringify(res.body));
+      agent = chai.request.agent(U.serverURL);
+      await agent.post('/localSignup')
+        .send(U.testingCredentials);
+      await agent.post('/localLogin').redirects(0)
+        .send(U.testingCredentials);
+    });
+
+    after(async function () {
+      agent.close();
+      await U.removeProject(shortname);
+    });
+
+    it('answers 401 to a logged-out visitor', async function () {
+      const statuses = await Promise.all(routes.map(async (route) => (await chai.request(U.serverURL).get(route)).statusCode));
+      assert.deepEqual(statuses, routes.map(() => 401));
+    });
+
+    it('answers 403 to a logged-in non-member', async function () {
+      const statuses = await Promise.all(routes.map(async (route) => (await agent.get(route)).statusCode));
+      assert.deepEqual(statuses, routes.map(() => 403));
+    });
+
+    it('answers the owner', async function () {
+      const res = await chai.request(U.serverURL).get(`/project/json/${shortname}?token=${U.testToken}foo`);
+      assert.equal(res.statusCode, 200);
+      assert.equal(res.body.shortname, shortname);
+    });
   });
 
   // eslint-disable-next-line max-statements
