@@ -52,7 +52,7 @@
     "morgan": "^1.12.1",
     "multer": "^2.4.0",
     "mustache-express": "^1.3.0",
-    "neuroweblab": "github:neuroanatomy/neuroweblab#v1.0.0",
+    "neuroweblab": "github:neuroanatomy/neuroweblab#v1.1.1",
     "nwl-components": "^1.6.1",
     "pako": "^1.0.11",
     "request": "^2.88.2",
