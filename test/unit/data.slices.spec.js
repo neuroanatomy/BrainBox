@@ -232,5 +232,26 @@ describe('Data Slices ', function() {
       const files = await dataSlices.getProjectsSlice(req, 0, 0);
       assert.strictEqual(files.length, 0);
     });
+
+    it('counts only the collaborator rows the user may see (as the project JSON route; 3.5)', async function() {
+      const anyone = { userID: 'anyone', access: { collaborators: 'none', annotations: 'none', files: 'view' } };
+      const row = { userID: 'foo', access: { collaborators: 'view', annotations: 'view', files: 'view' } };
+      const shortname = 'slicecountproject';
+      await nativeDb.collection('project').insertOne({
+        shortname, name: shortname, owner: 'foo', collaborators: { list: [anyone, row] }, files: { list: [] }, annotations: { list: [] }
+      });
+      try {
+        const asUser = async (username) => {
+          const req = { user: { username }, isAuthenticated: () => Boolean(username), nativeDb };
+          const rows = await dataSlices.getProjectsSlice(req, 0, 1000000);
+
+          return rows.find((r) => r.project === shortname);
+        };
+        assert.strictEqual((await asUser('')).numCollaborators, 1);
+        assert.strictEqual((await asUser('foo')).numCollaborators, 2);
+      } finally {
+        await nativeDb.collection('project').deleteMany({ shortname });
+      }
+    });
   });
 });

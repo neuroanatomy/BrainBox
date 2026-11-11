@@ -142,59 +142,81 @@ const getUserAtlasSlice = function getUserAtlasSlice(req, requestedUser, start, 
 };
 
 /**
+ * The number of collaborator rows a user may see: every row with `collaborators: view`, else only
+ * the 'anyone' row, as the project JSON route shows them (projectForUser; shared suite 3.5)
+ * @param {Object} project The stored project
+ * @param {string} loggedUser The user's name, or 'anonymous'
+ * @returns {number} The number of rows
+ */
+const visibleCollaborators = (project, loggedUser) => {
+  const { list } = project.collaborators;
+
+  return BrainboxAccessControlService.canViewCollaborators(project, loggedUser)
+    ? list.length
+    : list.filter((collaborator) => collaborator.userID === 'anyone').length;
+};
+
+/**
+ * A slice of a list: from `start` (default 0), `length` items (default all)
+ * @param {Array} list The list
+ * @param {number} [start] Start index
+ * @param {number} [length] Number of items
+ * @returns {Array} The slice
+ */
+const sliceOf = (list, start, length) => {
+  const from = Number.isInteger(start) && start > 0 ? start : 0;
+
+  return Number.isInteger(length) && length >= 0 ? list.slice(from, from + length) : list.slice(from);
+};
+
+/**
  * @func getUserProjectsSlice
- * @desc Get a slice of the projects from a user
+ * @desc Get a slice of the projects of a user: owned, or with a collaborator row naming the user
+ * (by userID, username or nickname: rows of every age), then only those the logged user may view
+ * the files of; filtered first, then sliced (shared suite 3.3, 3.4)
  * @param {Object} req request object
- * @param {String} requestedUser Username of the user whose files are requested
- * @param {integer} start Start index of the file slice
- * @param {integer} length Number of files to include in the slice
+ * @param {String} requestedUser Username of the user whose projects are requested
+ * @param {integer} [start] Start index of the slice (default 0)
+ * @param {integer} [length] Number of projects in the slice (default all)
  * @returns {Object} user projects slice
  */
-const getUserProjectsSlice = function getUserProjectsSlice(req, requestedUser, start, length) {
+const getUserProjectsSlice = async function getUserProjectsSlice(req, requestedUser, start, length) {
   let loggedUser = 'anonymous';
   if (req.isAuthenticated()) {
     loggedUser = req.user.username;
   }
 
-  return new Promise(function (resolve, reject) {
-    req.nativeDb.collection('project').find({
+  try {
+    const unfilteredProjects = await req.nativeDb.collection('project').find({
       $or: [
         { owner: requestedUser },
-        { 'collaborators.list': { $elemMatch: { userID: requestedUser } } }
+        { 'collaborators.list.userID': requestedUser },
+        { 'collaborators.list.username': requestedUser },
+        { 'collaborators.list.nickname': requestedUser }
       ],
       backup: { $exists: false }
-    }, { skip: start, limit: length })
-      .toArray()
-      .then(function (unfilteredProjects) {
-        let projects = [];
+    })
+      .toArray();
 
-        // filter for view access
-        for (const i in unfilteredProjects) {
-          if (BrainboxAccessControlService.hasFilesAccess(AccessLevel.VIEW, unfilteredProjects[i], loggedUser)) {
-            projects.push(unfilteredProjects[i]);
-          }
-        }
+    // filter for view access, then slice
+    const visible = unfilteredProjects
+      .filter((o) => BrainboxAccessControlService.hasFilesAccess(AccessLevel.VIEW, o, loggedUser));
+    const projects = sliceOf(visible, start, length).map((o) => ({
+      project: o.shortname,
+      projectName: o.name,
+      projectURL: o.brainboxURL,
+      numFiles: o.files.list.length,
+      numCollaborators: visibleCollaborators(o, loggedUser),
+      owner: o.owner,
+      // the stored ISO date: the user page formats it, and sorts by it
+      modified: o.modified
+    }));
 
-        projects = projects.map(function (o) {
-          return {
-            project: o.shortname,
-            projectName: o.name,
-            projectURL: o.brainboxURL,
-            numFiles: o.files.list.length,
-            numCollaborators: o.collaborators.list.length,
-            owner: o.owner,
-            // the stored ISO date: the user page formats it, and sorts by it
-            modified: o.modified
-          };
-        });
-
-        if (projects.length > 0) { resolve({ success: true, list: projects }); } else { resolve({ success: false, list: [] }); }
-      })
-      .catch(function (err) {
-        console.log('ERROR:', err);
-        reject(err);
-      });
-  });
+    return { success: projects.length > 0, list: projects };
+  } catch (err) {
+    console.log('ERROR:', err);
+    throw err;
+  }
 };
 
 /**
@@ -328,13 +350,14 @@ const getFilesSlice = function getFilesSlice(req, start, length) {
 
 /**
  * @func getProjectsSlice
- * @desc Get an access-filtered slice of all projects
+ * @desc Get an access-filtered slice of all projects: one query reads them all, the ones the
+ * logged user may not view the files of are dropped, then the slice is taken (shared suite 3.2:
+ * every page full but the last, no project on two pages)
  * @param {Object} req request object
- * @param {integer} start Start index of the file slice
- * @param {integer} length Number of files to include in the slice
+ * @param {integer} start Start index of the slice
+ * @param {integer} length Number of projects in the slice
  * @returns {Object} project slice
  */
-// eslint-disable-next-line max-statements
 const getProjectsSlice = async function getProjectsSlice(req, start, length) {
   let loggedUser = 'anonymous';
   if (req.isAuthenticated()) {
@@ -342,36 +365,25 @@ const getProjectsSlice = async function getProjectsSlice(req, start, length) {
   }
 
   try {
+    // only what the access check and the rows need (not the annotations)
     const unfilteredProjects = await req.nativeDb.collection('project')
-      .find({ backup: { $exists: false } }, { skip: start, limit: length })
+      .find(
+        { backup: { $exists: false } },
+        { projection: { _id: 0, shortname: 1, name: 1, owner: 1, collaborators: 1, 'files.list': 1 } }
+      )
       .toArray();
-    let projects = [];
 
-    // filter for view access
-    for (const uproj of unfilteredProjects) {
-      if (BrainboxAccessControlService.hasFilesAccess(AccessLevel.VIEW, uproj, loggedUser)) {
-        projects.push(uproj);
-      }
-    }
+    // filter for view access, then slice
+    const visible = unfilteredProjects
+      .filter((o) => BrainboxAccessControlService.hasFilesAccess(AccessLevel.VIEW, o, loggedUser));
 
-    // constrain start and length to available data
-    start = Math.min(start, projects.length);
-    length = Math.min(length, projects.length - start);
-
-    projects = projects.slice(start, start + length);
-
-    projects = projects.map(function (o) {
-      return {
-        project: o.shortname,
-        projectName: o.name,
-        numFiles: o.files.list.length,
-        numCollaborators: o.collaborators.list.length,
-        owner: o.owner
-      };
-    });
-
-    return projects;
-
+    return sliceOf(visible, start, length).map((o) => ({
+      project: o.shortname,
+      projectName: o.name,
+      numFiles: o.files.list.length,
+      numCollaborators: visibleCollaborators(o, loggedUser),
+      owner: o.owner
+    }));
   } catch (err) {
     console.log('ERROR:', err);
     throw err;

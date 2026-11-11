@@ -174,30 +174,18 @@ const apiUserAtlas = async function (req, res) {
  * @returns {Object} Object with a list of user projects
  */
 const apiUserProjects = async function (req, res) {
-  // @todo Check access rights for this route
   const { userName } = req.params;
-  let { start, length } = req.query;
+  // optional (shared suite 3.4): no start = from the first, no length = all
+  const number = (value) => (typeof value === 'undefined' ? value : parseInt(value, 10));
+  const start = number(req.query.start);
+  const length = number(req.query.length);
 
-  console.log('userName:', userName, 'start:', start, 'length:', length);
-  if (typeof start === 'undefined') {
-    res.status(403).send({ error: 'Provide \'start\'' });
-
-    return;
+  try {
+    res.send(await dataSlices.getUserProjectsSlice(req, userName, start, length));
+  } catch (err) {
+    console.log('ERROR:', err);
+    res.send({ success: false, list: [] });
   }
-  if (typeof length === 'undefined') {
-    res.status(403).send({ error: 'Provide \'length\'' });
-
-    return;
-  }
-  start = parseInt(start);
-  length = parseInt(length);
-
-  const result = await dataSlices.getUserProjectsSlice(req, userName, start, length)
-    .catch(function (err) {
-      console.log('ERROR:', err);
-      res.send({ success: false, list: [] });
-    });
-  res.send(result);
 };
 
 const UserController = function () {

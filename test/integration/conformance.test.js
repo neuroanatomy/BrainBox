@@ -59,15 +59,10 @@ const adapter = {
     .updateOne({ nickname: username }, { $set: fields }),
   // no project search since the hotfix (approved 3.6): projectNameQuery answers taken / free only
   routes: { searchProjects: null },
-  // the approved slice 2 rules BrainBox does not follow yet (coordination tasks/proposed-shared-pm-tests.md,
-  // "Slice 2: rules for the differing rows", 2026-11-11): none since slice 2 part C
+  // the approved rules BrainBox does not follow (coordination tasks/proposed-shared-pm-tests.md, "Slice 2/3:
+  // rules for the differing rows", 2026-11-11): none for slice 2 since part C, none for slice 3 but the absent search
   expectedDifferences: {
-    'route:searchProjects': 'approved 3.6: no project search (similarProjectNamesQuery removed; projectNameQuery answers taken / free over the WebSocket)',
-    // the approved slice 3 rules BrainBox does not follow yet ("Slice 3: rules for the differing rows", 2026-11-11)
-    '3.2': 'approved 3.2: ?page pages the unfiltered projects in the query and again after filtering (short or empty pages)',
-    '3.3': 'approved 3.3: a user\'s projects match collaborator rows by userID only (a row with username only is missed)',
-    '3.4': 'approved 3.4: start/length required (403 without them); skip/limit before the access filter',
-    '3.5': 'approved 3.5: numCollaborators counts every row, hidden collaborators included'
+    'route:searchProjects': 'approved 3.6: no project search (similarProjectNamesQuery removed; projectNameQuery answers taken / free over the WebSocket)'
   }
 };
 

@@ -259,7 +259,7 @@ describe('User Controller: ', function () {
   });
 
   describe('apiUserFiles function() ', function () {
-    it('should ask for start parameter if not provided', async function () {
+    it('answers the projects without start (optional, shared suite 3.4)', async function () {
       const req = {
         nativeDb,
         params: {
@@ -286,7 +286,7 @@ describe('User Controller: ', function () {
       sinon.restore();
     });
 
-    it('should ask for length parameter if not provided', async function () {
+    it('answers the projects without length (optional, shared suite 3.4)', async function () {
       const req = {
         nativeDb,
         params: {
@@ -343,7 +343,7 @@ describe('User Controller: ', function () {
   });
 
   describe('apiUserAtlas function() ', function () {
-    it('should ask for start parameter if not provided', async function () {
+    it('answers the projects without start (optional, shared suite 3.4)', async function () {
       const req = {
         nativeDb,
         params: {
@@ -370,7 +370,7 @@ describe('User Controller: ', function () {
       sinon.restore();
     });
 
-    it('should ask for length parameter if not provided', async function () {
+    it('answers the projects without length (optional, shared suite 3.4)', async function () {
       const req = {
         nativeDb,
         params: {
@@ -427,7 +427,7 @@ describe('User Controller: ', function () {
   });
 
   describe('apiUserProjects function() ', function () {
-    it('should ask for start parameter if not provided', async function () {
+    it('answers the projects without start (optional, shared suite 3.4)', async function () {
       const req = {
         nativeDb,
         params: {
@@ -449,12 +449,14 @@ describe('User Controller: ', function () {
         send: sendSpy
       };
       await userController.apiUserProjects(req, res);
+      assert.strictEqual(res.status.callCount, 0);
       assert.strictEqual(sendSpy.callCount, 1);
-      assert.notStrictEqual(sendSpy.args, [{ error: 'Provide \'start\'' }]);
+      assert.deepStrictEqual(Object.keys(sendSpy.args[0][0]).sort(), ['list', 'success']);
+      assert.ok(Array.isArray(sendSpy.args[0][0].list));
       sinon.restore();
     });
 
-    it('should ask for length parameter if not provided', async function () {
+    it('answers the projects without length (optional, shared suite 3.4)', async function () {
       const req = {
         nativeDb,
         params: {
@@ -476,8 +478,10 @@ describe('User Controller: ', function () {
         send: sendSpy
       };
       await userController.apiUserProjects(req, res);
+      assert.strictEqual(res.status.callCount, 0);
       assert.strictEqual(sendSpy.callCount, 1);
-      assert.notStrictEqual(sendSpy.args, [{ error: 'Provide \'length\'' }]);
+      assert.deepStrictEqual(Object.keys(sendSpy.args[0][0]).sort(), ['list', 'success']);
+      assert.ok(Array.isArray(sendSpy.args[0][0].list));
       sinon.restore();
     });
 
