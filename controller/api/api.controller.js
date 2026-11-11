@@ -30,6 +30,12 @@ const userNameQuery = (req, res) => {
 
     return;
   }
+  if(typeof query.q !== 'string') {
+    // e.g. ?q[$ne]= : refused, as microdraw does (shared suite row 3.8)
+    res.status(400).send({error: 'q must be a string'});
+
+    return;
+  }
   const nativeDb = req.app.db.nativeMongoDB();
   nativeDb.collection('user')
     .find(

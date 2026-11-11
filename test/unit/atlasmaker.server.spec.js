@@ -205,26 +205,27 @@ describe('UNIT TESTING ATLASMAKER SERVER', function() {
       }
     });
 
-    it('Find project', async function () {
+    it('A shortname query answers only that the shortname is taken, never the project name', async function () {
       const data = { type: 'projectNameQuery', metadata: { name: U.projectTest.shortname } };
       const result = await AMS.queryProjectName(data);
-      assert.strictEqual(result.name, U.projectTest.name);
+      assert.deepStrictEqual(result, { taken: true });
     });
 
-    it('Find similar project names', async function () {
-      const data = {
-        type: 'similarProjectNamesQuery',
-        metadata: { projectName: U.projectTest.shortname.slice(0, 3) }
-      };
-      const result = await AMS.querySimilarProjectNames(data);
-      assert.ok(result.filter((e) => e.name === U.projectTest.name).length);
+    it('A shortname query for a free shortname answers null', async function () {
+      const data = { type: 'projectNameQuery', metadata: { name: 'no-such-project-' + Date.now() } };
+      const result = await AMS.queryProjectName(data);
+      assert.strictEqual(result, null);
+    });
+
+    it('There is no similar project names query (it listed projects without an access check)', function () {
+      assert.strictEqual(typeof AMS.querySimilarProjectNames, 'undefined');
     });
 
     it('A server built from the native db alone queries the database', async function () {
       const ams = atlasmakerServer(U.getNativeDB());
       const data = { type: 'projectNameQuery', metadata: { name: U.projectTest.shortname } };
       const result = await ams.queryProjectName(data);
-      assert.strictEqual(result.name, U.projectTest.name);
+      assert.deepStrictEqual(result, { taken: true });
     });
   });
 

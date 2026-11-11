@@ -57,6 +57,19 @@ describe('API Controller: ', function () {
       chaiAssert.deepEqual(sendSpy.args[0][0], { error: 'missing q parameter' });
     });
 
+    it('should return 400 when q is not a string', function () {
+      const sendSpy = sinon.spy();
+      const req = { query: { q: { $ne: '' } } };
+      const res = {
+        status: sinon.stub().returns({ send: sendSpy })
+      };
+
+      apiController.userNameQuery(req, res);
+
+      assert.strictEqual(res.status.calledWith(400), true);
+      chaiAssert.deepEqual(sendSpy.args[0][0], { error: 'q must be a string' });
+    });
+
     it('should query users and return results', async function () {
       const mockUsers = [
         { name: 'John', nickname: 'john' },

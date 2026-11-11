@@ -981,41 +981,30 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         }
       });
     },
+
+    /**
+     * Answers whether a project shortname is taken, for the new-project page.
+     * Only taken / free is sent: never the project's name or other fields,
+     * since the asker may have no access to the project.
+     * @param {object} data The message, with metadata.name the shortname
+     * @returns {Promise<object|null>} { taken: true }, or null when free
+     */
     queryProjectName: function (data) {
       return new Promise(function (resolve, reject) {
-        if (data.metadata && data.metadata.name) {
+        if (data.metadata && typeof data.metadata.name === 'string' && data.metadata.name) {
           nativeDb.collection('project')
             .findOne({
               shortname: data.metadata.name,
               backup: { $exists: false }
             }, {
-              projection: { name: 1, shortname: 1 }
+              projection: { _id: 1 }
             })
             .then(function (obj) {
-              resolve(obj);
-            });
+              resolve(obj ? { taken: true } : null);
+            })
+            .catch(reject);
         } else {
           reject(new Error('Bad metadata'));
-        }
-      });
-    },
-    querySimilarProjectNames: function (data) {
-      return new Promise(function (resolve, reject) {
-        if (data.metadata && data.metadata.projectName) {
-          nativeDb.collection('project')
-            .find({
-              shortname: { $regex: escapeRegex(data.metadata.projectName) },
-              backup: { $exists: false }
-            }, {
-              projection: { name: 1, shortname: 1 },
-              limit: 10
-            })
-            .toArray()
-            .then(function (obj) {
-              resolve(obj);
-            });
-        } else {
-          reject(new Error('can\'t find similar project names'));
         }
       });
     },
@@ -2559,14 +2548,6 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         break;
       case 'projectNameQuery':
         me.queryProjectName(data)
-          .then(function (obj) {
-            data.metadata = obj;
-            ws.send(JSON.stringify(data)); // sender.send(JSON.stringify(data));
-          })
-          .catch(function (err) { tracer.log(err); });
-        break;
-      case 'similarProjectNamesQuery':
-        me.querySimilarProjectNames(data)
           .then(function (obj) {
             data.metadata = obj;
             ws.send(JSON.stringify(data)); // sender.send(JSON.stringify(data));
