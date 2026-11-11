@@ -476,6 +476,8 @@ describe('Project Controller: ', function () {
         user: {
           username: 'foo'
         },
+        // the project is found by the URL's shortname (shared suite 2.6)
+        params: { projectName: projectObject.shortname },
         body: {
           data: projectObject
         },
@@ -496,6 +498,66 @@ describe('Project Controller: ', function () {
       assert.strictEqual(res.json.callCount, 1);
       assert.deepStrictEqual(res.json.args, [[{ success: true, message: 'New project inserted' }]]);
       sinon.restore();
+    });
+
+    // the settings page sends back the projectInfo it was given, edited (shared suite 2.5, 2.6, 2.18)
+    describe('what the settings page sends', function () {
+      const shortname = 'testing-settings-page';
+
+      after(async function () {
+        await nativeDb.collection('project').deleteMany({ shortname });
+      });
+
+      const settingsAs = async (username) => {
+        const render = sinon.spy();
+        await projectController.settings({
+          params: { projectName: shortname },
+          user: { username },
+          session: {},
+          originalUrl: '/project/' + shortname + '/settings',
+          isAuthenticated: () => true,
+          nativeDb
+        }, { render, status: sinon.stub().returns({ send: sinon.spy() }) });
+        sinon.restore();
+
+        return JSON.parse(render.args[0][1].projectInfo);
+      };
+      const saveAs = async (username, data) => {
+        const json = sinon.spy();
+        const send = sinon.spy();
+        await projectController.postProject({
+          params: { projectName: shortname },
+          user: { username },
+          body: { data },
+          session: {},
+          isAuthenticated: () => true,
+          nativeDb
+        }, { json, status: sinon.stub().returns({ json, send }) });
+        sinon.restore();
+
+        return json.args.concat(send.args).map((args) => args[0]);
+      };
+      const stored = () => nativeDb.collection('project').findOne({ shortname, backup: { $exists: false } });
+
+      it('creates a project with a hyphen in its shortname, owned and last modified by its creator', async function () {
+        const page = await settingsAs('foo');
+        page.name = 'Settings page';
+        page.annotations.list = [{ type: 'volume', name: 'Layer', values: 'foreground.json' }];
+        expect(await saveAs('foo', page)).to.deep.equal([{ success: true, message: 'New project inserted' }]);
+        const project = await stored();
+        expect(project).to.include({ shortname, owner: 'foo', modifiedBy: 'foo' });
+        expect(Date.parse(project.modified)).to.be.above(Date.now() - 60000);
+        expect(project).to.not.have.property('filesLoaded');
+      });
+
+      it('saves it again, keeping the stored owner whatever the page sends', async function () {
+        const page = await settingsAs('foo');
+        page.name = 'Settings page, saved again';
+        page.owner = 'bar';
+        const [answer] = await saveAs('foo', page);
+        expect(answer).to.include({ success: true });
+        expect(await stored()).to.include({ name: 'Settings page, saved again', owner: 'foo', modifiedBy: 'foo' });
+      });
     });
   });
 

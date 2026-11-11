@@ -58,15 +58,11 @@ const adapter = {
   // "Slice 2: rules for the differing rows", 2026-11-11): its fixes to come
   expectedDifferences: {
     '2.4': 'approved 2.4: rows changed in place without edit on that list are stored (lengths only)',
-    '2.5': 'approved 2.5: the owner is taken from the body (required, stored as sent)',
-    '2.6': 'approved 2.6: the body shortname is used, not the URL; the URL validator refuses hyphens (403)',
     '2.9': 'approved 2.9: every row must exist on every save (a removed user blocks it)',
     '2.10': 'approved 2.10: layer names not checked; other layer types accepted next to a volume',
     '2.12': 'approved 2.12: DOMPurify on the JSON string (markup breaks it: 500; "&" becomes "&amp;")',
     '2.14': 'approved 2.14: every row validated, blank new rows refused',
-    '2.15': 'approved 2.15: a client backup key is stored (project hidden), a client _id is stored on update',
-    '2.17': 'approved 2.17: the body is stored as the new version, stored fields not sent are lost',
-    '2.18': 'approved 2.18: modified/modifiedBy not set on creation'
+    '2.17': 'approved 2.17: the body is stored as the new version, stored fields not sent are lost'
   }
 };
 

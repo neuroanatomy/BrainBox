@@ -20,9 +20,13 @@ const { window } = (new JSDOM('', {
 }));
 const DOMPurify = createDOMPurify(window);
 
+// a new project's shortname: letters, numbers and hyphens (shared suite 2.6, 2026-11-11)
+const shortnamePattern = /^[a-zA-Z0-9-]+$/;
+
 const validator = async function (req, res, next) {
 
-  await param('projectName', 'incorrect project name').isAlphanumeric()
+  // hyphens allowed, as in a new project's shortname (shared suite 2.6, 2026-11-11; was alphanumeric only)
+  await param('projectName', 'incorrect project name').matches(shortnamePattern)
     .run(req);
   // req.checkQuery('url', 'please enter a valid URL')
   // .isURL();
@@ -44,19 +48,19 @@ const validator = async function (req, res, next) {
  * @func isProjectObject
  * @param {Object} req Express req object
  * @param {Object} res Express res object
- * @param {Object} object Project definition object
+ * @param {Object} object Project definition object, its owner already set by the server
+ * @param {Object} params { shortname: the name in the URL, isNew: true if no project is stored under it }
  * @returns {Promise} true if the project is valid
  * @todo object.annotations??
  */
 // eslint-disable-next-line max-statements, complexity
-const isProjectObject = async function (req, res, object) {
+const isProjectObject = async function (req, res, object, { shortname, isNew }) {
   // var goodOwner = false;
   // var goodCollaborators = false;
 
   // eslint-disable-next-line max-statements, complexity
   let arr;
   const allowed = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,_- \'–:;'.split('');
-  const allowedAlphanumericHyphen = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-'.split('');
 
   // 1. Synchronous checks
   //----------------------
@@ -93,17 +97,21 @@ const isProjectObject = async function (req, res, object) {
   }
   console.log('> name ok');
 
-  // check that owner and shortname are present
-  if (!object.owner || !object.shortname) {
-    throw (new Error('Invalid owner or project shortname, not present'));
+  // the shortname: the one in the URL, which finds the stored project (shared suite 2.6,
+  // 2026-11-11; the body's was used, the URL ignored). Only a new one is checked for its
+  // characters: a stored project keeps working whatever its shortname
+  if (object.shortname !== shortname) {
+    throw (new Error('The project shortname in the data differs from the one in the URL'));
   }
-  console.log('> owner and project shortname present');
+  if (isNew && !shortnamePattern.test(shortname)) {
+    throw (new Error('The project shortname can only contain letters, numbers and hyphens'));
+  }
+  console.log('> project shortname valid');
 
-  // check that shortname is alphanumeric
-  if (!validatorNPM.isWhitelisted(object.owner, allowedAlphanumericHyphen) || !validatorNPM.isWhitelisted(object.shortname, allowedAlphanumericHyphen)) {
-    throw (new Error('Invalid owner or project shortname, not alphanumeric'));
+  // the owner is set by the server (shared suite 2.5): the stored one, or the creator
+  if (!object.owner) {
+    throw (new Error('The project has no owner'));
   }
-  console.log('> owner and project shortname valid');
 
   // convenience array for collaborator checks
   arr = object.collaborators.list;
@@ -609,24 +617,43 @@ const postProject = async function (req, res) {
     return;
   }
   let k;
+  // the stored project is found by the URL's shortname, which the body must equal (shared suite 2.6)
+  const shortname = req.params.projectName;
+  if (obj && typeof obj === 'object') {
+    // the database id and the backup flag are the server's: a client backup: true would hide
+    // the version saved, a client _id would be stored (shared suite 2.15, 2026-11-11)
+    delete obj._id;
+    delete obj.backup;
+  }
 
   // eslint-disable-next-line max-statements
   await lock.acquire(['project', 'mri'], async function () {
     console.log('enter lock block');
+    let oldProject;
+    try {
+      oldProject = await req.nativeDb.collection('project').findOne({ shortname, backup: { $exists: false } }, { projection: { _id: 0 } });
+    } catch (error) {
+      console.log('ERROR', error);
+      res.status(500).json({ error: error.message });
+
+      return;
+    }
     let object;
     try {
-      object = await isProjectObject(req, res, obj);
+      if (obj && typeof obj === 'object') {
+        // the owner is never the client's: the stored one, or the creator (shared suite 2.5, 2026-11-11)
+        obj.owner = oldProject ? oldProject.owner : loggedUser;
+      }
+      object = await isProjectObject(req, res, obj, { shortname, isNew: !oldProject });
     } catch (err) {
       console.error(err.message);
       res.status(400).send({ error: err.message });
 
       return;
     }
-    const oldProject = await req.nativeDb.collection('project').findOne({ shortname: object.shortname, backup: { $exists: false } }, { projection: { _id: 0 } })
-      .catch(function (error) {
-        console.log('ERROR', error);
-        res.status(300).json({ 'error': error });
-      });
+    // set by the server on every save, creation included (shared suite 2.18, 2026-11-11; was on update only)
+    object.modified = (new Date()).toJSON();
+    object.modifiedBy = loggedUser;
     // update/insert project
     if (oldProject) {
       // project exists, save update
@@ -671,9 +698,6 @@ const postProject = async function (req, res) {
         }
       });
 
-      object.modified = (new Date()).toJSON();
-      object.modifiedBy = req.user.username;
-
       console.log('updating...');
       await req.nativeDb.collection('project').updateMany({ shortname: object.shortname }, { $set: { backup: true } });
       await req.nativeDb.collection('project').insertOne(object);
@@ -698,19 +722,17 @@ const postProject = async function (req, res) {
     } else {
       // new project, insert
       console.log('inserting...');
-      delete obj.filesLoaded;
+      delete object.filesLoaded;
       console.log('insert mri names');
-      await insertMRInames(req, res, obj.files.list);
+      await insertMRInames(req, res, object.files.list);
 
       // reformat file list
       console.log('reformat file list');
-      for (k = 0; k < obj.files.list.length; k++) {
-        obj.files.list[k] = obj.files.list[k].source;
+      for (k = 0; k < object.files.list.length; k++) {
+        object.files.list[k] = object.files.list[k].source;
       }
 
-      delete object._id;
-
-      await req.nativeDb.collection('project').insertOne(obj);
+      await req.nativeDb.collection('project').insertOne(object);
 
       console.log('success: true');
       res.json({ success: true, message: 'New project inserted' });
