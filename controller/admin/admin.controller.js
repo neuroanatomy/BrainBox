@@ -142,7 +142,8 @@ const adminPage = (req, res) => {
   const username = requestUsername(req);
   if (!username) {
     req.session.returnTo = req.originalUrl;
-    res.render('askForLogin', {
+    // 401 with the login prompt, as microdraw (shared suite 5.2)
+    res.status(401).render('askForLogin', {
       title: 'BrainBox: Admin',
       functionality: 'use the admin tools',
       login: '<a href=\'/auth/github\'>Log in with GitHub</a>'

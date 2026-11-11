@@ -177,7 +177,7 @@ describe('Sessions with NeuroWebLab 0.2.0', function () {
 
       // anonymous: asked to log in; with the token: known, but not an admin
       res = await chai.request(U.serverURL).get('/admin');
-      assert.equal(res.statusCode, 200);
+      assert.equal(res.statusCode, 401);
       res = await chai.request(U.serverURL).get('/admin')
         .query({ token });
       assert.equal(res.statusCode, 403);

@@ -99,7 +99,7 @@ describe('TESTING THE /admin ROUTE', function () {
   describe('Access', function () {
     it('asks anonymous users to log in on the admin page', async function () {
       const res = await chai.request(U.serverURL).get('/admin');
-      assert.equal(res.statusCode, 200);
+      assert.equal(res.statusCode, 401);
       assert.include(res.text, 'use the admin tools');
       assert.notInclude(res.text, 'admin-page.js');
     });
