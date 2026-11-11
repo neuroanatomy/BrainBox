@@ -1,10 +1,10 @@
 /**
- * NeuroWebLab's shared project-management suite, slices 1 (access matrix) and
- * 2 (create, save, delete, validation, versions), against the server
+ * NeuroWebLab's shared project-management suite, slices 1 (access matrix),
+ * 2 (create, save, delete, validation, versions) and 3 (listings and search), against the server
  * test/runner.js started (test/integration/*.js runs it with the rest)
  * (neuroweblab/conformance/README.md).
  */
-const { accessMatrix, projectLifecycle } = require('neuroweblab/conformance');
+const { accessMatrix, projectLifecycle, projectListings } = require('neuroweblab/conformance');
 const U = require('../utils.js');
 
 const db = () => U.getNativeDB();
@@ -54,10 +54,23 @@ const adapter = {
       return ((body.mri && body.mri.atlas) || []).some((a) => a.project === shortname);
     }
   },
+  // slice 3 (3.7): a name and an email for a user
+  setUserFields: (username, fields) => db().collection('user')
+    .updateOne({ nickname: username }, { $set: fields }),
+  // no project search since the hotfix (approved 3.6): projectNameQuery answers taken / free only
+  routes: { searchProjects: null },
   // the approved slice 2 rules BrainBox does not follow yet (coordination tasks/proposed-shared-pm-tests.md,
   // "Slice 2: rules for the differing rows", 2026-11-11): none since slice 2 part C
-  expectedDifferences: {}
+  expectedDifferences: {
+    'route:searchProjects': 'approved 3.6: no project search (similarProjectNamesQuery removed; projectNameQuery answers taken / free over the WebSocket)',
+    // the approved slice 3 rules BrainBox does not follow yet ("Slice 3: rules for the differing rows", 2026-11-11)
+    '3.2': 'approved 3.2: ?page pages the unfiltered projects in the query and again after filtering (short or empty pages)',
+    '3.3': 'approved 3.3: a user\'s projects match collaborator rows by userID only (a row with username only is missed)',
+    '3.4': 'approved 3.4: start/length required (403 without them); skip/limit before the access filter',
+    '3.5': 'approved 3.5: numCollaborators counts every row, hidden collaborators included'
+  }
 };
 
 accessMatrix(adapter);
 projectLifecycle(adapter);
+projectListings(adapter);
