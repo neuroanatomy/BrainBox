@@ -388,9 +388,10 @@ describe('TESTING PERMISSIONS', function () {
       it(`Checks that collaborators can add project annotations if set to add or remove (${userStatus})`, async function() {
         let project = projects.collaboratorseditfileseditannotationsadd;
         let initialProjectState = _.cloneDeep(project);
+        // one name per run: the project is shared by the runs, and a layer named as another is refused (shared suite 2.10)
         project.annotations.list.push({
           type: 'text',
-          name: 'Annotation name',
+          name: `Annotation name (${userStatus})`,
           values: null
         });
         let res = await post('/project/json/' + project.shortname, userStatus)
@@ -401,9 +402,10 @@ describe('TESTING PERMISSIONS', function () {
 
         project = projects.collaboratorseditfileseditannotationsremove;
         initialProjectState = _.cloneDeep(project);
+        // one name per run: the project is shared by the runs, and a layer named as another is refused (shared suite 2.10)
         project.annotations.list.push({
           type: 'text',
-          name: 'Annotation name',
+          name: `Annotation name (${userStatus})`,
           values: null
         });
         res = await post('/project/json/' + project.shortname, userStatus)

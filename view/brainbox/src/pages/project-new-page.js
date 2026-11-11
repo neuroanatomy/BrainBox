@@ -6,6 +6,7 @@ import { createApp, ref } from 'vue';
 import Config from './../../../../cfg.json';
 import { NewProjectPage } from 'nwl-components';
 import config from '../nwl-components-config';
+import { isShortnameInput } from '../../../shared/projectShortname.js';
 
 let host;
 if(Config.secure) {
@@ -23,8 +24,8 @@ const NewPage = {
       >
         A project contains a list of MRI files, a set of volume or
         text annotations, and a list of collaborators with their access rights.
-        The short name of a project can only contain letters and numbers, but
-        you can choose a longer display name later.
+        The short name of a project can only contain letters, numbers and
+        hyphens, but you can choose a longer display name later.
       </NewProjectPage>
     `,
   setup() {
@@ -57,7 +58,7 @@ const NewPage = {
       validInput,
       checkInput(event) {
         existingProject.value = false;
-        validInput.value = (/^[a-zA-Z0-9]*$/).test(event.target.value);
+        validInput.value = isShortnameInput(event.target.value);
         ws.send(JSON.stringify({ 'type': 'projectNameQuery', 'metadata': { 'name': event.target.value } }));
       }
     };

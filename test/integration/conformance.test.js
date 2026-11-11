@@ -55,11 +55,8 @@ const adapter = {
     }
   },
   // the approved slice 2 rules BrainBox does not follow yet (coordination tasks/proposed-shared-pm-tests.md,
-  // "Slice 2: rules for the differing rows", 2026-11-11): its fixes to come
-  expectedDifferences: {
-    '2.10': 'approved 2.10: layer names not checked; other layer types accepted next to a volume',
-    '2.12': 'approved 2.12: DOMPurify on the JSON string (markup breaks it: 500; "&" becomes "&amp;")'
-  }
+  // "Slice 2: rules for the differing rows", 2026-11-11): none since slice 2 part C
+  expectedDifferences: {}
 };
 
 accessMatrix(adapter);

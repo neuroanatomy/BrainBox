@@ -21,9 +21,47 @@ const { window } = (new JSDOM('', {
 }));
 const DOMPurify = createDOMPurify(window);
 
-// the sanitising of the body (postProject), also applied to stored values compared with it
-const sanitizeValue = (value) => (typeof value === 'undefined' ? value : JSON.parse(DOMPurify.sanitize(JSON.stringify(value))));
+/**
+ * Plain text of a string: markup removed, text kept. A string without "<" holds no markup and is
+ * kept as it is, "&" included. As microdraw's plainText (app/controller/project/project.validation.js)
+ * @param {string} str A string
+ * @returns {string} The string without markup
+ */
+const plainText = (str) => {
+  if (!str.includes('<')) {
+    return str;
+  }
+
+  return DOMPurify.sanitize(str, { ALLOWED_TAGS: [], KEEP_CONTENT: true, RETURN_DOM_FRAGMENT: true }).textContent;
+};
+
+/**
+ * The sanitising of the body (postProject) and of the MRI documents it writes, also applied to
+ * the stored values compared with it: every string one by one, as text (shared suite 2.12,
+ * 2026-11-11; DOMPurify ran on the whole JSON string, so markup in a field could break it, and
+ * "&" became "&amp;" in every field once any field held a "<")
+ * @param {*} value A value parsed from JSON
+ * @returns {*} A copy, its strings sanitised
+ */
+const sanitizeValue = (value) => {
+  if (typeof value === 'string') {
+    return plainText(value);
+  }
+  if (Array.isArray(value)) {
+    return value.map(sanitizeValue);
+  }
+  if (_.isPlainObject(value)) {
+    return _.mapValues(value, sanitizeValue);
+  }
+
+  return value;
+};
 const text = (v) => ((v === null || typeof v === 'undefined') ? '' : v);
+
+// the layer types of BrainBox's pages: the settings page offers volume and text, the project
+// page shows text, multiple choices and hidden text layers (view/brainbox/src/brainbox.js
+// annotationType)
+const layerTypes = ['volume', 'text', 'multiple choices', 'hidden text'];
 
 // a new project's shortname: letters, numbers and hyphens (shared suite 2.6, 2026-11-11)
 const shortnamePattern = /^[a-zA-Z0-9-]+$/;
@@ -168,6 +206,28 @@ const isProjectObject = async function (req, res, object, { shortname, oldProjec
     throw (new Error('Access values are invalid'));
   }
   console.log('> Access values ok');
+
+  // the new or changed layers: one of BrainBox's types, a name, not the name of another layer
+  // ignoring case and surrounding spaces (shared suite 2.10, 2026-11-11; only the presence of a
+  // volume layer was checked). Stored layers are accepted as they are (2.14)
+  const layers = object.annotations.list;
+  const nameKey = (a) => (_.isPlainObject(a) && typeof a.name === 'string' ? a.name.trim().toLowerCase() : '');
+  for (const [i, layer] of layers.entries()) {
+    if (stored.annotations.has(i)) {
+      continue;
+    }
+    if (!_.isPlainObject(layer) || !layerTypes.includes(layer.type)) {
+      throw (new Error(`Layer ${i + 1} has an invalid type (allowed: ${layerTypes.join(', ')})`));
+    }
+    if (nameKey(layer) === '') {
+      throw (new Error(`Layer ${i + 1} needs a name`));
+    }
+    const same = layers.findIndex((other, k) => k !== i && (k < i || stored.annotations.has(k)) && nameKey(other) === nameKey(layer));
+    if (same >= 0) {
+      throw (new Error(`Layer ${i + 1} has the same name as layer ${same + 1}: "${layer.name.trim()}" (names are compared ignoring case)`));
+    }
+  }
+  console.log('> layers ok');
 
   // check that the list of annotations contains at least 1 volume-type entry
   flag = false;
@@ -577,8 +637,8 @@ const insertMRInames = function (req, res, list) {
     }
     */
 
-    // sanitise json
-    mri = JSON.parse(DOMPurify.sanitize(JSON.stringify(mri))); // sanitize works on strings, not objects
+    // sanitise each string (2.12): a source with "&" is kept as it is
+    mri = sanitizeValue(mri);
 
     // update and insert
     await req.nativeDb.collection('mri').updateMany({ source: mri.source }, { $set: { backup: true } });
@@ -645,19 +705,9 @@ const postProject = async function (req, res) {
     return;
   }
 
-  const payload = JSON.stringify(req.body.data);
-  const clean = DOMPurify.sanitize(payload);
-  let obj;
-  try {
-    obj = JSON.parse(clean);
-  } catch (err) {
-    console.log('ERROR');
-    console.log({ clean, obj });
-    // an invalid document is the client's error (shared suite 2.13, 2026-11-11; was 500)
-    res.status(400).send({ error: err.message });
-
-    return;
-  }
+  // each string sanitised as text (shared suite 2.12); a document that is not a project is
+  // refused by isProjectObject, with a 400 (2.13)
+  let obj = sanitizeValue(req.body.data);
   // the stored project is found by the URL's shortname, which the body must equal (shared suite 2.6)
   const shortname = req.params.projectName;
   if (obj && typeof obj === 'object') {

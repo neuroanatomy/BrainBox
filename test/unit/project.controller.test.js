@@ -672,6 +672,124 @@ describe('Project Controller: ', function () {
         expect((await storedProject(shortname)).collaborators.list[1].access).to.deep.equal(oldRow.access);
       });
     });
+
+    // strings are sanitised one by one, as text (2.12): "&" was turned into "&amp;" in every field
+    describe('the settings page saving sources with "&"', function () {
+      const shortname = 'testing-ampersand';
+      const sources = [
+        'https://example.org/testing-ampersand/scan.nii.gz?a=1&b=2',
+        // stored by the old sanitising
+        'https://example.org/testing-ampersand/old.nii.gz?a=1&amp;b=2'
+      ];
+      const added = 'https://example.org/testing-ampersand/new.nii.gz?a=1&b=2';
+      const loadedFiles = () => [{ source: sources[0], name: 'Scan' }, { source: sources[1], name: 'Old' }];
+      const currentMRI = (source) => nativeDb.collection('mri').findOne({ source, backup: { $exists: false } });
+
+      before(async function () {
+        await nativeDb.collection('project').deleteMany({ shortname });
+        await nativeDb.collection('mri').deleteMany({ source: { $regex: '^https://example\\.org/testing-ampersand/' } });
+        await nativeDb.collection('project').insertOne({
+          ..._.cloneDeep(_.omit(U.projectTest, ['collaborators', 'annotations'])),
+          shortname,
+          brainboxURL: '/project/' + shortname,
+          owner: 'foo',
+          collaborators: { list: [{ userID: 'anyone', nickname: 'anyone', access: { collaborators: 'view', annotations: 'edit', files: 'view' } }] },
+          // a layer named by the old sanitising
+          annotations: { list: [{ type: 'volume', name: 'R&amp;D', values: 'foreground.json' }] },
+          files: { list: sources }
+        });
+        await nativeDb.collection('mri').insertMany([
+          { source: sources[0], name: 'Scan', mri: { atlas: [] } },
+          { source: sources[1], name: 'Old', mri: { atlas: [] } }
+        ]);
+      });
+
+      after(async function () {
+        await nativeDb.collection('project').deleteMany({ shortname });
+        await nativeDb.collection('mri').deleteMany({ source: { $regex: '^https://example\\.org/testing-ampersand/' } });
+      });
+
+      it('saves the stored sources and layer again unchanged, "&amp;" included', async function () {
+        const page = await settingsAs(shortname, 'foo');
+        page.files.list = loadedFiles();
+        page.filesLoaded = { count: 2 };
+        page.name = 'Saved with ampersands';
+        // markup anywhere in the body made the old sanitising escape "&" in every field
+        page.annotations.list.push({ type: 'text', name: 'Notes <i>new</i>', values: '' });
+        const [answer] = await saveAs(shortname, 'foo', page);
+        expect(answer).to.include({ success: true });
+        const project = await storedProject(shortname);
+        expect(project.files.list).to.deep.equal(sources);
+        expect(project.annotations.list.map((a) => a.name)).to.deep.equal(['R&amp;D', 'Notes new']);
+        expect(await currentMRI(sources[0])).to.include({ name: 'Scan' });
+        expect(await currentMRI(sources[1])).to.include({ name: 'Old' });
+      });
+
+      it('stores a new source with "&" unchanged', async function () {
+        const page = await settingsAs(shortname, 'foo');
+        page.files.list = [...loadedFiles(), { source: added, name: 'New <b>scan</b>' }];
+        page.filesLoaded = { count: 2 };
+        const [answer] = await saveAs(shortname, 'foo', page);
+        expect(answer).to.include({ success: true });
+        expect((await storedProject(shortname)).files.list).to.deep.equal([...sources, added]);
+        expect(await currentMRI(added)).to.include({ source: added, name: 'New scan' });
+      });
+    });
+
+    // names non-empty, no duplicates ignoring case; BrainBox's layer types (2.10); stored layers as they are (2.14)
+    describe('the settings page saving layers', function () {
+      const shortname = 'testing-layers';
+
+      beforeEach(async function () {
+        await nativeDb.collection('project').deleteMany({ shortname });
+        await nativeDb.collection('project').insertOne({
+          ..._.cloneDeep(_.omit(U.projectTest, ['collaborators', 'files', 'annotations'])),
+          shortname,
+          brainboxURL: '/project/' + shortname,
+          owner: 'foo',
+          collaborators: { list: [{ userID: 'anyone', nickname: 'anyone', access: { collaborators: 'view', annotations: 'edit', files: 'view' } }] },
+          // stored before names were checked
+          annotations: { list: [{ type: 'volume', name: 'Layer', values: 'foreground.json' }, { type: 'text', name: 'layer', values: '' }] },
+          files: { list: [] }
+        });
+      });
+
+      after(async function () {
+        await nativeDb.collection('project').deleteMany({ shortname });
+      });
+
+      it('saves the stored layers, named alike, and new text layers', async function () {
+        const page = await settingsAs(shortname, 'foo');
+        page.annotations.list.push(
+          { type: 'text', name: 'Notes', values: '' },
+          { type: 'multiple choices', name: 'Quality', values: 'good, bad' },
+          { type: 'hidden text', name: 'Hidden', values: '' }
+        );
+        const [answer] = await saveAs(shortname, 'foo', page);
+        expect(answer).to.include({ success: true });
+        expect((await storedProject(shortname)).annotations.list.map((a) => a.name)).to.deep.equal(['Layer', 'layer', 'Notes', 'Quality', 'Hidden']);
+      });
+
+      it('refuses a layer renamed as another, ignoring case', async function () {
+        const page = await settingsAs(shortname, 'foo');
+        page.annotations.list[1].name = ' LAYER ';
+        const [answer] = await saveAs(shortname, 'foo', page);
+        expect(answer).to.have.property('error').that.includes('same name');
+        expect((await storedProject(shortname)).annotations.list[1].name).to.equal('layer');
+      });
+
+      it('refuses a layer of an unknown type, or without a name', async function () {
+        for (const layer of [{ type: 'nosuchtype', name: 'Other', values: '' }, { type: 'volume', name: ' ', values: 'foreground.json' }]) {
+          // eslint-disable-next-line no-await-in-loop
+          const page = await settingsAs(shortname, 'foo');
+          page.annotations.list.push(layer);
+          // eslint-disable-next-line no-await-in-loop
+          const [answer] = await saveAs(shortname, 'foo', page);
+          expect(answer).to.have.property('error');
+        }
+        expect((await storedProject(shortname)).annotations.list).to.have.length(2);
+      });
+    });
   });
 
   describe('deleteProject function() ', function () {

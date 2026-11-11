@@ -26,7 +26,8 @@ const project = {
     'list': [
       {
         'type': 'volume',
-        'name': null,
+        // a new layer needs a name (shared suite 2.10)
+        'name': 'Cerebellum',
         'values': 'cerebellum.json',
         'display': 'true'
       }
