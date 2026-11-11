@@ -187,7 +187,9 @@ describe('UNIT TESTING WEBSOCKET WRITE ACCESS', function () {
     });
 
     it('a layer without a project, or whose project is gone: the stored access', async function () {
-      expect(await level(null, 'public.nii.gz')).to.equal('edit');
+      expect(await level('editor', 'public.nii.gz')).to.equal('edit');
+      // a logged-out visitor only views (shared suite 4.4)
+      expect(await level(null, 'public.nii.gz')).to.equal('view');
       expect(await level('editor', 'viewonly.nii.gz')).to.equal('view');
       expect(await level('editor', 'orphan.nii.gz')).to.equal('view');
     });
@@ -251,8 +253,14 @@ describe('UNIT TESTING WEBSOCKET WRITE ACCESS', function () {
       expect(appliedWrites(sourceUS)).to.deep.equal([]);
     });
 
-    it('applies the writes of an anonymous user on a layer anyone can edit', async function () {
+    it('refuses the writes of an anonymous user on a layer anyone can edit (shared suite 4.4)', async function () {
       const sourceUS = await openAtlas({ filename: 'public.nii.gz' });
+      expect(appliedWrites(sourceUS)).to.deep.equal([]);
+      expect(sourceUS.writeAccess[dirname + 'public.nii.gz'].reason).to.equal('log in to edit this layer');
+    });
+
+    it('applies the writes of a logged-in user on a layer anyone can edit', async function () {
+      const sourceUS = await openAtlas({ cookie: 'connect.sid=bar', username: 'bar', filename: 'public.nii.gz' });
       expect(appliedWrites(sourceUS)).to.deep.equal(allWrites);
     });
 
@@ -263,7 +271,7 @@ describe('UNIT TESTING WEBSOCKET WRITE ACCESS', function () {
 
     it('checks the atlas actually written, not the one the client says it has open', async function () {
       // allowed on the public layer, then points iAtlas at a view-only one
-      const sourceUS = await openAtlas({ filename: 'public.nii.gz' });
+      const sourceUS = await openAtlas({ cookie: 'connect.sid=bar', username: 'bar', filename: 'public.nii.gz' });
       AMS.Atlases.a2 = { dirname, filename: 'viewonly.nii.gz', data: Buffer.alloc(8), dim: [2, 2, 2] };
       AMS.receiveUserDataMessage({ uid: sourceUS.uid, description: JSON.stringify({ iAtlas: 'a2' }) }, sourceUS.socket);
       const paint = sinon.stub(AMS, 'receivePaintMessage');

@@ -5,6 +5,7 @@ const { body, validationResult } = require('express-validator');
 const amri = require('../atlasmakerServer/atlasmaker-mri');
 const { AccessType } = require('neuroweblab');
 const { projectAccessLevel } = require('../atlasmakerServer/metadata-save-access');
+const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 const { filterMriForUser } = require('./mri-access');
 const AsyncLock = require('async-lock');
 const lock = new AsyncLock();
@@ -86,11 +87,13 @@ const removeUploadedFiles = async function (req) {
  */
 const projectAccessForUpload = async function (req, res, username) {
   const { atlasProject } = req.body;
-  const project = await req.nativeDb.collection('project').findOne({ shortname: atlasProject, backup: { $exists: false } });
+  // a logged-out visitor (a token without a user) never writes annotations (shared suite 4.4)
+  const loggedOut = BrainboxAccessControlService.isLoggedOut(username);
+  const project = loggedOut ? null : await req.nativeDb.collection('project').findOne({ shortname: atlasProject, backup: { $exists: false } });
   if (!project) {
-    console.log(`REJECTED upload by ${username}: no project ${atlasProject}`);
+    console.log(`REJECTED upload by ${username}: ${loggedOut ? 'no user' : `no project ${atlasProject}`}`);
     await removeUploadedFiles(req);
-    res.status(404).json({ error: `There is no project '${atlasProject}'` });
+    res.status(loggedOut ? 401 : 404).json({ error: loggedOut ? 'Log in to upload a layer' : `There is no project '${atlasProject}'` });
 
     return null;
   }

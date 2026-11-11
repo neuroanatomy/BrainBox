@@ -109,10 +109,14 @@ const shownName = (i) => FILES[i].name;
  * request for the files from the 20th on is held until `release()` is called, if `hold`.
  * @param {Object} browser A puppeteer browser
  * @param {boolean} [hold] Hold the second page of files
+ * @param {Array<Object>} [cookies] The session cookies of a logged-in user (else logged out)
  * @returns {Promise<Object>} { page, pageErrors, release }
  */
-const openPage = async (browser, hold = false) => {
+const openPage = async (browser, hold = false, cookies = []) => {
   const page = await browser.newPage();
+  if (cookies.length > 0) {
+    await page.setCookie(...cookies);
+  }
   await page.setViewport({ width: 1400, height: 1000 });
   const pageErrors = [];
   page.on('pageerror', (err) => pageErrors.push(err.message));
@@ -157,6 +161,7 @@ const recordLoads = (page) => page.evaluate(() => {
 describe('Project page: sortable files table', function () {
   let browser;
   let opened;
+  let cookies;
 
   // the Name of every row, top to bottom
   const names = () => opened.page.$$eval('#projectFiles tbody tr', (trs) => trs.map((tr) => tr.cells[0].textContent));
@@ -174,6 +179,13 @@ describe('Project page: sortable files table', function () {
       .insertOne(project());
     await db().collection('mri')
       .insertMany(FILES.map(mriDocument));
+    // a logged-out visitor does not write annotations, even where anyone may edit them (shared suite 4.4)
+    const agent = chai.request.agent(U.serverURL);
+    await agent.post('/localSignup')
+      .send(U.testingCredentials);
+    const res = await agent.post('/localLogin').redirects(0)
+      .send(U.testingCredentials);
+    cookies = U.parseCookies(res.headers['set-cookie'][0]);
     browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
   });
 
@@ -275,8 +287,8 @@ describe('Project page: sortable files table', function () {
   }).timeout(U.longTimeout);
 
   // eslint-disable-next-line max-statements
-  it('saves an edit made after a sort to that row\'s file, in the stored document, and keeps the row in place', async function () {
-    opened = await openPage(browser);
+  it('saves an edit made after a sort to that row\'s file, in the stored document, and keeps the row in place (logged in)', async function () {
+    opened = await openPage(browser, false, cookies);
     await recordLoads(opened.page);
     await opened.page.waitForFunction(() => AtlasMakerWidget.flagConnected === 1, { timeout: U.mediumTimeout });
     await clickHeader('Notes');

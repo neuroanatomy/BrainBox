@@ -77,8 +77,9 @@ const atlasAccessLevel = async (nativeDb, { username, dirname, filename, source 
     }
   }
 
-  // no project: the access stored with the atlas, as the HTTP API sends it
-  return accessLevels.includes(atlas.access) ? atlas.access : 'none';
+  // no project: the access stored with the atlas, as the HTTP API sends it (a
+  // logged-out visitor only views)
+  return accessLevels.includes(atlas.access) ? BrainboxAccessControlService.storedLayerAccess(atlas.access, username) : 'none';
 };
 
 /**

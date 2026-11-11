@@ -17,6 +17,10 @@ const { assert } = chai;
 const chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 const U = require('../utils.js');
+const F = require('../mri-access-fixtures.js');
+
+// logged in: a logged-out visitor does not paint (shared suite 4.4)
+const PAINTER = 'pointer-painter';
 
 const SCROLL = 60;
 
@@ -26,6 +30,7 @@ const openViewer = async (browser) => {
   const pageErrors = [];
   page.on('pageerror', (err) => pageErrors.push(err.message));
   await U.blockExternalRequests(page);
+  await page.setCookie(F.browserCookie(PAINTER));
   await page.goto(`${U.serverURL}/mri?url=${U.localBertURL}`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(
     () => window.AtlasMakerWidget && AtlasMakerWidget.brainImg && AtlasMakerWidget.brainImg.img &&
@@ -112,6 +117,7 @@ describe('TESTING MOUSE AND TOUCH ON THE VIEWER', function () {
     // eslint-disable-next-line no-invalid-this
     this.timeout(U.longTimeout);
     browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    await F.addSession(PAINTER);
   });
 
   beforeEach(async function () {
@@ -129,6 +135,7 @@ describe('TESTING MOUSE AND TOUCH ON THE VIEWER', function () {
     // eslint-disable-next-line no-invalid-this
     this.timeout(U.longTimeout);
     if (browser) { await browser.close(); }
+    await F.removeSession(PAINTER);
     const res = await chai.request(U.serverURL).get('/mri/json')
       .query({ url: U.localBertURL });
     if (res.body && res.body.url) {

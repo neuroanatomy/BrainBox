@@ -2286,8 +2286,9 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           const level = await atlasAccessLevel(nativeDb, { username, ...target });
           entry.allowed = canEdit(level);
           entry.description = `${username || 'anonymous'} has '${level}' access`;
-          // what the user is told: about their own access only
-          entry.reason = `your access to this layer is '${level}'`;
+          // what the user is told: about their own access only (a logged-out
+          // visitor never writes: shared suite 4.4)
+          entry.reason = username ? `your access to this layer is '${level}'` : 'log in to edit this layer';
         } catch (err) {
           tracer.log(`ERROR: Can't check the access of ${sourceUS.uid} to ${key}`, err);
           entry.allowed = false;

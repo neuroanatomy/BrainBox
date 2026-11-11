@@ -196,10 +196,9 @@ const adapter = {
   // no project search since the hotfix (approved 3.6): projectNameQuery answers taken / free only
   routes: { searchProjects: null },
   // the approved rules BrainBox does not follow (coordination tasks/proposed-shared-pm-tests.md, "Slice 2/3/4:
-  // rules for the differing rows", 2026-11-11): none for slice 2 since part C, none for slice 3 but the absent search
+  // rules for the differing rows", 2026-11-11): none for slice 2 since part C, none for slices 3 and 4 but the absent search
   expectedDifferences: {
-    'route:searchProjects': 'approved 3.6: no project search (similarProjectNamesQuery removed; projectNameQuery answers taken / free over the WebSocket)',
-    '4.4': 'approved 4.4: a logged-out visitor paints and saves where anyone may edit the annotations (atlas-write-access.js atlasAccessLevel, username || \'anonymous\')'
+    'route:searchProjects': 'approved 3.6: no project search (similarProjectNamesQuery removed; projectNameQuery answers taken / free over the WebSocket)'
   }
 };
 

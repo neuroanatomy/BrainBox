@@ -16,12 +16,14 @@ const { assert } = require('chai');
 const WebSocket = require('ws');
 const puppeteer = require('puppeteer');
 const U = require('../utils.js');
+const F = require('../mri-access-fixtures.js');
 
 const wshost = U.wsURL;
 
 const shortname = 'wswriteaccesstest';
 const atlasFilename = 'ws-write-access-test.nii.gz';
 const sid = 'brainbox-test-ws-write-access-session';
+const LAYER_EDITOR = 'ws-write-access-layer-editor';
 
 /* express-session's signed cookie, with NeuroWebLab's secret (as in session.test.js) */
 const SESSION_SECRET = process.env.SESSION_SECRET || 'a mi no me gusta la sémola';
@@ -221,7 +223,9 @@ const renameOnMRIPage = async (browser) => {
 const editWhileDisconnected = async (browser) => {
   const AMS = U.getAtlasmakerServer();
   const known = new Set(AMS.US);
-  const page = await browser.newPage();
+  // a logged-in user who owns neither the MRI nor a project that lists it (a
+  // logged-out visitor does not rename the layer either: shared suite 4.4)
+  const page = await F.newLoggedInPage(browser, LAYER_EDITOR);
   const pageErrors = [];
   page.on('pageerror', (err) => pageErrors.push(err.message));
   await page.goto(`${U.serverURL}/mri?url=${U.localBertURL}`, { waitUntil: 'domcontentloaded' });
@@ -349,6 +353,7 @@ describe('TESTING WEBSOCKET WRITE ACCESS', function () {
     await db.collection('mri').updateMany({ source: U.localBertURL }, typeof mri.name === 'string' ? { $set: { name: mri.name } } : { $unset: { name: '' } });
     await db.collection('project').deleteMany({ shortname: { $in: [shortname, hiddenShortname] } });
     await db.collection('sessions').deleteMany({ _id: sid });
+    await F.removeSession(LAYER_EDITOR);
     await fs.promises.rm(path.join(__dirname, '../../public', mri.url, atlasFilename), { force: true });
   });
 
@@ -472,7 +477,8 @@ describe('TESTING WEBSOCKET WRITE ACCESS', function () {
       assert.deepEqual(after.writeRefused, {
         write: 'paint',
         atlas: mri.url + atlasFilename,
-        reason: 'your access to this layer is \'view\''
+        // a logged-out visitor (shared suite 4.4)
+        reason: 'log in to edit this layer'
       });
       assert.strictEqual(after.editMode, 0);
       assert.include(after.chat, message);

@@ -17,6 +17,10 @@ const { assert } = chai;
 const chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 const U = require('../utils.js');
+const F = require('../mri-access-fixtures.js');
+
+// a logged-in user, for the tests that paint
+const PAINTER = 'mripage-painter';
 
 const MRI_PAGE = `${U.serverURL}/mri?url=${U.localBertURL}`;
 // Downloads fine, but is not an MRI (test-only route, test/utils.js)
@@ -32,8 +36,11 @@ const UNREADABLE_URL = `${U.testDataURL}/test_data/unreadable_brain.mgz`;
  * @returns {Promise<Object>} { page, requests, pageErrors }
  */
 // eslint-disable-next-line max-params
-const openPage = async (browser, respond = () => null, waitForTables = true, url = MRI_PAGE) => {
+const openPage = async (browser, respond = () => null, waitForTables = true, url = MRI_PAGE, cookies = []) => {
   const page = await browser.newPage();
+  if (cookies.length > 0) {
+    await page.setCookie(...cookies);
+  }
   await page.setViewport({ width: 1200, height: 900, hasTouch: true });
   const requests = [];
   const pageErrors = [];
@@ -110,6 +117,7 @@ describe('TESTING THE MRI PAGE SCRIPT (mri-page.js)', function () {
     // eslint-disable-next-line no-invalid-this
     this.timeout(U.longTimeout);
     if (browser) { await browser.close(); }
+    await F.removeSession(PAINTER);
     const res = await chai.request(U.serverURL).get('/mri/json')
       .query({ url: U.localBertURL });
     if (res.body && res.body.url) {
@@ -202,7 +210,9 @@ describe('TESTING THE MRI PAGE SCRIPT (mri-page.js)', function () {
   // layer kept the previous layer's, so a view-only layer could be painted on
   // (from PR #342, 754c7ac, Nicolas Traut)
   it('allows painting only on the layers the user may edit, when switching layers', async function () {
-    opened = await openPage(browser);
+    // logged in: a logged-out visitor edits no layer (shared suite 4.4)
+    await F.addSession(PAINTER);
+    opened = await openPage(browser, () => null, true, MRI_PAGE, [F.browserCookie(PAINTER)]);
     const { page } = opened;
     // A second layer, of a project where the user may only view the annotations
     await page.evaluate(() => {

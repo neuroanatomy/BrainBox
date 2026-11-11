@@ -11,6 +11,7 @@ const { JSDOM } = require('jsdom');
 const { ForbiddenAccessError, NotFoundError } = require('../../errors.js');
 const { jsonForScript } = require('../utils/jsonForScript');
 const { publicLoggedUser } = require('../user/publicUser');
+const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 const { isLabelset, changedLabelsets, setLayerLabelset } = require('./atlas-labels.js');
 const { fileSource, listChanged, listOf, listTypes, sortRows, usersToCheck } = require('./project-rows.js');
 const { window } = (new JSDOM('', {
@@ -327,7 +328,7 @@ const project = async function (req, res) {
       title: json.name,
       projectInfo: JSON.stringify(projectInfo),
       projectName: json.name,
-      annotationsAccessLevel: AccessControlService.getUserOrPublicAccessLevel(json, loggedUser, AccessType.ANNOTATIONS),
+      annotationsAccessLevel: BrainboxAccessControlService.getUserOrPublicAccessLevel(json, loggedUser, AccessType.ANNOTATIONS),
       loggedUser: jsonForScript(publicLoggedUser(req.user)),
       login
     });

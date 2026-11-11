@@ -57,6 +57,54 @@ const project = {
 };
 
 /**
+ * Store a logged-in session for a user (its cookie is `cookie(username)`)
+ * @param {string} username The user
+ * @returns {Promise<void>} Once it is stored
+ */
+const addSession = async (username) => {
+  const db = U.getNativeDB();
+  await db.collection('sessions').deleteMany({ _id: sid(username) });
+  await db.collection('sessions').insertOne({
+    _id: sid(username),
+    expires: new Date(Date.now() + 24 * 3600 * 1000),
+    session: JSON.stringify({
+      cookie: { originalMaxAge: null, expires: null, httpOnly: true, path: '/' },
+      passport: { user: { username, nickname: username } }
+    })
+  });
+};
+
+/**
+ * Remove a session stored by addSession
+ * @param {string} username The user
+ * @returns {Promise<void>} Once it is removed
+ */
+const removeSession = (username) => U.getNativeDB().collection('sessions')
+  .deleteMany({ _id: sid(username) });
+
+/**
+ * The session cookie of a user, for a puppeteer page (page.setCookie): a
+ * logged-out visitor does not write annotations (shared suite 4.4)
+ * @param {string} username The user
+ * @returns {object} The cookie
+ */
+const browserCookie = (username) => ({ name: 'connect.sid', value: cookie(username).slice('connect.sid='.length), url: U.serverURL });
+
+/**
+ * A new puppeteer page, logged in as a user: a session is stored, and the page has its cookie
+ * @param {object} browser A puppeteer browser
+ * @param {string} username The user
+ * @returns {Promise<object>} The page
+ */
+const newLoggedInPage = async (browser, username) => {
+  await addSession(username);
+  const page = await browser.newPage();
+  await page.setCookie(browserCookie(username));
+
+  return page;
+};
+
+/**
  * Create the project, the sessions and the tokens
  * @returns {Promise<void>} Once they are stored
  */
@@ -66,15 +114,7 @@ const setUp = async () => {
   await db.collection('project').insertOne({ ...project, created: new Date().toJSON() });
   for (const username of Object.values(users)) {
     /* eslint-disable no-await-in-loop */
-    await db.collection('sessions').deleteMany({ _id: sid(username) });
-    await db.collection('sessions').insertOne({
-      _id: sid(username),
-      expires: new Date(Date.now() + 24 * 3600 * 1000),
-      session: JSON.stringify({
-        cookie: { originalMaxAge: null, expires: null, httpOnly: true, path: '/' },
-        passport: { user: { username, nickname: username } }
-      })
-    });
+    await addSession(username);
     await U.insertTestTokenForUser(username);
     /* eslint-enable no-await-in-loop */
   }
@@ -89,7 +129,7 @@ const tearDown = async () => {
   await db.collection('project').deleteMany({ shortname });
   for (const username of Object.values(users)) {
     /* eslint-disable no-await-in-loop */
-    await db.collection('sessions').deleteMany({ _id: sid(username) });
+    await removeSession(username);
     await U.removeTestTokenForUser(username);
     /* eslint-enable no-await-in-loop */
   }
@@ -103,4 +143,4 @@ const tearDown = async () => {
 const storedMRI = (source = U.localBertURL) => U.getNativeDB().collection('mri')
   .findOne({ source, backup: { $exists: false } }, { projection: { _id: 0 } });
 
-module.exports = { shortname, users, cookie, token, setUp, tearDown, storedMRI };
+module.exports = { shortname, users, cookie, token, addSession, removeSession, browserCookie, newLoggedInPage, setUp, tearDown, storedMRI };

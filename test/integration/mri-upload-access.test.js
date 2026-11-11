@@ -29,24 +29,37 @@ const otherProject = {
   annotations: { list: [] }
 };
 
+// A project whose annotations anyone may edit: any logged-in user, never a
+// logged-out visitor (shared suite 4.4)
+const publicShortname = 'mriuploadpublicedit';
+const publicProject = {
+  ...otherProject,
+  name: publicShortname,
+  shortname: publicShortname,
+  collaborators: { list: [{ userID: 'anyone', nickname: 'anyone', username: 'anyone', access: { collaborators: 'view', annotations: 'edit', files: 'view' } }] }
+};
+// an upload token without a user
+const userlessToken = `${U.testToken}nouser`;
+
 /**
  * Upload a layer for the test brain with a user's token
  * @param {object} params { username, project, name }
  * @returns {Promise<object>} The response
  */
-const upload = ({ username, project = F.shortname, name = 'Hidden layer' }) => chai.request(U.serverURL).post('/mri/upload')
+const upload = ({ username, project = F.shortname, name = 'Hidden layer', token = F.token(username) }) => chai.request(U.serverURL).post('/mri/upload')
   .field('url', U.localBertURL)
   .field('atlasName', name.replace(/[^A-Za-z0-9]/g, ''))
   .field('atlasProject', project)
   .field('atlasLabelSet', 'foreground.json')
-  .field('token', F.token(username))
+  .field('token', token)
   .attach('atlas', atlasFile);
 
 /**
- * The test brain's layers in the test project
+ * The test brain's layers in a project
+ * @param {string} [shortname] The project (default: the test project)
  * @returns {Promise<Array>} The layers
  */
-const projectLayers = async () => (await F.storedMRI()).mri.atlas.filter((a) => a.project === F.shortname);
+const projectLayers = async (shortname = F.shortname) => (await F.storedMRI()).mri.atlas.filter((a) => a.project === shortname);
 
 describe('POST /mri/upload: who may add or replace a layer with a token', function () {
   // eslint-disable-next-line no-invalid-this
@@ -58,8 +71,10 @@ describe('POST /mri/upload: who may add or replace a layer with a token', functi
     await U.waitForTestBrain();
     await F.setUp();
     const db = U.getNativeDB();
-    await db.collection('project').deleteMany({ shortname: otherShortname });
-    await db.collection('project').insertOne({ ...otherProject });
+    await db.collection('project').deleteMany({ shortname: { $in: [otherShortname, publicShortname] } });
+    await db.collection('project').insertMany([{ ...otherProject }, { ...publicProject }]);
+    await db.collection('log').deleteMany({ token: userlessToken });
+    await db.collection('log').insertOne({ token: userlessToken, expiryDate: new Date(Date.now() + 3600 * 1000) });
     await db.collection('mri').updateOne({ source: U.localBertURL, backup: { $exists: false } }, {
       $push: { 'mri.atlas': { filename: otherFilename, project: otherShortname, name: 'Other', type: 'volume', labels: 'foreground.json', access: 'edit' } },
       $set: { [`mri.annotations.${otherShortname}`]: { Note: { type: 'text', data: 'not for everyone' } } }
@@ -68,14 +83,16 @@ describe('POST /mri/upload: who may add or replace a layer with a token', functi
   });
 
   after(async function () {
-    const layers = await projectLayers();
+    const layers = [...await projectLayers(), ...await projectLayers(publicShortname)];
     await U.getNativeDB().collection('mri')
       .updateMany({ source: U.localBertURL }, {
-        $pull: { 'mri.atlas': { project: { $in: [F.shortname, 'nosuchprojectmriroutes', otherShortname] } } },
+        $pull: { 'mri.atlas': { project: { $in: [F.shortname, 'nosuchprojectmriroutes', otherShortname, publicShortname] } } },
         $unset: { [`mri.annotations.${otherShortname}`]: '' }
       });
     await U.getNativeDB().collection('project')
-      .deleteMany({ shortname: otherShortname });
+      .deleteMany({ shortname: { $in: [otherShortname, publicShortname] } });
+    await U.getNativeDB().collection('log')
+      .deleteMany({ token: userlessToken });
     for (const layer of layers) {
       // eslint-disable-next-line no-await-in-loop
       await fs.promises.rm(path.join(__dirname, '../../public', mri.url, layer.filename), { force: true });
@@ -88,6 +105,15 @@ describe('POST /mri/upload: who may add or replace a layer with a token', functi
     assert.equal(res.statusCode, 404);
     assert.isString(res.body.error);
     assert.isUndefined((await F.storedMRI()).mri.atlas.find((a) => a.project === 'nosuchprojectmriroutes'));
+  });
+
+  it('refuses a logged-out upload (no token, or a token without a user) where anyone may edit the annotations (shared suite 4.4)', async function () {
+    const noToken = await upload({ project: publicShortname, token: '' });
+    assert.equal(noToken.statusCode, 403);
+    const res = await upload({ project: publicShortname, token: userlessToken });
+    assert.equal(res.statusCode, 401);
+    assert.isString(res.body.error);
+    assert.lengthOf(await projectLayers(publicShortname), 0);
   });
 
   it('refuses a logged-in user who cannot see the project\'s annotations (403)', async function () {

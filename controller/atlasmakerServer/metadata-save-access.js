@@ -174,7 +174,8 @@ const storedLayerAccess = (ctx, layer) => {
     return { project, level: projectAccessLevel(project, ctx.username, AccessType.ANNOTATIONS) };
   }
 
-  return { project, level: accessLevels.includes(layer.access) ? layer.access : 'none' };
+  // a logged-out visitor only views
+  return { project, level: accessLevels.includes(layer.access) ? BrainboxAccessControlService.storedLayerAccess(layer.access, ctx.username) : 'none' };
 };
 
 /**
@@ -214,8 +215,9 @@ const mergeLayer = (ctx, layer, sentLayer) => {
   const result = { ...layer };
   const what = `layer '${layer.name}' (${layer.filename})`;
   for (const key of Object.keys(sentLayer)) {
-    if (sameValue(layer[key], sentLayer[key]) || (key === 'access' && project)) {
-      // a page sends the user's own access to a project layer: the project decides
+    if (sameValue(layer[key], sentLayer[key]) || (key === 'access' && (project || sentLayer.access === level))) {
+      // a page sends the user's own access to a project layer (the project
+      // decides), or to a layer without a project ('view' for a logged-out visitor)
       continue;
     }
     if (key === 'access' && ctx.isOwner && accessLevels.includes(sentLayer.access)) {

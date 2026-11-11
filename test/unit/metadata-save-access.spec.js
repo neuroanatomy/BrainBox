@@ -230,9 +230,10 @@ describe('UNIT TESTING WHAT A METADATA SAVE MAY CHANGE', function () {
     expect(res).to.deep.equal({ applied: nobody, told: allUsers });
   });
 
-  it('a layer without a project: as its stored access says (and its MRI\'s owner)', function () {
+  it('a layer without a project: as its stored access says (and its MRI\'s owner), never a logged-out visitor', function () {
     const res = whoMay((d) => { layer(d, 'Atlas.nii.gz').name = 'Renamed'; }, (doc) => layer(doc, 'Atlas.nii.gz').name === 'Renamed');
-    expect(res).to.deep.equal({ applied: allUsers, told: nobody });
+    // 'edit' stored: any logged-in user (shared suite 4.4)
+    expect(res).to.deep.equal({ applied: allUsers.filter((u) => u !== 'anonymous'), told: ['anonymous'] });
     const res2 = whoMay((d) => { layer(d, 'viewonly.nii.gz').name = 'Renamed'; }, (doc) => layer(doc, 'viewonly.nii.gz').name === 'Renamed');
     expect(res2).to.deep.equal({ applied: ['mriOwner'], told: allUsers.filter((u) => u !== 'mriOwner') });
   });
@@ -244,6 +245,39 @@ describe('UNIT TESTING WHAT A METADATA SAVE MAY CHANGE', function () {
     const res2 = whoMay((d) => { d.mri.annotations[projectP.shortname].Other = { type: 'text', data: 'new' }; },
       (doc) => Boolean(doc.mri.annotations[projectP.shortname].Other));
     expect(res2.applied).to.deep.equal(['projectOwner', 'annotationsEditor']);
+  });
+
+  it('a logged-out visitor changes neither a layer nor the text annotations of a project anyone may edit; a logged-in user does (shared suite 4.4)', function () {
+    const projectE = {
+      ...projectP,
+      shortname: 'mdsavespecpublic',
+      collaborators: { list: [{ userID: 'anyone', nickname: 'anyone', access: { collaborators: 'view', annotations: 'edit', files: 'view' } }] }
+    };
+    const storedE = {
+      ...copy(),
+      mri: {
+        atlas: [{ filename: 'e.nii.gz', name: 'Layer', project: projectE.shortname, access: 'edit', owner: 'pown', labels: 'foreground.json' }],
+        annotations: { [projectE.shortname]: { Note: { type: 'text', data: 'stored note' } } }
+      }
+    };
+    const saveE = (username) => {
+      const incoming = JSON.parse(JSON.stringify(storedE));
+      incoming.mri.atlas[0].labels = 'cerebrum.json';
+      incoming.mri.annotations[projectE.shortname].Note.data = 'changed';
+
+      return mergeMetadata({ stored: JSON.parse(JSON.stringify(storedE)), incoming, username, projects: new Map([[projectE.shortname, projectE]]) });
+    };
+    const changed = ({ doc }) => [doc.mri.atlas[0].labels === 'cerebrum.json', doc.mri.annotations[projectE.shortname].Note.data === 'changed'];
+    const anonymous = saveE(null);
+    expect(changed(anonymous)).to.deep.equal([false, false]);
+    expect(anonymous.refused.filter((r) => r.notify)).to.have.lengthOf(2);
+    expect(changed(saveE('bar'))).to.deep.equal([true, true]);
+  });
+
+  it('a logged-out visitor\'s page sends back the \'view\' it was given for a layer without a project: kept, not told (shared suite 4.4)', function () {
+    const { doc, refused } = save(null, (d) => { layer(d, 'Atlas.nii.gz').access = 'view'; });
+    expect(layer(doc, 'Atlas.nii.gz').access).to.equal('edit');
+    expect(refused).to.deep.equal([]);
   });
 
   it('a page that only initialises a text annotation, or updates its date, is not told', function () {
