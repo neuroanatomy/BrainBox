@@ -1,7 +1,7 @@
 /**
  * NeuroWebLab's shared project-management suite, slices 1 (access matrix),
- * 2 (create, save, delete, validation, versions), 3 (listings and search) and
- * 4 (annotations by project), against the server test/runner.js started
+ * 2 (create, save, delete, validation, versions), 3 (listings and search),
+ * 4 (annotations by project) and 5 (admin), against the server test/runner.js started
  * (test/integration/*.js runs it with the rest) (neuroweblab/conformance/README.md).
  */
 const fs = require('fs');
@@ -9,8 +9,9 @@ const path = require('path');
 const zlib = require('zlib');
 const { promisify } = require('util');
 const WebSocket = require('ws');
-const { accessMatrix, projectAnnotations, projectLifecycle, projectListings } = require('neuroweblab/conformance');
+const { accessMatrix, projectAdmin, projectAnnotations, projectLifecycle, projectListings, signUp } = require('neuroweblab/conformance');
 const U = require('../utils.js');
+const admins = require('../../controller/admin/admins');
 
 const db = () => U.getNativeDB();
 
@@ -161,16 +162,57 @@ const annotations = {
   }
 };
 
+/*
+ * Slice 5: an admin is a user of the slice added to the admins list (as the
+ * admin tests do, admins.setAdmins), and removed from it with the user. The
+ * admin change (5.4) is restore-files: a save that lost a file is stored
+ * first (as an incomplete save of the settings page), then the admin puts the
+ * file back, as a new version.
+ */
+const admin = {
+  routes: [
+    { method: 'GET', path: '/admin/json/orphans' },
+    { method: 'POST', path: '/admin/json/orphans/remove' },
+    { method: 'GET', path: `/admin/json/mri?url=${U.localBertURL}` },
+    { method: 'POST', path: '/admin/json/mri/remove-annotations' },
+    { method: 'GET', path: '/admin/json/projects/damaged' },
+    { method: 'POST', path: '/admin/json/projects/restore-files' },
+    { method: 'POST', path: '/admin/json/projects/fix-current' }
+  ],
+  user: async () => {
+    const user = await signUp(U.serverURL, `cfadmin${Date.now().toString(36)}`);
+    admins.setAdmins([...admins.getAdmins(), user.username]);
+
+    return user;
+  },
+  changeProject: async (adminUser, shortname) => {
+    const current = await db().collection('project')
+      .findOne({ shortname, backup: { $exists: false } });
+    const lostAFile = { ...current, files: { list: current.files.list.slice(0, -1) } };
+    delete lostAFile._id;
+    await db().collection('project')
+      .updateMany({ shortname }, { $set: { backup: true } });
+    const { insertedId } = await db().collection('project')
+      .insertOne(lostAFile);
+    const res = await adminUser.client.post('/admin/json/projects/restore-files', { json: { project: shortname, version: String(insertedId) } });
+    if (res.status !== 200) {
+      throw new Error(`restore-files ${shortname}: ${res.status} ${res.text}`);
+    }
+  }
+};
+
 const adapter = {
   baseURL: U.serverURL,
   layer: { type: 'volume', values: 'foreground.json' },
   // a project without an `anyone` row can't be saved over HTTP (validation)
   insertProject: (doc) => db().collection('project')
     .insertOne({ ...doc, files: { list: doc.files.list.map((f) => f.source) } }),
-  // every version, the MRI documents its files created (projectDocument's sources), and its layers on the test brain
+  // every version, the admin logs, the MRI documents its files created (projectDocument's sources), and its layers on the test brain
   removeProject: async (owner, shortname) => {
     await db().collection('project')
       .deleteMany({ shortname });
+    await db().collection('log')
+      .deleteMany({ key: /^admin/, 'value.project': shortname });
     await db().collection('mri')
       .deleteMany({ source: { $regex: `^https://example\\.org/conformance/${shortname}/` } });
     const brain = await testBrain();
@@ -181,6 +223,7 @@ const adapter = {
     }
   },
   removeUser: async (username) => {
+    admins.setAdmins(admins.getAdmins().filter((name) => name !== username));
     await db().collection('user')
       .deleteMany({ nickname: username });
     await db().collection('log')
@@ -190,13 +233,15 @@ const adapter = {
     .find({ shortname }, { sort: { _id: 1 } })
     .toArray(),
   annotations,
+  admin,
   // slice 3 (3.7): a name and an email for a user
   setUserFields: (username, fields) => db().collection('user')
     .updateOne({ nickname: username }, { $set: fields }),
   // no project search since the hotfix (approved 3.6): projectNameQuery answers taken / free only
   routes: { searchProjects: null },
   // the approved rules BrainBox does not follow (coordination tasks/proposed-shared-pm-tests.md, "Slice 2/3/4:
-  // rules for the differing rows", 2026-11-11): none for slice 2 since part C, none for slices 3 and 4 but the absent search
+  // rules for the differing rows", "Slice 5: rules", 2026-11-11): none for slice 2 since part C, none for slices 3 and 4 but the absent
+  // search; 5.2 for slice 5
   expectedDifferences: {
     'route:searchProjects': 'approved 3.6: no project search (similarProjectNamesQuery removed; projectNameQuery answers taken / free over the WebSocket)'
   }
@@ -206,7 +251,7 @@ accessMatrix(adapter);
 projectLifecycle(adapter);
 projectListings(adapter);
 
-describe('conformance slice 4 on the test brain', function () {
+describe('conformance slices 4 and 5 on the test brain', function () {
   before(async function () {
     // as the WebSocket tests: the test brain may have been removed by an earlier test (client.js)
     // eslint-disable-next-line no-invalid-this
@@ -216,4 +261,7 @@ describe('conformance slice 4 on the test brain', function () {
 
   // eslint-disable-next-line mocha/no-setup-in-describe -- the slice defines its blocks here, after the hook
   projectAnnotations(adapter);
+  // slice 5 lists GET /admin/json/mri on the test brain
+  // eslint-disable-next-line mocha/no-setup-in-describe -- the slice defines its blocks here, after the hook
+  projectAdmin(adapter);
 });
