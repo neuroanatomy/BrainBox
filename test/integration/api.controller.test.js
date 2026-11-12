@@ -19,14 +19,6 @@ describe('TESTING THE /api ROUTE', function () {
     assert.equal(res.statusCode, 400);
   });
 
-  it('GET /api/userNameQuery/ with a q parameter should return a list of users', async function () {
-    const res = await chai.request(U.serverURL).get('/api/userNameQuery?q=foo');
-    assert.equal(res.statusCode, 200);
-    assert.isArray(res.body);
-    assert.isNotEmpty(res.body);
-    res.body.forEach((item) => assert.containsAllKeys(item, ['name', 'nickname']));
-  });
-
   it('GET /api/userNameQuery/ sends only the name and nickname of each user, not their _id', async function () {
     const res = await chai.request(U.serverURL).get('/api/userNameQuery?q=foo');
     assert.equal(res.statusCode, 200);

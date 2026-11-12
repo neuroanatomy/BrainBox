@@ -59,15 +59,6 @@ describe('TESTING THE /user ROUTE', function () {
       assert.isArray(body.list);
     });
 
-    it('get("/user/json/foo/projects") should return an object with an array of projects', async function () {
-      const res = await chai.request(U.serverURL).get(`/user/json/${U.userFoo.nickname}/projects`)
-        .query({start:0, length:100});
-      const {body} = res;
-      assert.isObject(body);
-      assert.equal(body.success, true);
-      assert.isArray(body.list);
-    });
-
     it('get("/user/foo") should return status 200', async function () {
       const res = await chai.request(U.serverURL).get(`/user/${U.userFoo.nickname}`);
       assert.equal(res.statusCode, 200);

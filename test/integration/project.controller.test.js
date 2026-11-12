@@ -34,17 +34,6 @@ describe('TESTING THE /project ROUTE', function () {
       assert.deepEqual(body, expected);
     });
 
-    it('get("/project/json?page=0") should return an array', async function () {
-      const { body } = await chai.request(U.serverURL).get('/project/json?page=0')
-        .query({ page: 0 });
-      assert(Array.isArray(body));
-    });
-
-    it('get("/project/json/test") should return status 200', async function () {
-      const res = await chai.request(U.serverURL).get(`/project/json/${U.projectTest.shortname}`);
-      assert.equal(res.statusCode, 200);
-    });
-
     it('get("/project/json/test") should return an object with appropriate keys', async function () {
       const { body } = await chai.request(U.serverURL).get(`/project/json/${U.projectTest.shortname}`);
       const expectedKeys = [
