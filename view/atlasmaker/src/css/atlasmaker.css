@@ -159,9 +159,6 @@
 #finger {
     display:none;
 }
-.display-mode #finger {
-    display:none;
-}
 .edit-mode #finger.touchDevice {
     position:absolute;
     top:200px;
