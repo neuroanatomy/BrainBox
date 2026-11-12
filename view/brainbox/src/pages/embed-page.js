@@ -1,4 +1,5 @@
 /*global AtlasMakerWidget mriInfo params embedWsTicket*/
+import 'nwl-components/tokens.css';
 import '../style/ui.css';
 import '../../../atlasmaker/src/css/embed-layout.css';
 import '../style/tables.css';

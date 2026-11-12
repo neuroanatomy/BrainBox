@@ -7,7 +7,7 @@
     <title>{{title}}</title>
     <style>
         html, body {
-            background-color: #222;
+            background-color: var(--nwl-bg);
             /* A fixed viewport-relative height (not %/min-height) is required here:
                AtlasMaker's resizeWindow() measures an ancestor's clientHeight to fit
                the canvas to each plane's aspect ratio. If that ancestor chain's height
@@ -20,7 +20,7 @@
             height: 100vh;
             overflow: hidden;
             margin: 0;
-            font: 16px/20px "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
+            font: var(--nwl-text-lg)/20px var(--nwl-font-body);
         }
         #stereotaxic {
             width: 100%;

@@ -6,13 +6,13 @@
 }
 
 .a {
-    border:thin solid #777;
-    border-radius:3px;
+    border:thin solid var(--nwl-border);
+    border-radius:var(--nwl-radius-sm);
     margin:1px;
     text-align:center;
     height: 24px;
     position: relative;
-    color: white;
+    color: var(--nwl-text);
     user-select: none;
 }
 .a:hover {
@@ -23,8 +23,8 @@
 }
 
 .chose {
-    border:thin solid #777;
-    border-radius:3px;
+    border:thin solid var(--nwl-border);
+    border-radius:var(--nwl-radius-sm);
     margin:1px;
     text-align:center;
     height: 24px;
@@ -43,15 +43,15 @@
 }
 
 .text {
-    border:thin solid #777;
-    background: #000;
+    border:thin solid var(--nwl-border);
+    background: var(--nwl-black);
     opacity: 0.5;
-    border-radius:3px;
+    border-radius:var(--nwl-radius-sm);
     margin:1px;
     user-select: text;
 }
 .text * {
-    font-size: 12px !important;
+    font-size: var(--nwl-text-sm) !important;
     line-height: 15px !important;
 }
 .text:hover {
@@ -59,11 +59,11 @@
 }
 
 .label {
-    color: white;
+    color: var(--nwl-text);
     user-select: none;
 }
 .pressed {
-    background-color:#555 !important;
+    background-color:var(--nwl-bg-pressed) !important;
 }
 .icon {
     width:16px;
@@ -78,9 +78,9 @@
 /* svg buttons
 ----------------------- */
 .pushButton {
-    border:1px solid #ddd;
-    border-radius:6px;
-    color:#ddd;
+    border:1px solid var(--nwl-border-strong);
+    border-radius:var(--nwl-radius-md);
+    color:var(--nwl-grey-dd);
     text-align:center;
     -webkit-appearance:none;
     cursor: pointer;
@@ -112,7 +112,7 @@ img.icon {
 .mui-select {
     border:none;
     background:none; /* no color, no decoration */
-    color:white;
+    color:var(--nwl-text);
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;

@@ -24,8 +24,8 @@
     justify-content: center;
     gap: 14px;
     background: rgba(17, 17, 17, 0.82);
-    color: #fff;
-    font: 14px "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
+    color: var(--nwl-text);
+    font: var(--nwl-text-md) var(--nwl-font-body);
     -webkit-font-smoothing: antialiased;
     text-align: center;
     pointer-events: none;
@@ -39,9 +39,9 @@
 #loadingIndicator .disc {
     width: 26px;
     height: 26px;
-    border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.25);
-    border-top-color: #fff;
+    border-radius: var(--nwl-radius-round);
+    border: 2px solid var(--nwl-white-25);
+    border-top-color: var(--nwl-white);
     animation: atlasmaker-spin 0.9s linear infinite;
 }
 

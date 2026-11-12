@@ -1,4 +1,5 @@
 /* eslint-disable max-lines */
+import 'nwl-components/tokens.css';
 import './style.css';
 import * as THREE from 'three';
 import { HTMLMesh } from 'three/examples/jsm/interactive/HTMLMesh.js';

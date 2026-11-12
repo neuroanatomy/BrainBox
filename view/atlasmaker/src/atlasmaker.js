@@ -2,6 +2,7 @@
 /*! AtlasMaker */
 
 import 'structjs';
+import 'nwl-components/tokens.css';
 import './css/atlasmaker.css';
 import './css/loading-style.css';
 

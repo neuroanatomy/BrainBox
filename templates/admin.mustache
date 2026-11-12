@@ -180,22 +180,22 @@
 </script>
 <style>
 section {
-    background: #333;
+    background: var(--nwl-bg-surface);
     padding: 20px;
     margin-bottom: 20px;
     overflow-x: auto;
 }
 section h2 {
-    font-size: 14px;
+    font-size: var(--nwl-text-md);
     margin: 0 0 10px;
 }
 section h3 {
-    font-size: 14px;
-    font-weight: normal;
+    font-size: var(--nwl-text-md);
+    font-weight: var(--nwl-weight-regular);
     margin: 20px 0 8px;
 }
 section a {
-    color: #fff;
+    color: var(--nwl-link);
 }
 section table {
     margin-left: 0;
@@ -222,11 +222,11 @@ tr.details li button {
     padding: 2px 8px;
 }
 .examples {
-    font-size: 12px;
+    font-size: var(--nwl-text-sm);
     word-break: break-all;
 }
 .tag.notice {
-    color: #fc6;
+    color: var(--nwl-warning);
     border-color: #a83;
 }
 .tag + .tag {
@@ -238,12 +238,12 @@ form {
 }
 input[type=url], input[type=text] {
     flex: 1;
-    color: #fff;
-    background: #222;
+    color: var(--nwl-text);
+    background: var(--nwl-bg);
     font: inherit;
     padding: 9px;
-    border: 1px solid #777;
-    border-radius: 3px;
+    border: 1px solid var(--nwl-border);
+    border-radius: var(--nwl-radius-sm);
     outline: none;
 }
 input[type=url]::placeholder, input[type=text]::placeholder {
@@ -253,11 +253,11 @@ input[type=checkbox] {
     accent-color: #888;
 }
 select {
-    color: #fff;
-    background: #222;
+    color: var(--nwl-text);
+    background: var(--nwl-bg);
     font: inherit;
-    border: 1px solid #777;
-    border-radius: 3px;
+    border: 1px solid var(--nwl-border);
+    border-radius: var(--nwl-radius-sm);
     padding: 2px 4px;
 }
 .toolbar {
@@ -266,7 +266,7 @@ select {
     gap: 8px;
 }
 button.danger {
-    border-color: #c55;
+    border-color: var(--nwl-danger);
     color: #f99;
 }
 button.danger:hover {
@@ -279,19 +279,19 @@ button.danger:hover {
     color: #f77;
 }
 .warning {
-    color: #fc6;
+    color: var(--nwl-warning);
 }
 .result {
-    color: #8d8;
+    color: var(--nwl-success);
 }
 .tag {
-    font-size: 11px;
-    border: 1px solid #c55;
-    border-radius: 3px;
+    font-size: var(--nwl-text-xs);
+    border: 1px solid var(--nwl-danger);
+    border-radius: var(--nwl-radius-sm);
     padding: 0 3px;
 }
 code {
-    font-size: 12px;
+    font-size: var(--nwl-text-sm);
 }
 </style>
 
