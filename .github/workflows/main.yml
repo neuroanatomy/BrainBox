@@ -14,6 +14,8 @@ jobs:
           mongodb-version: "8.2"
       - run: npm install
         timeout-minutes: 8
+      # ESLint, then no hex colour outside nwl-components/tokens.css
+      - run: npm run lint
       # npm 11 may skip puppeteer's postinstall (allowScripts), so fetch Chrome explicitly
       - run: npx puppeteer browsers install chrome
         timeout-minutes: 4
