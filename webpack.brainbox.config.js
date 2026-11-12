@@ -1,5 +1,6 @@
 /* eslint-disable prefer-exponentiation-operator */
 const path = require('path');
+const { publicConfigRule } = require('./webpack.public-config');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 
@@ -22,6 +23,7 @@ module.exports = {
   },
   module: {
     rules: [
+      publicConfigRule,
       {
         test: /\.css$/,
         use: [

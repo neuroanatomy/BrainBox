@@ -1,5 +1,6 @@
 /* eslint-disable prefer-exponentiation-operator */
 const path = require('path');
+const { publicConfigRule } = require('./webpack.public-config');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
@@ -41,6 +42,7 @@ module.exports = (env, argv) => ({
   },
   module: {
     rules: [
+      publicConfigRule,
       {
         test: /\.css$/,
         use: [
