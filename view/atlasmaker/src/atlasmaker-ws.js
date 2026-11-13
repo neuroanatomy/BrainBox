@@ -83,7 +83,7 @@ export const AtlasMakerWS = {
         me.socket.onopen = function (msg) {
           if (me.debug) { console.log('[initSocketConnection] connection open', msg); }
           // me.progress is null when the page has no progress link (it was an empty jQuery object before)
-          if (me.progress) { me.progress.innerHTML = '<img src=\'' + me.hostname + '/img/download.svg\' style=\'vertical-align:middle\'/>MRI'; }
+          if (me.progress) { me.progress.innerHTML = '<img src=\'' + me.downloadIcon + '\' style=\'vertical-align:middle\'/>MRI'; }
           me._setNotificationsText('Chat (1 connected)');
           me.flagConnected = 1;
           me.reconnectionTimeout = 5;
@@ -259,7 +259,7 @@ export const AtlasMakerWS = {
         if (link) {
           link.innerHTML = [
             '<a class=\'download\' href=\'' + me.User.dirname + me.User.atlasFilename + '\'>',
-            '<img src=\'' + me.hostname + '/img/download.svg\' style=\'vertical-align:middle\'/>',
+            '<img src=\'' + me.downloadIcon + '\' style=\'vertical-align:middle\'/>',
             '</a>' + atlas.name
           ].join('');
         }

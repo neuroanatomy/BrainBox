@@ -16,6 +16,7 @@ import {AtlasMakerWS} from './atlasmaker-ws.js';
 
 import Config from './../../../cfg.json';
 import deepExtendModule from '../../shared/deepExtend.js';
+import downloadIcon from './html/img/download.svg';
 import toolsEmbed from './html/toolsEmbed.html';
 import toolsFull from './html/toolsFull.html';
 import toolsLight from './html/toolsLight.html';
@@ -68,6 +69,9 @@ const me = {
   hostname: Config.hostname, // string, host url
   wshostname: Config.wshostname, // string, websocket url
   secure: Config.secure, // wss used?
+
+  // icons built into the bundle (data URIs), so they also load when the viewer is embedded on another host
+  downloadIcon, // string, download icon for the MRI and atlas links
 
   // canvas and drawing
   container: null, // [DOM element] where atlasmaker lives
