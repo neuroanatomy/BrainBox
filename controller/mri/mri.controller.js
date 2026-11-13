@@ -15,6 +15,7 @@ const EmbedAccessService = require('../../services/EmbedAccessService');
 const { projectsForMetadata, mayChangeMri } = require('../atlasmakerServer/metadata-save-access');
 const { getRelatedProjects, filterMriForUser, isFilePubliclyVisible, hasCustomFileViewAccess, mayViewMriFiles, mayEmbedMri, privateMriError, anonymousOwner } = require('./mri-access');
 const { jsonForScript } = require('../utils/jsonForScript');
+const { publicLoggedUser } = require('../user/publicUser');
 const _ = require('lodash');
 const AsyncLock = require('async-lock');
 const lock = new AsyncLock();
@@ -269,7 +270,7 @@ const mri = async function (req, res) {
       title: 'BrainBox: private brain',
       message: 'This brain is private',
       askToLogIn: loggedUser === 'anonymous',
-      login
+      loggedUser: jsonForScript(publicLoggedUser(req.isAuthenticated() ? req.user : null))
     });
 
     return;
@@ -283,6 +284,7 @@ const mri = async function (req, res) {
       title: obj.name || 'BrainBox',
       params: jsonForScript(req.query),
       mriInfo: jsonForScript(obj),
+      header: { title: 'BrainBox' },
       login
     });
   } else {
@@ -304,6 +306,7 @@ const mri = async function (req, res) {
       params: jsonForScript(req.query),
       mriInfo: jsonForScript(json),
       hasPrivilegedAccess: !isPubliclyVisible && hasCustomViewAccess,
+      header: { title: 'BrainBox' },
       login
     });
   }

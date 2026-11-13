@@ -3,8 +3,9 @@
 /*
   The pages' own stylesheets read nwl-components' tokens (var(--nwl-…), UI kit step 4), so
   each page bundle that has such a stylesheet loads nwl-components/tokens.css. On the home
-  and ask-for-login pages, which load no other nwl-components stylesheet, a token is defined
-  and the body gets its colours and font through the tokens.
+  page, which loads no other nwl-components stylesheet, a token is defined and the body gets
+  its colours and font through the tokens; on the ask-for-login page, which uses
+  nwl-components' Vue components (UI kit step 10), its .app does.
 */
 
 const puppeteer = require('puppeteer');
@@ -19,26 +20,28 @@ const EXPECTED = {
 };
 
 /**
- * A page's --nwl-bg token, and its body's background colour and font family
+ * A page's --nwl-bg token, and an element's background colour and font family
  * @param {Object} browser A puppeteer browser
  * @param {string} url The page's URL
+ * @param {string} selector The element (default: the body)
  * @returns {Promise<Object>} The token's value, the background colour and the font family
  */
-const tokenStyles = async (browser, url) => {
+const tokenStyles = async (browser, url, selector = 'body') => {
   const page = await browser.newPage();
   try {
     await page.goto(url, { waitUntil: 'load' });
+    await page.waitForSelector(selector);
 
-    return await page.evaluate(() => {
-      const body = getComputedStyle(document.body);
+    return await page.evaluate((sel) => {
+      const style = getComputedStyle(document.querySelector(sel));
 
       return {
         token: getComputedStyle(document.documentElement).getPropertyValue('--nwl-bg')
           .trim(),
-        background: body.backgroundColor,
-        font: body.fontFamily
+        background: style.backgroundColor,
+        font: style.fontFamily
       };
-    });
+    }, selector);
   } finally {
     await page.close();
   }
@@ -62,6 +65,6 @@ describe('Pages load nwl-components\' tokens', function () {
   }).timeout(U.longTimeout);
 
   it('defines the tokens on the ask-for-login page', async function () {
-    assert.deepEqual(await tokenStyles(browser, `${U.serverURL}/project/new`), EXPECTED);
+    assert.deepEqual(await tokenStyles(browser, `${U.serverURL}/project/new`, '.app'), EXPECTED);
   }).timeout(U.longTimeout);
 });

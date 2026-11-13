@@ -1,0 +1,17 @@
+/* The ask-for-login page's message: a 600px box under nwl-components' header, its text 480px
+   wide and centred */
+.ask-for-login {
+    box-sizing: border-box;
+    width: 600px;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: var(--nwl-space-5) 60px;
+    background: var(--nwl-bg-surface);
+}
+.ask-for-login h1 {
+    font-size: var(--nwl-text-lg);
+}
+.ask-for-login h1,
+.ask-for-login p {
+    text-align: center;
+}

@@ -67,3 +67,53 @@ a {
      display:inline-block;
      margin-left:15px;
 }
+
+/* The MRI and project pages' header and footer (templates/partials/viewer-header.mustache
+   and viewer-footer.mustache) */
+.bb-header {
+    flex: 0 0 64px;
+}
+/* the GitHub icon is smaller than the menu's other buttons (img.button) */
+img.button.bb-icon-small {
+    width: 15px;
+    height: 15px;
+}
+.bb-logo {
+    display: inline-block;
+    margin: 10px;
+}
+.bb-logo-link {
+    text-decoration: none;
+}
+.bb-logo-link img {
+    height: 56px;
+    vertical-align: middle;
+}
+.bb-title,
+.bb-title a {
+    font-family: var(--nwl-font-display);
+    font-size: var(--nwl-text-3xl);
+    font-weight: var(--nwl-weight-thin);
+}
+.bb-title {
+    vertical-align: middle;
+}
+.bb-footer-space {
+    flex: 0 0 50px;
+}
+.bb-footer {
+    flex: 0 0 100px;
+    background-color: var(--nwl-bg-canvas);
+}
+.bb-footer .footerLinks {
+    width: 100%;
+    font-size: small;
+    text-align: center;
+}
+.bb-footer img {
+    width: 28px;
+    height: 28px;
+    margin-right: 4px;
+    display: inline-block;
+    vertical-align: middle;
+}

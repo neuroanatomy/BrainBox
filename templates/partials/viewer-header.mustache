@@ -1,0 +1,26 @@
+    <!-- Header (fixed height): the title is the context's header.title; header.settings adds the settings button -->
+    <div class="bb-header">
+        <!-- Top-right menu bar -->
+        <div id="menu">
+            <img id="addProject" class="button" title="add project" alt="add project" src="/img/plus.svg"/>
+            {{#header.settings}}
+            <img id="settings" class="button" title="settings" alt="settings" src="/img/settings.svg"/>
+            {{/header.settings}}
+            <a href="https://openneurolab.github.io/metasearch" target="_blank"><img id="search" class="button" title="search" alt="search" src="/img/search.svg"/></a>
+            <img id="doc" class="button" title="documentation" alt="documentation" src="/img/doc.svg"/>
+            <a href="https://github.com/neuroanatomy/BrainBox/issues/new" target="_blank"><img id="bug" class="button" title="report a bug" alt="report a bug" src="/img/bug.svg"/></a>
+            <a href="https://github.com/neuroanatomy/BrainBox" target="_blank"><img id="github" class="button bb-icon-small" title="join our github project" alt="join our github project" src="/img/github.svg"/></a>
+            <div id="MyLogin">
+                <span>{{{login}}}</span>
+            </div>
+        </div>
+
+        <!-- Small left-top logo -->
+        <div class="bb-logo">
+            <a href="/" class="bb-logo-link">
+                <img src="/img/brainbox-logo-small_noFont.svg" alt="brainbox logo"/>
+            </a><span class="bb-title" id="fontLogo"> 
+                <a href="/" class="linkNoULine">{{header.title}}</a>
+            </span>
+        </div>
+    </div>

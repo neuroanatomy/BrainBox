@@ -13,13 +13,19 @@ const ALLOWED = {
   'view/brainbox/src/style/style.css': [],
   'view/brainbox/src/style/ui.css': [],
   'view/brainbox/src/style/tables.css': [],
+  'view/brainbox/src/style/ask-for-login.css': [],
   'view/atlasmaker/src/css/atlasmaker.css': ['#F00'],
   'view/atlasmaker/src/css/loading-style.css': [],
   'view/atlasmaker/src/tools/render3D/style.css': [],
   'templates/admin.mustache': ['#2a2a2a', '#a83', '#888', '#888', '#f99', '#633', '#aaa', '#f77'],
   'templates/projectSettings.mustache': ['#aaa'],
   'templates/mriEmbed.mustache': [],
-  'templates/mriRender3D.mustache': []
+  'templates/mriRender3D.mustache': [],
+  'templates/askForLogin.mustache': [],
+  'templates/mri.mustache': [],
+  'templates/project.mustache': [],
+  'templates/partials/viewer-header.mustache': [],
+  'templates/partials/viewer-footer.mustache': []
 };
 const HEX = /#(?:[0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{3,4})\b/giu;
 

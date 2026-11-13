@@ -333,7 +333,7 @@ const project = async function (req, res) {
     res.render('project', {
       title: json.name,
       projectInfo: JSON.stringify(projectInfo),
-      projectName: json.name,
+      header: { title: json.name, settings: true },
       annotationsAccessLevel: BrainboxAccessControlService.getUserOrPublicAccessLevel(json, loggedUser, AccessType.ANNOTATIONS),
       loggedUser: jsonForScript(publicLoggedUser(req.user)),
       login
@@ -566,9 +566,6 @@ const settings = async function (req, res) {
  * @returns {void}
  */
 const newProject = function (req, res) {
-  const login = (req.isAuthenticated()) ?
-    ('<a href=\'/user/' + req.user.username + '\'>' + req.user.username + '</a> (<a href=\'/logout\'>Log Out</a>)')
-    : ('<a href=\'/auth/github\'>Log in with GitHub</a>');
   let loggedUser = 'anonymous';
   if (req.isAuthenticated()) {
     loggedUser = req.user.username;
@@ -581,7 +578,7 @@ const newProject = function (req, res) {
     const context = {
       title: 'BrainBox: New Project',
       functionality: 'create a new project',
-      login: login
+      loggedUser: jsonForScript(publicLoggedUser(null))
     };
     res.render('askForLogin', context);
   } else {

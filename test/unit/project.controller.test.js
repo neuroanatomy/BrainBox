@@ -81,8 +81,9 @@ describe('Project Controller: ', function () {
       assert.strictEqual(failure.callCount, 0);
       assert.strictEqual(success.args[0].length, 2);
       assert.strictEqual(success.args[0][0], 'project');
-      expect(success.args[0][1]).to.have.keys(['annotationsAccessLevel', 'loggedUser', 'login', 'projectInfo', 'projectName', 'title']);
-      expect(success.args[0][1].title).to.equal('Unit Test');
+      expect(success.args[0][1]).to.have.keys(['annotationsAccessLevel', 'header', 'loggedUser', 'login', 'projectInfo', 'title']);
+      // the page's title, and the header's (with the settings button)
+      expect([success.args[0][1].title, success.args[0][1].header]).to.deep.equal(['Unit Test', { title: 'Unit Test', settings: true }]);
       expect(success.args[0][1].login).to.equal('<a href=\'/user/anyone\'>anyone</a> (<a href=\'/logout\'>Log Out</a>)');
       const projectInfo = JSON.parse(success.args[0][1].projectInfo);
       expect(projectInfo).to.deep.include({
@@ -401,7 +402,7 @@ describe('Project Controller: ', function () {
           'askForLogin',
           {
             functionality: 'create a new project',
-            login: '<a href=\'/auth/github\'>Log in with GitHub</a>',
+            loggedUser: 'null',
             title: 'BrainBox: New Project'
           }
         ]

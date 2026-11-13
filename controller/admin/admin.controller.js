@@ -146,7 +146,7 @@ const adminPage = (req, res) => {
     res.status(401).render('askForLogin', {
       title: 'BrainBox: Admin',
       functionality: 'use the admin tools',
-      login: '<a href=\'/auth/github\'>Log in with GitHub</a>'
+      loggedUser: jsonForScript(publicLoggedUser(req.user))
     });
 
     return;
