@@ -917,6 +917,46 @@ describe('Project Controller: ', function () {
     });
   });
 
+  // projectInfo goes into an inline <script> (project.mustache, projectSettings.mustache): a
+  // project name with `</script>` must not close it
+  describe('projectInfo in the project and settings pages', function () {
+    const hostileName = '</script><img src=x onerror=alert(1)><!--';
+
+    before(async function () {
+      const doc = { ..._.cloneDeep(projectObject), shortname: 'scriptname', name: hostileName };
+      delete doc._id;
+      await nativeDb.collection('project').insertOne(doc);
+    });
+
+    after(async function () {
+      await nativeDb.collection('project').deleteMany({ shortname: 'scriptname' });
+    });
+
+    const pageContext = async function (page) {
+      const req = {
+        user: { username: 'foo' },
+        nativeDb: nativeDb,
+        isAuthenticated: function () { return Boolean(this.user.username); },
+        originalUrl: '',
+        session: {},
+        params: { projectName: 'scriptname' }
+      };
+      const render = sinon.spy();
+      await projectController[page](req, { render, status: sinon.stub().returns({ send: sinon.spy() }) });
+      sinon.restore();
+
+      return render.args[0][1];
+    };
+
+    for (const page of ['project', 'settings']) {
+      it(`${page} page: no < or > in projectInfo, and the name survives`, async function () {
+        const { projectInfo } = await pageContext(page);
+        expect(projectInfo).to.not.match(/[<>]/u);
+        expect(JSON.parse(projectInfo).name).to.equal(hostileName);
+      });
+    }
+  });
+
   describe('apiProjectAll function() ', function () {
     it('should ask for page parameter if not provided', async function () {
       const req = {

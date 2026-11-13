@@ -332,7 +332,7 @@ const project = async function (req, res) {
     const projectInfo = { ...projectForUser(json, loggedUser), files: { ...json.files, list: [] } };
     res.render('project', {
       title: json.name,
-      projectInfo: JSON.stringify(projectInfo),
+      projectInfo: jsonForScript(projectInfo),
       header: { title: json.name, settings: true },
       annotationsAccessLevel: BrainboxAccessControlService.getUserOrPublicAccessLevel(json, loggedUser, AccessType.ANNOTATIONS),
       loggedUser: jsonForScript(publicLoggedUser(req.user)),
@@ -550,7 +550,7 @@ const settings = async function (req, res) {
   const context = {
     projectShortname: filteredJSON.shortname,
     owner: filteredJSON.owner,
-    projectInfo: JSON.stringify(filteredJSON),
+    projectInfo: jsonForScript(filteredJSON),
     filesTotal,
     loggedUser: jsonForScript(publicLoggedUser(req.user))
   };
