@@ -266,4 +266,80 @@ describe('TESTING THE VIEWER\'S TOOLBAR AND PAGE STATE', function () {
     });
     assert.isTrue(sample.found, 'the annotation now holds the uploaded volume');
   }).timeout(U.longTimeout);
+
+  // Tool buttons are native <button class="nwl-tool-button"> with aria-pressed (UI kit step 9b)
+
+  it('reaches a tool with Tab and selects it with Enter or Space, once', async function () {
+    const { page } = viewer;
+    const state = () => page.evaluate(() => ({
+      focused: document.activeElement.getAttribute('title'),
+      outline: getComputedStyle(document.activeElement).outlineStyle,
+      pressed: [...document.querySelectorAll('#paintTool .nwl-tool-button')]
+        .filter((b) => b.getAttribute('aria-pressed') === 'true').map((b) => b.getAttribute('title')),
+      tool: AtlasMakerWidget.User.tool,
+      clicks: window.toolClicks
+    }));
+    await page.evaluate(() => {
+      window.toolClicks = 0;
+      document.querySelectorAll('#paintTool .nwl-tool-button').forEach((b) => b.addEventListener('click', () => { window.toolClicks += 1; }));
+    });
+    await page.focus('#paintTool [title="Show"]');
+    await page.keyboard.press('Tab');
+    assert.deepEqual(await state(), { focused: 'Paint', outline: 'solid', pressed: ['Show'], tool: 'show', clicks: 0 });
+    await page.keyboard.press('Enter');
+    assert.deepEqual(await state(), { focused: 'Paint', outline: 'solid', pressed: ['Paint'], tool: 'paint', clicks: 1 });
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Space');
+    assert.deepEqual(await state(), { focused: 'Erase', outline: 'solid', pressed: ['Erase'], tool: 'erase', clicks: 2 });
+  }).timeout(U.longTimeout);
+
+  // eslint-disable-next-line max-statements
+  it('presses a clicked tool, releases the others of its group, and leaves the keyboard to the viewer', async function () {
+    const { page } = viewer;
+    const pressed = (sel) => page.$$eval(sel, (bs) => bs.map((b) => `${b.id || b.getAttribute('title')}:${b.getAttribute('aria-pressed')}`));
+    assert.deepEqual(await pressed('#penSize .nwl-tool-button'), ['1:true', '2:false', '3:false', '5:false', '10:false', '15:false']);
+    await page.click('#penSize [title="5"]');
+    assert.deepEqual(await pressed('#penSize .nwl-tool-button'), ['1:false', '2:false', '3:false', '5:true', '10:false', '15:false']);
+    assert.strictEqual(await page.evaluate(() => AtlasMakerWidget.User.penSize), 5);
+    await page.click('#precise');
+    assert.deepEqual(await pressed('#precise'), ['precise:true']);
+    await page.click('#precise');
+    assert.deepEqual(await pressed('#precise'), ['precise:false']);
+    // push buttons are not toggles; no button submits a form
+    assert.deepEqual(await pressed('#undo, #save'), ['undo:null', 'save:null']);
+    assert.deepEqual(await page.$$eval('#tools-side button', (bs) => bs.filter((b) => b.type !== 'button' || b.form).length), 0);
+    // a mouse click leaves the focus on the page, so the viewer's keys still work
+    assert.strictEqual(await page.evaluate(() => document.activeElement.tagName), 'BODY');
+    const slice = await page.evaluate(() => AtlasMakerWidget.User.slice);
+    await page.keyboard.press('ArrowRight');
+    await page.waitForFunction((s) => AtlasMakerWidget.User.slice === s + 1, { timeout: U.shortTimeout }, slice);
+  }).timeout(U.longTimeout);
+
+  it('gives a pressed tool the --nwl-bg-pressed background, and hovers as U7', async function () {
+    const { page } = viewer;
+    const look = (sel) => page.$eval(sel, (el) => {
+      const cs = getComputedStyle(el);
+
+      return `${cs.backgroundColor} ${cs.opacity}`;
+    });
+    const token = await page.evaluate(() => {
+      const probe = document.createElement('div');
+      probe.style.background = 'var(--nwl-bg-pressed)';
+      document.body.appendChild(probe);
+      const bg = getComputedStyle(probe).backgroundColor;
+      probe.remove();
+
+      return bg;
+    });
+    assert.strictEqual(token, 'rgb(85, 85, 85)');
+    assert.strictEqual(await look('#plane [aria-pressed="true"]'), `${token} 1`);
+    assert.strictEqual(await look('#plane [title="cor"]'), 'rgba(0, 0, 0, 0) 1');
+    // hover: a lighter background on a text tool, half opacity on an icon tool and the pen colour
+    await page.hover('#plane [title="cor"]');
+    assert.strictEqual(await look('#plane [title="cor"]'), `${token} 1`);
+    await page.hover('#paintTool [title="Erase"]');
+    assert.strictEqual(await look('#paintTool [title="Erase"]'), 'rgba(0, 0, 0, 0) 0.5');
+    await page.hover('#color');
+    assert.match(await look('#color'), / 0\.5$/u);
+  }).timeout(U.longTimeout);
 });

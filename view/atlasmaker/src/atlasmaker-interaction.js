@@ -479,13 +479,13 @@ export const AtlasMakerInteraction = {
    * @function syncFullscreenButton
    * @desc Keep the toolbar button in step with reality. The Fullscreen API can
    *       be left by means we do not control (Esc, the browser's own UI), and
-   *       the toggle helper flips the pressed class on click regardless.
+   *       the toggle helper flips the pressed state on click regardless.
    * @returns {void}
    */
   syncFullscreenButton: function () {
     const me = AtlasMakerWidget;
     const button = document.getElementById('fullscreen');
-    if(button) { button.classList.toggle('pressed', me.fullscreen === true); }
+    if(button) { me.setPressed(button, me.fullscreen === true); }
   },
 
   /**

@@ -44,7 +44,7 @@
 }
 
 /* The attribution link is an <a> rather than a <div> so the browser treats it
-   as navigation from a user gesture; .a's sizing assumes a block box. */
+   as navigation from a user gesture; the tool button's sizing assumes a block box. */
 #atlasmaker.embed-layout #brainboxLink {
     display: block;
     text-decoration: none;

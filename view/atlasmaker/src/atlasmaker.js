@@ -348,9 +348,9 @@ const me = {
     if(!view) { return; }
     const plane = document.getElementById('plane');
     if(!plane) { return; }
-    plane.querySelectorAll('.a').forEach((el) => { el.classList.remove('pressed'); });
-    const button = plane.querySelector('.a[title="' + view + '"]');
-    if(button) { button.classList.add('pressed'); }
+    plane.querySelectorAll('.nwl-tool-button').forEach((el) => { me.setPressed(el, false); });
+    const button = plane.querySelector('.nwl-tool-button[title="' + view + '"]');
+    if(button) { me.setPressed(button, true); }
   },
 
   /**
@@ -524,6 +524,7 @@ const me = {
     me.push(document.getElementById('display-minimize'), function() { me.changeToolbarDisplay('minimize'); });
     me.push(document.getElementById('display-left'), function() { me.changeToolbarDisplay('left'); });
     me.push(document.getElementById('display-right'), function() { me.changeToolbarDisplay('right'); });
+    me.keepFocusOnClick(document.getElementById('tools-side'));
     me.initToolsDrag();
     me.initTextInputResize();
     me.slider(document.getElementById('slice'), function(x) { me.changeSlice(Math.round(x)); });

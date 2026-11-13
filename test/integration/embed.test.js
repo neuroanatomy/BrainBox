@@ -71,7 +71,7 @@ const readViewer = (ctx) => ctx.evaluate(() => {
 });
 
 const clickPlane = (ctx, label) => ctx.evaluate((name) => {
-  const button = [...document.querySelectorAll('#plane .a')].find((el) => el.textContent.trim() === name);
+  const button = [...document.querySelectorAll('#plane .nwl-tool-button')].find((el) => el.textContent.trim() === name);
   if (!button) { return false; }
   button.click();
 
@@ -738,7 +738,7 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
             width: Math.round(box.width),
             left: Math.round(box.left),
             viewport: window.innerWidth,
-            buttons: [...document.querySelectorAll('#plane .a')].map((el) => Math.round(el.getBoundingClientRect().width))
+            buttons: [...document.querySelectorAll('#plane .nwl-tool-button')].map((el) => Math.round(el.getBoundingClientRect().width))
           };
         });
 

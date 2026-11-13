@@ -8,6 +8,36 @@ import { getData, setData } from '../../shared/domData.js';
 export const AtlasMakerUI = {
 
   /**
+     * @function setPressed
+     * @description Set or clear the pressed state of a tool button: the 'pressed' class (which
+     *              code and tests query) and aria-pressed (which nwl-components' .nwl-tool-button
+     *              styles, and screen readers read). The only place that changes either.
+     * @param {object} elem The tool button
+     * @param {boolean} pressed True for pressed
+     * @returns {void}
+     */
+  setPressed: function (elem, pressed) {
+    elem.classList.toggle('pressed', pressed);
+    elem.setAttribute('aria-pressed', pressed ? 'true' : 'false');
+  },
+
+  /**
+     * @function keepFocusOnClick
+     * @description A mouse click on a tool button leaves the keyboard focus where it was (the
+     *              page), as the toolbar's former divs did, so the viewer's keys (arrows for
+     *              slices, Enter for a measure) keep working after a click. Tab still reaches
+     *              the buttons, and Enter or Space press them.
+     * @param {object} elem The toolbar
+     * @returns {void}
+     */
+  keepFocusOnClick: function (elem) {
+    if (!elem) { return; }
+    elem.querySelectorAll('button.nwl-tool-button').forEach((button) => {
+      button.addEventListener('mousedown', (ev) => { ev.preventDefault(); });
+    });
+  },
+
+  /**
      * @function slider
      * @description Initialise a 'slider' control
      * @param {object} elem DOM element
@@ -60,14 +90,15 @@ export const AtlasMakerUI = {
      */
   chose: function (elem, callback) {
     if (!elem) { return; }
-    const ch = elem.querySelectorAll('.a');
+    const ch = elem.querySelectorAll('.nwl-tool-button');
     ch.forEach((d) => {
+      AtlasMakerUI.setPressed(d, d.classList.contains('pressed'));
       d.addEventListener('click', () => {
         if (d.classList.contains('pressed')) {
           return callback(d.getAttribute('title'));
         }
-        ch.forEach((d1) => { d1.classList.remove('pressed'); });
-        d.classList.add('pressed');
+        ch.forEach((d1) => { AtlasMakerUI.setPressed(d1, false); });
+        AtlasMakerUI.setPressed(d, true);
         if(callback) {
           return callback(d.getAttribute('title'));
         }
@@ -84,16 +115,17 @@ export const AtlasMakerUI = {
      */
   chose3state: function (elem, callback) {
     if (!elem) { return; }
-    const ch = elem.querySelectorAll('.a');
+    const ch = elem.querySelectorAll('.nwl-tool-button');
     ch.forEach((d) => {
+      AtlasMakerUI.setPressed(d, d.classList.contains('pressed'));
       d.addEventListener('click', () => {
         if (d.classList.contains('pressed')) {
-          d.classList.remove('pressed');
+          AtlasMakerUI.setPressed(d, false);
 
           return callback('none');
         }
-        ch.forEach((d1) => { d1.classList.remove('pressed'); });
-        d.classList.add('pressed');
+        ch.forEach((d1) => { AtlasMakerUI.setPressed(d1, false); });
+        AtlasMakerUI.setPressed(d, true);
         if (callback) {
           return callback(d.getAttribute('title'));
         }
@@ -110,8 +142,9 @@ export const AtlasMakerUI = {
      */
   toggle: function (elem, callback) {
     if (!elem) { return; }
+    AtlasMakerUI.setPressed(elem, elem.classList.contains('pressed'));
     elem.addEventListener('click', () => {
-      elem.classList.toggle('pressed');
+      AtlasMakerUI.setPressed(elem, !elem.classList.contains('pressed'));
       if (callback) {
         return callback(elem.classList.contains('pressed'));
       }

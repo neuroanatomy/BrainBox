@@ -5,21 +5,19 @@
     box-sizing: border-box;
 }
 
-.a {
-    border:thin solid var(--nwl-border);
-    border-radius:var(--nwl-radius-sm);
-    margin:1px;
-    text-align:center;
-    height: 24px;
-    position: relative;
-    color: var(--nwl-text);
-    user-select: none;
+/* Tool buttons are nwl-components' .nwl-tool-button (widgets.css): its look, pressed state
+   (aria-pressed) and hover. Here only what keeps them as the former div tools: the page's
+   font and line height (a <button> takes the browser's), and the text at the top of the
+   button, as in a div (a <button> centres it vertically, whatever its display). */
+.nwl-tool-button {
+    font: inherit;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
 }
-.a:hover {
-    opacity:0.5;
-    -webkit-user-select:none;
-    -moz-user-select:none;
-    user-select:none;
+/* the pen colour has no icon or text: its hover is the icon tools' (its background is the colour) */
+#color:hover {
+    opacity: 0.5;
 }
 
 .chose {
@@ -30,18 +28,6 @@
     height: 24px;
     position: relative;
 }
-.a.sub {
-    border:none;
-    margin:0;
-    height: 22px;
-}
-.a.sub:hover {
-    opacity:0.5;
-    -webkit-user-select:none;
-    -moz-user-select:none;
-    user-select:none;
-}
-
 .text {
     border:thin solid var(--nwl-border);
     background: var(--nwl-black);
@@ -61,9 +47,6 @@
 .label {
     color: var(--nwl-text);
     user-select: none;
-}
-.pressed {
-    background-color:var(--nwl-bg-pressed) !important;
 }
 .hidden {
     display:none;

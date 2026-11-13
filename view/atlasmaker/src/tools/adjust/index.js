@@ -91,9 +91,10 @@ const observer = new MutationObserver(function (mutations) {
   mutations.forEach(function (mutation) {
     if (mutation.attributeName === 'class') {
       console.log('mutation', mutation);
-      // jQuery's .prop('class') was the element's className
-      const attributeValue = mutation.target.className;
-      if (attributeValue === 'a sub') {
+      // the Adjust button of the full toolbar (a tool of a group, .nwl-tool-button--sub) is no
+      // longer pressed: as the former check, className === 'a sub', of the div tools
+      const { classList } = mutation.target;
+      if (classList.contains('nwl-tool-button--sub') && !classList.contains('pressed')) {
         const panel = document.getElementById('adjust');
         if (panel) { panel.remove(); }
       }

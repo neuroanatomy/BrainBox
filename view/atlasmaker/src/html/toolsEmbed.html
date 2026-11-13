@@ -10,10 +10,10 @@
         <div id="headerBlock" style="flex:0 1 28px;background:#333">
 
             <div style="display:flex">
-                <div style="flex:0 0 28px"><div id="display-minimize" title="Minimize toolbar" class="a push noBorder"><img class="nwl-icon" src="./img/times-circle.svg" /></div></div>
+                <div style="flex:0 0 28px"><button type="button" id="display-minimize" title="Minimize toolbar" class="nwl-tool-button push noBorder"><img class="nwl-icon" src="./img/times-circle.svg" /></button></div>
                 <div style="flex:1 1 auto"></div>
-                <div style="flex:0 0 28px"><div id="display-left" title="Display to the left" class="a push noBorder"><img class="nwl-icon" src="./img/caret-square-o-left.svg" /></div></div>
-                <div style="flex:0 0 28px"><div id="display-right" title="Display to the right" class="a push noBorder"><img class="nwl-icon" src="./img/caret-square-o-right.svg" /></div></div>
+                <div style="flex:0 0 28px"><button type="button" id="display-left" title="Display to the left" class="nwl-tool-button push noBorder"><img class="nwl-icon" src="./img/caret-square-o-left.svg" /></button></div>
+                <div style="flex:0 0 28px"><button type="button" id="display-right" title="Display to the right" class="nwl-tool-button push noBorder"><img class="nwl-icon" src="./img/caret-square-o-right.svg" /></button></div>
             </div>
 
         </div>
@@ -22,7 +22,7 @@
         <div id="sliderBlock" style="flex:0 0 28px">
             <div style="display:flex">
                 <div style="flex:0 0 28px">
-                    <div id="prev" class="a push">-</div>
+                    <button type="button" id="prev" class="nwl-tool-button push">-</button>
                 </div>
                 <div style="flex:1 0 28px;display:flex">
                     <div style="flex:1;position:relative">
@@ -33,7 +33,7 @@
                     </div>
                 </div>
                 <div style="flex:0 0 28px">
-                    <div id="next" class="a push">+</div>
+                    <button type="button" id="next" class="nwl-tool-button push">+</button>
                 </div>
             </div>
         </div>
@@ -48,21 +48,21 @@
                      to switch between planes. -->
                 <div style="flex:1 0 200px;width:50px">
                     <div id="plane" style="display:flex" class="chose">
-                        <div style="flex:1"><div title="sag" class="a pressed">Sag</div></div>
-                        <div style="flex:1"><div title="cor" class="a">Cor</div></div>
-                        <div style="flex:1"><div title="axi" class="a">Axi</div></div>
-                        <div style="flex:1"><div title="3d" class="a">3D</div></div>
+                        <div style="flex:1"><button type="button" title="sag" class="nwl-tool-button pressed">Sag</button></div>
+                        <div style="flex:1"><button type="button" title="cor" class="nwl-tool-button">Cor</button></div>
+                        <div style="flex:1"><button type="button" title="axi" class="nwl-tool-button">Axi</button></div>
+                        <div style="flex:1"><button type="button" title="3d" class="nwl-tool-button">3D</button></div>
                     </div>
                 </div>
 
                 <div style="flex:1 0 100px;width:50px">
                     <div style="display:flex">
-                        <div style="flex:1"><div id="fullscreen" title="Full screen" class="a toggle"><img class="nwl-icon" src="./img/fullscreen.svg" /></div></div>
+                        <div style="flex:1"><button type="button" id="fullscreen" title="Full screen" class="nwl-tool-button toggle"><img class="nwl-icon" src="./img/fullscreen.svg" /></button></div>
                         <!-- Attribution / "watch on BrainBox" link, like the logo on an
                              embedded video. A real anchor, so the browser treats opening
                              it as navigation from a user gesture rather than a popup.
                              Hidden when the embedding page passes brainboxLink=0. -->
-                        <div style="flex:2"><a id="brainboxLink" class="a push" target="_blank" rel="noopener noreferrer" title="Open this brain in BrainBox"><img class="wordmark" alt="BrainBox" src="/img/brainbox-wordmark.svg" /></a></div>
+                        <div style="flex:2"><a id="brainboxLink" class="nwl-tool-button push" target="_blank" rel="noopener noreferrer" title="Open this brain in BrainBox"><img class="wordmark" alt="BrainBox" src="/img/brainbox-wordmark.svg" /></a></div>
                     </div>
                 </div>
 
