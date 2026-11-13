@@ -99,7 +99,7 @@ const makeAnnotationsSortable = (table, value, modified) => {
  */
 const selectRow = (rowsSelector, n) => {
   const row = document.querySelectorAll(rowsSelector)[n];
-  if (row) { row.classList.add('selected'); }
+  if (row) { row.classList.add('selected'); row.setAttribute('aria-selected', 'true'); }
 };
 
 const receiveMetadata = function (data) {
@@ -365,7 +365,7 @@ if (isEmptyObject(mriInfo)) {
       }
 
       // text annotations table: select the first row by default
-      document.querySelectorAll('table#textAnnotations tr').forEach((tr) => tr.classList.remove('selected'));
+      document.querySelectorAll('table#textAnnotations tr').forEach((tr) => { tr.classList.remove('selected'); tr.removeAttribute('aria-selected'); });
       selectRow('table#textAnnotations tr', 1);
       makeAnnotationsSortable(textAnnParam.table, cellText(1), (i) => (textAnnotationsArray[i] || {}).modified);
 

@@ -310,6 +310,7 @@ const loadProjectFile = function (index) {
           const firstRow = document.querySelector('#annotations tbody tr');
           if (firstRow) {
             firstRow.classList.add('selected');
+            firstRow.setAttribute('aria-selected', 'true');
           }
 
           AtlasMakerWidget.User.projectPage = projectInfo.shortname;
@@ -551,6 +552,7 @@ BrainBox.initBrainBox()
     const firstRow = document.querySelector('#projectFiles tbody tr');
     if (firstRow) {
       firstRow.classList.add('selected');
+      firstRow.setAttribute('aria-selected', 'true');
     }
   })
   // load the 1st file
@@ -630,8 +632,9 @@ delegate(document, 'click touchstart', '#projectFiles tbody tr', function (e) {
   const index = rowIndex(selRow);
 
   if (index >= 0 && currentIndex !== index) {
-    if (table) { table.querySelectorAll('tr').forEach((tr) => tr.classList.remove('selected')); }
+    if (table) { table.querySelectorAll('tr').forEach((tr) => { tr.classList.remove('selected'); tr.removeAttribute('aria-selected'); }); }
     selRow.classList.add('selected');
+    selRow.setAttribute('aria-selected', 'true');
     // remove table with previous annotations
     clearVolumeAnnotationsTable();
     // load and bind new file
@@ -660,8 +663,8 @@ document.addEventListener('keydown', function (e) {
   }
   const row = rows[position];
   if (table) {
-    rows.forEach((tr) => tr.classList.remove('selected'));
-    if (row) { row.classList.add('selected'); }
+    rows.forEach((tr) => { tr.classList.remove('selected'); tr.removeAttribute('aria-selected'); });
+    if (row) { row.classList.add('selected'); row.setAttribute('aria-selected', 'true'); }
   }
 
   // remove table with previous annotations
@@ -680,8 +683,9 @@ delegate(document, 'click touchstart', '#volAnnotations tbody tr', function (e) 
   const currentIndex = jqIndex(table ? table.querySelector('tr.selected') : null);
 
   if (targetIndex >= 0 && currentIndex !== targetIndex) {
-    if (table) { table.querySelectorAll('tr').forEach((tr) => tr.classList.remove('selected')); }
+    if (table) { table.querySelectorAll('tr').forEach((tr) => { tr.classList.remove('selected'); tr.removeAttribute('aria-selected'); }); }
     targetRow.classList.add('selected');
+    targetRow.setAttribute('aria-selected', 'true');
 
     let iarr;
     let found = false;

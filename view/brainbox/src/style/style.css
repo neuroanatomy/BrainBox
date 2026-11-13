@@ -11,12 +11,15 @@ html,body {
 /* No `*` rule (as in nwl-components 2.0's base.css): the colour is set on the root and the
    font size on the page's top-level elements, and both are inherited. html and body keep
    16px, so 1rem is unchanged. Elements the browser gives a size or colour of their own take
-   their parent's. */
-:where(h1, h2, h3, h4, h5, h6, small, sub, sup, big, code, kbd, samp, pre, tt, button, input, select, textarea) {
-    font-size: inherit;
-}
-:where(button, input, select, textarea, dialog, hr) {
-    color: inherit;
+   their parent's. These two rules are in nwl-components' lowest layer, as in its base.css, so
+   that a widget's own size or colour (widgets.css, as .nwl-push-button's) wins over them. */
+@layer nwl.base {
+    :where(h1, h2, h3, h4, h5, h6, small, sub, sup, big, code, kbd, samp, pre, tt, button, input, select, textarea) {
+        font-size: inherit;
+    }
+    :where(button, input, select, textarea, dialog, hr) {
+        color: inherit;
+    }
 }
 /* after the rule above: a heading or control directly in body is 14px too */
 :where(body > *) {
@@ -36,6 +39,10 @@ a {
 .linkNoULine {
     text-decoration: none;
     font-weight: lighter;
+}
+/* a link without its underline (header, footer) gets it back on hover (UI kit U8) */
+.linkNoULine:hover {
+    text-decoration: underline;
 }
 /* the footer's small print: its links keep the body size */
 .footerLinks a {

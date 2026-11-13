@@ -1,5 +1,6 @@
 /* global MozWebSocket */
 import 'nwl-components/tokens.css';
+import 'nwl-components/widgets.css';
 import '../style/style.css';
 import '../style/index-style.css';
 import '../style/ui.css';

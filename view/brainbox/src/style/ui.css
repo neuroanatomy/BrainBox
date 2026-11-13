@@ -65,29 +65,13 @@
 .pressed {
     background-color:var(--nwl-bg-pressed) !important;
 }
-.icon {
-    width:16px;
-    vertical-align:middle;
-    user-select: none;
-}
-
 .hidden {
     display:none;
 }
 
-/* svg buttons
+/* svg buttons (push buttons and icons: nwl-components' widgets.css, .nwl-push-button and
+   .nwl-icon)
 ----------------------- */
-.pushButton {
-    border:1px solid var(--nwl-border-strong);
-    border-radius:var(--nwl-radius-md);
-    color:var(--nwl-grey-dd);
-    text-align:center;
-    -webkit-appearance:none;
-    cursor: pointer;
-}
-.pushButton option {
-    color: var(--nwl-text);
-}
 img.button {
     width:0.9rem;
     height:0.9rem;
@@ -98,9 +82,13 @@ img.button {
 img.button:hover {
     opacity:0.5;
 }
-img.icon {
-    width:1rem;
-    height:1rem;
+/* the landmarks dialog's Save and Cancel are headings: one per line, with a heading's margins */
+#landmarksDialog h2.nwl-push-button {
+    display: block;
+    margin: 0.83em 0;
+}
+/* an icon centred in its tool button (the icon's 16px size is .nwl-icon's) */
+img.nwl-icon {
     position: absolute;
     top:50%;
     left:50%;

@@ -130,7 +130,7 @@
             <tr><th></th><th>Name</th><th>Project</th><th>Owner</th><th>Created</th><th>Modified</th><th>Labels</th><th>Vector items</th><th>Filename</th></tr>
           </thead>
           <tbody>
-            <tr v-for="a in mri.volume" :key="a.filename" :class="{ selected: selectedVolume.includes(a.filename) }">
+            <tr v-for="a in mri.volume" :key="a.filename" :class="{ selected: selectedVolume.includes(a.filename) }" :aria-selected="selectedVolume.includes(a.filename)">
               <td><input type="checkbox" :value="a.filename" v-model="selectedVolume"></td>
               <td>[[a.name || '(no name)']]</td>
               <td><code>[[a.project || '(none)']]</code> <span v-if="a.projectExists === false" class="tag">missing</span></td>
@@ -149,7 +149,7 @@
         <Table v-else>
           <thead><tr><th></th><th>Project</th><th>Fields</th></tr></thead>
           <tbody>
-            <tr v-for="t in mri.text" :key="t.project" :class="{ selected: selectedText.includes(t.project) }">
+            <tr v-for="t in mri.text" :key="t.project" :class="{ selected: selectedText.includes(t.project) }" :aria-selected="selectedText.includes(t.project)">
               <td><input type="checkbox" :value="t.project" v-model="selectedText"></td>
               <td><code>[[t.project || '(none)']]</code> <span v-if="t.projectExists === false" class="tag">missing</span></td>
               <td>[[t.keys.join(', ')]]</td>

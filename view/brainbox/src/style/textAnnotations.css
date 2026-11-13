@@ -3,9 +3,8 @@
 tr {
     vertical-align:top;
 }
-tr.selected {
-    background-color: #444;
-}
+/* a selected row (tr.selected, which the scripts query) is styled by nwl-components'
+   widgets.css: the scripts also set aria-selected="true" on it */
 table {
     border-collapse:collapse;
 }

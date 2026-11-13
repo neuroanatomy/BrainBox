@@ -52,7 +52,7 @@
 
 /* The BrainBox wordmark, lifted from the logo on the landing page so the
    lettering matches exactly (it is drawn as paths, not set in a font, so no
-   webfont has to be loaded into someone else's page). Unlike .icon it is wide
+   webfont has to be loaded into someone else's page). Unlike .nwl-icon it is wide
    rather than square, so it is sized by height with the width left to follow. */
 #atlasmaker.embed-layout #brainboxLink .wordmark {
     position: absolute;

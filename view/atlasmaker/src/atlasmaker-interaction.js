@@ -1472,6 +1472,7 @@ export const AtlasMakerInteraction = {
       }
       if(tbody.rows.length > 0) {
         tbody.rows[0].classList.add('selected');
+        tbody.rows[0].setAttribute('aria-selected', 'true');
       }
       dialog.style.display = 'inline-block';
     };
@@ -1530,8 +1531,10 @@ export const AtlasMakerInteraction = {
           if(!tr) { return; }
           for(const row of tbody.rows) {
             row.classList.remove('selected');
+            row.removeAttribute('aria-selected');
           }
           tr.classList.add('selected');
+          tr.setAttribute('aria-selected', 'true');
         }
       },
       {

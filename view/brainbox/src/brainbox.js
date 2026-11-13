@@ -424,11 +424,13 @@ export const BrainBox = {
 
       table.querySelectorAll('tr.selected').forEach((row) => {
         row.classList.remove('selected');
+        row.removeAttribute('aria-selected');
       });
 
       const row = [...table.querySelectorAll('tbody tr')].find((tr) => dataIndex(tr) === index);
       if (row) {
         row.classList.add('selected');
+        row.setAttribute('aria-selected', 'true');
       }
 
       AtlasMakerWidget.configureAtlasMaker(BrainBox.info, index);
