@@ -153,9 +153,9 @@ BrainBox already includes links to data from Zenodo, figshare, Dropbox, Google D
 
 BrainBox wants to facilitate data discovery. On the home page, you will find the option to either enter a link to a new MRI file you'd like to view, or to choose from a list of previously visited links. Each will open an MRI page with the viewer and annotation tools. When visiting BrainBox for the first time, this list will hold example links to proposed brain data and, once you start working, will update to a list of links to your recently visited brains. In the URL field, you can point BrainBox to any MRI data available online, as for instance on Zenodo, FigShare, Dropbox, GitHub or your own website.
 
-In the top menu, the ![](/img/plus.svg =13x13) icon is used to add a new project. Projects are collections of MRIs and annotations, and are discussed more deeply in the project page section below. The ![](/img/settings.svg =13x13) icon allows you to configure your existing projects, for example, to restrict access to a list of collaborators. In addition to that, BrainBox allows you to search for MRIs via their filename using the ![](/img/search.svg =13x13) icon, for a user or for a project.
+In the top menu, the ![](/lib/nwl-components/icons/plus.svg =13x13) icon is used to add a new project. Projects are collections of MRIs and annotations, and are discussed more deeply in the project page section below. The ![](/lib/nwl-components/icons/settings.svg =13x13) icon allows you to configure your existing projects, for example, to restrict access to a list of collaborators. In addition to that, BrainBox allows you to search for MRIs via their filename using the ![](/lib/nwl-components/icons/search.svg =13x13) icon, for a user or for a project.
 
-In case you find a bug or would like to suggest a new feature we could add, open a [![](/img/bug.svg =13x13)Github issue](https://github.com/neuroanatomy/BrainBox/issues/new). And if you'd like to join our team of developers, head over to our [![](/img/github.svg =15x15)Gihub repo](https://github.com/neuroanatomy/BrainBox).
+In case you find a bug or would like to suggest a new feature we could add, open a [![](/lib/nwl-components/icons/bug.svg =13x13)Github issue](https://github.com/neuroanatomy/BrainBox/issues/new). And if you'd like to join our team of developers, head over to our [![](/lib/nwl-components/icons/github.svg =15x15)Gihub repo](https://github.com/neuroanatomy/BrainBox).
 
 To be able to use full BrainBox functionalities, you need to login. BrainBox asks you to login with your GitHub account so that annotations can benefit from GitHub’s versioning system and be saved to your user account as well as easily be shared with the BrainBox GitHub repository. Once logged in, a click on your username will take you to your user page.
 
@@ -189,7 +189,7 @@ You can add, duplicate or remove a label set by using the **[+]**, **[Copy]**, a
 
 On the right side of the MRI page the stereotaxic viewer displays a slice of your MRI data. The number of the slice is shown in the upper-left corner of the viewer along with information about the total segmentation volume and the total length that you have segmented.
 
-Below the stereotaxic viewer there is a set of tools to navigate and segment the MRI volume. You can change the stereotaxic plane using the **[Sag]**, **[Cor]** and **[Axi]** buttons. The slice can be changed by clicking on the ![](/img/minus-small.svg =13x13) and ![](/img/plus-small.svg =13x13) buttons, or moving the slider ![](img/slider.png =18x15). You can also change the slice by pressing the left and right arrows in your keyboard. The BrainBox viewer allows you to change the brightness and contrast of the image, and to adapt the transparency level of the overlay segmentations with the ![](/doc/atlasmakersvg/adjust.svg =13x13) adjust tool.
+Below the stereotaxic viewer there is a set of tools to navigate and segment the MRI volume. You can change the stereotaxic plane using the **[Sag]**, **[Cor]** and **[Axi]** buttons. The slice can be changed by clicking on the ![](/lib/nwl-components/icons/minus-small.svg =13x13) and ![](/lib/nwl-components/icons/plus-small.svg =13x13) buttons, or moving the slider ![](img/slider.png =18x15). You can also change the slice by pressing the left and right arrows in your keyboard. The BrainBox viewer allows you to change the brightness and contrast of the image, and to adapt the transparency level of the overlay segmentations with the ![](/doc/atlasmakersvg/adjust.svg =13x13) adjust tool.
 
 The ![](/doc/atlasmakersvg/fullscreen.svg =13x13) fullscreen button lets you use the complete computer screen to display the MRI image (you can go back by clicking it again). By clicking on the ![](/doc/atlasmakersvg/link.svg =13x13) link button you can get a URL that you can send to your collaborators. The link will take them to the exact stereotaxic plane and slice where you are. Once your collaborators are also connected to BrainBox, you can chat with them using the integrated chat. You can toggle visibility of the chat window by clicking on the ![](/doc/atlasmakersvg/chat.svg =13x13) button.
 
@@ -211,9 +211,9 @@ You can use BrainBox in a desktop computer or in a tablet. In a desktop computer
 
 |Icon|Function|
 |:-----|:--------|
-|![](/img/minus-small.svg =13x13)|Move to the previous slice|
+|![](/lib/nwl-components/icons/minus-small.svg =13x13)|Move to the previous slice|
 |![](img/slider.png =15x13)|Change slice|
-|![](/img/plus-small.svg =13x13)|Move to the next slice|
+|![](/lib/nwl-components/icons/plus-small.svg =13x13)|Move to the next slice|
 |**Sag**|Change to Sagittal view|
 |**Cor**|Change to Coronal Plane|
 |**Axi**|Change to Axial plane|

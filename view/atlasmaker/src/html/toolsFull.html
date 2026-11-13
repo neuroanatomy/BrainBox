@@ -1,7 +1,7 @@
 <div id="tools-side" style="display:block;height:100%">
   <div id="tools-minimized">
       <div>
-          <img alt="menu" style="width:28px;position:absolute;top:10px;left:10px" src="./img/bars.svg" />
+          <img alt="menu" style="width:28px;position:absolute;top:10px;left:10px" src="~nwl-components/dist/icons/bars.svg" />
       </div>
   </div>
 
@@ -10,10 +10,10 @@
       <!-- tools hide/show, display left/right -->
       <div id="headerBlock" style="flex:0 1 28px;background:#333">
           <div style="display:flex">
-              <div style="flex:0 0 28px"><button type="button" id="display-minimize" title="Minimize toolbar" class="nwl-tool-button push noBorder"><img class="nwl-icon" alt="close" src="./img/times-circle.svg" /></button></div>
+              <div style="flex:0 0 28px"><button type="button" id="display-minimize" title="Minimize toolbar" class="nwl-tool-button push noBorder"><img class="nwl-icon" alt="close" src="~nwl-components/dist/icons/times-circle.svg" /></button></div>
               <div id="toolsDragHandle" style="flex:1 1 auto;cursor:grab" title="Drag to move toolbar"></div>
-              <div style="flex:0 0 28px"><button type="button" id="display-left" title="Display to the left" class="nwl-tool-button push noBorder"><img class="nwl-icon" alt="left" src="./img/caret-square-o-left.svg" /></button></div>
-              <div style="flex:0 0 28px"><button type="button" id="display-right" title="Display to the right" class="nwl-tool-button push noBorder"><img class="nwl-icon" alt="right" src="./img/caret-square-o-right.svg" /></button></div>
+              <div style="flex:0 0 28px"><button type="button" id="display-left" title="Display to the left" class="nwl-tool-button push noBorder"><img class="nwl-icon" alt="left" src="~nwl-components/dist/icons/caret-square-o-left.svg" /></button></div>
+              <div style="flex:0 0 28px"><button type="button" id="display-right" title="Display to the right" class="nwl-tool-button push noBorder"><img class="nwl-icon" alt="right" src="~nwl-components/dist/icons/caret-square-o-right.svg" /></button></div>
           </div>
       </div>
 
@@ -48,34 +48,34 @@
                       <div style="flex:1"><button type="button" title="axi" class="nwl-tool-button nwl-tool-button--sub">Axi</button></div>
                   </div>
                   <div style="display:flex">
-                      <div style="flex:1"><button type="button" id="fullscreen" title="Full screen" class="nwl-tool-button toggle"><img class="nwl-icon" alt="fullscreen" src="./img/fullscreen.svg" /></button></div>
-                      <div style="flex:1"><button type="button" id="3drender" title="3D render" class="nwl-tool-button push"><img class="nwl-icon" alt="3d render" src="./img/3drender.svg" /></button></div>
+                      <div style="flex:1"><button type="button" id="fullscreen" title="Full screen" class="nwl-tool-button toggle"><img class="nwl-icon" alt="fullscreen" src="~nwl-components/dist/icons/fullscreen.svg" /></button></div>
+                      <div style="flex:1"><button type="button" id="3drender" title="3D render" class="nwl-tool-button push"><img class="nwl-icon" alt="3d render" src="~nwl-components/dist/icons/3drender.svg" /></button></div>
                       <div id="text" style="flex:2;display:flex" class="chose">
-                          <div style="flex:1"><button type="button" id="bubble" title="Chat" class="nwl-tool-button nwl-tool-button--sub pressed"><img class="nwl-icon" alt="chat" src="./img/chat.svg" /></button></div>
-                          <div style="flex:1"><button type="button" id="script" title="Script" class="nwl-tool-button nwl-tool-button--sub"><img class="nwl-icon" alt="script" src="./img/scroll.svg" /></button></div>
+                          <div style="flex:1"><button type="button" id="bubble" title="Chat" class="nwl-tool-button nwl-tool-button--sub pressed"><img class="nwl-icon" alt="chat" src="~nwl-components/dist/icons/chat.svg" /></button></div>
+                          <div style="flex:1"><button type="button" id="script" title="Script" class="nwl-tool-button nwl-tool-button--sub"><img class="nwl-icon" alt="script" src="~nwl-components/dist/icons/scroll.svg" /></button></div>
                       </div>
-                      <div style="flex:1"><button type="button" id="link" title="Link" class="nwl-tool-button push"><img class="nwl-icon" alt="link" src="./img/link.svg" /></button></div>
-                      <div style="flex:1"><button type="button" id="precise" title="Precise cursor" class="nwl-tool-button toggle"><img class="nwl-icon" alt="precise cursor" src="./img/preciseCursor.svg" /></button></div>
+                      <div style="flex:1"><button type="button" id="link" title="Link" class="nwl-tool-button push"><img class="nwl-icon" alt="link" src="~nwl-components/dist/icons/link.svg" /></button></div>
+                      <div style="flex:1"><button type="button" id="precise" title="Precise cursor" class="nwl-tool-button toggle"><img class="nwl-icon" alt="precise cursor" src="~nwl-components/dist/icons/preciseCursor.svg" /></button></div>
                   </div>
               </div>
 
               <div style="flex:1 0 250px;width:50px">
                   <div id="paintTool" style="display:flex" class="chose">
-                      <div style="flex:1"><button type="button" title="Show" class="nwl-tool-button nwl-tool-button--sub pressed"><img class="nwl-icon" alt="show" src="./img/show.svg" /></button></div>
-                      <div style="flex:1"><button type="button" title="Paint" class="nwl-tool-button nwl-tool-button--sub"><img class="nwl-icon" alt="paint" src="./img/paint.svg" /></button></div>
-                      <div style="flex:1"><button type="button" title="Erase" class="nwl-tool-button nwl-tool-button--sub"><img class="nwl-icon" alt="erase" src="./img/erase.svg" /></button></div>
-                      <div style="flex:1"><button type="button" title="Landmark" class="nwl-tool-button nwl-tool-button--sub"><img class="nwl-icon" alt="landmark" src="./img/landmark.svg" /></button></div>
-                      <div style="flex:1"><button type="button" title="Measure" class="nwl-tool-button nwl-tool-button--sub"><img class="nwl-icon" alt="ruler" src="./img/ruler.svg" /></button></div>
-                      <div style="flex:1"><button type="button" title="Adjust" class="nwl-tool-button nwl-tool-button--sub"><img class="nwl-icon" alt="adjust" src="./img/adjust.svg" /></button></div>
-                      <div style="flex:1"><button type="button" title="Eyedrop" class="nwl-tool-button nwl-tool-button--sub"><img class="nwl-icon" alt="eyedropper" src="./img/eyedropper.svg" /></button></div>
+                      <div style="flex:1"><button type="button" title="Show" class="nwl-tool-button nwl-tool-button--sub pressed"><img class="nwl-icon" alt="show" src="~nwl-components/dist/icons/show.svg" /></button></div>
+                      <div style="flex:1"><button type="button" title="Paint" class="nwl-tool-button nwl-tool-button--sub"><img class="nwl-icon" alt="paint" src="~nwl-components/dist/icons/paint.svg" /></button></div>
+                      <div style="flex:1"><button type="button" title="Erase" class="nwl-tool-button nwl-tool-button--sub"><img class="nwl-icon" alt="erase" src="~nwl-components/dist/icons/erase.svg" /></button></div>
+                      <div style="flex:1"><button type="button" title="Landmark" class="nwl-tool-button nwl-tool-button--sub"><img class="nwl-icon" alt="landmark" src="~nwl-components/dist/icons/landmark.svg" /></button></div>
+                      <div style="flex:1"><button type="button" title="Measure" class="nwl-tool-button nwl-tool-button--sub"><img class="nwl-icon" alt="ruler" src="~nwl-components/dist/icons/ruler.svg" /></button></div>
+                      <div style="flex:1"><button type="button" title="Adjust" class="nwl-tool-button nwl-tool-button--sub"><img class="nwl-icon" alt="adjust" src="~nwl-components/dist/icons/adjust.svg" /></button></div>
+                      <div style="flex:1"><button type="button" title="Eyedrop" class="nwl-tool-button nwl-tool-button--sub"><img class="nwl-icon" alt="eyedropper" src="~nwl-components/dist/icons/eyedropper.svg" /></button></div>
                   </div>
                   <div style="display:flex">
                       <div style="flex:1"><button type="button" id="color" title="Color" style="height:24px;background:#f00" class="nwl-tool-button push"></button></div>
-                      <div style="flex:1"><button type="button" id="fill" class="nwl-tool-button toggle"><img class="nwl-icon" alt="fill" src="./img/fill.svg" /></button></div>
-                      <div style="flex:1"><button type="button" id="undo" title="Undo" class="nwl-tool-button push"><img class="nwl-icon" alt="undo" src="./img/undo.svg" /></button></div>
-                      <div style="flex:1"><button type="button" id="upload" title="Upload" class="nwl-tool-button push"><img class="nwl-icon" alt="upload" src="./img/upload.svg" /></button></div>
-                      <div style="flex:1"><button type="button" id="download" title="Download" class="nwl-tool-button push"><img class="nwl-icon" alt="download" src="./img/download.svg" /></button></div>
-                      <div style="flex:1"><button type="button" id="save" title="Save" class="nwl-tool-button push"><img class="nwl-icon" alt="save" src="./img/floppy.svg" /></button></div>
+                      <div style="flex:1"><button type="button" id="fill" class="nwl-tool-button toggle"><img class="nwl-icon" alt="fill" src="~nwl-components/dist/icons/fill.svg" /></button></div>
+                      <div style="flex:1"><button type="button" id="undo" title="Undo" class="nwl-tool-button push"><img class="nwl-icon" alt="undo" src="~nwl-components/dist/icons/undo.svg" /></button></div>
+                      <div style="flex:1"><button type="button" id="upload" title="Upload" class="nwl-tool-button push"><img class="nwl-icon" alt="upload" src="~nwl-components/dist/icons/upload.svg" /></button></div>
+                      <div style="flex:1"><button type="button" id="download" title="Download" class="nwl-tool-button push"><img class="nwl-icon" alt="download" src="~nwl-components/dist/icons/download.svg" /></button></div>
+                      <div style="flex:1"><button type="button" id="save" title="Save" class="nwl-tool-button push"><img class="nwl-icon" alt="save" src="~nwl-components/dist/icons/save.svg" /></button></div>
                   </div>
               </div>
 
@@ -152,7 +152,7 @@
 <!-- Labels -->
 <div id="labelset">
   <div style="z-index:23;text-align:right">
-      <img id="labels-close" class="button" alt="close" src="./img/times-circle.svg"/>
+      <img id="labels-close" class="button" alt="close" src="~nwl-components/dist/icons/times-circle.svg"/>
   </div>
 
   <ul style="padding-left:1rem">
@@ -194,8 +194,8 @@
         </tbody>
       </table>
       <div style="text-align:right">
-        <img id="exportLandmarks" class="button" style="width:20px; height:20px; margin:8 2 0 0" src="/img/download-square.svg" title="download csv" alt="download csv"/>
-        <img id="removeLandmark" class="button" style="width:20px; height:20px; margin:8 2 0 0" src="/img/minus-square.svg" title="remove landmark" alt="remove landmark entry"/>
+        <img id="exportLandmarks" class="button" style="width:20px; height:20px; margin:8 2 0 0" src="~nwl-components/dist/icons/download-square.svg" title="download csv" alt="download csv"/>
+        <img id="removeLandmark" class="button" style="width:20px; height:20px; margin:8 2 0 0" src="~nwl-components/dist/icons/minus-square.svg" title="remove landmark" alt="remove landmark entry"/>
       </div>  
     </div>
 

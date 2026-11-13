@@ -16,7 +16,7 @@ import {AtlasMakerWS} from './atlasmaker-ws.js';
 
 import Config from './../../../cfg.json';
 import deepExtendModule from '../../shared/deepExtend.js';
-import downloadIcon from './html/img/download.svg';
+import downloadIcon from 'nwl-components/dist/icons/download.svg';
 import toolsEmbed from './html/toolsEmbed.html';
 import toolsFull from './html/toolsFull.html';
 import toolsLight from './html/toolsLight.html';

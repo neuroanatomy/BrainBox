@@ -111,6 +111,8 @@ const start = async function () {
   // only those who may see them get the files of an MRI (/data/<md5>/<file>)
   app.use(dataAccessMiddleware({ nativeDb }));
   app.use(express.static(path.join(dirname, 'public')));
+  // nwl-components' built files, among them the shared icons (/lib/nwl-components/icons/<name>.svg)
+  app.use('/lib/nwl-components', express.static(path.dirname(require.resolve('nwl-components/tokens.css'))));
 
   //========================================================================================
   // App-wide variables

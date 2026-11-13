@@ -2,7 +2,7 @@
 /* global AtlasMakerWidget */
 /*! AtlasMaker: Painting commands */
 
-import showIcon from './html/img/show.svg';
+import showIcon from 'nwl-components/dist/icons/show.svg';
 
 /**
  * @function placeCollaboratorPointer
