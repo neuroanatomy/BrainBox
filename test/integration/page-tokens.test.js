@@ -5,7 +5,8 @@
   each page bundle that has such a stylesheet loads nwl-components/tokens.css. On the home
   page, which loads no other nwl-components stylesheet, a token is defined and the body gets
   its colours and font through the tokens; on the ask-for-login page, which uses
-  nwl-components' Vue components (UI kit step 10), its .app does.
+  nwl-components' Vue components (UI kit step 10), its .app does, with the values of the
+  2027 theme the page opts in to (UI kit step 13a).
 */
 
 const puppeteer = require('puppeteer');
@@ -17,6 +18,12 @@ const EXPECTED = {
   token: '#222',
   background: 'rgb(34, 34, 34)',
   font: '"Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif'
+};
+
+const EXPECTED_2027 = {
+  token: '#1a1a1a',
+  background: 'rgb(26, 26, 26)',
+  font: '"Source Sans 3", "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif'
 };
 
 /**
@@ -65,6 +72,6 @@ describe('Pages load nwl-components\' tokens', function () {
   }).timeout(U.longTimeout);
 
   it('defines the tokens on the ask-for-login page', async function () {
-    assert.deepEqual(await tokenStyles(browser, `${U.serverURL}/project/new`, '.app'), EXPECTED);
+    assert.deepEqual(await tokenStyles(browser, `${U.serverURL}/project/new`, '.app'), EXPECTED_2027);
   }).timeout(U.longTimeout);
 });
