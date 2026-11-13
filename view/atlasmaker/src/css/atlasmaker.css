@@ -190,6 +190,10 @@
 #msg {
     color: var(--nwl-text-inverse);
 }
+/* the script console (codeflask): its code text stays white, not codeflask's theme colour */
+#logScript .codeflask__pre {
+    color: var(--nwl-text);
+}
 
 /* Label set
 ------------------------ */

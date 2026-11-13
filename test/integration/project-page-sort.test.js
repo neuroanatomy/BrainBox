@@ -214,12 +214,15 @@ describe('Project page: sortable files table', function () {
         label: btn && btn.querySelector(':scope > span.nwl-sort-label').textContent,
         icon: svg && svg.getAttribute('data-state'),
         iconColor: svg && getComputedStyle(svg).color,
+        // what shows: the paths' stroke (currentColor), white under BrainBox's former `*` rule
+        iconStroke: svg && [...svg.querySelectorAll('path')].map((path) => getComputedStyle(path).stroke),
         iconWidth: svg && getComputedStyle(svg).width
       };
     }));
     assert.deepEqual(headers.map((h) => h.text), HEADERS);
     for (const h of headers) {
-      assert.deepEqual(h, { text: h.text, sortable: true, type: 'button', label: h.text, icon: 'none', iconColor: 'rgb(122, 122, 122)', iconWidth: h.iconWidth }, h.text);
+      assert.deepEqual(h, { text: h.text, sortable: true, type: 'button', label: h.text, icon: 'none', iconColor: 'rgb(122, 122, 122)', iconStroke: h.iconStroke.map(() => 'rgb(122, 122, 122)'), iconWidth: h.iconWidth }, h.text);
+      assert.isNotEmpty(h.iconStroke);
       assert.match(h.iconWidth, /^[\d.]+px$/);
     }
     assert.deepEqual(await ariaSorts(), HEADERS.map(() => 'none'));

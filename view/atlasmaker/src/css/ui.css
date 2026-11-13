@@ -115,6 +115,16 @@ img.icon {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
-    outline: none;
     cursor: pointer;
+}
+.mui-select:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* Keyboard focus (UI kit U6): a 2px white outline, as BrainBox's style/ui.css (there
+   --nwl-focus). Mouse focus shows nothing (browsers match :focus-visible on a click only for
+   text fields, and Chromium for <select>). */
+:where(:focus-visible) {
+    outline: 2px solid white;
+    outline-offset: 2px;
 }

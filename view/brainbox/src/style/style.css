@@ -1,15 +1,26 @@
 /* BrainBox common style */
-* {
-     font-size:var(--nwl-text-md);
-    color:var(--nwl-text);
-}
 html,body {
     background-color:var(--nwl-bg);
     height:100%;
     margin:0px;
     font: var(--nwl-text-lg)/20px var(--nwl-font-body);
+    color:var(--nwl-text);
     -webkit-font-smoothing: antialiased;
     -moz-font-smoothing: antialiased;
+}
+/* No `*` rule (as in nwl-components 2.0's base.css): the colour is set on the root and the
+   font size on the page's top-level elements, and both are inherited. html and body keep
+   16px, so 1rem is unchanged. Elements the browser gives a size or colour of their own take
+   their parent's. */
+:where(h1, h2, h3, h4, h5, h6, small, sub, sup, big, code, kbd, samp, pre, tt, button, input, select, textarea) {
+    font-size: inherit;
+}
+:where(button, input, select, textarea, dialog, hr) {
+    color: inherit;
+}
+/* after the rule above: a heading or control directly in body is 14px too */
+:where(body > *) {
+    font-size:var(--nwl-text-md);
 }
 h1 {
      font-size: 1rem;
@@ -26,6 +37,10 @@ a {
     text-decoration: none;
     font-weight: lighter;
 }
+/* the footer's small print: its links keep the body size */
+.footerLinks a {
+    font-size: var(--nwl-text-md);
+}
 
 #menu {
     float:right;
@@ -33,6 +48,10 @@ a {
     margin-right: 10px;
     display: inline-block;
     font: var(--nwl-text-lg)/24px var(--nwl-font-body);
+}
+/* the menu's 16px is its line's; its links and login are 14px */
+#menu > * {
+    font-size: var(--nwl-text-md);
 }
 #menu img{
      margin-left: 15px;

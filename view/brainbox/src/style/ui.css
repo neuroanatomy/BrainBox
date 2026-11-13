@@ -85,6 +85,9 @@
     -webkit-appearance:none;
     cursor: pointer;
 }
+.pushButton option {
+    color: var(--nwl-text);
+}
 img.button {
     width:0.9rem;
     height:0.9rem;
@@ -116,6 +119,16 @@ img.icon {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
-    outline: none;
     cursor: pointer;
+}
+.mui-select:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* Keyboard focus (UI kit U6): a 2px outline in --nwl-focus, as nwl-components' base.css
+   gives the library's pages. Mouse focus shows nothing (browsers match :focus-visible on a
+   click only for text fields, and Chromium for <select>). */
+:where(:focus-visible) {
+    outline: 2px solid var(--nwl-focus);
+    outline-offset: 2px;
 }
