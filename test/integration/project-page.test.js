@@ -303,13 +303,15 @@ describe('TESTING THE PROJECT PAGE SCRIPT (project-page.js)', function () {
     assert.deepEqual(opened.pageErrors, []);
   }).timeout(U.longTimeout);
 
-  it('goes to the new-project and settings pages from the header buttons', async function () {
+  // nwl-components' Nav (UI kit step 10b): links, not the hand-made header's bound buttons
+  it('goes to the new-project and settings pages from the header links', async function () {
     const { page } = opened;
-    await Promise.all([page.waitForNavigation({ timeout: U.mediumTimeout }), page.click('#settings')]);
+    await page.waitForSelector(`#bb-header-app nav#menu a[href="/project/${SHORTNAME}/settings"]`);
+    await Promise.all([page.waitForNavigation({ timeout: U.mediumTimeout }), page.click(`#bb-header-app nav#menu a[href="/project/${SHORTNAME}/settings"]`)]);
     assert.strictEqual(new URL(page.url()).pathname, `/project/${SHORTNAME}/settings`);
     await page.goto(PAGE, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('#addProject');
-    await Promise.all([page.waitForNavigation({ timeout: U.mediumTimeout }), page.click('#addProject')]);
+    await page.waitForSelector('#bb-header-app nav#menu a[href="/project/new"]');
+    await Promise.all([page.waitForNavigation({ timeout: U.mediumTimeout }), page.click('#bb-header-app nav#menu a[href="/project/new"]')]);
     assert.strictEqual(new URL(page.url()).pathname, '/project/new');
   }).timeout(U.longTimeout);
 });

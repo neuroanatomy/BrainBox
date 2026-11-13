@@ -13,7 +13,9 @@
 
 <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:stretch">
     
-{{> partials/viewer-header}}
+    <!-- nwl-components' Header, mounted by project-page.js (a Vue app of its own, outside the
+         viewer); its title, the project's name, is projectInfo.name, set as text -->
+    <div id="bb-header-app" class="bb-nwl"></div>
     
     <!-- Content -->
     <div id="content" style="flex:1 1 auto;position:relative">
@@ -74,6 +76,7 @@
 <script>
 const projectInfo={{{projectInfo}}};
 const annotationsAccessLevel='{{{annotationsAccessLevel}}}';
+const loggedUser = {{{loggedUser}}};
 const infoProxy = {};
 </script>
 <script src="/lib/atlasmaker.js"></script>

@@ -60,6 +60,8 @@ const get = (path, username) => {
 };
 
 // the access the project page is told, as its script declares it
+// the page's logged user, given to its header: null when logged out
+const pageUser = (res) => JSON.parse(res.text.match(/const loggedUser = (.*);/u)[1]);
 const pageAccess = (res) => {
   const match = res.text.match(/const annotationsAccessLevel='([a-z]+)'/);
 
@@ -94,9 +96,11 @@ describe('A logged-out visitor is told view-only access to annotations anyone ma
     const loggedOut = await get(`/project/${shortname}`);
     assert.equal(loggedOut.statusCode, 200);
     assert.equal(pageAccess(loggedOut), 'view');
-    assert.include(loggedOut.text, 'Log in', 'the page shows how to log in');
+    // nwl-components' header shows how to log in when the page's user is null (UI kit step 10b)
+    assert.isNull(pageUser(loggedOut), 'the page shows how to log in');
     const loggedIn = await get(`/project/${shortname}`, F.users.nonmember);
     assert.equal(pageAccess(loggedIn), 'edit');
+    assert.equal(pageUser(loggedIn).username, F.users.nonmember);
   });
 
   it('the layers the page loads: \'view\' logged out, \'edit\' logged in', async function () {

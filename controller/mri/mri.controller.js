@@ -246,9 +246,8 @@ const downloadMRI = async function (myurl, req) {
 
 // eslint-disable-next-line max-statements
 const mri = async function (req, res) {
-  const login = (req.isAuthenticated()) ?
-    ('<a href=\'/user/' + req.user.username + '\'>' + req.user.username + '</a> (<a href=\'/logout\'>Log Out</a>)') :
-    ('<a href=\'/auth/github\'>Log in with GitHub</a>');
+  // the nwl-components header's user (null when logged out)
+  const headerUser = jsonForScript(publicLoggedUser(req.isAuthenticated() ? req.user : null));
   const loggedUser = req.isAuthenticated() ? req.user.username : 'anonymous';
   req.session.returnTo = req.originalUrl; // Store return path in case of login
 
@@ -270,7 +269,7 @@ const mri = async function (req, res) {
       title: 'BrainBox: private brain',
       message: 'This brain is private',
       askToLogIn: loggedUser === 'anonymous',
-      loggedUser: jsonForScript(publicLoggedUser(req.isAuthenticated() ? req.user : null))
+      loggedUser: headerUser
     });
 
     return;
@@ -284,8 +283,7 @@ const mri = async function (req, res) {
       title: obj.name || 'BrainBox',
       params: jsonForScript(req.query),
       mriInfo: jsonForScript(obj),
-      header: { title: 'BrainBox' },
-      login
+      loggedUser: headerUser
     });
   } else {
     // If the json object exists, and has annotations, configure the access to them
@@ -306,8 +304,7 @@ const mri = async function (req, res) {
       params: jsonForScript(req.query),
       mriInfo: jsonForScript(json),
       hasPrivilegedAccess: !isPubliclyVisible && hasCustomViewAccess,
-      header: { title: 'BrainBox' },
-      login
+      loggedUser: headerUser
     });
   }
 };

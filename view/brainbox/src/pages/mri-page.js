@@ -1,5 +1,6 @@
 /* eslint-disable max-lines */
-/*global AtlasMakerWidget BrainBox infoProxy mriInfo params*/
+/*global AtlasMakerWidget BrainBox infoProxy loggedUser mriInfo params*/
+import 'nwl-components/dist/style.css';
 import '../style/style.css';
 import '../style/textAnnotations.css';
 import '../style/ui.css';
@@ -10,10 +11,15 @@ import '../style/tables.css';
 import * as tw from '../twoWayBinding';
 import { cellText, makeSortable, rowIndex } from '../sortableTable.js';
 import { getData, setData } from '../../../shared/domData';
+import { mountViewerFooter, mountViewerHeader } from '../viewer-header-footer.js';
 import showHideModule from '../../../shared/showHide.js';
 
 // jQuery's .show() / .hide(), without jQuery
 const { show, hide } = showHideModule;
+
+// nwl-components' header and footer, each on its own placeholder, outside the viewer
+mountViewerHeader(document.getElementById('bb-header-app'), { title: 'BrainBox', user: loggedUser });
+mountViewerFooter(document.getElementById('bb-footer-app'));
 
 // let mriInfoOrig;
 let textAnnotationsArray = [];
@@ -386,5 +392,3 @@ if (isEmptyObject(mriInfo)) {
     });
 }
 
-const addProject = document.getElementById('addProject');
-if (addProject) { addProject.addEventListener('click', () => { location = '/project/new'; }); }

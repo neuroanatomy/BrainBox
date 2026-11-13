@@ -1,6 +1,7 @@
 /* eslint-disable max-lines */
-/* global infoProxy projectInfo annotationsAccessLevel BrainBox AtlasMakerWidget */
+/* global infoProxy projectInfo annotationsAccessLevel BrainBox AtlasMakerWidget loggedUser */
 
+import 'nwl-components/dist/style.css';
 import '../style/style.css';
 import '../style/textAnnotations.css';
 import '../style/ui.css';
@@ -12,12 +13,23 @@ import { getData, setData } from '../../../shared/domData.js';
 import freeform from '../tools/freeform.js';
 import geometryModule from '../../../shared/geometry.js';
 import hidden from '../tools/hidden.js';
+import { mountViewerHeader } from '../viewer-header-footer.js';
 import multiple from '../tools/multiple.js';
 import showHideModule from '../../../shared/showHide.js';
 
 // jQuery's .show()/.hide(), .width() and .css({...}), without jQuery
 const { hide } = showHideModule;
 const { contentSize, setStyle } = geometryModule;
+
+// nwl-components' header, on its own placeholder, outside the viewer (no footer on this page).
+// The settings link shows for every visitor, as the hand-made header's did: the settings page
+// checks the access itself
+mountViewerHeader(document.getElementById('bb-header-app'), {
+  title: projectInfo.name,
+  user: loggedUser,
+  displaySettings: true,
+  project: projectInfo
+});
 
 /**
  * jQuery's $.isEmptyObject: true if the object has no enumerable property, own or inherited
@@ -424,16 +436,6 @@ document.body.addEventListener('mousemove', function (e) { resizeButton({ x: e.p
 document.body.addEventListener('touchmove', function (e) { resizeButton({ x: e.changedTouches[0].pageX, y: e.changedTouches[0].pageY }); });
 for (const type of ['mouseup', 'touchend']) {
   document.body.addEventListener(type, function () { setData(resizeButtonElem, { flag: -1 }); });
-}
-
-const addProjectButton = document.getElementById('addProject');
-if (addProjectButton) { addProjectButton.addEventListener('click', function () { location.assign('/project/new'); }); }
-const settingsButton = document.getElementById('settings');
-if (settingsButton) {
-  settingsButton.addEventListener('click', function () {
-    const { pathname } = location;
-    if (pathname.slice(-1) === '/') { location.assign(pathname + 'settings'); } else { location.assign(pathname + '/settings'); }
-  });
 }
 
 const receiveMetadata = function (data) {

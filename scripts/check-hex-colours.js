@@ -23,9 +23,7 @@ const ALLOWED = {
   'templates/mriRender3D.mustache': [],
   'templates/askForLogin.mustache': [],
   'templates/mri.mustache': [],
-  'templates/project.mustache': [],
-  'templates/partials/viewer-header.mustache': [],
-  'templates/partials/viewer-footer.mustache': []
+  'templates/project.mustache': []
 };
 const HEX = /#(?:[0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{3,4})\b/giu;
 

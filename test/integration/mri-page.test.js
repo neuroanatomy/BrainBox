@@ -7,7 +7,7 @@
   annotations table (one row per annotation, a label-set menu, project link, access level,
   first row selected), changing an annotation's label set, selecting a row, the error shown
   when the page gets no MRI information, a failed load (shown in the viewer instead of an
-  endless "loading"), the double-tap handling on touch screens, and the "add project" button.
+  endless "loading"), the double-tap handling on touch screens, and the "add project" link (nwl-components' Nav).
 */
 
 const crypto = require('crypto');
@@ -373,12 +373,12 @@ describe('TESTING THE MRI PAGE SCRIPT (mri-page.js)', function () {
     assert.deepEqual(opened.pageErrors, []);
   }).timeout(U.longTimeout);
 
-  it('goes to the new-project page from the "add project" button', async function () {
+  it('goes to the new-project page from the "add project" link', async function () {
     opened = await openPage(browser);
     const { page } = opened;
     await Promise.all([
       page.waitForNavigation({ timeout: U.mediumTimeout }),
-      page.click('#addProject')
+      page.click('#bb-header-app nav#menu a[href="/project/new"]')
     ]);
     assert.strictEqual(new URL(page.url()).pathname, '/project/new');
   }).timeout(U.longTimeout);

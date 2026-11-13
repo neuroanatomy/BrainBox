@@ -308,9 +308,6 @@ const projectForUser = function (json, loggedUser) {
  * @return {void}
  */
 const project = async function (req, res) {
-  const login = (req.isAuthenticated()) ?
-    ('<a href=\'/user/' + req.user.username + '\'>' + req.user.username + '</a> (<a href=\'/logout\'>Log Out</a>)')
-    : ('<a href=\'/auth/github\'>Log in with GitHub</a>');
   let loggedUser = 'anonymous';
   if (req.isAuthenticated()) {
     loggedUser = req.user.username;
@@ -333,10 +330,9 @@ const project = async function (req, res) {
     res.render('project', {
       title: json.name,
       projectInfo: jsonForScript(projectInfo),
-      header: { title: json.name, settings: true },
       annotationsAccessLevel: BrainboxAccessControlService.getUserOrPublicAccessLevel(json, loggedUser, AccessType.ANNOTATIONS),
-      loggedUser: jsonForScript(publicLoggedUser(req.user)),
-      login
+      // the nwl-components header's user (null when logged out); its title is projectInfo.name
+      loggedUser: jsonForScript(publicLoggedUser(req.user))
     });
   } else {
     res.status(404).send('Project Not Found');

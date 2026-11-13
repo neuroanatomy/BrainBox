@@ -49,7 +49,8 @@ a {
     font-size: var(--nwl-text-md);
 }
 
-#menu {
+/* the home page's hand-made menu; not nwl-components' nav#menu, on the MRI and project pages */
+#menu:where(div) {
     float:right;
     /* margin-top: 10px; */
     margin-right: 10px;
@@ -57,10 +58,10 @@ a {
     font: var(--nwl-text-lg)/24px var(--nwl-font-body);
 }
 /* the menu's 16px is its line's; its links and login are 14px */
-#menu > * {
+#menu:where(div) > * {
     font-size: var(--nwl-text-md);
 }
-#menu img{
+#menu:where(div) img{
      margin-left: 15px;
 }
 #MyLogin {
@@ -68,52 +69,52 @@ a {
      margin-left:15px;
 }
 
-/* The MRI and project pages' header and footer (templates/partials/viewer-header.mustache
-   and viewer-footer.mustache) */
-.bb-header {
-    flex: 0 0 64px;
+/* The nwl-components Header of the MRI and project pages, and the MRI page's Footer
+   (view/brainbox/src/viewer-header-footer.js), each on its own placeholder: what
+   nwl-components' .app (Wrapper) gives its header and footer on the other pages (base.css),
+   without its 100vh height */
+.bb-nwl {
+    flex: none;
+    box-sizing: border-box;
+    font-family: var(--nwl-font-body);
+    font-size: var(--nwl-text-md);
+    line-height: normal;
+    color: var(--nwl-text);
 }
-/* the GitHub icon is smaller than the menu's other buttons (img.button) */
-img.button.bb-icon-small {
-    width: 15px;
-    height: 15px;
+.bb-nwl *, .bb-nwl *::before, .bb-nwl *::after {
+    box-sizing: inherit;
 }
-.bb-logo {
-    display: inline-block;
-    margin: 10px;
+:where(.bb-nwl :focus-visible) {
+    outline: 2px solid var(--nwl-focus);
+    outline-offset: 2px;
 }
-.bb-logo-link {
-    text-decoration: none;
+/* the hand-made header was 76px high; nwl's has 3px more above and below (82px): without
+   them, the viewer under it stays where it was */
+#bb-header-app > header {
+    padding-top: 0;
+    padding-bottom: 0;
 }
-.bb-logo-link img {
-    height: 56px;
-    vertical-align: middle;
+/* nwl-components' styles are in its layers, so this page's unlayered rules win over them:
+   the paragraphs' font (h2, p above) and the viewer's buttons (img.button, ui.css) get back
+   the values nwl's Footer and Nav have on the other pages (0.9rem there is 0.9 × 14px) */
+.bb-nwl p {
+    font-family: inherit;
 }
-.bb-title,
-.bb-title a {
-    font-family: var(--nwl-font-display);
-    font-size: var(--nwl-text-3xl);
-    font-weight: var(--nwl-weight-thin);
+#bb-header-app img.button {
+    width: calc(0.9 * var(--nwl-text-md));
+    height: calc(0.9 * var(--nwl-text-md));
+    margin: 8px 2px 8px 15px;
 }
-.bb-title {
-    vertical-align: middle;
+#bb-header-app img.button:hover {
+    opacity: 1;
+}
+/* nwl-components' ScriptConsole styles #logScript (dist/style.css, layer nwl.components);
+   the viewer's own script console keeps its layout */
+#logScript {
+    position: static;
+    width: auto;
+    min-height: auto;
 }
 .bb-footer-space {
     flex: 0 0 50px;
-}
-.bb-footer {
-    flex: 0 0 100px;
-    background-color: var(--nwl-bg-canvas);
-}
-.bb-footer .footerLinks {
-    width: 100%;
-    font-size: small;
-    text-align: center;
-}
-.bb-footer img {
-    width: 28px;
-    height: 28px;
-    margin-right: 4px;
-    display: inline-block;
-    vertical-align: middle;
 }

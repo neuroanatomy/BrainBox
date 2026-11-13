@@ -13,7 +13,8 @@
 
 <div style="width:100%;height:100%;display:flex;flex-direction:column">
     
-{{> partials/viewer-header}}
+    <!-- nwl-components' Header, mounted by mri-page.js (a Vue app of its own, outside the viewer) -->
+    <div id="bb-header-app" class="bb-nwl"></div>
     
     <!-- Content (variable height) -->
     <div style="flex:1 0 auto">
@@ -94,13 +95,18 @@
     </div>
     <!-- End Content -->
     
-{{> partials/viewer-footer}}
+    <!-- Space (fixed height) -->
+    <div class="bb-footer-space"></div>
+
+    <!-- nwl-components' Footer, mounted by mri-page.js -->
+    <div id="bb-footer-app" class="bb-nwl"></div>
 </div>
 
 <script>
 var params = {{{params}}};
 var mriInfo = {{{mriInfo}}};
 const infoProxy = {};
+const loggedUser = {{{loggedUser}}};
 </script>
 <script src="/lib/atlasmaker.js"></script>
 <script src="/lib/brainbox.js"></script>
