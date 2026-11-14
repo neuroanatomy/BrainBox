@@ -1066,9 +1066,9 @@ export const AtlasMakerInteraction = {
     localStorage.brainbox = URL.createObjectURL(new Blob([me.encodeNifti()]));
 
     const newWindow = window.open('', 'Render 3D', 'width=800,height=600');
-    // in the 2027 theme, as the mriRender3D page the embed frames (UI kit step 13c)
+    // with nwl-components' fonts, as the mriRender3D page the embed frames (UI kit step 13c)
     newWindow.document.write(`
-        <html lang="en" data-nwl-theme="2027">
+        <html lang="en">
         <head><link rel="stylesheet" href="/lib/nwl-components/fonts.css"></head>
         <body>
           <script>const path = "${me.User.dirname}${me.User.atlasFilename}";</script>

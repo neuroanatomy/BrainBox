@@ -54,8 +54,8 @@ select {
     z-index:5;
 }
 
-/* The 2027 theme (UI kit step 13c): form controls take the page's font family, as nwl's
-   base.css gives them inside .app, which this viewer page doesn't have */
-:where([data-nwl-theme="2027"]) :where(button, input, select, textarea) {
+/* Form controls take the page's font family, as nwl's base.css gives them inside .app,
+   which this viewer page doesn't have (UI kit step 13c; unconditional since nwl-components 3.0.0) */
+:where(button, input, select, textarea) {
     font-family: inherit;
 }
