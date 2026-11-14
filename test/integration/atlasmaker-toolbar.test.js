@@ -182,7 +182,7 @@ describe('TESTING THE VIEWER\'S TOOLBAR AND PAGE STATE', function () {
             position: overlay.style.position,
             inset: [overlay.style.top, overlay.style.left, overlay.style.width, overlay.style.height],
             zIndex: overlay.style.zIndex,
-            // the page's background, --nwl-bg (#1a1a1a in the 2027 theme, UI kit step 13c)
+            // the page's background, --nwl-bg (#1a1a1a since nwl-components 3.0.0)
             background: getComputedStyle(overlay).backgroundColor
           }
           : null
@@ -332,7 +332,7 @@ describe('TESTING THE VIEWER\'S TOOLBAR AND PAGE STATE', function () {
 
       return bg;
     });
-    // the MRI page is in the 2027 theme (UI kit step 13c): --nwl-bg-pressed is #404040
+    // --nwl-bg-pressed, #404040 since nwl-components 3.0.0
     assert.strictEqual(token, 'rgb(64, 64, 64)');
     assert.strictEqual(await look('#plane [aria-pressed="true"]'), `${token} 1`);
     assert.strictEqual(await look('#plane [title="cor"]'), 'rgba(0, 0, 0, 0) 1');

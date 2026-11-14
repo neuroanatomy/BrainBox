@@ -22,6 +22,7 @@ global.authTokenMiddleware = nwl.authTokenMiddleware;
 
 const AtlasmakerServer = require('./controller/atlasmakerServer/atlasmakerServer');
 const routes = require('./controller/routes/routes');
+const { notFound, errorHandler } = require('./controller/routes/not-found');
 const { dataAccessMiddleware } = require('./controller/mri/data-access');
 
 const MONGO_DB = process.env.MONGODB || 'localhost:27017/brainbox';
@@ -41,8 +42,15 @@ const serverPorts = (config) => ({
   wsPort: config.ws_port ?? 8080
 });
 
+/**
+ * Start the web and WebSocket servers
+ * @param {Object} [options] Options
+ * @param {Function} [options.extraRoutes] Called with the app after the routes and before
+ * the not-found and error handlers; the tests add their test-only routes with it
+ * @returns {Promise<Object>} app, server and atlasmakerServer
+ */
 // eslint-disable-next-line max-statements
-const start = async function () {
+const start = async function ({ extraRoutes } = {}) {
   const app = express();
 
   app.use(bodyParser.json({ limit: '50mb' }));
@@ -108,9 +116,14 @@ const start = async function () {
   }
   app.use(logger(':remote-addr :method :url :status :response-time ms - :res[content-length]', loggerOptions));//app.use(logger('dev'));
   app.use(cookieParser());
-  // only those who may see them get the files of an MRI (/data/<md5>/<file>)
-  app.use(dataAccessMiddleware({ nativeDb }));
-  app.use(express.static(path.join(dirname, 'public')));
+  // only those who may see them get the files of an MRI (/data/<md5>/<file>). Both in a
+  // router of their own: a refused file leaves it (next('router')) and gets the app's 404,
+  // as a file that does not exist
+  // eslint-disable-next-line new-cap
+  const publicFiles = express.Router();
+  publicFiles.use(dataAccessMiddleware({ nativeDb }));
+  publicFiles.use(express.static(path.join(dirname, 'public')));
+  app.use(publicFiles);
   // nwl-components' built files, among them the shared icons (/lib/nwl-components/icons/<name>.svg)
   app.use('/lib/nwl-components', express.static(path.dirname(require.resolve('nwl-components/tokens.css'))));
 
@@ -168,37 +181,18 @@ const start = async function () {
   //========================================================================================
   routes(app);
 
-  //========================================================================================
-  // Error handlers
-  //========================================================================================
-  // // catch 404 and forward to error handler
-  // app.use(function (req, res, next) {
-  //   console.log('Not found URL requested: ' + req.url);
-  //   next();
-  // });
+  // Test-only routes (test/utils.js), before the catch-all
+  if (typeof extraRoutes === 'function') {
+    extraRoutes(app);
+  }
 
-  // the following middlewares will not be used by express as we need to pass 4 arguments to
-  // the use method to handle express errors: https://expressjs.com/fr/guide/error-handling.html
-  // // development error handler
-  // // will print stacktrace
-  // if (app.get('env') === 'development') {
-  //   app.use(function (err, req, res) {
-  //     res.status(err.status || 500);
-  //     res.render('error', {
-  //       message: err.message,
-  //       error: err
-  //     });
-  //   });
-  // }
-  // // production error handler
-  // // no stacktraces leaked to user
-  // app.use(function (err, req, res) {
-  //   res.status(err.status || 500);
-  //   res.render('error', {
-  //     message: err.message,
-  //     error: {}
-  //   });
-  // });
+  //========================================================================================
+  // Not found and error handlers
+  //========================================================================================
+  // an unknown URL: a 404 page, JSON or plain text, depending on the request
+  app.use(notFound);
+  // an error passed to next(err) or thrown by a route: its status (500 by default)
+  app.use(errorHandler);
 
   return { app, server, atlasmakerServer };
 };

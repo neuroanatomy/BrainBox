@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
-    <title>BrainBox</title>
+    <title>BrainBox: {{message}}</title>
     <link rel="stylesheet" href="/lib/nwl-components/tokens.css">
     <link rel="stylesheet" href="/lib/nwl-components/base.css">
     <link rel="stylesheet" href="/lib/nwl-components/fonts.css">
@@ -12,8 +12,10 @@
 <body style="background-color:var(--nwl-bg)">
 <div id="content" class="app">
   <h1>{{message}}</h1>
+  {{#path}}<p>{{path}}</p>{{/path}}
   <h2>{{error.status}}</h2>
   <pre>{{error.stack}}</pre>
+  <p><a href="/">Go to the home page</a></p>
 </div>
 </body>
 </html>

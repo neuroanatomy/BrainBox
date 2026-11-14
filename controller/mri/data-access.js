@@ -219,7 +219,8 @@ const dataAccessMiddleware = ({
     const enforce = mode() === 'enforce';
     log(`DATA_ACCESS ${enforce ? 'REFUSED' : 'WOULD REFUSE'} ${req.method} /${rel} (user: ${username}, reason: ${decision.reason})`);
 
-    // refused: as a file that does not exist (leave the app's router, Express answers its own 404)
+    // refused: as a file that does not exist (leave the router of the public files,
+    // app.js: the app's catch-all answers its 404)
     return enforce ? next('router') : next();
   };
   middleware.clearCache = () => cache.clear();

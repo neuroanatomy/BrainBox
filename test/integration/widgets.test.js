@@ -3,9 +3,8 @@
 /*
   nwl-components' widgets (widgets.css, UI kit step 9a) on BrainBox's own pages: the home
   page's push buttons are bold with 5px vertical padding (U3) and get a lighter background on
-  hover (U7; the home page is in the 2027 theme, UI kit step 13b, so its --nwl-bg-pressed is
-  #404040); a selected table row carries aria-selected="true", which gives it its background
-  (--nwl-bg-elevated, #2e2e2e on the project page, in the 2027 theme since UI kit step 13c);
+  hover (U7; --nwl-bg-pressed, #404040 since nwl-components 3.0.0); a selected table row carries aria-selected="true", which gives it its background
+  (--nwl-bg-elevated, #2e2e2e on the project page since nwl-components 3.0.0);
   a link without its underline (the footer's) gets it back on hover (U8). The mouse is the
   real one (page.hover), so :hover is the browser's.
 */

@@ -5,9 +5,10 @@
   headers (2026-11-10), not its dist/style.css, whose global rules (`*` sets every
   element's font size and colour) could restyle them: the title and other elements
   outside the tables keep the computed styles they had on 95a6262 (recorded below with
-  that commit's build, at 1400x1000), and the pages have the sort stylesheet's rules. Since
-  UI kit step 13c both pages are in the 2027 theme: the values below are 95a6262's with the
-  theme's font, text colour, backgrounds (#1a1a1a, panels #252525) and dividers (#383838).
+  that commit's build, at 1400x1000), and the pages have the sort stylesheet's rules. The
+  values below are 95a6262's with the kit's font, text colour, backgrounds (#1a1a1a, panels
+  #252525) and dividers (#383838), the defaults since nwl-components 3.0.0 (first shipped as
+  the 2027 theme in 2.4).
   Since UI kit step 10b both pages have nwl-components' Header (and the MRI page its
   Footer), so they load dist/style.css (2.x, without the `*` rule); their headers are
   tested in viewer-header-footer.test.js. No MRI is downloaded: the requests for MRI data

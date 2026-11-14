@@ -155,21 +155,37 @@ const privateProjectTest = {
 
 let app, atlasmakerServer, db, nativeDb, server;
 
-const initResources = async () => {
-  ({ app, server, atlasmakerServer } = await brainboxApp.start());
-
+/**
+ * Test-only routes, mounted by app.start() after the app's routes and before
+ * its not-found and error handlers
+ * @param {Object} testApp The Express app
+ * @returns {void}
+ */
+const addTestRoutes = (testApp) => {
   // Test-only route: serves HTML with text/html content-type
   // to simulate a remote server returning an error page instead of a binary file
-  app.get('/test_data/html_error_page.nii.gz', (req, res) => {
+  testApp.get('/test_data/html_error_page.nii.gz', (req, res) => {
     res.set('Content-Type', 'text/html');
     res.send('<html><body><h1>403 Forbidden</h1><p>Rate limited</p></body></html>');
   });
 
   // Test-only route: a brain file that downloads fine but cannot be read
-  app.get('/test_data/unreadable_brain.mgz', (req, res) => {
+  testApp.get('/test_data/unreadable_brain.mgz', (req, res) => {
     res.set('Content-Type', 'application/octet-stream');
     res.send(Buffer.from('this is not a gzipped mgz file'));
   });
+
+  // Test-only routes: a route that throws, and one that calls next(err), for the error handler
+  testApp.get('/test_error/throw', () => {
+    throw new Error('test error thrown by a route');
+  });
+  testApp.get('/test_error/next', (req, res, next) => {
+    next(new Error('test error passed to next'));
+  });
+};
+
+const initResources = async () => {
+  ({ app, server, atlasmakerServer } = await brainboxApp.start({ extraRoutes: addTestRoutes }));
 
   ({ db } = app);
   nativeDb = app.db.nativeMongoDB();
@@ -206,6 +222,7 @@ const closeResources = async () => {
 };
 
 const getServer = () => server;
+const getApp = () => app;
 const getAtlasmakerServer = () => atlasmakerServer;
 const getNativeDB = () => nativeDb;
 
@@ -492,6 +509,7 @@ module.exports = {
   initResources,
   closeResources,
   getServer,
+  getApp,
   getAtlasmakerServer,
   getNativeDB, // native mongodb
   removeMRI,

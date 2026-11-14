@@ -4,10 +4,9 @@
   Keyboard focus shows a 2px outline in --nwl-focus (UI kit U6, nwl-components 2.0), on the
   app's own pages too (style/ui.css): a control reached with Tab gets it, and a control
   focused by a mouse click gets none. The home page's project list (select.nwl-push-button) is
-  reached with Tab from the URL field, in the 2027 theme the page opts in to (UI kit step 13b:
-  the outline is the theme's text colour); a <select> shows focus on a click too (Chromium), so
-  the mouse is checked on the project page's sortable column headers (buttons), also in the 2027
-  theme since UI kit step 13c.
+  reached with Tab from the URL field (the outline is the kit's text colour since
+  nwl-components 3.0.0); a <select> shows focus on a click too (Chromium), so the mouse is
+  checked on the project page's sortable column headers (buttons).
 */
 
 const puppeteer = require('puppeteer');

@@ -4,10 +4,9 @@
   The pages' own stylesheets read nwl-components' tokens (var(--nwl-…), UI kit step 4), so
   each page bundle that has such a stylesheet loads nwl-components/tokens.css. On the home
   page, which loads nwl-components' tokens, base and widget styles but not its components, a
-  token is defined and the body gets its colours and font through the tokens, with the values
-  of the 2027 theme the page opts in to (UI kit step 13b); on the project page too, in the 2027
-  theme since UI kit step 13c; on the ask-for-login page, which uses nwl-components' Vue
-  components (UI kit step 10), its .app does, in the 2027 theme (UI kit step 13a).
+  token is defined and the body gets its colours and font through the tokens, with the kit's
+  values (nwl-components 3.0.0 defaults); on the project page too; on the ask-for-login page,
+  which uses nwl-components' Vue components (UI kit step 10), its .app does.
 */
 
 const puppeteer = require('puppeteer');
@@ -15,7 +14,7 @@ const chai = require('chai');
 const { assert } = chai;
 const U = require('../utils.js');
 
-const EXPECTED_2027 = {
+const EXPECTED = {
   token: '#1a1a1a',
   background: 'rgb(26, 26, 26)',
   font: '"Source Sans 3", "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif'
@@ -63,14 +62,14 @@ describe('Pages load nwl-components\' tokens', function () {
   });
 
   it('defines the tokens on the home page', async function () {
-    assert.deepEqual(await tokenStyles(browser, `${U.serverURL}/`), EXPECTED_2027);
+    assert.deepEqual(await tokenStyles(browser, `${U.serverURL}/`), EXPECTED);
   }).timeout(U.longTimeout);
 
   it('defines the tokens on the project page', async function () {
-    assert.deepEqual(await tokenStyles(browser, `${U.serverURL}/project/${U.projectTest.shortname}`), EXPECTED_2027);
+    assert.deepEqual(await tokenStyles(browser, `${U.serverURL}/project/${U.projectTest.shortname}`), EXPECTED);
   }).timeout(U.longTimeout);
 
   it('defines the tokens on the ask-for-login page', async function () {
-    assert.deepEqual(await tokenStyles(browser, `${U.serverURL}/project/new`, '.app'), EXPECTED_2027);
+    assert.deepEqual(await tokenStyles(browser, `${U.serverURL}/project/new`, '.app'), EXPECTED);
   }).timeout(U.longTimeout);
 });
