@@ -7,6 +7,7 @@
 
 import { getData, setData } from '../../shared/domData.js';
 import pako from 'pako';
+import { resizableColumns } from 'nwl-components/resize';
 import geometryModule from '../../shared/geometry.js';
 import showHideModule from '../../shared/showHide.js';
 
@@ -1477,6 +1478,8 @@ export const AtlasMakerInteraction = {
         tbody.rows[0].setAttribute('aria-selected', 'true');
       }
       dialog.style.display = 'inline-block';
+      // every column can be resized (nwl-components/resize), not remembered; a second call does nothing
+      resizableColumns(dialog.querySelector('table'));
     };
     const exit = () => {
       for(const l of listeners) {

@@ -24,8 +24,9 @@
         padding: 3px 10px;
         cursor: pointer;
     }
-    /* the files cannot be edited until they are all loaded */
-    .filesLoading > :not(h2) {
+    /* the files cannot be edited until they are all loaded (the table is in a
+       div.nwl-resize-wrap, which has no box of its own until a column is resized) */
+    .filesLoading > :not(h2), .filesLoading > .nwl-resize-wrap > table {
         pointer-events: none;
         opacity: 0.6;
     }

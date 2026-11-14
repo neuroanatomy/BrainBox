@@ -4,6 +4,7 @@
 import 'structjs';
 import 'nwl-components/tokens.css';
 import 'nwl-components/widgets.css';
+import 'nwl-components/resize/style.css';
 import './css/atlasmaker.css';
 import './css/loading-style.css';
 

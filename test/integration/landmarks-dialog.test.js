@@ -5,7 +5,7 @@
   Browser tests for the landmarks dialog of view/atlasmaker/src/atlasmaker-interaction.js
   (landmarkClick): labels typed in the table are saved, Cancel discards them, removing the
   last landmark leaves an empty table, and labels are shown as text, never as markup (in
-  the table and on the slice).
+  the table and on the slice). Its columns can be resized (a handle on each header).
 */
 
 const puppeteer = require('puppeteer');
@@ -94,6 +94,11 @@ describe('TESTING THE LANDMARKS DIALOG', function () {
     const { page } = viewer;
     await openDialog(page, LANDMARKS);
     assert.deepEqual(await labelCells(page), ['', 'pons']);
+    // every column can be resized (nwl-components/resize): one handle per header
+    assert.deepEqual(
+      await page.$$eval('#landmarksDialog thead th', (ths) => ths.map((th) => th.querySelectorAll(':scope > .nwl-col-resize[role="separator"]').length)),
+      [1, 1, 1]
+    );
     await typeInLabel(page, 0, 'corpus callosum');
     await page.click('#landmarksDialogOk');
     const result = await page.evaluate(() => ({

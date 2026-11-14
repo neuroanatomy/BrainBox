@@ -96,12 +96,12 @@ const openSettingsPage = async (browser, respond = () => null, check = () => ({ 
 const numFiles = (page) => page.$eval('#numFiles', (el) => Number(el.textContent));
 const waitForAllFiles = (page) => page.waitForFunction((n) => {
   const el = document.querySelector('#numFiles');
-  const heading = document.querySelector('#files') && document.querySelector('#files').parentElement.querySelector('h2');
+  const heading = document.querySelector('#files') && document.querySelector('#files').closest('.nwl-resize-wrap').parentElement.querySelector('h2');
 
   return el && Number(el.textContent) === n && heading && heading.textContent.trim() === 'Files';
 }, { timeout: U.longTimeout }, NFILES);
-const filesHeading = (page) => page.evaluate(() => document.querySelector('#files').parentElement.querySelector('h2').textContent.replace(/\s+/g, ' ').trim());
-const filesLocked = (page) => page.evaluate(() => document.querySelector('#files').parentElement.classList.contains('filesLoading'));
+const filesHeading = (page) => page.evaluate(() => document.querySelector('#files').closest('.nwl-resize-wrap').parentElement.querySelector('h2').textContent.replace(/\s+/g, ' ').trim());
+const filesLocked = (page) => page.evaluate(() => document.querySelector('#files').closest('.nwl-resize-wrap').parentElement.classList.contains('filesLoading'));
 const clickButton = (page, text) => page.evaluate((t) => {
   const button = [...document.querySelectorAll('button')].find((b) => b.textContent.trim() === t);
   button.click();

@@ -6,7 +6,8 @@
   focused by a mouse click gets none. The home page's project list (select.nwl-push-button) is
   reached with Tab from the URL field (the outline is the kit's text colour since
   nwl-components 3.0.0); a <select> shows focus on a click too (Chromium), so the mouse is
-  checked on the project page's sortable column headers (buttons).
+  checked on the project page's sortable column headers (buttons), each followed in the tab
+  order by its column's resize handle.
 */
 
 const puppeteer = require('puppeteer');
@@ -91,7 +92,12 @@ describe('Keyboard focus outline', function () {
     await page.waitForSelector(button, { timeout: U.longTimeout });
     await page.click(button);
     assert.deepInclude(await focusedOutline(page), { element: 'nwl-sort-button', style: 'none' }, 'mouse');
+    // the next stop is the header's resize handle (nwl-components 3.1.0), then back to the button
     await page.keyboard.press('Tab');
+    assert.deepInclude(await focusedOutline(page), { element: 'nwl-col-resize', ...KEYBOARD, color: 'rgb(232, 232, 232)' }, 'keyboard, resize handle');
+    await page.keyboard.down('Shift');
+    await page.keyboard.press('Tab');
+    await page.keyboard.up('Shift');
     assert.deepInclude(await focusedOutline(page), { element: 'nwl-sort-button', ...KEYBOARD, color: 'rgb(232, 232, 232)' }, 'keyboard');
   }).timeout(U.longTimeout);
 });

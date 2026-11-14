@@ -57,14 +57,16 @@ project.filesLoaded = filesLoaded;
 let loading = false;
 
 /**
- * The section of the page with the files: the files table's parent, which also
- * holds the "Files" heading
+ * The section of the page with the files, which also holds the "Files" heading: the
+ * parent of the files table's wrapper (nwl-components' Table wraps its table in a
+ * div.nwl-resize-wrap since 3.1.0), or of the table itself
  * @returns {HTMLElement|null} The section
  */
 const filesSection = () => {
   const table = document.getElementById('files');
+  if (!table) { return null; }
 
-  return table ? table.parentElement : null;
+  return (table.closest('.nwl-resize-wrap') || table).parentElement;
 };
 
 /**

@@ -2,6 +2,7 @@
 /* global infoProxy projectInfo annotationsAccessLevel BrainBox AtlasMakerWidget loggedUser */
 
 import 'nwl-components/dist/style.css';
+import 'nwl-components/resize/style.css';
 import '../style/style.css';
 import '../style/textAnnotations.css';
 import '../style/ui.css';
@@ -15,6 +16,7 @@ import geometryModule from '../../../shared/geometry.js';
 import hidden from '../tools/hidden.js';
 import { mountViewerHeader } from '../viewer-header-footer.js';
 import multiple from '../tools/multiple.js';
+import { resizableColumns } from 'nwl-components/resize';
 import showHideModule from '../../../shared/showHide.js';
 
 // jQuery's .show()/.hide(), .width() and .css({...}), without jQuery
@@ -410,6 +412,13 @@ for (const k of projectInfo.annotations.list) {
       ...annotations.text.map((a, g) => ({ key: (a.type === 'multiple choices') ? selectValue(2 + g) : cellText(2 + g) }))
     ]);
   }
+}
+
+// Every column of the files and volume annotations tables can be resized (nwl-components/resize):
+// their headers exist by now, the text annotations' included; a header added later would get
+// its handle by itself. Widths are not remembered: a reload gives the automatic layout
+for (const table of document.querySelectorAll('#projectFiles table, table#volAnnotations')) {
+  resizableColumns(table);
 }
 
 // collect the project's volume annotations

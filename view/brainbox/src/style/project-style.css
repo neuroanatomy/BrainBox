@@ -27,6 +27,14 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+/* once a column is resized (nwl-components/resize), cells wrap, even inside a word, and
+   nothing is cut with an ellipsis */
+#projectFiles table.nwl-resized td,
+#projectFiles table.nwl-resized th {
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
 
 select {
     border:none;

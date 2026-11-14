@@ -1,6 +1,7 @@
 /* eslint-disable max-lines */
 /*global AtlasMakerWidget BrainBox infoProxy loggedUser mriInfo params*/
 import 'nwl-components/dist/style.css';
+import 'nwl-components/resize/style.css';
 import '../style/style.css';
 import '../style/textAnnotations.css';
 import '../style/ui.css';
@@ -12,6 +13,7 @@ import * as tw from '../twoWayBinding';
 import { cellText, makeSortable, rowIndex } from '../sortableTable.js';
 import { getData, setData } from '../../../shared/domData';
 import { mountViewerFooter, mountViewerHeader } from '../viewer-header-footer.js';
+import { resizableColumns } from 'nwl-components/resize';
 import showHideModule from '../../../shared/showHide.js';
 
 // jQuery's .show() / .hide(), without jQuery
@@ -80,7 +82,9 @@ const selectedOptionText = (col) => (tr) => {
 
 /**
  * Make the Name, Value, Project and Modified columns of an annotations table sortable
- * (Access is not): by what their cells show, Modified by its date
+ * (Access is not): by what their cells show, Modified by its date. Every column can be
+ * resized (nwl-components/resize), not remembered. The MRI's info table (a header per
+ * row) is neither
  * @param {HTMLTableElement|null} table The table
  * @param {function} value The Value column's sort key
  * @param {function} modified i => the modification date of the annotation at index i of the table's data
@@ -95,6 +99,7 @@ const makeAnnotationsSortable = (table, value, modified) => {
     { key: (tr) => modified(rowIndex(tr)), type: 'date' },
     null
   ]);
+  resizableColumns(table);
 };
 
 /**
