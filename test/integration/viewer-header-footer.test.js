@@ -6,7 +6,8 @@
   goes to GitHub. So do the MRI and project pages (step 10b): their Header (and the MRI
   page's Footer) are small Vue apps of their own, on #bb-header-app and #bb-footer-app,
   outside the viewer; they compute as on the user page, except the header's 3px padding
-  above and below, left out so that the viewer stays where it was (76px from the top). The
+  above and below, left out so that the viewer stays where it was (76px from the top; both
+  pages are in the 2027 theme since UI kit step 13c, so the footer is in Source Sans 3). The
   project page has no footer; its header's title is the project's name, as text, and its
   settings link shows for every visitor (the settings page checks the access). No MRI is
   downloaded: the requests for MRI data are aborted.
@@ -183,7 +184,7 @@ describe('Headers and footers', function () {
       header: 76,
       content: 76,
       logScript: ['static', '0px'],
-      footer: ['100px', '"Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif', 'border-box']
+      footer: ['100px', '"Source Sans 3", "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif', 'border-box']
     });
   }).timeout(U.longTimeout);
 

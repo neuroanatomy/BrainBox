@@ -5,7 +5,7 @@ td {
     margin: 0 auto;
 }
 #annotationsPane, #privilegedAccessInfo {
-    background-color:#333;
+    background-color:var(--nwl-bg-surface);
     padding: 20px;
     margin-right: 20px;
     margin-bottom: 20px;
@@ -46,7 +46,7 @@ td {
 select {
     border:none;
     background:none; /* no color, no decoration */
-    color:white;
+    color:var(--nwl-text);
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
@@ -68,4 +68,9 @@ select {
     #stereotaxic {
         min-width: 100%;
     }
+}
+/* The 2027 theme (UI kit step 13c): form controls take the page's font family, as nwl's
+   base.css gives them inside .app, which this viewer page doesn't have */
+:where([data-nwl-theme="2027"]) :where(button, input, select, textarea) {
+    font-family: inherit;
 }

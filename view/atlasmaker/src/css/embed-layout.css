@@ -93,7 +93,7 @@
     width: 100%;
     height: 100%;
     border: 0;
-    background: #000;
+    background: var(--nwl-bg-canvas);
 }
 #atlasmaker.embed-layout[data-mode="3d"] #resizable {
     visibility: hidden;
@@ -104,4 +104,10 @@
 #atlasmaker.embed-layout[data-mode="3d"] #sliderBlock {
     pointer-events: none;
     opacity: 0.45;
+}
+
+/* The 2027 theme (UI kit step 13c): form controls take the page's font family, as nwl's
+   base.css gives them inside .app, which this viewer page doesn't have */
+:where([data-nwl-theme="2027"]) :where(button, input, select, textarea) {
+    font-family: inherit;
 }

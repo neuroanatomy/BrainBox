@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 'use strict';
 
 /*
@@ -5,11 +6,16 @@
   ask-for-login) opt in to nwl-components' 2027 theme, with `<html data-nwl-theme="2027">` and
   a link to /lib/nwl-components/fonts.css. Step 13b: so do the Mustache pages home, error and
   embedError, whose content is put in a .app for it; the home page's heading stays centred, and
-  embedError, shown in a frame on other sites, loads its fonts from BrainBox. The viewers (project,
-  MRI, embed, render3D) don't, yet.
+  embedError, shown in a frame on other sites, loads its fonts from BrainBox. Step 13c: so do the
+  viewers (project, MRI, embed and render3D), whose font is checked on the viewer (#atlasmaker; on
+  render3D, its body); the embed, and render3D in the embed's frame, load their fonts from BrainBox
+  inside a frame on another site. Every page template now has the attribute and the link.
   nwl-components sets the font on the wrapper (.app), not on the body: that is the element
-  checked.
+  checked on the other pages.
 */
+
+const fs = require('fs').promises;
+const { join } = require('path');
 
 const puppeteer = require('puppeteer');
 const chai = require('chai');
@@ -24,17 +30,22 @@ const missingEmbed = `/mri/embed?url=${encodeURIComponent('https://example.com/n
 const server = new URL(U.serverURL);
 const otherOrigin = `${server.protocol}//${server.hostname === 'localhost' ? '127.0.0.1' : 'localhost'}${server.port ? ':' + server.port : ''}`;
 
+const TEMPLATES = join(__dirname, '../../templates');
+const TEXT = '14px "Source Sans 3"';
+const viewerURL = (route) => `${U.serverURL}${route}?url=${encodeURIComponent(U.localBertURL)}`;
+
 /**
- * The theme attribute of a page, and once its fonts are ready, the font family of its .app,
- * whether Source Sans 3 is available and whether one of its faces was loaded
+ * The theme attribute of a page, and once its fonts are ready, the font family of an element
+ * (its .app by default), whether Source Sans 3 is available and whether one of its faces was loaded
  * @param {Object} browser A puppeteer browser
  * @param {string} url The page's URL
  * @param {Array} cookies The cookies to send (none: logged out)
  * @param {string} selector An element the page must have (default: nwl-components' wrapper)
  * @param {string} checked The font given to document.fonts.check (default: the body text's)
+ * @param {string} fontOf The element whose font family is returned (default: .app)
  * @returns {Promise<Object>} The attribute, the font family and the two checks
  */
-const themeOf = async (browser, url, cookies = [], selector = '.app', checked = '14px "Source Sans 3"') => {
+const themeOf = async (browser, url, cookies = [], selector = '.app', checked = '14px "Source Sans 3"', fontOf = '.app') => {
   // a context of its own, so that a logged-out page gets no cookie from an earlier one
   const context = await browser.createBrowserContext();
   const page = await context.newPage();
@@ -43,16 +54,16 @@ const themeOf = async (browser, url, cookies = [], selector = '.app', checked = 
     await page.goto(url, { waitUntil: 'load' });
     await page.waitForSelector(selector);
 
-    return await page.evaluate(async (font) => {
+    return await page.evaluate(async (font, el) => {
       await document.fonts.ready;
 
       return {
         theme: document.documentElement.getAttribute('data-nwl-theme'),
-        font: getComputedStyle(document.querySelector('.app')).fontFamily,
+        font: getComputedStyle(document.querySelector(el)).fontFamily,
         check: document.fonts.check(font),
         loaded: [...document.fonts].some((f) => f.family.replace(/"/gu, '') === 'Source Sans 3' && f.status === 'loaded')
       };
-    }, checked);
+    }, checked, fontOf);
   } finally {
     await context.close();
   }
@@ -80,14 +91,6 @@ const themeAndStatus = async (browser, url) => {
 };
 
 /**
- * The theme attribute of a page, once its HTML is parsed
- * @param {Object} browser A puppeteer browser
- * @param {string} url The page's URL
- * @returns {Promise<string|null>} The attribute's value
- */
-const themeAttribute = async (browser, url) => (await themeAndStatus(browser, url)).theme;
-
-/**
  * The alignment of the home page's heading, and its space left and right in the content column
  * @param {Object} browser A puppeteer browser
  * @param {string} url The page's URL
@@ -111,14 +114,41 @@ const headingOf = async (browser, url) => {
 };
 
 /**
+ * The theme attribute, the fonts.css sheet, the font family of an element and whether a Source
+ * Sans 3 face loaded, in a frame, once the element is there and the fonts are ready
+ * @param {Object} frame A puppeteer frame
+ * @param {string} fontOf The element whose font family is returned
+ * @returns {Promise<Object>} The frame's theme and fonts
+ */
+const frameTheme = async (frame, fontOf) => {
+  await frame.waitForSelector(fontOf);
+
+  return frame.evaluate(async (el) => {
+    await document.fonts.ready;
+    const sheet = [...document.styleSheets].find((s) => s.href && s.href.endsWith('/lib/nwl-components/fonts.css'));
+
+    return {
+      theme: document.documentElement.getAttribute('data-nwl-theme'),
+      sheet: sheet ? sheet.href : null,
+      font: getComputedStyle(document.querySelector(el)).fontFamily,
+      loaded: [...document.fonts].some((f) => f.family.replace(/"/gu, '') === 'Source Sans 3' && f.status === 'loaded')
+    };
+  }, fontOf);
+};
+
+/**
  * A BrainBox page in a frame of a page of another origin (localhost <-> 127.0.0.1), as a site
  * embedding it: the host's origin, and in the frame, the theme attribute, the fonts.css sheet,
- * the font family of .app and whether a Source Sans 3 face loaded
+ * the font family of an element (.app by default) and whether a Source Sans 3 face loaded.
+ * With `inside`, the same for the frame's own frame whose URL has that path, once it is there
  * @param {Object} browser A puppeteer browser
  * @param {string} url The framed page's URL
- * @returns {Promise<Object>} The host's origin and the frame's theme and fonts
+ * @param {string} fontOf The element whose font family is returned
+ * @param {Object} [inside] The inner frame: `path`, its URL's path, `fontOf`, and `open`, a
+ *   function run in the outer frame that makes it
+ * @returns {Promise<Object>} The host's origin, the frame's theme and fonts, and the inner frame's
  */
-const themeInFrame = async (browser, url) => {
+const themeInFrame = async (browser, url, fontOf = '.app', inside = null) => {
   const context = await browser.createBrowserContext();
   const page = await context.newPage();
   try {
@@ -131,19 +161,43 @@ const themeInFrame = async (browser, url) => {
       document.body.appendChild(iframe);
     }), url);
     const frame = page.frames().find((f) => f.url().startsWith(server.origin));
-    const res = await frame.evaluate(async () => {
-      await document.fonts.ready;
-      const sheet = [...document.styleSheets].find((s) => s.href && s.href.endsWith('/lib/nwl-components/fonts.css'));
+    const res = await frameTheme(frame, fontOf);
+    if (!inside) { return { host, ...res }; }
+    await frame.waitForFunction(inside.open, { timeout: U.longTimeout });
+    const inner = await (await frame.waitForSelector(`iframe[src*="${inside.path}"]`)).contentFrame();
 
-      return {
-        theme: document.documentElement.getAttribute('data-nwl-theme'),
-        sheet: sheet ? sheet.href : null,
-        font: getComputedStyle(document.querySelector('.app')).fontFamily,
-        loaded: [...document.fonts].some((f) => f.family.replace(/"/gu, '') === 'Source Sans 3' && f.status === 'loaded')
-      };
+    return { host, ...res, inner: await frameTheme(inner, inside.fontOf) };
+  } finally {
+    await context.close();
+  }
+};
+
+/**
+ * The visible form controls of a page whose font family differs from their parent's, once the
+ * viewer and its annotations tables are there (logged in: the tables have their selects)
+ * @param {Object} browser A puppeteer browser
+ * @param {string} url The page's URL
+ * @param {Array} cookies The cookies to send
+ * @param {string} selector An element the page must have before the check
+ * @returns {Promise<Object>} The number of visible controls, and those in another font
+ */
+const controlFonts = async (browser, url, cookies, selector) => {
+  const context = await browser.createBrowserContext();
+  const page = await context.newPage();
+  try {
+    await page.setCookie(...cookies);
+    await page.goto(url, { waitUntil: 'load' });
+    await page.waitForSelector(selector, { timeout: U.longTimeout });
+
+    return await page.evaluate(() => {
+      const controls = [...document.querySelectorAll('button, input, select, textarea')]
+        .filter((el) => el.getClientRects().length > 0);
+      const other = controls
+        .filter((el) => getComputedStyle(el).fontFamily !== getComputedStyle(el.parentElement).fontFamily)
+        .map((el) => `${el.tagName.toLowerCase()}${el.id ? '#' + el.id : ''}: ${getComputedStyle(el).fontFamily}`);
+
+      return { count: controls.length, other };
     });
-
-    return { host, ...res };
   } finally {
     await context.close();
   }
@@ -156,10 +210,11 @@ const themeInFrame = async (browser, url) => {
  * @param {Array} cookiesToSend The cookies to send (none: logged out)
  * @param {string} selector An element the page must have
  * @param {string} checked The font given to document.fonts.check
+ * @param {string} fontOf The element whose font must be Source Sans 3 (default: .app)
  * @returns {Promise<void>} Resolves when the checks pass
  */
-const assertOpted = async (browser, path, cookiesToSend, selector, checked) => {
-  const res = await themeOf(browser, U.serverURL + path, cookiesToSend, selector, checked);
+const assertOpted = async (browser, path, cookiesToSend, selector, checked, fontOf) => {
+  const res = await themeOf(browser, U.serverURL + path, cookiesToSend, selector, checked, fontOf);
   assert.equal(res.theme, '2027');
   assert.match(res.font, /^"Source Sans 3",/u);
   assert.isTrue(res.check, 'document.fonts.check');
@@ -228,14 +283,6 @@ describe('Pages in the 2027 theme', function () {
     it('the ask-for-login page is in the 2027 theme, in Source Sans 3', async function () {
       await assertOpted(browser, '/project/new', [], '.ask-for-login');
     }).timeout(U.longTimeout);
-
-    it('the project page is not in the 2027 theme', async function () {
-      assert.isNull(await themeAttribute(browser, `${U.serverURL}/project/${U.projectTest.shortname}`));
-    }).timeout(U.longTimeout);
-
-    it('the MRI page is not in the 2027 theme', async function () {
-      assert.isNull(await themeAttribute(browser, `${U.serverURL}/mri?url=${U.localBertURL}`));
-    }).timeout(U.longTimeout);
   });
 
   describe('the Mustache pages home, error and embedError (step 13b)', function () {
@@ -287,13 +334,96 @@ describe('Pages in the 2027 theme', function () {
       assert.match(res.font, /^"Source Sans 3",/u);
       assert.isTrue(res.loaded, 'a Source Sans 3 face is loaded in the frame');
     }).timeout(U.longTimeout);
+  });
 
-    it('the embed viewer is not in the 2027 theme', async function () {
-      assert.deepEqual(await themeAndStatus(browser, `${U.serverURL}/mri/embed?url=${encodeURIComponent(U.localBertURL)}`), { status: 200, theme: null });
+  describe('the viewers project, MRI, embed and render3D (step 13c)', function () {
+    let browser;
+    let cookies;
+    let previousAdmins;
+
+    before(async function () {
+      // eslint-disable-next-line no-invalid-this
+      this.timeout(U.longTimeout);
+      ({ browser, cookies, previousAdmins } = await setUp());
+      await U.waitForTestBrain();
+    });
+
+    after(async function () {
+      admins.setAdmins(previousAdmins);
+      if (browser) { await browser.close(); }
+    });
+
+    it('every page template is in the 2027 theme and links fonts.css', async function () {
+      const templates = (await fs.readdir(TEMPLATES)).filter((f) => f.endsWith('.mustache'));
+      assert.isAtLeast(templates.length, 12);
+      const texts = await Promise.all(templates.map((f) => fs.readFile(join(TEMPLATES, f), 'utf8')));
+      templates.forEach((file, i) => {
+        assert.match(texts[i], /<html lang="en" data-nwl-theme="2027">/u, file);
+        assert.include(texts[i], '<link rel="stylesheet" href="/lib/nwl-components/fonts.css">', file);
+      });
+    });
+
+    it('the MRI page is in the 2027 theme, its viewer in Source Sans 3', async function () {
+      await assertOpted(browser, `/mri?url=${U.localBertURL}`, [], '#atlasmaker', TEXT, '#atlasmaker');
     }).timeout(U.longTimeout);
 
-    it('the render3D viewer is not in the 2027 theme', async function () {
-      assert.deepEqual(await themeAndStatus(browser, `${U.serverURL}/mri/render3d?url=${encodeURIComponent(U.localBertURL)}`), { status: 200, theme: null });
+    it('the MRI page is in the 2027 theme logged in too', async function () {
+      await assertOpted(browser, `/mri?url=${U.localBertURL}`, cookies, '#atlasmaker', TEXT, '#atlasmaker');
+    }).timeout(U.longTimeout);
+
+    it('the project page is in the 2027 theme, its viewer in Source Sans 3', async function () {
+      await assertOpted(browser, `/project/${U.projectTest.shortname}`, [], '#atlasmaker', TEXT, '#atlasmaker');
+    }).timeout(U.longTimeout);
+
+    it('the project page is in the 2027 theme logged in too', async function () {
+      await assertOpted(browser, `/project/${U.projectTest.shortname}`, cookies, '#atlasmaker', TEXT, '#atlasmaker');
+    }).timeout(U.longTimeout);
+
+    it('the MRI and project pages\' form controls are in the font of the text around them', async function () {
+      for (const [path, selector] of [
+        [`/mri?url=${U.localBertURL}`, '#annotations tbody tr select'],
+        [`/project/${U.projectTest.shortname}`, '#projectFiles tbody tr']
+      ]) {
+        // eslint-disable-next-line no-await-in-loop
+        const res = await controlFonts(browser, U.serverURL + path, cookies, selector);
+        assert.isAbove(res.count, 10, path);
+        assert.deepEqual(res.other, [], path);
+      }
+    }).timeout(U.longTimeout);
+
+    it('the embed viewer is in the 2027 theme, in Source Sans 3', async function () {
+      const res = await themeAndStatus(browser, viewerURL('/mri/embed'));
+      assert.deepEqual(res, { status: 200, theme: '2027' });
+      await assertOpted(browser, `/mri/embed?url=${encodeURIComponent(U.localBertURL)}`, [], '#atlasmaker', TEXT, '#atlasmaker');
+    }).timeout(U.longTimeout);
+
+    it('the render3D viewer is in the 2027 theme, in Source Sans 3', async function () {
+      const res = await themeAndStatus(browser, viewerURL('/mri/render3d'));
+      assert.deepEqual(res, { status: 200, theme: '2027' });
+      // render3D replaces the body's content: its splash's text is in the body's font
+      await assertOpted(browser, `/mri/render3d?url=${encodeURIComponent(U.localBertURL)}`, [], '#splash p', '16px "Source Sans 3"', 'body');
+    }).timeout(U.longTimeout);
+
+    it('the embed, and render3D in its frame, load their fonts from BrainBox inside a frame on another site', async function () {
+      const res = await themeInFrame(browser, viewerURL('/mri/embed'), '#atlasmaker', {
+        path: '/mri/render3d',
+        fontOf: '#splash p',
+        // choose 3D once the viewer is ready: render3D comes in a frame of the embed's
+        open: () => {
+          const widget = window.AtlasMakerWidget;
+          if (!widget || !widget.isViewerReady()) { return false; }
+          if (!document.getElementById('render3d-frame')) { document.querySelector('#plane button[title="3d"]').click(); }
+
+          return Boolean(document.getElementById('render3d-frame'));
+        }
+      });
+      assert.notEqual(res.host, server.origin, 'the host page is of another origin');
+      for (const frame of [res, res.inner]) {
+        assert.equal(frame.theme, '2027');
+        assert.equal(frame.sheet, `${server.origin}/lib/nwl-components/fonts.css`);
+        assert.match(frame.font, /^"Source Sans 3",/u);
+        assert.isTrue(frame.loaded, 'a Source Sans 3 face is loaded in the frame');
+      }
     }).timeout(U.longTimeout);
   });
 });

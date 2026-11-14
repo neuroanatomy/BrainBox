@@ -1,12 +1,12 @@
 #projectFiles table tbody tr td select {
-    color:rgba(255,255,255,0.4);
+    color:var(--nwl-text-3);
 }
 
 #projectFiles {
     overflow:scroll;
 }
 .block {
-    border:thin solid #555;
+    border:thin solid var(--nwl-border-subtle);
     padding: 5px;
 }
 #left {
@@ -16,7 +16,7 @@
     overflow: hidden;
 }
 #right {
-    background-color: black;
+    background-color: var(--nwl-bg-canvas);
 }
 #projectFiles table {
     table-layout: fixed;
@@ -31,7 +31,7 @@
 select {
     border:none;
     background:none; /* no color, no decoration */
-    color:white;
+    color:var(--nwl-text);
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
@@ -48,8 +48,14 @@ select {
     height:20px;
     top:50%;
     left:100%;
-    background-color:#333;
+    background-color:var(--nwl-bg-surface);
     transform:translate(-50%, -50%);
     border-radius:5px;
     z-index:5;
+}
+
+/* The 2027 theme (UI kit step 13c): form controls take the page's font family, as nwl's
+   base.css gives them inside .app, which this viewer page doesn't have */
+:where([data-nwl-theme="2027"]) :where(button, input, select, textarea) {
+    font-family: inherit;
 }

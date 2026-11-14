@@ -5,7 +5,9 @@
   headers (2026-11-10), not its dist/style.css, whose global rules (`*` sets every
   element's font size and colour) could restyle them: the title and other elements
   outside the tables keep the computed styles they had on 95a6262 (recorded below with
-  that commit's build, at 1400x1000), and the pages have the sort stylesheet's rules.
+  that commit's build, at 1400x1000), and the pages have the sort stylesheet's rules. Since
+  UI kit step 13c both pages are in the 2027 theme: the values below are 95a6262's with the
+  theme's font, text colour, backgrounds (#1a1a1a, panels #252525) and dividers (#383838).
   Since UI kit step 10b both pages have nwl-components' Header (and the MRI page its
   Footer), so they load dist/style.css (2.x, without the `*` rule); their headers are
   tested in viewer-header-footer.test.js. No MRI is downloaded: the requests for MRI data
@@ -21,14 +23,14 @@ const PROPS = ['font-family', 'font-size', 'font-weight', 'color', 'background-c
 // per page, per element: the value of each of PROPS on 95a6262
 const EXPECTED = {
   project: {
-    'body': ['"Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif', '16px', '400', 'rgb(255, 255, 255)', 'rgb(34, 34, 34)', 'border-box', '0px', '0px', '0px none rgb(255, 255, 255)', '20px'],
-    '#tools': ['"Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif', '14px', '400', 'rgb(255, 255, 255)', 'rgba(0, 0, 0, 0)', 'border-box', '5px', '0px', '1px solid rgb(85, 85, 85)', '20px'],
-    '#projectFiles': ['"Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif', '14px', '400', 'rgb(255, 255, 255)', 'rgba(0, 0, 0, 0)', 'border-box', '5px', '0px', '1px solid rgb(85, 85, 85)', '20px']
+    'body': ['"Source Sans 3", "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif', '16px', '400', 'rgb(232, 232, 232)', 'rgb(26, 26, 26)', 'border-box', '0px', '0px', '0px none rgb(232, 232, 232)', '20px'],
+    '#tools': ['"Source Sans 3", "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif', '14px', '400', 'rgb(232, 232, 232)', 'rgba(0, 0, 0, 0)', 'border-box', '5px', '0px', '1px solid rgb(56, 56, 56)', '20px'],
+    '#projectFiles': ['"Source Sans 3", "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif', '14px', '400', 'rgb(232, 232, 232)', 'rgba(0, 0, 0, 0)', 'border-box', '5px', '0px', '1px solid rgb(56, 56, 56)', '20px']
   },
   mri: {
-    'body': ['"Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif', '16px', '400', 'rgb(255, 255, 255)', 'rgb(34, 34, 34)', 'border-box', '0px', '0px', '0px none rgb(255, 255, 255)', '20px'],
-    '#annotationsPane': ['"Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif', '14px', '400', 'rgb(255, 255, 255)', 'rgb(51, 51, 51)', 'border-box', '20px', '0px 20px 20px 0px', '0px none rgb(255, 255, 255)', '20px'],
-    '#annotationsPane > b': ['"Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif', '14px', '700', 'rgb(255, 255, 255)', 'rgba(0, 0, 0, 0)', 'border-box', '0px', '0px', '0px none rgb(255, 255, 255)', '20px']
+    'body': ['"Source Sans 3", "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif', '16px', '400', 'rgb(232, 232, 232)', 'rgb(26, 26, 26)', 'border-box', '0px', '0px', '0px none rgb(232, 232, 232)', '20px'],
+    '#annotationsPane': ['"Source Sans 3", "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif', '14px', '400', 'rgb(232, 232, 232)', 'rgb(37, 37, 37)', 'border-box', '20px', '0px 20px 20px 0px', '0px none rgb(232, 232, 232)', '20px'],
+    '#annotationsPane > b': ['"Source Sans 3", "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif', '14px', '700', 'rgb(232, 232, 232)', 'rgba(0, 0, 0, 0)', 'border-box', '0px', '0px', '0px none rgb(232, 232, 232)', '20px']
   }
 };
 const PAGES = {

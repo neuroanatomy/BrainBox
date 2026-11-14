@@ -554,7 +554,7 @@ export const AtlasMakerInteraction = {
       // add black overlay
       const black = document.createElement('div');
       black.id = 'blackOverlay';
-      Object.assign(black.style, { position:'fixed', top:'0px', left:'0px', width:'100%', height:'100%', zIndex:'5', backgroundColor:'#222' });
+      Object.assign(black.style, { position:'fixed', top:'0px', left:'0px', width:'100%', height:'100%', zIndex:'5', backgroundColor:'var(--nwl-bg)' });
       document.body.appendChild(black);
 
       // configure display mode
@@ -1066,8 +1066,10 @@ export const AtlasMakerInteraction = {
     localStorage.brainbox = URL.createObjectURL(new Blob([me.encodeNifti()]));
 
     const newWindow = window.open('', 'Render 3D', 'width=800,height=600');
+    // in the 2027 theme, as the mriRender3D page the embed frames (UI kit step 13c)
     newWindow.document.write(`
-        <html>
+        <html lang="en" data-nwl-theme="2027">
+        <head><link rel="stylesheet" href="/lib/nwl-components/fonts.css"></head>
         <body>
           <script>const path = "${me.User.dirname}${me.User.atlasFilename}";</script>
           <script src="/lib/atlasmaker-tools/render3D.js"></script>

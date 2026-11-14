@@ -8,7 +8,7 @@
   <div id="tools-maximized" style="display:flex;flex-direction:column;height:100%">
 
       <!-- tools hide/show, display left/right -->
-      <div id="headerBlock" style="flex:0 1 28px;background:#333">
+      <div id="headerBlock" style="flex:0 1 28px;background:var(--nwl-bg-surface)">
           <div style="display:flex">
               <div style="flex:0 0 28px"><button type="button" id="display-minimize" title="Minimize toolbar" class="nwl-tool-button push noBorder"><img class="nwl-icon" alt="close" src="~nwl-components/dist/icons/times-circle.svg" /></button></div>
               <div id="toolsDragHandle" style="flex:1 1 auto;cursor:grab" title="Drag to move toolbar"></div>
@@ -174,9 +174,9 @@
 <!-- End Labels -->
 
 <!-- black overlay -->
-<div id="landmarksDialog" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(0,0,0,0.7);z-index:100">
+<div id="landmarksDialog" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background-color:var(--nwl-bg-overlay);z-index:100">
   <!-- centered content -->
-  <div style="position:relative;padding:1rem;margin:2rem auto;background-color:#333;max-width:600px;text-align:center;border:1px solid #777;height:calc(100% - 4rem);box-sizing:border-box">
+  <div style="position:relative;padding:1rem;margin:2rem auto;background-color:var(--nwl-bg-surface);max-width:600px;text-align:center;border:1px solid var(--nwl-border);height:calc(100% - 4rem);box-sizing:border-box">
     
     <h2 class="selection-header">Landmarks</h2>
 

@@ -6,7 +6,8 @@
   focused by a mouse click gets none. The home page's project list (select.nwl-push-button) is
   reached with Tab from the URL field, in the 2027 theme the page opts in to (UI kit step 13b:
   the outline is the theme's text colour); a <select> shows focus on a click too (Chromium), so
-  the mouse is checked on the project page's sortable column headers (buttons).
+  the mouse is checked on the project page's sortable column headers (buttons), also in the 2027
+  theme since UI kit step 13c.
 */
 
 const puppeteer = require('puppeteer');
@@ -92,6 +93,6 @@ describe('Keyboard focus outline', function () {
     await page.click(button);
     assert.deepInclude(await focusedOutline(page), { element: 'nwl-sort-button', style: 'none' }, 'mouse');
     await page.keyboard.press('Tab');
-    assert.deepInclude(await focusedOutline(page), { element: 'nwl-sort-button', ...KEYBOARD }, 'keyboard');
+    assert.deepInclude(await focusedOutline(page), { element: 'nwl-sort-button', ...KEYBOARD, color: 'rgb(232, 232, 232)' }, 'keyboard');
   }).timeout(U.longTimeout);
 });

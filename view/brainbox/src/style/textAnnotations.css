@@ -48,14 +48,14 @@ li {
     left:0;
     right:0;
     bottom:0;
-    background:#222;
+    background:var(--nwl-bg);
 }
 .noEmpty:empty:before {
     content:'Empty';
-    color:rgba(255,255,255,0.4);
+    color:var(--nwl-text-3);
 }
 
 .noEmptyWithPlaceholder:empty:before {
     content:attr(placeholder);
-    color:rgba(255,255,255,0.4);
+    color:var(--nwl-text-3);
 }
