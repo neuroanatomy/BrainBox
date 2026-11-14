@@ -1,6 +1,6 @@
 /* BrainBox/index page style */
 html, #menu, #footer {
-    background-color: #111;
+    background-color: var(--nwl-bg-nav);
 }
 #footer {
     display: block;
@@ -28,7 +28,7 @@ html, #menu, #footer {
     margin-top:0;
     width: 100%;
     display: inline-block;
-    font: 16px/24px "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
+    font: var(--nwl-text-lg)/24px var(--nwl-font-body);
     transition: top .5s, opacity .5s;
     -moz-transition: top .5s, opacity .5s;
     -webkit-transition: top .5s, opacity .5s;

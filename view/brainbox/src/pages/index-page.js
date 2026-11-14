@@ -1,5 +1,7 @@
 /* global MozWebSocket */
 import 'nwl-components/tokens.css';
+// nwl's base styles, inside the landing content (.content.app): the 2027 theme's headings and form controls
+import 'nwl-components/base.css';
 import 'nwl-components/widgets.css';
 import '../style/style.css';
 import '../style/index-style.css';

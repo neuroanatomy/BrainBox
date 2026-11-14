@@ -4,7 +4,8 @@
   Keyboard focus shows a 2px outline in --nwl-focus (UI kit U6, nwl-components 2.0), on the
   app's own pages too (style/ui.css): a control reached with Tab gets it, and a control
   focused by a mouse click gets none. The home page's project list (select.nwl-push-button) is
-  reached with Tab from the URL field; a <select> shows focus on a click too (Chromium), so
+  reached with Tab from the URL field, in the 2027 theme the page opts in to (UI kit step 13b:
+  the outline is the theme's text colour); a <select> shows focus on a click too (Chromium), so
   the mouse is checked on the project page's sortable column headers (buttons).
 */
 
@@ -81,7 +82,7 @@ describe('Keyboard focus outline', function () {
     await page.waitForSelector('select#list.nwl-push-button');
     await page.focus('#url');
     await page.keyboard.press('Tab');
-    assert.deepEqual(await focusedOutline(page), { element: 'list', ...KEYBOARD, token: '#fff' });
+    assert.deepEqual(await focusedOutline(page), { element: 'list', ...KEYBOARD, color: 'rgb(232, 232, 232)', token: '#e8e8e8' });
   }).timeout(U.longTimeout);
 
   it('shows the outline on a sortable header with Tab, and none after a click', async function () {

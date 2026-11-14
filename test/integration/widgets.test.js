@@ -3,7 +3,8 @@
 /*
   nwl-components' widgets (widgets.css, UI kit step 9a) on BrainBox's own pages: the home
   page's push buttons are bold with 5px vertical padding (U3) and get a lighter background on
-  hover (U7); a selected table row carries aria-selected="true", which gives it its background;
+  hover (U7; the home page is in the 2027 theme, UI kit step 13b, so its --nwl-bg-pressed is
+  #404040); a selected table row carries aria-selected="true", which gives it its background;
   a link without its underline (the footer's) gets it back on hover (U8). The mouse is the
   real one (page.hover), so :hover is the browser's.
 */
@@ -68,7 +69,7 @@ describe('nwl-components widgets on BrainBox pages', function () {
     buttons.forEach((b) => assert.deepEqual(b, { 'font-weight': '700', padding: '5px 0px' }));
     assert.strictEqual((await style(page, '#go', ['background-color']))['background-color'], 'rgba(0, 0, 0, 0)');
     await page.hover('#go');
-    assert.deepEqual(await style(page, '#go', ['background-color', 'opacity']), { 'background-color': 'rgb(85, 85, 85)', opacity: '1' });
+    assert.deepEqual(await style(page, '#go', ['background-color', 'opacity']), { 'background-color': 'rgb(64, 64, 64)', opacity: '1' });
   }).timeout(U.longTimeout);
 
   it('marks the selected file row with aria-selected, which gives it its background', async function () {

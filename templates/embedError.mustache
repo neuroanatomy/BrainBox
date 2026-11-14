@@ -1,10 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-nwl-theme="2027">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" type="image/x-icon" href="/favicon.png" />
     <title>BrainBox</title>
+    <!-- BrainBox's own, the frame's origin, whatever the host page's -->
+    <link rel="stylesheet" href="/lib/nwl-components/tokens.css">
+    <link rel="stylesheet" href="/lib/nwl-components/base.css">
+    <link rel="stylesheet" href="/lib/nwl-components/fonts.css">
     <style>
         /* Deliberately chromeless: this is rendered inside someone else's page,
            in a box that may be only a few hundred pixels wide. The full `error`
@@ -12,9 +16,9 @@
         html, body {
             height: 100%;
             margin: 0;
-            background-color: #222;
+            background-color: var(--nwl-bg);
             color: #eee;
-            font: 14px/1.5 "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
+            font: var(--nwl-text-md)/1.5 var(--nwl-font-body);
             -webkit-font-smoothing: antialiased;
         }
         main {
@@ -34,7 +38,7 @@
         }
     </style>
 </head>
-<body>
+<body class="app">
 <main>
     <p>{{message}}</p>
 </main>

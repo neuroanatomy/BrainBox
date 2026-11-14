@@ -3,10 +3,11 @@
 /*
   The pages' own stylesheets read nwl-components' tokens (var(--nwl-…), UI kit step 4), so
   each page bundle that has such a stylesheet loads nwl-components/tokens.css. On the home
-  page, which loads no other nwl-components stylesheet, a token is defined and the body gets
-  its colours and font through the tokens; on the ask-for-login page, which uses
-  nwl-components' Vue components (UI kit step 10), its .app does, with the values of the
-  2027 theme the page opts in to (UI kit step 13a).
+  page, which loads nwl-components' tokens, base and widget styles but not its components, a
+  token is defined and the body gets its colours and font through the tokens, with the values
+  of the 2027 theme the page opts in to (UI kit step 13b); on the project page, which doesn't
+  opt in, with today's values; on the ask-for-login page, which uses nwl-components' Vue
+  components (UI kit step 10), its .app does, in the 2027 theme (UI kit step 13a).
 */
 
 const puppeteer = require('puppeteer');
@@ -68,7 +69,11 @@ describe('Pages load nwl-components\' tokens', function () {
   });
 
   it('defines the tokens on the home page', async function () {
-    assert.deepEqual(await tokenStyles(browser, `${U.serverURL}/`), EXPECTED);
+    assert.deepEqual(await tokenStyles(browser, `${U.serverURL}/`), EXPECTED_2027);
+  }).timeout(U.longTimeout);
+
+  it('defines the tokens on the project page, with today\'s values', async function () {
+    assert.deepEqual(await tokenStyles(browser, `${U.serverURL}/project/${U.projectTest.shortname}`), EXPECTED);
   }).timeout(U.longTimeout);
 
   it('defines the tokens on the ask-for-login page', async function () {
