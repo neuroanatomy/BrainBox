@@ -55,6 +55,21 @@ const userNameQuery = (req, res) => {
     });
 };
 
+/**
+ * Render the error page for a failed query: the message only. The error itself
+ * (its stack, the database's details) goes to the server log, never to the page.
+ * @param {Object} res Express response
+ * @param {number} status HTTP status
+ * @param {string} message What the page says
+ * @param {Error} err The error, logged
+ * @returns {void}
+ */
+const renderQueryError = (res, status, message, err) => {
+  console.error('ERROR:', message, err);
+  res.status(status);
+  res.render('error', { message });
+};
+
 const getAtlasBackups = (req, res) => {
   const { source, atlasProject, atlasName } = req.query;
 
@@ -115,27 +130,15 @@ const getAtlasBackups = (req, res) => {
               res.send(result);
             })
             .catch( (err) => {
-              res.status(500);
-              res.render('error', {
-                message: 'Can\'t query backup file logs',
-                error: err
-              });
+              renderQueryError(res, 500, 'Can\'t query backup file logs', err);
             });
         })
         .catch( (err) => {
-          res.status(500);
-          res.render('error', {
-            message: 'Can\'t query backup files',
-            error: err
-          });
+          renderQueryError(res, 500, 'Can\'t query backup files', err);
         });
     })
     .catch( (err) => {
-      res.status(400);
-      res.render('error', {
-        message: 'Can\'t find atlas',
-        error: err
-      });
+      renderQueryError(res, 400, 'Can\'t find atlas', err);
     });
 };
 

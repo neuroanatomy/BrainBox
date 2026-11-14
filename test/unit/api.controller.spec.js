@@ -161,6 +161,8 @@ describe('API Controller: ', function () {
 
       assert.strictEqual(res.status.calledWith(400), true);
       assert.strictEqual(renderSpy.callCount, 1);
+      // the page gets the message only: the error and its stack stay in the server log
+      assert.deepStrictEqual(renderSpy.args[0][1], { message: 'Can\'t find atlas' });
     });
   });
 
