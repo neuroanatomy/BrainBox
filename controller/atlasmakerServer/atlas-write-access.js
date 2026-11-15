@@ -7,38 +7,14 @@
  * socket, and the access is computed from the database the same way the HTTP
  * API computes the `access` it gives each atlas
  * (BrainboxAccessControlService.setVolumeAnnotationsAccessByProjects).
+ * The cookie is read by NeuroWebLab's `usernameFromCookie` (1.8.0): it takes
+ * `username`, else the configured `usernameField`, `nickname` in BrainBox.
  */
 const crypto = require('crypto');
 const { AccessType, AccessLevel } = require('neuroweblab');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 
 const accessLevels = ['none', 'view', 'edit', 'add', 'remove'];
-
-/**
- * The username of the session a cookie header belongs to.
- * @param {function} sessionParser The app's session middleware (express-session)
- * @param {string} cookie The Cookie header sent when the socket was opened
- * @returns {Promise<string|null>} The username, or null for an anonymous visitor
- */
-const usernameFromCookie = (sessionParser, cookie) => new Promise((resolve) => {
-  if (typeof sessionParser !== 'function' || typeof cookie !== 'string' || cookie.length === 0) {
-    resolve(null);
-
-    return;
-  }
-  // a fresh request each time, so a logout is seen
-  const req = { headers: { cookie }, url: '/', originalUrl: '/' };
-  try {
-    sessionParser(req, {}, (err) => {
-      const user = !err && req.session && req.session.passport && req.session.passport.user;
-      // the same reduction as NeuroWebLab's sessionUser.js (old sessions store whole documents)
-      const username = user && typeof user === 'object' && (user.username || user.nickname);
-      resolve(typeof username === 'string' && username.length > 0 ? username : null);
-    });
-  } catch (err) {
-    resolve(null);
-  }
-});
 
 /**
  * The access a user has to one atlas of an MRI, as the HTTP API gives it.
@@ -141,4 +117,4 @@ const atlasReadAccess = async (nativeDb, { username, dirname, filename, source }
  */
 const canEdit = (level) => accessLevels.indexOf(level) >= accessLevels.indexOf(AccessLevel.EDIT.toString());
 
-module.exports = { usernameFromCookie, atlasAccessLevel, atlasReadAccess, canEdit };
+module.exports = { atlasAccessLevel, atlasReadAccess, canEdit };

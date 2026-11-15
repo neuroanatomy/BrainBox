@@ -2,7 +2,7 @@
 /* eslint-disable radix */
 const dateFormat = require('dateformat');
 const dataSlices = require('../dataSlices/dataSlices.js');
-const { jsonForAttribute, jsonForScript } = require('../utils/jsonForScript');
+const { jsonForAttribute, jsonForScript } = require('neuroweblab');
 const { PUBLIC_USER_FIELDS, publicUser, publicLoggedUser } = require('./publicUser');
 
 const validator = function (req, res, next) {

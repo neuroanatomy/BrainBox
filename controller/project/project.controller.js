@@ -4,12 +4,11 @@ const validatorNPM = require('validator');
 const { param, validationResult } = require('express-validator');
 const dataSlices = require('../dataSlices/dataSlices.js');
 const lock = require('../projectLock.js');
-const { AccessType, AccessLevel, AccessControlService } = require('neuroweblab');
+const { AccessType, AccessLevel, AccessControlService, catchErrors, jsonForScript } = require('neuroweblab');
 const _ = require('lodash');
 const createDOMPurify = require('dompurify');
 const { JSDOM } = require('jsdom');
 const { ForbiddenAccessError, NotFoundError } = require('../../errors.js');
-const { jsonForScript } = require('../utils/jsonForScript');
 const { publicLoggedUser } = require('../user/publicUser');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 const { isLabelset, changedLabelsets, setLayerLabelset } = require('./atlas-labels.js');
@@ -964,15 +963,22 @@ const deleteProject = async function (req, res) {
 };
 
 
+// a page's error answer: plain text, as its other errors ('Authorization required')
+const pageServerError = (res) => res.status(500).send('Server error');
+
+// An error these handlers throw answers 500, logged with console.error (no pino-http in
+// BrainBox), instead of an unhandled rejection that left the request without an answer
+// (NeuroWebLab's catchErrors, T002 M1): the pages as text, the JSON routes as JSON
+// {error: 'Server error'}, as their other errors
 const ProjectController = function () {
   this.validator = validator;
   this.apiProjectAll = apiProjectAll;
-  this.apiProject = apiProject;
+  this.apiProject = catchErrors(apiProject);
   this.apiProjectFiles = apiProjectFiles;
-  this.project = project;
-  this.settings = settings;
+  this.project = catchErrors(project, pageServerError);
+  this.settings = catchErrors(settings, pageServerError);
   this.newProject = newProject;
-  this.postProject = postProject;
+  this.postProject = catchErrors(postProject);
   this.deleteProject = deleteProject;
 };
 

@@ -4,7 +4,7 @@ const { body, validationResult } = require('express-validator');
 const { isAdmin, requestUsername } = require('./admins');
 const annotations = require('./admin.annotations');
 const projects = require('./admin.projects');
-const { jsonForScript } = require('../utils/jsonForScript');
+const { jsonForScript } = require('neuroweblab');
 const { publicLoggedUser } = require('../user/publicUser');
 
 const LOOPBACK_ADDRESSES = ['127.0.0.1', '::1', '::ffff:127.0.0.1'];

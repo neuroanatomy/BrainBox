@@ -2,12 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const tracer = require('tracer').console({format: '[{{file}}:{{line}}]  {{message}}'});
 
-/**
- * Escape special regex characters for use inside a MongoDB $regex query.
- * @param {string} str - raw user input
- * @returns {string} escaped string safe for $regex
- */
-const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const { escapeRegex } = require('neuroweblab');
 
 const getLabelsets = async (req, res) => {
   const arr = await fs.promises.readdir(path.join(__dirname, '../../public/labels/'));

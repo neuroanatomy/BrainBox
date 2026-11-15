@@ -10,7 +10,8 @@ const zlib = require('zlib');
 const { expect } = require('chai');
 const sinon = require('sinon');
 const atlasmakerServer = require('../../controller/atlasmakerServer/atlasmakerServer.js');
-const { usernameFromCookie, atlasAccessLevel, canEdit } = require('../../controller/atlasmakerServer/atlas-write-access.js');
+const { usernameFromCookie } = require('neuroweblab');
+const { atlasAccessLevel, canEdit } = require('../../controller/atlasmakerServer/atlas-write-access.js');
 const U = require('../utils.js');
 
 const source = 'https://example.org/ws-write-access-spec.nii.gz';
@@ -144,6 +145,8 @@ describe('UNIT TESTING WEBSOCKET WRITE ACCESS', function () {
     await db.collection('project').deleteMany({ shortname });
   });
 
+  // NeuroWebLab's (1.8.0), with BrainBox's usernameField ('nickname'): sessions
+  // stored by earlier versions keep only that key
   describe('usernameFromCookie', function () {
     let parser;
 

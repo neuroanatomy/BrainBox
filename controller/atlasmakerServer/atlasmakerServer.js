@@ -14,7 +14,8 @@ const amri = require('./atlasmaker-mri');
 const AsyncLock = require('async-lock');
 const lock = new AsyncLock();
 const EmbedAccessService = require('../../services/EmbedAccessService');
-const { usernameFromCookie, atlasAccessLevel, atlasReadAccess, canEdit } = require('./atlas-write-access');
+const { escapeRegex, usernameFromCookie } = require('neuroweblab');
+const { atlasAccessLevel, atlasReadAccess, canEdit } = require('./atlas-write-access');
 const { mergeMetadata, projectsForMetadata, savedView } = require('./metadata-save-access');
 
 // WebSocket message types that write to an atlas/annotation - never applied on
@@ -65,13 +66,6 @@ const bufferTag = function (str, sz) {
 
   return buf;
 };
-
-/**
- * Escape special regex characters for use inside a MongoDB $regex query.
- * @param {string} str - raw user input
- * @returns {string} escaped string safe for $regex
- */
-const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // The instance the notifier handlers (admin broadcast, save all atlases, users
 // on an MRI) talk to: the one serving the WebSocket clients. Other instances,

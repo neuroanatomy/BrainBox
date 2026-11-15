@@ -16,7 +16,7 @@
  *
  * Fixes follow the same versioning rule, and are recorded in the log collection.
  */
-const { ObjectId } = require('neuroweblab');
+const { toId } = require('neuroweblab');
 const lock = require('../projectLock.js');
 
 const BATCH_LENGTH = 100; // files per batch in the settings page
@@ -163,8 +163,6 @@ const findDamagedProjects = async (nativeDb) => {
   return list.sort((a, b) => (Number(b.suspected) - Number(a.suspected)) || (b.missing - a.missing));
 };
 
-const toObjectId = (id) => (ObjectId.isValid(id) && String(new ObjectId(id)) === id ? new ObjectId(id) : null);
-
 /**
  * Make a new current version of a project, keeping the previous one as a
  * backup, and log the change
@@ -212,7 +210,7 @@ const planRestore = (versions, id) => {
  * @returns {Promise<object>} { restored, files }, or { error, status }
  */
 const restoreFiles = ({ nativeDb, project, version, username }) => lock.acquire(['project', 'mri'], async () => {
-  const id = toObjectId(version);
+  const id = toId(version);
   if (!id) { return { status: 400, error: 'Invalid version' }; }
   const plan = planRestore(await projectVersions(nativeDb, project, true), id);
   if (plan.error) { return plan; }
