@@ -685,6 +685,53 @@ const droppedMessage = (dropped) => {
 };
 
 /**
+ * Whether a user may save an existing project (2026-11-15): `edit` on at least one of its
+ * lists. What each list's changes need is then checked list by list, and the project's own
+ * fields need `files: edit` (keepFieldsWithoutFilesEdit); before, every save needed `files: edit`
+ * @param {Object} oldProject The stored project
+ * @param {string} loggedUser The user saving
+ * @returns {boolean} true if the save may go on
+ */
+const canSaveProject = (oldProject, loggedUser) => listTypes.some((type) => AccessControlService.hasAccess(type, AccessLevel.EDIT, oldProject, loggedUser));
+
+// the fields that are neither the lists nor the project's own fields: set by the server
+// (owner, modified, modifiedBy, _id, backup), checked against the URL (shortname), or never
+// stored (filesLoaded)
+const notOwnFields = [...listTypes, 'owner', 'shortname', '_id', 'backup', 'modified', 'modifiedBy', 'filesLoaded'];
+
+// a field sent empty ('' for a name the settings page fills in) is the same as one the stored
+// project lacks; a stored value is compared as stored and as the body is sanitised
+const isEmptyField = (v) => _.isNil(v) || v === '';
+const sameField = (value, stored) => _.isEqual(value, stored) || _.isEqual(value, sanitizeValue(stored)) ||
+  (isEmptyField(value) && isEmptyField(stored));
+
+/**
+ * Keep the stored value of each of the project's own fields (name, description, url,
+ * brainboxURL, created and any other field that is not one of the three lists) if the user
+ * may not edit the files (2026-11-15). A field the stored project lacks is removed
+ * @param {Object} object The project to save (changed in place)
+ * @param {Object} oldProject The stored project
+ * @param {string} loggedUser The user saving
+ * @returns {Array<string>} The fields whose changes were ignored
+ */
+const keepFieldsWithoutFilesEdit = (object, oldProject, loggedUser) => {
+  if (AccessControlService.hasFilesAccess(AccessLevel.EDIT, oldProject, loggedUser)) {
+    return [];
+  }
+  const changed = Object.keys(object)
+    .filter((key) => !notOwnFields.includes(key) && !sameField(object[key], oldProject[key]));
+  for (const key of changed) {
+    if (_.has(oldProject, key)) {
+      object[key] = oldProject[key];
+    } else {
+      delete object[key];
+    }
+  }
+
+  return changed;
+};
+
+/**
  * @function postProject
  * @desc Receives data for creating a new project or updating the settings of an existing one
  * @param {Object} req Req object from express
@@ -700,7 +747,8 @@ const postProject = async function (req, res) {
   if (loggedUser === 'anonymous') {
     console.log('ERROR not Authenticated');
     // 401: who are you? (shared suite 2.1, 2026-11-11; was 403)
-    res.status(401).json({ error: 'error', message: 'User not authenticated' });
+    // the reason in `error`, which the settings page shows (nwl-components ProjectInfo.vue)
+    res.status(401).json({ success: false, error: 'User not authenticated', message: 'User not authenticated' });
 
     return;
   }
@@ -756,9 +804,10 @@ const postProject = async function (req, res) {
     // update/insert project
     if (oldProject) {
       // project exists, save update
-      if (!AccessControlService.hasFilesAccess(AccessLevel.EDIT, oldProject, loggedUser)) {
-        console.log('User does not have edit rights');
-        res.status(403).json({ error: 'error', message: 'User does not have edit rights' });
+      if (!canSaveProject(oldProject, loggedUser)) {
+        const reason = 'You may not change this project: saving it needs edit rights on its files, annotations or collaborators';
+        console.log(reason);
+        res.status(403).json({ success: false, error: reason, message: reason });
 
         return;
       }
@@ -795,11 +844,18 @@ const postProject = async function (req, res) {
         }
       });
 
+      // the project's own fields need files edit (2026-11-15)
+      ignoredChanges.push(...keepFieldsWithoutFilesEdit(object, oldProject, loggedUser));
+
       // insert the MRI names provided, for the files the project keeps (they were written
       // for every file sent, even when the list was then kept as stored)
       console.log('insert mri names');
-      const keptSources = new Set(object.files.list.map(fileSource));
-      await insertMRInames(req, res, sentFiles.filter((file) => _.isPlainObject(file) && keptSources.has(file.source)));
+      // A file's name is part of the files list: it needs files edit (2026-11-15, when a save
+      // without files edit became possible)
+      if (AccessControlService.hasFilesAccess(AccessLevel.EDIT, oldProject, loggedUser)) {
+        const keptSources = new Set(object.files.list.map(fileSource));
+        await insertMRInames(req, res, sentFiles.filter((file) => _.isPlainObject(file) && keptSources.has(file.source)));
+      }
 
       console.log('updating...');
       await req.nativeDb.collection('project').updateMany({ shortname: object.shortname }, { $set: { backup: true } });
