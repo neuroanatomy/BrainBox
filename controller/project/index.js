@@ -3,6 +3,7 @@
 const express = require('express');
 const controller = require('./project.controller');
 const { labelsetCheck } = require('./labelset-check.js');
+const { projectEmbed } = require('./project-embed.js');
 
 const router = new express.Router();
 
@@ -17,5 +18,7 @@ router.delete('/json/:projectName', controller.validator, authTokenMiddleware, c
 
 router.get('/:projectName', controller.validator, controller.project);
 router.get('/:projectName/settings', controller.validator, controller.settings);
+// what nwl-components' "Embed Project" button frames (2026-11-15)
+router.get('/:projectName/embed', controller.validator, projectEmbed);
 
 module.exports = router;

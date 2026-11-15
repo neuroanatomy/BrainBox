@@ -961,4 +961,55 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
       }
     }).timeout(U.longTimeout);
   });
+
+  // nwl-components' "Embed Project" button frames /project/<shortname>/embed,
+  // which had no route (a 404 in the iframe). It now answers with the embed of
+  // the project's first brain, after mriEmbed's access check (2026-11-15).
+  describe('E14: the Embed Project button\'s URL, /project/:p/embed', function () {
+    const FILES_PROJECT = 'embedintegrationprivatefiles';
+    const EMPTY_PROJECT = 'embedintegrationempty';
+    const projectEmbed = (shortname) => chai.request(U.serverURL).get(`/project/${shortname}/embed`)
+      .redirects(0);
+    const anyoneNone = { userID: 'anyone', username: 'anyone', access: { collaborators: 'none', annotations: 'none', files: 'none' } };
+    const anyoneView = { userID: 'anyone', username: 'anyone', access: { collaborators: 'view', annotations: 'view', files: 'view' } };
+
+    before(async function () {
+      await nativeDb.collection('project').insertMany([
+        { name: 'Embed private files', shortname: FILES_PROJECT, owner: 'foo', collaborators: { list: [anyoneNone] }, files: { list: [PRIVATE_SOURCE] }, annotations: { list: [] } },
+        { name: 'Embed empty', shortname: EMPTY_PROJECT, owner: 'foo', collaborators: { list: [anyoneView] }, files: { list: [] }, annotations: { list: [] } }
+      ]);
+    });
+
+    after(async function () {
+      await nativeDb.collection('project').deleteMany({ shortname: { $in: [FILES_PROJECT, EMPTY_PROJECT] } });
+    });
+
+    it('a public project: redirects to the embed of its first brain, and may be framed', async function () {
+      const res = await projectEmbed(U.projectTest.shortname);
+      assert.strictEqual(res.statusCode, 302);
+      const location = new URL(res.headers.location, U.serverURL);
+      assert.strictEqual(location.pathname, '/mri/embed');
+      assert.strictEqual(location.searchParams.get('url'), U.localBertURL);
+      assert.strictEqual(location.searchParams.get('project'), U.projectTest.shortname);
+      assert.include(res.headers['content-security-policy'], 'frame-ancestors *');
+    }).timeout(U.mediumTimeout);
+
+    it('a private project: the embed error page, without its file\'s URL', async function () {
+      const res = await projectEmbed(FILES_PROJECT);
+      assert.strictEqual(res.statusCode, 403);
+      assert.isUndefined(res.headers.location);
+      assert.include(res.text, 'This content is private');
+      assert.notInclude(res.text, PRIVATE_SOURCE);
+      assert.notInclude(res.text, 'id="menu"');
+    }).timeout(U.mediumTimeout);
+
+    it('an unknown project, or one without a brain: 404 on the embed error page', async function () {
+      const unknown = await projectEmbed('nosuchembedproject');
+      assert.strictEqual(unknown.statusCode, 404);
+      assert.include(unknown.text, 'could not be found');
+      const empty = await projectEmbed(EMPTY_PROJECT);
+      assert.strictEqual(empty.statusCode, 404);
+      assert.include(empty.text, 'no brain');
+    }).timeout(U.mediumTimeout);
+  });
 });
