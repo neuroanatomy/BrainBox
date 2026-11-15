@@ -1224,7 +1224,8 @@ export const AtlasMakerInteraction = {
     const me = AtlasMakerWidget;
     const labelset = document.getElementById('labelset');
     me.container.appendChild(labelset);
-    labelset.style.display = 'block';
+    // a flex box: nwl-components' .nwl-panel, whose header stays while the labels scroll
+    labelset.style.display = 'flex';
 
     labelset.querySelector('span#labels-name').textContent = me.ontology.name;
     labelset.querySelector('#label-list').innerHTML = '';

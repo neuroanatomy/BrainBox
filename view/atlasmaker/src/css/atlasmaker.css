@@ -197,9 +197,10 @@
 
 /* Label set
 ------------------------ */
+/* nwl-components' .nwl-panel (3.2.0): the header (the close button) stays while the body
+   (the labels) scrolls. It fills the viewer, with no border; shown with display flex. */
 #labelset {
     display:none;
-    overflow:scroll;
     position:fixed;
     top:0px;
     left:0px;
@@ -207,7 +208,18 @@
     height:100%;
     text-align:left;
     background-color:var(--nwl-bg-surface);
+    border:none;
     z-index:21;
+}
+/* as before: only the close button, on the right, on the panel's background */
+#labelset > .nwl-panel-header {
+    min-height:0;
+    padding:0;
+    text-align:right;
+    background-color:transparent;
+}
+#labelset > .nwl-panel-body {
+    padding:0;
 }
 .label-color {
     vertical-align:middle;

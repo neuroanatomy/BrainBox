@@ -150,11 +150,13 @@
 <!-- End Loading indicator -->
 
 <!-- Labels -->
-<div id="labelset">
-  <div style="z-index:23;text-align:right">
+<!-- the close button stays while the labels scroll (nwl-components 3.2.0 .nwl-panel) -->
+<div id="labelset" class="nwl-panel">
+  <div class="nwl-panel-header">
       <img id="labels-close" class="button" alt="close" src="~nwl-components/dist/icons/times-circle.svg"/>
   </div>
 
+  <div class="nwl-panel-body">
   <ul style="padding-left:1rem">
       <li>
           <b>Label Set</b><br/>
@@ -170,6 +172,7 @@
           </div>
       </li>
   </ul>
+  </div>
 </div>
 <!-- End Labels -->
 
