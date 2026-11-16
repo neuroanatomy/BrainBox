@@ -6,16 +6,11 @@
  * userID.
  */
 const _ = require('lodash');
-const { AccessType } = require('neuroweblab');
+// text (null, undefined and blank strings compare equal: the settings page may send '' for a
+// missing value) and listOf are NeuroWebLab's (1.10.0, T002 M3)
+const { AccessType, listOf, text } = require('neuroweblab');
 
 const listTypes = [AccessType.COLLABORATORS, AccessType.FILES, AccessType.ANNOTATIONS];
-
-const isBlank = (v) => v === null || typeof v === 'undefined' || (typeof v === 'string' && v.trim() === '');
-
-// null, undefined and '' compare equal: the settings page may send '' for a missing value
-const text = (v) => (isBlank(v) ? '' : v);
-
-const listOf = (project, type) => ((project && _.isPlainObject(project[type]) && Array.isArray(project[type].list)) ? project[type].list : []);
 
 // a file is stored as its source, and received as {source, name}
 const fileSource = (f) => (_.isPlainObject(f) ? f.source : f);
@@ -25,52 +20,16 @@ const fileSource = (f) => (_.isPlainObject(f) ? f.source : f);
 const collaboratorUser = (c) => (_.isPlainObject(c) ? (c.userID || c.nickname || c.username) : c);
 
 // What a row is compared on: what the settings page shows and edits. It adds a display name to
-// the collaborators and `display` to the layers; a file's name is in its MRI document.
+// the collaborators and `display` to the layers; a file's name is in its MRI document. Given to
+// NeuroWebLab's sortRows (1.10.0, T002 M3) as sortRows(type, rows, oldRows, { rowKey }), with
+// NeuroWebLab's isBlankRow, the same as BrainBox's: a collaborator row is blank without username,
+// userID or nickname.
 const rowKey = {
   files: (f) => text(fileSource(f)),
   collaborators: (c) => (_.isPlainObject(c) ?
     { user: text(collaboratorUser(c)), access: _.isPlainObject(c.access) ? _.pick(c.access, listTypes) : c.access } :
     c),
   annotations: (a) => (_.isPlainObject(a) ? { type: a.type, name: text(a.name), values: text(a.values) } : a)
-};
-
-// rows left empty, e.g. by the settings page's "+" button
-const isBlankRow = {
-  files: (f) => _.isPlainObject(f) && isBlank(f.source) && isBlank(f.name),
-  collaborators: (c) => _.isPlainObject(c) && isBlank(c.userID) && isBlank(c.nickname) && isBlank(c.username),
-  annotations: (a) => _.isPlainObject(a) && isBlank(a.name) && isBlank(a.values)
-};
-
-/**
- * Sort the rows of one list of the project sent. A row equal to a stored row (on rowKey; each
- * stored row matches at most one row sent, wherever it is) is a stored row, accepted as it is
- * (2.14); a blank row that is not stored is dropped; the others are new or changed, and checked.
- * @param {string} type The list: collaborators, files or annotations
- * @param {Array} rows The rows sent, sanitised
- * @param {Array} oldRows The stored rows, sanitised as the rows sent
- * @returns {Object} { kept: the rows without the dropped ones, stored: Set of the indexes in
- *   kept of the stored rows, dropped: how many were dropped }
- */
-const sortRows = (type, rows, oldRows) => {
-  const available = oldRows.map(rowKey[type]);
-  const kept = [];
-  const stored = new Set();
-  let dropped = 0;
-  for (const row of rows) {
-    const key = rowKey[type](row);
-    const at = available.findIndex((k) => _.isEqual(k, key));
-    if (at >= 0) {
-      available.splice(at, 1);
-      stored.add(kept.length);
-      kept.push(row);
-    } else if (isBlankRow[type](row)) {
-      dropped += 1;
-    } else {
-      kept.push(row);
-    }
-  }
-
-  return { kept, stored, dropped };
 };
 
 /**
@@ -108,6 +67,6 @@ module.exports = {
   listChanged,
   listOf,
   listTypes,
-  sortRows,
+  rowKey,
   usersToCheck
 };

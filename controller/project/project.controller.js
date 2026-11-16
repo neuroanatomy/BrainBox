@@ -5,60 +5,22 @@ const { param, validationResult } = require('express-validator');
 const dataSlices = require('../dataSlices/dataSlices.js');
 const lock = require('../projectLock.js');
 const {
-  AccessType, AccessLevel, AccessControlService, canSaveProject, catchErrors, filesListIncomplete, ignoredChangesMessage,
-  jsonForScript, keepFieldsWithoutFilesEdit, saveRefusal
+  AccessType, AccessLevel, AccessControlService, canSaveProject, catchErrors, droppedMessage, filesListIncomplete,
+  ignoredChangesMessage, jsonForScript, keepFieldsWithoutFilesEdit, sanitize, saveRefusal, shortnamePattern,
+  sortRows
 } = require('neuroweblab');
 const _ = require('lodash');
-const createDOMPurify = require('dompurify');
-const { JSDOM } = require('jsdom');
 const { ForbiddenAccessError, NotFoundError } = require('../../errors.js');
 const { publicLoggedUser } = require('../user/publicUser');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 const { isLabelset, changedLabelsets, setLayerLabelset } = require('./atlas-labels.js');
-const { fileSource, listChanged, listOf, listTypes, sortRows, usersToCheck } = require('./project-rows.js');
-const { window } = (new JSDOM('', {
-  features: {
-    FetchExternalResources: false, // disables resource loading over HTTP / filesystem
-    ProcessExternalResources: false // do not execute JS within script blocks
-  }
-}));
-const DOMPurify = createDOMPurify(window);
+const { fileSource, listChanged, listOf, listTypes, rowKey, usersToCheck } = require('./project-rows.js');
+// the sanitising of the body (postProject), of the MRI documents it writes and of the stored
+// values compared with it (shared suite 2.12) is NeuroWebLab's (1.10.0, T002 M3): sanitize and
+// plainText, every string one by one, as text
 
-/**
- * Plain text of a string: markup removed, text kept. A string without "<" holds no markup and is
- * kept as it is, "&" included. As microdraw's plainText (app/controller/project/project.validation.js)
- * @param {string} str A string
- * @returns {string} The string without markup
- */
-const plainText = (str) => {
-  if (!str.includes('<')) {
-    return str;
-  }
-
-  return DOMPurify.sanitize(str, { ALLOWED_TAGS: [], KEEP_CONTENT: true, RETURN_DOM_FRAGMENT: true }).textContent;
-};
-
-/**
- * The sanitising of the body (postProject) and of the MRI documents it writes, also applied to
- * the stored values compared with it: every string one by one, as text (shared suite 2.12,
- * 2026-11-11; DOMPurify ran on the whole JSON string, so markup in a field could break it, and
- * "&" became "&amp;" in every field once any field held a "<")
- * @param {*} value A value parsed from JSON
- * @returns {*} A copy, its strings sanitised
- */
-const sanitizeValue = (value) => {
-  if (typeof value === 'string') {
-    return plainText(value);
-  }
-  if (Array.isArray(value)) {
-    return value.map(sanitizeValue);
-  }
-  if (_.isPlainObject(value)) {
-    return _.mapValues(value, sanitizeValue);
-  }
-
-  return value;
-};
+// not NeuroWebLab's text, which also blanks strings of spaces: the MRI name check in
+// isProjectObject compares a stored name as it is
 const text = (v) => ((v === null || typeof v === 'undefined') ? '' : v);
 
 // the layer types of BrainBox's pages: the settings page offers volume and text, the project
@@ -66,12 +28,10 @@ const text = (v) => ((v === null || typeof v === 'undefined') ? '' : v);
 // annotationType)
 const layerTypes = ['volume', 'text', 'multiple choices', 'hidden text'];
 
-// a new project's shortname: letters, numbers and hyphens (shared suite 2.6, 2026-11-11)
-const shortnamePattern = /^[a-zA-Z0-9-]+$/;
-
 const validator = async function (req, res, next) {
 
-  // hyphens allowed, as in a new project's shortname (shared suite 2.6, 2026-11-11; was alphanumeric only)
+  // hyphens allowed, as in a new project's shortname: NeuroWebLab's shortnamePattern (shared suite 2.6,
+  // 2026-11-11; was alphanumeric only)
   await param('projectName', 'incorrect project name').matches(shortnamePattern)
     .run(req);
   // req.checkQuery('url', 'please enter a valid URL')
@@ -117,7 +77,7 @@ const isProjectObject = async function (req, res, object, { shortname, oldProjec
   for (const type of listTypes) {
     stored[type] = new Set();
     if (object[type] && Array.isArray(object[type].list)) {
-      ({ kept: object[type].list, stored: stored[type], dropped: dropped[type] } = sortRows(type, object[type].list, oldLists[type]));
+      ({ kept: object[type].list, stored: stored[type], dropped: dropped[type] } = sortRows(type, object[type].list, oldLists[type], { rowKey }));
     }
   }
 
@@ -152,7 +112,7 @@ const isProjectObject = async function (req, res, object, { shortname, oldProjec
 
   // a stored name or description is kept as it is, as stored rows are: a save keeps the stored
   // fields the client does not send (shared suite 2.17), and these may be older than the checks
-  const isStoredText = (field) => Boolean(oldProject) && _.isEqual(object[field], sanitizeValue(oldProject[field]));
+  const isStoredText = (field) => Boolean(oldProject) && _.isEqual(object[field], sanitize(oldProject[field]));
 
   // description
   if (object.description && !isStoredText('description') && !validatorNPM.isWhitelisted(object.description, allowed)) {
@@ -253,7 +213,7 @@ const isProjectObject = async function (req, res, object, { shortname, oldProjec
   const mris = await Promise.all(storedFileNames.map(({ source }) => req.nativeDb.collection('mri')
     .findOne({ source, backup: { $exists: false } }, { projection: { name: 1, _id: 0 } })));
   storedFileNames.forEach((file, i) => {
-    if (!mris[i] || sanitizeValue(text(mris[i].name)) !== file.name) {
+    if (!mris[i] || sanitize(text(mris[i].name)) !== file.name) {
       throw (new Error(`Invalid file name "${file.name}"`));
     }
   });
@@ -640,7 +600,7 @@ const insertMRInames = function (req, res, list) {
     */
 
     // sanitise each string (2.12): a source with "&" is kept as it is
-    mri = sanitizeValue(mri);
+    mri = sanitize(mri);
 
     // update and insert
     await req.nativeDb.collection('mri').updateMany({ source: mri.source }, { $set: { backup: true } });
@@ -677,18 +637,12 @@ const updateAtlasLabelsets = async function (req, oldProject, savedProject) {
   return messages;
 };
 
-// the blank new rows that isProjectObject dropped, for the message (shared suite 2.14)
-const droppedMessage = (dropped) => {
-  const parts = Object.entries(dropped || {})
-    .filter(([, n]) => n > 0)
-    .map(([type, n]) => `${n} ${type}`);
-
-  return parts.length > 0 ? ` Empty rows were not saved (${parts.join(', ')}).` : '';
-};
+// the message for the blank new rows that isProjectObject dropped (shared suite 2.14) is
+// NeuroWebLab's droppedMessage (1.10.0, T002 M3)
 
 // Save rights (2026-11-15) are NeuroWebLab's (1.9.0, T002 M2): canSaveProject (edit on at
 // least one list), keepFieldsWithoutFilesEdit (the project's own fields need files edit; given
-// sanitizeValue, so that a stored value equal to the one sent once sanitised is unchanged),
+// sanitize, so that a stored value equal to the one sent once sanitised is unchanged),
 // saveRefusal (the 403 body), filesListIncomplete (the incomplete files list guard) and
 // ignoredChangesMessage
 
@@ -716,7 +670,7 @@ const postProject = async function (req, res) {
 
   // each string sanitised as text (shared suite 2.12); a document that is not a project is
   // refused by isProjectObject, with a 400 (2.13)
-  let obj = sanitizeValue(req.body.data);
+  let obj = sanitize(req.body.data);
   // the stored project is found by the URL's shortname, which the body must equal (shared suite 2.6)
   const shortname = req.params.projectName;
   if (obj && typeof obj === 'object') {
@@ -739,7 +693,7 @@ const postProject = async function (req, res) {
       return;
     }
     // the stored lists, sanitised as the body, to compare the rows sent with
-    const oldLists = _.fromPairs(listTypes.map((type) => [type, sanitizeValue(listOf(oldProject, type))]));
+    const oldLists = _.fromPairs(listTypes.map((type) => [type, sanitize(listOf(oldProject, type))]));
     let object;
     let dropped;
     try {
@@ -807,7 +761,7 @@ const postProject = async function (req, res) {
       });
 
       // the project's own fields need files edit (2026-11-15)
-      ignoredChanges.push(...keepFieldsWithoutFilesEdit(object, oldProject, loggedUser, { sanitize: sanitizeValue }));
+      ignoredChanges.push(...keepFieldsWithoutFilesEdit(object, oldProject, loggedUser, { sanitize }));
 
       // insert the MRI names provided, for the files the project keeps (they were written
       // for every file sent, even when the list was then kept as stored)
