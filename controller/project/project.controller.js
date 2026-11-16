@@ -4,7 +4,10 @@ const validatorNPM = require('validator');
 const { param, validationResult } = require('express-validator');
 const dataSlices = require('../dataSlices/dataSlices.js');
 const lock = require('../projectLock.js');
-const { AccessType, AccessLevel, AccessControlService, catchErrors, jsonForScript } = require('neuroweblab');
+const {
+  AccessType, AccessLevel, AccessControlService, canSaveProject, catchErrors, filesListIncomplete, ignoredChangesMessage,
+  jsonForScript, keepFieldsWithoutFilesEdit, saveRefusal
+} = require('neuroweblab');
 const _ = require('lodash');
 const createDOMPurify = require('dompurify');
 const { JSDOM } = require('jsdom');
@@ -683,52 +686,11 @@ const droppedMessage = (dropped) => {
   return parts.length > 0 ? ` Empty rows were not saved (${parts.join(', ')}).` : '';
 };
 
-/**
- * Whether a user may save an existing project (2026-11-15): `edit` on at least one of its
- * lists. What each list's changes need is then checked list by list, and the project's own
- * fields need `files: edit` (keepFieldsWithoutFilesEdit); before, every save needed `files: edit`
- * @param {Object} oldProject The stored project
- * @param {string} loggedUser The user saving
- * @returns {boolean} true if the save may go on
- */
-const canSaveProject = (oldProject, loggedUser) => listTypes.some((type) => AccessControlService.hasAccess(type, AccessLevel.EDIT, oldProject, loggedUser));
-
-// the fields that are neither the lists nor the project's own fields: set by the server
-// (owner, modified, modifiedBy, _id, backup), checked against the URL (shortname), or never
-// stored (filesLoaded)
-const notOwnFields = [...listTypes, 'owner', 'shortname', '_id', 'backup', 'modified', 'modifiedBy', 'filesLoaded'];
-
-// a field sent empty ('' for a name the settings page fills in) is the same as one the stored
-// project lacks; a stored value is compared as stored and as the body is sanitised
-const isEmptyField = (v) => _.isNil(v) || v === '';
-const sameField = (value, stored) => _.isEqual(value, stored) || _.isEqual(value, sanitizeValue(stored)) ||
-  (isEmptyField(value) && isEmptyField(stored));
-
-/**
- * Keep the stored value of each of the project's own fields (name, description, url,
- * brainboxURL, created and any other field that is not one of the three lists) if the user
- * may not edit the files (2026-11-15). A field the stored project lacks is removed
- * @param {Object} object The project to save (changed in place)
- * @param {Object} oldProject The stored project
- * @param {string} loggedUser The user saving
- * @returns {Array<string>} The fields whose changes were ignored
- */
-const keepFieldsWithoutFilesEdit = (object, oldProject, loggedUser) => {
-  if (AccessControlService.hasFilesAccess(AccessLevel.EDIT, oldProject, loggedUser)) {
-    return [];
-  }
-  const changed = Object.keys(object)
-    .filter((key) => !notOwnFields.includes(key) && !sameField(object[key], oldProject[key]));
-  for (const key of changed) {
-    if (_.has(oldProject, key)) {
-      object[key] = oldProject[key];
-    } else {
-      delete object[key];
-    }
-  }
-
-  return changed;
-};
+// Save rights (2026-11-15) are NeuroWebLab's (1.9.0, T002 M2): canSaveProject (edit on at
+// least one list), keepFieldsWithoutFilesEdit (the project's own fields need files edit; given
+// sanitizeValue, so that a stored value equal to the one sent once sanitised is unchanged),
+// saveRefusal (the 403 body), filesListIncomplete (the incomplete files list guard) and
+// ignoredChangesMessage
 
 /**
  * @function postProject
@@ -804,24 +766,25 @@ const postProject = async function (req, res) {
     if (oldProject) {
       // project exists, save update
       if (!canSaveProject(oldProject, loggedUser)) {
-        const reason = 'You may not change this project: saving it needs edit rights on its files, annotations or collaborators';
-        console.log(reason);
-        res.status(403).json({ success: false, error: reason, message: reason });
+        const refusal = saveRefusal();
+        console.log(refusal.error);
+        res.status(403).json(refusal);
 
         return;
       }
       // The settings page loads the files in batches, and says how many it received
       // (filesLoaded.count). If that is not the whole stored list, the list it sends
-      // is incomplete: keep the stored one, so that files are not lost
+      // is incomplete: keep the stored one, so that files are not lost. NWL's
+      // filesListIncomplete then sets dropped.files = 0: the list sent was not used, so no blank
+      // file row was dropped from it; a stored project without a files list has 0 files
       const ignoredChanges = [];
-      const filesIncomplete = typeof object.filesLoaded !== 'undefined' &&
-        !(object.filesLoaded && object.filesLoaded.count === oldProject.files.list.length);
+      const filesIncomplete = filesListIncomplete(object, oldProject, dropped);
       delete object.filesLoaded;
       // the files sent, whose names go in their MRI documents
       let sentFiles = [];
       if (filesIncomplete) {
-        console.log(`incomplete file list (${object.files.list.length} received, ${oldProject.files.list.length} stored): keeping the stored one`);
-        object.files.list = oldProject.files.list;
+        console.log(`incomplete file list (${object.files.list.length} received, ${listOf(oldProject, 'files').length} stored): keeping the stored one`);
+        object.files.list = listOf(oldProject, 'files');
       } else {
         // files are stored as their source
         sentFiles = object.files.list;
@@ -844,7 +807,7 @@ const postProject = async function (req, res) {
       });
 
       // the project's own fields need files edit (2026-11-15)
-      ignoredChanges.push(...keepFieldsWithoutFilesEdit(object, oldProject, loggedUser));
+      ignoredChanges.push(...keepFieldsWithoutFilesEdit(object, oldProject, loggedUser, { sanitize: sanitizeValue }));
 
       // insert the MRI names provided, for the files the project keeps (they were written
       // for every file sent, even when the list was then kept as stored)
@@ -866,9 +829,7 @@ const postProject = async function (req, res) {
 
       console.log('success: true');
       let successMessage = 'Project settings updated.';
-      if (ignoredChanges.length > 0) {
-        successMessage += ` Some changes (on ${ignoredChanges.join(', ')}) were ignored due to a lack of permissions.`;
-      }
+      successMessage += ignoredChangesMessage(ignoredChanges);
       if (filesIncomplete) {
         successMessage += ' The list of files was not saved because it had not been completely loaded: reload the page to edit it.';
       }

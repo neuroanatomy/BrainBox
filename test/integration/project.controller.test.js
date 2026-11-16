@@ -140,6 +140,23 @@ describe('TESTING THE /project ROUTE', function () {
       assert.strictEqual(stored.description, 'changed');
     });
 
+    // T002 M2 (NWL 1.9.0 filesListIncomplete): the list sent is not used, so none of its blank
+    // rows is reported as dropped
+    it('reports no blank file row from a list it did not use', async function () {
+      const res = await save({ ...project(2), files: { list: [...files(2), { source: '', name: '' }] }, filesLoaded: { count: 2 } });
+      assert.isTrue(res.body.success, JSON.stringify(res.body));
+      assert.include(res.body.message, 'not been completely loaded');
+      assert.notInclude(res.body.message, 'Empty rows');
+      assert.deepEqual(await storedSources(), files(5).map((f) => f.source));
+    });
+
+    it('reports a blank file row dropped from a complete list', async function () {
+      const res = await save({ ...project(2), files: { list: [...files(2), { source: '', name: '' }] }, filesLoaded: { count: 5 } });
+      assert.isTrue(res.body.success, JSON.stringify(res.body));
+      assert.include(res.body.message, 'Empty rows were not saved (1 files).');
+      assert.deepEqual(await storedSources(), [source(0), source(1)]);
+    });
+
     it('does not store the number of files loaded', async function () {
       await save({ ...project(5), filesLoaded: { count: 5 } });
       assert.notProperty(await U.queryProject(shortname), 'filesLoaded');

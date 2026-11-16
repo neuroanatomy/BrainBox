@@ -12,8 +12,14 @@
   What throws: `?var=a/b` reads a field of an undefined value; a damaged stored
   project, without a files list and whose 'anyone' row has no annotations
   access: the project page asks the public annotations level (NeuroWebLab
-  throws 'Access level not found'), the settings page and a save with
-  filesLoaded read `files.list` of the stored project.
+  throws 'Access level not found'), the settings page and a save read
+  `files.list` of the stored project.
+
+  T002 M2 (NeuroWebLab 1.9.0, 2026-11-16): the save's incomplete files list
+  guard is NWL's filesListIncomplete, which takes a stored project without a
+  files list as having 0 files, and no longer throws. The save still throws,
+  later: the per-list rights check reads `files.list` of the stored project
+  (BrainBox's loop, until merge M12), so this case still tests the wrapper.
 */
 
 const chai = require('chai');
@@ -116,6 +122,7 @@ describe('Project handlers answer an error instead of crashing (catchErrors)', f
     await checkServerAlive();
   });
 
+  // past the files list guard (filesLoaded.count is the 0 files stored), it throws in the per-list check
   it('POST /project/json/:p of a damaged project (postProject) answers 500 JSON and saves nothing', async function () {
     const res = await chai.request(U.serverURL).post(`/project/json/${DAMAGED}?token=${U.testToken}foo`)
       .send(saveBody());
