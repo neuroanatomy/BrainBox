@@ -16,7 +16,7 @@
  *
  * Fixes follow the same versioning rule, and are recorded in the log collection.
  */
-const { toId } = require('neuroweblab');
+const { adminLog, toId } = require('neuroweblab');
 const lock = require('../projectLock.js');
 
 const BATCH_LENGTH = 100; // files per batch in the settings page
@@ -174,7 +174,7 @@ const findDamagedProjects = async (nativeDb) => {
 const replaceCurrentVersion = async (nativeDb, newVersion, { key, value }) => {
   await nativeDb.collection('project').updateMany({ shortname: newVersion.shortname }, { $set: { backup: true } });
   await nativeDb.collection('project').insertOne(newVersion);
-  await nativeDb.collection('log').insertOne({ key, value, date: (new Date()).toJSON() });
+  await adminLog(nativeDb, key, value);
 };
 
 /**
@@ -246,11 +246,7 @@ const fixCurrentVersions = ({ nativeDb, project, username }) => lock.acquire(['p
   const kept = currents.pop()._id;
   const backups = currents.map((v) => v._id);
   await nativeDb.collection('project').updateMany({ _id: { $in: backups } }, { $set: { backup: true } });
-  await nativeDb.collection('log').insertOne({
-    key: 'adminFixCurrentVersions',
-    value: { username, project, kept: String(kept), backups: backups.map(String) },
-    date: (new Date()).toJSON()
-  });
+  await adminLog(nativeDb, 'adminFixCurrentVersions', { username, project, kept: String(kept), backups: backups.map(String) });
 
   return { kept: String(kept), backups: backups.length };
 });

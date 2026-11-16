@@ -1,11 +1,13 @@
 /* eslint-disable max-lines */
 const notifier = require('../../notifier');
 const { body, validationResult } = require('express-validator');
-const { isAdmin, requestUsername } = require('./admins');
+const admins = require('./admins');
 const annotations = require('./admin.annotations');
 const projects = require('./admin.projects');
-const { jsonForScript } = require('neuroweblab');
+const { jsonForScript, sendResult } = require('neuroweblab');
 const { publicLoggedUser } = require('../user/publicUser');
+
+const { isAdmin, requestUsername } = admins;
 
 const LOOPBACK_ADDRESSES = ['127.0.0.1', '::1', '::ffff:127.0.0.1'];
 const FORWARDING_HEADERS = ['x-forwarded-for', 'forwarded', 'x-forwarded-host'];
@@ -100,24 +102,9 @@ const broadcastMessage = async (req, res) => {
   res.send({ msg: `Message sent to ${users} connected user${users === 1 ? '' : 's'}: ${msg}`, users, success: true });
 };
 
-/**
- * Let through only admins (logged in, or authenticated by a token)
- * @param {object} req Request object
- * @param {object} res Response object
- * @param {function} next Next middleware
- * @returns {void}
- */
-const requireAdmin = (req, res, next) => {
-  const username = requestUsername(req);
-  if (!username) {
-    return res.status(401).json({ success: false, error: 'User not authenticated' });
-  }
-  if (!isAdmin(username)) {
-    return res.status(403).json({ success: false, error: 'Admins only' });
-  }
-
-  next();
-};
+// requireAdmin: admins only (logged in, or authenticated by a token), 401/403
+// JSON (NeuroWebLab createAdmins)
+const { requireAdmin } = admins;
 
 /**
  * Number of users connected through the WebSocket server who have
@@ -132,35 +119,13 @@ const usersOnMRI = (source) => {
   return users;
 };
 
-/**
- * Render the admin page
- * @param {object} req Request object
- * @param {object} res Response object
- * @returns {void}
- */
-const adminPage = (req, res) => {
-  const username = requestUsername(req);
-  if (!username) {
-    req.session.returnTo = req.originalUrl;
-    // 401 with the login prompt, as microdraw (shared suite 5.2)
-    res.status(401).render('askForLogin', {
-      title: 'BrainBox: Admin',
-      functionality: 'use the admin tools',
-      loggedUser: jsonForScript(publicLoggedUser(req.user))
-    });
-
-    return;
-  }
-  if (!isAdmin(username)) {
-    res.status(403).render('error', { message: 'Admins only' });
-
-    return;
-  }
-  res.render('admin', {
-    title: 'BrainBox: Admin',
-    loggedUser: jsonForScript(publicLoggedUser(req.user))
-  });
-};
+// The admin page (NeuroWebLab createAdmins): 401 askForLogin when logged out
+// (shared suite 5.2), 403 to non-admins
+const adminPage = admins.adminPage({
+  title: 'BrainBox: Admin',
+  userPayload: (req) => publicLoggedUser(req.user),
+  loginPrompt: (req) => ({ loggedUser: jsonForScript(publicLoggedUser(req.user)) })
+});
 
 const serverError = (res, err) => {
   console.log('ERROR:', err);
@@ -279,23 +244,9 @@ const getDamagedProjects = async (req, res) => {
   }
 };
 
-/**
- * Answer with the result of a fix, or its error
- * @param {object} res Response object
- * @param {Promise<object>} fix The fix
- * @returns {Promise<void>} Resolves once answered
- */
-const sendFixResult = async (res, fix) => {
-  try {
-    const { status, error, ...result } = await fix;
-    if (error) {
-      return res.status(status).json({ success: false, error });
-    }
-    res.json({ success: true, ...result });
-  } catch (err) {
-    serverError(res, err);
-  }
-};
+// Answer with the result of a fix, or its error (NeuroWebLab sendResult; a
+// 500 is logged with console.log('ERROR:', err), as serverError)
+const sendFixResult = (res, fix) => sendResult(res, fix);
 
 /**
  * Add back to a project the files that a save removed. req.body contains the

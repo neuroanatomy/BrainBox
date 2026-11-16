@@ -8,6 +8,7 @@
  * recorded in the log collection.
  */
 const AsyncLock = require('async-lock');
+const { adminLog } = require('neuroweblab');
 const lock = new AsyncLock();
 
 const isProjectName = (name) => typeof name === 'string' && name !== '';
@@ -190,11 +191,7 @@ const removeSelected = (nativeDb, { source, selectVolume, text, username }) => l
     volume: removedVolume.map(({ filename, name, project, owner, created }) => ({ filename, name, project, owner, created })),
     text: removedText
   };
-  await nativeDb.collection('log').insertOne({
-    key: 'adminRemoveAnnotations',
-    value: { username, source, ...summary },
-    date: (new Date()).toJSON()
-  });
+  await adminLog(nativeDb, 'adminRemoveAnnotations', { username, source, ...summary });
 
   return summary;
 });
