@@ -83,6 +83,10 @@ const start = async function ({ extraRoutes } = {}) {
     nativeDb.collection('mri').createIndex({ url: 1 }),
     nativeDb.collection('project').createIndex({ shortname: 1 })
   ]).catch((err) => console.error('ERROR: could not create the database indexes', err.message));
+  // The embed pages' WebSocket tickets: looked up by token, and removed by
+  // MongoDB once past their expiryDate (TTL). It never rejects: an index that
+  // cannot be created is logged with console.warn
+  nwl.ensureTicketIndex(nativeDb);
 
   //========================================================================================
   // Allow CORS

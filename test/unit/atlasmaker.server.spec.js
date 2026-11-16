@@ -1401,6 +1401,22 @@ describe('UNIT TESTING ATLASMAKER SERVER', function() {
         assert.strictEqual(user.embedScope, null);
       }).timeout(U.mediumTimeout);
 
+      // The query parser gives an array for a repeated parameter: NeuroWebLab's
+      // findWsTicket (1.12.0) answers null for a non-string token, without a lookup
+      it('should tag the connection as embed but with a null scope, for a repeated ticket parameter', async function () {
+        const token = await EmbedAccessService.mintWsTicket(U.getNativeDB(), {
+          dirname: '/data/testembed/',
+          mriSource: 'http://example.com/b.nii.gz'
+        });
+        const ws = mockSocket();
+        await AMS._connectNewUser({ ws, req: { url: `/?embedTicket=${token}&embedTicket=${token}` } });
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        const user = AMS.getUserFromSocket(ws);
+        assert.strictEqual(user.isEmbed, true);
+        assert.strictEqual(user.embedScope, null);
+      }).timeout(U.mediumTimeout);
+
       it('should not tag the connection as embed when no ticket is present', async function () {
         let undef;
         const ws = mockSocket();

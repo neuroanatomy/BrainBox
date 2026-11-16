@@ -593,6 +593,18 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
     });
   });
 
+  // app.js creates them at start-up (NeuroWebLab's ensureTicketIndex, 1.12.0):
+  // tickets are looked up by token, and MongoDB removes them past their expiryDate
+  describe('E8b: the tickets\' indexes', function () {
+    it('has token_1, and expiryDate_1 with expireAfterSeconds 0', async function () {
+      const indexes = await nativeDb.collection('embedWsTicket').indexes();
+      const byName = Object.fromEntries(indexes.map((index) => [index.name, index]));
+      assert.deepEqual(byName.token_1 && byName.token_1.key, { token: 1 });
+      assert.deepEqual(byName.expiryDate_1 && byName.expiryDate_1.key, { expiryDate: 1 });
+      assert.strictEqual(byName.expiryDate_1.expireAfterSeconds, 0);
+    });
+  });
+
   describe('E9: access control', function () {
     it('refuses to embed a private brain', async function () {
       const res = await chai.request(U.serverURL).get('/mri/embed')
