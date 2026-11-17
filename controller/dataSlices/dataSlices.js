@@ -3,7 +3,7 @@ console.log('dataSlices.js');
 const dateFormat = require('dateformat');
 
 const { ForbiddenAccessError, NotFoundError } = require('../../errors');
-const { AccessLevel } = require('neuroweblab');
+const { AccessLevel, isAnyoneRow } = require('neuroweblab');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 
 /**
@@ -143,7 +143,7 @@ const getUserAtlasSlice = function getUserAtlasSlice(req, requestedUser, start, 
 
 /**
  * The number of collaborator rows a user may see: every row with `collaborators: view`, else only
- * the 'anyone' row, as the project JSON route shows them (projectForUser; shared suite 3.5)
+ * the 'anyone' row (NWL isAnyoneRow), as the project JSON route shows them (NWL visibleProject; shared suite 3.5)
  * @param {Object} project The stored project
  * @param {string} loggedUser The user's name, or 'anonymous'
  * @returns {number} The number of rows
@@ -153,7 +153,7 @@ const visibleCollaborators = (project, loggedUser) => {
 
   return BrainboxAccessControlService.canViewCollaborators(project, loggedUser)
     ? list.length
-    : list.filter((collaborator) => collaborator.userID === 'anyone').length;
+    : list.filter(isAnyoneRow).length;
 };
 
 /**

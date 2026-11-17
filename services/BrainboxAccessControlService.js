@@ -4,42 +4,21 @@ const _ = require('lodash');
 module.exports = class BrainboxAccessControlService extends AccessControlService {
 
   /**
-   * Whether a user is a logged-out visitor: no server-verified user
-   * @param {string|null} user The username, null or 'anonymous'
-   * @returns {boolean} True for a logged-out visitor
-   */
-  static isLoggedOut(user) {
-    return typeof user !== 'string' || user === '' || user === 'anonymous';
-  }
-
-  /**
    * The access level a user has to a project: 'anyone' is the minimum a named
    * collaborator has, so the higher of their own row and 'anyone' (shared
-   * suite 4.2, decided 2026-11-11; NWL's own function takes the own row first).
-   * A logged-out visitor never writes annotations: 'anyone' with annotations
-   * 'edit' (or more) means any logged-in user, and gives a logged-out visitor
-   * 'view' (shared suite 4.4, 2026-11-11)
+   * suite 4.2, decided 2026-11-11; NWL's own getUserOrPublicAccessLevel takes
+   * the own row first). A logged-out visitor (NWL `isLoggedOut`) never writes
+   * annotations: 'anyone' with annotations 'edit' (or more) means any
+   * logged-in user, and gives a logged-out visitor 'view' (shared suite 4.4,
+   * 2026-11-11). It is NWL's `AccessControlService.getEffectiveAccessLevel`
+   * (1.14.0), kept under this name for its many callers
    * @param {Object} project The project
    * @param {string} user The username, or 'anonymous'
    * @param {string} accessType The access type
    * @returns {AccessLevel} The access level (throws as NWL's when the project has neither row)
    */
   static getUserOrPublicAccessLevel(project, user, accessType) {
-    let level = super.getUserOrPublicAccessLevel(project, user, accessType);
-    try {
-      const publicLevel = super.getUserOrPublicAccessLevel(project, 'anyone', accessType);
-      if (publicLevel.isGreaterThan(level)) {
-        level = publicLevel;
-      }
-    } catch (err) {
-      // no 'anyone' row: the own row alone
-    }
-    if (accessType === AccessType.ANNOTATIONS && BrainboxAccessControlService.isLoggedOut(user) &&
-      level.isGreaterThan(AccessLevel.VIEW)) {
-      return AccessLevel.VIEW;
-    }
-
-    return level;
+    return AccessControlService.getEffectiveAccessLevel(project, user, accessType);
   }
 
   /**

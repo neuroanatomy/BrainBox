@@ -8,6 +8,7 @@ const projectObject = require('../data/model_objects/project');
 const { expect } = require('chai');
 const _ = require('lodash');
 const U = require('../utils.js');
+const { AccessControlService, jsonForScript } = require('neuroweblab');
 
 describe('Project Controller: ', function () {
   let nativeDb; // native mongodb
@@ -955,6 +956,132 @@ describe('Project Controller: ', function () {
         expect(JSON.parse(projectInfo).name).to.equal(hostileName);
       });
     }
+  });
+
+  // T002 M7c: the project JSON, project page and settings page hide through NWL visibleProject
+  describe('what a visitor sees, through NWL visibleProject (M7c)', function () {
+    const access = (collaborators, files, annotations) => ({ collaborators, files, annotations });
+
+    describe('an anyone row with only a username', function () {
+      const shortname = 'm7c-anyone-username';
+
+      before(async function () {
+        await nativeDb.collection('project').insertOne({
+          name: 'M7c',
+          shortname,
+          owner: 'm7cowner',
+          created: '2026-11-17T00:00:00.000Z',
+          collaborators: {
+            list: [
+              { username: 'anyone', access: access('none', 'none', 'none') },
+              { userID: 'm7cmember', access: access('none', 'view', 'view') },
+              { userID: 'm7chidden', access: access('view', 'view', 'view') }
+            ]
+          },
+          files: { list: [] },
+          annotations: { list: [] }
+        });
+      });
+
+      after(async function () {
+        await nativeDb.collection('project').deleteMany({ shortname });
+      });
+
+      it('is kept for a visitor who may not view the collaborators', async function () {
+        const json = sinon.spy();
+        await projectController.apiProject({
+          params: { projectName: shortname },
+          query: {},
+          user: { username: 'm7cmember' },
+          isAuthenticated: () => true,
+          nativeDb
+        }, { json, status: sinon.stub().returns({ json: sinon.spy() }) });
+        sinon.restore();
+        expect(json.callCount).to.equal(1);
+        expect(json.args[0][0].collaborators.list).to.deep.equal([{ username: 'anyone', access: access('none', 'none', 'none') }]);
+      });
+    });
+
+    // the settings page's projectInfo, byte for byte as before M7c, for each kind of visitor
+    describe('the settings page\'s projectInfo', function () {
+      const shortname = 'm7c-settings';
+      const stored = () => ({
+        name: 'M7c settings',
+        shortname,
+        owner: 'm7cowner',
+        created: '2026-11-17T00:00:00.000Z',
+        collaborators: {
+          list: [
+            { userID: 'anyone', access: access('none', 'view', 'none') },
+            { userID: 'm7ccollab', access: access('view', 'view', 'view') },
+            { userID: 'm7cmember', access: access('none', 'view', 'view') }
+          ]
+        },
+        files: { list: [{ source: 'https://example.org/m7c-a.nii.gz', name: 'a' }, { source: 'https://example.org/m7c-b.nii.gz', name: 'b' }] },
+        annotations: { list: [{ type: 'volume', name: 'Layer', values: 'layer.json', display: 'true' }] },
+        modifiedBy: 'm7ccollab'
+      });
+
+      before(async function () {
+        await nativeDb.collection('project').insertOne(stored());
+      });
+
+      after(async function () {
+        await nativeDb.collection('project').deleteMany({ shortname });
+      });
+
+      // the settings page's filter before M7c (controller/project/project.controller.js, e37e5fd)
+      const asBeforeM7c = async (loggedUser) => {
+        const json = stored();
+        json.files.list = [];
+        json.filesLoaded = { count: 0 };
+        const filteredJSON = _.cloneDeep(json);
+        if (AccessControlService.canViewCollaborators(json, loggedUser)) {
+          const names = await Promise.all(filteredJSON.collaborators.list.map((c) => nativeDb.collection('user')
+            .findOne({ nickname: c.userID, backup: { $exists: false } }, { projection: { name: 1, _id: 0 } })));
+          names.forEach((found, j) => {
+            filteredJSON.collaborators.list[j].username = filteredJSON.collaborators.list[j].userID;
+            filteredJSON.collaborators.list[j].name = found ? found.name : '';
+          });
+        } else {
+          filteredJSON.collaborators.list = json.collaborators.list.filter((c) => c.userID === 'anyone');
+          delete filteredJSON.modifiedBy;
+        }
+        if (!AccessControlService.canViewAnnotations(json, loggedUser)) {
+          filteredJSON.annotations.list = [];
+        }
+
+        return jsonForScript(filteredJSON);
+      };
+
+      const settingsFor = async (username) => {
+        const render = sinon.spy();
+        await projectController.settings({
+          params: { projectName: shortname },
+          user: username ? { username } : null,
+          session: {},
+          originalUrl: '/project/' + shortname + '/settings',
+          isAuthenticated: () => Boolean(username),
+          nativeDb
+        }, { render, status: sinon.stub().returns({ send: sinon.spy() }) });
+        sinon.restore();
+        expect(render.callCount).to.equal(1);
+
+        return render.args[0][1].projectInfo;
+      };
+
+      for (const [kind, username] of [
+        ['the owner', 'm7cowner'],
+        ['a collaborator who may view the collaborators', 'm7ccollab'],
+        ['a collaborator who may not view the collaborators', 'm7cmember'],
+        ['a logged-in stranger, with anyone\'s rights', 'm7cstranger'],
+        ['a logged-out visitor', null]
+      ]) {
+        it(`is unchanged for ${kind}`, async function () {
+          expect(await settingsFor(username)).to.equal(await asBeforeM7c(username || 'anonymous'));
+        });
+      }
+    });
   });
 
   describe('apiProjectAll function() ', function () {

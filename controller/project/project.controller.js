@@ -7,7 +7,7 @@ const lock = require('../projectLock.js');
 const {
   AccessType, AccessLevel, AccessControlService, canSaveProject, catchErrors, droppedMessage, filesListIncomplete,
   ignoredChangesMessage, jsonForScript, keepFieldsWithoutFilesEdit, sanitize, saveRefusal, shortnamePattern,
-  sortRows
+  sortRows, visibleProject
 } = require('neuroweblab');
 const _ = require('lodash');
 const { ForbiddenAccessError, NotFoundError } = require('../../errors.js');
@@ -239,30 +239,6 @@ const isProjectObject = async function (req, res, object, { shortname, oldProjec
 const noViewStatus = (req) => (req.isAuthenticated() ? 403 : 401);
 
 /**
- * The project as a user may see it: the collaborators and modifiedBy only if they may view them (else
- * only 'anyone'), the files and annotations only if they may view them (else empty lists).
- * The stored project is not changed: the filtered lists go in new objects
- * @param {Object} json The stored project
- * @param {string} loggedUser The user's name, or 'anonymous'
- * @returns {Object} A copy of the project, filtered
- */
-const projectForUser = function (json, loggedUser) {
-  const filteredJSON = Object.assign({}, json);
-  if (!AccessControlService.canViewCollaborators(json, loggedUser)) {
-    filteredJSON.collaborators = { ...json.collaborators, list: json.collaborators.list.filter((collaborator) => collaborator.userID === 'anyone') };
-    // who saved last is a collaborator too
-    delete filteredJSON.modifiedBy;
-  }
-  [AccessType.FILES, AccessType.ANNOTATIONS].forEach((type) => {
-    if (!AccessControlService.hasAccess(type, AccessLevel.VIEW, json, loggedUser)) {
-      filteredJSON[type] = { ...json[type], list: [] };
-    }
-  });
-
-  return filteredJSON;
-};
-
-/**
  * @function project
  * @desc Render the project page GUI
  * @param {Object} req Req object from express
@@ -288,7 +264,7 @@ const project = async function (req, res) {
       return;
     }
     // as the JSON API gives it; the files are loaded by the page, page by page
-    const projectInfo = { ...projectForUser(json, loggedUser), files: { ...json.files, list: [] } };
+    const projectInfo = { ...visibleProject(json, loggedUser), files: { ...json.files, list: [] } };
     res.render('project', {
       title: json.name,
       projectInfo: jsonForScript(projectInfo),
@@ -325,7 +301,7 @@ const apiProject = async function (req, res) {
       return;
     }
 
-    let filteredJSON = projectForUser(json, loggedUser);
+    let filteredJSON = visibleProject(json, loggedUser);
 
     if (req.query.var) {
       const arr = req.query.var.split('/');
@@ -471,8 +447,10 @@ const settings = async function (req, res) {
   json.files.list = [];
   json.filesLoaded = { count: 0 };
 
-  // deep-copying initial object
-  const filteredJSON = _.cloneDeep(json);
+  // what the visitor may see (NWL visibleProject: the collaborators other than
+  // 'anyone', modifiedBy and the annotations hidden without view rights),
+  // deep-copied: the name lookup below writes on the rows
+  const filteredJSON = _.cloneDeep(visibleProject(json, loggedUser));
 
   if (AccessControlService.canViewCollaborators(json, loggedUser)) {
     const arr1 = [];
@@ -496,13 +474,6 @@ const settings = async function (req, res) {
         filteredJSON.collaborators.list[j].name = '';
       }
     }
-  } else {
-    filteredJSON.collaborators.list = json.collaborators.list.filter((collaborator) => collaborator.userID === 'anyone');
-    delete filteredJSON.modifiedBy;
-  }
-
-  if (!AccessControlService.canViewAnnotations(json, loggedUser)) {
-    filteredJSON.annotations.list = [];
   }
 
   const context = {
