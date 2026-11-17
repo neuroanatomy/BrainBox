@@ -1,6 +1,5 @@
 const { assert } = require('chai');
 const dataSlices = require('../../controller/dataSlices/dataSlices');
-const { NotFoundError } = require('../../errors');
 require('mocha-sinon');
 const U = require('../utils.js');
 
@@ -87,43 +86,9 @@ describe('Data Slices ', function() {
     });
   });
 
-  describe('getProjectFilesSlice function() ', function() {
-    it('should return files for an existing project', async function() {
-      const req = {
-        user: {
-          username: 'foo'
-        },
-        isAuthenticated: function () {
-          // eslint-disable-next-line no-unneeded-ternary
-          return this.user.username ? true : false;
-        },
-        nativeDb: nativeDb
-      };
-      const result = await dataSlices.getProjectFilesSlice(req, 'testproject', 0, 2);
-      assert.isArray(result);
-    });
-
-    it('should reject with a NotFoundError for a non-existent project', async function() {
-      const req = {
-        user: {
-          username: 'foo'
-        },
-        isAuthenticated: function () {
-          // eslint-disable-next-line no-unneeded-ternary
-          return this.user.username ? true : false;
-        },
-        nativeDb: nativeDb
-      };
-      let error;
-      try {
-        await dataSlices.getProjectFilesSlice(req, 'nonexistentproject', 0, 2);
-      } catch (err) {
-        error = err;
-      }
-      assert.instanceOf(error, NotFoundError);
-      assert.include(error.message, 'nonexistentproject');
-    });
-
+  // the 404, the view right, the slicing and the paging are NeuroWebLab's projectFilesRoute and
+  // projectListRoute (1.17.0, T002 M10), covered by its route specs and the shared suite (3.11-3.15)
+  describe('projectFileEntries function() ', function() {
     describe('with files that are in the mri collection, and files that are not', function () {
       const shortname = 'filesslicetest';
       const src = (i) => `https://example.org/filesslicetest/${i}.nii.gz`;
@@ -132,9 +97,10 @@ describe('Data Slices ', function() {
         isAuthenticated: () => true,
         nativeDb: null
       };
+      let project;
       const mri = (i, name, backup) => ({
         source: src(i),
-        name,
+        ...(typeof name === 'undefined' ? {} : { name }),
         url: `/data/filesslicetest${i}/`,
         mri: { atlas: [{ name: 'Default', project: shortname, access: 'edit', type: 'volume', filename: 'Atlas.nii.gz', labels: 'foreground.json' }] },
         ...(backup ? { backup: true } : {})
@@ -142,22 +108,17 @@ describe('Data Slices ', function() {
 
       before(async function () {
         req.nativeDb = nativeDb;
-        await nativeDb.collection('project').insertOne({
-          ...U.projectTest,
-          shortname,
-          // src(1) is listed twice
-          files: { list: [src(0), src(1), src(2), src(3), src(1)] }
-        });
-        await nativeDb.collection('mri').insertMany([mri(1, 'old one', true), mri(1, 'one'), mri(3, 'three')]);
+        // src(1) is listed twice
+        project = { ...U.projectTest, shortname, files: { list: [src(0), src(1), src(2), src(3), src(1)] } };
+        await nativeDb.collection('mri').insertMany([mri(1, 'old one', true), mri(1, 'one'), mri(3, 'three'), mri(4)]);
       });
 
       after(async function () {
-        await nativeDb.collection('project').deleteMany({ shortname });
-        await nativeDb.collection('mri').deleteMany({ source: { $in: [0, 1, 2, 3].map(src) } });
+        await nativeDb.collection('mri').deleteMany({ source: { $in: [0, 1, 2, 3, 4].map(src) } });
       });
 
-      it('gives the source and name of each file, in the order of the list', async function () {
-        const result = await dataSlices.getProjectFilesSlice(req, shortname, 0, 10, true);
+      it('gives the source and name of each file, in the order of the slice', async function () {
+        const result = await dataSlices.projectFileEntries(req, project, project.files.list, { names: true });
         assert.deepEqual(result, [
           { source: src(0), name: '' },
           { source: src(1), name: 'one' },
@@ -167,14 +128,17 @@ describe('Data Slices ', function() {
         ]);
       });
 
-      it('gives the requested slice', async function () {
-        const result = await dataSlices.getProjectFilesSlice(req, shortname, 1, 2, true);
-        assert.deepEqual(result, [{ source: src(1), name: 'one' }, { source: src(2), name: '' }]);
-        assert.deepEqual(await dataSlices.getProjectFilesSlice(req, shortname, 10, 2, true), []);
+      it('gives a string name for an mri document without one (shared suite 3.13)', async function () {
+        const result = await dataSlices.projectFileEntries(req, project, [src(4)], { names: true });
+        assert.deepEqual(result, [{ source: src(4), name: '' }]);
+      });
+
+      it('gives [] for an empty slice', async function () {
+        assert.deepEqual(await dataSlices.projectFileEntries(req, project, [], { names: true }), []);
       });
 
       it('gives the whole entry of the files in the mri collection without the names flag', async function () {
-        const result = await dataSlices.getProjectFilesSlice(req, shortname, 0, 4);
+        const result = await dataSlices.projectFileEntries(req, project, project.files.list.slice(0, 4));
         assert.deepEqual(result[0], { source: src(0), name: '' });
         assert.notProperty(result[1], '_id');
         assert.notProperty(result[1], 'backup');
@@ -202,56 +166,27 @@ describe('Data Slices ', function() {
     });
   });
 
-  describe('getProjectsSlice function() ', function() {
-    it('should return the correct projects slice with valid input', async function() {
-      const req = {
-        user: {
-          username: 'anyone'
-        },
-        isAuthenticated: function () {
-          // eslint-disable-next-line no-unneeded-ternary
-          return this.user.username ? true : false;
-        },
-        nativeDb: nativeDb
-      };
-      const files = await dataSlices.getProjectsSlice(req, 0, 10);
-      assert.notStrictEqual(files.length, 0);
+  describe('projectRow function() ', function() {
+    const anyone = { userID: 'anyone', access: { collaborators: 'none', annotations: 'none', files: 'view' } };
+    const row = { userID: 'foo', access: { collaborators: 'view', annotations: 'view', files: 'view' } };
+    const project = {
+      shortname: 'slicecountproject',
+      name: 'A project',
+      owner: 'foo',
+      collaborators: { list: [anyone, row] },
+      files: { list: ['a', 'b', 'c'] }
+    };
+    const asUser = (username) => dataSlices.projectRow({ user: { username }, isAuthenticated: () => Boolean(username) }, project);
+
+    it('gives the project, its name, its number of files and its owner', function () {
+      const { numCollaborators, ...rest } = asUser('foo');
+      assert.deepEqual(rest, { project: 'slicecountproject', projectName: 'A project', numFiles: 3, owner: 'foo' });
+      assert.isNumber(numCollaborators);
     });
 
-    it('should return the number of files based on length', async function() {
-      const req = {
-        user: {
-          username: 'general'
-        },
-        isAuthenticated: function () {
-          // eslint-disable-next-line no-unneeded-ternary
-          return this.user.username ? true : false;
-        },
-        nativeDb: nativeDb
-      };
-      const files = await dataSlices.getProjectsSlice(req, 0, 0);
-      assert.strictEqual(files.length, 0);
-    });
-
-    it('counts only the collaborator rows the user may see (as the project JSON route; 3.5)', async function() {
-      const anyone = { userID: 'anyone', access: { collaborators: 'none', annotations: 'none', files: 'view' } };
-      const row = { userID: 'foo', access: { collaborators: 'view', annotations: 'view', files: 'view' } };
-      const shortname = 'slicecountproject';
-      await nativeDb.collection('project').insertOne({
-        shortname, name: shortname, owner: 'foo', collaborators: { list: [anyone, row] }, files: { list: [] }, annotations: { list: [] }
-      });
-      try {
-        const asUser = async (username) => {
-          const req = { user: { username }, isAuthenticated: () => Boolean(username), nativeDb };
-          const rows = await dataSlices.getProjectsSlice(req, 0, 1000000);
-
-          return rows.find((r) => r.project === shortname);
-        };
-        assert.strictEqual((await asUser('')).numCollaborators, 1);
-        assert.strictEqual((await asUser('foo')).numCollaborators, 2);
-      } finally {
-        await nativeDb.collection('project').deleteMany({ shortname });
-      }
+    it('counts only the collaborator rows the user may see (as the project JSON route; 3.5)', function () {
+      assert.strictEqual(asUser('').numCollaborators, 1);
+      assert.strictEqual(asUser('foo').numCollaborators, 2);
     });
   });
 });

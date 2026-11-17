@@ -317,10 +317,13 @@ describe('Project Controller: ', function () {
         }
       };
       const resSpy = sinon.spy();
+      // NeuroWebLab's projectFilesRoute (1.17.0) answers with res.json; an error goes to next
       const res = {
-        send: resSpy
+        json: resSpy
       };
-      await projectController.apiProjectFiles(req, res);
+      const next = sinon.spy();
+      await projectController.apiProjectFiles(req, res, next);
+      assert.strictEqual(next.callCount, 0);
       assert.strictEqual(resSpy.callCount, 1);
       expect(resSpy.args[0][0]).to.have.lengthOf(3);
       resSpy.args[0][0].forEach((i) => expect(i).to.have.keys('source', 'name'));
@@ -345,10 +348,13 @@ describe('Project Controller: ', function () {
         }
       };
       const resSpy = sinon.spy();
+      // NeuroWebLab's projectFilesRoute (1.17.0) answers with res.json; an error goes to next
       const res = {
-        send: resSpy
+        json: resSpy
       };
-      await projectController.apiProjectFiles(req, res);
+      const next = sinon.spy();
+      await projectController.apiProjectFiles(req, res, next);
+      assert.strictEqual(next.callCount, 0);
       assert.strictEqual(resSpy.callCount, 1);
       assert.deepStrictEqual(resSpy.args, [[{ error: 'Provide \'start\'' }]]);
       sinon.restore();
@@ -372,10 +378,13 @@ describe('Project Controller: ', function () {
         }
       };
       const resSpy = sinon.spy();
+      // NeuroWebLab's projectFilesRoute (1.17.0) answers with res.json; an error goes to next
       const res = {
-        send: resSpy
+        json: resSpy
       };
-      await projectController.apiProjectFiles(req, res);
+      const next = sinon.spy();
+      await projectController.apiProjectFiles(req, res, next);
+      assert.strictEqual(next.callCount, 0);
       assert.strictEqual(resSpy.callCount, 1);
       assert.deepStrictEqual(resSpy.args, [[{ error: 'Provide \'length\'' }]]);
       sinon.restore();
@@ -1224,10 +1233,11 @@ describe('Project Controller: ', function () {
         send: sendSpy,
         json: jsonSpy
       };
+      // NeuroWebLab's projectListRoute (1.17.0) answers with res.json
       await projectController.apiProjectAll(req, res);
-      assert.strictEqual(sendSpy.callCount, 1);
-      assert.strictEqual(jsonSpy.callCount, 0);
-      assert.deepStrictEqual(sendSpy.args, [[{ error: 'Provide the parameter \'page\'' }]]);
+      assert.strictEqual(sendSpy.callCount, 0);
+      assert.strictEqual(jsonSpy.callCount, 1);
+      assert.deepStrictEqual(jsonSpy.args, [[{ error: 'Provide the parameter \'page\'' }]]);
       sinon.restore();
     });
 
@@ -1255,7 +1265,9 @@ describe('Project Controller: ', function () {
         send: sendSpy,
         json: jsonSpy
       };
-      await projectController.apiProjectAll(req, res);
+      const next = sinon.spy();
+      await projectController.apiProjectAll(req, res, next);
+      assert.strictEqual(next.callCount, 0);
       assert.strictEqual(sendSpy.callCount, 0);
       assert.strictEqual(jsonSpy.callCount, 1);
       sinon.restore();

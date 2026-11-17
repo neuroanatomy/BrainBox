@@ -2,8 +2,7 @@
 console.log('dataSlices.js');
 const dateFormat = require('dateformat');
 
-const { ForbiddenAccessError, NotFoundError } = require('../../errors');
-const { AccessLevel, findCurrentProject, isAnyoneRow } = require('neuroweblab');
+const { AccessLevel, isAnyoneRow } = require('neuroweblab');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 
 /**
@@ -220,77 +219,48 @@ const getUserProjectsSlice = async function getUserProjectsSlice(req, requestedU
 };
 
 /**
- * @func getProjectFilesSlice
- * @desc Get a slice of the mri files in a project
- * @param {String} projectShortname Shortname of the project containing the files
- * @param {integer} start Start index of the file slice
- * @param {integer} length Number of files to include in the slice
- * @param {boolean} namesFlag Whether to append only the name of each MRI or the complete structure
- * @returns {Promise<Array>} The files. Rejects with a NotFoundError if there is no such project,
- * and with a ForbiddenAccessError if the user can't view its files
+ * The visitor of a request: the logged user's name, or 'anonymous'
+ * @param {Object} req The request
+ * @returns {string} The username, or 'anonymous'
  */
-// eslint-disable-next-line max-statements
-const getProjectFilesSlice = async (req, projShortname, start, length, namesFlag) => {
-  let loggedUser = 'anonymous';
-  if (req.isAuthenticated()) {
-    loggedUser = req.user.username;
-  }
+const visitorOf = (req) => (req.isAuthenticated() ? req.user.username : 'anonymous');
 
-  // query project
-  let project;
-  try {
-    project = await findCurrentProject(req.nativeDb, projShortname);
-  } catch (err) {
-    throw new Error(err);
-  }
-
-  if (!project) {
-    console.log(`project ${projShortname} not found`);
-
-    throw new NotFoundError(`No project ${projShortname}`);
-  }
-
-  // check access
-  if (!BrainboxAccessControlService.hasFilesAccess(AccessLevel.VIEW, project, loggedUser)) {
-    const error = new ForbiddenAccessError(`User  ${loggedUser} is not allowed to view project ${projShortname}`);
-
-    return Promise.reject(error);
-  }
-
-  // query mri info for project files
-  let list;
-  if (project && project.files) {
-    ({ list } = project.files);
-  }
-  start = Math.min(start, list.length);
-  length = Math.min(length, list.length - start);
-  const sources = list.slice(start, start + length);
-  const onlyNames = (namesFlag === true);
+/**
+ * @func projectFileEntries
+ * @desc What GET /project/json/:projectName/files answers for a slice of a project's files: the
+ * `entries` of NeuroWebLab's projectFilesRoute (1.17.0, T002 M10), which reads the project, checks
+ * the view right and slices `files.list`. One query reads the slice's `mri` documents; a file
+ * without one (probably not yet downloaded) is `{source, name: ''}`
+ * @param {Object} req The request
+ * @param {Object} project The current version of the project
+ * @param {Array<string>} sources The slice of the project's `files.list`
+ * @param {Object} [options] Options
+ * @param {boolean} [options.names] Only `{source, name}` for each file, `name` a string ('' for
+ *   an `mri` document without one); else the whole `mri` document, its annotations' access set
+ *   for the visitor by the project
+ * @returns {Promise<Array>} The entries, in the order of the slice
+ */
+const projectFileEntries = async (req, project, sources, { names = false } = {}) => {
+  const visitor = visitorOf(req);
 
   // a single query for the whole slice (mri.source is indexed, see app.js)
-  let mris;
-  try {
-    mris = await req.nativeDb.collection('mri')
-      .find(
-        { source: { $in: sources }, backup: { $exists: false } },
-        { projection: onlyNames ? { _id: 0, source: 1, name: 1 } : { _id: 0 } }
-      )
-      .toArray();
-  } catch (err) {
-    throw new Error(err);
-  }
+  const mris = await req.nativeDb.collection('mri')
+    .find(
+      { source: { $in: sources }, backup: { $exists: false } },
+      { projection: names ? { _id: 0, source: 1, name: 1 } : { _id: 0 } }
+    )
+    .toArray();
   const mriBySource = new Map(mris.map((mri) => [mri.source, mri]));
 
   return sources.map((source) => {
     const mri = mriBySource.get(source);
     if (!mri) {
-      // mri file not present in DB (probably not yet downloaded)
       return { source, name: '' };
     }
-    if (onlyNames) {
-      return { source: mri.source, name: mri.name };
+    if (names) {
+      return { source: mri.source, name: typeof mri.name === 'string' ? mri.name : '' };
     }
-    BrainboxAccessControlService.setVolumeAnnotationsAccessByProjects(mri, [project], loggedUser);
+    BrainboxAccessControlService.setVolumeAnnotationsAccessByProjects(mri, [project], visitor);
 
     return mri;
   });
@@ -349,54 +319,29 @@ const getFilesSlice = function getFilesSlice(req, start, length) {
 };
 
 /**
- * @func getProjectsSlice
- * @desc Get an access-filtered slice of all projects: one query reads them all, the ones the
- * logged user may not view the files of are dropped, then the slice is taken (shared suite 3.2:
- * every page full but the last, no project on two pages)
- * @param {Object} req request object
- * @param {integer} start Start index of the slice
- * @param {integer} length Number of projects in the slice
- * @returns {Object} project slice
+ * @func projectRow
+ * @desc The row GET /project/json answers for a project: the `row` of NeuroWebLab's
+ * projectListRoute (1.17.0, T002 M10), which reads every current project (with its default
+ * projection), keeps the ones the visitor may view the files of, then pages them
+ * @param {Object} req The request
+ * @param {Object} project A current project, as projected
+ * @returns {Object} {project, projectName, numFiles, numCollaborators, owner}
  */
-const getProjectsSlice = async function getProjectsSlice(req, start, length) {
-  let loggedUser = 'anonymous';
-  if (req.isAuthenticated()) {
-    loggedUser = req.user.username;
-  }
-
-  try {
-    // only what the access check and the rows need (not the annotations)
-    const unfilteredProjects = await req.nativeDb.collection('project')
-      .find(
-        { backup: { $exists: false } },
-        { projection: { _id: 0, shortname: 1, name: 1, owner: 1, collaborators: 1, 'files.list': 1 } }
-      )
-      .toArray();
-
-    // filter for view access, then slice
-    const visible = unfilteredProjects
-      .filter((o) => BrainboxAccessControlService.hasFilesAccess(AccessLevel.VIEW, o, loggedUser));
-
-    return sliceOf(visible, start, length).map((o) => ({
-      project: o.shortname,
-      projectName: o.name,
-      numFiles: o.files.list.length,
-      numCollaborators: visibleCollaborators(o, loggedUser),
-      owner: o.owner
-    }));
-  } catch (err) {
-    console.log('ERROR:', err);
-    throw err;
-  }
-};
+const projectRow = (req, project) => ({
+  project: project.shortname,
+  projectName: project.name,
+  numFiles: project.files.list.length,
+  numCollaborators: visibleCollaborators(project, visitorOf(req)),
+  owner: project.owner
+});
 
 const DataSlices = function () {
   this.getUserFilesSlice = getUserFilesSlice;
   this.getUserAtlasSlice = getUserAtlasSlice;
   this.getUserProjectsSlice = getUserProjectsSlice;
-  this.getProjectFilesSlice = getProjectFilesSlice;
   this.getFilesSlice = getFilesSlice;
-  this.getProjectsSlice = getProjectsSlice;
+  this.projectFileEntries = projectFileEntries;
+  this.projectRow = projectRow;
 };
 
 module.exports = new DataSlices();

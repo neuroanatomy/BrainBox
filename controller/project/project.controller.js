@@ -7,10 +7,9 @@ const lock = require('../projectLock.js');
 const {
   AccessType, AccessLevel, AccessControlService, canSaveProject, catchErrors, droppedMessage, filesListIncomplete,
   findCurrentProject, ignoredChangesMessage, jsonForScript, keepFieldsWithoutFilesEdit, sanitize, saveProjectVersion,
-  saveRefusal, shortnamePattern, sortRows, visibleProject
+  projectFilesRoute, projectListRoute, saveRefusal, shortnamePattern, sortRows, visibleProject
 } = require('neuroweblab');
 const _ = require('lodash');
-const { ForbiddenAccessError, NotFoundError } = require('../../errors.js');
 const { publicLoggedUser } = require('../user/publicUser');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 const { isLabelset, changedLabelsets, setLayerLabelset } = require('./atlas-labels.js');
@@ -314,78 +313,31 @@ const apiProject = async function (req, res) {
   }
 };
 
-/**
- * @function apiProjectAll
- * @desc Writes json data for all project, access-filtered
- * @param {Object} req Req object from express
- * @param {Object} res Res object from express
- * @returns {void}
- * @result A json object with project data
+/*
+ * GET /project/json/:projectName/files and GET /project/json?page are NeuroWebLab's (1.17.0,
+ * T002 M10): projectFilesRoute reads the project, answers 404 or the no-view status, slices
+ * `files.list` (a negative or non-numeric `start`/`length` counting as 0) and BrainBox maps the
+ * slice (dataSlices.projectFileEntries); projectListRoute reads every current project, keeps the
+ * viewable ones, then pages them, 20 per page (a non-numeric `page` is page 0), BrainBox giving
+ * the row (dataSlices.projectRow). A failing read goes to the app's errorHandler
  */
-const apiProjectAll = async function (req, res) {
-  // var loggedUser = "anonymous";
-  // if (req.isAuthenticated()) {
-  //   loggedUser = req.user.username;
-  // }
-
-  if (!req.query.page) {
-    res.send({ error: 'Provide the parameter \'page\'' });
-
-    return;
-  }
-
-  // eslint-disable-next-line radix
-  const page = Math.max(0, parseInt(req.query.page));
-  const nItemsPerPage = 20;
-
-  const values = await dataSlices.getProjectsSlice(req, page * nItemsPerPage, nItemsPerPage);
-  res.json(values);
+const projectRoutesAdapter = {
+  db: (req) => req.nativeDb,
+  canView: (req, proj) => BrainboxAccessControlService.hasFilesAccess(
+    AccessLevel.VIEW, proj, req.isAuthenticated() ? req.user.username : 'anonymous'
+  )
 };
 
-/**
- * @function apiProjectFiles
- * @desc Writes json data for a slice of project files
- * @param {Object} req Req object from express
- * @param {Object} res Res object from express
- * @returns {void}
- * @result A json object with project data
- */
-// eslint-disable-next-line max-statements
-const apiProjectFiles = async function (req, res) {
-  const projShortname = req.params.projectName;
-  let { start, length, names: namesFlag } = req.query;
-  console.log('projShortname:', projShortname, 'start:', start, 'length:', length, 'namesFlag:', namesFlag);
+const apiProjectFiles = projectFilesRoute({
+  ...projectRoutesAdapter,
+  noViewStatus,
+  entries: dataSlices.projectFileEntries
+});
 
-  if (typeof start === 'undefined') {
-    res.send({ error: 'Provide \'start\'' });
-
-    return;
-  }
-  if (typeof length === 'undefined') {
-    res.send({ error: 'Provide \'length\'' });
-
-    return;
-  }
-
-  // eslint-disable-next-line radix
-  start = parseInt(start);
-  // eslint-disable-next-line radix
-  length = parseInt(length);
-  namesFlag = (namesFlag === 'true');
-
-  try {
-    const list = await dataSlices.getProjectFilesSlice(req, projShortname, start, length, namesFlag);
-    res.send(list);
-  } catch (err) {
-    if (err instanceof ForbiddenAccessError) {
-      res.status(noViewStatus(req)).send({ error: err.message });
-    } else if (err instanceof NotFoundError) {
-      res.status(404).send({ error: err.message });
-    } else {
-      res.status(500).send({ error: err.message });
-    }
-  }
-};
+const apiProjectAll = projectListRoute({
+  ...projectRoutesAdapter,
+  row: dataSlices.projectRow
+});
 
 /**
  * @function settings
