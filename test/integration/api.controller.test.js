@@ -1,5 +1,7 @@
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
 const chai = require('chai');
 const {assert} = chai;
 const chaiHttp = require('chai-http');
@@ -12,6 +14,15 @@ describe('TESTING THE /api ROUTE', function () {
     assert.isArray(body);
     assert.isNotEmpty(body);
     body.forEach((item) => assert.containsAllKeys(item, ['name', 'source']));
+  });
+
+  it('GET /api/getLabelsets lists every *.json file of public/labels once, by file name (code point), with its name', async function () {
+    const dir = path.join(__dirname, '../../public/labels');
+    const files = (await fs.promises.readdir(dir)).filter((f) => f.endsWith('.json'))
+      .sort((a, b) => (a < b ? -1 : Number(a > b)));
+    const names = await Promise.all(files.map(async (f) => JSON.parse(await fs.promises.readFile(path.join(dir, f), 'utf8')).name));
+    const { body } = await chai.request(U.serverURL).get('/api/getLabelsets');
+    assert.deepEqual(body, files.map((source, i) => ({ name: names[i], source })));
   });
 
   it('GET /api/userNameQuery/ without any parameter should return status 400', async function () {

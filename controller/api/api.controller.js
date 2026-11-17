@@ -1,22 +1,6 @@
-const fs = require('fs');
-const path = require('path');
 const tracer = require('tracer').console({format: '[{{file}}:{{line}}]  {{message}}'});
 
 const { escapeRegex } = require('neuroweblab');
-
-const getLabelsets = async (req, res) => {
-  const arr = await fs.promises.readdir(path.join(__dirname, '../../public/labels/'));
-  const info = [];
-  for (const label of arr) {
-    // eslint-disable-next-line no-await-in-loop
-    const json = JSON.parse(await fs.promises.readFile(path.join(__dirname, '../../public/labels/' + label)));
-    info.push({
-      name: json.name,
-      source: label
-    });
-  }
-  res.send(info);
-};
 
 const userNameQuery = (req, res) => {
   const {query} = req;
@@ -203,7 +187,6 @@ const log = async (req, res) => {
 };
 
 module.exports = {
-  getLabelsets,
   userNameQuery,
   getAtlasBackups,
   log

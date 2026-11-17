@@ -1,45 +1,12 @@
 const assert = require('assert');
 const { assert: chaiAssert } = require('chai');
 const sinon = require('sinon');
-const fs = require('fs');
 require('mocha-sinon');
 const apiController = require('../../controller/api/api.controller');
 
 describe('API Controller: ', function () {
   afterEach(function () {
     sinon.restore();
-  });
-
-  describe('getLabelsets()', function () {
-    it('should return label info from label files', async function () {
-      sinon.stub(fs.promises, 'readdir').resolves(['cerebrum.json', 'cerebellum.json']);
-      sinon.stub(fs.promises, 'readFile')
-        .onFirstCall()
-        .resolves(JSON.stringify({ name: 'Cerebrum' }))
-        .onSecondCall()
-        .resolves(JSON.stringify({ name: 'Cerebellum' }));
-
-      const res = { send: sinon.spy() };
-      await apiController.getLabelsets({}, res);
-
-      assert.strictEqual(res.send.callCount, 1);
-      const [[result]] = res.send.args;
-      assert.strictEqual(result.length, 2);
-      assert.strictEqual(result[0].name, 'Cerebrum');
-      assert.strictEqual(result[0].source, 'cerebrum.json');
-      assert.strictEqual(result[1].name, 'Cerebellum');
-      assert.strictEqual(result[1].source, 'cerebellum.json');
-    });
-
-    it('should return empty array when no label files exist', async function () {
-      sinon.stub(fs.promises, 'readdir').resolves([]);
-
-      const res = { send: sinon.spy() };
-      await apiController.getLabelsets({}, res);
-
-      assert.strictEqual(res.send.callCount, 1);
-      assert.strictEqual(res.send.args[0][0].length, 0);
-    });
   });
 
   describe('userNameQuery()', function () {
