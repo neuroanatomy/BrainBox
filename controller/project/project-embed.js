@@ -8,7 +8,7 @@
  * that a project the visitor may not see never gives away its file's URL: the
  * embed error page instead.
  */
-const { projectEmbedRoute } = require('neuroweblab');
+const { findCurrentProject, projectEmbedRoute } = require('neuroweblab');
 const { getRelatedProjects, mayEmbedMri } = require('../mri/mri-access');
 
 const embedError = (res, status, message) => {
@@ -25,8 +25,7 @@ const noBrain = { status: 404, message: 'This project has no brain to show.' };
  * @returns {Promise<void>} Once answered
  */
 const projectEmbed = projectEmbedRoute({
-  findProject: (req, shortname) => req.nativeDb.collection('project')
-    .findOne({ shortname, backup: { $exists: false } }, { projection: { _id: 0 } }),
+  findProject: (req, shortname) => findCurrentProject(req.nativeDb, shortname, { projection: { _id: 0 } }),
   mayEmbed: async (req, { source }) => {
     const json = await req.nativeDb.collection('mri')
       .findOne({ source, backup: { $exists: false } }, { projection: { _id: 0 } });

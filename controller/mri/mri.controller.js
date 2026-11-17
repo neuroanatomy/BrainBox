@@ -9,7 +9,7 @@ const sanitize = require('sanitize-filename');
 const { body, validationResult } = require('express-validator');
 const AtlasmakerServer = require('../atlasmakerServer/atlasmakerServer');
 const dataSlices = require('../dataSlices/dataSlices.js');
-const { AccessType, AccessLevel, jsonForScript } = require('neuroweblab');
+const { AccessType, AccessLevel, findCurrentProject, jsonForScript } = require('neuroweblab');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 const EmbedAccessService = require('../../services/EmbedAccessService');
 const { projectsForMetadata, mayChangeMri } = require('../atlasmakerServer/metadata-save-access');
@@ -749,10 +749,7 @@ const apiMriGet = async function (req, res) {
       }
     }
     arr = [...prj].map(async (o) => {
-      const obj = await req.nativeDb.collection('project').findOne({
-        shortname: o,
-        backup: { $exists: false }
-      });
+      const obj = await findCurrentProject(req.nativeDb, o);
 
       return obj;
     });

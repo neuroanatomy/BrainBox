@@ -4,6 +4,7 @@ const httpMocks = require('node-mocks-http');
 const projectController = require('../../controller/project/project.controller');
 require('mocha-sinon');
 const sinon = require('sinon');
+const { Collection } = require('mongodb');
 const projectObject = require('../data/model_objects/project');
 const { expect } = require('chai');
 const _ = require('lodash');
@@ -795,6 +796,120 @@ describe('Project Controller: ', function () {
           expect(answer).to.have.property('error');
         }
         expect((await storedProject(shortname)).annotations.list).to.have.length(2);
+      });
+    });
+
+    // NWL's project versions (1.16.0, T002 M9c): of two current versions (a failure between the two
+    // writes of a save), every read takes the newest _id, and a save leaves one
+    describe('a project with two current versions', function () {
+      const shortname = 'testing-two-current';
+      const stored = (name, description) => ({
+        ..._.cloneDeep(_.omit(U.projectTest, ['collaborators'])),
+        shortname,
+        brainboxURL: '/project/' + shortname,
+        owner: 'foo',
+        name,
+        description,
+        collaborators: { list: [{ userID: 'anyone', nickname: 'anyone', access: { collaborators: 'view', annotations: 'view', files: 'view' } }] },
+        files: { list: [] }
+      });
+      const versions = () => nativeDb.collection('project').find({ shortname })
+        .sort({ _id: 1 })
+        .toArray();
+      // the first updateMany of this project's versions fails; the stub counts the failures
+      const failFirstMarking = () => {
+        const { updateMany } = Collection.prototype;
+        const stub = { failed: 0 };
+        sinon.stub(Collection.prototype, 'updateMany').callsFake(function (filter, ...rest) {
+          // eslint-disable-next-line no-invalid-this
+          if (this.collectionName === 'project' && filter && filter.shortname === shortname && stub.failed === 0) {
+            stub.failed += 1;
+
+            return Promise.reject(new Error('updateMany failed'));
+          }
+
+          // eslint-disable-next-line no-invalid-this
+          return updateMany.call(this, filter, ...rest);
+        });
+
+        return stub;
+      };
+
+      beforeEach(async function () {
+        await nativeDb.collection('project').deleteMany({ shortname });
+        // the newest _id second
+        await nativeDb.collection('project').insertOne(stored('Older', 'Older description'));
+        await nativeDb.collection('project').insertOne(stored('Newer', 'Newer description'));
+      });
+
+      after(async function () {
+        await nativeDb.collection('project').deleteMany({ shortname });
+      });
+
+      it('gives the newest in the project page, its JSON and the settings page', async function () {
+        const request = {
+          params: { projectName: shortname },
+          user: { username: 'foo' },
+          query: {},
+          session: {},
+          originalUrl: '/project/' + shortname,
+          isAuthenticated: () => true,
+          nativeDb
+        };
+        const render = sinon.spy();
+        const json = sinon.spy();
+        const failure = sinon.spy();
+        await projectController.project(request, { render, status: sinon.stub().returns({ send: failure }) });
+        await projectController.apiProject(request, { json, status: sinon.stub().returns({ send: failure, json: failure }) });
+        sinon.restore();
+        expect(failure.callCount).to.equal(0);
+        expect(render.args[0][1].title).to.equal('Newer');
+        expect(json.args[0][0].name).to.equal('Newer');
+        expect((await settingsAs(shortname, 'foo')).name).to.equal('Newer');
+      });
+
+      it('saves over the newest, and leaves one current version', async function () {
+        const page = await settingsAs(shortname, 'foo');
+        // a field the page does not send is kept from the stored project: the newest
+        delete page.description;
+        page.name = 'Saved';
+        const [answer] = await saveAs(shortname, 'foo', page);
+        expect(answer).to.include({ success: true });
+        const all = await versions();
+        expect(all).to.have.length(3);
+        expect(all.slice(0, 2).map((v) => v.backup)).to.deep.equal([true, true]);
+        expect(all[2]).to.not.have.property('backup');
+        expect(all[2]).to.include({ name: 'Saved', description: 'Newer description', modifiedBy: 'foo' });
+      });
+
+      // insert, then mark the others backup: a failure between the two leaves two current versions, not none
+      it('keeps the version saved when marking the others backup fails', async function () {
+        await nativeDb.collection('project').deleteMany({ shortname, name: 'Older' });
+        const page = await settingsAs(shortname, 'foo');
+        page.name = 'Saved';
+        const stub = failFirstMarking();
+        const json = sinon.spy();
+        try {
+          await projectController.postProject({
+            params: { projectName: shortname },
+            user: { username: 'foo' },
+            body: { data: page },
+            session: {},
+            isAuthenticated: () => true,
+            nativeDb
+          }, { json, status: sinon.stub().returns({ json, send: json }) });
+        } finally {
+          sinon.restore();
+        }
+        expect(stub.failed).to.equal(1);
+        const currents = (await versions()).filter((v) => !('backup' in v));
+        expect(currents.map((v) => v.name)).to.deep.equal(['Newer', 'Saved']);
+        const [newest] = await nativeDb.collection('project')
+          .find({ shortname, backup: { $exists: false } })
+          .sort({ _id: -1 })
+          .limit(1)
+          .toArray();
+        expect(newest).to.include({ name: 'Saved', modifiedBy: 'foo' });
       });
     });
   });

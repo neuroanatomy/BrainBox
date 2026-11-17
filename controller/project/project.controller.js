@@ -6,8 +6,8 @@ const dataSlices = require('../dataSlices/dataSlices.js');
 const lock = require('../projectLock.js');
 const {
   AccessType, AccessLevel, AccessControlService, canSaveProject, catchErrors, droppedMessage, filesListIncomplete,
-  ignoredChangesMessage, jsonForScript, keepFieldsWithoutFilesEdit, sanitize, saveRefusal, shortnamePattern,
-  sortRows, visibleProject
+  findCurrentProject, ignoredChangesMessage, jsonForScript, keepFieldsWithoutFilesEdit, sanitize, saveProjectVersion,
+  saveRefusal, shortnamePattern, sortRows, visibleProject
 } = require('neuroweblab');
 const _ = require('lodash');
 const { ForbiddenAccessError, NotFoundError } = require('../../errors.js');
@@ -254,8 +254,7 @@ const project = async function (req, res) {
   // store return path in case of login
   req.session.returnTo = req.originalUrl;
 
-  const json = await req.nativeDb.collection('project')
-    .findOne({ shortname: req.params.projectName, backup: { $exists: false } }, { projection: { _id: 0 } });
+  const json = await findCurrentProject(req.nativeDb, req.params.projectName, { projection: { _id: 0 } });
   if (json) {
     // check that the logged user has access to view this project
     if (!AccessControlService.hasFilesAccess(AccessLevel.VIEW, json, loggedUser)) {
@@ -292,7 +291,7 @@ const apiProject = async function (req, res) {
     loggedUser = req.user.username;
   }
 
-  const json = await req.nativeDb.collection('project').findOne({ shortname: req.params.projectName, backup: { $exists: false } }, { projection: { _id: 0 } });
+  const json = await findCurrentProject(req.nativeDb, req.params.projectName, { projection: { _id: 0 } });
   if (json) {
     // check that the logged user has access to view this project
     if (!AccessControlService.hasFilesAccess(AccessLevel.VIEW, json, loggedUser)) {
@@ -403,7 +402,7 @@ const settings = async function (req, res) {
 
   // store return path in case of login
   req.session.returnTo = req.originalUrl;
-  let json = await req.nativeDb.collection('project').findOne({ shortname: req.params.projectName, backup: { $exists: false } }, { projection: { _id: 0 } });
+  let json = await findCurrentProject(req.nativeDb, req.params.projectName, { projection: { _id: 0 } });
   if (json) {
     // check that the logged user has access to view this project
     if (!AccessControlService.hasFilesAccess(AccessLevel.VIEW, json, loggedUser)) {
@@ -656,7 +655,7 @@ const postProject = async function (req, res) {
     console.log('enter lock block');
     let oldProject;
     try {
-      oldProject = await req.nativeDb.collection('project').findOne({ shortname, backup: { $exists: false } }, { projection: { _id: 0 } });
+      oldProject = await findCurrentProject(req.nativeDb, shortname, { projection: { _id: 0 } });
     } catch (error) {
       console.log('ERROR', error);
       res.status(500).json({ error: error.message });
@@ -684,9 +683,6 @@ const postProject = async function (req, res) {
 
       return;
     }
-    // set by the server on every save, creation included (shared suite 2.18, 2026-11-11; was on update only)
-    object.modified = (new Date()).toJSON();
-    object.modifiedBy = loggedUser;
     // update/insert project
     if (oldProject) {
       // project exists, save update
@@ -745,8 +741,10 @@ const postProject = async function (req, res) {
       }
 
       console.log('updating...');
-      await req.nativeDb.collection('project').updateMany({ shortname: object.shortname }, { $set: { backup: true } });
-      await req.nativeDb.collection('project').insertOne(object);
+      // NWL's saveProjectVersion (1.16.0, T002 M9c) inserts the new version, then marks the others
+      // backup, and sets modified and modifiedBy, on every save, creation included (shared suite
+      // 2.18). It stores a copy: `object` is not changed
+      await saveProjectVersion(req.nativeDb, object, { by: loggedUser });
 
       // the atlases of a volume layer keep the label set they were created with:
       // give them the layer's new one
@@ -774,7 +772,7 @@ const postProject = async function (req, res) {
       // files are stored as their source
       object.files.list = object.files.list.map(fileSource);
 
-      await req.nativeDb.collection('project').insertOne(object);
+      await saveProjectVersion(req.nativeDb, object, { by: loggedUser });
 
       console.log('success: true');
       res.json({ success: true, message: 'New project inserted' + droppedMessage(dropped) });
@@ -809,7 +807,7 @@ const deleteProject = async function (req, res) {
     await lock.acquire(['project', 'mri'], async function () {
 
       shortname = req.params.projectName;
-      const oldProject = await req.nativeDb.collection('project').findOne({ shortname: shortname, backup: { $exists: false } }, { projection: { _id: 0 } });
+      const oldProject = await findCurrentProject(req.nativeDb, shortname, { projection: { _id: 0 } });
 
       if (!oldProject) {
         console.log('WARNING: project does not exist');

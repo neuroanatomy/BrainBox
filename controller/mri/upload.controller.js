@@ -3,7 +3,7 @@
 const fs = require('fs');
 const { body, validationResult } = require('express-validator');
 const amri = require('../atlasmakerServer/atlasmaker-mri');
-const { AccessType } = require('neuroweblab');
+const { AccessType, findCurrentProject } = require('neuroweblab');
 const { projectAccessLevel } = require('../atlasmakerServer/metadata-save-access');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 const { filterMriForUser } = require('./mri-access');
@@ -89,7 +89,7 @@ const projectAccessForUpload = async function (req, res, username) {
   const { atlasProject } = req.body;
   // a logged-out visitor (a token without a user) never writes annotations (shared suite 4.4)
   const loggedOut = BrainboxAccessControlService.isLoggedOut(username);
-  const project = loggedOut ? null : await req.nativeDb.collection('project').findOne({ shortname: atlasProject, backup: { $exists: false } });
+  const project = loggedOut ? null : await findCurrentProject(req.nativeDb, atlasProject);
   if (!project) {
     console.log(`REJECTED upload by ${username}: ${loggedOut ? 'no user' : `no project ${atlasProject}`}`);
     await removeUploadedFiles(req);

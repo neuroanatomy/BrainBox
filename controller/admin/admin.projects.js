@@ -1,9 +1,9 @@
 /**
  * Admin tools for finding and fixing damaged projects.
  *
- * Project documents are versioned: saving a project's settings marks every
- * version as backup and inserts a new one (the only one without the backup
- * field), so the files a save removed are still in the versions before it.
+ * Project documents are versioned: saving a project's settings inserts a new
+ * version (the only one without the backup field) and marks the others as
+ * backup, so the files a save removed are still in the versions before it.
  *
  * A project is damaged when:
  * - files removed by a save are still missing from the current version. The
@@ -16,7 +16,7 @@
  *
  * Fixes follow the same versioning rule, and are recorded in the log collection.
  */
-const { adminLog, toId } = require('neuroweblab');
+const { adminLog, saveProjectVersion, toId } = require('neuroweblab');
 const lock = require('../projectLock.js');
 
 const BATCH_LENGTH = 100; // files per batch in the settings page
@@ -165,15 +165,15 @@ const findDamagedProjects = async (nativeDb) => {
 
 /**
  * Make a new current version of a project, keeping the previous one as a
- * backup, and log the change
+ * backup, and log the change. NWL's saveProjectVersion (1.16.0, T002 M9c)
+ * inserts it, then marks the others backup, and sets modified and modifiedBy
  * @param {object} nativeDb Native MongoDB database
- * @param {object} newVersion The new version, without _id
- * @param {object} log What to log: { key, value }
+ * @param {object} newVersion The new version (an _id in it is ignored)
+ * @param {object} params { by: the admin, stored as modifiedBy; key, value: what to log }
  * @returns {Promise<void>} Resolves once done
  */
-const replaceCurrentVersion = async (nativeDb, newVersion, { key, value }) => {
-  await nativeDb.collection('project').updateMany({ shortname: newVersion.shortname }, { $set: { backup: true } });
-  await nativeDb.collection('project').insertOne(newVersion);
+const replaceCurrentVersion = async (nativeDb, newVersion, { by, key, value }) => {
+  await saveProjectVersion(nativeDb, newVersion, { by });
   await adminLog(nativeDb, key, value);
 };
 
@@ -217,10 +217,8 @@ const restoreFiles = ({ nativeDb, project, version, username }) => lock.acquire(
   const { current, files } = plan;
 
   const restored = { ...current, files: { ...current.files, list: [...sources(current), ...files] } };
-  delete restored._id;
-  restored.modified = (new Date()).toJSON();
-  restored.modifiedBy = username;
   await replaceCurrentVersion(nativeDb, restored, {
+    by: username,
     key: 'adminRestoreProjectFiles',
     value: { username, project, version, files }
   });

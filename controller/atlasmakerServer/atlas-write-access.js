@@ -11,7 +11,7 @@
  * `username`, else the configured `usernameField`, `nickname` in BrainBox.
  */
 const crypto = require('crypto');
-const { AccessType, AccessLevel } = require('neuroweblab');
+const { AccessType, AccessLevel, findCurrentProject } = require('neuroweblab');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 
 const accessLevels = ['none', 'view', 'edit', 'add', 'remove'];
@@ -45,7 +45,7 @@ const atlasAccessLevel = async (nativeDb, { username, dirname, filename, source 
     return 'none';
   }
   if (atlas.project) {
-    const project = await nativeDb.collection('project').findOne({ shortname: atlas.project, backup: { $exists: false } });
+    const project = await findCurrentProject(nativeDb, atlas.project);
     if (project) {
       return BrainboxAccessControlService
         .getUserOrPublicAccessLevel(project, username || 'anonymous', AccessType.ANNOTATIONS)
@@ -94,7 +94,7 @@ const atlasReadAccess = async (nativeDb, { username, dirname, filename, source }
   if (!atlas || !atlas.project) {
     return { hidden: false, level: null };
   }
-  const project = await nativeDb.collection('project').findOne({ shortname: atlas.project, backup: { $exists: false } });
+  const project = await findCurrentProject(nativeDb, atlas.project);
   if (!project) {
     return { hidden: false, level: null };
   }

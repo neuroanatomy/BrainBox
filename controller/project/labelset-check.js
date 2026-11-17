@@ -12,7 +12,7 @@
  */
 const fs = require('fs');
 const path = require('path');
-const { AccessLevel } = require('neuroweblab');
+const { AccessLevel, findCurrentProject } = require('neuroweblab');
 const amri = require('../atlasmakerServer/atlasmaker-mri.js');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 const { isLabelset } = require('./atlas-labels.js');
@@ -103,7 +103,7 @@ const labelsetCheck = async function (req, res) {
 
     return;
   }
-  const project = await req.nativeDb.collection('project').findOne({ shortname: projectName, backup: { $exists: false } });
+  const project = await findCurrentProject(req.nativeDb, projectName);
   if (!project) {
     res.status(404).json({ error: `No project ${projectName}` });
 

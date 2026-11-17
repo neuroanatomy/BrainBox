@@ -3,7 +3,7 @@ console.log('dataSlices.js');
 const dateFormat = require('dateformat');
 
 const { ForbiddenAccessError, NotFoundError } = require('../../errors');
-const { AccessLevel, isAnyoneRow } = require('neuroweblab');
+const { AccessLevel, findCurrentProject, isAnyoneRow } = require('neuroweblab');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 
 /**
@@ -239,7 +239,7 @@ const getProjectFilesSlice = async (req, projShortname, start, length, namesFlag
   // query project
   let project;
   try {
-    project = await req.nativeDb.collection('project').findOne({ shortname: projShortname, backup: { $exists: false } });
+    project = await findCurrentProject(req.nativeDb, projShortname);
   } catch (err) {
     throw new Error(err);
   }

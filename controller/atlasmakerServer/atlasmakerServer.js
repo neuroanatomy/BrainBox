@@ -14,7 +14,7 @@ const amri = require('./atlasmaker-mri');
 const AsyncLock = require('async-lock');
 const lock = new AsyncLock();
 const EmbedAccessService = require('../../services/EmbedAccessService');
-const { escapeRegex, usernameFromCookie } = require('neuroweblab');
+const { escapeRegex, findCurrentProject, usernameFromCookie } = require('neuroweblab');
 const { atlasAccessLevel, atlasReadAccess, canEdit } = require('./atlas-write-access');
 const { mergeMetadata, projectsForMetadata, savedView } = require('./metadata-save-access');
 
@@ -986,13 +986,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
     queryProjectName: function (data) {
       return new Promise(function (resolve, reject) {
         if (data.metadata && typeof data.metadata.name === 'string' && data.metadata.name) {
-          nativeDb.collection('project')
-            .findOne({
-              shortname: data.metadata.name,
-              backup: { $exists: false }
-            }, {
-              projection: { _id: 1 }
-            })
+          findCurrentProject(nativeDb, data.metadata.name, { projection: { _id: 1 } })
             .then(function (obj) {
               resolve(obj ? { taken: true } : null);
             })

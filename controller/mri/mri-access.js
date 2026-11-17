@@ -6,7 +6,7 @@
  */
 const net = require('net');
 const _ = require('lodash');
-const { AccessType, AccessLevel } = require('neuroweblab');
+const { AccessType, AccessLevel, findCurrentProject } = require('neuroweblab');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 const { projectAccessLevel, ownsMri } = require('../atlasmakerServer/metadata-save-access');
 
@@ -33,10 +33,7 @@ const getRelatedProjects = async function (nativeDb, json, myurl) {
     Object.keys(annotations).forEach(prj.add, prj);
   }
 
-  const arr = [...prj].map((o) => nativeDb.collection('project').findOne({
-    shortname: o,
-    backup: { $exists: false }
-  }));
+  const arr = [...prj].map((o) => findCurrentProject(nativeDb, o));
   const projects = await Promise.all(arr)
     .catch((err) => {
       console.log('ERROR Cannot get db information:', err);
