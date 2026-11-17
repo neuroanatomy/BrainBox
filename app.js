@@ -22,7 +22,7 @@ global.authTokenMiddleware = nwl.authTokenMiddleware;
 
 const AtlasmakerServer = require('./controller/atlasmakerServer/atlasmakerServer');
 const routes = require('./controller/routes/routes');
-const { notFound, errorHandler } = require('./controller/routes/not-found');
+const { notFound, errorHandler } = require('neuroweblab');
 const { dataAccessMiddleware } = require('./controller/mri/data-access');
 
 const MONGO_DB = process.env.MONGODB || 'localhost:27017/brainbox';
@@ -46,7 +46,7 @@ const serverPorts = (config) => ({
  * Start the web and WebSocket servers
  * @param {Object} [options] Options
  * @param {Function} [options.extraRoutes] Called with the app after the routes and before
- * the not-found and error handlers; the tests add their test-only routes with it
+ * NeuroWebLab's not-found and error handlers; the tests add their test-only routes with it
  * @returns {Promise<Object>} app, server and atlasmakerServer
  */
 // eslint-disable-next-line max-statements
@@ -194,9 +194,9 @@ const start = async function ({ extraRoutes } = {}) {
   // Not found and error handlers
   //========================================================================================
   // an unknown URL: a 404 page, JSON or plain text, depending on the request
-  app.use(notFound);
+  app.use(notFound());
   // an error passed to next(err) or thrown by a route: its status (500 by default)
-  app.use(errorHandler);
+  app.use(errorHandler());
 
   return { app, server, atlasmakerServer };
 };

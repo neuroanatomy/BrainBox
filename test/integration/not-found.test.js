@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  Unknown URLs and errors (app.js, controller/routes/not-found.js). An unknown page gets a
+  Unknown URLs and errors (app.js, NeuroWebLab's routes/notFound.js). An unknown page gets a
   404 with the error template, in the kit's look (it links nwl-components' fonts.css), with
   the message, the requested path escaped, and a link to the home page; never Express's
   default "Cannot GET". An unknown API or JSON path gets a 404 in JSON, and a missing

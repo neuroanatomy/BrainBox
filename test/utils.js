@@ -157,7 +157,7 @@ let app, atlasmakerServer, db, nativeDb, server;
 
 /**
  * Test-only routes, mounted by app.start() after the app's routes and before
- * its not-found and error handlers
+ * NeuroWebLab's not-found and error handlers
  * @param {Object} testApp The Express app
  * @returns {void}
  */
