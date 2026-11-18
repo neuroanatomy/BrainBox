@@ -17,9 +17,14 @@
 
   T002 M2 (NeuroWebLab 1.9.0, 2026-11-16): the save's incomplete files list
   guard is NWL's filesListIncomplete, which takes a stored project without a
-  files list as having 0 files, and no longer throws. The save still throws,
-  later: the per-list rights check reads `files.list` of the stored project
-  (BrainBox's loop, until merge M12), so this case still tests the wrapper.
+  files list as having 0 files, and no longer throws. The save still threw,
+  later: the per-list rights check read `files.list` of the stored project
+  (BrainBox's loop, until merge M12).
+
+  T002 M12c (NeuroWebLab 1.19.0, 2026-11-18): the per-list rights check is
+  NWL's keepListsWithoutEditRights, which takes a stored list that is missing
+  as []: the save of the damaged project now succeeds. The wrapper of
+  postProject is tested with a save whose insert fails.
 */
 
 const chai = require('chai');
@@ -27,6 +32,7 @@ const chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 const { assert } = chai;
 const sinon = require('sinon');
+const { Collection } = require('mongodb');
 const U = require('../utils.js');
 
 const DAMAGED = 'crashtestdamaged';
@@ -122,15 +128,34 @@ describe('Project handlers answer an error instead of crashing (catchErrors)', f
     await checkServerAlive();
   });
 
-  // past the files list guard (filesLoaded.count is the 0 files stored), it throws in the per-list check
-  it('POST /project/json/:p of a damaged project (postProject) answers 500 JSON and saves nothing', async function () {
-    const res = await chai.request(U.serverURL).post(`/project/json/${DAMAGED}?token=${U.testToken}foo`)
-      .send(saveBody());
+  it('POST /project/json/:p (postProject) whose insert fails answers 500 JSON and saves nothing', async function () {
+    const insertOne = sinon.stub(Collection.prototype, 'insertOne').rejects(new Error('insert failed'));
+    let res;
+    try {
+      res = await chai.request(U.serverURL).post(`/project/json/${DAMAGED}?token=${U.testToken}foo`)
+        .send(saveBody());
+    } finally {
+      insertOne.restore();
+    }
     assert.equal(res.status, 500);
     assert.deepEqual(res.body, { error: 'Server error' });
-    assert.match(loggedOnce().message, /reading 'list'/);
+    assert.match(loggedOnce().message, /insert failed/);
     assert.equal(await U.getNativeDB().collection('project')
       .countDocuments({ shortname: DAMAGED }), 1);
+    await checkServerAlive();
+  });
+
+  // past the files list guard (filesLoaded.count is the 0 files stored), the stored files list
+  // that is missing counts as [] in the per-list check (M12c; it threw, 500)
+  it('POST /project/json/:p of a damaged project (postProject) saves it, with the files list sent', async function () {
+    const res = await chai.request(U.serverURL).post(`/project/json/${DAMAGED}?token=${U.testToken}foo`)
+      .send(saveBody());
+    assert.equal(res.status, 200);
+    assert.include(res.body, { success: true });
+    assert.notInclude(res.body.message, 'ignored');
+    const stored = await U.getNativeDB().collection('project')
+      .findOne({ shortname: DAMAGED, backup: { $exists: false } });
+    assert.deepEqual(stored.files, { list: [] });
     await checkServerAlive();
   });
 });

@@ -808,6 +808,42 @@ describe('Project Controller: ', function () {
       });
     });
 
+    // NWL's keepListsWithoutEditRights (1.19.0, T002 M12c) compares the rows on rowKey (2.4, 2.26)
+    describe('a collaborator who may only view the layers', function () {
+      const shortname = 'testing-layer-display';
+
+      before(async function () {
+        await nativeDb.collection('project').deleteMany({ shortname });
+        await nativeDb.collection('project').insertOne({
+          ..._.cloneDeep(_.omit(U.projectTest, ['collaborators', 'files', 'annotations'])),
+          shortname,
+          brainboxURL: '/project/' + shortname,
+          owner: 'foo',
+          collaborators: {
+            list: [
+              { userID: 'anyone', nickname: 'anyone', access: { collaborators: 'none', annotations: 'none', files: 'none' } },
+              { userID: 'bar', nickname: 'bar', access: { collaborators: 'view', annotations: 'view', files: 'edit' } }
+            ]
+          },
+          annotations: { list: [{ type: 'volume', name: 'Layer', values: 'foreground.json', display: 'true' }] },
+          files: { list: [] }
+        });
+      });
+
+      after(async function () {
+        await nativeDb.collection('project').deleteMany({ shortname });
+      });
+
+      it('is not told a layer change was ignored when only what rowKey ignores (display) changed', async function () {
+        const page = await settingsAs(shortname, 'bar');
+        page.annotations.list[0].display = 'false';
+        const [answer] = await saveAs(shortname, 'bar', page);
+        expect(answer).to.include({ success: true });
+        expect(answer.message).to.not.include('ignored');
+        expect((await storedProject(shortname)).annotations.list[0]).to.include({ name: 'Layer', display: 'false' });
+      });
+    });
+
     // NWL's project versions (1.16.0, T002 M9c): of two current versions (a failure between the two
     // writes of a save), every read takes the newest _id, and a save leaves one
     describe('a project with two current versions', function () {

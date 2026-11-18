@@ -6,14 +6,14 @@ const dataSlices = require('../dataSlices/dataSlices.js');
 const lock = require('../projectLock.js');
 const {
   AccessType, AccessLevel, AccessControlService, canSaveProject, catchErrors, droppedMessage, filesListIncomplete,
-  findCurrentProject, ignoredChangesMessage, jsonForScript, keepFieldsWithoutFilesEdit, sanitize, saveProjectVersion,
+  findCurrentProject, ignoredChangesMessage, jsonForScript, keepFieldsWithoutFilesEdit, keepListsWithoutEditRights, sanitize, saveProjectVersion,
   projectFilesRoute, projectListRoute, saveRefusal, shortnamePattern, sortRows, visibleProject
 } = require('neuroweblab');
 const _ = require('lodash');
 const { publicLoggedUser } = require('../user/publicUser');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 const { isLabelset, changedLabelsets, setLayerLabelset } = require('./atlas-labels.js');
-const { fileSource, listChanged, listOf, listTypes, rowKey, usersToCheck } = require('./project-rows.js');
+const { fileSource, listOf, listTypes, rowKey, usersToCheck } = require('./project-rows.js');
 // the sanitising of the body (postProject), of the MRI documents it writes and of the stored
 // values compared with it (shared suite 2.12) is NeuroWebLab's (1.10.0, T002 M3): sanitize and
 // plainText, every string one by one, as text
@@ -566,7 +566,7 @@ const updateAtlasLabelsets = async function (req, oldProject, savedProject) {
 // least one list), keepFieldsWithoutFilesEdit (the project's own fields need files edit; given
 // sanitize, so that a stored value equal to the one sent once sanitised is unchanged),
 // saveRefusal (the 403 body), filesListIncomplete (the incomplete files list guard) and
-// ignoredChangesMessage
+// ignoredChangesMessage; keepListsWithoutEditRights (1.19.0, T002 M12c) the rights per list
 
 /**
  * @function postProject
@@ -664,20 +664,12 @@ const postProject = async function (req, res) {
         object.files.list = sentFiles.map(fileSource);
       }
 
-      // a longer list needs add on it, a shorter one remove, and a row changed in place edit
-      // (shared suite 2.4, 2026-11-11; only the lengths were checked): else the stored list is kept
-      listTypes.forEach((type) => {
-        const can = (level) => AccessControlService.hasAccess(type, level, oldProject, loggedUser);
-        const oldList = oldProject[type].list;
-        if (
-          (object[type].list.length > oldList.length && !can(AccessLevel.ADD)) ||
-          (object[type].list.length < oldList.length && !can(AccessLevel.REMOVE)) ||
-          (listChanged(type, object[type].list, oldLists[type]) && !can(AccessLevel.EDIT))
-        ) {
-          ignoredChanges.push(type);
-          object[type].list = oldList;
-        }
-      });
+      // a longer list needs add on it, a shorter one remove, and a row changed in place or moved
+      // edit (shared suite 2.4, 2026-11-11, and 2.26; only the lengths were checked): else the
+      // stored list is kept. NWL's keepListsWithoutEditRights (1.19.0, T002 M12c), comparing the
+      // rows on rowKey with the stored rows sanitised as the body (oldLists); a stored project
+      // without a list has []. object.files.list holds sources here, as rowKey.files expects
+      ignoredChanges.push(...keepListsWithoutEditRights(object, oldProject, loggedUser, { rowKey, oldRows: oldLists }));
 
       // the project's own fields need files edit (2026-11-15)
       ignoredChanges.push(...keepFieldsWithoutFilesEdit(object, oldProject, loggedUser, { sanitize }));

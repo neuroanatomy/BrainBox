@@ -23,7 +23,8 @@ const collaboratorUser = (c) => (_.isPlainObject(c) ? (c.userID || c.nickname ||
 // the collaborators and `display` to the layers; a file's name is in its MRI document. Given to
 // NeuroWebLab's sortRows (1.10.0, T002 M3) as sortRows(type, rows, oldRows, { rowKey }), with
 // NeuroWebLab's isBlankRow, the same as BrainBox's: a collaborator row is blank without username,
-// userID or nickname.
+// userID or nickname. Also given to NeuroWebLab's keepListsWithoutEditRights (1.19.0, T002 M12c),
+// the save rights per list in postProject.
 const rowKey = {
   files: (f) => text(fileSource(f)),
   collaborators: (c) => (_.isPlainObject(c) ?
@@ -31,16 +32,6 @@ const rowKey = {
     c),
   annotations: (a) => (_.isPlainObject(a) ? { type: a.type, name: text(a.name), values: text(a.values) } : a)
 };
-
-/**
- * Whether a list differs from the stored one as the settings page shows it (rowKey, in order):
- * a row changed in place, or moved (2.4)
- * @param {string} type The list
- * @param {Array} rows The rows to store
- * @param {Array} oldRows The stored rows, sanitised as the rows sent
- * @returns {boolean} True if the list changed
- */
-const listChanged = (type, rows, oldRows) => !_.isEqual(rows.map(rowKey[type]), oldRows.map(rowKey[type]));
 
 /**
  * The users that must exist (2.9): a new project's owner, and the users of the collaborator
@@ -64,7 +55,6 @@ const usersToCheck = (project, oldProject, stored = new Set()) => {
 module.exports = {
   collaboratorUser,
   fileSource,
-  listChanged,
   listOf,
   listTypes,
   rowKey,
