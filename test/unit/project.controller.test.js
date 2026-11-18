@@ -1055,7 +1055,7 @@ describe('Project Controller: ', function () {
       };
       await projectController.deleteProject(req, res);
       assert.strictEqual(jsonSpy.callCount, 1);
-      assert.deepStrictEqual(jsonSpy.args, [[{ success: false, message: 'User not authenticated' }]]);
+      assert.deepStrictEqual(jsonSpy.args, [[{ success: false, error: 'User not authenticated', message: 'User not authenticated' }]]);
       sinon.restore();
     });
 
@@ -1081,7 +1081,7 @@ describe('Project Controller: ', function () {
       assert.strictEqual(res.status.callCount, 1);
       assert.deepStrictEqual(res.status.args, [[404]]);
       assert.strictEqual(jsonSpy.callCount, 1);
-      assert.deepStrictEqual(jsonSpy.args, [[{ success: false, message: 'Unable to delete. Project does not exist in the database' }]]);
+      assert.deepStrictEqual(jsonSpy.args, [[{ success: false, error: 'Project not found', message: 'Project not found' }]]);
       sinon.restore();
     });
 

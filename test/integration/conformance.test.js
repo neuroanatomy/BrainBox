@@ -4,6 +4,7 @@
  * 4 (annotations by project) and 5 (admin), against the server test/runner.js started
  * (test/integration/*.js runs it with the rest) (neuroweblab/conformance/README.md).
  */
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
@@ -237,6 +238,15 @@ const adapter = {
   // slice 3 (3.7): a name and an email for a user
   setUserFields: (username, fields) => db().collection('user')
     .updateOne({ nickname: username }, { $set: fields }),
+  // 1.19: an expired token of the user, in NWL's token store (the `log` collection, as
+  // db.findToken reads it); removeUser deletes it
+  expiredToken: async (user) => {
+    const token = `${user.username}expired${crypto.randomBytes(4).toString('hex')}`;
+    await db().collection('log')
+      .insertOne({ token, username: user.username, expiryDate: new Date(Date.now() - 60000) });
+
+    return token;
+  },
   // no project search since the hotfix (approved 3.6): projectNameQuery answers taken / free only
   routes: { searchProjects: null },
   // the approved rules BrainBox does not follow (coordination tasks/proposed-shared-pm-tests.md, "Slice 2/3/4:

@@ -5,9 +5,10 @@
  * It only covers this process.
  *
  * The lock lives in NeuroWebLab 1.18.0, `project/lock.js` (T002 M11c): this is
- * its `withLock`, as `acquire`. The four call sites (project.controller.js's
- * save and delete, admin.projects.js's restoreFiles and fixCurrentVersions)
- * still take `['project', 'mri']`.
+ * its `withLock`, as `acquire`. The four holders take `['project', 'mri']`:
+ * project.controller.js's save and delete, through NeuroWebLab 1.21.0's
+ * projectSaveRoute and projectDeleteRoute (`lockKeys`, T002 M14c), and
+ * admin.projects.js's restoreFiles and fixCurrentVersions, through this module.
  *
  * Its state is shared by everything that requires the same copy of
  * `neuroweblab`: there must be one copy (`npm ls neuroweblab` shows one).

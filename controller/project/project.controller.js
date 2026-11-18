@@ -2,11 +2,11 @@
 const crypto = require('crypto');
 const { param, validationResult } = require('express-validator');
 const dataSlices = require('../dataSlices/dataSlices.js');
-const lock = require('../projectLock.js');
 const {
-  AccessType, AccessLevel, AccessControlService, canSaveProject, catchErrors, droppedMessage, filesListIncomplete,
+  AccessType, AccessLevel, AccessControlService, canSaveProject, droppedMessage, filesListIncomplete,
   findCurrentProject, ignoredChangesMessage, jsonForScript, keepFieldsWithoutFilesEdit, keepListsWithoutEditRights, parseProjectData,
-  sanitize, saveProjectVersion, projectFilesRoute, projectListRoute, saveRefusal, shortnamePattern, validateProject, visibleProject
+  noViewStatus, projectDeleteRoute, projectFilesRoute, projectJsonRoute, projectListRoute, projectPageRoute, projectSaveRoute,
+  projectSettingsRoute, sanitize, saveProjectVersion, saveRefusal, shortnamePattern, validateProject, visibleProject, visitor
 } = require('neuroweblab');
 const _ = require('lodash');
 const { publicLoggedUser } = require('../user/publicUser');
@@ -63,35 +63,27 @@ const isProjectObject = (req, data, { shortname, oldProject, owner }) => validat
 });
 
 /*
- * No view right on a project (shared suite 1.5, 2026-11-11): 401 logged out
- * ("who are you?"), 403 logged in, by session or by token
+ * The visitor of the project routes (NeuroWebLab 1.21.0, T002 M14c): NWL's visitor (a session,
+ * or a valid API token: authTokenMiddleware sets req.user), or BrainBox's sentinel 'anonymous'
+ * when logged out. Only the hooks map null to 'anonymous': it does not enter NWL's signatures
  */
-const noViewStatus = (req) => (req.isAuthenticated() ? 403 : 401);
+const getLoggedUser = (req) => visitor(req) || 'anonymous';
 
-/**
- * @function project
- * @desc Render the project page GUI
- * @param {Object} req Req object from express
- * @param {Object} res Res object from express
- * @return {void}
+// What every project route asks of BrainBox (NeuroWebLab 1.17.0 and 1.21.0): the native db and
+// the view right
+const db = (req) => req.nativeDb;
+const canView = (req, proj) => BrainboxAccessControlService.hasFilesAccess(AccessLevel.VIEW, proj, getLoggedUser(req));
+
+/*
+ * GET /project/:projectName: the project page (NeuroWebLab's projectPageRoute, 1.21.0: the
+ * return path, 404 'Project Not Found', the view right, refused with noViewStatus and 'Not
+ * authorized to view project'; an error goes to the app's errorHandler, the error page)
  */
-const project = async function (req, res) {
-  let loggedUser = 'anonymous';
-  if (req.isAuthenticated()) {
-    loggedUser = req.user.username;
-  }
-
-  // store return path in case of login
-  req.session.returnTo = req.originalUrl;
-
-  const json = await findCurrentProject(req.nativeDb, req.params.projectName, { projection: { _id: 0 } });
-  if (json) {
-    // check that the logged user has access to view this project
-    if (!AccessControlService.hasFilesAccess(AccessLevel.VIEW, json, loggedUser)) {
-      res.status(noViewStatus(req)).send('Authorization required');
-
-      return;
-    }
+const project = projectPageRoute({
+  db,
+  canView,
+  render: (req, res, json) => {
+    const loggedUser = getLoggedUser(req);
     // as the JSON API gives it; the files are loaded by the page, page by page
     const projectInfo = { ...visibleProject(json, loggedUser), files: { ...json.files, list: [] } };
     res.render('project', {
@@ -101,48 +93,20 @@ const project = async function (req, res) {
       // the nwl-components header's user (null when logged out); its title is projectInfo.name
       loggedUser: jsonForScript(publicLoggedUser(req.user))
     });
-  } else {
-    res.status(404).send('Project Not Found');
   }
-};
+});
 
-/**
- * @function apiProject
- * @desc Writes json data for a project
- * @param {Object} req Req object from express
- * @param {Object} res Res object from express
- * @returns {void}
- * @result A json object with project data
+/*
+ * GET /project/json/:projectName: what the visitor may see of the project (NWL visibleProject),
+ * or with ?var=a/b the value at that path, own properties only (NeuroWebLab's projectJsonRoute,
+ * 1.21.0: 404 {error: 'No project <name>'} (shared suite 1.6), the view right; an error, as a
+ * ?var= path through a missing value, goes to the app's errorHandler, a 500)
  */
-// eslint-disable-next-line max-statements
-const apiProject = async function (req, res) {
-  let loggedUser = 'anonymous';
-  if (req.isAuthenticated()) {
-    loggedUser = req.user.username;
-  }
-
-  const json = await findCurrentProject(req.nativeDb, req.params.projectName, { projection: { _id: 0 } });
-  if (json) {
-    // check that the logged user has access to view this project
-    if (!AccessControlService.hasFilesAccess(AccessLevel.VIEW, json, loggedUser)) {
-      res.status(noViewStatus(req)).json({ error: 'Authorization required' });
-
-      return;
-    }
-
-    let filteredJSON = visibleProject(json, loggedUser);
-
-    if (req.query.var) {
-      const arr = req.query.var.split('/');
-      for (const v of arr) { filteredJSON = filteredJSON[v]; }
-    }
-    res.json(filteredJSON);
-
-  } else {
-    // as the page and the files route (shared suite 1.6, 2026-11-11; was 200 with an empty body)
-    res.status(404).json({ error: `No project ${req.params.projectName}` });
-  }
-};
+const apiProject = projectJsonRoute({
+  db,
+  canView,
+  visible: (req, json) => visibleProject(json, getLoggedUser(req))
+});
 
 /*
  * GET /project/json/:projectName/files and GET /project/json?page are NeuroWebLab's (1.17.0,
@@ -152,12 +116,7 @@ const apiProject = async function (req, res) {
  * viewable ones, then pages them, 20 per page (a non-numeric `page` is page 0), BrainBox giving
  * the row (dataSlices.projectRow). A failing read goes to the app's errorHandler
  */
-const projectRoutesAdapter = {
-  db: (req) => req.nativeDb,
-  canView: (req, proj) => BrainboxAccessControlService.hasFilesAccess(
-    AccessLevel.VIEW, proj, req.isAuthenticated() ? req.user.username : 'anonymous'
-  )
-};
+const projectRoutesAdapter = { db, canView };
 
 const apiProjectFiles = projectFilesRoute({
   ...projectRoutesAdapter,
@@ -171,57 +130,49 @@ const apiProjectAll = projectListRoute({
 });
 
 /**
- * @function settings
- * @desc Render the settings page GUI
+ * The project the settings page shows for an unknown shortname, owned by the visitor
+ * ('anonymous' when logged out)
+ * @param {Object} req Req object from express
+ * @returns {Object} The new project
+ */
+const blankProject = (req) => ({
+  name: '',
+  shortname: req.params.projectName,
+  url: '',
+  brainboxURL: '/project/' + req.params.projectName,
+  created: (new Date()).toJSON(),
+  owner: getLoggedUser(req),
+  collaborators: {
+    list: [
+      {
+        userID: 'anyone',
+        nickname: 'anyone',
+        access: {
+          collaborators: 'view',
+          annotations: 'edit',
+          files: 'view'
+        }
+      }
+    ]
+  },
+  files: {
+    list: []
+  },
+  annotations: {
+    list: []
+  }
+});
+
+/**
+ * @function renderSettings
+ * @desc Render the settings page GUI, once its view right is checked (or the project is new)
  * @param {Object} req Req object from express
  * @param {Object} res Res object from express
+ * @param {Object} json The stored project, or the blank one
+ * @returns {Promise<void>} Resolves once rendered
  */
-// eslint-disable-next-line max-statements
-const settings = async function (req, res) {
-  let loggedUser = 'anonymous';
-  if (req.isAuthenticated()) {
-    loggedUser = req.user.username;
-  }
-
-  // store return path in case of login
-  req.session.returnTo = req.originalUrl;
-  let json = await findCurrentProject(req.nativeDb, req.params.projectName, { projection: { _id: 0 } });
-  if (json) {
-    // check that the logged user has access to view this project
-    if (!AccessControlService.hasFilesAccess(AccessLevel.VIEW, json, loggedUser)) {
-      res.status(noViewStatus(req)).send('Authorization required');
-
-      return;
-    }
-  } else {
-    json = {
-      name: '',
-      shortname: req.params.projectName,
-      url: '',
-      brainboxURL: '/project/' + req.params.projectName,
-      created: (new Date()).toJSON(),
-      owner: loggedUser,
-      collaborators: {
-        list: [
-          {
-            userID: 'anyone',
-            nickname: 'anyone',
-            access: {
-              collaborators: 'view',
-              annotations: 'edit',
-              files: 'view'
-            }
-          }
-        ]
-      },
-      files: {
-        list: []
-      },
-      annotations: {
-        list: []
-      }
-    };
-  }
+const renderSettings = async function (req, res, json) {
+  const loggedUser = getLoggedUser(req);
 
   // empty the files.list: it will be filled progressively from the client, which
   // reports in filesLoaded.count how many files it received (see postProject)
@@ -234,40 +185,44 @@ const settings = async function (req, res) {
   // deep-copied: the name lookup below writes on the rows
   const filteredJSON = _.cloneDeep(visibleProject(json, loggedUser));
 
+  // with the collaborators' view right visibleProject keeps every row, in order: the rows looked
+  // up are the rows shown
   if (AccessControlService.canViewCollaborators(json, loggedUser)) {
-    const arr1 = [];
-    for (let j = 0; j < filteredJSON.collaborators.list.length; j++) {
-      arr1.push(
-        req.nativeDb.collection('user')
-          .findOne({
-            nickname: json.collaborators.list[j].userID,
-            backup: { $exists: false }
-          }, {
-            projection: { name: 1, _id: 0 }
-          })
-      );
-    }
-    const obj = await Promise.all(arr1);
+    const rows = filteredJSON.collaborators.list;
+    const obj = await Promise.all(rows.map((row) => req.nativeDb.collection('user')
+      .findOne({
+        nickname: row.userID,
+        backup: { $exists: false }
+      }, {
+        projection: { name: 1, _id: 0 }
+      })));
     for (let j = 0; j < obj.length; j++) {
-      filteredJSON.collaborators.list[j].username = filteredJSON.collaborators.list[j].userID;
-      if (obj[j]) { // name found
-        filteredJSON.collaborators.list[j].name = obj[j].name;
-      } else { // name not found: set to empty
-        filteredJSON.collaborators.list[j].name = '';
-      }
+      rows[j].username = rows[j].userID;
+      // the name found, else empty
+      rows[j].name = obj[j] ? obj[j].name : '';
     }
   }
 
-  const context = {
+  res.render('projectSettings', {
     projectShortname: filteredJSON.shortname,
     owner: filteredJSON.owner,
     projectInfo: jsonForScript(filteredJSON),
     filesTotal,
     loggedUser: jsonForScript(publicLoggedUser(req.user))
-  };
-
-  res.render('projectSettings', context);
+  });
 };
+
+/*
+ * GET /project/:projectName/settings: the settings page (NeuroWebLab's projectSettingsRoute,
+ * 1.21.0: the return path, the view right of a stored project, as the page, the blank project of
+ * an unknown one; an error goes to the app's errorHandler, the error page)
+ */
+const settings = projectSettingsRoute({
+  db,
+  canView,
+  blankProject,
+  render: renderSettings
+});
 
 /**
  * @function newProject
@@ -400,236 +355,206 @@ const updateAtlasLabelsets = async function (req, oldProject, savedProject) {
 // ignoredChangesMessage; keepListsWithoutEditRights (1.19.0, T002 M12c) the rights per list
 
 /**
- * @function postProject
- * @desc Receives data for creating a new project or updating the settings of an existing one
+ * @function saveProject
+ * @desc Create a new project or update the settings of an existing one, holding the lock
+ *   (postProject's body: the 403 before the 400 (T002 M13, decision D2), the validation, the files
+ *   list guard, the writes)
  * @param {Object} req Req object from express
  * @param {Object} res Res object from express
+ * @param {string} loggedUser The user saving (logged in: projectSaveRoute answered 401 otherwise)
+ * @returns {Promise<void>} Resolves once answered
  */
 // eslint-disable-next-line max-statements
-const postProject = async function (req, res) {
-  let loggedUser = 'anonymous';
-  if (req.isAuthenticated()) {
-    loggedUser = req.user.username;
-  }
-
-  if (loggedUser === 'anonymous') {
-    console.log('ERROR not Authenticated');
-    // 401: who are you? (shared suite 2.1, 2026-11-11; was 403)
-    // the reason in `error`, which the settings page shows (nwl-components ProjectInfo.vue)
-    res.status(401).json({ success: false, error: 'User not authenticated', message: 'User not authenticated' });
-
-    return;
-  }
-
+const saveProject = async function (req, res, loggedUser) {
   // the stored project is found by the URL's shortname, which the body must equal (shared suite 2.6)
   const shortname = req.params.projectName;
 
-  // eslint-disable-next-line max-statements
-  await lock.acquire(['project', 'mri'], async function () {
-    console.log('enter lock block');
-    let oldProject;
-    try {
-      oldProject = await findCurrentProject(req.nativeDb, shortname, { projection: { _id: 0 } });
-    } catch (err) {
-      console.log('ERROR', err);
-      res.status(500).json({ error: err.message });
-
-      return;
-    }
-    // the rights before the validation (T002 M13, decision D2): a user who may not save an
-    // existing project learns nothing about the document sent
-    if (oldProject && !canSaveProject(oldProject, loggedUser)) {
-      const refusal = saveRefusal();
-      console.log(refusal.error);
-      res.status(403).json(refusal);
-
-      return;
-    }
-    // the stored lists, sanitised as the body, to compare the rows sent with
-    const oldLists = _.fromPairs(listTypes.map((type) => [type, sanitize(listOf(oldProject, type))]));
-    // the body as sent: validateProject sanitises each string as text (shared suite 2.12), once
-    // (sanitize is not idempotent on a string with markup and escaped markup), drops the client's
-    // _id and backup (2.15), and refuses a document that is not a project with a 400 (2.13)
-    let { data } = req.body;
-    const parsed = parseProjectData(data);
-    if (oldProject && parsed) {
-      // the stored top-level fields the client doesn't send are kept (shared suite 2.17,
-      // 2026-11-11; they were lost). A copy: the stored project is compared with below
-      data = { ..._.cloneDeep(oldProject), ...parsed };
-    }
-    // the owner is never the client's: the stored one, or the creator (shared suite 2.5, 2026-11-11)
-    const owner = oldProject ? oldProject.owner : loggedUser;
-    const { project: object, dropped, error } = await isProjectObject(req, data, { shortname, oldProject, owner });
-    if (error) {
-      console.error(error);
-      res.status(400).send({ error });
-
-      return;
-    }
-    // update/insert project
-    if (oldProject) {
-      // The settings page loads the files in batches, and says how many it received
-      // (filesLoaded.count). If that is not the whole stored list, the list it sends
-      // is incomplete: keep the stored one, so that files are not lost. NWL's
-      // filesListIncomplete then sets dropped.files = 0: the list sent was not used, so no blank
-      // file row was dropped from it; a stored project without a files list has 0 files
-      const ignoredChanges = [];
-      const filesIncomplete = filesListIncomplete(object, oldProject, dropped);
-      delete object.filesLoaded;
-      // the files sent, whose names go in their MRI documents
-      let sentFiles = [];
-      if (filesIncomplete) {
-        console.log(`incomplete file list (${object.files.list.length} received, ${listOf(oldProject, 'files').length} stored): keeping the stored one`);
-        object.files.list = listOf(oldProject, 'files');
-      } else {
-        // files are stored as their source
-        sentFiles = object.files.list;
-        object.files.list = sentFiles.map(fileSource);
-      }
-
-      // a longer list needs add on it, a shorter one remove, and a row changed in place or moved
-      // edit (shared suite 2.4, 2026-11-11, and 2.26; only the lengths were checked): else the
-      // stored list is kept. NWL's keepListsWithoutEditRights (1.19.0, T002 M12c), comparing the
-      // rows on rowKey with the stored rows sanitised as the body (oldLists); a stored project
-      // without a list has []. object.files.list holds sources here, as rowKey.files expects
-      ignoredChanges.push(...keepListsWithoutEditRights(object, oldProject, loggedUser, { rowKey, oldRows: oldLists }));
-
-      // the project's own fields need files edit (2026-11-15)
-      ignoredChanges.push(...keepFieldsWithoutFilesEdit(object, oldProject, loggedUser, { sanitize }));
-
-      // insert the MRI names provided, for the files the project keeps (they were written
-      // for every file sent, even when the list was then kept as stored)
-      console.log('insert mri names');
-      // A file's name is part of the files list: it needs files edit (2026-11-15, when a save
-      // without files edit became possible)
-      if (AccessControlService.hasFilesAccess(AccessLevel.EDIT, oldProject, loggedUser)) {
-        const keptSources = new Set(object.files.list.map(fileSource));
-        await insertMRInames(req, res, sentFiles.filter((file) => _.isPlainObject(file) && keptSources.has(file.source)));
-      }
-
-      console.log('updating...');
-      // NWL's saveProjectVersion (1.16.0, T002 M9c) inserts the new version, then marks the others
-      // backup, and sets modified and modifiedBy, on every save, creation included (shared suite
-      // 2.18). It stores a copy: `object` is not changed
-      await saveProjectVersion(req.nativeDb, object, { by: loggedUser });
-
-      // the atlases of a volume layer keep the label set they were created with:
-      // give them the layer's new one
-      const labelsetMessages = await updateAtlasLabelsets(req, oldProject, object);
-
-      console.log('success: true');
-      let successMessage = 'Project settings updated.';
-      successMessage += ignoredChangesMessage(ignoredChanges);
-      if (filesIncomplete) {
-        successMessage += ' The list of files was not saved because it had not been completely loaded: reload the page to edit it.';
-      }
-      successMessage += droppedMessage(dropped);
-      if (labelsetMessages.length > 0) {
-        successMessage += ' ' + labelsetMessages.join(' ');
-      }
-
-      res.json({ success: true, message: successMessage });
-    } else {
-      // new project, insert
-      console.log('inserting...');
-      delete object.filesLoaded;
-      console.log('insert mri names');
-      await insertMRInames(req, res, object.files.list.filter(_.isPlainObject));
-
-      // files are stored as their source
-      object.files.list = object.files.list.map(fileSource);
-
-      await saveProjectVersion(req.nativeDb, object, { by: loggedUser });
-
-      console.log('success: true');
-      res.json({ success: true, message: 'New project inserted' + droppedMessage(dropped) });
-    }
-    console.log('leave lock block');
-  });
-};
-
-/**
- * @function deleteProject
- * @desc Delete a project
- * @param {Object} req Req object from express
- * @param {Object} res Res object from express
- */
-// eslint-disable-next-line max-statements
-const deleteProject = async function (req, res) {
-  let shortname;
-  let loggedUser = 'anonymous';
-  if (req.isAuthenticated()) {
-    loggedUser = req.user.username;
-  }
-
-  if (loggedUser === 'anonymous') {
-    console.log('The user is not logged in');
-    res.status(401).json({ success: false, message: 'User not authenticated' });
+  console.log('enter lock block');
+  let oldProject;
+  try {
+    oldProject = await findCurrentProject(req.nativeDb, shortname, { projection: { _id: 0 } });
+  } catch (err) {
+    console.log('ERROR', err);
+    res.status(500).json({ error: err.message });
 
     return;
   }
+  // the rights before the validation (T002 M13, decision D2): a user who may not save an
+  // existing project learns nothing about the document sent
+  if (oldProject && !canSaveProject(oldProject, loggedUser)) {
+    const refusal = saveRefusal();
+    console.log(refusal.error);
+    res.status(403).json(refusal);
 
-  try {
-    // eslint-disable-next-line max-statements
-    await lock.acquire(['project', 'mri'], async function () {
-
-      shortname = req.params.projectName;
-      const oldProject = await findCurrentProject(req.nativeDb, shortname, { projection: { _id: 0 } });
-
-      if (!oldProject) {
-        console.log('WARNING: project does not exist');
-        // shared suite 2.23, 2026-11-11 (was 500)
-        res.status(404).json({ success: false, message: 'Unable to delete. Project does not exist in the database' });
-
-        return;
-      }
-      console.log('>> project does exist');
-
-      if (!AccessControlService.hasFilesAccess(AccessLevel.REMOVE, oldProject, loggedUser)) {
-        console.log('WARNING: user does not have remove rights');
-        res.status(403).json({ success: false, message: 'The user is not allowed to delete this project' });
-
-        return;
-      }
-      console.log('>> user does have remove rights');
-
-      const query = {},
-        update = {};
-      query['mri.annotations.' + shortname] = { $exists: 1 };
-      query.backup = { $exists: false };
-      update.$unset = {};
-      update.$unset['mri.annotations.' + shortname] = '';
-      await Promise.all([
-        req.nativeDb.collection('project').deleteOne({ shortname: shortname, backup: { $exists: false } }),
-        req.nativeDb.collection('mri').updateMany(query, update),
-        req.nativeDb.collection('mri').updateMany({ 'mri.atlas': { $elemMatch: { project: shortname } } }, { $pull: { 'mri.atlas': { project: shortname } } })
-      ]);
-      console.log('>> project and project-related annotations removed');
-      res.json({ success: true, message: 'Project deleted' });
-    });
-  } catch (err) {
-    console.log('ERROR: cannot remove project or project-related annotations', err);
-    res.json({ success: false, message: 'Unable to delete. Try again later' });
+    return;
   }
+  // the stored lists, sanitised as the body, to compare the rows sent with
+  const oldLists = _.fromPairs(listTypes.map((type) => [type, sanitize(listOf(oldProject, type))]));
+  // the body as sent: validateProject sanitises each string as text (shared suite 2.12), once
+  // (sanitize is not idempotent on a string with markup and escaped markup), drops the client's
+  // _id and backup (2.15), and refuses a document that is not a project with a 400 (2.13)
+  let { data } = req.body;
+  const parsed = parseProjectData(data);
+  if (oldProject && parsed) {
+    // the stored top-level fields the client doesn't send are kept (shared suite 2.17,
+    // 2026-11-11; they were lost). A copy: the stored project is compared with below
+    data = { ..._.cloneDeep(oldProject), ...parsed };
+  }
+  // the owner is never the client's: the stored one, or the creator (shared suite 2.5, 2026-11-11)
+  const owner = oldProject ? oldProject.owner : loggedUser;
+  const { project: object, dropped, error } = await isProjectObject(req, data, { shortname, oldProject, owner });
+  if (error) {
+    console.error(error);
+    res.status(400).send({ error });
+
+    return;
+  }
+  // update/insert project
+  if (oldProject) {
+    // The settings page loads the files in batches, and says how many it received
+    // (filesLoaded.count). If that is not the whole stored list, the list it sends
+    // is incomplete: keep the stored one, so that files are not lost. NWL's
+    // filesListIncomplete then sets dropped.files = 0: the list sent was not used, so no blank
+    // file row was dropped from it; a stored project without a files list has 0 files
+    const ignoredChanges = [];
+    const filesIncomplete = filesListIncomplete(object, oldProject, dropped);
+    delete object.filesLoaded;
+    // the files sent, whose names go in their MRI documents
+    let sentFiles = [];
+    if (filesIncomplete) {
+      console.log(`incomplete file list (${object.files.list.length} received, ${listOf(oldProject, 'files').length} stored): keeping the stored one`);
+      object.files.list = listOf(oldProject, 'files');
+    } else {
+      // files are stored as their source
+      sentFiles = object.files.list;
+      object.files.list = sentFiles.map(fileSource);
+    }
+
+    // a longer list needs add on it, a shorter one remove, and a row changed in place or moved
+    // edit (shared suite 2.4, 2026-11-11, and 2.26; only the lengths were checked): else the
+    // stored list is kept. NWL's keepListsWithoutEditRights (1.19.0, T002 M12c), comparing the
+    // rows on rowKey with the stored rows sanitised as the body (oldLists); a stored project
+    // without a list has []. object.files.list holds sources here, as rowKey.files expects
+    ignoredChanges.push(...keepListsWithoutEditRights(object, oldProject, loggedUser, { rowKey, oldRows: oldLists }));
+
+    // the project's own fields need files edit (2026-11-15)
+    ignoredChanges.push(...keepFieldsWithoutFilesEdit(object, oldProject, loggedUser, { sanitize }));
+
+    // insert the MRI names provided, for the files the project keeps (they were written
+    // for every file sent, even when the list was then kept as stored)
+    console.log('insert mri names');
+    // A file's name is part of the files list: it needs files edit (2026-11-15, when a save
+    // without files edit became possible)
+    if (AccessControlService.hasFilesAccess(AccessLevel.EDIT, oldProject, loggedUser)) {
+      const keptSources = new Set(object.files.list.map(fileSource));
+      await insertMRInames(req, res, sentFiles.filter((file) => _.isPlainObject(file) && keptSources.has(file.source)));
+    }
+
+    console.log('updating...');
+    // NWL's saveProjectVersion (1.16.0, T002 M9c) inserts the new version, then marks the others
+    // backup, and sets modified and modifiedBy, on every save, creation included (shared suite
+    // 2.18). It stores a copy: `object` is not changed
+    await saveProjectVersion(req.nativeDb, object, { by: loggedUser });
+
+    // the atlases of a volume layer keep the label set they were created with:
+    // give them the layer's new one
+    const labelsetMessages = await updateAtlasLabelsets(req, oldProject, object);
+
+    console.log('success: true');
+    let successMessage = 'Project settings updated.';
+    successMessage += ignoredChangesMessage(ignoredChanges);
+    if (filesIncomplete) {
+      successMessage += ' The list of files was not saved because it had not been completely loaded: reload the page to edit it.';
+    }
+    successMessage += droppedMessage(dropped);
+    if (labelsetMessages.length > 0) {
+      successMessage += ' ' + labelsetMessages.join(' ');
+    }
+
+    res.json({ success: true, message: successMessage });
+  } else {
+    // new project, insert
+    console.log('inserting...');
+    delete object.filesLoaded;
+    console.log('insert mri names');
+    await insertMRInames(req, res, object.files.list.filter(_.isPlainObject));
+
+    // files are stored as their source
+    object.files.list = object.files.list.map(fileSource);
+
+    await saveProjectVersion(req.nativeDb, object, { by: loggedUser });
+
+    console.log('success: true');
+    res.json({ success: true, message: 'New project inserted' + droppedMessage(dropped) });
+  }
+  console.log('leave lock block');
 };
 
+/*
+ * The lock of the project changes (NWL's project/lock.js, as controller/projectLock.js), held by
+ * the save and the delete; the admin tools take the same keys (decision D3)
+ */
+const lockKeys = () => ['project', 'mri'];
 
-// a page's error answer: plain text, as its other errors ('Authorization required')
-const pageServerError = (res) => res.status(500).send('Server error');
+/*
+ * POST /project/json/:projectName (NeuroWebLab's projectSaveRoute, 1.21.0): logged out 401
+ * {success: false, error: 'User not authenticated', message: …} (shared suite 2.1), without the
+ * lock; else saveProject holding it. Any other error (e.g. the database) goes to the app's
+ * errorHandler, a 500
+ */
+const postProject = projectSaveRoute({ lockKeys, save: saveProject });
 
-// An error these handlers throw answers 500, logged with console.error (no pino-http in
-// BrainBox), instead of an unhandled rejection that left the request without an answer
-// (NeuroWebLab's catchErrors, T002 M1): the pages as text, the JSON routes as JSON
-// {error: 'Server error'}, as their other errors
+/**
+ * @function removeProject
+ * @desc Delete the project and its annotations: the current version, the MRIs' annotations of
+ *   the project and the MRIs' atlases of the project
+ * @param {Object} req Req object from express
+ * @param {Object} oldProject The stored project
+ * @returns {Promise<void>} Resolves once deleted (nothing added to the answer)
+ */
+const removeProject = async function (req, oldProject) {
+  const { shortname } = oldProject;
+  const query = {},
+    update = {};
+  query['mri.annotations.' + shortname] = { $exists: 1 };
+  query.backup = { $exists: false };
+  update.$unset = {};
+  update.$unset['mri.annotations.' + shortname] = '';
+  await Promise.all([
+    req.nativeDb.collection('project').deleteOne({ shortname: shortname, backup: { $exists: false } }),
+    req.nativeDb.collection('mri').updateMany(query, update),
+    req.nativeDb.collection('mri').updateMany({ 'mri.atlas': { $elemMatch: { project: shortname } } }, { $pull: { 'mri.atlas': { project: shortname } } })
+  ]);
+  console.log('>> project and project-related annotations removed');
+};
+
+/*
+ * DELETE /project/json/:projectName (NeuroWebLab's projectDeleteRoute, 1.21.0): logged out 401,
+ * as the save; holding the lock, an unknown project 404 {success: false, error: 'Project not
+ * found', message: …} (shared suite 2.23, 2.32), no REMOVE right 403 {success: false, error: 'The
+ * user is not allowed to delete this project', message: …} (2.33), else the delete and 200
+ * {success: true, message: 'Project deleted'}. A failing write goes to the app's errorHandler, a
+ * 500 (was 200 {success: false})
+ */
+const deleteProject = projectDeleteRoute({
+  db,
+  lockKeys,
+  canRemove: (req, proj) => AccessControlService.hasFilesAccess(AccessLevel.REMOVE, proj, getLoggedUser(req)),
+  remove: removeProject
+});
+
+// The project page, its settings page, its JSON, its save and its delete are NeuroWebLab's
+// route factories (1.21.0, T002 M14c): an error goes to `next`, and the app's errorHandler
+// answers it (routes/notFound.js: a page as the error page, JSON as {error})
 const ProjectController = function () {
   this.validator = validator;
   this.apiProjectAll = apiProjectAll;
-  this.apiProject = catchErrors(apiProject);
+  this.apiProject = apiProject;
   this.apiProjectFiles = apiProjectFiles;
-  this.project = catchErrors(project, pageServerError);
-  this.settings = catchErrors(settings, pageServerError);
+  this.project = project;
+  this.settings = settings;
   this.newProject = newProject;
-  this.postProject = catchErrors(postProject);
+  this.postProject = postProject;
   this.deleteProject = deleteProject;
 };
 

@@ -256,6 +256,45 @@ describe('TESTING THE /project ROUTE', function () {
       assert.equal(res.statusCode, 200);
       assert.equal(res.body.shortname, shortname);
     });
+
+    // NeuroWebLab 1.21.0 (M14c): the routes take the visitor from NWL's visitor(req), which a
+    // valid token sets (authTokenMiddleware) and an expired one does not
+    describe('the visitor of an API token (NeuroWebLab 1.21.0 visitor)', function () {
+      let expired;
+
+      before(async function () {
+        expired = `${U.testToken}expiredfoo`;
+        await U.getNativeDB().collection('log')
+          .insertOne({ token: expired, username: 'foo', expiryDate: new Date(Date.now() - 60000) });
+      });
+
+      after(async function () {
+        await U.getNativeDB().collection('log')
+          .deleteMany({ token: expired });
+      });
+
+      it('a valid token on POST /project/json/:name saves as its user (modifiedBy)', async function () {
+        const current = _.omit(await U.queryProject(shortname), ['_id']);
+        const res = await chai.request(U.serverURL).post(`/project/json/${shortname}?token=${U.testToken}foo`)
+          .send({ data: { ...current, name: 'Saved by the token user' } });
+        assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+        const saved = await U.queryProject(shortname);
+        assert.equal(saved.name, 'Saved by the token user');
+        assert.equal(saved.modifiedBy, 'foo');
+      });
+
+      it('an expired token is logged out: GET /project/json/:name 401, POST 401, nothing saved', async function () {
+        const read = await chai.request(U.serverURL).get(`/project/json/${shortname}?token=${expired}`);
+        assert.equal(read.statusCode, 401);
+        assert.deepEqual(read.body, { error: 'Not authorized to view project' });
+        const current = _.omit(await U.queryProject(shortname), ['_id']);
+        const save = await chai.request(U.serverURL).post(`/project/json/${shortname}?token=${expired}`)
+          .send({ data: { ...current, name: 'Not saved' } });
+        assert.equal(save.statusCode, 401);
+        assert.deepEqual(save.body, { success: false, error: 'User not authenticated', message: 'User not authenticated' });
+        assert.notEqual((await U.queryProject(shortname)).name, 'Not saved');
+      });
+    });
   });
 
   // eslint-disable-next-line max-statements

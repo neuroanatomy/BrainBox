@@ -25,6 +25,15 @@
   NWL's keepListsWithoutEditRights, which takes a stored list that is missing
   as []: the save of the damaged project now succeeds. The wrapper of
   postProject is tested with a save whose insert fails.
+
+  T002 M14c (NeuroWebLab 1.21.0, 2026-11-18): the page, settings, JSON, save
+  and delete routes are NWL's route factories, which pass an error to `next`:
+  the app's errorHandler answers it (NWL routes/notFound.js) and logs it
+  (console.error('ERROR:', method, url, err)). Outside development, a page
+  answers the error page (`<h1>Server error</h1>`, was the text `Server
+  error`), JSON `{error: 'Server error'}`; in development, the message (and the
+  stack on a page). The tests run as production. A delete whose write fails
+  answers 500 (it answered 200 {success: false}).
 */
 
 const chai = require('chai');
@@ -61,18 +70,24 @@ const saveBody = () => ({
   }
 });
 
-describe('Project handlers answer an error instead of crashing (catchErrors)', function () {
+// eslint-disable-next-line max-statements
+describe('Project handlers answer an error instead of crashing (the errorHandler)', function () {
   const rejections = [];
   const onRejection = (reason) => rejections.push(reason);
   let consoleError;
+  let env;
 
   before(async function () {
     await U.getNativeDB().collection('project')
       .insertOne({ ...damagedProject });
     process.on('unhandledRejection', onRejection);
+    // a server error's message stays on the server, as in production
+    env = U.getApp().get('env');
+    U.getApp().set('env', 'production');
   });
 
   after(async function () {
+    U.getApp().set('env', env);
     process.removeListener('unhandledRejection', onRejection);
     await U.removeProject(DAMAGED);
   });
@@ -96,10 +111,10 @@ describe('Project handlers answer an error instead of crashing (catchErrors)', f
   };
 
   const loggedOnce = () => {
-    const calls = consoleError.getCalls().filter((c) => c.args[1] === 'unhandled error in route handler');
+    const calls = consoleError.getCalls().filter((c) => c.args[0] === 'ERROR:');
     assert.lengthOf(calls, 1);
 
-    return calls[0].args[0].err;
+    return calls[0].args[3];
   };
 
   it('GET /project/json/:p?var=a/b (apiProject) answers 500 JSON', async function () {
@@ -111,19 +126,20 @@ describe('Project handlers answer an error instead of crashing (catchErrors)', f
     await checkServerAlive();
   });
 
-  it('GET /project/:p of a damaged project (project page) answers 500 as text', async function () {
+  it('GET /project/:p of a damaged project (project page) answers 500, the error page', async function () {
     const res = await chai.request(U.serverURL).get(`/project/${DAMAGED}`);
     assert.equal(res.status, 500);
     assert.match(res.headers['content-type'], /^text\/html/);
-    assert.equal(res.text, 'Server error');
+    assert.include(res.text, '<h1>Server error</h1>');
+    assert.notMatch(res.text, /Access level not found/);
     assert.match(loggedOnce().message, /Access level not found for type "annotations"/);
     await checkServerAlive();
   });
 
-  it('GET /project/:p/settings of a damaged project (settings page) answers 500 as text', async function () {
+  it('GET /project/:p/settings of a damaged project (settings page) answers 500, the error page', async function () {
     const res = await chai.request(U.serverURL).get(`/project/${DAMAGED}/settings`);
     assert.equal(res.status, 500);
-    assert.equal(res.text, 'Server error');
+    assert.include(res.text, '<h1>Server error</h1>');
     assert.match(loggedOnce().message, /reading 'list'/);
     await checkServerAlive();
   });
@@ -156,6 +172,22 @@ describe('Project handlers answer an error instead of crashing (catchErrors)', f
     const stored = await U.getNativeDB().collection('project')
       .findOne({ shortname: DAMAGED, backup: { $exists: false } });
     assert.deepEqual(stored.files, { list: [] });
+    await checkServerAlive();
+  });
+
+  it('DELETE /project/json/:p whose write fails answers 500 JSON and keeps the project', async function () {
+    const deleteOne = sinon.stub(Collection.prototype, 'deleteOne').rejects(new Error('delete failed'));
+    let res;
+    try {
+      res = await chai.request(U.serverURL).delete(`/project/json/${DAMAGED}?token=${U.testToken}foo`);
+    } finally {
+      deleteOne.restore();
+    }
+    assert.equal(res.status, 500);
+    assert.deepEqual(res.body, { error: 'Server error' });
+    assert.match(loggedOnce().message, /delete failed/);
+    assert.equal(await U.getNativeDB().collection('project')
+      .countDocuments({ shortname: DAMAGED, backup: { $exists: false } }), 1);
     await checkServerAlive();
   });
 });
