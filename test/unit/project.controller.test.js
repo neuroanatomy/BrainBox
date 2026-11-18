@@ -685,7 +685,8 @@ describe('Project Controller: ', function () {
         const page = await settingsAs(shortname, 'foo');
         page.collaborators.list[1].access.files = 'edit';
         const [answer] = await saveAs(shortname, 'foo', page);
-        expect(answer).to.deep.equal({ error: 'Access values are invalid' });
+        // NWL validateProject's text (T002 M13c; was 'Access values are invalid')
+        expect(answer).to.deep.equal({ error: 'Collaborator testing-gone-user has invalid access values (allowed: none, view, edit, add, remove)' });
         expect((await storedProject(shortname)).collaborators.list[1].access).to.deep.equal(oldRow.access);
       });
     });
@@ -841,6 +842,75 @@ describe('Project Controller: ', function () {
         expect(answer).to.include({ success: true });
         expect(answer.message).to.not.include('ignored');
         expect((await storedProject(shortname)).annotations.list[0]).to.include({ name: 'Layer', display: 'false' });
+      });
+    });
+
+    // NWL's validateProject (1.20.0, T002 M13c) with BrainBox's rules: the stored values are kept as
+    // they are (checkStoredFields and checkStoredKeys false), the rights come before the validation
+    describe('a stored project with values today\'s checks refuse', function () {
+      const shortname = 'testing-stored-values';
+      const anyone = { userID: 'anyone', nickname: 'anyone', access: { collaborators: 'view', annotations: 'view', files: 'view' } };
+      // stored by an API client: a username that differs from the userID
+      const differentKeys = { userID: 'foo', nickname: 'foo', username: 'testing-other-name', access: { collaborators: 'edit', annotations: 'edit', files: 'edit' } };
+      const viewer = { userID: 'testing-viewer', nickname: 'testing-viewer', access: { collaborators: 'view', annotations: 'view', files: 'view' } };
+
+      beforeEach(async function () {
+        await nativeDb.collection('project').deleteMany({ shortname });
+        await nativeDb.collection('project').insertOne({
+          ..._.cloneDeep(_.omit(U.projectTest, ['collaborators', 'files', 'annotations'])),
+          shortname,
+          brainboxURL: '/project/' + shortname,
+          owner: 'foo',
+          name: 'Stored (before the checks)',
+          description: null,
+          collaborators: { list: [anyone, differentKeys, viewer] },
+          annotations: { list: [{ type: 'volume', name: 'Layer', values: 'foreground.json' }] },
+          files: { list: [] }
+        });
+      });
+
+      after(async function () {
+        await nativeDb.collection('project').deleteMany({ shortname: { $in: [shortname, 'testing-no-files-list'] } });
+      });
+
+      it('saves what the settings page sends back unchanged, a null description and a name with parentheses included', async function () {
+        const page = await settingsAs(shortname, 'foo');
+        const [answer] = await saveAs(shortname, 'foo', page);
+        expect(answer).to.include({ success: true });
+        const project = await storedProject(shortname);
+        expect(project).to.include({ name: 'Stored (before the checks)', description: null });
+      });
+
+      it('saves a stored row whose username and userID differ, sent back as it is stored', async function () {
+        const data = _.omit(await storedProject(shortname), ['_id']);
+        const [answer] = await saveAs(shortname, 'foo', data);
+        expect(answer).to.include({ success: true });
+        expect((await storedProject(shortname)).collaborators.list[1]).to.deep.equal(differentKeys);
+      });
+
+      it('refuses a new row whose username and userID differ', async function () {
+        const page = await settingsAs(shortname, 'foo');
+        page.collaborators.list.push({ userID: 'foo', username: 'testing-viewer', access: { collaborators: 'view', annotations: 'view', files: 'view' } });
+        const [answer] = await saveAs(shortname, 'foo', page);
+        expect(answer).to.deep.equal({ error: 'Collaborator 4 has a different username (testing-viewer) and userID (foo): they must be equal' });
+      });
+
+      it('answers a user who may not save 403, not what is wrong with the document', async function () {
+        const page = await settingsAs(shortname, 'foo');
+        page.annotations.list.push({ type: 'nosuchtype', name: 'Other', values: '' });
+        const [answer] = await saveAs(shortname, 'testing-viewer', page);
+        expect(answer).to.include({ success: false });
+        expect(answer.error).to.match(/edit rights/);
+      });
+
+      it('refuses a new project without a files list with a 400 (was 500)', async function () {
+        const [answer] = await saveAs('testing-no-files-list', 'foo', {
+          shortname: 'testing-no-files-list',
+          collaborators: { list: [anyone] },
+          annotations: { list: [{ type: 'volume', name: 'Layer', values: 'foreground.json' }] }
+        });
+        expect(answer).to.deep.equal({ error: 'The project needs a files list' });
+        expect(await storedProject('testing-no-files-list')).to.equal(null);
       });
     });
 

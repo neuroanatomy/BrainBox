@@ -466,8 +466,10 @@ const createProjectWithPermission = function (name, accessProp) {
             annotations: 'view',
             files: 'view'
           },
-          username: 'foo',
-          name: 'Foo'
+          // username and userID name the same user: a new row naming two users is refused
+          // (NWL validateProject, T002 M13c; this row said username 'foo')
+          username: 'bar',
+          name: 'Bar'
         }
       ]
     },

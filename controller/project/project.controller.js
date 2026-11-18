@@ -1,31 +1,22 @@
 /* eslint-disable max-lines */
 const crypto = require('crypto');
-const validatorNPM = require('validator');
 const { param, validationResult } = require('express-validator');
 const dataSlices = require('../dataSlices/dataSlices.js');
 const lock = require('../projectLock.js');
 const {
   AccessType, AccessLevel, AccessControlService, canSaveProject, catchErrors, droppedMessage, filesListIncomplete,
-  findCurrentProject, ignoredChangesMessage, jsonForScript, keepFieldsWithoutFilesEdit, keepListsWithoutEditRights, sanitize, saveProjectVersion,
-  projectFilesRoute, projectListRoute, saveRefusal, shortnamePattern, sortRows, visibleProject
+  findCurrentProject, ignoredChangesMessage, jsonForScript, keepFieldsWithoutFilesEdit, keepListsWithoutEditRights, parseProjectData,
+  sanitize, saveProjectVersion, projectFilesRoute, projectListRoute, saveRefusal, shortnamePattern, validateProject, visibleProject
 } = require('neuroweblab');
 const _ = require('lodash');
 const { publicLoggedUser } = require('../user/publicUser');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 const { isLabelset, changedLabelsets, setLayerLabelset } = require('./atlas-labels.js');
-const { fileSource, listOf, listTypes, rowKey, usersToCheck } = require('./project-rows.js');
-// the sanitising of the body (postProject), of the MRI documents it writes and of the stored
+const { fileSource, listOf, listTypes, rowKey } = require('./project-rows.js');
+const { missingUsers, projectRules } = require('./project-rules.js');
+// the sanitising of the body (validateProject), of the MRI documents it writes and of the stored
 // values compared with it (shared suite 2.12) is NeuroWebLab's (1.10.0, T002 M3): sanitize and
 // plainText, every string one by one, as text
-
-// not NeuroWebLab's text, which also blanks strings of spaces: the MRI name check in
-// isProjectObject compares a stored name as it is
-const text = (v) => ((v === null || typeof v === 'undefined') ? '' : v);
-
-// the layer types of BrainBox's pages: the settings page offers volume and text, the project
-// page shows text, multiple choices and hidden text layers (view/brainbox/src/brainbox.js
-// annotationType)
-const layerTypes = ['volume', 'text', 'multiple choices', 'hidden text'];
 
 const validator = async function (req, res, next) {
 
@@ -51,185 +42,25 @@ const validator = async function (req, res, next) {
 
 /**
  * @func isProjectObject
- * @param {Object} req Express req object
- * @param {Object} res Express res object
- * @param {Object} object Project definition object, its owner already set by the server; its
- *   lists lose their blank new rows
+ * @desc Parse, sanitise and validate the project sent: NeuroWebLab's validateProject (1.20.0,
+ *   T002 M13c) with BrainBox's rules (project-rules.js). The rows equal to stored ones are accepted
+ *   as they are, the blank new rows dropped (shared suite 2.14); the users of the new rows, and a
+ *   new project's owner, must exist (2.9), looked up on user.nickname
+ * @param {Object} req Express req object (req.nativeDb)
+ * @param {*} data The project sent (an object or a JSON string), with the stored fields the client
+ *   does not send (2.17), not sanitised: validateProject sanitises it, once
  * @param {Object} params { shortname: the name in the URL, oldProject: the stored project or
- *   null, oldLists: its lists sanitised as the body ({collaborators, files, annotations}) }
- * @returns {Promise<Object>} { project: the project, dropped: the blank new rows dropped, by list }
- * @todo object.annotations??
+ *   null, owner: the stored one, or the creator (2.5) }
+ * @returns {Promise<Object>} { project, dropped: the blank new rows dropped, by list } or { error }
+ *   (a 400 answer)
  */
-// eslint-disable-next-line max-statements, complexity
-const isProjectObject = async function (req, res, object, { shortname, oldProject, oldLists }) {
-  // var goodOwner = false;
-  // var goodCollaborators = false;
-
-  const allowed = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,_- \'–:;'.split('');
-  const isNew = !oldProject;
-
-  // the rows equal to stored ones are accepted as they are, even if they would not pass the
-  // checks below; blank new rows are dropped (shared suite 2.14, 2026-11-11; every row was
-  // checked, and a blank one refused)
-  const stored = {};
-  const dropped = {};
-  for (const type of listTypes) {
-    stored[type] = new Set();
-    if (object[type] && Array.isArray(object[type].list)) {
-      ({ kept: object[type].list, stored: stored[type], dropped: dropped[type] } = sortRows(type, object[type].list, oldLists[type], { rowKey }));
-    }
-  }
-
-  // 1. Synchronous checks
-  //----------------------
-  // files
-  const storedFileNames = [];
-  if (object.files) {
-    for (const [i, file] of object.files.list.entries()) {
-      if (stored.files.has(i)) {
-        // a stored file: its name may have been stored before the characters were checked
-        if (_.isPlainObject(file) && typeof file.name === 'string' && !validatorNPM.isWhitelisted(file.name, allowed)) {
-          storedFileNames.push(file);
-        }
-        continue;
-      }
-      if (typeof file.source !== 'string') {
-        throw (new Error('File source not specified'));
-      }
-      if (typeof file.name !== 'string') {
-        throw (new Error('File name not specified'));
-      }
-      if (!validatorNPM.isURL(file.source)) {
-        throw (new Error(`Invalid file URL: ${file.source}`));
-      }
-      if (!validatorNPM.isWhitelisted(file.name, allowed)) {
-        throw (new Error(`Invalid file name "${file.name}"`));
-      }
-    }
-  }
-  console.log('> files ok');
-
-  // a stored name or description is kept as it is, as stored rows are: a save keeps the stored
-  // fields the client does not send (shared suite 2.17), and these may be older than the checks
-  const isStoredText = (field) => Boolean(oldProject) && _.isEqual(object[field], sanitize(oldProject[field]));
-
-  // description
-  if (object.description && !isStoredText('description') && !validatorNPM.isWhitelisted(object.description, allowed)) {
-    throw (new Error('Invalid project description'));
-    // delete object.description;
-  }
-  console.log('> description ok');
-
-  // name
-  if (object.name && !isStoredText('name') && !validatorNPM.isWhitelisted(object.name, allowed)) {
-    throw (new Error('Invalid name'));
-    //delete object.name;
-  }
-  console.log('> name ok');
-
-  // the shortname: the one in the URL, which finds the stored project (shared suite 2.6,
-  // 2026-11-11; the body's was used, the URL ignored). Only a new one is checked for its
-  // characters: a stored project keeps working whatever its shortname
-  if (object.shortname !== shortname) {
-    throw (new Error('The project shortname in the data differs from the one in the URL'));
-  }
-  if (isNew && !shortnamePattern.test(shortname)) {
-    throw (new Error('The project shortname can only contain letters, numbers and hyphens'));
-  }
-  console.log('> project shortname valid');
-
-  // the owner is set by the server (shared suite 2.5): the stored one, or the creator
-  if (!object.owner) {
-    throw (new Error('The project has no owner'));
-  }
-
-  // convenience array for collaborator checks
-  const arr = object.collaborators.list;
-  // check that the 'anyone' user is present
-  let flag = false;
-  for (const collaborator of arr) {
-    if (collaborator && collaborator.userID === 'anyone') {
-      flag = true;
-      break;
-    }
-  }
-  if (flag === false) {
-    throw (new Error('User \'anyone\' is not present'));
-  }
-
-  // check that collaborator's access values are valid: exactly one of the
-  // levels (an unanchored regex let "viewer" pass; shared suite 2.8, 2026-11-11)
-  const accessLevels = ['none', 'view', 'edit', 'add', 'remove'];
-  const validAccess = (access) => Boolean(access) && ['collaborators', 'annotations', 'files']
-    .every((type) => accessLevels.includes(access[type]));
-  // stored rows are not checked (2.14)
-  flag = arr.every((collaborator, i) => stored.collaborators.has(i) || validAccess(collaborator && collaborator.access));
-  if (flag === false) {
-    throw (new Error('Access values are invalid'));
-  }
-  console.log('> Access values ok');
-
-  // the new or changed layers: one of BrainBox's types, a name, not the name of another layer
-  // ignoring case and surrounding spaces (shared suite 2.10, 2026-11-11; only the presence of a
-  // volume layer was checked). Stored layers are accepted as they are (2.14)
-  const layers = object.annotations.list;
-  const nameKey = (a) => (_.isPlainObject(a) && typeof a.name === 'string' ? a.name.trim().toLowerCase() : '');
-  for (const [i, layer] of layers.entries()) {
-    if (stored.annotations.has(i)) {
-      continue;
-    }
-    if (!_.isPlainObject(layer) || !layerTypes.includes(layer.type)) {
-      throw (new Error(`Layer ${i + 1} has an invalid type (allowed: ${layerTypes.join(', ')})`));
-    }
-    if (nameKey(layer) === '') {
-      throw (new Error(`Layer ${i + 1} needs a name`));
-    }
-    const same = layers.findIndex((other, k) => k !== i && (k < i || stored.annotations.has(k)) && nameKey(other) === nameKey(layer));
-    if (same >= 0) {
-      throw (new Error(`Layer ${i + 1} has the same name as layer ${same + 1}: "${layer.name.trim()}" (names are compared ignoring case)`));
-    }
-  }
-  console.log('> layers ok');
-
-  // check that the list of annotations contains at least 1 volume-type entry
-  flag = false;
-  for (const annotation of object.annotations.list) {
-    if (annotation.type === 'volume') {
-      flag = true;
-      break;
-    }
-  }
-  if (flag === false) {
-    throw (new Error('Annotations must contain at least 1 volume-type entry'));
-  }
-
-
-  // 2. Asynchronous checks
-  //-----------------------
-
-  // the names of stored files that the checks above would refuse: kept if they are the names
-  // stored in the files' MRI documents (2.14)
-  const mris = await Promise.all(storedFileNames.map(({ source }) => req.nativeDb.collection('mri')
-    .findOne({ source, backup: { $exists: false } }, { projection: { name: 1, _id: 0 } })));
-  storedFileNames.forEach((file, i) => {
-    if (!mris[i] || sanitize(text(mris[i].name)) !== file.name) {
-      throw (new Error(`Invalid file name "${file.name}"`));
-    }
-  });
-
-  // the users must exist: a new project's owner, and the collaborators the stored project
-  // does not have (shared suite 2.9, 2026-11-11; every row was checked on every save, so
-  // a row of a user removed since blocked the save)
-  const names = usersToCheck(object, oldProject, stored.collaborators);
-  const users = await Promise.all(names.map((nickname) => req.nativeDb.collection('user').findOne({ nickname })));
-  if (users.some((user) => user === null)) {
-    throw (new Error('Users are invalid, one or more do not exist'));
-  }
-
-  // All checks are successful, resolve the promisse
-  //console.log({success:true, message:"All checks ok. Project object looks valid"});
-  return { project: object, dropped };
-};
+const isProjectObject = (req, data, { shortname, oldProject, owner }) => validateProject(data, {
+  shortname,
+  oldProject,
+  owner,
+  findMissingUsers: (names) => missingUsers(req.nativeDb, names),
+  rules: projectRules(req.nativeDb)
+});
 
 /*
  * No view right on a project (shared suite 1.5, 2026-11-11): 401 logged out
@@ -590,17 +421,8 @@ const postProject = async function (req, res) {
     return;
   }
 
-  // each string sanitised as text (shared suite 2.12); a document that is not a project is
-  // refused by isProjectObject, with a 400 (2.13)
-  let obj = sanitize(req.body.data);
   // the stored project is found by the URL's shortname, which the body must equal (shared suite 2.6)
   const shortname = req.params.projectName;
-  if (obj && typeof obj === 'object') {
-    // the database id and the backup flag are the server's: a client backup: true would hide
-    // the version saved, a client _id would be stored (shared suite 2.15, 2026-11-11)
-    delete obj._id;
-    delete obj.backup;
-  }
 
   // eslint-disable-next-line max-statements
   await lock.acquire(['project', 'mri'], async function () {
@@ -608,43 +430,44 @@ const postProject = async function (req, res) {
     let oldProject;
     try {
       oldProject = await findCurrentProject(req.nativeDb, shortname, { projection: { _id: 0 } });
-    } catch (error) {
-      console.log('ERROR', error);
-      res.status(500).json({ error: error.message });
+    } catch (err) {
+      console.log('ERROR', err);
+      res.status(500).json({ error: err.message });
+
+      return;
+    }
+    // the rights before the validation (T002 M13, decision D2): a user who may not save an
+    // existing project learns nothing about the document sent
+    if (oldProject && !canSaveProject(oldProject, loggedUser)) {
+      const refusal = saveRefusal();
+      console.log(refusal.error);
+      res.status(403).json(refusal);
 
       return;
     }
     // the stored lists, sanitised as the body, to compare the rows sent with
     const oldLists = _.fromPairs(listTypes.map((type) => [type, sanitize(listOf(oldProject, type))]));
-    let object;
-    let dropped;
-    try {
-      if (oldProject && _.isPlainObject(obj)) {
-        // the stored top-level fields the client doesn't send are kept (shared suite 2.17,
-        // 2026-11-11; they were lost). A copy: the stored project is compared with below
-        obj = { ..._.cloneDeep(oldProject), ...obj };
-      }
-      if (obj && typeof obj === 'object') {
-        // the owner is never the client's: the stored one, or the creator (shared suite 2.5, 2026-11-11)
-        obj.owner = oldProject ? oldProject.owner : loggedUser;
-      }
-      ({ project: object, dropped } = await isProjectObject(req, res, obj, { shortname, oldProject, oldLists }));
-    } catch (err) {
-      console.error(err.message);
-      res.status(400).send({ error: err.message });
+    // the body as sent: validateProject sanitises each string as text (shared suite 2.12), once
+    // (sanitize is not idempotent on a string with markup and escaped markup), drops the client's
+    // _id and backup (2.15), and refuses a document that is not a project with a 400 (2.13)
+    let { data } = req.body;
+    const parsed = parseProjectData(data);
+    if (oldProject && parsed) {
+      // the stored top-level fields the client doesn't send are kept (shared suite 2.17,
+      // 2026-11-11; they were lost). A copy: the stored project is compared with below
+      data = { ..._.cloneDeep(oldProject), ...parsed };
+    }
+    // the owner is never the client's: the stored one, or the creator (shared suite 2.5, 2026-11-11)
+    const owner = oldProject ? oldProject.owner : loggedUser;
+    const { project: object, dropped, error } = await isProjectObject(req, data, { shortname, oldProject, owner });
+    if (error) {
+      console.error(error);
+      res.status(400).send({ error });
 
       return;
     }
     // update/insert project
     if (oldProject) {
-      // project exists, save update
-      if (!canSaveProject(oldProject, loggedUser)) {
-        const refusal = saveRefusal();
-        console.log(refusal.error);
-        res.status(403).json(refusal);
-
-        return;
-      }
       // The settings page loads the files in batches, and says how many it received
       // (filesLoaded.count). If that is not the whole stored list, the list it sends
       // is incomplete: keep the stored one, so that files are not lost. NWL's
