@@ -3,7 +3,19 @@
  * settings, deleting a project, the admin tools that fix projects), so that
  * two of them cannot both read the current version and then both replace it.
  * It only covers this process.
+ *
+ * The lock lives in NeuroWebLab 1.18.0, `project/lock.js` (T002 M11c): this is
+ * its `withLock`, as `acquire`. The four call sites (project.controller.js's
+ * save and delete, admin.projects.js's restoreFiles and fixCurrentVersions)
+ * still take `['project', 'mri']`.
+ *
+ * Its state is shared by everything that requires the same copy of
+ * `neuroweblab`: there must be one copy (`npm ls neuroweblab` shows one).
+ *
+ * The four other `new AsyncLock()` instances (admin.annotations.js,
+ * atlasmakerServer.js, mri.controller.js, upload.controller.js) don't share
+ * this lock yet (decision D3).
  */
-const AsyncLock = require('async-lock');
+const { withLock } = require('neuroweblab');
 
-module.exports = new AsyncLock();
+module.exports = { acquire: withLock };
