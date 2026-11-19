@@ -5,11 +5,10 @@ const dataSlices = require('../dataSlices/dataSlices.js');
 const {
   AccessType, AccessLevel, AccessControlService, canSaveProject, droppedMessage, filesListIncomplete,
   findCurrentProject, ignoredChangesMessage, jsonForScript, keepFieldsWithoutFilesEdit, keepListsWithoutEditRights, parseProjectData,
-  noViewStatus, projectDeleteRoute, projectFilesRoute, projectJsonRoute, projectListRoute, projectPageRoute, projectSaveRoute,
+  noViewStatus, projectDeleteRoute, publicLoggedUser, projectFilesRoute, projectJsonRoute, projectListRoute, projectPageRoute, projectSaveRoute,
   projectSettingsRoute, sanitize, saveProjectVersion, saveRefusal, shortnamePattern, validateProject, visibleProject, visitor
 } = require('neuroweblab');
 const _ = require('lodash');
-const { publicLoggedUser } = require('../user/publicUser');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 const { isLabelset, changedLabelsets, setLayerLabelset } = require('./atlas-labels.js');
 const { fileSource, listOf, listTypes, rowKey } = require('./project-rows.js');

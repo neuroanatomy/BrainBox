@@ -49,40 +49,37 @@ describe('Data Slices ', function() {
     });
   });
 
-  describe('getUserProjectsSlice function() ', function() {
-    it('should return the correct project files with valid input', async function() {
-      const req = {
-        user: {
-          username: 'foo'
-        },
-        isAuthenticated: function () {
-          // eslint-disable-next-line no-unneeded-ternary
-          return this.user.username ? true : false;
-        },
-        nativeDb: nativeDb
-      };
-      const requestedUser = 'foo';
-      const files = await dataSlices.getUserProjectsSlice(req, requestedUser, 0, 4);
-      assert.strictEqual(files.success, true);
-      assert.notStrictEqual(files.list.length, 0);
-      assert.containsAllKeys(files.list[0], ['project', 'owner']);
+  // the query, the view right and the slicing of a user's projects are NeuroWebLab's
+  // userProjectsRoute (1.22.0, T002 M15), covered by its route spec and the shared suite (3.3-3.5,
+  // 3.16-3.18); the row is the app's
+  describe('userProjectRow function() ', function() {
+    const row = {
+      shortname: 'rowtest',
+      name: 'Row test',
+      brainboxURL: '/project/rowtest',
+      owner: 'foo',
+      modified: '2026-01-01T00:00:00.000Z',
+      collaborators: { list: [{ userID: 'anyone', access: { collaborators: 'view', annotations: 'view', files: 'view' } }] },
+      files: { list: ['a', 'b'] }
+    };
+
+    it('answers the row of a project', function() {
+      assert.deepStrictEqual(dataSlices.userProjectRow(row, 'anonymous'), {
+        project: 'rowtest',
+        projectName: 'Row test',
+        projectURL: '/project/rowtest',
+        numFiles: 2,
+        numCollaborators: 1,
+        owner: 'foo',
+        modified: '2026-01-01T00:00:00.000Z'
+      });
     });
 
-    it('should not return files with invalid input', async function() {
-      const req = {
-        user: {
-          username: 'foo'
-        },
-        isAuthenticated: function () {
-          // eslint-disable-next-line no-unneeded-ternary
-          return this.user.username ? true : false;
-        },
-        nativeDb: nativeDb
-      };
-      const requestedUser = 'general';
-      const files = await dataSlices.getUserProjectsSlice(req, requestedUser, 0, 4);
-      assert.strictEqual(files.success, false);
-      assert.strictEqual(files.list.length, 0);
+    it('counts 0 files for a project without a files list', function() {
+      const noFiles = { ...row };
+      delete noFiles.files;
+      assert.strictEqual(dataSlices.userProjectRow(noFiles, 'anonymous').numFiles, 0);
+      assert.strictEqual(dataSlices.userProjectRow({ ...row, files: {} }, 'anonymous').numFiles, 0);
     });
   });
 

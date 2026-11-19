@@ -156,69 +156,6 @@ const visibleCollaborators = (project, loggedUser) => {
 };
 
 /**
- * A slice of a list: from `start` (default 0), `length` items (default all)
- * @param {Array} list The list
- * @param {number} [start] Start index
- * @param {number} [length] Number of items
- * @returns {Array} The slice
- */
-const sliceOf = (list, start, length) => {
-  const from = Number.isInteger(start) && start > 0 ? start : 0;
-
-  return Number.isInteger(length) && length >= 0 ? list.slice(from, from + length) : list.slice(from);
-};
-
-/**
- * @func getUserProjectsSlice
- * @desc Get a slice of the projects of a user: owned, or with a collaborator row naming the user
- * (by userID, username or nickname: rows of every age), then only those the logged user may view
- * the files of; filtered first, then sliced (shared suite 3.3, 3.4)
- * @param {Object} req request object
- * @param {String} requestedUser Username of the user whose projects are requested
- * @param {integer} [start] Start index of the slice (default 0)
- * @param {integer} [length] Number of projects in the slice (default all)
- * @returns {Object} user projects slice
- */
-const getUserProjectsSlice = async function getUserProjectsSlice(req, requestedUser, start, length) {
-  let loggedUser = 'anonymous';
-  if (req.isAuthenticated()) {
-    loggedUser = req.user.username;
-  }
-
-  try {
-    const unfilteredProjects = await req.nativeDb.collection('project').find({
-      $or: [
-        { owner: requestedUser },
-        { 'collaborators.list.userID': requestedUser },
-        { 'collaborators.list.username': requestedUser },
-        { 'collaborators.list.nickname': requestedUser }
-      ],
-      backup: { $exists: false }
-    })
-      .toArray();
-
-    // filter for view access, then slice
-    const visible = unfilteredProjects
-      .filter((o) => BrainboxAccessControlService.hasFilesAccess(AccessLevel.VIEW, o, loggedUser));
-    const projects = sliceOf(visible, start, length).map((o) => ({
-      project: o.shortname,
-      projectName: o.name,
-      projectURL: o.brainboxURL,
-      numFiles: o.files.list.length,
-      numCollaborators: visibleCollaborators(o, loggedUser),
-      owner: o.owner,
-      // the stored ISO date: the user page formats it, and sorts by it
-      modified: o.modified
-    }));
-
-    return { success: projects.length > 0, list: projects };
-  } catch (err) {
-    console.log('ERROR:', err);
-    throw err;
-  }
-};
-
-/**
  * The visitor of a request: the logged user's name, or 'anonymous'
  * @param {Object} req The request
  * @returns {string} The username, or 'anonymous'
@@ -335,13 +272,35 @@ const projectRow = (req, project) => ({
   owner: project.owner
 });
 
+/**
+ * @func userProjectRow
+ * @desc The row GET /user/json/:userName/projects answers for a project: the `rows` of
+ * NeuroWebLab's userProjectsRoute (1.22.0, T002 M15), which reads the user's current projects
+ * (owned, or with a collaborator row naming the user by userID, username or nickname), keeps
+ * the ones the visitor may view the files of, then slices them. A project without a files list
+ * counts 0 files
+ * @param {Object} project A current project the visitor may view the files of
+ * @param {string} loggedUser The visitor, or 'anonymous'
+ * @returns {Object} {project, projectName, projectURL, numFiles, numCollaborators, owner, modified}
+ */
+const userProjectRow = (project, loggedUser) => ({
+  project: project.shortname,
+  projectName: project.name,
+  projectURL: project.brainboxURL,
+  numFiles: project.files && Array.isArray(project.files.list) ? project.files.list.length : 0,
+  numCollaborators: visibleCollaborators(project, loggedUser),
+  owner: project.owner,
+  // the stored ISO date: the user page formats it, and sorts by it
+  modified: project.modified
+});
+
 const DataSlices = function () {
   this.getUserFilesSlice = getUserFilesSlice;
   this.getUserAtlasSlice = getUserAtlasSlice;
-  this.getUserProjectsSlice = getUserProjectsSlice;
   this.getFilesSlice = getFilesSlice;
   this.projectFileEntries = projectFileEntries;
   this.projectRow = projectRow;
+  this.userProjectRow = userProjectRow;
 };
 
 module.exports = new DataSlices();

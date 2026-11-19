@@ -2,8 +2,15 @@
 /* eslint-disable radix */
 const dateFormat = require('dateformat');
 const dataSlices = require('../dataSlices/dataSlices.js');
-const { jsonForAttribute, jsonForScript } = require('neuroweblab');
-const { PUBLIC_USER_FIELDS, publicUser, publicLoggedUser } = require('./publicUser');
+const {
+  AccessLevel, PUBLIC_USER_FIELDS, jsonForAttribute, jsonForScript, publicLoggedUser, publicUser, userProjectsRoute, visitor
+} = require('neuroweblab');
+const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
+
+// What of a user others may see is NeuroWebLab's (1.22.0, T002 M15): publicUser and
+// publicLoggedUser, an allow-list of the configured usernameField (`nickname` here, app.js) and
+// PUBLIC_USER_FIELDS. The fields `?var=` may name: the same, the username field included
+const USER_VARS = Object.freeze(['nickname', ...PUBLIC_USER_FIELDS]);
 
 const validator = function (req, res, next) {
 
@@ -74,7 +81,7 @@ const apiUser = async function (req, res) {
   const field = req.query.var;
   if (field) {
     // ?var=name: a single public field; an empty response for any other name
-    res.send(PUBLIC_USER_FIELDS.includes(field) ? info[field] : null);
+    res.send(USER_VARS.includes(field) ? info[field] : null);
   } else {
     res.send(info);
   }
@@ -168,25 +175,22 @@ const apiUserAtlas = async function (req, res) {
 };
 
 /**
- * @function apiUserProjects
- * @param {Object} req Request object
- * @param {Object} res Response object
- * @returns {Object} Object with a list of user projects
+ * GET /user/json/:userName/projects?[start][&length]: NeuroWebLab's userProjectsRoute (1.22.0,
+ * T002 M15). The user's current projects (owner, or a collaborator row naming them by userID,
+ * username or nickname) that the visitor may view the files of, `length` of them from `start`
+ * (by default all of them; a value that is not a string of digits counts as not given), as
+ * `{success: list.length > 0, list}`. An error goes to the app's errorHandler (a 500 `{error}`).
  */
-const apiUserProjects = async function (req, res) {
-  const { userName } = req.params;
-  // optional (shared suite 3.4): no start = from the first, no length = all
-  const number = (value) => (typeof value === 'undefined' ? value : parseInt(value, 10));
-  const start = number(req.query.start);
-  const length = number(req.query.length);
+const apiUserProjects = userProjectsRoute({
+  db: (req) => req.nativeDb,
+  canView: (req, project) => BrainboxAccessControlService.hasFilesAccess(AccessLevel.VIEW, project, visitor(req) || 'anonymous'),
+  rows: (req, page) => {
+    const loggedUser = visitor(req) || 'anonymous';
 
-  try {
-    res.send(await dataSlices.getUserProjectsSlice(req, userName, start, length));
-  } catch (err) {
-    console.log('ERROR:', err);
-    res.send({ success: false, list: [] });
-  }
-};
+    return page.map((project) => dataSlices.userProjectRow(project, loggedUser));
+  },
+  answer: (list) => ({ success: list.length > 0, list })
+});
 
 const UserController = function () {
   this.validator = validator;

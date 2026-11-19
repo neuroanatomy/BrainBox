@@ -9,6 +9,8 @@
 
 const chai = require('chai');
 const { assert } = chai;
+const sinon = require('sinon');
+const { Collection } = require('mongodb');
 const U = require('../utils.js');
 
 const owner = 'listing-owner';
@@ -53,5 +55,48 @@ describe('User projects: filtered, then sliced', function () {
   it('anonymous, the next batch (start=100, length=100): empty, so the page stops', async function () {
     const res = await fetch(`${U.serverURL}/user/json/${owner}/projects?start=100&length=100`);
     assert.deepEqual(await res.json(), { success: false, list: [] });
+  });
+
+  describe('User projects: a project without a files list, and a failed read', function () {
+    const nofilesOwner = 'listing-nofiles-owner';
+
+    before(async function () {
+      const noFiles = { ...project('listingprojnofiles', anyone), owner: nofilesOwner };
+      delete noFiles.files;
+      await U.getNativeDB().collection('project')
+        .insertOne(noFiles);
+    });
+
+    it('a project without a files list is listed, with numFiles 0', async function () {
+      const res = await fetch(`${U.serverURL}/user/json/${nofilesOwner}/projects`);
+      const body = await res.json();
+      assert.strictEqual(res.status, 200);
+      assert.isTrue(body.success);
+      assert.deepEqual(body.list.map((p) => [p.project, p.numFiles]), [['listingprojnofiles', 0]]);
+    });
+
+    it('a failed read answers the errorHandler\'s 500 {error} (it answered 200 {success: false, list: []})', async function () {
+      const env = U.getApp().get('env');
+      // a server error's message stays on the server, as in production
+      U.getApp().set('env', 'production');
+      const { find } = Collection.prototype;
+      /* eslint-disable no-invalid-this -- the stubbed method's collection */
+      const findStub = sinon.stub(Collection.prototype, 'find').callsFake(function (...args) {
+        return this.collectionName === 'project' && args[0] && args[0].$or
+          ? { toArray: () => Promise.reject(new Error('simulated read failure')) }
+          : find.apply(this, args);
+      });
+      /* eslint-enable no-invalid-this */
+      const consoleError = sinon.stub(console, 'error');
+      try {
+        const res = await fetch(`${U.serverURL}/user/json/${nofilesOwner}/projects`);
+        assert.strictEqual(res.status, 500);
+        assert.deepEqual(await res.json(), { error: 'Server error' });
+      } finally {
+        consoleError.restore();
+        findStub.restore();
+        U.getApp().set('env', env);
+      }
+    });
   });
 });

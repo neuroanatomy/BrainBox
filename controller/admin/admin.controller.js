@@ -4,8 +4,7 @@ const { body, validationResult } = require('express-validator');
 const admins = require('./admins');
 const annotations = require('./admin.annotations');
 const projects = require('./admin.projects');
-const { jsonForScript, sendResult } = require('neuroweblab');
-const { publicLoggedUser } = require('../user/publicUser');
+const { jsonForScript, publicLoggedUser, sendResult } = require('neuroweblab');
 
 const { isAdmin, requestUsername } = admins;
 

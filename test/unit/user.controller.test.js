@@ -173,6 +173,10 @@ describe('User Controller: ', function () {
       assert.deepStrictEqual(await apiUserVar('name'), [[localUser.name]]);
     });
 
+    it('apiUser ?var=nickname answers the nickname (the username field, not in NWL\'s PUBLIC_USER_FIELDS)', async function () {
+      assert.deepStrictEqual(await apiUserVar('nickname'), [[localUser.nickname]]);
+    });
+
     it('apiUser answers 500 instead of rejecting when the DB fails', async function () {
       const res = makeRes();
       await userController.apiUser(makeReq('x', { nativeDb: failingDb }), res);
@@ -434,7 +438,7 @@ describe('User Controller: ', function () {
           userName: 'foo'
         },
         query: {
-          length: 3
+          length: '3'
         },
         user: {
           username: 'anyone'
@@ -445,10 +449,12 @@ describe('User Controller: ', function () {
       };
       const sendSpy = sinon.spy();
       const res = {
-        status: sinon.stub().returns({ send: sendSpy }),
-        send: sendSpy
+        status: sinon.stub().returns({ json: sendSpy }),
+        json: sendSpy
       };
-      await userController.apiUserProjects(req, res);
+      const next = sinon.spy();
+      await userController.apiUserProjects(req, res, next);
+      assert.strictEqual(next.callCount, 0);
       assert.strictEqual(res.status.callCount, 0);
       assert.strictEqual(sendSpy.callCount, 1);
       assert.deepStrictEqual(Object.keys(sendSpy.args[0][0]).sort(), ['list', 'success']);
@@ -463,7 +469,7 @@ describe('User Controller: ', function () {
           userName: 'foo'
         },
         query: {
-          start: 1
+          start: '1'
         },
         user: {
           username: 'anyone'
@@ -474,10 +480,12 @@ describe('User Controller: ', function () {
       };
       const sendSpy = sinon.spy();
       const res = {
-        status: sinon.stub().returns({ send: sendSpy }),
-        send: sendSpy
+        status: sinon.stub().returns({ json: sendSpy }),
+        json: sendSpy
       };
-      await userController.apiUserProjects(req, res);
+      const next = sinon.spy();
+      await userController.apiUserProjects(req, res, next);
+      assert.strictEqual(next.callCount, 0);
       assert.strictEqual(res.status.callCount, 0);
       assert.strictEqual(sendSpy.callCount, 1);
       assert.deepStrictEqual(Object.keys(sendSpy.args[0][0]).sort(), ['list', 'success']);
