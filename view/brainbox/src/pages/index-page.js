@@ -6,7 +6,6 @@ import 'nwl-components/widgets.css';
 import '../style/style.css';
 import '../style/index-style.css';
 import '../style/ui.css';
-import '../style/tables.css';
 import Config from './../../../../cfg.json';
 
 /**

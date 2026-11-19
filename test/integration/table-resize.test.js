@@ -147,8 +147,28 @@ const checkHandlesAndWidths = async (page, p) => {
   assert.strictEqual(await page.$$eval('table:not(:has(thead)) .nwl-col-resize', (hs) => hs.length), 0, 'no handles in key/value tables');
 };
 
+// how a table's cells overflow: the set of their text-overflow and white-space, and, with
+// wrap, overflow-wrap
+const cellOverflow = (page, sel, wrap) => page.$eval(sel, (table, withWrap) => {
+  const values = [...table.querySelectorAll('th, td')].map((cell) => {
+    const style = getComputedStyle(cell);
+
+    return `${style.textOverflow} ${style.whiteSpace}${withWrap ? ' ' + style.overflowWrap : ''}`;
+  });
+
+  return [...new Set(values)];
+}, wrap);
+
+// the files table's cells end with an ellipsis on one line until a column is resized
+// (BrainBox's rule); then they wrap, even inside a word, and clip (nwl-components 3.4.0)
+const FILES_OVERFLOW = { before: ['ellipsis nowrap'], after: ['clip normal anywhere'] };
+
 // a drag widens that column only, without sorting
 const checkDrag = async (page, sel) => {
+  const overflow = sel === '#projectFiles table';
+  if (overflow) {
+    assert.deepEqual(await cellOverflow(page, sel, false), FILES_OVERFLOW.before, 'before a resize: an ellipsis, on one line');
+  }
   const before = await headers(page, sel);
   const rows = await rowOrder(page, sel);
   await drag(page, sel, 0, 60);
@@ -158,6 +178,9 @@ const checkDrag = async (page, sel) => {
   assert.isTrue(await page.$eval(sel, (table) => table.classList.contains('nwl-resized') && getComputedStyle(table).tableLayout === 'fixed'), 'fixed layout');
   assert.deepEqual(dragged.map((h) => h.sort), before.map((h) => h.sort), 'a drag does not sort');
   assert.deepEqual(await rowOrder(page, sel), rows, 'the rows keep their order');
+  if (overflow) {
+    assert.deepEqual(await cellOverflow(page, sel, true), FILES_OVERFLOW.after, 'after a resize: wrapped and clipped');
+  }
 };
 
 // ArrowRight on a focused handle adds 10px to its column only

@@ -7,7 +7,6 @@ import '../style/textAnnotations.css';
 import '../style/ui.css';
 import '../style/mri-style.css';
 import '../style/access-style.css';
-import '../style/tables.css';
 
 import * as tw from '../twoWayBinding';
 import { cellText, makeSortable, rowIndex } from '../sortableTable.js';

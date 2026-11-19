@@ -1,7 +1,6 @@
 /* global project, filesTotal, loggedUser */
 
 import 'nwl-components/dist/style.css';
-import '../style/tables.css';
 import { createApp, ref } from 'vue';
 import { SettingsPage } from 'nwl-components';
 import config from '../nwl-components-config';

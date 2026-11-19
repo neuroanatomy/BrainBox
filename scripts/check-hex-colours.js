@@ -12,7 +12,6 @@ const ROOT = path.resolve(__dirname, '..');
 const ALLOWED = {
   'view/brainbox/src/style/style.css': [],
   'view/brainbox/src/style/ui.css': [],
-  'view/brainbox/src/style/tables.css': [],
   'view/brainbox/src/style/ask-for-login.css': [],
   'view/atlasmaker/src/css/atlasmaker.css': ['#F00'],
   'view/atlasmaker/src/css/loading-style.css': [],

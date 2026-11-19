@@ -2,7 +2,6 @@
 import 'nwl-components/tokens.css';
 import '../style/ui.css';
 import '../../../atlasmaker/src/css/embed-layout.css';
-import '../style/tables.css';
 
 import embedAnnotation from '../../../shared/embedAnnotation.js';
 import embedSizing from '../../../shared/embedSizing.js';

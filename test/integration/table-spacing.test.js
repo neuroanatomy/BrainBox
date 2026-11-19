@@ -4,8 +4,8 @@
   Browser tests for the spacing between table columns, in the user, project, project
   settings and MRI pages: in every table, every cell but the last of its row is followed by
   1em, so that "Collaborators" and "Owner" do not run together, and the last one by nothing.
-  nwl-components' Table spaces its own columns (since 1.5.1); BrainBox's
-  view/brainbox/src/style/tables.css spaces only the plain tables. No MRI is downloaded: the
+  nwl-components' Table spaces its own columns (since 1.5.1); BrainBox's plain tables have the
+  class nwl-table, which nwl-components (3.4.0) spaces the same way. No MRI is downloaded: the
   requests for MRI data are aborted.
 */
 
@@ -153,6 +153,38 @@ const checkSpacing = (browser, p, kind) => withPage(browser, p, async (page) => 
     : 'plain table cells not spaced by BrainBox');
 });
 
+/**
+ * Open a page and check that the given plain tables have the class nwl-table and that
+ * every cell but the last of its row is followed by the 14px (1em at 14px) of
+ * nwl-components' .nwl-table rule (3.4.0).
+ * @param {Object} browser A puppeteer browser
+ * @param {Object} p The page: its url, and a selector to wait for
+ * @param {Array<string>} selectors The tables
+ * @returns {Promise<void>} Resolves when the tables have been checked
+ */
+const checkNwlTable = (browser, p, selectors) => withPage(browser, p, async (page) => {
+  for (const sel of selectors) {
+    // eslint-disable-next-line no-await-in-loop
+    const tables = await page.$$eval(sel, (list) => list.map((table) => {
+      const gaps = [];
+      for (const tr of table.querySelectorAll('tr')) {
+        [...tr.cells].slice(0, -1).forEach((cell) => {
+          const style = getComputedStyle(cell);
+          gaps.push(`${style.paddingRight} at ${style.fontSize}`);
+        });
+      }
+
+      return { nwl: table.classList.contains('nwl-table'), gaps };
+    }));
+    assert.isAbove(tables.length, 0, `${sel} is in the page`);
+    for (const t of tables) {
+      assert.isTrue(t.nwl, `${sel} has the class nwl-table`);
+      assert.isAbove(t.gaps.length, 0, `${sel} has cells followed by others`);
+      assert.deepEqual([...new Set(t.gaps)], ['14px at 14px'], `${sel}: 14px after every cell but the last`);
+    }
+  }
+});
+
 describe('TESTING THE SPACE BETWEEN TABLE COLUMNS', function () {
   let browser;
 
@@ -212,5 +244,17 @@ describe('TESTING THE SPACE BETWEEN TABLE COLUMNS', function () {
     // eslint-disable-next-line no-invalid-this
     this.timeout(U.longTimeout);
     await checkSpacing(browser, PAGES.mri, 'plain');
+  });
+
+  it('gives the project page\'s files and volume annotations tables nwl-components\' .nwl-table gaps', async function () {
+    // eslint-disable-next-line no-invalid-this
+    this.timeout(U.longTimeout);
+    await checkNwlTable(browser, PAGES.project, ['#projectFiles table', '#volAnnotations']);
+  });
+
+  it('gives the MRI page\'s info, annotations and landmarks tables nwl-components\' .nwl-table gaps', async function () {
+    // eslint-disable-next-line no-invalid-this
+    this.timeout(U.longTimeout);
+    await checkNwlTable(browser, PAGES.mri, ['#annotationsPane table', '#landmarksDialog table']);
   });
 });

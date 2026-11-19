@@ -1,6 +1,5 @@
 /* globals nickname, loggedUser */
 import 'nwl-components/dist/style.css';
-import '../style/tables.css';
 import { SortableTh, Tab, Table, Tabs, UserPage, useSortable } from 'nwl-components';
 import { createApp, ref } from 'vue';
 import config from '../nwl-components-config';

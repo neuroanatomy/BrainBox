@@ -20,8 +20,15 @@ table {
 .tabContent td {
     font-weight: normal;
 }
+/* no padding, but the 1em after every cell but the last of its row, which .nwl-table gives
+   (nwl-components 3.4.0; its rule is in a layer, so a padding-right here would win over it) */
 .tabContent th, .tabContent td {
-    padding:0;
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+}
+.tabContent :is(th, td):last-child {
+    padding-right: 0;
 }
 ul {
     list-style-type: none;

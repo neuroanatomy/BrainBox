@@ -7,7 +7,6 @@ import '../style/style.css';
 import '../style/textAnnotations.css';
 import '../style/ui.css';
 import '../style/project-style.css';
-import '../style/tables.css';
 
 import { cellText, makeSortable, rowIndex } from '../sortableTable.js';
 import { getData, setData } from '../../../shared/domData.js';
