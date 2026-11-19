@@ -10,6 +10,7 @@ const path = require('path');
 const zlib = require('zlib');
 const { promisify } = require('util');
 const WebSocket = require('ws');
+const { projectVersion } = require('neuroweblab');
 const { accessMatrix, projectAdmin, projectAnnotations, projectLifecycle, projectListings, signUp } = require('neuroweblab/conformance');
 const U = require('../utils.js');
 const admins = require('../../controller/admin/admins');
@@ -168,7 +169,9 @@ const annotations = {
  * admin tests do, admins.setAdmins), and removed from it with the user. The
  * admin change (5.4) is restore-files: a save that lost a file is stored
  * first (as an incomplete save of the settings page), then the admin puts the
- * file back, as a new version.
+ * file back, as a new version. The damaged projects routes are NWL's
+ * damagedProjects (1.23.0, M16c): the list entries and bodies are microdraw's,
+ * so there is no `admin.damaged` mapping (5.6, 5.7).
  */
 const admin = {
   routes: [
@@ -195,11 +198,17 @@ const admin = {
       .updateMany({ shortname }, { $set: { backup: true } });
     const { insertedId } = await db().collection('project')
       .insertOne(lostAFile);
-    const res = await adminUser.client.post('/admin/json/projects/restore-files', { json: { project: shortname, version: String(insertedId) } });
+    // the project's version token, as the damaged list gives it (NWL projectVersion of the current version)
+    const version = projectVersion(await db().collection('project')
+      .findOne({ shortname, backup: { $exists: false } }, { sort: { _id: -1 } }));
+    const res = await adminUser.client.post('/admin/json/projects/restore-files', { json: { project: shortname, version, save: String(insertedId) } });
     if (res.status !== 200) {
       throw new Error(`restore-files ${shortname}: ${res.status} ${res.text}`);
     }
-  }
+  },
+  // 5.6: the admin log entries about a project (NWL damagedProjects logs value.shortname)
+  logEntries: (shortname) => db().collection('log')
+    .countDocuments({ 'value.shortname': shortname })
 };
 
 const adapter = {
@@ -213,7 +222,7 @@ const adapter = {
     await db().collection('project')
       .deleteMany({ shortname });
     await db().collection('log')
-      .deleteMany({ key: /^admin/, 'value.project': shortname });
+      .deleteMany({ key: /^admin/, 'value.shortname': shortname });
     await db().collection('mri')
       .deleteMany({ source: { $regex: `^https://example\\.org/conformance/${shortname}/` } });
     const brain = await testBrain();

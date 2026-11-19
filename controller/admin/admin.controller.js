@@ -229,14 +229,14 @@ const removeMRIAnnotations = async (req, res) => {
 
 /**
  * List the damaged projects: files removed by a save that are still missing,
- * several current versions
+ * several current versions (NeuroWebLab 1.23.0 damagedProjects)
  * @param {object} req Request object
  * @param {object} res Response object
  * @returns {void}
  */
 const getDamagedProjects = async (req, res) => {
   try {
-    const list = await projects.findDamagedProjects(req.nativeDb);
+    const { list } = await projects.findDamagedProjects(req.nativeDb);
     res.json({ success: true, list });
   } catch (err) {
     serverError(res, err);
@@ -247,34 +247,51 @@ const getDamagedProjects = async (req, res) => {
 // 500 is logged with console.log('ERROR:', err), as serverError)
 const sendFixResult = (res, fix) => sendResult(res, fix);
 
+// The project and its version token (as listed) of a fix's body; the texts are microdraw's
+const projectFromBody = (fields) => {
+  if (typeof fields.project !== 'string' || fields.project === '') {
+    return { error: 'Provide the project shortname' };
+  }
+  if (typeof fields.version !== 'string' || fields.version === '') {
+    return { error: 'Provide the version of the project, as listed' };
+  }
+
+  return { shortname: fields.project, version: fields.version };
+};
+
 /**
- * Add back to a project the files that a save removed. req.body contains the
- * project and the version saved that removed them
+ * Add back to a project the files that a save removed and that are still
+ * missing, as a new version. Body: { project, version, save } (version: the
+ * project's token, save: the id of the version the save stored, as listed)
  * @param {object} req Request object
  * @param {object} res Response object
  * @returns {void}
  */
 const restoreProjectFiles = (req, res) => {
-  const { project, version } = req.body;
-  if (typeof project !== 'string' || project === '' || typeof version !== 'string') {
-    return res.status(400).json({ success: false, error: 'Provide the project and the version' });
+  const reqBody = req.body || {};
+  const { shortname, version, error } = projectFromBody(reqBody);
+  if (error) {
+    return res.status(400).json({ success: false, error });
   }
-  sendFixResult(res, projects.restoreFiles({ nativeDb: req.nativeDb, project, version, username: requestUsername(req) }));
+  if (typeof reqBody.save !== 'string' || reqBody.save === '') {
+    return res.status(400).json({ success: false, error: 'Provide the save: the id of the version it stored, as listed' });
+  }
+  sendFixResult(res, projects.restoreFiles(req.nativeDb, { shortname, version, save: reqBody.save, username: requestUsername(req) }));
 };
 
 /**
- * Keep only the most recent of the current versions of a project. The project
- * is in req.body.project
+ * Keep only the most recent of the current versions of a project, mark the
+ * others backup. Body: { project, version } (version: the token, as listed)
  * @param {object} req Request object
  * @param {object} res Response object
  * @returns {void}
  */
 const fixProjectCurrentVersions = (req, res) => {
-  const { project } = req.body;
-  if (typeof project !== 'string' || project === '') {
-    return res.status(400).json({ success: false, error: 'Provide the project' });
+  const { shortname, version, error } = projectFromBody(req.body || {});
+  if (error) {
+    return res.status(400).json({ success: false, error });
   }
-  sendFixResult(res, projects.fixCurrentVersions({ nativeDb: req.nativeDb, project, username: requestUsername(req) }));
+  sendFixResult(res, projects.fixCurrentVersions(req.nativeDb, { shortname, version, username: requestUsername(req) }));
 };
 
 module.exports = {

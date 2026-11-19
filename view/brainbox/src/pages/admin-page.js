@@ -80,45 +80,59 @@ const AdminPage = {
       damagedLoading.value = false;
     };
 
-    const toggleDamaged = (project) => {
-      damagedExpanded.value = { ...damagedExpanded.value, [project]: !damagedExpanded.value[project] };
+    const toggleDamaged = (shortname) => {
+      damagedExpanded.value = { ...damagedExpanded.value, [shortname]: !damagedExpanded.value[shortname] };
     };
 
     // What is wrong with a damaged project
     const problems = (p) => [
       ...(p.suspected ? ['incomplete save'] : []),
       ...(p.missing && !p.suspected ? ['files removed'] : []),
-      ...(p.currentVersions > 1 ? [`${p.currentVersions} current versions`] : [])
+      ...(p.currentVersions.length > 1 ? [`${p.currentVersions.length} current versions`] : [])
     ];
 
-    const restoreFiles = async (p, e) => {
-      // eslint-disable-next-line no-alert
-      if (!window.confirm(`Add back to "${p.project}" the ${e.stillMissing} file(s) that the save of ${formatDate(e.modified)} removed?`)) {
-        return;
-      }
+    // Post a fix, then search again. An error (a 409 for a project changed
+    // since it was listed, with the version token of the list) stays shown
+    // above the list searched again, with the project's new token
+    const fixDamaged = async (fn) => {
       damagedResult.value = '';
+      damagedError.value = '';
+      let error = '';
       try {
-        const { restored, files } = await postJSON('/admin/json/projects/restore-files', { project: p.project, version: e.version });
-        damagedResult.value = `${p.project}: restored ${restored} file(s), it has ${files} now.`;
-        await loadDamaged();
+        damagedResult.value = await fn();
       } catch (err) {
-        damagedError.value = err.message;
+        ({ message: error } = err);
+      }
+      await loadDamaged();
+      if (error) {
+        damagedError.value = error;
       }
     };
 
-    const fixCurrent = async (p) => {
+    const restoreFiles = (p, e) => {
       // eslint-disable-next-line no-alert
-      if (!window.confirm(`"${p.project}" has ${p.currentVersions} current versions: keep the most recent one, and make the others backups?`)) {
+      if (!window.confirm(`Add back to "${p.shortname}" the ${e.stillMissing} file(s) that the save of ${formatDate(e.modified)} removed?`)) {
         return;
       }
-      damagedResult.value = '';
-      try {
-        const { backups } = await postJSON('/admin/json/projects/fix-current', { project: p.project });
-        damagedResult.value = `${p.project}: kept the most recent version, ${backups} other(s) made backups.`;
-        await loadDamaged();
-      } catch (err) {
-        damagedError.value = err.message;
+
+      return fixDamaged(async () => {
+        const { restored, files } = await postJSON('/admin/json/projects/restore-files', { project: p.shortname, version: p.version, save: e.save });
+
+        return `${p.shortname}: restored ${restored} file(s), it has ${files} now.`;
+      });
+    };
+
+    const fixCurrent = (p) => {
+      // eslint-disable-next-line no-alert
+      if (!window.confirm(`"${p.shortname}" has ${p.currentVersions.length} current versions: keep the most recent one, and make the others backups?`)) {
+        return;
       }
+
+      return fixDamaged(async () => {
+        const { backups } = await postJSON('/admin/json/projects/fix-current', { project: p.shortname, version: p.version });
+
+        return `${p.shortname}: kept the most recent version, ${backups} other(s) made backups.`;
+      });
     };
 
     const loadMRI = async () => {

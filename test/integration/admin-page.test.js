@@ -95,7 +95,7 @@ describe('TESTING THE ADMIN PAGE', function () {
     await U.getNativeDB().collection('project')
       .deleteMany({ shortname: damagedProject });
     await U.getNativeDB().collection('log')
-      .deleteMany({ key: 'adminRestoreProjectFiles', 'value.project': damagedProject });
+      .deleteMany({ key: 'adminRestoreProjectFiles', 'value.shortname': damagedProject });
     agent.close();
     await U.removeUser(U.testingCredentials.username);
   });
@@ -144,7 +144,7 @@ describe('TESTING THE ADMIN PAGE', function () {
     const row = await page.waitForFunction((project) => [...document.querySelectorAll('#projects tbody tr')]
       .find((tr) => tr.querySelector('code') && tr.querySelector('code').textContent === project), { timeout: U.mediumTimeout }, damagedProject);
     const cells = await row.evaluate((tr) => [...tr.cells].map((td) => td.textContent.replace(/\s+/g, ' ').trim()));
-    assert.deepEqual(cells.slice(0, 4), [damagedProject, '100', '50', 'incomplete save']);
+    assert.deepEqual(cells.slice(0, 5), [damagedProject, U.projectTest.owner, '100', '50', 'incomplete save']);
 
     await row.evaluate((tr) => tr.querySelector('a.toggle').click());
     const event = await page.waitForSelector('#projects tr.details li', { timeout: U.shortTimeout });
@@ -154,6 +154,17 @@ describe('TESTING THE ADMIN PAGE', function () {
     assert.include(text, '150 → 100 files');
     assert.include(text, '50 still missing');
 
+    // a save after the list was read: the restore is refused (409), the error shown and the list searched again
+    await U.getNativeDB().collection('project')
+      .updateOne({ shortname: damagedProject, backup: { $exists: false } }, { $set: { description: 'changed since listed' } });
+    await page.click('#projects tr.details li button');
+    await page.waitForFunction(() => document.querySelector('#projects .error')
+      && document.querySelector('#projects button').textContent.trim() === 'Search again', { timeout: U.mediumTimeout });
+    assert.equal(await page.$eval('#projects .error', (el) => el.textContent), `Project ${damagedProject} has changed since it was listed: reload the list`);
+    assert.lengthOf((await U.queryProject(damagedProject)).files.list, 100, 'nothing was stored');
+
+    // with the new token of the list searched again
+    await page.waitForSelector('#projects tr.details li button', { timeout: U.shortTimeout });
     await page.click('#projects tr.details li button');
     await page.waitForSelector('#projects .result', { timeout: U.mediumTimeout });
     assert.include(await page.$eval('#projects .result', (el) => el.textContent), `${damagedProject}: restored 50 file(s), it has 150 now.`);

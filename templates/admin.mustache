@@ -70,26 +70,27 @@
       <p v-else-if="damaged && !damagedLoading && damaged.length === 0">None found.</p>
       <Table v-if="damaged && damaged.length">
         <thead>
-          <tr><th>Project</th><th>Files</th><th>Missing</th><th>Problem</th><th>Saves</th><th></th></tr>
+          <tr><th>Project</th><th>Owner</th><th>Files</th><th>Missing</th><th>Problem</th><th>Saves</th><th></th></tr>
         </thead>
         <tbody>
-          <template v-for="p in damaged" :key="p.project">
+          <template v-for="p in damaged" :key="p.shortname">
             <tr>
-              <td><a :href="'/project/' + p.project + '/settings'" target="_blank"><code>[[p.project]]</code></a></td>
+              <td><a :href="'/project/' + p.shortname + '/settings'" target="_blank"><code>[[p.shortname]]</code></a></td>
+              <td>[[p.owner]]</td>
               <td>[[p.files]]</td>
               <td>[[p.missing]]</td>
               <td><span v-for="t in problems(p)" :key="t" class="tag" :class="{ notice: t === 'files removed' }">[[t]]</span></td>
-              <td><a v-if="p.events.length" href="#" class="toggle" @click.prevent="toggleDamaged(p.project)">[[p.events.length]] [[damagedExpanded[p.project] ? '▴' : '▾']]</a></td>
-              <td class="actions"><Button v-if="p.currentVersions > 1" className="danger" @click="fixCurrent(p)">Keep the latest version</Button></td>
+              <td><a v-if="p.events.length" href="#" class="toggle" @click.prevent="toggleDamaged(p.shortname)">[[p.events.length]] [[damagedExpanded[p.shortname] ? '▴' : '▾']]</a></td>
+              <td class="actions"><Button v-if="p.currentVersions.length > 1" className="danger" @click="fixCurrent(p)">Keep the latest version</Button></td>
             </tr>
-            <tr v-if="damagedExpanded[p.project]" class="details">
-              <td colspan="6">
+            <tr v-if="damagedExpanded[p.shortname]" class="details">
+              <td colspan="7">
                 <ul>
-                  <li v-for="e in p.events" :key="e.version">
+                  <li v-for="e in p.events" :key="e.save">
                     [[formatDate(e.modified)]] by [[e.modifiedBy || '?']]: [[e.before]] → [[e.after]] files,
                     [[e.stillMissing]] still missing<span v-if="e.annotated">, [[e.annotated]] with annotations</span>
                     <span v-if="e.incomplete" class="tag">incomplete save</span>
-                    <Button @click="restoreFiles(p, e)" :disabled="p.currentVersions > 1">Restore [[e.stillMissing]] file(s)</Button>
+                    <Button @click="restoreFiles(p, e)" :disabled="p.currentVersions.length > 1">Restore [[e.stillMissing]] file(s)</Button>
                     <div class="help examples">e.g. [[e.examples.join(', ')]]</div>
                   </li>
                 </ul>
