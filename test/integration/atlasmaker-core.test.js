@@ -12,7 +12,6 @@
 */
 
 const path = require('path');
-const puppeteer = require('puppeteer');
 const chai = require('chai');
 const { assert } = chai;
 const chaiHttp = require('chai-http');
@@ -98,7 +97,7 @@ describe('TESTING THE VIEWER CORE (atlasmaker.js)', function () {
   before(async function () {
     // eslint-disable-next-line no-invalid-this
     this.timeout(U.longTimeout);
-    browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    browser = await U.launchBrowser({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
   });
 
   afterEach(async function () {

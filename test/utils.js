@@ -5,6 +5,7 @@ const rimraf = require('rimraf');
 const { PNG } = require('pngjs');
 const jpeg = require('jpeg-js');
 const pixelmatch = require('pixelmatch');
+const puppeteer = require('puppeteer');
 const { exec } = require('child_process');
 // const { constants } = require('buffer');
 const brainboxApp = require('../app');
@@ -402,6 +403,22 @@ const blockExternalRequests = async (page) => {
   });
 };
 
+/**
+ * The same, for every browser the tests launch, also for pages that don't call
+ * blockExternalRequests: Chrome resolves no host name but the test server's, so an
+ * outside host (the umami analytics script every template loads, a font, a CDN) fails
+ * at once instead of holding back the 'load' event while it doesn't answer.
+ * The tests launch their browsers with this, not puppeteer.launch.
+ * @param {Object} [opts] puppeteer.launch options
+ * @returns {Promise<Object>} The browser
+ */
+const localHosts = new Set(['localhost', '127.0.0.1', '[::1]', new URL(serverURL).hostname, new URL(wsURL).hostname]);
+const hostResolverRules = ['MAP * ~NOTFOUND', ...[...localHosts].map((h) => `EXCLUDE ${h}`)].join(', ');
+const launchBrowser = (opts = {}) => puppeteer.launch({
+  ...opts,
+  args: [...(opts.args || []), `--host-resolver-rules=${hostResolverRules}`]
+});
+
 const isDomElementVisible = (element) => {
   if (!element.ownerDocument || !element.ownerDocument.defaultView) { return true; }
   const style = element.ownerDocument.defaultView.getComputedStyle(element);
@@ -527,6 +544,7 @@ module.exports = {
   delay,
   waitForTestBrain,
   blockExternalRequests,
+  launchBrowser,
   isLocalURL,
   compareImages,
   comparePageScreenshots,

@@ -7,7 +7,6 @@
   the message, and the answer says how many users it was sent to.
 */
 
-const puppeteer = require('puppeteer');
 const chai = require('chai');
 const { assert } = chai;
 const chaiHttp = require('chai-http');
@@ -67,7 +66,7 @@ describe('TESTING THE ADMIN BROADCAST MESSAGE IN THE VIEWER', function () {
     this.timeout(U.longTimeout);
     previousAdmins = admins.getAdmins();
     admins.setAdmins(['foo']);
-    browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    browser = await U.launchBrowser({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
   });
 
   after(async function () {

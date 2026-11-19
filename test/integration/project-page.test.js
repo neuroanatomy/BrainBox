@@ -11,7 +11,6 @@
   are recorded instead of being carried out, so that the tests only observe the page script.
 */
 
-const puppeteer = require('puppeteer');
 const chai = require('chai');
 const { assert } = chai;
 const chaiHttp = require('chai-http');
@@ -109,7 +108,7 @@ describe('TESTING THE PROJECT PAGE SCRIPT (project-page.js)', function () {
     this.timeout(U.longTimeout);
     await U.removeProject(SHORTNAME);
     await U.insertProject(project());
-    browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    browser = await U.launchBrowser({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
   });
 
   beforeEach(async function () {

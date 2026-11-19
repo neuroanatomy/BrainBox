@@ -9,7 +9,6 @@
   which uses nwl-components' Vue components (UI kit step 10), its .app does.
 */
 
-const puppeteer = require('puppeteer');
 const chai = require('chai');
 const { assert } = chai;
 const U = require('../utils.js');
@@ -54,7 +53,7 @@ describe('Pages load nwl-components\' tokens', function () {
   before(async function () {
     // eslint-disable-next-line no-invalid-this
     this.timeout(U.longTimeout);
-    browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    browser = await U.launchBrowser({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
   });
 
   after(async function () {

@@ -10,7 +10,6 @@
   and errors.
 */
 
-const puppeteer = require('puppeteer');
 const { assert } = require('chai');
 const U = require('../utils.js');
 
@@ -24,7 +23,7 @@ describe('The API called from a page of another origin', function () {
   let browser, page;
 
   before(async function () {
-    browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    browser = await U.launchBrowser({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     page = await browser.newPage();
     await page.goto(otherOrigin + '/test_data/foo.png');
   });

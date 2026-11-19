@@ -14,7 +14,6 @@ const { assert } = chai;
 const chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 const WebSocket = require('ws');
-const puppeteer = require('puppeteer');
 const U = require('../utils.js');
 const F = require('../mri-access-fixtures.js');
 
@@ -292,7 +291,7 @@ describe('WebSocket: layers are sent only to the users who may see them', functi
   });
 
   it('says in the viewer that the layer is not shown, and stops editing', async function () {
-    const browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    const browser = await U.launchBrowser({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     try {
       const page = await browser.newPage();
       const pageErrors = [];

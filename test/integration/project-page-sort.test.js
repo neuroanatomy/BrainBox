@@ -15,7 +15,6 @@
   page's requests for MRI data are aborted (the viewer shows an error, the tables work).
 */
 
-const puppeteer = require('puppeteer');
 const chai = require('chai');
 const { assert } = chai;
 const U = require('../utils.js');
@@ -186,7 +185,7 @@ describe('Project page: sortable files table', function () {
     const res = await agent.post('/localLogin').redirects(0)
       .send(U.testingCredentials);
     cookies = U.parseCookies(res.headers['set-cookie'][0]);
-    browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    browser = await U.launchBrowser({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
   });
 
   afterEach(async function () {

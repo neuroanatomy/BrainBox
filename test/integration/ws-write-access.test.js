@@ -14,7 +14,6 @@ const path = require('path');
 const crypto = require('crypto');
 const { assert } = require('chai');
 const WebSocket = require('ws');
-const puppeteer = require('puppeteer');
 const U = require('../utils.js');
 const F = require('../mri-access-fixtures.js');
 
@@ -469,7 +468,7 @@ describe('TESTING WEBSOCKET WRITE ACCESS', function () {
   it('the MRI page of a user who paints on a layer they may only view says so and stops editing', async function () {
     // eslint-disable-next-line no-invalid-this
     this.timeout(U.longTimeout);
-    const browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    const browser = await U.launchBrowser({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     try {
       const { before, after, pageErrors } = await paintOnViewOnlyLayer(browser);
       assert.deepEqual(before, { access: 'view', editMode: 0 });
@@ -492,7 +491,7 @@ describe('TESTING WEBSOCKET WRITE ACCESS', function () {
   it('the page of a user whose change to the MRI\'s information is refused says so, and goes on editing', async function () {
     // eslint-disable-next-line no-invalid-this
     this.timeout(U.longTimeout);
-    const browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    const browser = await U.launchBrowser({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     try {
       const { before, after, pageErrors } = await renameOnMRIPage(browser);
       assert.deepEqual(after.writeRefused, { write: 'saveMetadata', atlas: null, reason: 'you may not rename this MRI' });
@@ -509,7 +508,7 @@ describe('TESTING WEBSOCKET WRITE ACCESS', function () {
   it('a change to the MRI\'s information made while the connection is down is saved once it is back, and a refused one is told', async function () {
     // eslint-disable-next-line no-invalid-this
     this.timeout(U.longTimeout);
-    const browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    const browser = await U.launchBrowser({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     const layerName = () => storedMRI().then((doc) => doc.mri.atlas.find((a) => a.filename === 'Atlas.nii.gz').name);
     const originalName = await layerName();
     const mriName = (await storedMRI()).name;

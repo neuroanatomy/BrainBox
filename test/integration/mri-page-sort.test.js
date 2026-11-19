@@ -14,7 +14,6 @@
   sorted ones; the brain is removed at the end, as the other suites that use it do.
 */
 
-const puppeteer = require('puppeteer');
 const chai = require('chai');
 const { assert } = chai;
 const chaiHttp = require('chai-http');
@@ -149,7 +148,7 @@ describe('MRI page: sortable annotations tables', function () {
   before(async function () {
     // eslint-disable-next-line no-invalid-this
     this.timeout(U.longTimeout * 3);
-    browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    browser = await U.launchBrowser({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     labelSets = (await chai.request(U.serverURL).get('/api/getLabelsets')).body;
     assert.isAtLeast(labelSets.length, 4);
     layerNames = LAYERS.map((l) => labelSets[l.labels].name);

@@ -7,7 +7,6 @@
 const chai = require('chai');
 const { assert } = chai;
 const chaiHttp = require('chai-http');
-const puppeteer = require('puppeteer');
 chai.use(chaiHttp);
 const U = require('../utils.js');
 
@@ -118,7 +117,7 @@ describe('User documents are not exposed (T004)', function () {
     before(async function () {
       // eslint-disable-next-line no-invalid-this
       this.timeout(U.longTimeout);
-      browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+      browser = await U.launchBrowser({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
       page = await browser.newPage();
       await U.blockExternalRequests(page);
     });

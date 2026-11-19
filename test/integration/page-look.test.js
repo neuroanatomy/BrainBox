@@ -17,7 +17,6 @@
 const fs = require('fs').promises;
 const { join } = require('path');
 
-const puppeteer = require('puppeteer');
 const chai = require('chai');
 const { assert, expect } = chai;
 const chaiHttp = require('chai-http');
@@ -235,7 +234,7 @@ const setUp = async () => {
   expect(res).to.have.cookie('connect.sid');
   const previousAdmins = admins.getAdmins();
   admins.setAdmins([U.testingCredentials.username]);
-  const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+  const browser = await U.launchBrowser({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
 
   return { browser, cookies: U.parseCookies(res.headers['set-cookie'][0]), previousAdmins };
 };

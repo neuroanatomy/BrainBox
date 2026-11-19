@@ -14,7 +14,6 @@
   on one line when the panel is narrow.
 */
 
-const puppeteer = require('puppeteer');
 const chai = require('chai');
 const { assert } = chai;
 const U = require('../utils.js');
@@ -109,7 +108,7 @@ describe('User page: sortable columns', function () {
     await U.insertUser({ nickname: owner, name: 'Sort Page Owner', joined: '2026-10-28T00:00:00.000Z' });
     await U.getNativeDB().collection('project')
       .insertMany(PROJECTS.map(project));
-    browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    browser = await U.launchBrowser({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     page = await browser.newPage();
     await page.setViewport({ width: 1400, height: 1000 });
     await U.blockExternalRequests(page);

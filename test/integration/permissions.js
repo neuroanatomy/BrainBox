@@ -6,7 +6,6 @@ const {assert, expect} = chai;
 const chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 const U = require('../utils.js');
-const puppeteer = require('puppeteer');
 const _ = require('lodash');
 
 describe('TESTING PERMISSIONS', function () {
@@ -57,7 +56,7 @@ describe('TESTING PERMISSIONS', function () {
         project.collaborators.list.find((c) => c.userID === 'anyone').access.files = 'none';
         await U.insertProject(project);
 
-        browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+        browser = await U.launchBrowser({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
         page = await browser.newPage();
         await U.blockExternalRequests(page);
       });
@@ -310,7 +309,7 @@ describe('TESTING PERMISSIONS', function () {
         let browser, page;
 
         before(async function() {
-          browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+          browser = await U.launchBrowser({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
           page = await browser.newPage();
           await U.blockExternalRequests(page);
           page.setCookie(...cookies);

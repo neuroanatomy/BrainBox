@@ -4,7 +4,6 @@ const chai = require('chai');
 const { assert, expect } = chai;
 const chaiHttp = require('chai-http');
 chai.use(chaiHttp);
-const puppeteer = require('puppeteer');
 const U = require('../utils.js');
 const admins = require('../../controller/admin/admins');
 
@@ -76,7 +75,7 @@ describe('TESTING THE ADMIN PAGE', function () {
         projectVersion(damagedFiles.slice(0, 100), '2024-06-07T14:29:59.623Z', false)
       ]);
 
-    browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    browser = await U.launchBrowser({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     page = await browser.newPage();
     await U.blockExternalRequests(page);
     await page.setCookie(...cookies);

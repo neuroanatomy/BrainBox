@@ -9,7 +9,6 @@
   It opens with the toolbar's colour button and closes with its close button, or by choosing a label.
 */
 
-const puppeteer = require('puppeteer');
 const chai = require('chai');
 const { assert } = chai;
 const chaiHttp = require('chai-http');
@@ -66,7 +65,7 @@ describe('TESTING THE LABEL SET PANEL', function () {
   before(async function () {
     // eslint-disable-next-line no-invalid-this
     this.timeout(U.longTimeout);
-    browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    browser = await U.launchBrowser({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
   });
 
   beforeEach(async function () {

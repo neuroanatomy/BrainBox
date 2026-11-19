@@ -3,7 +3,6 @@
 
 // require('../browser');
 const fs = require('fs');
-const puppeteer = require('puppeteer');
 const chai = require('chai');
 const { assert } = chai;
 const chaiHttp = require('chai-http');
@@ -36,7 +35,7 @@ describe('TESTING CLIENT-SIDE RENDERING', function () {
     });
 
     it('Browser opens', async function () {
-      browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+      browser = await U.launchBrowser({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     }).timeout(U.shortTimeout);
 
     it('Can access index page', async function () {

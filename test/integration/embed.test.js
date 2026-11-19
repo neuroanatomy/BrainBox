@@ -5,7 +5,6 @@ const chai = require('chai');
 const { assert } = chai;
 const chaiHttp = require('chai-http');
 chai.use(chaiHttp);
-const puppeteer = require('puppeteer');
 const WebSocket = require('ws');
 const U = require('../utils.js');
 
@@ -109,7 +108,7 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
     // eslint-disable-next-line no-invalid-this
     this.timeout(U.longTimeout);
     nativeDb = U.getNativeDB();
-    browser = await puppeteer.launch({
+    browser = await U.launchBrowser({
       headless: true,
       acceptInsecureCerts: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
@@ -769,7 +768,7 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
       // This test has its own browser because it once needed Chrome's new
       // headless mode (the old one had no Fullscreen API). Since puppeteer 22
       // that is the only headless mode, so the shared browser would do too.
-      const fullscreenBrowser = await puppeteer.launch({
+      const fullscreenBrowser = await U.launchBrowser({
         headless: true,
         acceptInsecureCerts: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox']
@@ -818,7 +817,7 @@ describe('TESTING THE EMBEDDABLE VIEWER', function () {
       // atlasmaker.js used to re-apply the fullscreen setting 500 ms after
       // configuring the brain, from the live flag, which a click before then had
       // already set: the viewer went fullscreen and straight back out.
-      const fullscreenBrowser = await puppeteer.launch({
+      const fullscreenBrowser = await U.launchBrowser({
         headless: true,
         acceptInsecureCerts: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox']

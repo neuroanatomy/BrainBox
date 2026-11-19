@@ -10,7 +10,6 @@
   carried out.
 */
 
-const puppeteer = require('puppeteer');
 const chai = require('chai');
 const { assert } = chai;
 const U = require('../utils.js');
@@ -131,7 +130,7 @@ describe('TESTING THE PROJECT SETTINGS PAGE SCRIPT (project-settings-page.js)', 
     await U.removeProject(SHORTNAME);
     const res = await U.insertProject(project());
     assert.isTrue(res.body.success, JSON.stringify(res.body));
-    browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    browser = await U.launchBrowser({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
   });
 
   afterEach(async function () {

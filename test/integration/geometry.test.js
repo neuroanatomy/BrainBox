@@ -13,7 +13,6 @@
 
 const fs = require('fs');
 const path = require('path');
-const puppeteer = require('puppeteer');
 const chai = require('chai');
 const { assert } = chai;
 const chaiHttp = require('chai-http');
@@ -98,7 +97,7 @@ describe('TESTING geometry.js AGAINST jQuery, IN A BROWSER', function () {
   before(async function () {
     // eslint-disable-next-line no-invalid-this
     this.timeout(U.longTimeout * 2);
-    browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    browser = await U.launchBrowser({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     page = await browser.newPage();
     await page.setViewport({ width: 1200, height: 900 });
     await U.blockExternalRequests(page);
