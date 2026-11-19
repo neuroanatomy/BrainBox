@@ -141,12 +141,10 @@ window.addEventListener('scroll', () => {
 //              */
 //             if(stored.history[i].img) {
 //                 document.getElementById("intro").innerHTML += `<img src="${stored.history[i].img}"/>`;
-//                 // $("#intro").append('<img src="'+stored.history[i].img+'"/>');
 //             }
 //         }
 //         str += "</p>";
 //         document.getElementById("intro").innerHTML += str;
-//         // $("#intro").append(str);
 //     } else {
 //         localStorage.clear();
 //     }
@@ -158,5 +156,4 @@ window.addEventListener('scroll', () => {
 //     }
 //     str+="</p>";
 //     document.getElementById("intro").innerHTML += str;
-//     // $("#intro").append(str);
 // }

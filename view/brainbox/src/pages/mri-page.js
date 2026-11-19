@@ -15,7 +15,7 @@ import { mountViewerFooter, mountViewerHeader } from '../viewer-header-footer.js
 import { resizableColumns } from 'nwl-components/resize';
 import showHideModule from '../../../shared/showHide.js';
 
-// jQuery's .show() / .hide(), without jQuery
+// Showing and hiding elements (view/shared)
 const { show, hide } = showHideModule;
 
 // nwl-components' header and footer, each on its own placeholder, outside the viewer
@@ -28,7 +28,7 @@ let volAnnParam;
 let textAnnParam;
 
 /**
- * jQuery's $.isEmptyObject: true if the object has no enumerable property, own or inherited
+ * True if the object has no enumerable property, own or inherited
  * @param {object} obj Any object
  * @returns {boolean} Whether it is empty
  */
@@ -42,15 +42,15 @@ const isEmptyObject = (obj) => {
 };
 
 /**
- * jQuery's $.map over an array: like Array.prototype.map, but null and undefined results are dropped
- * @param {array|null} arr The array (null gives [], as with $.map)
+ * Like Array.prototype.map, but null and undefined results are dropped
+ * @param {array|null} arr The array (null gives [])
  * @param {function} fn The mapping function
  * @returns {array} The mapped values
  */
 const jqMap = (arr, fn) => (arr || []).map(fn).filter((v) => v !== null && typeof v !== 'undefined');
 
 /**
- * jQuery's $(document).on(types, selector, handler): call `handler(event, matched)` for events
+ * Delegated listener: call `handler(event, matched)` for events
  * whose target is, or is inside, an element matching `selector`
  * @param {string} types Space-separated event types
  * @param {string} selector CSS selector of the elements to watch
@@ -102,7 +102,7 @@ const makeAnnotationsSortable = (table, value, modified) => {
 };
 
 /**
- * Select the n-th row (counting the header) of a table, as $('table... tr').eq(n).addClass('selected')
+ * Select the n-th row (counting the header) of a table: give it the class 'selected'
  * @param {string} rowsSelector Selector of the table's rows
  * @param {number} n Row index
  * @returns {void}
@@ -279,7 +279,7 @@ if (isEmptyObject(mriInfo)) {
         switch (col) {
         case 'Value': {
           const url = '/labels/' + infoProxy['mri.atlas.' + index + '.labels'];
-          // As with $.getJSON, a failed request is ignored
+          // A failed request is ignored
           fetch(url)
             .then((res) => (res.ok ? res.json().catch(() => null) : null), () => null)
             .then((json) => {
@@ -384,8 +384,6 @@ if (isEmptyObject(mriInfo)) {
 
       show(document.getElementById('data'));
 
-      // (An autocompletion for project names used to be set up here, with jQuery UI, on
-      // '.autocomplete' elements; the page has none, so it never ran, and was removed.)
     })
     .catch((err) => {
       const msgLog = document.getElementById('msgLog');

@@ -82,7 +82,7 @@ export const AtlasMakerWS = {
 
         me.socket.onopen = function (msg) {
           if (me.debug) { console.log('[initSocketConnection] connection open', msg); }
-          // me.progress is null when the page has no progress link (it was an empty jQuery object before)
+          // me.progress is null when the page has no progress link
           if (me.progress) { me.progress.innerHTML = '<img src=\'' + me.downloadIcon + '\' style=\'vertical-align:middle\'/>MRI'; }
           me._setNotificationsText('Chat (1 connected)');
           me.flagConnected = 1;

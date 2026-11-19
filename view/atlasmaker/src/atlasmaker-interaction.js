@@ -11,13 +11,13 @@ import { resizableColumns } from 'nwl-components/resize';
 import geometryModule from '../../shared/geometry.js';
 import showHideModule from '../../shared/showHide.js';
 
-// jQuery's .show() / .hide(), without jQuery
+// Showing and hiding elements (view/shared)
 const { show, hide } = showHideModule;
-// jQuery's .css('width'), .offset(), .offset({...}) and .css({...}), without jQuery
+// Measuring, placing and styling elements (view/shared)
 const { cssDimension, offset, setOffset, setStyle } = geometryModule;
 
-// The image canvas, measured as $('#atlasmaker canvas') was: the first canvas in the
-// viewer, and undefined values (giving NaN) when there is none
+// The image canvas, for measuring: the first canvas in the viewer,
+// and undefined values (giving NaN) when there is none
 const viewerCanvas = () => document.querySelector('#atlasmaker canvas');
 const canvasCss = (dimension) => { const c = viewerCanvas(); return c ? cssDimension(c, dimension) : undefined; };
 const canvasAttr = (name) => { const c = viewerCanvas(); return c ? c.getAttribute(name) : undefined; };
@@ -43,8 +43,7 @@ const clearToolsSidePosition = () => {
 
 /**
  * Move the viewer (#atlasmaker) into another element, keeping its listeners,
- * as jQuery's .detach().appendTo() did - including leaving it detached when
- * there is no such element
+ * or leave it detached when there is no such element
  * @param {HTMLElement|null} parent Where to move it
  * @returns {void}
  */
@@ -88,7 +87,7 @@ export const AtlasMakerInteraction = {
      */
   loadTools: function () {
     const me = AtlasMakerWidget;
-    // As with jQuery's $.get, a failed request is ignored
+    // A failed request is ignored
     fetch('/lib/atlasmaker-tools/tools.json')
       .then((res) => (res.ok ? res.json() : null))
       .then((res) => {
@@ -796,11 +795,6 @@ export const AtlasMakerInteraction = {
     const me = AtlasMakerWidget;
     e.preventDefault();
 
-    // var W = parseFloat(canvasCss('width'));
-    // var H = parseFloat(canvasCss('height'));
-    // var w = parseFloat(canvasAttr('width'));
-    // var h = parseFloat(canvasAttr('height'));
-    // var o = $('#atlasmaker canvas').offset();
     let touchEvent;
     if(e.originalEvent) {
       [touchEvent] = Array.from(e.originalEvent);
@@ -852,11 +846,6 @@ export const AtlasMakerInteraction = {
     }
     e.preventDefault();
 
-    // var W = parseFloat(canvasCss('width'));
-    // var H = parseFloat(canvasCss('height'));
-    // var w = parseFloat(canvasAttr('width'));
-    // var h = parseFloat(canvasAttr('height'));
-    // var o = $('#atlasmaker canvas').offset();
     let touchEvent;
     if(e.originalEvent) {
       [touchEvent] = Array.from(e.originalEvent.changedTouches);

@@ -25,7 +25,7 @@ import toolsLight from './html/toolsLight.html';
 const { deepExtend } = deepExtendModule;
 
 /**
- * The outcome of a request, as jQuery's $.ajax reported it: `ok` for a 2xx answer
+ * The outcome of a request: `ok` for a 2xx answer
  * whose body could be read (a body sent as JSON must parse), `data` the body
  * (parsed if JSON, text otherwise), `responseJSON` the parsed body if it was JSON
  * (also for errors), and `status` 0 when the server could not be reached.
@@ -47,7 +47,7 @@ const request = async (url, options) => {
 
       return { ok: res.ok, status: res.status, data: parsed, responseJSON: parsed };
     } catch (err) {
-      // jQuery: a JSON body that does not parse is a failure, whatever the status
+      // A JSON body that does not parse is a failure, whatever the status
       return { ok: false, status: res.status };
     }
   }
@@ -441,7 +441,7 @@ const me = {
     me._addAtlasMakerComponents();
 
     // check if user is loged in
-    // (if the request fails, nothing is assumed about the user, as with jQuery's $.get)
+    // (if the request fails, nothing is assumed about the user)
     request('/loggedIn').then(function({ ok, data: res }) {
       if(!ok) { return; }
       if(res.loggedIn) {
@@ -647,7 +647,7 @@ const me = {
         formData.append('url', url);
         formData.append('mriFile', file, filename);
 
-        // fetch sets the multipart Content-Type itself, as jQuery did with contentType: false
+        // no Content-Type: fetch sets the multipart one itself, with its boundary
         request(me.hostname + '/mri/upload-from-url', { method: 'POST', body: formData })
           .then(function(res) {
             if(res.ok) {
@@ -714,7 +714,7 @@ const me = {
           return;
         }
         console.log('polling for data...', url);
-        // A form-encoded body, as jQuery's $.post sent it
+        // A form-encoded body
         request(me.hostname + '/mri/json', { method: 'POST', body: new URLSearchParams({url}) })
           .then(function(res) {
             if(isSuperseded()) {

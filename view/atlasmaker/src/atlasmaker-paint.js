@@ -27,7 +27,7 @@ const placeCollaboratorPointer = (u, x, y, usr) => {
     usr.pointer = div;
     resizable.appendChild(div);
   }
-  // The content-box size, as jQuery's .width()/.height() measured it (#resizable has no padding or border)
+  // The content-box size (#resizable has no padding or border)
   const style = getComputedStyle(resizable);
   usr.pointer.style.left = `${x*parseFloat(style.width)/me.brainW}px`;
   usr.pointer.style.top = `${y*parseFloat(style.height)/me.brainH}px`;

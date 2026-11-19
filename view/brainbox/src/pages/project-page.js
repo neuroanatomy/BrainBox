@@ -18,7 +18,7 @@ import multiple from '../tools/multiple.js';
 import { resizableColumns } from 'nwl-components/resize';
 import showHideModule from '../../../shared/showHide.js';
 
-// jQuery's .show()/.hide(), .width() and .css({...}), without jQuery
+// Showing and hiding elements, measuring and styling them (view/shared)
 const { hide } = showHideModule;
 const { contentSize, setStyle } = geometryModule;
 
@@ -33,7 +33,7 @@ mountViewerHeader(document.getElementById('bb-header-app'), {
 });
 
 /**
- * jQuery's $.isEmptyObject: true if the object has no enumerable property, own or inherited
+ * True if the object has no enumerable property, own or inherited
  * @param {object} obj Any object
  * @returns {boolean} Whether it is empty
  */
@@ -47,14 +47,14 @@ const isEmptyObject = (obj) => {
 };
 
 /**
- * jQuery's $(elem).index(): the element's position among its siblings, -1 for none
+ * The element's position among its siblings, -1 for none (or no element)
  * @param {Element|null} elem The element
  * @returns {number} Its index
  */
-const jqIndex = (elem) => ((elem && elem.parentNode) ? [...elem.parentNode.children].indexOf(elem) : -1);
+const siblingIndex = (elem) => ((elem && elem.parentNode) ? [...elem.parentNode.children].indexOf(elem) : -1);
 
 /**
- * $.getJSON(url, params): rejects on HTTP errors and on a body that is not JSON
+ * GET url?params as JSON: rejects on HTTP errors and on a body that is not JSON
  * @param {string} url Request URL
  * @param {object} params Query parameters
  * @returns {Promise<object>} The parsed body
@@ -69,9 +69,8 @@ const getJSON = async (url, params) => {
 };
 
 /**
- * jQuery's $(document).on(types, selector, handler) (or on another root): call
- * `handler(event, matched)` for events whose target is, or is inside, an element of
- * `root` matching `selector`
+ * Delegated listener: call `handler(event, matched)` for events on `root` whose target
+ * is, or is inside, an element of `root` matching `selector`
  * @param {EventTarget} root Where to listen
  * @param {string} types Space-separated event types
  * @param {string} selector CSS selector of the elements to watch
@@ -90,9 +89,8 @@ const delegate = (root, types, selector, handler) => {
 };
 
 /**
- * jQuery's $(elem).trigger('click'): run the element's click handlers. Like jQuery, a link
- * is not followed, other elements get their native click (as a checkbox toggles), and
- * elements without one (SVG) get the event only.
+ * Run the element's click handlers. A link is not followed, other elements get their
+ * native click (as a checkbox toggles), and elements without one (SVG) get the event only.
  * @param {Element} elem The element
  * @returns {void}
  */
@@ -111,9 +109,8 @@ const triggerClick = (elem) => {
 };
 
 /**
- * jQuery's $(elem).blur() for a delegated blur handler (which jQuery listens to as
- * 'focusout'): a focused element really loses focus; otherwise the focusout is only
- * simulated. Either way the handlers run once.
+ * Blur an element for the delegated 'focusout' handlers: a focused element really loses
+ * focus; otherwise the focusout is only simulated. Either way the handlers run once.
  * @param {Element} elem The element
  * @returns {void}
  */
@@ -196,7 +193,7 @@ const queryFiles = function () {
       } else {
         console.log('All files downloaded. Length:', projectInfo.files.list.length);
       }
-    }, () => null); // as with $.getJSON, a failed request is ignored
+    }, () => null); // a failed request is ignored
 };
 
 /**
@@ -319,7 +316,6 @@ const loadProjectFile = function (index) {
 
           // select the first annotation by default
           // (should be read from project settings)
-          // $('#annotations tbody tr:eq(0)').addClass('selected');
           const firstRow = document.querySelector('#annotations tbody tr');
           if (firstRow) {
             firstRow.classList.add('selected');
@@ -428,7 +424,7 @@ for (const k of projectInfo.annotations.list) {
 }
 
 {
-  // As $(...).text(name): nothing if there is no such element, or if name is undefined
+  // Nothing if there is no such element, or if the name is undefined
   const projectName = document.getElementById('projectName');
   if (projectName && typeof projectInfo.name !== 'undefined') { projectName.textContent = projectInfo.name; }
 }
@@ -558,7 +554,6 @@ BrainBox.initBrainBox()
     appendFilesToProject(list);
 
     // mark first row as selected
-    // $('#projectFiles tbody tr:eq(0)').addClass('selected');
     const firstRow = document.querySelector('#projectFiles tbody tr');
     if (firstRow) {
       firstRow.classList.add('selected');
@@ -598,7 +593,7 @@ BrainBox.initBrainBox()
 
 // Listen to changes that trigger a metadata save
 //------------------------------------------------
-// send data when focus is lost (on blur: jQuery delegated it as 'focusout', which bubbles)
+// send data when focus is lost ('focusout', which bubbles, unlike 'blur')
 delegate(document, 'focusout', '#projectFiles table tbody td', function (e) {
   const index = rowIndex(e.target.closest('tr'));
   JSON.stringify(infoProxy); // update content of projectInfo object from proxy by calling all getters
@@ -614,7 +609,7 @@ delegate(document, 'keydown', '#projectFiles table tbody td', function (e) {
 });
 // blur when <select> changes value to trigger data sending
 {
-  // Bound on the tbody that exists now, as $('#projectFiles table tbody').on(...) was
+  // Bound on the tbody that exists now (not delegated)
   const filesBody = document.querySelector('#projectFiles table tbody');
   if (filesBody) {
     delegate(filesBody, 'change', 'select', function (e) {
@@ -624,7 +619,7 @@ delegate(document, 'keydown', '#projectFiles table tbody td', function (e) {
 }
 
 /**
- * Empty the volume annotations table, as $('table#volAnnotations tbody').html('')
+ * Empty the volume annotations table's body
  * @returns {void}
  */
 const clearVolumeAnnotationsTable = () => {
@@ -657,7 +652,7 @@ delegate(document, 'click touchstart', '#projectFiles tbody tr', function (e) {
 document.addEventListener('keydown', function (e) {
   const table = document.querySelector('#projectFiles tbody');
   const rows = table ? [...table.querySelectorAll('tr')] : [];
-  let position = jqIndex(table ? table.querySelector('tr.selected') : null);
+  let position = siblingIndex(table ? table.querySelector('tr.selected') : null);
 
   if (e.keyCode !== 38 && e.keyCode !== 40) {
     return;
@@ -689,8 +684,8 @@ document.addEventListener('keydown', function (e) {
 delegate(document, 'click touchstart', '#volAnnotations tbody tr', function (e) {
   const table = e.target.closest('tbody');
   const targetRow = e.target.closest('tr');
-  const targetIndex = jqIndex(targetRow);
-  const currentIndex = jqIndex(table ? table.querySelector('tr.selected') : null);
+  const targetIndex = siblingIndex(targetRow);
+  const currentIndex = siblingIndex(table ? table.querySelector('tr.selected') : null);
 
   if (targetIndex >= 0 && currentIndex !== targetIndex) {
     if (table) { table.querySelectorAll('tr').forEach((tr) => { tr.classList.remove('selected'); tr.removeAttribute('aria-selected'); }); }

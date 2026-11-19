@@ -15,7 +15,7 @@ import Config from './../../../cfg.json';
 
 /**
  * @function fetchOK
- * @description fetch() that rejects on HTTP errors, as jQuery's $.get/$.getJSON did
+ * @description fetch() that rejects on HTTP errors
  * @param {string} url Request URL
  * @returns {Promise<Response>} The response, if its status is 2xx
  */
@@ -30,7 +30,7 @@ const fetchOK = async (url) => {
 
 /**
  * @function getJSON
- * @description Replacement for jQuery's $.getJSON: the body must be JSON, or the promise rejects
+ * @description GET as JSON: the body must be JSON, or the promise rejects
  * @param {string} url Request URL
  * @returns {Promise<object>} The parsed body
  */
@@ -38,8 +38,8 @@ const getJSON = async (url) => (await fetchOK(url)).json();
 
 /**
  * @function get
- * @description Replacement for jQuery's $.get with query parameters. Like $.get,
- * the body is parsed only if the server says it is JSON, and returned as text
+ * @description GET with query parameters. The body is parsed only if the server
+ * says it is JSON, and returned as text
  * otherwise (e.g. /mri/json answers 'Invalid Url!' as text/html).
  * @param {string} url Request URL
  * @param {object} data Query parameters
@@ -48,7 +48,7 @@ const getJSON = async (url) => (await fetchOK(url)).json();
 const get = async (url, data) => {
   const query = new URLSearchParams();
   for (const [key, value] of Object.entries(data)) {
-    // $.param sends null and undefined as empty strings
+    // null and undefined are sent as empty strings
     query.append(key, (value === null || typeof value === 'undefined') ? '' : value);
   }
   const res = await fetchOK(`${url}?${query}`);
