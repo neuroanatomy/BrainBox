@@ -1,32 +1,10 @@
 /* global loggedUser */
 import 'nwl-components/dist/style.css';
-import { Button, Footer, Header, Table, Wrapper } from 'nwl-components';
+import { Button, Footer, Header, Table, Wrapper, fetchJSON, formatDate, postJSON } from 'nwl-components';
 import { computed, createApp, onMounted, ref } from 'vue';
 import config from '../nwl-components-config';
 
-const fetchJSON = async (url, options = {}) => {
-  const res = await fetch(url, {
-    ...options,
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }
-  });
-  let body;
-  try {
-    body = await res.json();
-  } catch {
-    body = { success: false, error: `${res.status} ${res.statusText}` };
-  }
-  if (!res.ok || body.success === false) {
-    throw new Error(body.error || body.msg || `${res.status} ${res.statusText}`);
-  }
-
-  return body;
-};
-
-const postJSON = (url, data) => fetchJSON(url, { method: 'POST', body: JSON.stringify(data) });
-
 const mriLink = (source) => '/mri?url=' + encodeURIComponent(source);
-
-const formatDate = (date) => (date ? String(date).slice(0, 10) : '');
 
 const AdminPage = {
   template: '#template',

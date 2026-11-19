@@ -21,7 +21,7 @@ const ALLOWED = {
   'view/brainbox/src/style/textAnnotations.css': [],
   'view/atlasmaker/src/tools/render3D/style.css': [],
   'templates/admin.mustache': ['#2a2a2a', '#a83', '#888', '#888', '#f99', '#633', '#aaa', '#f77'],
-  'templates/projectSettings.mustache': ['#aaa'],
+  'templates/projectSettings.mustache': [],
   'templates/mriEmbed.mustache': [],
   'templates/mriRender3D.mustache': [],
   'templates/askForLogin.mustache': [],

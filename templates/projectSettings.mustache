@@ -10,26 +10,6 @@
     #files td:first-child {
         word-break: break-all;
     }
-    .filesStatus {
-        font-size: inherit;
-        font-weight: var(--nwl-weight-regular);
-        color: #aaa;
-    }
-    .filesStatus button {
-        background: transparent;
-        color: var(--nwl-text);
-        border: 1px solid var(--nwl-border);
-        border-radius: var(--nwl-radius-sm);
-        margin-left: 5px;
-        padding: 3px 10px;
-        cursor: pointer;
-    }
-    /* the files cannot be edited until they are all loaded (the table is in a
-       div.nwl-resize-wrap, which has no box of its own until a column is resized) */
-    .filesLoading > :not(h2), .filesLoading > .nwl-resize-wrap > table {
-        pointer-events: none;
-        opacity: 0.6;
-    }
     </style>
     <link rel="stylesheet" href="/fonts/roboto/roboto.css" type="text/css">
     <link rel="stylesheet" href="/lib/nwl-components/fonts.css">
