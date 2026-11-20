@@ -22,6 +22,15 @@ const projectVersion = (list, modified, backup) => ({
   ...(backup ? { backup: true } : {})
 });
 
+// the damaged projects section is nwl-components' DamagedProjects (3.7.0): a block per project, no time, no undo
+const projectBlock = `#projects div.project[data-shortname="${damagedProject}"]`;
+// the list has been read (again)
+const listRead = (page) => page.waitForFunction(() => {
+  const button = document.querySelector('#projects button.find-damaged');
+
+  return button && !button.disabled && button.textContent.trim() === 'Reload';
+}, { timeout: U.mediumTimeout });
+
 const volume = (filename, project) => ({
   name: '',
   project,
@@ -137,42 +146,46 @@ describe('TESTING THE ADMIN PAGE', function () {
     assert.equal(mri.modifiedBy, U.testingCredentials.username);
   }).timeout(U.longTimeout);
 
-  // eslint-disable-next-line max-statements
-  it('finds a project damaged by an incomplete save, and restores its files', async function () {
-    await page.click('#projects button');
-    const row = await page.waitForFunction((project) => [...document.querySelectorAll('#projects tbody tr')]
-      .find((tr) => tr.querySelector('code') && tr.querySelector('code').textContent === project), { timeout: U.mediumTimeout }, damagedProject);
-    const cells = await row.evaluate((tr) => [...tr.cells].map((td) => td.textContent.replace(/\s+/g, ' ').trim()));
-    assert.deepEqual(cells.slice(0, 5), [damagedProject, U.projectTest.owner, '100', '50', 'incomplete save']);
+  it('finds a project damaged by an incomplete save', async function () {
+    await page.click('#projects button.find-damaged');
+    await page.waitForSelector(projectBlock, { timeout: U.mediumTimeout });
+    const counts = await page.$eval(`${projectBlock} p.counts`, (el) => el.textContent.replace(/\s+/g, ' ').trim());
+    assert.equal(counts, 'incomplete save 100 file(s) now, 2 version(s), 50 file(s) missing');
+    assert.equal(await page.$eval(`${projectBlock} .owner`, (el) => el.textContent), `owner: ${U.projectTest.owner}`);
 
-    await row.evaluate((tr) => tr.querySelector('a.toggle').click());
-    const event = await page.waitForSelector('#projects tr.details li', { timeout: U.shortTimeout });
-    const text = await event.evaluate((el) => el.textContent.replace(/\s+/g, ' '));
-    assert.include(text, '2024-06-07');
-    assert.include(text, 'someone');
+    const text = await page.$eval(`${projectBlock} li.event`, (el) => el.textContent.replace(/\s+/g, ' '));
+    assert.include(text, '2024-06-07 by someone');
+    assert.notMatch(text, /\d\d:\d\d/, 'the dates show no time');
     assert.include(text, '150 → 100 files');
     assert.include(text, '50 still missing');
+  }).timeout(U.longTimeout);
 
-    // a save after the list was read: the restore is refused (409), the error shown and the list searched again
+  it('keeps the 409 of a restore shown after the list is read again', async function () {
+    // a save after the list was read: the restore is refused (409)
     await U.getNativeDB().collection('project')
       .updateOne({ shortname: damagedProject, backup: { $exists: false } }, { $set: { description: 'changed since listed' } });
-    await page.click('#projects tr.details li button');
-    await page.waitForFunction(() => document.querySelector('#projects .error')
-      && document.querySelector('#projects button').textContent.trim() === 'Search again', { timeout: U.mediumTimeout });
-    assert.equal(await page.$eval('#projects .error', (el) => el.textContent), `Project ${damagedProject} has changed since it was listed: reload the list`);
+    await page.click(`${projectBlock} button.restore-files`);
+    await page.waitForSelector('#projects p.error', { timeout: U.mediumTimeout });
+    await listRead(page);
+    await page.waitForSelector(projectBlock, { timeout: U.shortTimeout });
+    assert.equal(await page.$eval('#projects p.error', (el) => el.textContent.trim()), `Project ${damagedProject} has changed since it was listed: reload the list`);
+    assert.equal(await page.$eval('#projects p.error', (el) => el.getAttribute('role')), 'alert');
+    assert.isNull(await page.$('#projects p.result'));
     assert.lengthOf((await U.queryProject(damagedProject)).files.list, 100, 'nothing was stored');
+  }).timeout(U.longTimeout);
 
-    // with the new token of the list searched again
-    await page.waitForSelector('#projects tr.details li button', { timeout: U.shortTimeout });
-    await page.click('#projects tr.details li button');
-    await page.waitForSelector('#projects .result', { timeout: U.mediumTimeout });
-    assert.include(await page.$eval('#projects .result', (el) => el.textContent), `${damagedProject}: restored 50 file(s), it has 150 now.`);
+  it('restores its files with the token of the list read again', async function () {
+    await page.click(`${projectBlock} button.restore-files`);
+    await page.waitForSelector('#projects p.result', { timeout: U.mediumTimeout });
+    assert.include(await page.$eval('#projects p.result', (el) => el.textContent), `${damagedProject}: restored 50 file(s), it has 150 now.`);
+    assert.isNull(await page.$('#projects button.undo-restore-files'), 'no undo');
 
     const project = await U.queryProject(damagedProject);
     assert.deepEqual(project.files.list, damagedFiles);
     assert.equal(project.modifiedBy, U.testingCredentials.username);
-    // the list is searched again, without the project
-    await page.waitForFunction((p) => ![...document.querySelectorAll('#projects tbody code')].some((el) => el.textContent === p)
-      && document.querySelector('#projects button').textContent.trim() === 'Search again', { timeout: U.mediumTimeout }, damagedProject);
+    // the list is read again, without the project
+    await listRead(page);
+    await page.waitForFunction((selector) => !document.querySelector(selector), { timeout: U.mediumTimeout }, projectBlock);
+    assert.isNull(await page.$('#projects p.error'));
   }).timeout(U.longTimeout);
 });

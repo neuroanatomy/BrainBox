@@ -1,6 +1,6 @@
 /* global loggedUser */
 import 'nwl-components/dist/style.css';
-import { Button, Footer, Header, Table, Wrapper, fetchJSON, formatDate, postJSON } from 'nwl-components';
+import { Button, DamagedProjects, Footer, Header, Table, Wrapper, fetchJSON, formatDate, postJSON } from 'nwl-components';
 import { computed, createApp, onMounted, ref } from 'vue';
 import config from '../nwl-components-config';
 
@@ -26,12 +26,6 @@ const AdminPage = {
     const selectedText = ref([]);
     const selectProject = ref('');
 
-    const damaged = ref(null); // null until searched
-    const damagedLoading = ref(false);
-    const damagedError = ref('');
-    const damagedResult = ref('');
-    const damagedExpanded = ref({});
-
     const message = ref('');
     const serverResult = ref('');
 
@@ -44,72 +38,6 @@ const AdminPage = {
         orphansError.value = err.message;
       }
       orphansLoading.value = false;
-    };
-
-    const loadDamaged = async () => {
-      damagedLoading.value = true;
-      damagedError.value = '';
-      try {
-        damaged.value = (await fetchJSON('/admin/json/projects/damaged')).list;
-      } catch (err) {
-        damagedError.value = err.message;
-      }
-      damagedLoading.value = false;
-    };
-
-    const toggleDamaged = (shortname) => {
-      damagedExpanded.value = { ...damagedExpanded.value, [shortname]: !damagedExpanded.value[shortname] };
-    };
-
-    // What is wrong with a damaged project
-    const problems = (p) => [
-      ...(p.suspected ? ['incomplete save'] : []),
-      ...(p.missing && !p.suspected ? ['files removed'] : []),
-      ...(p.currentVersions.length > 1 ? [`${p.currentVersions.length} current versions`] : [])
-    ];
-
-    // Post a fix, then search again. An error (a 409 for a project changed
-    // since it was listed, with the version token of the list) stays shown
-    // above the list searched again, with the project's new token
-    const fixDamaged = async (fn) => {
-      damagedResult.value = '';
-      damagedError.value = '';
-      let error = '';
-      try {
-        damagedResult.value = await fn();
-      } catch (err) {
-        ({ message: error } = err);
-      }
-      await loadDamaged();
-      if (error) {
-        damagedError.value = error;
-      }
-    };
-
-    const restoreFiles = (p, e) => {
-      // eslint-disable-next-line no-alert
-      if (!window.confirm(`Add back to "${p.shortname}" the ${e.stillMissing} file(s) that the save of ${formatDate(e.modified)} removed?`)) {
-        return;
-      }
-
-      return fixDamaged(async () => {
-        const { restored, files } = await postJSON('/admin/json/projects/restore-files', { project: p.shortname, version: p.version, save: e.save });
-
-        return `${p.shortname}: restored ${restored} file(s), it has ${files} now.`;
-      });
-    };
-
-    const fixCurrent = (p) => {
-      // eslint-disable-next-line no-alert
-      if (!window.confirm(`"${p.shortname}" has ${p.currentVersions.length} current versions: keep the most recent one, and make the others backups?`)) {
-        return;
-      }
-
-      return fixDamaged(async () => {
-        const { backups } = await postJSON('/admin/json/projects/fix-current', { project: p.shortname, version: p.version });
-
-        return `${p.shortname}: kept the most recent version, ${backups} other(s) made backups.`;
-      });
     };
 
     const loadMRI = async () => {
@@ -231,16 +159,6 @@ const AdminPage = {
       selectedText,
       selectProject,
       volumeProjects,
-      damaged,
-      damagedLoading,
-      damagedError,
-      damagedResult,
-      damagedExpanded,
-      loadDamaged,
-      toggleDamaged,
-      problems,
-      restoreFiles,
-      fixCurrent,
       message,
       serverResult,
       loadOrphans,
@@ -264,6 +182,8 @@ app.component('Header', Header);
 app.component('Footer', Footer);
 app.component('Table', Table);
 app.component('Button', Button);
+// the damaged projects section (nwl-components 3.7.0): no time, no undo
+app.component('DamagedProjects', DamagedProjects);
 app.provide('config', config);
 app.provide('user', loggedUser);
 

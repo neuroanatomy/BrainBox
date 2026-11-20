@@ -4,7 +4,7 @@ const { body, validationResult } = require('express-validator');
 const admins = require('./admins');
 const annotations = require('./admin.annotations');
 const projects = require('./admin.projects');
-const { jsonForScript, publicLoggedUser, sendResult } = require('neuroweblab');
+const { damagedProjectsRoutes, jsonForScript, publicLoggedUser } = require('neuroweblab');
 
 const { isAdmin, requestUsername } = admins;
 
@@ -227,72 +227,15 @@ const removeMRIAnnotations = async (req, res) => {
   }
 };
 
-/**
- * List the damaged projects: files removed by a save that are still missing,
- * several current versions (NeuroWebLab 1.23.0 damagedProjects)
- * @param {object} req Request object
- * @param {object} res Response object
- * @returns {void}
- */
-const getDamagedProjects = async (req, res) => {
-  try {
-    const { list } = await projects.findDamagedProjects(req.nativeDb);
-    res.json({ success: true, list });
-  } catch (err) {
-    serverError(res, err);
-  }
-};
-
-// Answer with the result of a fix, or its error (NeuroWebLab sendResult; a
-// 500 is logged with console.log('ERROR:', err), as serverError)
-const sendFixResult = (res, fix) => sendResult(res, fix);
-
-// The project and its version token (as listed) of a fix's body; the texts are microdraw's
-const projectFromBody = (fields) => {
-  if (typeof fields.project !== 'string' || fields.project === '') {
-    return { error: 'Provide the project shortname' };
-  }
-  if (typeof fields.version !== 'string' || fields.version === '') {
-    return { error: 'Provide the version of the project, as listed' };
-  }
-
-  return { shortname: fields.project, version: fields.version };
-};
-
-/**
- * Add back to a project the files that a save removed and that are still
- * missing, as a new version. Body: { project, version, save } (version: the
- * project's token, save: the id of the version the save stored, as listed)
- * @param {object} req Request object
- * @param {object} res Response object
- * @returns {void}
- */
-const restoreProjectFiles = (req, res) => {
-  const reqBody = req.body || {};
-  const { shortname, version, error } = projectFromBody(reqBody);
-  if (error) {
-    return res.status(400).json({ success: false, error });
-  }
-  if (typeof reqBody.save !== 'string' || reqBody.save === '') {
-    return res.status(400).json({ success: false, error: 'Provide the save: the id of the version it stored, as listed' });
-  }
-  sendFixResult(res, projects.restoreFiles(req.nativeDb, { shortname, version, save: reqBody.save, username: requestUsername(req) }));
-};
-
-/**
- * Keep only the most recent of the current versions of a project, mark the
- * others backup. Body: { project, version } (version: the token, as listed)
- * @param {object} req Request object
- * @param {object} res Response object
- * @returns {void}
- */
-const fixProjectCurrentVersions = (req, res) => {
-  const { shortname, version, error } = projectFromBody(req.body || {});
-  if (error) {
-    return res.status(400).json({ success: false, error });
-  }
-  sendFixResult(res, projects.fixCurrentVersions(req.nativeDb, { shortname, version, username: requestUsername(req) }));
-};
+// The damaged projects tools (NeuroWebLab 1.24.0 damagedProjectsRoutes, over
+// admin.projects.js): GET /admin/json/projects/damaged, POST
+// /admin/json/projects/restore-files { project, version, save } and
+// fix-current { project, version }; the 400 texts are microdraw's, a 500 is
+// logged with console.log('ERROR:', err), as serverError
+const { getDamagedProjects, restoreProjectFiles, fixProjectCurrentVersions } = damagedProjectsRoutes(projects, {
+  nativeDb: (req) => req.nativeDb,
+  requestUsername
+});
 
 module.exports = {
   validator,
