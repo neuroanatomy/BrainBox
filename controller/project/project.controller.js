@@ -490,7 +490,7 @@ const saveProject = async function (req, res, loggedUser) {
 };
 
 /*
- * The lock of the project changes (NWL's project/lock.js, as controller/projectLock.js), held by
+ * The lock of the project changes (NWL's project/lock.js), held by
  * the save and the delete; the admin tools take the same keys (decision D3)
  */
 const lockKeys = () => ['project', 'mri'];

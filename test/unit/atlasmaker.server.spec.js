@@ -183,26 +183,8 @@ describe('UNIT TESTING ATLASMAKER SERVER', function() {
   });
 
   describe('Database', function () {
-    it('Find user name given their nickname', async function () {
-      const data = { type: 'userNameQuery', metadata: { nickname: U.userFoo.nickname } };
-      const result = await AMS.queryUserName(data);
-      assert.strictEqual(result[0].name, U.userFoo.name);
-    });
-
-    it('Find user nickname given their name', async function () {
-      const data = { type: 'userNameQuery', metadata: { name: U.userFoo.name } };
-      const result = await AMS.queryUserName(data);
-      assert.strictEqual(result[0].nickname, U.userFoo.nickname);
-    });
-
-    it('User name queries send only the name and nickname of each user, not their _id', async function () {
-      const byNickname = await AMS.queryUserName({ type: 'userNameQuery', metadata: { nickname: U.userFoo.nickname } });
-      const byName = await AMS.queryUserName({ type: 'userNameQuery', metadata: { name: U.userFoo.name } });
-      assert.ok(byNickname.length);
-      assert.ok(byName.length);
-      for (const item of [...byNickname, ...byName]) {
-        assert.deepStrictEqual(Object.keys(item).sort(), ['name', 'nickname']);
-      }
+    it('There is no user name query over the WebSocket (the pages use GET /api/userNameQuery)', function () {
+      assert.strictEqual(typeof AMS.queryUserName, 'undefined');
     });
 
     it('A shortname query answers only that the shortname is taken, never the project name', async function () {

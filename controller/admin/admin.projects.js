@@ -16,7 +16,7 @@
  *   project, or an atlas of it;
  * - the save: NeuroWebLab's saveProjectVersion, the files stored as sources
  *   (a restore never writes `{source, name}` rows);
- * - the lock: `['project', 'mri']`, as projectLock.js (decision D3).
+ * - the lock: `['project', 'mri']`, as NWL's project/lock.js (decision D3).
  * No logger: BrainBox logs with console, adminLog only writes the entry.
  *
  * Exports `{ findDamagedProjects(db), restoreFiles(db, params),

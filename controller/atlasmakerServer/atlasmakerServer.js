@@ -14,7 +14,7 @@ const amri = require('./atlasmaker-mri');
 const AsyncLock = require('async-lock');
 const lock = new AsyncLock();
 const EmbedAccessService = require('../../services/EmbedAccessService');
-const { escapeRegex, findCurrentProject, usernameFromCookie } = require('neuroweblab');
+const { findCurrentProject, usernameFromCookie } = require('neuroweblab');
 const { atlasAccessLevel, atlasReadAccess, canEdit } = require('./atlas-write-access');
 const { mergeMetadata, projectsForMetadata, savedView } = require('./metadata-save-access');
 
@@ -949,33 +949,6 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
     //========================================================================================
     // DB querying
     //========================================================================================
-    queryUserName: function (data) {
-      return new Promise(function (resolve, reject) {
-        if (data.metadata && data.metadata.nickname) {
-          nativeDb.collection('user')
-            .find(
-              { 'nickname': { '$regex': escapeRegex(data.metadata.nickname) } },
-              { projection: { _id: 0, nickname: 1, name: 1 }, limit: 10 })
-            .toArray()
-            .then(function (obj) {
-              resolve(obj);
-            }
-            );
-        } else if (data.metadata && data.metadata.name) {
-          nativeDb.collection('user')
-            .find(
-              { 'name': { '$regex': escapeRegex(data.metadata.name) } },
-              { projection: { _id: 0, nickname: 1, name: 1 }, limit: 10 })
-            .toArray()
-            .then(function (obj) {
-              resolve(obj);
-            });
-        } else {
-          reject(new Error('Can\'t find user'));
-        }
-      });
-    },
-
     /**
      * Answers whether a project shortname is taken, for the new-project page.
      * Only taken / free is sent: never the project's name or other fields,
@@ -2526,14 +2499,6 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         break;
       case 'echo':
         tracer.log(`ECHO: "${data.msg}" from user ${data.username} (${data.uid})`);
-        break;
-      case 'userNameQuery':
-        me.queryUserName(data)
-          .then(function (obj) {
-            data.metadata = obj;
-            ws.send(JSON.stringify(data)); // sender.send(JSON.stringify(data));
-          })
-          .catch((err) => tracer.log(err));
         break;
       case 'projectNameQuery':
         me.queryProjectName(data)
