@@ -1,5 +1,6 @@
 const { assert } = require('chai');
-const { planeAspect, desiredEmbedHeight } = require('../../view/shared/embedSizing');
+const { planeAspect } = require('../../view/shared/embedSizing');
+const { desiredEmbedHeight } = require('nwl-components/embed');
 
 // Sloth Bear (braincatalogue.org), the brain the embed demo page uses:
 // 230 x 300 x 270 voxels, 0.33 mm isotropic.

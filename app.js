@@ -24,6 +24,7 @@ const AtlasmakerServer = require('./controller/atlasmakerServer/atlasmakerServer
 const routes = require('./controller/routes/routes');
 const { notFound, errorHandler } = require('neuroweblab');
 const { dataAccessMiddleware } = require('./controller/mri/data-access');
+const { serveEmbedJs } = require('./controller/embedLoader');
 
 const MONGO_DB = process.env.MONGODB || 'localhost:27017/brainbox';
 
@@ -120,6 +121,9 @@ const start = async function ({ extraRoutes } = {}) {
   }
   app.use(logger(':remote-addr :method :url :status :response-time ms - :res[content-length]', loggerOptions));//app.use(logger('dev'));
   app.use(cookieParser());
+  // the one-line embed's loader, made by nwl-components' embedScript() (controller/embedLoader.js),
+  // ahead of the public files, where it used to be a file
+  app.get('/embed.js', serveEmbedJs);
   // only those who may see them get the files of an MRI (/data/<md5>/<file>). Both in a
   // router of their own: a refused file leaves it (next('router')) and gets the app's 404,
   // as a file that does not exist

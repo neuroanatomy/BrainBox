@@ -3,6 +3,7 @@ import 'nwl-components/tokens.css';
 import '../style/ui.css';
 import '../../../atlasmaker/src/css/embed-layout.css';
 
+import { desiredEmbedHeight, positiveIntParam } from 'nwl-components/embed';
 import embedAnnotation from '../../../shared/embedAnnotation.js';
 import embedSizing from '../../../shared/embedSizing.js';
 
@@ -51,18 +52,6 @@ const updateBrainBoxLink = function () {
 };
 
 /**
- * @function positiveIntParam
- * @param {string} value Raw query-string value
- * @returns {number|undefined} The parsed value, or undefined when unusable
- */
-const positiveIntParam = function (value) {
-  const n = parseInt(value, 10);
-
-  // eslint-disable-next-line no-undefined
-  return (isFinite(n) && n > 0) ? n : undefined;
-};
-
-/**
  * Report the height this viewer wants to the parent window, computed from the
  * current plane's aspect ratio plus the toolbar. Never derived from the
  * rendered document height: that is clamped by the iframe box we are trying to
@@ -75,7 +64,7 @@ const reportSizeToParent = function () {
   const toolbar = document.getElementById('tools-side');
   const width = document.documentElement.clientWidth;
   const aspect = embedSizing.planeAspect(AtlasMakerWidget);
-  const height = embedSizing.desiredEmbedHeight({
+  const height = desiredEmbedHeight({
     width,
     aspect,
     toolbarHeight: toolbar ? toolbar.offsetHeight : 0,

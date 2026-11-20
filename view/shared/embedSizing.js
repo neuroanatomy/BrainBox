@@ -6,6 +6,9 @@
  * embed logic covered by unit tests (the AtlasMaker modules import .css/.html
  * through webpack loaders and cannot be required outside a bundle).
  *
+ * Only the plane's aspect ratio is here, since it follows BrainBox's data model;
+ * the height to ask for, desiredEmbedHeight(), is in nwl-components/embed.
+ *
  * The height an embed needs is *computed* from the plane's aspect ratio, never
  * measured from the DOM. Measuring is what made the previous implementation
  * useless: it read document.body.scrollHeight inside a viewport-height box, so
@@ -33,27 +36,4 @@ const planeAspect = function ({ brainW, brainH, brainWdim, brainHdim }) {
   return w / h;
 };
 
-/**
- * Height the host page should give the iframe so the image is not letterboxed.
- * @param {object} opts Options
- * @param {number} opts.width Current content width of the embed, in px
- * @param {number} opts.aspect Plane aspect ratio, from planeAspect()
- * @param {number} opts.toolbarHeight Height of the toolbar below the image, in px
- * @param {number} [opts.minHeight] Never report less than this
- * @param {number} [opts.maxHeight] Never report more than this
- * @returns {number} Integer height in px, or NaN when the aspect is unknown
- */
-const desiredEmbedHeight = function ({ width, aspect, toolbarHeight, minHeight = 160, maxHeight = Infinity }) {
-  if (!isFinite(width) || width <= 0 || !isFinite(aspect) || aspect <= 0) {
-    return NaN;
-  }
-
-  const bar = isFinite(toolbarHeight) ? toolbarHeight : 0;
-  const ideal = Math.round(width / aspect) + bar;
-
-  // A max lower than the min is contradictory; the min is the safer promise to
-  // keep, since a box below it cannot show anything useful at all.
-  return Math.max(minHeight, Math.min(maxHeight, ideal));
-};
-
-module.exports = { planeAspect, desiredEmbedHeight };
+module.exports = { planeAspect };
