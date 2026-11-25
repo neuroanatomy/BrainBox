@@ -462,16 +462,20 @@ const me = {
 
 
     // text input (scripting console - not available in the read-only embed viewer,
-    // which has no #logScript element and shouldn't expose a JS console anyway)
+    // which has no #logScript element and shouldn't expose a JS console anyway).
+    // Shipped in public/vendor/ (provenance and checksums: public/vendor/vendor.json,
+    // `npm run verify-vendor`). Started as soon as both are loaded: the toolbar,
+    // with #logScript, is in the page by then, and the window's load event may
+    // already have fired (waiting for it left the console unstarted).
     if (!me.embedMode) {
       Promise.all([
-        me.loadScript('https://unpkg.com/codeflask/build/codeflask.min.js'),
-        me.loadScript('https://cdn.jsdelivr.net/gh/r03ert0/consolita.js@v0.1.1/consolita.js')
+        me.loadScript('/vendor/codeflask/codeflask.min.js'), // codeflask@1.4.1
+        me.loadScript('/vendor/consolita/consolita.js') // consolita.js@0.2.1
       ]).then(() => {
-        window.onload = () => {
-          // eslint-disable-next-line no-undef
-          Consolita.init('#logScript');
-        };
+        const logScript = document.getElementById('logScript');
+        // consolita 0.2 takes the element, not a selector
+        // eslint-disable-next-line no-undef
+        if (logScript) { Consolita.init(logScript); }
       })
         .catch((err) => {
           console.warn('Scripting console unavailable:', err && err.type);

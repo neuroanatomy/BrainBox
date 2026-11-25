@@ -669,5 +669,68 @@ describe('MRI Controller: ', function () {
         assert.strictEqual(JSON.parse(locals.path), '/data/embedpublic/Atlas.nii.gz');
       });
     });
+
+    // A failing database answers 500 (logged by catchErrors), not 404 or no
+    // answer at all (F2, D10)
+    describe('database errors', function () {
+      // The real database, with one collection's method replaced by a failure
+      const failing = (name, method) => ({
+        collection: (c) => {
+          const real = nativeDb.collection(c);
+          if (c !== name) { return real; }
+          const fail = () => Promise.reject(new Error('db down'));
+
+          return Object.assign(Object.create(real), {
+            [method]: method === 'find' ? () => ({ toArray: fail }) : fail
+          });
+        }
+      });
+      const reqWith = (db, query) => ({ ...makeAnonReq(query), nativeDb: db });
+
+      // catchErrors logs the error: keep the test output quiet
+      beforeEach(function () { sinon.stub(console, 'error'); });
+
+      afterEach(function () { console.error.restore(); });
+
+      it('mriEmbed answers 500 when the MRI lookup fails', async function () {
+        const res = makeRenderRes();
+        await mriController.mriEmbed(reqWith(failing('mri', 'findOne'), { url: publicEmbedURL }), res);
+        assert.isTrue(res.status.calledOnceWith(500));
+        assert.strictEqual(res.render.args[0][0], 'embedError');
+      });
+
+      it('mriEmbed answers 500 when getRelatedProjects rejects', async function () {
+        const res = makeRenderRes();
+        await mriController.mriEmbed(reqWith(failing('project', 'find'), { url: publicEmbedURL }), res);
+        assert.isTrue(res.status.calledOnceWith(500));
+        assert.strictEqual(res.render.args[0][0], 'embedError');
+        assert.isTrue(res.set.calledWith('Content-Security-Policy', 'frame-ancestors *'));
+      });
+
+      it('mriRender3D answers 500 when getRelatedProjects rejects', async function () {
+        const res = makeRenderRes();
+        await mriController.mriRender3D(reqWith(failing('project', 'find'), { url: publicEmbedURL }), res);
+        assert.isTrue(res.status.calledOnceWith(500));
+        assert.strictEqual(res.render.args[0][0], 'embedError');
+        assert.isTrue(res.set.calledWith('Content-Security-Policy', 'frame-ancestors *'));
+      });
+
+      it('apiMriLayers answers 500 JSON when getRelatedProjects rejects', async function () {
+        const jsonSpy = sinon.spy();
+        const res = { status: sinon.stub().returns({ json: jsonSpy }), json: sinon.spy(), headersSent: false };
+        await mriController.apiMriLayers(reqWith(failing('project', 'find'), { url: publicEmbedURL }), res);
+        assert.isTrue(res.status.calledOnceWith(500));
+        assert.deepStrictEqual(jsonSpy.args[0][0], { error: 'Server error' });
+        assert.strictEqual(res.json.callCount, 0);
+      });
+
+      it('mriEmbed answers 500 when mintWsTicket rejects', async function () {
+        const res = makeRenderRes();
+        await mriController.mriEmbed(reqWith(failing('embedWsTicket', 'insertOne'), { url: publicEmbedURL }), res);
+        assert.isTrue(res.status.calledOnceWith(500));
+        assert.strictEqual(res.render.callCount, 1);
+        assert.strictEqual(res.render.args[0][0], 'embedError');
+      });
+    });
   });
 });

@@ -10,11 +10,14 @@ import pako from 'pako';
 import { resizableColumns } from 'nwl-components/resize';
 import geometryModule from '../../shared/geometry.js';
 import showHideModule from '../../shared/showHide.js';
+import viewLinkModule from '../../shared/viewLink.js';
 
 // Showing and hiding elements (view/shared)
 const { show, hide } = showHideModule;
 // Measuring, placing and styling elements (view/shared)
 const { cssDimension, offset, setOffset, setStyle } = geometryModule;
+// Links to a plane and slice (view/shared)
+const { linkToView } = viewLinkModule;
 
 // The image canvas, for measuring: the first canvas in the viewer,
 // and undefined values (giving NaN) when there is none
@@ -1135,10 +1138,12 @@ export const AtlasMakerInteraction = {
 
   /**
      * @function link
+     * @desc Offer a link to this page showing the current plane and slice
+     *       (each set once in the query; the MRI page reads them back)
      * @returns {void}
      */
   link: function () {
-    window.prompt('Copy to clipboard:', location.href + '&view = ' + AtlasMakerWidget.User.view + '&slice = ' + AtlasMakerWidget.User.slice);
+    window.prompt('Copy to clipboard:', linkToView(location.href, AtlasMakerWidget.User));
   },
 
   /**

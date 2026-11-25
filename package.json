@@ -22,6 +22,7 @@
     "test-integration": "cross-env MONGODB='127.0.0.1:27017/brainbox_test' LOCALSIGNIN=true nyc --report-dir test/integration/coverage mocha --exit --timeout 5000 ./test/runner.js test/integration/*.js",
     "mocha-test": "cross-env MONGODB='127.0.0.1:27017/brainbox_test' LOCALSIGNIN=true nyc mocha --exit --timeout 5000 ./test/runner.js test/unit/*.js test/integration/*.js",
     "lint": "eslint . && node scripts/check-hex-colours.js",
+    "verify-vendor": "node scripts/verify-vendor.js",
     "test": "npm run mocha-test",
     "prepare": "husky install"
   },

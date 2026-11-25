@@ -9,7 +9,7 @@ const sanitize = require('sanitize-filename');
 const { body, validationResult } = require('express-validator');
 const AtlasmakerServer = require('../atlasmakerServer/atlasmakerServer');
 const dataSlices = require('../dataSlices/dataSlices.js');
-const { AccessType, AccessLevel, findCurrentProject, jsonForScript, publicLoggedUser } = require('neuroweblab');
+const { AccessType, AccessLevel, catchErrors, findCurrentProject, jsonForScript, publicLoggedUser } = require('neuroweblab');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 const EmbedAccessService = require('../../services/EmbedAccessService');
 const { projectsForMetadata, mayChangeMri } = require('../atlasmakerServer/metadata-save-access');
@@ -312,6 +312,60 @@ const mri = async function (req, res) {
 const EMBED_QUERY_PARAMS = ['url', 'view', 'slice', 'project', 'annotation', 'embedToken', 'maxHeight', 'brainboxLink'];
 
 /**
+ * The access steps the three embed routes share (mriEmbed, mriRender3D,
+ * apiMriLayers): a url is asked for, the MRI is in the database, and the
+ * visitor may embed it. The annotations' access is set for the visitor. A
+ * database error, or a failed project lookup, is thrown: the routes are wrapped
+ * with NeuroWebLab's catchErrors, which logs it and answers 500 (as microdraw's
+ * embed.controller.js).
+ * @param {Object} req Express request
+ * @returns {Promise<Object>} {status: 400 | 404 | 403} when refused, else {status: 200, json, myurl}
+ */
+const embedAccess = async function (req) {
+  const loggedUser = req.isAuthenticated() ? req.user.username : 'anonymous';
+  const myurl = req.query.url;
+
+  if (!myurl) { return { status: 400 }; }
+
+  const json = await req.nativeDb.collection('mri').findOne({ source: myurl, backup: { $exists: false } }, { projection: { _id: 0 } });
+
+  if (!json) { return { status: 404 }; }
+
+  if (json.mri && !json.mri.atlas) {
+    json.mri.atlas = [];
+  }
+
+  const projects = await getRelatedProjects(req.nativeDb, json, myurl);
+
+  if (!mayEmbedMri(json, projects, loggedUser)) { return { status: 403 }; }
+
+  BrainboxAccessControlService.setVolumeAnnotationsAccessByProjects(json, projects, loggedUser);
+
+  return { status: 200, json, myurl };
+};
+
+// What the embed pages (mriEmbed, mriRender3D) answer when embedAccess refuses
+const EMBED_REFUSALS = {
+  400: 'No brain was requested.',
+  404: 'This brain could not be found.',
+  403: 'This content is private.'
+};
+
+// ...and what GET /mri/layers answers
+const LAYERS_REFUSALS = {
+  400: 'Provide a url',
+  404: 'Not found',
+  403: 'Access denied'
+};
+
+const embedError = (res, status, message) => {
+  res.status(status);
+  res.render('embedError', { message });
+};
+
+const embedServerError = (res) => embedError(res, 500, 'This brain could not be loaded.');
+
+/**
  * @function mriEmbed
  * @desc Serves the chromeless, read-only viewer used to embed a single brain
  *       into an external page (e.g. via an <iframe>). Like `mri`, this
@@ -321,48 +375,17 @@ const EMBED_QUERY_PARAMS = ['url', 'view', 'slice', 'project', 'annotation', 'em
  * @param {Object} res Express response
  * @returns {void}
  */
-// eslint-disable-next-line max-statements
-const mriEmbed = async function (req, res) {
-  const loggedUser = req.isAuthenticated() ? req.user.username : 'anonymous';
-  const myurl = req.query.url;
-
+const mriEmbedUnsafe = async function (req, res) {
   // This route exists to be framed by other sites: say so explicitly rather
   // than relying on the absence of an X-Frame-Options header elsewhere.
   res.set('Content-Security-Policy', 'frame-ancestors *');
 
-  if (!myurl) {
-    res.status(400);
-    res.render('embedError', { message: 'No brain was requested.' });
+  const { status, json, myurl } = await embedAccess(req);
+  if (status !== 200) {
+    embedError(res, status, EMBED_REFUSALS[status]);
 
     return;
   }
-
-  const json = await req.nativeDb.collection('mri').findOne({ source: myurl, backup: { $exists: false } }, { projection: { _id: 0 } })
-    .catch((err) => {
-      console.log('ERROR mriEmbed:', err);
-    });
-
-  if (!json) {
-    res.status(404);
-    res.render('embedError', { message: 'This brain could not be found.' });
-
-    return;
-  }
-
-  if (json.mri && !json.mri.atlas) {
-    json.mri.atlas = [];
-  }
-
-  const projects = await getRelatedProjects(req.nativeDb, json, myurl);
-
-  if (!mayEmbedMri(json, projects, loggedUser)) {
-    res.status(403);
-    res.render('embedError', { message: 'This content is private.' });
-
-    return;
-  }
-
-  BrainboxAccessControlService.setVolumeAnnotationsAccessByProjects(json, projects, loggedUser);
 
   const embedWsTicket = await EmbedAccessService.mintWsTicket(req.nativeDb, {
     dirname: json.url,
@@ -391,46 +414,15 @@ const mriEmbed = async function (req, res) {
  * @param {Object} res Express response
  * @returns {void}
  */
-// eslint-disable-next-line max-statements
-const mriRender3D = async function (req, res) {
-  const loggedUser = req.isAuthenticated() ? req.user.username : 'anonymous';
-  const myurl = req.query.url;
-
+const mriRender3DUnsafe = async function (req, res) {
   res.set('Content-Security-Policy', 'frame-ancestors *');
 
-  if (!myurl) {
-    res.status(400);
-    res.render('embedError', { message: 'No brain was requested.' });
+  const { status, json } = await embedAccess(req);
+  if (status !== 200) {
+    embedError(res, status, EMBED_REFUSALS[status]);
 
     return;
   }
-
-  const json = await req.nativeDb.collection('mri').findOne({ source: myurl, backup: { $exists: false } }, { projection: { _id: 0 } })
-    .catch((err) => {
-      console.log('ERROR mriRender3D:', err);
-    });
-
-  if (!json) {
-    res.status(404);
-    res.render('embedError', { message: 'This brain could not be found.' });
-
-    return;
-  }
-
-  if (json.mri && !json.mri.atlas) {
-    json.mri.atlas = [];
-  }
-
-  const projects = await getRelatedProjects(req.nativeDb, json, myurl);
-
-  if (!mayEmbedMri(json, projects, loggedUser)) {
-    res.status(403);
-    res.render('embedError', { message: 'This content is private.' });
-
-    return;
-  }
-
-  BrainboxAccessControlService.setVolumeAnnotationsAccessByProjects(json, projects, loggedUser);
 
   // Resolve the annotation against the ones this viewer is actually allowed to
   // see, so a filename cannot be used to reach a layer access control hid.
@@ -439,8 +431,7 @@ const mriRender3D = async function (req, res) {
   const atlas = requested || visible[0];
 
   if (!atlas) {
-    res.status(404);
-    res.render('embedError', { message: 'This brain has no annotation to render.' });
+    embedError(res, 404, 'This brain has no annotation to render.');
 
     return;
   }
@@ -461,46 +452,24 @@ const mriRender3D = async function (req, res) {
  * @param {Object} res Express response
  * @returns {void}
  */
-// eslint-disable-next-line max-statements
-const apiMriLayers = async function (req, res) {
-  const loggedUser = req.isAuthenticated() ? req.user.username : 'anonymous';
-  const myurl = req.query.url;
-
-  if (!myurl) {
-    res.status(400).json({ error: 'Provide a url' });
+const apiMriLayersUnsafe = async function (req, res) {
+  const { status, json } = await embedAccess(req);
+  if (status !== 200) {
+    res.status(status).json({ error: LAYERS_REFUSALS[status] });
 
     return;
   }
-
-  const json = await req.nativeDb.collection('mri').findOne({ source: myurl, backup: { $exists: false } }, { projection: { _id: 0 } })
-    .catch((err) => {
-      console.log('ERROR apiMriLayers:', err);
-    });
-
-  if (!json) {
-    res.status(404).json({ error: 'Not found' });
-
-    return;
-  }
-
-  if (json.mri && !json.mri.atlas) {
-    json.mri.atlas = [];
-  }
-
-  const projects = await getRelatedProjects(req.nativeDb, json, myurl);
-
-  if (!mayEmbedMri(json, projects, loggedUser)) {
-    res.status(403).json({ error: 'Access denied' });
-
-    return;
-  }
-
-  BrainboxAccessControlService.setVolumeAnnotationsAccessByProjects(json, projects, loggedUser);
 
   const layers = json.mri.atlas.map((a) => ({ project: a.project, name: a.name, access: a.access }));
 
   res.json({ layers });
 };
+
+// A thrown error (database, project lookup, ticket) answers 500, logged, rather
+// than leaving the request without an answer
+const mriEmbed = catchErrors(mriEmbedUnsafe, embedServerError);
+const mriRender3D = catchErrors(mriRender3DUnsafe, embedServerError);
+const apiMriLayers = catchErrors(apiMriLayersUnsafe);
 
 /**
  * Whether the server has the image of an MRI: its file, and its dimensions

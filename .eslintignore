@@ -2,3 +2,4 @@
 /public/js/
 dist/
 /view/atlasmaker/src/tools/render3D/three.js*
+/public/vendor/

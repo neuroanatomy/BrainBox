@@ -1,0 +1,30 @@
+{
+  "comment": [
+    "Provenance for third-party scripts that BrainBox used to fetch from a CDN at",
+    "runtime and now ships locally (T002 F2). Run `npm run verify-vendor` to check that",
+    "every file still matches the bytes that were downloaded; `npm run verify-vendor -- --refetch`",
+    "also checks that each URL still serves them. Same assets, versions, URLs and checksums",
+    "as microdraw's app/public/lib/vendor.json.",
+    "In public/vendor/, not public/lib/: public/lib/ is gitignored and holds the built bundles.",
+    "Loaded by view/atlasmaker/src/atlasmaker.js (the script console, not in the embed)."
+  ],
+  "retrieved": "2026-11-25",
+  "assets": [
+    {
+      "name": "codeflask",
+      "version": "1.4.1",
+      "path": "public/vendor/codeflask/codeflask.min.js",
+      "url": "https://unpkg.com/codeflask@1.4.1/build/codeflask.min.js",
+      "sha256": "61d3b7a7d583a165f92983f37718d02abc6de5085356aa217dc4ddad142207cc",
+      "note": "Was requested unpinned as unpkg.com/codeflask/build/codeflask.min.js. 1.4.1 is the version microdraw vendored from that URL (2026-08-05)."
+    },
+    {
+      "name": "consolita.js",
+      "version": "0.2.1",
+      "path": "public/vendor/consolita/consolita.js",
+      "url": "https://cdn.jsdelivr.net/gh/r03ert0/consolita.js@0.2.1/consolita.js",
+      "sha256": "268a076274c70a2ba009aa73e6f53650cdeba699e4585d826b19b6ba51329240",
+      "note": "Was 0.1.1. 0.2.1's init(el, styleParent) takes the element, not a selector (it calls el.querySelector), so atlasmaker.js passes document.getElementById('logScript')."
+    }
+  ]
+}

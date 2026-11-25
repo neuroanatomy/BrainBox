@@ -6,6 +6,7 @@ import '../../../atlasmaker/src/css/embed-layout.css';
 import { desiredEmbedHeight, positiveIntParam } from 'nwl-components/embed';
 import embedAnnotation from '../../../shared/embedAnnotation.js';
 import embedSizing from '../../../shared/embedSizing.js';
+import viewLink from '../../../shared/viewLink.js';
 
 const { findAnnotationItemIndex, NO_ATLAS } = embedAnnotation;
 
@@ -43,8 +44,7 @@ const updateBrainBoxLink = function () {
   if (!link || !AtlasMakerWidget.User.source) { return; }
 
   const query = new URLSearchParams({ url: AtlasMakerWidget.User.source });
-  if (AtlasMakerWidget.User.view) { query.set('view', AtlasMakerWidget.User.view); }
-  if (AtlasMakerWidget.User.slice !== null) { query.set('slice', AtlasMakerWidget.User.slice); }
+  viewLink.setViewAndSlice(query, AtlasMakerWidget.User);
   if (params.project) { query.set('project', params.project); }
   if (params.annotation) { query.set('annotation', params.annotation); }
 
