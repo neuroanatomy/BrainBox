@@ -20,7 +20,8 @@ const { mergeMetadata, projectsForMetadata, savedView } = require('./metadata-sa
 
 // WebSocket message types that write to an atlas/annotation - never applied on
 // a connection tagged isEmbed, regardless of what the client claims about editMode.
-const embedWriteBlockedTypes = ['paint', 'vectorial', 'save', 'saveMetadata', 'atlas'];
+// An embedded viewer has no chat either: it may not post to it
+const embedWriteBlockedTypes = ['paint', 'vectorial', 'save', 'saveMetadata', 'atlas', 'chat'];
 
 // The views a slice can be drawn in
 const sliceViews = ['sag', 'cor', 'axi'];
@@ -36,6 +37,15 @@ const atlasContentTypes = ['paint', 'vectorial', 'atlas'];
 // what other users are not told about a user's state: the layer they have open
 // (its file name is the only protection of the layer's file until /data is checked)
 const privateUserFields = ['atlasFilename', 'iAtlas'];
+// who a user is: set by the server (the session's name, the connection's id),
+// never by what the client sends in its user data
+const identityUserFields = ['username', 'uid'];
+// the name of a connection without a logged-in user
+const anonymousName = 'Anonymous';
+// the longest chat message relayed (as microdraw)
+const maxChatLength = 1000;
+// the messages that carry who sent them: the session's name is read before they are handled
+const namedMessages = new WeakSet();
 
 // Get whitelist and blacklist
 const useWhitelist = false;
@@ -1832,7 +1842,9 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
 
           return;
         }
+        // who the user is comes from the session, never from the client
         User.uid = data.uid;
+        User.username = sourceUS.sessionName || anonymousName;
       } else {
         ({ User } = sourceUS);
 
@@ -1847,12 +1859,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         } else {
           // receive a specific field of the User data object from the user
           /** @todo If the atlas/mri for the client failed to be sent, `User` is undefined */
-          let changes;
-          try {
-            changes = JSON.parse(data.description);
-          } catch (err) {
-            tracer.log(`WARNING: Ignoring 'userData' message with an invalid description from ${data.uid}`);
-
+          const changes = me._userDataChanges(data);
+          if (changes === null) {
             return;
           }
           for (const i in changes) {
@@ -1907,6 +1915,48 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         me.unloadUnusedBrains();
         me.unloadUnusedAtlases();
       }
+    },
+
+    /**
+     * The changes a partial 'userData' message makes to the user's data,
+     * without those to who the user is (identityUserFields): they are removed
+     * from the message too, so the others are not told them
+     * @param {object} data The message; its description is the changes, in JSON
+     * @returns {object|null} The changes, or null if the description is not JSON
+     */
+    _userDataChanges: function (data) {
+      let changes;
+      try {
+        changes = JSON.parse(data.description);
+      } catch (err) {
+        tracer.log(`WARNING: Ignoring 'userData' message with an invalid description from ${data.uid}`);
+
+        return null;
+      }
+      if (changes && typeof changes === 'object' && identityUserFields.some((f) => f in changes)) {
+        changes = _.omit(changes, identityUserFields);
+        data.description = JSON.stringify(changes);
+      }
+
+      return changes;
+    },
+
+    /**
+     * Check a chat message, and set who sent it: the name of the session,
+     * never the one the client says
+     * @param {object} data The message: { type: 'chat', msg }
+     * @param {object} sourceUS The connection
+     * @returns {boolean} False if the message must not be relayed (not a string, or too long)
+     */
+    receiveChatMessage: function (data, sourceUS) {
+      if (typeof data.msg !== 'string' || data.msg.length > maxChatLength) {
+        tracer.log(`WARNING: Ignoring a chat message that is not a string of at most ${maxChatLength} characters from ${data.uid}`);
+
+        return false;
+      }
+      data.username = sourceUS.sessionName || anonymousName;
+
+      return true;
     },
     declareAutocompleteClient: function (data/*, userSocket*/) {
       const sourceUS = me.getUserFromUserId(data.uid);
@@ -2046,6 +2096,41 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       }
 
       return usernameFromCookie(me.sessionParser, sourceUS.cookie);
+    },
+
+    /**
+     * Read the name a message that says who sent it (a chat, the user's data)
+     * is relayed under: the user of the session (as _readerUsername), or
+     * 'Anonymous'. Kept in sourceUS.sessionName
+     * @param {object} sourceUS The connection
+     * @param {object} data The message
+     * @returns {Promise|null} The promise to wait for, or null if the message needs no name, or has it
+     */
+    _sessionNamePending: function (sourceUS, data) {
+      const named = data.type === 'chat' || (data.type === 'userData' && data.description === 'allUserData');
+      if (!named || namedMessages.has(data)) {
+        return null;
+      }
+      // known at once (no session to read): an embed connection is named by
+      // its ticket (read before), a connection without a cookie is anonymous
+      if (sourceUS.isEmbed || typeof sourceUS.cookie !== 'string') {
+        const scope = sourceUS.isEmbed && sourceUS.embedScope;
+        sourceUS.sessionName = (scope && typeof scope.username === 'string' && scope.username.length > 0) ? scope.username : anonymousName;
+        namedMessages.add(data);
+
+        return null;
+      }
+
+      return usernameFromCookie(me.sessionParser, sourceUS.cookie)
+        .catch((err) => {
+          tracer.log('ERROR: Can\'t read the session of a connection', err);
+
+          return null;
+        })
+        .then((username) => {
+          sourceUS.sessionName = (typeof username === 'string' && username.length > 0) ? username : anonymousName;
+          namedMessages.add(data);
+        });
     },
 
     /**
@@ -2497,6 +2582,8 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         me.receiveAtlasFromUserMessage(data, ws) // sender);
           .catch((err) => tracer.log('ERROR: atlas message failed', err));
         break;
+      case 'chat':
+        return me.receiveChatMessage(data, sourceUS);
       case 'echo':
         tracer.log(`ECHO: "${data.msg}" from user ${data.username} (${data.uid})`);
         break;
@@ -2517,7 +2604,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
 
       return true;
     },
-    _fitsBroadcastExclusionCriteria: function ({ sourceUS, targetUS }) {
+    _fitsBroadcastExclusionCriteria: function ({ sourceUS, targetUS, data }) {
       let exclude = false;
 
       if (sourceUS.uid === targetUS.uid) {
@@ -2528,6 +2615,9 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         exclude = true;
       } else if (typeof sourceUS.User === 'undefined' || typeof targetUS.User === 'undefined') {
         // do not broadcast to undefined users
+        exclude = true;
+      } else if (targetUS.isEmbed && data && data.type === 'chat') {
+        // an embedded viewer has no chat
         exclude = true;
       }
 
@@ -2567,7 +2657,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         const targetUS = me.getUserFromSocket(client);
 
         // check exclusion criteria
-        if (me._fitsBroadcastExclusionCriteria({ sourceUS, targetUS })) {
+        if (me._fitsBroadcastExclusionCriteria({ sourceUS, targetUS, data })) {
           continue;
         }
 
@@ -2650,9 +2740,10 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
 
     /**
      * Handle, in order, messages from a connection. While the ticket of an
-     * embed connection is being read, or a write cannot be decided yet (see
-     * _writeAccessPending), the message and those after it wait in
-     * sourceUS.messageQueue
+     * embed connection is being read, the session's name of a message that
+     * carries it is read (see _sessionNamePending), or a write cannot be
+     * decided yet (see _writeAccessPending), the message and those after it
+     * wait in sourceUS.messageQueue
      * @param {object} params Parameters
      * @param {Array} params.queue The messages
      * @param {object} params.ws The socket
@@ -2661,7 +2752,9 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
      */
     _handleMessages: function ({ queue, ws, sourceUS }) {
       while (queue.length > 0) {
-        const pending = sourceUS.embedTicketLookup || me._writeAccessPending(sourceUS, queue[0].type);
+        const pending = sourceUS.embedTicketLookup
+          || me._sessionNamePending(sourceUS, queue[0])
+          || me._writeAccessPending(sourceUS, queue[0].type);
         if (pending) {
           sourceUS.messageQueue = queue;
           pending.then(() => {

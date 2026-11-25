@@ -44,15 +44,81 @@ export const AtlasMakerWS = {
   },
 
   /**
-   * Append a line to the chat log, if the current toolbar has one.
-   * @param {string} html Sanitised HTML to append
+   * Append a line to the chat log, if the current toolbar has one: an
+   * optional link, a name in bold, then a text. Names and messages come from
+   * other users: they are set as text, never as HTML
+   * @param {object} parts { name, text, href }: href, if set, wraps the name
    * @returns {void}
    */
-  _appendChatMessage: function (html) {
+  appendChatLine: function ({ name, text, href }) {
+    const me = AtlasMakerWidget;
     const chatText = document.querySelector('#logChat .text');
     if (!chatText) { return; }
-    chatText.insertAdjacentHTML('beforeend', html);
+    chatText.appendChild(me._chatLine({ name, text, href }));
     chatText.scrollTop = chatText.scrollHeight;
+  },
+
+  /**
+   * The nodes of a line of the chat log (see appendChatLine)
+   * @param {object} parts { name, text, href }
+   * @returns {object} A DocumentFragment
+   */
+  _chatLine: function ({ name, text, href }) {
+    const line = document.createDocumentFragment();
+    let nameHolder = line;
+    if (href) {
+      const a = document.createElement('a');
+      a.href = href;
+      line.appendChild(a);
+      nameHolder = a;
+    }
+    if (!isUnknown(name)) {
+      const b = document.createElement('b');
+      b.textContent = String(name);
+      nameHolder.appendChild(b);
+    }
+    if (!isUnknown(text)) {
+      line.appendChild(document.createTextNode(String(text)));
+    }
+    line.appendChild(document.createElement('br'));
+
+    return line;
+  },
+
+  /**
+   * The name another user is shown under: their username, or their
+   * connection's id if they are anonymous
+   * @param {object} user The other user's data (me.Collab[uid]), if known
+   * @param {string} uid The other user's connection id
+   * @returns {string} The name
+   */
+  _collabName: function (user, uid) {
+    if (!user || isUnknown(user.username) || user.username === 'Anonymous') {
+      return uid;
+    }
+
+    return user.username;
+  },
+
+  /**
+   * The link to what another user is looking at: the MRI page on this
+   * BrainBox, with their source, view and slice
+   * @param {object} user The other user's data (me.Collab[uid]), if known
+   * @returns {string|null} The link, or null if there is none to give
+   */
+  _collabViewLink: function (user) {
+    const me = AtlasMakerWidget;
+    if (!user || typeof user.source !== 'string') { return null; }
+    try {
+      const base = new URL(me.hostname, window.location.href);
+      if (base.protocol !== 'http:' && base.protocol !== 'https:') { return null; }
+      const link = new URL('/mri', base);
+      link.search = new URLSearchParams({ url: user.source, view: String(user.view), slice: String(user.slice) }).toString();
+
+      return link.host === base.host ? link.href : null;
+    } catch (err) {
+      return null;
+    }
   },
 
   /**
@@ -314,14 +380,7 @@ export const AtlasMakerWS = {
     // First time the user is observed
     if (typeof me.Collab[u] === 'undefined') {
       try {
-        //var    msg="<b>"+data.user.username+"</b> entered atlas "+data.user.specimenName+"/"+data.user.atlasFilename+"<br />"
-        let msg;
-        if (typeof data.user === 'undefined' || data.user.username === 'Anonymous') {
-          msg = '<b>' + data.uid + '</b> entered<br />';
-        } else {
-          msg = '<b>' + data.user.username + '</b> entered<br />';
-        }
-        me._appendChatMessage(msg);
+        me.appendChatLine({ name: me._collabName(data.user, data.uid), text: ' entered' });
       } catch (e) {
         console.log('data:', data);
         console.log(e);
@@ -363,13 +422,11 @@ export const AtlasMakerWS = {
   sendChatMessage: function () {
     const me = AtlasMakerWidget;
     if (me.flagConnected === 0) { return; }
-    let msg = DOMPurify.sanitize(document.getElementById('msg').value);
+    // sent as typed: every page shows it as text (the server says who sent it)
+    const msg = document.getElementById('msg').value;
     try {
-      me.socket.send(JSON.stringify({ 'type': 'chat', 'msg': msg, 'username': me.User.username }));
-      msg = '<b>me: </b>' + msg + '<br />';
-      const chatText = document.querySelector('#logChat .text');
-      chatText.insertAdjacentHTML('beforeend', msg);
-      chatText.scrollTop = chatText.scrollHeight;
+      me.socket.send(JSON.stringify({ 'type': 'chat', 'msg': msg }));
+      me.appendChatLine({ name: 'me: ', text: msg });
       document.getElementById('msg').value = '';
     } catch (ex) {
       console.log('ERROR: Unable to sendChatMessage', ex);
@@ -382,15 +439,11 @@ export const AtlasMakerWS = {
     */
   receiveChatMessage: function (data) {
     const me = AtlasMakerWidget;
-    console.log(data);
+    if (me.debug) { console.log(data); }
 
-    const theSource = me.Collab[data.uid].source;
-    const theView = me.Collab[data.uid].view;
-    const theSlice = me.Collab[data.uid].slice;
-    const link = me.hostname + '/mri?url=' + theSource + '&view=' + theView + '&slice=' + theSlice;
-    const theUsername = (data.username === 'Anonymous')?data.uid:data.username;
-    const msg = '<a href=\'' +link+'\'><b>'+theUsername+':</b></a> '+data.msg+'<br />';
-    me._appendChatMessage(msg);
+    const user = me.Collab[data.uid];
+    const theUsername = (isUnknown(data.username) || data.username === 'Anonymous') ? data.uid : data.username;
+    me.appendChatLine({ name: theUsername + ':', text: ' ' + data.msg, href: me._collabViewLink(user) });
   },
 
   /**
@@ -807,16 +860,7 @@ export const AtlasMakerWS = {
   receiveDisconnectMessage: function (data) {
     const me = AtlasMakerWidget;
     const {uid} = data; // user
-    let msg;
-    if(me.Collab[uid]) {
-      if(typeof me.Collab[uid].username === 'undefined' || me.Collab[uid].username === 'Anonymous') {
-        msg = '<b>'+me.Collab[uid].uid+'</b> left<br />';
-      } else {
-        msg = '<b>'+me.Collab[uid].username+'</b> left<br />';
-      }
-    } else {
-      msg='<b>'+uid+'</b> left<br />';
-    }
+    const name = me._collabName(me.Collab[uid], uid);
     delete me.Collab[uid];
     let v;
     let nusers=1;
@@ -826,7 +870,7 @@ export const AtlasMakerWS = {
       }
     }
     me._setNotificationsText('Chat ('+nusers+' connected)');
-    me._appendChatMessage(msg);
+    me.appendChatLine({ name, text: ' left' });
   },
 
   displayDialog: async ({msg, modal, delay, doFadeOut}) => {
@@ -926,7 +970,7 @@ export const AtlasMakerWS = {
     me.writeRefused = { write: data.write, atlas: data.atlas, reason: data.reason };
 
     const text = me.writeRefusedMessage;
-    me._appendChatMessage('<b>' + DOMPurify.sanitize(text) + '</b><br />');
+    me.appendChatLine({ name: text });
     if (!me._writeRefusedDialogShown) {
       me._writeRefusedDialogShown = true;
       me.displayDialog({ msg: '<p>' + DOMPurify.sanitize(text) + '</p>', modal: true, delay: 0, doFadeOut: false })
@@ -954,7 +998,7 @@ export const AtlasMakerWS = {
     me.editMode = 0;
     me.readRefused = { atlas: data.atlas, reason: data.reason };
     const text = me.readRefusedMessage + ': ' + data.reason + '. Reload the page or log in again.';
-    me._appendChatMessage('<b>' + DOMPurify.sanitize(text) + '</b><br />');
+    me.appendChatLine({ name: text });
     me.displayDialog({ msg: '<p>' + DOMPurify.sanitize(text) + '</p>', modal: true, delay: 0, doFadeOut: false });
   },
 
@@ -970,7 +1014,7 @@ export const AtlasMakerWS = {
     console.warn('The server did not save some changes to the metadata: ' + data.reason);
     me.writeRefused = { write: data.write, atlas: data.atlas, reason: data.reason };
     const text = me.metadataRefusedMessage + ': ' + data.reason + '.';
-    me._appendChatMessage('<b>' + DOMPurify.sanitize(text) + '</b><br />');
+    me.appendChatLine({ name: text });
     me.displayDialog({ msg: '<p>' + DOMPurify.sanitize(text) + '</p>', modal: false, delay: 5000, doFadeOut: true });
   },
 

@@ -23,7 +23,8 @@ const placeCollaboratorPointer = (u, x, y, usr) => {
     icon.style.cssText = 'height:100%';
     div.appendChild(icon);
     div.style.cssText = 'display:inline-block;height:20px;margin-left:-10px;margin-top:-10px;position:absolute;color:white';
-    div.innerHTML += ((usr.username === 'Anonymous')?u:usr.username);
+    // the name another user sent: text, never HTML
+    div.appendChild(document.createTextNode((usr.username === 'Anonymous')?u:usr.username));
     usr.pointer = div;
     resizable.appendChild(div);
   }

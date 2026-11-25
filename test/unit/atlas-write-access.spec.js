@@ -252,7 +252,8 @@ describe('UNIT TESTING WEBSOCKET WRITE ACCESS', function () {
 
     it('refuses the writes of a client that says it is the project\'s owner', async function () {
       const sourceUS = await openAtlas({ username: 'foo', filename: 'project.nii.gz' });
-      expect(sourceUS.User.username).to.equal('foo');
+      // the name the client says is not kept: a connection without a session is anonymous
+      expect(sourceUS.User.username).to.equal('Anonymous');
       expect(appliedWrites(sourceUS)).to.deep.equal([]);
     });
 
