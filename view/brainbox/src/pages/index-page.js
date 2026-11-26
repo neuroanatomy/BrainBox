@@ -119,8 +119,6 @@ window.addEventListener('scroll', () => {
   }
 });
 
-// intro.js test
-//startIntro();
 // var version=1;
 // var brainsToTry=[
 //     "https://zenodo.org/record/44855/files/MRI-n4.nii.gz",

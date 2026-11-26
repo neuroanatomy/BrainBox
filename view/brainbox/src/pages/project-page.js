@@ -10,16 +10,20 @@ import '../style/project-style.css';
 
 import { cellText, makeSortable, rowIndex } from '../sortableTable.js';
 import { getData, setData } from '../../../shared/domData.js';
+import { fetchJSON } from 'nwl-components';
 import freeform from '../tools/freeform.js';
 import geometryModule from '../../../shared/geometry.js';
 import hidden from '../tools/hidden.js';
 import { mountViewerHeader } from '../viewer-header-footer.js';
 import multiple from '../tools/multiple.js';
+import pageEventsModule from '../../../shared/pageEvents.js';
 import { resizableColumns } from 'nwl-components/resize';
 import showHideModule from '../../../shared/showHide.js';
 
-// Showing and hiding elements, measuring and styling them (view/shared)
+// Showing and hiding elements, measuring and styling them, and the helpers shared with
+// the MRI page (view/shared)
 const { hide } = showHideModule;
+const { delegate, isEmptyObject, preventDoubleTapZoom } = pageEventsModule;
 const { contentSize, setStyle } = geometryModule;
 
 // nwl-components' header, on its own placeholder, outside the viewer (no footer on this page).
@@ -33,20 +37,6 @@ mountViewerHeader(document.getElementById('bb-header-app'), {
 });
 
 /**
- * True if the object has no enumerable property, own or inherited
- * @param {object} obj Any object
- * @returns {boolean} Whether it is empty
- */
-const isEmptyObject = (obj) => {
-  // eslint-disable-next-line guard-for-in, no-unreachable-loop
-  for (const name in obj) {
-    return false;
-  }
-
-  return true;
-};
-
-/**
  * The element's position among its siblings, -1 for none (or no element)
  * @param {Element|null} elem The element
  * @returns {number} Its index
@@ -54,39 +44,13 @@ const isEmptyObject = (obj) => {
 const siblingIndex = (elem) => ((elem && elem.parentNode) ? [...elem.parentNode.children].indexOf(elem) : -1);
 
 /**
- * GET url?params as JSON: rejects on HTTP errors and on a body that is not JSON
- * @param {string} url Request URL
- * @param {object} params Query parameters
- * @returns {Promise<object>} The parsed body
+ * A page of the project's files, from /project/json/<shortname>/files (nwl-components'
+ * fetchJSON: rejects with the server's error, or '<status> <statusText>')
+ * @param {number} start Index of the first file
+ * @param {number} length Number of files
+ * @returns {Promise<object[]>} The files
  */
-const getJSON = async (url, params) => {
-  const res = await fetch(`${url}?${new URLSearchParams(params)}`);
-  if (!res.ok) {
-    throw new Error(`GET ${url} failed: ${res.status} ${res.statusText}`);
-  }
-
-  return res.json();
-};
-
-/**
- * Delegated listener: call `handler(event, matched)` for events on `root` whose target
- * is, or is inside, an element of `root` matching `selector`
- * @param {EventTarget} root Where to listen
- * @param {string} types Space-separated event types
- * @param {string} selector CSS selector of the elements to watch
- * @param {function} handler Called with the event and the matched element
- * @returns {void}
- */
-const delegate = (root, types, selector, handler) => {
-  for (const type of types.split(' ')) {
-    root.addEventListener(type, (e) => {
-      const matched = (e.target instanceof Element) ? e.target.closest(selector) : null;
-      if (matched && matched !== root && (root === document || root.contains(matched))) {
-        handler(e, matched);
-      }
-    });
-  }
-};
+const getFiles = (start, length) => fetchJSON(`/project/json/${projectInfo.shortname}/files?${new URLSearchParams({ start, length })}`);
 
 /**
  * Run the element's click handlers. A link is not followed, other elements get their
@@ -182,10 +146,7 @@ const appendFilesToProject = function (list) {
 };
 
 const queryFiles = function () {
-  getJSON('/project/json/' + projectInfo.shortname + '/files', {
-    start: projectInfo.files.list.length,
-    length: numFilesQuery
-  })
+  getFiles(projectInfo.files.list.length, numFilesQuery)
     .then(function (list) {
       if (list.length) {
         appendFilesToProject(list);
@@ -366,19 +327,9 @@ const resizeButton = function (p) {
   }
 };
 
-// Prevent zoom on double tap
-document.body.addEventListener('touchstart', function preventZoom(e) {
-  const t2 = e.timeStamp;
-  const t1 = getData(e.target, 'lastTouch') || t2;
-  const dt = t2 - t1;
-  const fingers = e.touches.length;
-  setData(e.target, {lastTouch: t2});
-  if (!dt || dt > 500 || fingers > 1) { return; } // not double-tap
-  e.preventDefault(); // double tap - prevent the zoom
-  // also synthesize click events we just swallowed up
-  triggerClick(e.target);
-  triggerClick(e.target);
-});
+// Prevent zoom on double tap: this page times the taps on the touched element, and
+// clicks it with triggerClick (a link is not followed)
+preventDoubleTapZoom(document.body, { click: triggerClick });
 
 // collect the project's text annotations
 for (const k of projectInfo.annotations.list) {
@@ -544,10 +495,7 @@ BrainBox.initBrainBox()
     // Start with the 1st #numFilesQuery files, load and
     // display the 1st file, configure the tools position, and keep querying for the
     // rest of the files
-    return getJSON('/project/json/' + projectInfo.shortname + '/files', {
-      start: 0,
-      length: numFilesQuery
-    });
+    return getFiles(0, numFilesQuery);
   })
   // append files progressively
   .then(function (list) {

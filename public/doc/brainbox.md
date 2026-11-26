@@ -222,7 +222,7 @@ You can use BrainBox in a desktop computer or in a tablet. In a desktop computer
 |![](/doc/atlasmakersvg/ruler.svg =13x13)|Select measure tool|
 |![](/doc/atlasmakersvg/adjust.svg =13x13)|Select image adjustment tool|
 |![](/doc/atlasmakersvg/fullscreen.svg =13x13)|Toggle full screen|
-|![](/doc/atlasmakersvg/3Drender.svg =13x13)|Open the 3D renderer|
+|![](/doc/atlasmakersvg/3drender.svg =13x13)|Open the 3D renderer|
 |![](/doc/atlasmakersvg/chat.svg =13x13)|Toggle visibility of chat window|
 |![](/doc/atlasmakersvg/link.svg =13x13)|Get shareble link to current MRI, view & slice|
 |![](/doc/atlasmakersvg/upload.svg =13x13)|Upload a segmentation from disc|

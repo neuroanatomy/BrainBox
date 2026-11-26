@@ -83,19 +83,6 @@ img.nwl-icon {
     border: none;
 }
 
-.mui-select {
-    border:none;
-    background:none; /* no color, no decoration */
-    color:var(--nwl-text);
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    cursor: pointer;
-}
-.mui-select:focus:not(:focus-visible) {
-    outline: none;
-}
-
 /* Keyboard focus (UI kit U6): a 2px outline in --nwl-focus, as nwl-components' base.css
    gives the library's pages. Mouse focus shows nothing (browsers match :focus-visible on a
    click only for text fields, and Chromium for <select>). */

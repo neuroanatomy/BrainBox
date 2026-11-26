@@ -24,7 +24,7 @@
  * MongoDB Db.
  */
 const _ = require('lodash');
-const { damagedProjects, listOf, saveProjectVersion } = require('neuroweblab');
+const { CURRENT, damagedProjects, listOf, saveProjectVersion } = require('neuroweblab');
 const { fileSource } = require('../project/project-rows.js');
 
 /**
@@ -46,7 +46,7 @@ const annotatedFiles = async (db, shortname, files) => {
   const mris = await db.collection('mri')
     .find({
       source: { $in: files },
-      backup: { $exists: false },
+      ...CURRENT,
       $or: [{ [`mri.annotations.${shortname}`]: { $exists: true } }, { 'mri.atlas.project': shortname }]
     }, { projection: { _id: 0, source: 1 } })
     .toArray();

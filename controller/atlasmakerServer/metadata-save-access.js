@@ -30,7 +30,7 @@
  */
 const net = require('net');
 const _ = require('lodash');
-const { AccessType } = require('neuroweblab');
+const { AccessType, CURRENT } = require('neuroweblab');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 
 const accessLevels = ['none', 'view', 'edit', 'add', 'remove'];
@@ -98,7 +98,7 @@ const projectsForMetadata = async (nativeDb, source, docs) => {
       { 'files.list': source },
       { 'files.list.source': source }
     ],
-    backup: { $exists: false }
+    ...CURRENT
   })
     .toArray();
 

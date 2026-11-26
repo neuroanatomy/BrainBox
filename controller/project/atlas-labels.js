@@ -13,6 +13,7 @@
  * as backup and inserts a new version (the only one without the backup field).
  */
 const fs = require('fs');
+const { CURRENT } = require('neuroweblab');
 const path = require('path');
 
 const labelsDirectory = path.join(__dirname, '../../public/labels');
@@ -89,7 +90,7 @@ const setLayerLabelset = async (nativeDb, { project, name, values, username, dry
   const mismatch = (a) => a && a.project === project && a.name === name && a.labels !== values;
   const mris = await nativeDb.collection('mri')
     .find({
-      backup: { $exists: false },
+      ...CURRENT,
       'mri.atlas': { $elemMatch: { project, name, labels: { $ne: values } } }
     }, { projection: { _id: 0 } })
     .toArray();

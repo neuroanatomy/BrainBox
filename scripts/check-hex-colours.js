@@ -13,7 +13,7 @@ const ALLOWED = {
   'view/brainbox/src/style/style.css': [],
   'view/brainbox/src/style/ui.css': [],
   'view/brainbox/src/style/ask-for-login.css': [],
-  'view/atlasmaker/src/css/atlasmaker.css': ['#F00'],
+  'view/atlasmaker/src/css/atlasmaker.css': [],
   'view/atlasmaker/src/css/loading-style.css': [],
   'view/atlasmaker/src/css/embed-layout.css': [],
   'view/brainbox/src/style/mri-style.css': ['#3B3B3B', '#2B2B2B'],

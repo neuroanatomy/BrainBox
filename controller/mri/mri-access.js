@@ -6,7 +6,7 @@
  */
 const net = require('net');
 const _ = require('lodash');
-const { AccessType, AccessLevel, findCurrentProject } = require('neuroweblab');
+const { AccessType, AccessLevel, CURRENT, findCurrentProject } = require('neuroweblab');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 const { projectAccessLevel, ownsMri } = require('../atlasmakerServer/metadata-save-access');
 
@@ -46,7 +46,7 @@ const getRelatedProjects = async function (nativeDb, json, myurl) {
       { 'files.list': { $eq: myurl } },
       { 'files.list.source': { $eq: myurl } }
     ],
-    backup: { $exists: false }
+    ...CURRENT
   })
     .toArray());
 

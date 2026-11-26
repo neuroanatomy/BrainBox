@@ -7,6 +7,6 @@
  * This stays an object whose functions are called through it
  * (EmbedAccessService.findWsTicket(…)), so that a test can stub them.
  */
-const { WS_TICKET_COLLECTION, WS_TICKET_DURATION, mintWsTicket, findWsTicket } = require('neuroweblab');
+const { WS_TICKET_COLLECTION, mintWsTicket, findWsTicket } = require('neuroweblab');
 
-module.exports = { WS_TICKET_COLLECTION, WS_TICKET_DURATION, mintWsTicket, findWsTicket };
+module.exports = { WS_TICKET_COLLECTION, mintWsTicket, findWsTicket };

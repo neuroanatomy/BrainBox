@@ -7,7 +7,7 @@
  * the previous version can be restored from its backup, and they are
  * recorded in the log collection.
  */
-const { adminLog, withLock } = require('neuroweblab');
+const { CURRENT, adminLog, withLock } = require('neuroweblab');
 
 const isProjectName = (name) => typeof name === 'string' && name !== '';
 
@@ -17,7 +17,7 @@ const isProjectName = (name) => typeof name === 'string' && name !== '';
  * @returns {Promise<Array<string>>} Project shortnames
  */
 const liveProjects = async (nativeDb) => {
-  const shortnames = await nativeDb.collection('project').distinct('shortname', { backup: { $exists: false } });
+  const shortnames = await nativeDb.collection('project').distinct('shortname', { ...CURRENT });
 
   return shortnames.filter(isProjectName);
 };
@@ -42,7 +42,7 @@ const findOrphanAnnotations = async (nativeDb) => {
     ]
   });
   const rows = await nativeDb.collection('mri').aggregate([
-    { $match: { backup: { $exists: false } } },
+    { $match: { ...CURRENT } },
     {
       $project: {
         _id: 0,
@@ -114,7 +114,7 @@ const findOrphanAnnotations = async (nativeDb) => {
  *   or null if there is no MRI with that source
  */
 const describeMRI = async (nativeDb, source) => {
-  const mri = await nativeDb.collection('mri').findOne({ source, backup: { $exists: false } }, { projection: { _id: 0 } });
+  const mri = await nativeDb.collection('mri').findOne({ source, ...CURRENT }, { projection: { _id: 0 } });
   if (!mri) {
     return null;
   }
@@ -160,7 +160,7 @@ const describeMRI = async (nativeDb, source) => {
  */
 // eslint-disable-next-line max-statements
 const removeSelected = (nativeDb, { source, selectVolume, text, username }) => withLock('mri', async () => {
-  const mri = await nativeDb.collection('mri').findOne({ source, backup: { $exists: false } });
+  const mri = await nativeDb.collection('mri').findOne({ source, ...CURRENT });
   if (!mri) {
     return null;
   }
@@ -228,7 +228,7 @@ const removeOrphanProjectAnnotations = async (nativeDb, { project, username, isO
     return null;
   }
   const mris = await nativeDb.collection('mri').find({
-    backup: { $exists: false },
+    ...CURRENT,
     $or: [
       { 'mri.atlas.project': project },
       { ['mri.annotations.' + project]: { $exists: true } }

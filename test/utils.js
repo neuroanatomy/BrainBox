@@ -6,7 +6,6 @@ const { PNG } = require('pngjs');
 const jpeg = require('jpeg-js');
 const pixelmatch = require('pixelmatch');
 const puppeteer = require('puppeteer');
-const { exec } = require('child_process');
 // const { constants } = require('buffer');
 const brainboxApp = require('../app');
 
@@ -227,13 +226,6 @@ const getApp = () => app;
 const getAtlasmakerServer = () => atlasmakerServer;
 const getNativeDB = () => nativeDb;
 
-const currentDirectory = function () {
-  console.log('Current directory:', __dirname);
-  exec('ls -l', (error, stdout) => {
-    console.log(stdout);
-  });
-};
-
 const queryUser = function (nickname) {
   return nativeDb.collection('user').findOne({ nickname });
 };
@@ -361,18 +353,6 @@ const waitUntilHTMLRendered = async function (page, timeout = 30000) {
     // eslint-disable-next-line no-await-in-loop
     await delay(checkDurationMsecs);
   }
-};
-
-const comparePageScreenshots = async function (testPage, url, filename) {
-  const newPath = './test/screenshots/' + filename;
-  const refPath = './test/data/reference-screenshots/' + filename;
-  await testPage.goto(url, { waitUntil: 'networkidle2', timeout: 90000 });
-  await waitUntilHTMLRendered(testPage);
-  fs.promises.mkdir(path.dirname(newPath), { recursive: true });
-  await testPage.screenshot({ path: './test/screenshots/' + filename });
-  const pixdiff = await compareImages(newPath, refPath);
-
-  return pixdiff;
 };
 
 const waitForDOMReady = async function (testPage, url) {
@@ -532,7 +512,6 @@ module.exports = {
   getAtlasmakerServer,
   getNativeDB, // native mongodb
   removeMRI,
-  currentDirectory,
   insertTestTokenForUser,
   removeTestTokenForUser,
   queryProject,
@@ -547,8 +526,6 @@ module.exports = {
   launchBrowser,
   isLocalURL,
   compareImages,
-  comparePageScreenshots,
-  waitUntilHTMLRendered,
   waitForDOMReady,
   isDomElementVisible,
   noTimeout,

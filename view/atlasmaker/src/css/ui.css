@@ -76,14 +76,6 @@
 
 /* svg buttons
 ----------------------- */
-.pushButton {
-    border:1px solid #ddd;
-    border-radius:6px;
-    color:#ddd;
-    text-align:center;
-    -webkit-appearance:none;
-    cursor: pointer;
-}
 img.button {
     width:0.9rem;
     height:0.9rem;
@@ -106,19 +98,6 @@ img.icon {
 
 .noBorder {
     border: none;
-}
-
-.mui-select {
-    border:none;
-    background:none; /* no color, no decoration */
-    color:white;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    cursor: pointer;
-}
-.mui-select:focus:not(:focus-visible) {
-    outline: none;
 }
 
 /* Keyboard focus (UI kit U6): a 2px white outline, as BrainBox's style/ui.css (there

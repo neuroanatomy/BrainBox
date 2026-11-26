@@ -11,7 +11,7 @@
  * `username`, else the configured `usernameField`, `nickname` in BrainBox.
  */
 const crypto = require('crypto');
-const { AccessType, AccessLevel, findCurrentProject } = require('neuroweblab');
+const { AccessType, AccessLevel, CURRENT, findCurrentProject } = require('neuroweblab');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 
 const accessLevels = ['none', 'view', 'edit', 'add', 'remove'];
@@ -36,7 +36,7 @@ const atlasAccessLevel = async (nativeDb, { username, dirname, filename, source 
     return 'none';
   }
   const mri = await nativeDb.collection('mri').findOne(
-    { source, backup: { $exists: false } },
+    { source, ...CURRENT },
     { projection: { 'mri.atlas': 1 } }
   );
   const atlases = (mri && mri.mri && Array.isArray(mri.mri.atlas)) ? mri.mri.atlas : [];
@@ -82,7 +82,7 @@ const atlasReadAccess = async (nativeDb, { username, dirname, filename, source }
   // the current version of the MRI document or, while a save replaces it (it
   // marks the current one as a backup before it inserts the next), the latest
   const projection = { url: 1, 'mri.atlas': 1 };
-  const latest = async (query) => await nativeDb.collection('mri').findOne({ ...query, backup: { $exists: false } }, { projection }) ||
+  const latest = async (query) => await nativeDb.collection('mri').findOne({ ...query, ...CURRENT }, { projection }) ||
     nativeDb.collection('mri').findOne(query, { projection, sort: { _id: -1 } });
   let mri = (typeof source === 'string') ? await latest({ source }) : null;
   if (!mri || mri.url !== dirname) {

@@ -9,7 +9,7 @@ const sanitize = require('sanitize-filename');
 const { body, validationResult } = require('express-validator');
 const AtlasmakerServer = require('../atlasmakerServer/atlasmakerServer');
 const dataSlices = require('../dataSlices/dataSlices.js');
-const { AccessType, AccessLevel, catchErrors, findCurrentProject, jsonForScript, publicLoggedUser, withLock } = require('neuroweblab');
+const { AccessType, AccessLevel, CURRENT, catchErrors, findCurrentProject, jsonForScript, publicLoggedUser, visitor, withLock } = require('neuroweblab');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 const EmbedAccessService = require('../../services/EmbedAccessService');
 const { projectsForMetadata, mayChangeMri } = require('../atlasmakerServer/metadata-save-access');
@@ -100,7 +100,7 @@ const downloadMRI = async function (myurl, req) {
     .update(myurl)
     .digest('hex');
 
-  const mridb = await req.nativeDb.collection('mri').findOne({ source: myurl, backup: { $exists: false } });
+  const mridb = await req.nativeDb.collection('mri').findOne({ source: myurl, ...CURRENT });
   delete mridb?._id;
   console.log('mridb:', mridb);
   let filename;
@@ -193,7 +193,7 @@ const downloadMRI = async function (myurl, req) {
         atlasmakerServer.getBrainAtPath('/data/' + hash + '/' + filename)
           .then((mri) => {
             // Create json file for new dataset
-            const username = req.isAuthenticated() ? req.user.username : anonymousOwner(req);
+            const username = visitor(req) || anonymousOwner(req);
 
             let json = mridb;
             if (!json) {
@@ -244,14 +244,14 @@ const downloadMRI = async function (myurl, req) {
 const mri = async function (req, res) {
   // the nwl-components header's user (null when logged out)
   const headerUser = jsonForScript(publicLoggedUser(req.isAuthenticated() ? req.user : null));
-  const loggedUser = req.isAuthenticated() ? req.user.username : 'anonymous';
+  const loggedUser = visitor(req) || 'anonymous';
   req.session.returnTo = req.originalUrl; // Store return path in case of login
 
   const myurl = req.query.url;
   // const hash = crypto.createHash('md5').update(myurl).digest('hex');
   // console.log('Receive GET, query:', myurl, hash);
 
-  const json = await req.nativeDb.collection('mri').findOne({ source: myurl, backup: { $exists: false } }, { projection: { _id: 0 } })
+  const json = await req.nativeDb.collection('mri').findOne({ source: myurl, ...CURRENT }, { projection: { _id: 0 } })
     .catch((err) => {
       console.log('err 241:', err);
     });
@@ -320,12 +320,12 @@ const EMBED_QUERY_PARAMS = ['url', 'view', 'slice', 'project', 'annotation', 'em
  * @returns {Promise<Object>} {status: 400 | 404 | 403} when refused, else {status: 200, json, myurl}
  */
 const embedAccess = async function (req) {
-  const loggedUser = req.isAuthenticated() ? req.user.username : 'anonymous';
+  const loggedUser = visitor(req) || 'anonymous';
   const myurl = req.query.url;
 
   if (!myurl) { return { status: 400 }; }
 
-  const json = await req.nativeDb.collection('mri').findOne({ source: myurl, backup: { $exists: false } }, { projection: { _id: 0 } });
+  const json = await req.nativeDb.collection('mri').findOne({ source: myurl, ...CURRENT }, { projection: { _id: 0 } });
 
   if (!json) { return { status: 404 }; }
 
@@ -388,7 +388,7 @@ const mriEmbedUnsafe = async function (req, res) {
   const embedWsTicket = await EmbedAccessService.mintWsTicket(req.nativeDb, {
     dirname: json.url,
     mriSource: myurl,
-    username: req.isAuthenticated() ? req.user.username : null
+    username: visitor(req)
   });
 
   res.render('mriEmbed', {
@@ -520,7 +520,7 @@ const apiMriPost = async function (req, res) {
   //     return res.status(403).send({error: "Provide authentication"}).end();
   // }
 
-  let json = await req.nativeDb.collection('mri').findOne({ source: myurl, backup: { $exists: false }, success: { $exists: true } }, { projection: { _id: 0 } })
+  let json = await req.nativeDb.collection('mri').findOne({ source: myurl, ...CURRENT, success: { $exists: true } }, { projection: { _id: 0 } })
     .catch((err) => {
       console.log('ERROR:', err);
       res.json({ success: false });
@@ -531,7 +531,7 @@ const apiMriPost = async function (req, res) {
 
   // An MRI whose files the user cannot see is refused, as /mri/embed does
   // (also before it is downloaded: a project may list it before it has a document)
-  const loggedUser = req.isAuthenticated() ? req.user.username : 'anonymous';
+  const loggedUser = visitor(req) || 'anonymous';
   if (!mayViewMriFiles(myurl, await getRelatedProjects(req.nativeDb, json, myurl), loggedUser, json)) {
     console.log(`REJECTED POST /mri/json of ${myurl} by ${loggedUser}: may not see its files`);
     res.status(403).json(privateMriError(loggedUser));
@@ -766,7 +766,7 @@ const reset = async function reset(req, res) {
   const hash = crypto.createHash('md5').update(myurl)
     .digest('hex');
 
-  const mridb = await req.nativeDb.collection('mri').findOne({ source: myurl, backup: { $exists: false } })
+  const mridb = await req.nativeDb.collection('mri').findOne({ source: myurl, ...CURRENT })
     .catch((err) => {
       console.log('ERROR:', err);
       res
@@ -785,7 +785,7 @@ const reset = async function reset(req, res) {
         .send(err)
         .end();
     });
-  await req.nativeDb.collection('mri').updateOne({ source: myurl, backup: { $exists: false } }, {
+  await req.nativeDb.collection('mri').updateOne({ source: myurl, ...CURRENT }, {
     $set: {
       dim: mrires.dim,
       pixdim: mrires.pixdim,
@@ -838,9 +838,9 @@ const apiMriUploadFromURL = async function (req, res) {
   // Anyone may give an MRI its image the first time (the server could not
   // download it), but only its owner, or a user who may edit the files of a
   // project that lists it, may replace an image the server has
-  let json = await req.nativeDb.collection('mri').findOne({ source: myurl, backup: { $exists: false } }, { projection: { _id: 0 } });
+  let json = await req.nativeDb.collection('mri').findOne({ source: myurl, ...CURRENT }, { projection: { _id: 0 } });
   if (json && hasMriImage(req, json, myurl)) {
-    const username = req.isAuthenticated() ? req.user.username : null;
+    const username = visitor(req);
     const projects = username ? await projectsForMetadata(req.nativeDb, myurl, [json]) : new Map();
     if (!mayChangeMri({ stored: json, username, projects })) {
       console.log(`REJECTED upload-from-url of ${myurl} by ${username || 'anonymous'}: the MRI already has its image`);
@@ -873,7 +873,7 @@ const apiMriUploadFromURL = async function (req, res) {
   try {
     const mriData = await atlasmakerServer.getBrainAtPath('/data/' + hash + '/' + filename);
 
-    const username = req.isAuthenticated() ? req.user.username : anonymousOwner(req);
+    const username = visitor(req) || anonymousOwner(req);
 
     if (!json) {
       json = {

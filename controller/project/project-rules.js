@@ -11,7 +11,7 @@
  */
 const _ = require('lodash');
 const validatorNPM = require('validator');
-const { sanitize } = require('neuroweblab');
+const { CURRENT, sanitize } = require('neuroweblab');
 const { collaboratorUser, rowKey } = require('./project-rows.js');
 
 // the characters of a new name, description or file name
@@ -100,7 +100,7 @@ const projectErrorFor = (db) => async (project, { stored }) => {
   const storedNames = project.files.list.filter((file, i) => stored.files.has(i) &&
     _.isPlainObject(file) && typeof file.name === 'string' && !isWhitelisted(file.name));
   const mris = await Promise.all(storedNames.map(({ source }) => db.collection('mri')
-    .findOne({ source, backup: { $exists: false } }, { projection: { name: 1, _id: 0 } })));
+    .findOne({ source, ...CURRENT }, { projection: { name: 1, _id: 0 } })));
   const refused = storedNames.find((file, i) => !mris[i] || sanitize(_.isNil(mris[i].name) ? '' : mris[i].name) !== file.name);
 
   return refused ? `Invalid file name "${refused.name}"` : null;

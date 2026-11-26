@@ -8,7 +8,7 @@
  * that a project the visitor may not see never gives away its file's URL: the
  * embed error page instead.
  */
-const { findCurrentProject, projectEmbedRoute } = require('neuroweblab');
+const { CURRENT, findCurrentProject, projectEmbedRoute, visitor } = require('neuroweblab');
 const { getRelatedProjects, mayEmbedMri } = require('../mri/mri-access');
 
 const embedError = (res, status, message) => {
@@ -28,10 +28,10 @@ const projectEmbed = projectEmbedRoute({
   findProject: (req, shortname) => findCurrentProject(req.nativeDb, shortname, { projection: { _id: 0 } }),
   mayEmbed: async (req, { source }) => {
     const json = await req.nativeDb.collection('mri')
-      .findOne({ source, backup: { $exists: false } }, { projection: { _id: 0 } });
+      .findOne({ source, ...CURRENT }, { projection: { _id: 0 } });
     if (!json) { return noBrain; }
     const projects = await getRelatedProjects(req.nativeDb, json, source);
-    const loggedUser = req.isAuthenticated() ? req.user.username : 'anonymous';
+    const loggedUser = visitor(req) || 'anonymous';
 
     return mayEmbedMri(json, projects, loggedUser) ? { status: 200 } : { status: 403, message: 'This content is private.' };
   },

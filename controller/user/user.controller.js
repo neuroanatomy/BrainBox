@@ -3,7 +3,7 @@
 const dateFormat = require('dateformat');
 const dataSlices = require('../dataSlices/dataSlices.js');
 const {
-  AccessLevel, PUBLIC_USER_FIELDS, jsonForAttribute, jsonForScript, publicLoggedUser, publicUser, userProjectsRoute, visitor
+  AccessLevel, PUBLIC_USER_FIELDS, CURRENT, jsonForAttribute, jsonForScript, publicLoggedUser, publicUser, userProjectsRoute, visitor
 } = require('neuroweblab');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 
@@ -65,7 +65,7 @@ const user = async function (req, res) {
 const apiUser = async function (req, res) {
   let json;
   try {
-    json = await req.nativeDb.collection('user').findOne({ nickname: req.params.userName, backup: { $exists: false } });
+    json = await req.nativeDb.collection('user').findOne({ nickname: req.params.userName, ...CURRENT });
   } catch (err) {
     console.log('ERROR:', err);
     res.status(500).send({ error: 'Server error' });
@@ -98,7 +98,7 @@ const apiUserAll = async function (req, res) {
   const page = parseInt(req.query.page);
   const nItemsPerPage = 20;
 
-  const json = await req.nativeDb.collection('user').find({ backup: { $exists: false } }, { skip: page * nItemsPerPage, limit: nItemsPerPage, projection: { _id: 0 } })
+  const json = await req.nativeDb.collection('user').find({ ...CURRENT }, { skip: page * nItemsPerPage, limit: nItemsPerPage, projection: { _id: 0 } })
     .toArray();
   res.send(json.map(function (o) {
     return o.nickname;

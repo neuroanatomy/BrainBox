@@ -25,7 +25,7 @@
  */
 const path = require('path');
 const _ = require('lodash');
-const { AccessType } = require('neuroweblab');
+const { AccessType, CURRENT } = require('neuroweblab');
 const { getRelatedProjects, mayViewMriFiles } = require('./mri-access');
 const { projectAccessLevel } = require('../atlasmakerServer/metadata-save-access');
 
@@ -123,7 +123,7 @@ const decideDataAccess = ({ mri, projects, username, filename }) => {
 const loadFolder = async (nativeDb, md5) => {
   const url = `/data/${md5}/`;
   const projection = { _id: 0, source: 1, url: 1, filename: 1, owner: 1, 'mri.atlas': 1, 'mri.annotations': 1 };
-  const mri = await nativeDb.collection('mri').findOne({ url, backup: { $exists: false } }, { projection }) ||
+  const mri = await nativeDb.collection('mri').findOne({ url, ...CURRENT }, { projection }) ||
     await nativeDb.collection('mri').findOne({ url }, { projection, sort: { _id: -1 } });
   if (!mri || typeof mri.source !== 'string') {
     return { mri: null, projects: [] };

@@ -136,17 +136,6 @@
     border:none;
 }
 
-/* cursor
-------------------------------- */
-#atlasmaker .drawingcursor {
-    border: 1px solid #F00;
-    position: absolute;
-    pointer-events:none;
-}
-#atlasmaker .hidepaintcursor {
-    display: none;
-}
-
 #cursor {
     pointer-events: none;
     position:absolute;

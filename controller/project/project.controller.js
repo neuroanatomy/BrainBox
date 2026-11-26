@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const { param, validationResult } = require('express-validator');
 const dataSlices = require('../dataSlices/dataSlices.js');
 const {
-  AccessType, AccessLevel, AccessControlService, canSaveProject, droppedMessage, filesListIncomplete,
+  AccessType, AccessLevel, AccessControlService, CURRENT, canSaveProject, droppedMessage, filesListIncomplete,
   findCurrentProject, ignoredChangesMessage, jsonForScript, keepFieldsWithoutFilesEdit, keepListsWithoutEditRights, parseProjectData,
   noViewStatus, projectDeleteRoute, publicLoggedUser, projectFilesRoute, projectJsonRoute, projectListRoute, projectPageRoute, projectSaveRoute,
   projectSettingsRoute, sanitize, saveProjectVersion, saveRefusal, shortnamePattern, validateProject, visibleProject, visitor
@@ -191,7 +191,7 @@ const renderSettings = async function (req, res, json) {
     const obj = await Promise.all(rows.map((row) => req.nativeDb.collection('user')
       .findOne({
         nickname: row.userID,
-        backup: { $exists: false }
+        ...CURRENT
       }, {
         projection: { name: 1, _id: 0 }
       })));
@@ -266,7 +266,7 @@ const insertMRInames = function (req, res, list) {
 
     // check if the mri entry already exists
     // without a closure, only the last name in the list is used and repeated
-    let mri = await req.nativeDb.collection('mri').findOne({ source, backup: { $exists: false } }, { projection: { _id: 0 } });
+    let mri = await req.nativeDb.collection('mri').findOne({ source, ...CURRENT }, { projection: { _id: 0 } });
     const hash = crypto.createHash('md5').update(source)
       .digest('hex');
 
@@ -516,11 +516,11 @@ const removeProject = async function (req, oldProject) {
   const query = {},
     update = {};
   query['mri.annotations.' + shortname] = { $exists: 1 };
-  query.backup = { $exists: false };
+  Object.assign(query, CURRENT);
   update.$unset = {};
   update.$unset['mri.annotations.' + shortname] = '';
   await Promise.all([
-    req.nativeDb.collection('project').deleteOne({ shortname: shortname, backup: { $exists: false } }),
+    req.nativeDb.collection('project').deleteOne({ shortname: shortname, ...CURRENT }),
     req.nativeDb.collection('mri').updateMany(query, update),
     req.nativeDb.collection('mri').updateMany({ 'mri.atlas': { $elemMatch: { project: shortname } } }, { $pull: { 'mri.atlas': { project: shortname } } })
   ]);

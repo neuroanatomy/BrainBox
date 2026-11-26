@@ -10,13 +10,14 @@ import '../style/access-style.css';
 
 import * as tw from '../twoWayBinding';
 import { cellText, makeSortable, rowIndex } from '../sortableTable.js';
-import { getData, setData } from '../../../shared/domData';
 import { mountViewerFooter, mountViewerHeader } from '../viewer-header-footer.js';
+import pageEventsModule from '../../../shared/pageEvents.js';
 import { resizableColumns } from 'nwl-components/resize';
 import showHideModule from '../../../shared/showHide.js';
 
-// Showing and hiding elements (view/shared)
+// Showing and hiding elements, and the helpers shared with the project page (view/shared)
 const { show, hide } = showHideModule;
+const { delegate, isEmptyObject, preventDoubleTapZoom } = pageEventsModule;
 
 // nwl-components' header and footer, each on its own placeholder, outside the viewer
 mountViewerHeader(document.getElementById('bb-header-app'), { title: 'BrainBox', user: loggedUser });
@@ -28,45 +29,12 @@ let volAnnParam;
 let textAnnParam;
 
 /**
- * True if the object has no enumerable property, own or inherited
- * @param {object} obj Any object
- * @returns {boolean} Whether it is empty
- */
-const isEmptyObject = (obj) => {
-  // eslint-disable-next-line guard-for-in, no-unreachable-loop
-  for (const name in obj) {
-    return false;
-  }
-
-  return true;
-};
-
-/**
  * Like Array.prototype.map, but null and undefined results are dropped
  * @param {array|null} arr The array (null gives [])
  * @param {function} fn The mapping function
  * @returns {array} The mapped values
  */
 const jqMap = (arr, fn) => (arr || []).map(fn).filter((v) => v !== null && typeof v !== 'undefined');
-
-/**
- * Delegated listener: call `handler(event, matched)` for events
- * whose target is, or is inside, an element matching `selector`
- * @param {string} types Space-separated event types
- * @param {string} selector CSS selector of the elements to watch
- * @param {function} handler Called with the event and the matched element
- * @returns {void}
- */
-const onDocument = (types, selector, handler) => {
-  for (const type of types.split(' ')) {
-    document.addEventListener(type, (e) => {
-      const matched = (e.target instanceof Element) ? e.target.closest(selector) : null;
-      if (matched) {
-        handler(e, matched);
-      }
-    });
-  }
-};
 
 /**
  * The label set's name shown by the menu in a cell, as a sort key
@@ -129,21 +97,8 @@ const receiveMetadata = function (data) {
 };
 
 
-// Prevent zoom on double tap
-document.body.addEventListener('touchstart', (e) => {
-  const t2 = e.timeStamp;
-  const t1 = getData(e.currentTarget, 'lastTouch') || t2;
-  const dt = t2 - t1;
-  const fingers = e.touches.length;
-  setData(e.currentTarget, {lastTouch: t2});
-  if (!dt || dt > 500 || fingers > 1) {
-    return; // not double-tap
-  }
-  e.preventDefault(); // double tap - prevent the zoom
-  // also synthesize click events we just swallowed up
-  e.currentTarget.click();
-  e.currentTarget.click();
-});
+// Prevent zoom on double tap: this page times the taps on the body, and clicks the body
+preventDoubleTapZoom(document.body, { tapped: (e) => e.currentTarget });
 
 if (isEmptyObject(mriInfo)) {
   const stereotaxic = document.getElementById('stereotaxic');
@@ -269,7 +224,7 @@ if (isEmptyObject(mriInfo)) {
         BrainBox.appendAnnotationTableRow(i, volAnnParam);
       }
       // connect pop-down menus
-      onDocument('change', 'table#annotations select', (e, select) => {
+      delegate(document, 'change', 'table#annotations select', (e, select) => {
         // The column's title: the header row's th in the same position as the select's cell
         const [header] = document.querySelectorAll('table#annotations tr');
         const th = header ? header.querySelectorAll('th')[select.closest('td').cellIndex] : null;
@@ -297,7 +252,7 @@ if (isEmptyObject(mriInfo)) {
       // volume annotation table: select row
       // (by its index in mri.atlas, wherever a sort shows it; the header row, whose
       // buttons sort the table, selects nothing)
-      onDocument('click touchstart', '#annotations tr', (e) => {
+      delegate(document, 'click touchstart', '#annotations tr', (e) => {
         const targetIndex = rowIndex(e.target.closest('tr'));
         if (targetIndex < 0) { return; }
         BrainBox.selectAnnotationTableRow(targetIndex, volAnnParam);
@@ -380,7 +335,7 @@ if (isEmptyObject(mriInfo)) {
       makeAnnotationsSortable(textAnnParam.table, cellText(1), (i) => (textAnnotationsArray[i] || {}).modified);
 
       // connect close button in labels set
-      onDocument('click touchstart', '#labels-close', () => { hide(document.getElementById('labelset')); });
+      delegate(document, 'click touchstart', '#labels-close', () => { hide(document.getElementById('labelset')); });
 
       show(document.getElementById('data'));
 

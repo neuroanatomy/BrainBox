@@ -162,7 +162,6 @@ export const AtlasMakerWS = {
 
         me.receiveFunctions.saveMetadata = me.receiveMetadata;
         me.receiveFunctions.userData = me.receiveUserDataMessage;
-        me.receiveFunctions.volInfo = function (data) { console.log('volInfo', data); };
         me.receiveFunctions.chat = me.receiveChatMessage;
         me.receiveFunctions.show = me.receiveShowMessage;
         me.receiveFunctions.paint = me.receivePaintMessage;
@@ -173,9 +172,6 @@ export const AtlasMakerWS = {
         me.receiveFunctions.writeRefused = me.receiveWriteRefusedMessage;
         me.receiveFunctions.readRefused = me.receiveReadRefusedMessage;
         me.receiveFunctions.sliceFailed = me.receiveSliceFailedMessage;
-
-        me.receiveFunctions.requestSlice = function (data) { console.log('requestSlice', data); };
-        me.receiveFunctions.requestSlice2 = function (data) { console.log('requestSlice2', data); };
 
         me.socket.onmessage = me.receiveSocketMessage;
 
@@ -603,23 +599,6 @@ export const AtlasMakerWS = {
   /**
    * @returns {void}
    */
-  sendRequestMRIMessage: function () {
-    const me = AtlasMakerWidget;
-    if(me.flagConnected === 0) { return; }
-
-    try {
-      me.socket.send(JSON.stringify({
-        type:'requestMRI',
-        source:'sendRequestMRIMessage'
-      }));
-    } catch (ex) {
-      console.log('ERROR: Unable to sendRequestMRIMessage', ex);
-    }
-  },
-
-  /**
-   * @returns {void}
-   */
   sendRequestSliceMessage: function () {
     const me = AtlasMakerWidget;
     if(me.flagConnected === 0) { return; }
@@ -905,17 +884,6 @@ export const AtlasMakerWS = {
    * @returns {Promise<void>} Resolved once closed
    */
   displayDialog: async ({msg, text, modal, delay, doFadeOut}) => {
-
-    /*
-      Use like this:
-      const date = new Date();
-      const time = `${date.getHours()}:${('00' + date.getMinutes()).slice(-2)}`;
-      AtlasMakerWidget._displayServerModal({
-        type:"alert",
-        msg:`<p>⚠️ Server is going to restart at ${time}`
-      });
-    */
-
     const me = AtlasMakerWidget;
     const el = document.createElement('div');
     el.style = `

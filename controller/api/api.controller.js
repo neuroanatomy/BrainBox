@@ -1,6 +1,6 @@
 const tracer = require('tracer').console({format: '[{{file}}:{{line}}]  {{message}}'});
 
-const { escapeRegex } = require('neuroweblab');
+const { CURRENT, escapeRegex, visitor } = require('neuroweblab');
 
 const userNameQuery = (req, res) => {
   const {query} = req;
@@ -68,7 +68,7 @@ const getAtlasBackups = (req, res) => {
   nativeDb.collection('mri').findOne({
     source: source,
     'mri.atlas': {$elemMatch:{name: atlasName, project: atlasProject}},
-    backup: {$exists: false}
+    ...CURRENT
   }, {projection: {url: 1, 'mri.atlas.$': 1, _id: 0}})
     .then( (obj) => {
     // get all filenames that have ever been associated with this atlas
@@ -123,7 +123,7 @@ const getAtlasBackups = (req, res) => {
 
 // eslint-disable-next-line max-statements
 const log = async (req, res) => {
-  const loggedUser = req.isAuthenticated() ? req.user.username : 'anonymous';
+  const loggedUser = visitor(req) || 'anonymous';
   const json = req.body;
   let obj;
   const nativeDb = req.app.db.nativeMongoDB();

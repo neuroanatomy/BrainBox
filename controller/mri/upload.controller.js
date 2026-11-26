@@ -3,7 +3,7 @@
 const fs = require('fs');
 const { body, validationResult } = require('express-validator');
 const amri = require('../atlasmakerServer/atlasmaker-mri');
-const { AccessType, findCurrentProject, withLock } = require('neuroweblab');
+const { AccessType, CURRENT, findCurrentProject, withLock } = require('neuroweblab');
 const { projectAccessLevel } = require('../atlasmakerServer/metadata-save-access');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 const { filterMriForUser } = require('./mri-access');
@@ -121,7 +121,7 @@ const otherValidations = async function (req, res, next) {
     // Check token expiry date
     const now = new Date();
     if (obj.expiryDate.getTime() > now.getTime()) {
-      const json = await req.nativeDb.collection('mri').findOne({ source: req.body.url, backup: { $exists: false } });
+      const json = await req.nativeDb.collection('mri').findOne({ source: req.body.url, ...CURRENT });
       if (json && req.files.length > 0) {
         const access = await projectAccessForUpload(req, res, obj.username);
         if (access === null) {
@@ -264,7 +264,7 @@ const upload = async function (req, res) {
     // update the database
     mri.mri.atlas.push(atlasMetadata);
     // mark previous version as backup
-    await req.nativeDb.collection('mri').updateMany({ source: req.body.url, backup: { $exists: false } }, { $set: { backup: true } });
+    await req.nativeDb.collection('mri').updateMany({ source: req.body.url, ...CURRENT }, { $set: { backup: true } });
     // insert new version
     await req.nativeDb.collection('mri').insertOne(mri);
   });

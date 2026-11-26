@@ -12,7 +12,7 @@
  */
 const fs = require('fs');
 const path = require('path');
-const { AccessLevel, findCurrentProject } = require('neuroweblab');
+const { AccessLevel, CURRENT, findCurrentProject, visitor } = require('neuroweblab');
 const amri = require('../atlasmakerServer/atlasmaker-mri.js');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 const { isLabelset } = require('./atlas-labels.js');
@@ -60,7 +60,7 @@ const atlasPath = (mri, atlas) => {
  */
 const layerValues = async (nativeDb, project, name) => {
   const mris = await nativeDb.collection('mri')
-    .find({ backup: { $exists: false }, 'mri.atlas': { $elemMatch: { project, name } } }, { projection: { _id: 0, url: 1, 'mri.atlas': 1 } })
+    .find({ ...CURRENT, 'mri.atlas': { $elemMatch: { project, name } } }, { projection: { _id: 0, url: 1, 'mri.atlas': 1 } })
     .toArray();
   const values = new Set();
   let annotated = 0;
@@ -95,7 +95,7 @@ const layerValues = async (nativeDb, project, name) => {
  */
 // eslint-disable-next-line max-statements
 const labelsetCheck = async function (req, res) {
-  const loggedUser = req.isAuthenticated() ? req.user.username : 'anonymous';
+  const loggedUser = visitor(req) || 'anonymous';
   const { projectName } = req.params;
   const { layer, values } = req.query;
   if (typeof layer !== 'string' || layer === '' || !isLabelset(values)) {

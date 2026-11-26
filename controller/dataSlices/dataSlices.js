@@ -2,7 +2,7 @@
 console.log('dataSlices.js');
 const dateFormat = require('dateformat');
 
-const { AccessLevel, isAnyoneRow } = require('neuroweblab');
+const { AccessLevel, CURRENT, isAnyoneRow, visitor } = require('neuroweblab');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 
 /**
@@ -24,14 +24,14 @@ const getUserFilesSlice = function getUserFilesSlice(req, requestedUser, start, 
   return new Promise(function (resolve, reject) {
     Promise.all([
       req.nativeDb.collection('mri')
-        .find({ owner: requestedUser, backup: { $exists: false } }, { skip: start, limit: length })
+        .find({ owner: requestedUser, ...CURRENT }, { skip: start, limit: length })
         .toArray(),
       req.nativeDb.collection('project').find({
         $or: [
           { owner: requestedUser },
           { 'collaborators.list': { $elemMatch: { userID: requestedUser } } }
         ],
-        backup: { $exists: false }
+        ...CURRENT
       })
         .toArray()
     ])
@@ -91,14 +91,14 @@ const getUserAtlasSlice = function getUserAtlasSlice(req, requestedUser, start, 
   return new Promise(function (resolve, reject) {
     Promise.all([
       req.nativeDb.collection('mri')
-        .find({ 'mri.atlas': { $elemMatch: { owner: requestedUser } }, backup: { $exists: false } }, { skip: start, limit: length })
+        .find({ 'mri.atlas': { $elemMatch: { owner: requestedUser } }, ...CURRENT }, { skip: start, limit: length })
         .toArray(),
       req.nativeDb.collection('project').find({
         $or: [
           { owner: requestedUser },
           { 'collaborators.list': { $elemMatch: { userID: requestedUser } } }
         ],
-        backup: { $exists: false }
+        ...CURRENT
       })
         .toArray()
     ])
@@ -160,7 +160,7 @@ const visibleCollaborators = (project, loggedUser) => {
  * @param {Object} req The request
  * @returns {string} The username, or 'anonymous'
  */
-const visitorOf = (req) => (req.isAuthenticated() ? req.user.username : 'anonymous');
+const visitorOf = (req) => visitor(req) || 'anonymous';
 
 /**
  * @func projectFileEntries
@@ -178,12 +178,12 @@ const visitorOf = (req) => (req.isAuthenticated() ? req.user.username : 'anonymo
  * @returns {Promise<Array>} The entries, in the order of the slice
  */
 const projectFileEntries = async (req, project, sources, { names = false } = {}) => {
-  const visitor = visitorOf(req);
+  const requester = visitorOf(req);
 
   // a single query for the whole slice (mri.source is indexed, see app.js)
   const mris = await req.nativeDb.collection('mri')
     .find(
-      { source: { $in: sources }, backup: { $exists: false } },
+      { source: { $in: sources }, ...CURRENT },
       { projection: names ? { _id: 0, source: 1, name: 1 } : { _id: 0 } }
     )
     .toArray();
@@ -197,7 +197,7 @@ const projectFileEntries = async (req, project, sources, { names = false } = {})
     if (names) {
       return { source: mri.source, name: typeof mri.name === 'string' ? mri.name : '' };
     }
-    BrainboxAccessControlService.setVolumeAnnotationsAccessByProjects(mri, [project], visitor);
+    BrainboxAccessControlService.setVolumeAnnotationsAccessByProjects(mri, [project], requester);
 
     return mri;
   });
@@ -220,9 +220,9 @@ const getFilesSlice = function getFilesSlice(req, start, length) {
   return new Promise(function (resolve, reject) {
     Promise.all([
       req.nativeDb.collection('mri')
-        .find({ backup: { $exists: false } }, { projection: { source: 1, _id: 0 }, skip: start, limit: length })
+        .find({ ...CURRENT }, { projection: { source: 1, _id: 0 }, skip: start, limit: length })
         .toArray(),
-      req.nativeDb.collection('project').find({ backup: { $exists: false } })
+      req.nativeDb.collection('project').find({ ...CURRENT })
         .toArray()
     ])
       .then(function (values) {
