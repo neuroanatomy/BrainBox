@@ -9,14 +9,12 @@ const sanitize = require('sanitize-filename');
 const { body, validationResult } = require('express-validator');
 const AtlasmakerServer = require('../atlasmakerServer/atlasmakerServer');
 const dataSlices = require('../dataSlices/dataSlices.js');
-const { AccessType, AccessLevel, catchErrors, findCurrentProject, jsonForScript, publicLoggedUser } = require('neuroweblab');
+const { AccessType, AccessLevel, catchErrors, findCurrentProject, jsonForScript, publicLoggedUser, withLock } = require('neuroweblab');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 const EmbedAccessService = require('../../services/EmbedAccessService');
 const { projectsForMetadata, mayChangeMri } = require('../atlasmakerServer/metadata-save-access');
 const { getRelatedProjects, filterMriForUser, isFilePubliclyVisible, hasCustomFileViewAccess, mayViewMriFiles, mayEmbedMri, privateMriError, anonymousOwner } = require('./mri-access');
 const _ = require('lodash');
-const AsyncLock = require('async-lock');
-const lock = new AsyncLock();
 
 const downloadQueue = {};
 let atlasmakerServer;
@@ -591,7 +589,7 @@ const apiMriPost = async function (req, res) {
         console.log('Download succeeded. Insert in DB, remove from queue');
         obj.success = true;
 
-        return lock.acquire('mri', async function () {
+        return withLock('mri', async function () {
           await req.nativeDb.collection('mri').updateMany({ source: myurl }, { $set: { backup: true } });
           await req.nativeDb.collection('mri').insertOne(obj);
         });
@@ -911,7 +909,7 @@ const apiMriUploadFromURL = async function (req, res) {
       modifiedBy: username
     });
 
-    await lock.acquire('mri', async function () {
+    await withLock('mri', async function () {
       await req.nativeDb.collection('mri').updateMany({ source: myurl }, { $set: { backup: true } });
       await req.nativeDb.collection('mri').insertOne(json);
     });

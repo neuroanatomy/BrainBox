@@ -11,10 +11,10 @@ const path = require('path');
 const keypress = require('keypress');
 
 const amri = require('./atlasmaker-mri');
-const AsyncLock = require('async-lock');
-const lock = new AsyncLock();
 const EmbedAccessService = require('../../services/EmbedAccessService');
-const { findCurrentProject, usernameFromCookie } = require('neuroweblab');
+// withLock('mri'): the lock of the MRI documents, one table with the other
+// writers, the project saves and the admin tools (['project', 'mri'])
+const { findCurrentProject, usernameFromCookie, withLock } = require('neuroweblab');
 const { atlasAccessLevel, atlasReadAccess, canEdit } = require('./atlas-write-access');
 const { mergeMetadata, projectsForMetadata, savedView } = require('./metadata-save-access');
 
@@ -414,7 +414,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       const { vectorial } = atlas;
 
       // eslint-disable-next-line max-statements
-      await lock.acquire('mri', async function () {
+      await withLock('mri', async function () {
 
         // check if atlas has changed since the last time and
         // if it hasn't return
@@ -1370,7 +1370,7 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
       let saved = null;
       let refused = [];
       // eslint-disable-next-line max-statements
-      await lock.acquire('mri', async function () {
+      await withLock('mri', async function () {
         const stored = await nativeDb.collection('mri').findOne({ source, backup: { $exists: false } }, { projection: { _id: 0 } });
         let incoming = json;
         if (data.method === 'patch') {

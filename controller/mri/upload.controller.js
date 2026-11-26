@@ -3,12 +3,10 @@
 const fs = require('fs');
 const { body, validationResult } = require('express-validator');
 const amri = require('../atlasmakerServer/atlasmaker-mri');
-const { AccessType, findCurrentProject } = require('neuroweblab');
+const { AccessType, findCurrentProject, withLock } = require('neuroweblab');
 const { projectAccessLevel } = require('../atlasmakerServer/metadata-save-access');
 const BrainboxAccessControlService = require('../../services/BrainboxAccessControlService');
 const { filterMriForUser } = require('./mri-access');
-const AsyncLock = require('async-lock');
-const lock = new AsyncLock();
 
 // ExpressValidator = require('express-validator')
 
@@ -262,7 +260,7 @@ const upload = async function (req, res) {
     }
   }
 
-  await lock.acquire('mri', async function () {
+  await withLock('mri', async function () {
     // update the database
     mri.mri.atlas.push(atlasMetadata);
     // mark previous version as backup

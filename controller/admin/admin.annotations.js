@@ -7,9 +7,7 @@
  * the previous version can be restored from its backup, and they are
  * recorded in the log collection.
  */
-const AsyncLock = require('async-lock');
-const { adminLog } = require('neuroweblab');
-const lock = new AsyncLock();
+const { adminLog, withLock } = require('neuroweblab');
 
 const isProjectName = (name) => typeof name === 'string' && name !== '';
 
@@ -161,7 +159,7 @@ const describeMRI = async (nativeDb, source) => {
  *   or null if there is no MRI with that source
  */
 // eslint-disable-next-line max-statements
-const removeSelected = (nativeDb, { source, selectVolume, text, username }) => lock.acquire('mri', async () => {
+const removeSelected = (nativeDb, { source, selectVolume, text, username }) => withLock('mri', async () => {
   const mri = await nativeDb.collection('mri').findOne({ source, backup: { $exists: false } });
   if (!mri) {
     return null;
