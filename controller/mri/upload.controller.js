@@ -160,8 +160,6 @@ const upload = async function (req, res) {
   const { mri } = req.atlasUpload;
   const { files } = req;
 
-  delete mri._id;
-
   console.log('Everything is in order');
   console.log('username:', username);
   console.log('url:', url);
@@ -251,28 +249,32 @@ const upload = async function (req, res) {
   console.log('final volume annotation entry:');
   console.log('atlasMetadata:', atlasMetadata);
 
-  // remove previous atlases with the same atlasName and atlasProject (the
-  // user may edit them: the project decides the access to its layers)
-  let i;
-  for (i = mri.mri.atlas.length - 1; i >= 0; i--) {
-    if (mri.mri.atlas[i].name === atlasName && mri.mri.atlas[i].project === atlasProject) {
-      mri.mri.atlas.splice(i, 1);
+  // the version written is the current one, read inside the lock: a save made
+  // since the checks read the MRI (a name, a text annotation, a layer) is kept
+  const stored = await withLock('mri', async function () {
+    const current = await req.nativeDb.collection('mri').findOne({ source: req.body.url, ...CURRENT });
+    if (!current) {
+      return null;
     }
-  }
-
-  await withLock('mri', async function () {
-    // update the database
-    mri.mri.atlas.push(atlasMetadata);
-    // mark previous version as backup
+    delete current._id;
+    // remove previous atlases with the same atlasName and atlasProject (the
+    // user may edit them: the project decides the access to its layers)
+    current.mri.atlas = current.mri.atlas.filter((a) => !(a.name === atlasName && a.project === atlasProject));
+    current.mri.atlas.push(atlasMetadata);
+    // the previous version becomes a backup
     await req.nativeDb.collection('mri').updateMany({ source: req.body.url, ...CURRENT }, { $set: { backup: true } });
-    // insert new version
-    await req.nativeDb.collection('mri').insertOne(mri);
+    await req.nativeDb.collection('mri').insertOne(current);
+
+    return current;
   });
+  if (!stored) { // removed since the checks: answered as they answer an unknown URL
+    return res.status(403).json([{ error: 'Unkown URL' }]);
+  }
 
   // answer the MRI as the uploader may see it, as POST /mri/json does: without
   // the layers and text annotations of projects whose annotations are hidden
   // from them
-  const answer = JSON.parse(JSON.stringify(mri));
+  const answer = JSON.parse(JSON.stringify(stored));
   await filterMriForUser(req.nativeDb, answer, req.body.url, username);
   res.status(200).json(answer)
     .end();

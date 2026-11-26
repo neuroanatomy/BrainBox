@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 // The writers of MRI documents (the WebSocket's saveMetadata and vectorial
 // atlas save, POST /mri/json's download, the uploads, the admin removal) read
 // the current version and insert a new one. Each module had its own AsyncLock
@@ -7,17 +8,22 @@
 // which the project saves and admin tools also take (['project', 'mri']).
 
 const crypto = require('crypto');
+const fs = require('fs');
 const { expect } = require('chai');
 const sinon = require('sinon');
 const { isLocked, withLock } = require('neuroweblab');
 const atlasmakerServer = require('../../controller/atlasmakerServer/atlasmakerServer.js');
 const annotations = require('../../controller/admin/admin.annotations.js');
+const amri = require('../../controller/atlasmakerServer/atlasmaker-mri.js');
+const MriController = require('../../controller/mri/mri.controller.js');
+const uploadController = require('../../controller/mri/upload.controller.js');
 const U = require('../utils.js');
 
 const source = 'https://example.org/mri-lock-spec.nii.gz';
 const dirname = `/data/${crypto.createHash('md5').update(source)
   .digest('hex')}/`;
 const shortname = 'mrilockspec';
+const uploadToken = 'mrilockspectoken';
 
 const project = {
   name: 'MRI lock spec',
@@ -47,6 +53,33 @@ const fakeSessionParser = (sessions) => (req, res, next) => {
   const user = sessions[req.headers.cookie];
   req.session = user ? { passport: { user } } : {};
   setImmediate(next);
+};
+
+/**
+ * A response that resolves once the controller answers
+ * @returns {object} { res, answered }: answered resolves with { status, body }
+ */
+const mockResponse = () => {
+  let done;
+  const answered = new Promise((resolve) => { done = resolve; });
+  const res = { statusCode: 200 };
+  const answer = (body) => {
+    done({ status: res.statusCode, body });
+
+    return res;
+  };
+  Object.assign(res, {
+    status: (code) => {
+      res.statusCode = code;
+
+      return res;
+    },
+    json: answer,
+    send: answer,
+    end: () => res
+  });
+
+  return { res, answered };
 };
 
 const mockSocket = () => ({ send: sinon.spy(), close: sinon.spy(), readyState: 1, on: sinon.spy() });
@@ -165,6 +198,8 @@ describe('UNIT TESTING THE MRI DOCUMENTS LOCK', function () {
       .deleteMany({ shortname });
     await db().collection('log')
       .deleteMany({ source });
+    await db().collection('log')
+      .deleteMany({ token: uploadToken });
   });
 
   it('an admin removal and a WebSocket save of the same MRI at the same time: both changes are kept', async function () {
@@ -206,6 +241,87 @@ describe('UNIT TESTING THE MRI DOCUMENTS LOCK', function () {
     release();
     await Promise.all([projectSave, save]);
     expect((await storedDoc()).name).to.equal('Renamed');
+  });
+
+  // The uploads read the MRI (to check it exists and who may change it), then
+  // move and load the file, then write: they insert the version they read,
+  // changed. A save made meanwhile was lost; they now re-read the current
+  // version inside the lock and change that one.
+  describe('an upload and a WebSocket save of the same MRI at the same time: both changes are kept', function () {
+    // the uploads' files are neither moved nor read: their image is this one
+    const image = { dim: [2, 2, 2], pixdim: [1, 1, 1], v2w: [[1, 0, 0], [0, 1, 0], [0, 0, 1]], wori: [0, 0, 0] };
+
+    beforeEach(async function () {
+      sinon.stub(amri, 'loadMRI').resolves(image);
+      sinon.stub(fs.promises, 'mkdir').resolves();
+      sinon.stub(fs.promises, 'rename').resolves();
+      sinon.stub(fs, 'mkdirSync');
+      sinon.stub(fs, 'renameSync');
+      await db().collection('log')
+        .deleteMany({ token: uploadToken });
+      await db().collection('log')
+        .insertOne({ token: uploadToken, username: 'foo', expiryDate: new Date(Date.now() + 3600 * 1000) });
+    });
+
+    /**
+     * Runs a request whose read of the MRI is held, renames the MRI over the
+     * WebSocket meanwhile, then lets the read answer
+     * @param {Function} request held db => Promise of the answer
+     * @returns {Promise<object>} The request's answer
+     */
+    const saveDuringRequest = async (request) => {
+      const held = heldReads(db());
+      toRelease.push(held.open);
+      const answer = request(held.db);
+      await held.read; // the request has read the current version
+      const save = rename('Renamed');
+      await Promise.race([save, delay(200)]);
+      held.open();
+      await save;
+
+      return answer;
+    };
+
+    it('POST /mri/upload (a volume layer)', async function () {
+      const answer = await saveDuringRequest((nativeDb) => {
+        const { res, answered } = mockResponse();
+        const req = {
+          body: { url: source, token: uploadToken, atlasName: 'Uploaded', atlasProject: shortname, atlasLabelSet: 'foreground.json' },
+          files: [{ originalname: 'layer.nii.gz', path: 'uploads/layer' }],
+          dirname: '/nonexistent-mri-lock-spec',
+          nativeDb
+        };
+        uploadController.otherValidations(req, res, () => uploadController.upload(req, res));
+
+        return answered;
+      });
+      expect(answer.status).to.equal(200);
+      const doc = await storedDoc();
+      expect(doc.name).to.equal('Renamed');
+      expect(doc.mri.atlas.map((a) => a.name)).to.include('Uploaded');
+    });
+
+    it('POST /mri/upload-from-url (the MRI\'s image)', async function () {
+      const controller = new MriController(db());
+      const answer = await saveDuringRequest((nativeDb) => {
+        const { res, answered } = mockResponse();
+        const req = {
+          body: { url: source },
+          file: { path: 'uploads/brain' },
+          dirname: '/nonexistent-mri-lock-spec',
+          headers: {},
+          ip: '127.0.0.1',
+          nativeDb
+        };
+        controller.apiMriUploadFromURL(req, res);
+
+        return answered;
+      });
+      expect(answer.status).to.equal(200);
+      const doc = await storedDoc();
+      expect(doc.name).to.equal('Renamed');
+      expect(doc.dim).to.deep.equal(image.dim);
+    });
   });
 
   describe('each writer finishes, alone and in parallel with itself', function () {

@@ -809,6 +809,34 @@ const reset = async function reset(req, res) {
 };
 
 /**
+ * The document of an MRI that has none yet, as the client's upload creates it
+ * @param {string} source The MRI's source URL
+ * @param {string} hash The md5 of the source: its directory under /data/
+ * @param {string} owner The uploader, or the anonymous owner
+ * @returns {object} The document, with its default volume layer
+ */
+const newMriDocument = (source, hash, owner) => ({
+  source,
+  name: '',
+  url: '/data/' + hash + '/',
+  included: (new Date()).toJSON(),
+  owner,
+  mri: {
+    atlas: [
+      {
+        created: (new Date()).toJSON(),
+        modified: (new Date()).toJSON(),
+        access: 'edit',
+        type: 'volume',
+        name: 'Default',
+        filename: 'Atlas.nii.gz',
+        labels: 'foreground.json'
+      }
+    ]
+  }
+});
+
+/**
  * @function apiMriUploadFromURL
  * @desc Receives an MRI file uploaded by the client (for sources that block
  *       server-side downloads, e.g. behind WAF/bot-challenge). The client
@@ -875,30 +903,7 @@ const apiMriUploadFromURL = async function (req, res) {
 
     const username = visitor(req) || anonymousOwner(req);
 
-    if (!json) {
-      json = {
-        source: myurl,
-        name: '',
-        url: '/data/' + hash + '/',
-        included: (new Date()).toJSON(),
-        owner: username,
-        mri: {
-          atlas: [
-            {
-              created: (new Date()).toJSON(),
-              modified: (new Date()).toJSON(),
-              access: 'edit',
-              type: 'volume',
-              name: 'Default',
-              filename: 'Atlas.nii.gz',
-              labels: 'foreground.json'
-            }
-          ]
-        }
-      };
-    }
-
-    Object.assign(json, {
+    const changes = {
       filename,
       success: true,
       dim: mriData.dim,
@@ -907,9 +912,14 @@ const apiMriUploadFromURL = async function (req, res) {
       worldOrigin: mriData.wori,
       modified: (new Date()).toJSON(),
       modifiedBy: username
-    });
+    };
 
+    // the version changed is the current one, read inside the lock: the check
+    // read the MRI before the file was moved and loaded, and a save made since
+    // (a name, an annotation, a layer) would be lost if that copy was written back
     await withLock('mri', async function () {
+      const current = await req.nativeDb.collection('mri').findOne({ source: myurl, ...CURRENT }, { projection: { _id: 0 } });
+      json = Object.assign(current || newMriDocument(myurl, hash, username), changes);
       await req.nativeDb.collection('mri').updateMany({ source: myurl }, { $set: { backup: true } });
       await req.nativeDb.collection('mri').insertOne(json);
     });
