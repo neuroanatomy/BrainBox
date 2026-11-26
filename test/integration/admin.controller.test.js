@@ -175,6 +175,46 @@ describe('TESTING THE /admin ROUTE', function () {
       }
     }).timeout(U.shortTimeout);
 
+    it('sends a notice holding HTML as it is (the viewers show it as text)', async function () {
+      const socket = new WebSocket(wshost);
+      const text = '<img src=x onerror="window.__notice=1"><b>"Restart"</b> & after';
+      try {
+        await new Promise((resolve, reject) => {
+          socket.once('open', resolve);
+          socket.once('error', reject);
+        });
+        const received = new Promise((resolve) => {
+          socket.on('message', (data) => {
+            if (Buffer.isBuffer(data) && data[0] !== 0x7b) { return; } // binary data, not JSON
+            const msg = JSON.parse(data);
+            if (msg.type === 'serverMessage' && msg.msg === text) { resolve(msg); }
+          });
+        });
+        const res = await chai.request(U.serverURL).post('/admin/broadcast-message')
+          .query({ token: adminToken })
+          .send({ msg: text });
+        assert.equal(res.statusCode, 200);
+        const msg = await Promise.race([
+          received,
+          new Promise((resolve) => { setTimeout(resolve, U.shortTimeout / 2); })
+        ]);
+        assert.isDefined(msg, 'the connected user received the notice as it was sent');
+      } finally {
+        socket.close();
+      }
+    }).timeout(U.shortTimeout);
+
+    it('refuses a notice over 500 characters, or empty, with a JSON 400', async function () {
+      for (const msg of ['x'.repeat(501), '   ']) {
+        // eslint-disable-next-line no-await-in-loop
+        const res = await chai.request(U.serverURL).post('/admin/broadcast-message')
+          .query({ token: adminToken })
+          .send({ msg });
+        assert.equal(res.statusCode, 400);
+        assert.deepEqual(res.body, { success: false, error: 'Provide the msg: 1 to 500 characters' });
+      }
+    });
+
     it('counts the users connected to an MRI', async function () {
       const socket = new WebSocket(wshost);
       try {

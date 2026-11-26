@@ -171,7 +171,12 @@ const me = {
   sendFunctions: [], // array, functions to send messages through the websocket
   socketReady: null, // promise, resolved once the WebSocket is open (set by initAtlasMaker)
   flagConnected: 0, // boolean, is the user is currently connected to the server?
-  reconnectionTimeout: 5, // reconnection timeout starts at 5 seconds, used in case of websocket cuts
+  // the waits before reconnecting after the WebSocket closed (ms, see _reconnectionWait)
+  reconnectionTimeout: 1000, // the next one: 1 s, doubled at each try
+  reconnectionMinTimeout: 1000,
+  reconnectionMaxTimeout: 30000, // never more than 30 s
+  stableConnectionTime: 10000, // back to 1 s after a connection that stayed open 10 s
+  connectedAt: null, // when the WebSocket opened (ms), null while closed
   flagLoadingImg: {loading:false}, // is an image is loading?
   drawScheduled: false, // is a redraw waiting for the next animation frame? (drawImages)
   drawPending: null, // the atlas view and slice that redraw will show

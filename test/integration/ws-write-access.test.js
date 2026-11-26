@@ -232,8 +232,8 @@ const editWhileDisconnected = async (browser) => {
   await page.evaluate(() => {
     const me = AtlasMakerWidget;
     window.__sentSaves = 0;
-    // reconnect in about 3 s instead of up to 12 s
-    me.reconnectionTimeout = 0;
+    // reconnect in 1 s (no random part), time enough to edit while disconnected
+    me.reconnectionTimeout = 1000;
     const { onclose } = me.socket;
     me.socket.onclose = () => {
       const { random } = Math;

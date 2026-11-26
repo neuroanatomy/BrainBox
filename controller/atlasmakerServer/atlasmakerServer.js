@@ -14,7 +14,7 @@ const amri = require('./atlasmaker-mri');
 const EmbedAccessService = require('../../services/EmbedAccessService');
 // withLock('mri'): the lock of the MRI documents, one table with the other
 // writers, the project saves and the admin tools (['project', 'mri'])
-const { findCurrentProject, usernameFromCookie, withLock } = require('neuroweblab');
+const { chatMessage, findCurrentProject, relayInOrder, usernameFromCookie, withLock } = require('neuroweblab');
 const { atlasAccessLevel, atlasReadAccess, canEdit } = require('./atlas-write-access');
 const { mergeMetadata, projectsForMetadata, savedView } = require('./metadata-save-access');
 
@@ -42,8 +42,6 @@ const privateUserFields = ['atlasFilename', 'iAtlas'];
 const identityUserFields = ['username', 'uid'];
 // the name of a connection without a logged-in user
 const anonymousName = 'Anonymous';
-// the longest chat message relayed (as microdraw)
-const maxChatLength = 1000;
 // the messages that carry who sent them: the session's name is read before they are handled
 const namedMessages = new WeakSet();
 
@@ -1942,21 +1940,26 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
     },
 
     /**
-     * Check a chat message, and set who sent it: the name of the session,
-     * never the one the client says
-     * @param {object} data The message: { type: 'chat', msg }
+     * Relay a chat message (neuroweblab's chatMessage: its text, at most 1000
+     * characters, and the name of the session, never the one the client
+     * says; then the sender's connection id), in the order each sender sent
+     * them (neuroweblab's relayInOrder). The receivers show it as text
+     * @param {object} data The message: { type: 'chat', msg, uid }
      * @param {object} sourceUS The connection
-     * @returns {boolean} False if the message must not be relayed (not a string, or too long)
+     * @returns {Promise|null} Resolved once relayed, or null if the message is refused (not a string, or too long)
      */
     receiveChatMessage: function (data, sourceUS) {
-      if (typeof data.msg !== 'string' || data.msg.length > maxChatLength) {
-        tracer.log(`WARNING: Ignoring a chat message that is not a string of at most ${maxChatLength} characters from ${data.uid}`);
+      const chat = chatMessage(data, { username: sourceUS.sessionName || anonymousName });
+      if (chat === null) {
+        tracer.log(`WARNING: Ignoring a chat message that is not a string of at most 1000 characters from ${data.uid}`);
 
-        return false;
+        return null;
       }
-      data.username = sourceUS.sessionName || anonymousName;
+      chat.uid = data.uid;
 
-      return true;
+      return relayInOrder(sourceUS, () => me._handleBroadcastWebSocketMessage({ data: chat, sourceUS }), {
+        onError: (err) => tracer.log('ERROR: Can\'t relay a chat message', err)
+      });
     },
     declareAutocompleteClient: function (data/*, userSocket*/) {
       const sourceUS = me.getUserFromUserId(data.uid);
@@ -2583,7 +2586,10 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
           .catch((err) => tracer.log('ERROR: atlas message failed', err));
         break;
       case 'chat':
-        return me.receiveChatMessage(data, sourceUS);
+        // relayed by receiveChatMessage, as neuroweblab's chatMessage builds it
+        me.receiveChatMessage(data, sourceUS);
+
+        return false;
       case 'echo':
         tracer.log(`ECHO: "${data.msg}" from user ${data.username} (${data.uid})`);
         break;
@@ -2678,8 +2684,17 @@ data.vox_offset: ${me.Brains[i].data.vox_offset}
         if (data.type === 'atlas') {
           me.sendAtlasToUser(data, client, false);
         } else {
-          // sanitise data
-          const cleanData = DOMPurify.sanitize(JSON.stringify(data.type === 'userData' ? me._publicUserData(data) : data));
+          // chats and user data as they are: the viewers show their names and
+          // text as text. The other messages are still sanitised (on their
+          // JSON text): their receivers are not all checked to show text only
+          let cleanData;
+          if (data.type === 'chat') {
+            cleanData = JSON.stringify(data);
+          } else if (data.type === 'userData') {
+            cleanData = JSON.stringify(me._publicUserData(data));
+          } else {
+            cleanData = DOMPurify.sanitize(JSON.stringify(data));
+          }
           try {
             client.send(cleanData);
           } catch (err) {

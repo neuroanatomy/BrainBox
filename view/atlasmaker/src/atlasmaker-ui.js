@@ -215,7 +215,12 @@ export const AtlasMakerUI = {
       doFadeOut = true;
     }
 
-    el.innerHTML = message;
+    // a node (e.g. a text the user must not see as HTML) as it is; a string is HTML
+    if (typeof message === 'object' && message !== null && typeof message.nodeType === 'number') {
+      el.replaceChildren(message);
+    } else {
+      el.innerHTML = message;
+    }
     el.style.background = background;
     me._fadeIn(el);
 

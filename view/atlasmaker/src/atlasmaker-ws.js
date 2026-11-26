@@ -152,7 +152,7 @@ export const AtlasMakerWS = {
           if (me.progress) { me.progress.innerHTML = '<img src=\'' + me.downloadIcon + '\' style=\'vertical-align:middle\'/>MRI'; }
           me._setNotificationsText('Chat (1 connected)');
           me.flagConnected = 1;
-          me.reconnectionTimeout = 5;
+          me.connectedAt = Date.now();
           resolve();
           // the metadata saved while disconnected: after what the code waiting
           // for the connection sends first (on a reconnection, the user data
@@ -184,45 +184,7 @@ export const AtlasMakerWS = {
           // the answer to a request on its way cannot arrive any more
           me.flagLoadingImg.loading = false;
 
-          // Try to reconnect: wait a random initial time, to prevent an avalanche
-          // of reconnections in case of server crash
-          const rand = 1000 + 5000 * Math.random();
-          console.log('Initial random time:', rand);
-          setTimeout(function () {
-            let timeout = me.reconnectionTimeout;
-            me._setNotificationsText('Disconnected. Try to reconnect in ' + (timeout-=1) + ' s...');
-            if (me.timer) {
-              clearInterval(me.timer);
-            }
-            me.timer = setInterval(function () {
-              if (timeout < 0) {
-                me._setNotificationsText('Reconnecting...');
-                me.socket = null;
-                clearInterval(me.timer);
-                setTimeout(function () {
-                  // should we limit the inflation of the timeout?
-                  me.reconnectionTimeout *= 2;
-                  me.initSocketConnection()
-                    .then(function () {
-                      me.sendUserDataMessage('allUserData');
-                      if (me.User.atlasFilename) { me.sendUserDataMessage('sendAtlas'); }
-                      // The arrival of the atlas draws the slice. Without one nothing else asks
-                      // for it, and an embed's may not come: the server refuses sendAtlas until
-                      // it has read the new connection's ticket. After the user data, which the
-                      // server needs for the request
-                      if (!me.User.atlasFilename || me.embedTicket) { me.drawImages(); }
-                      clearInterval(me.timer);
-                    })
-                    .catch(function () {
-                      timeout = me.reconnectionTimeout;
-                      me._setNotificationsText('Disconnected. Try to reconnect in ' + (timeout-=1) + ' s...');
-                    });
-                }, 1000);
-              } else {
-                me._setNotificationsText('Disconnected. Try to reconnect in ' + (timeout-=1) + ' s...');
-              }
-            }, 1000);
-          }, rand);
+          me._scheduleReconnection();
         };
 
         window.onbeforeunload = function () {
@@ -234,6 +196,65 @@ export const AtlasMakerWS = {
         reject(ex);
       }
     });
+  },
+
+  /**
+   * The wait before the next reconnection (ms), as microdraw's: 1 s, 2 s,
+   * 4 s ... up to 30 s; it starts again from 1 s only after a connection
+   * that stayed open 10 s (see _scheduleReconnection), so a server that
+   * accepts and drops connections at once is not retried quickly. Up to 1 s
+   * more, at random, spreads the reconnections of the pages open when the
+   * server restarts; never more than 30 s in all
+   * @returns {number} The wait
+   */
+  _reconnectionWait: function () {
+    const me = AtlasMakerWidget;
+    const wait = Math.min(me.reconnectionTimeout + Math.floor(1000 * Math.random()), me.reconnectionMaxTimeout);
+    me.reconnectionTimeout = Math.min(2 * me.reconnectionTimeout, me.reconnectionMaxTimeout);
+
+    return wait;
+  },
+
+  /**
+   * After the socket closed: count down the wait (_reconnectionWait) in the
+   * notifications, then reconnect, send the user data and ask for the atlas
+   * @returns {void}
+   */
+  _scheduleReconnection: function () {
+    const me = AtlasMakerWidget;
+    if (typeof me.connectedAt === 'number' && Date.now() - me.connectedAt >= me.stableConnectionTime) {
+      me.reconnectionTimeout = me.reconnectionMinTimeout;
+    }
+    me.connectedAt = null;
+    const wait = me._reconnectionWait();
+    const deadline = Date.now() + wait;
+    const countDown = () => {
+      me._setNotificationsText('Disconnected. Try to reconnect in ' + Math.max(0, Math.ceil((deadline - Date.now()) / 1000)) + ' s...');
+    };
+    if (me.timer) {
+      clearInterval(me.timer);
+    }
+    countDown();
+    me.timer = setInterval(countDown, 1000);
+    setTimeout(function () {
+      clearInterval(me.timer);
+      me._setNotificationsText('Reconnecting...');
+      me.socket = null;
+      me.initSocketConnection()
+        .then(function () {
+          me.sendUserDataMessage('allUserData');
+          if (me.User.atlasFilename) { me.sendUserDataMessage('sendAtlas'); }
+          // The arrival of the atlas draws the slice. Without one nothing else asks
+          // for it, and an embed's may not come: the server refuses sendAtlas until
+          // it has read the new connection's ticket. After the user data, which the
+          // server needs for the request
+          if (!me.User.atlasFilename || me.embedTicket) { me.drawImages(); }
+        })
+        .catch(function () {
+          // the socket could not be made: try again later
+          me._scheduleReconnection();
+        });
+    }, wait);
   },
 
   /**
@@ -873,7 +894,17 @@ export const AtlasMakerWS = {
     me.appendChatLine({ name, text: ' left' });
   },
 
-  displayDialog: async ({msg, modal, delay, doFadeOut}) => {
+  /**
+   * Show a dialog
+   * @param {object} params Parameters
+   * @param {string} [params.msg] The message, as HTML
+   * @param {string} [params.text] The message, as text (shown in a paragraph, never as HTML): used instead of msg if given
+   * @param {boolean} params.modal Whether the dialog waits for its OK button
+   * @param {number} params.delay How long it is shown (ms), if not modal
+   * @param {boolean} params.doFadeOut Whether it fades out
+   * @returns {Promise<void>} Resolved once closed
+   */
+  displayDialog: async ({msg, text, modal, delay, doFadeOut}) => {
 
     /*
       Use like this:
@@ -902,12 +933,18 @@ export const AtlasMakerWS = {
       padding: 20px;
       `;
     document.body.appendChild(el);
-    await me.dialog({ el, message: msg, modal, delay, doFadeOut });
+    let message = msg;
+    if (typeof text !== 'undefined') {
+      message = document.createElement('p');
+      message.textContent = String(text);
+    }
+    await me.dialog({ el, message, modal, delay, doFadeOut });
     document.body.removeChild(el);
   },
 
   /**
-   * Receives notifications from the server
+   * Receives notifications from the server (an admin's notice, 'Atlas
+   * saved'...): shown as text, never as HTML
    * @param {object} data Message data
    * @returns {void}
    */
@@ -917,7 +954,7 @@ export const AtlasMakerWS = {
 
     if (dialogType === 'modal') {
       me.displayDialog({
-        msg: `<p>${msg}</p>`,
+        text: msg,
         modal: true,
         delay: 0,
         doFadeOut: 0
@@ -933,7 +970,7 @@ export const AtlasMakerWS = {
       }
     } else {
       me.displayDialog({
-        msg: `<p>${msg}</p>`,
+        text: msg,
         modal: false,
         delay: 2000,
         doFadeOut: true

@@ -1,10 +1,9 @@
 /* eslint-disable max-lines */
 const notifier = require('../../notifier');
-const { body, validationResult } = require('express-validator');
 const admins = require('./admins');
 const annotations = require('./admin.annotations');
 const projects = require('./admin.projects');
-const { damagedProjectsRoutes, jsonForScript, publicLoggedUser } = require('neuroweblab');
+const { damagedProjectsRoutes, jsonForScript, MAX_NOTICE_LENGTH, noticeMessage, publicLoggedUser } = require('neuroweblab');
 
 const { isAdmin, requestUsername } = admins;
 
@@ -75,29 +74,34 @@ const saveAllAtlases = (req, res) => {
 };
 
 /**
- * Broadcast a server message to all connected users (the pages with a
- * viewer: MRI, project and embedded viewer pages), and say to how many it
- * was sent. Message is in req.body.msg
+ * Broadcast a notice to all connected users (the pages with a viewer: MRI,
+ * project and embedded viewer pages), and say to how many it was sent. The
+ * message is in req.body.msg: neuroweblab's noticeMessage, a text of 1 to 500
+ * characters, which the viewers show as text. Logged as microdraw logs it:
+ * a console line, and an 'adminBroadcast' entry in the log collection
  * @param {object} req Request object
  * @param {object} res Response object
  * @returns {void}
  */
 const broadcastMessage = async (req, res) => {
-  console.log('broadcastMessage');
-
-  await body('msg', 'Provide a msg to broadcast')
-    .notEmpty()
-    .run(req);
-
-  const errors = validationResult(req).array();
-  if (errors.length) {
-    return res.status(403).send(errors)
-      .end();
+  const msg = noticeMessage((req.body || {}).msg);
+  if (msg === null) {
+    return res.status(400).json({ success: false, error: `Provide the msg: 1 to ${MAX_NOTICE_LENGTH} characters` });
   }
-  // const msg = req.sanitize(req.body.msg); // why does this not work?
-  const { msg } = req.body;
+  // null for a script on the server
+  const username = requestUsername(req) || null;
   let users = 0;
   notifier.emit('broadcastMessage', msg, (n) => { users = n; });
+  console.log('admin: adminBroadcast', { username, users });
+  if (req.nativeDb) {
+    try {
+      await req.nativeDb.collection('log')
+        .insertOne({ key: 'adminBroadcast', value: { username, message: msg, users }, date: (new Date()).toJSON() });
+    } catch (err) {
+      // the message was sent: say so, and log the failure
+      console.log('ERROR: cannot log the broadcast', err);
+    }
+  }
   res.send({ msg: `Message sent to ${users} connected user${users === 1 ? '' : 's'}: ${msg}`, users, success: true });
 };
 

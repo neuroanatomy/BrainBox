@@ -182,25 +182,55 @@ describe('Admin Controller: ', function() {
   });
 
   describe('broadcastMessage function() ', function () {
-    it('should throw error if validation fails', async function() {
-      const reqSpy = sinon.spy();
-      const req = {
-        body: {
-        },
-        checkBody: sinon.stub().returns({ notEmpty: reqSpy }),
-        validationErrors: function () {
-          if(!this.body.msg || this.body.msg === '') { return 'Msg should not be empty'; }
 
-          return null;
-        }
-      };
-      const endSpy = sinon.spy();
-      const res = {
-        status: sinon.stub().returns({ send: sinon.stub().returns({ end: endSpy })}),
-        send: sinon.spy()
-      };
-      await adminController.broadcastMessage(req, res);
-      assert.strictEqual(endSpy.callCount, 1);
+    /**
+     * Call broadcastMessage with a message, and say what it answered and broadcast
+     * @param {object} req The request
+     * @param {number} users The number of users the WebSocket server says it sent the message to
+     * @returns {Promise<object>} { status, json, send, broadcast }: the res stubs, and the notifier's listener
+     */
+    const callBroadcast = async (req, users = 0) => {
+      const json = sinon.spy();
+      const res = { status: sinon.stub().returns({ json }), send: sinon.spy() };
+      const listeners = notifier.listeners('broadcastMessage');
+      notifier.removeAllListeners('broadcastMessage');
+      const broadcast = sinon.spy((text, callback) => { callback(users); });
+      notifier.on('broadcastMessage', broadcast);
+      try {
+        await adminController.broadcastMessage(req, res);
+      } finally {
+        notifier.removeAllListeners('broadcastMessage');
+        listeners.forEach((listener) => notifier.on('broadcastMessage', listener));
+      }
+
+      return { status: res.status, json, send: res.send, broadcast };
+    };
+
+    // a JSON 400 for a message that is not a text of 1 to 500 characters
+    // (neuroweblab's noticeMessage); nothing is broadcast
+    it('should answer 400 to a missing, empty, non-string or too long message, and broadcast nothing', async function() {
+      for (const body of [{}, { msg: '  ' }, { msg: { text: 'x' } }, { msg: 'x'.repeat(501) }]) {
+        // eslint-disable-next-line no-await-in-loop
+        const { status, json, send, broadcast } = await callBroadcast({ body });
+        assert.strictEqual(status.firstCall.args[0], 400);
+        assert.deepStrictEqual(json.firstCall.args[0], { success: false, error: 'Provide the msg: 1 to 500 characters' });
+        assert.strictEqual(broadcast.callCount, 0);
+        assert.strictEqual(send.callCount, 0);
+      }
+      sinon.restore();
+    });
+
+    it('should broadcast a message of 500 characters holding HTML as it is, and log it', async function() {
+      const msg = '<b>"Restart"</b> & ' + 'x'.repeat(481);
+      const insertOne = sinon.stub().resolves();
+      const req = { body: { msg }, nativeDb: { collection: sinon.stub().returns({ insertOne }) } };
+      const { send, broadcast } = await callBroadcast(req, 1);
+      assert.strictEqual(msg.length, 500);
+      assert.strictEqual(broadcast.firstCall.args[0], msg);
+      assert.deepStrictEqual(send.firstCall.args[0], { msg: `Message sent to 1 connected user: ${msg}`, users: 1, success: true });
+      assert.strictEqual(req.nativeDb.collection.firstCall.args[0], 'log');
+      const [{ key, value }] = insertOne.firstCall.args;
+      assert.deepStrictEqual({ key, value }, { key: 'adminBroadcast', value: { username: null, message: msg, users: 1 } });
       sinon.restore();
     });
 
