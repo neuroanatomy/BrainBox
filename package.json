@@ -87,7 +87,7 @@
     "sinon": "^11.1.1",
     "style-loader": "^0.23.1",
     "url-loader": "^1.1.2",
-    "webpack": "^4.43.0",
+    "webpack": "^4.46.0",
     "webpack-cli": "^3.3.11",
     "webworkify-webpack": "^2.1.5"
   },
