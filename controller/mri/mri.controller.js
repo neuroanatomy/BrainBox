@@ -89,6 +89,34 @@ const validatorPost = async function (req, res, next) {
 //   return typeof obj[Symbol.iterator] === 'function';
 // };
 
+/**
+ * The document of an MRI that has none yet, as the client's upload creates it
+ * @param {string} source The MRI's source URL
+ * @param {string} hash The md5 of the source: its directory under /data/
+ * @param {string} owner The uploader, or the anonymous owner
+ * @returns {object} The document, with its default volume layer
+ */
+const newMriDocument = (source, hash, owner) => ({
+  source,
+  name: '',
+  url: '/data/' + hash + '/',
+  included: (new Date()).toJSON(),
+  owner,
+  mri: {
+    atlas: [
+      {
+        created: (new Date()).toJSON(),
+        modified: (new Date()).toJSON(),
+        access: 'edit',
+        type: 'volume',
+        name: 'Default',
+        filename: 'Atlas.nii.gz',
+        labels: 'foreground.json'
+      }
+    ]
+  }
+});
+
 /* Download MRI file
 --------------------- */
 // @todo Change this function callback into a promise
@@ -100,9 +128,9 @@ const downloadMRI = async function (myurl, req) {
     .update(myurl)
     .digest('hex');
 
-  const mridb = await req.nativeDb.collection('mri').findOne({ source: myurl, ...CURRENT });
-  delete mridb?._id;
-  console.log('mridb:', mridb);
+  // only the file's name is read here: the document is written by the caller,
+  // which reads its current version inside the lock, once the file is loaded
+  const mridb = await req.nativeDb.collection('mri').findOne({ source: myurl, ...CURRENT }, { projection: { _id: 0, filename: 1 } });
   let filename;
   if (!mridb?.filename) {
     filename = sanitize(url.parse(myurl).pathname.split('/').pop());
@@ -192,45 +220,22 @@ const downloadMRI = async function (myurl, req) {
         // NOTE: getBrainAtPath has to be called with a client-side path like "/data/[md5hash]/..."
         atlasmakerServer.getBrainAtPath('/data/' + hash + '/' + filename)
           .then((mri) => {
-            // Create json file for new dataset
-            const username = visitor(req) || anonymousOwner(req);
-
-            let json = mridb;
-            if (!json) {
-              // Create new json object if it doesn't already exist
-              json = {
-                source: myurl,
-                name: '',
-                url: '/data/' + hash + '/',
-                included: (new Date()).toJSON(),
-                owner: username,
-                mri: {
-                  atlas: [
-                    {
-                      created: (new Date()).toJSON(),
-                      modified: (new Date()).toJSON(),
-                      access: 'edit',
-                      type: 'volume',
-                      name: 'Default',
-                      filename: 'Atlas.nii.gz',
-                      labels: 'foreground.json'
-                    }
-                  ]
-                }
-              };
-            }
-            // Add MRI information
-            Object.assign(json, {
-              filename,
-              success: true,
-              dim: mri.dim,
-              pixdim: mri.pixdim,
-              voxel2world: mri.v2w,
-              worldOrigin: mri.wori,
-              modified: (new Date()).toJSON(),
-              modifiedBy: username
+            // the file's fields, and what a new document needs
+            const owner = visitor(req) || anonymousOwner(req);
+            resolve({
+              hash,
+              owner,
+              changes: {
+                filename,
+                success: true,
+                dim: mri.dim,
+                pixdim: mri.pixdim,
+                voxel2world: mri.v2w,
+                worldOrigin: mri.wori,
+                modified: (new Date()).toJSON(),
+                modifiedBy: owner
+              }
             });
-            resolve(json);
           })
           .catch((err) => {
             console.log('ERROR Cannot get brain at path /data/' + hash + '/' + filename + ': ', err);
@@ -584,12 +589,15 @@ const apiMriPost = async function (req, res) {
     } else {
       console.log('Start download:');
       downloadQueue[myurl] = { success: 'downloading', cur: 0, len: 1 };
-      downloadMRI(myurl, req).then((obj) => {
-        console.log('downloadMRI obj:', obj);
+      downloadMRI(myurl, req).then(({ hash, owner, changes }) => {
+        console.log('downloadMRI changes:', changes);
         console.log('Download succeeded. Insert in DB, remove from queue');
-        obj.success = true;
 
+        // the version changed is the current one, read inside the lock: a save
+        // made during the download (a name, an annotation, a layer) is kept
         return withLock('mri', async function () {
+          const current = await req.nativeDb.collection('mri').findOne({ source: myurl, ...CURRENT }, { projection: { _id: 0 } });
+          const obj = Object.assign(current || newMriDocument(myurl, hash, owner), changes);
           await req.nativeDb.collection('mri').updateMany({ source: myurl }, { $set: { backup: true } });
           await req.nativeDb.collection('mri').insertOne(obj);
         });
@@ -807,34 +815,6 @@ const reset = async function reset(req, res) {
     worldOrigin: mrires.wori
   });
 };
-
-/**
- * The document of an MRI that has none yet, as the client's upload creates it
- * @param {string} source The MRI's source URL
- * @param {string} hash The md5 of the source: its directory under /data/
- * @param {string} owner The uploader, or the anonymous owner
- * @returns {object} The document, with its default volume layer
- */
-const newMriDocument = (source, hash, owner) => ({
-  source,
-  name: '',
-  url: '/data/' + hash + '/',
-  included: (new Date()).toJSON(),
-  owner,
-  mri: {
-    atlas: [
-      {
-        created: (new Date()).toJSON(),
-        modified: (new Date()).toJSON(),
-        access: 'edit',
-        type: 'volume',
-        name: 'Default',
-        filename: 'Atlas.nii.gz',
-        labels: 'foreground.json'
-      }
-    ]
-  }
-});
 
 /**
  * @function apiMriUploadFromURL

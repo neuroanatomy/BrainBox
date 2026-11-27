@@ -9,6 +9,8 @@
 
 const crypto = require('crypto');
 const fs = require('fs');
+const http = require('http');
+const { Writable } = require('stream');
 const { expect } = require('chai');
 const sinon = require('sinon');
 const { isLocked, withLock } = require('neuroweblab');
@@ -135,18 +137,21 @@ describe('UNIT TESTING THE MRI DOCUMENTS LOCK', function () {
   const sessions = { 'connect.sid=mowner': { username: 'mowner' } };
 
   const db = () => U.getNativeDB();
-  const storedDoc = () => db().collection('mri')
-    .findOne({ source, backup: { $exists: false } }, { projection: { _id: 0 } });
+  const storedDoc = (src = source) => db().collection('mri')
+    .findOne({ source: src, backup: { $exists: false } }, { projection: { _id: 0 } });
 
   /**
    * The MRI's owner's connection, as a page opens it
+   * @param {string} [src] The MRI's source
    * @returns {object} The connection
    */
-  const connectOwner = () => {
+  const connectOwner = (src = source) => {
     const ws = mockSocket();
     AMS._connectNewUser({ ws, req: { url: '/', headers: { cookie: 'connect.sid=mowner' } } });
     const sourceUS = AMS.getUserFromSocket(ws);
-    sourceUS.User = { username: 'mowner', source, dirname, atlasFilename: 'Atlas.nii.gz' };
+    const dir = `/data/${crypto.createHash('md5').update(src)
+      .digest('hex')}/`;
+    sourceUS.User = { username: 'mowner', source: src, dirname: dir, atlasFilename: 'Atlas.nii.gz' };
 
     return sourceUS;
   };
@@ -154,12 +159,13 @@ describe('UNIT TESTING THE MRI DOCUMENTS LOCK', function () {
   /**
    * The owner renames the MRI over the WebSocket, from a copy read now
    * @param {string} name The new name
+   * @param {string} [src] The MRI's source
    * @returns {Promise<void>} Once saved
    */
-  const rename = async (name) => {
-    const copy = await storedDoc();
+  const rename = async (name, src = source) => {
+    const copy = await storedDoc(src);
     copy.name = name;
-    await AMS.receiveSaveMetadataMessage({ uid: connectOwner().uid, metadata: copy, method: 'append' });
+    await AMS.receiveSaveMetadataMessage({ uid: connectOwner(src).uid, metadata: copy, method: 'append' });
   };
 
   const removeNote = (nativeDb = db()) => annotations.removeAnnotations(nativeDb, { source, text: [shortname], username: 'admin' });
@@ -321,6 +327,118 @@ describe('UNIT TESTING THE MRI DOCUMENTS LOCK', function () {
       const doc = await storedDoc();
       expect(doc.name).to.equal('Renamed');
       expect(doc.dim).to.deep.equal(image.dim);
+    });
+  });
+
+  // POST /mri/json reads the MRI, downloads its file (seconds to minutes) and
+  // loads it, then writes. It inserted the version read before the download,
+  // with the file's fields: a save made meanwhile was lost. It now re-reads the
+  // current version inside the lock and changes that one.
+  describe('POST /mri/json\'s download', function () {
+    const image = { dim: [2, 2, 2], pixdim: [1, 1, 1], v2w: [[1, 0, 0], [0, 1, 0], [0, 0, 1]], wori: [0, 0, 0] };
+    let base, server;
+    // the downloads' sources, one per test: the loaded brains are kept by path
+    const sources = [];
+    const sourceFor = (name) => {
+      const src = `${base}/${name}.nii.gz`;
+      sources.push(src);
+
+      return src;
+    };
+
+    before(function (done) {
+      // the remote server the MRI is downloaded from
+      server = http.createServer((req, res) => {
+        res.writeHead(200, { 'content-type': 'application/octet-stream', 'content-length': 4 });
+        res.end(Buffer.from([1, 2, 3, 4]));
+      });
+      server.listen(0, '127.0.0.1', () => {
+        base = `http://127.0.0.1:${server.address().port}`;
+        done();
+      });
+    });
+
+    after(async function () {
+      server.close();
+      await db().collection('mri')
+        .deleteMany({ source: { $in: sources } });
+    });
+
+    let letLoad, loaded;
+
+    beforeEach(function () {
+      // the file is neither written nor read: its image is this one, given
+      // once letLoad is called
+      const gate = new Promise((resolve) => { letLoad = resolve; });
+      toRelease.push(letLoad);
+      loaded = new Promise((resolve) => {
+        sinon.stub(amri, 'loadMRI').callsFake(async () => {
+          resolve();
+          await gate;
+
+          return image;
+        });
+      });
+      sinon.stub(fs, 'mkdirSync');
+      sinon.stub(fs, 'renameSync');
+      sinon.stub(fs, 'createWriteStream').callsFake(() => new Writable({ write: (chunk, enc, cb) => cb() }));
+    });
+
+    const post = (src) => {
+      const { res, answered } = mockResponse();
+      new MriController(db()).apiMriPost({
+        body: { url: src },
+        query: {},
+        dirname: '/nonexistent-mri-lock-spec',
+        headers: {},
+        ip: '127.0.0.1',
+        nativeDb: db()
+      }, res);
+
+      return answered;
+    };
+
+    // the download is over once a version has the image
+    const downloaded = async (src, tries = 100) => {
+      const doc = await storedDoc(src);
+      if (doc?.dim) { return doc; }
+      if (tries === 0) { throw new Error('the download did not write the MRI'); }
+      await delay(10);
+
+      return downloaded(src, tries - 1);
+    };
+
+    it('a save made during the download is kept', async function () {
+      const src = sourceFor('download-save');
+      // a document without image, as a project's names import makes it
+      await db().collection('mri')
+        .insertOne({ source: src, url: '/data/x/', name: 'Brain', owner: 'mowner', mri: { atlas: [{ filename: 'Atlas.nii.gz', name: 'Default', access: 'edit' }] } });
+      const answer = await post(src);
+      expect(answer.body).to.include({ success: 'downloading' });
+      await loaded; // downloaded, being loaded
+      await rename('Renamed', src);
+      letLoad();
+      const doc = await downloaded(src);
+      expect(doc.name).to.equal('Renamed');
+      expect(doc).to.include({ success: true, filename: 'download-save.nii.gz', modifiedBy: 'ip:127.0.0.1' });
+      expect(doc.dim).to.deep.equal(image.dim);
+      expect(doc.voxel2world).to.deep.equal(image.v2w);
+      expect(doc.worldOrigin).to.deep.equal(image.wori);
+    });
+
+    it('a source without document gets one, with the default layer', async function () {
+      const src = sourceFor('download-new');
+      letLoad();
+      expect((await post(src)).body).to.include({ success: 'downloading' });
+      const doc = await downloaded(src);
+      const hash = crypto.createHash('md5').update(src)
+        .digest('hex');
+      expect(doc).to.include({ source: src, name: '', url: `/data/${hash}/`, owner: 'ip:127.0.0.1', success: true, filename: 'download-new.nii.gz' });
+      expect(doc.mri.atlas).to.have.length(1);
+      expect(doc.mri.atlas[0]).to.include({ name: 'Default', type: 'volume', access: 'edit', filename: 'Atlas.nii.gz', labels: 'foreground.json' });
+      expect(doc.dim).to.deep.equal(image.dim);
+      expect(await db().collection('mri')
+        .countDocuments({ source: src })).to.equal(1);
     });
   });
 
