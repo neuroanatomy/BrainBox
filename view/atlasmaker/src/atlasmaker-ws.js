@@ -3,6 +3,7 @@
 /*! AtlasMaker: WebSockets */
 import * as DOMPurify from 'dompurify';
 import * as pako from 'pako';
+import { chatLog } from 'nwl-components/chat';
 
 const isUnknown = (value) => value === null || typeof value === 'undefined';
 
@@ -44,45 +45,18 @@ export const AtlasMakerWS = {
   },
 
   /**
-   * Append a line to the chat log, if the current toolbar has one: an
-   * optional link, a name in bold, then a text. Names and messages come from
-   * other users: they are set as text, never as HTML
-   * @param {object} parts { name, text, href }: href, if set, wraps the name
+   * Append a line to the chat log, if the current toolbar has one, with
+   * nwl-components/chat's chatLog: the name in bold (inside a link when href
+   * is set), `(me)` in italics after it for an own line, then `: ` and the
+   * text. A name alone or a text alone is a notice. Names and messages come
+   * from other users: they are set as text, never as HTML
+   * @param {object} line { name, text, own, href }
    * @returns {void}
    */
-  appendChatLine: function ({ name, text, href }) {
-    const me = AtlasMakerWidget;
+  appendChatLine: function (line) {
     const chatText = document.querySelector('#logChat .text');
     if (!chatText) { return; }
-    chatText.appendChild(me._chatLine({ name, text, href }));
-    chatText.scrollTop = chatText.scrollHeight;
-  },
-
-  /**
-   * The nodes of a line of the chat log (see appendChatLine)
-   * @param {object} parts { name, text, href }
-   * @returns {object} A DocumentFragment
-   */
-  _chatLine: function ({ name, text, href }) {
-    const line = document.createDocumentFragment();
-    let nameHolder = line;
-    if (href) {
-      const a = document.createElement('a');
-      a.href = href;
-      line.appendChild(a);
-      nameHolder = a;
-    }
-    if (!isUnknown(name)) {
-      const b = document.createElement('b');
-      b.textContent = String(name);
-      nameHolder.appendChild(b);
-    }
-    if (!isUnknown(text)) {
-      line.appendChild(document.createTextNode(String(text)));
-    }
-    line.appendChild(document.createElement('br'));
-
-    return line;
+    chatLog(chatText).append(line);
   },
 
   /**
@@ -397,7 +371,7 @@ export const AtlasMakerWS = {
     // First time the user is observed
     if (typeof me.Collab[u] === 'undefined') {
       try {
-        me.appendChatLine({ name: me._collabName(data.user, data.uid), text: ' entered' });
+        me.appendChatLine({ name: me._collabName(data.user, data.uid) + ' entered' });
       } catch (e) {
         console.log('data:', data);
         console.log(e);
@@ -434,17 +408,20 @@ export const AtlasMakerWS = {
   },
 
   /**
+    * Send a chat message, and show it in the log as an own line
+    * @param {string} msg The text (typed in #msg: chatInput gives it trimmed)
     * @returns {void}
     */
-  sendChatMessage: function () {
+  sendChatMessage: function (msg) {
     const me = AtlasMakerWidget;
     if (me.flagConnected === 0) { return; }
-    // sent as typed: every page shows it as text (the server says who sent it)
-    const msg = document.getElementById('msg').value;
+    // sent as typed, trimmed: every page shows it as text (the server says who sent it)
+    const text = isUnknown(msg) ? '' : String(msg).trim();
+    if (text === '') { return; }
     try {
-      me.socket.send(JSON.stringify({ 'type': 'chat', 'msg': msg }));
-      me.appendChatLine({ name: 'me: ', text: msg });
-      document.getElementById('msg').value = '';
+      me.socket.send(JSON.stringify({ 'type': 'chat', 'msg': text }));
+      const name = (me.User && !isUnknown(me.User.username)) ? me.User.username : 'Anonymous';
+      me.appendChatLine({ name, own: true, text });
     } catch (ex) {
       console.log('ERROR: Unable to sendChatMessage', ex);
     }
@@ -460,7 +437,7 @@ export const AtlasMakerWS = {
 
     const user = me.Collab[data.uid];
     const theUsername = (isUnknown(data.username) || data.username === 'Anonymous') ? data.uid : data.username;
-    me.appendChatLine({ name: theUsername + ':', text: ' ' + data.msg, href: me._collabViewLink(user) });
+    me.appendChatLine({ name: theUsername, text: data.msg, href: me._collabViewLink(user) });
   },
 
   /**
@@ -870,7 +847,7 @@ export const AtlasMakerWS = {
       }
     }
     me._setNotificationsText('Chat ('+nusers+' connected)');
-    me.appendChatLine({ name, text: ' left' });
+    me.appendChatLine({ name: name + ' left' });
   },
 
   /**

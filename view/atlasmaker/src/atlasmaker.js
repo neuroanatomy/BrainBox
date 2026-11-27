@@ -16,6 +16,7 @@ import {AtlasMakerUI} from './atlasmaker-ui.js';
 import {AtlasMakerWS} from './atlasmaker-ws.js';
 
 import Config from './../../../cfg.json';
+import { chatInput } from 'nwl-components/chat';
 import deepExtendModule from '../../shared/deepExtend.js';
 import downloadIcon from 'nwl-components/dist/icons/download.svg';
 import toolsEmbed from './html/toolsEmbed.html';
@@ -559,9 +560,11 @@ const me = {
     me.push(document.getElementById('prev'), me.prevSlice);
     me.push(document.getElementById('next'), me.nextSlice);
 
-    // event connect: chat message input
+    // event connect: chat message input. Enter sends the trimmed text and
+    // clears the input; empty text sends nothing (nwl-components/chat).
+    // While disconnected, the text stays in the input (onChatInput)
     const msg = document.getElementById('msg');
-    if(msg) { msg.addEventListener('keypress', (e) => { me.onkey(e); }); }
+    if(msg) { chatInput(msg, (text) => { me.onChatInput(text); }); }
 
     const toolsMinimized = document.getElementById('tools-minimized');
     if(toolsMinimized) { toolsMinimized.style.display = 'none'; }

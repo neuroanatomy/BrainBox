@@ -8,6 +8,7 @@
 import { getData, setData } from '../../shared/domData.js';
 import pako from 'pako';
 import { resizableColumns } from 'nwl-components/resize';
+import { textArea } from 'nwl-components/chat';
 import geometryModule from '../../shared/geometry.js';
 import showHideModule from '../../shared/showHide.js';
 import viewLinkModule from '../../shared/viewLink.js';
@@ -211,56 +212,30 @@ export const AtlasMakerInteraction = {
     handle.addEventListener('touchstart', onTouchStart, {passive: false});
   },
 
-  initTextInputResize: function () {
-    const handle = document.getElementById('textInputResize');
+  /**
+   * The chat and script area (nwl-components/chat's textArea), made once per
+   * toolbar: its Chat/Script switch, and #textInputResize resizing it (at least 100 px)
+   * @returns {object|null} { show(mode) }, or null without the area (toolsLight, toolsEmbed)
+   */
+  _getTextArea: function () {
+    const me = AtlasMakerWidget;
     const block = document.getElementById('textInputBlock');
-    if (!handle || !block) { return; }
+    const chat = document.getElementById('logChat');
+    const script = document.getElementById('logScript');
+    if (!block || !chat || !script) { return null; }
+    if (!me._textArea || me._textArea.block !== block) {
+      me._textArea = { block, area: textArea({ block, chat, script, handle: document.getElementById('textInputResize') }) };
+    }
 
-    const onMouseDown = function(e) {
-      e.preventDefault();
-      const startY = e.clientY;
-      const startHeight = block.offsetHeight;
+    return me._textArea.area;
+  },
 
-      const onMouseMove = function(e) {
-        const delta = e.clientY - startY;
-        const newHeight = Math.max(100, startHeight + delta);
-        block.style.flex = '0 0 ' + newHeight + 'px';
-      };
-
-      const onMouseUp = function() {
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
-      };
-
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
-    };
-
-    const onTouchStart = function(e) {
-      e.preventDefault();
-      const touch = e.touches[0];
-      const startY = touch.clientY;
-      const startHeight = block.offsetHeight;
-
-      const onTouchMove = function(e) {
-        e.preventDefault();
-        const t = e.touches[0];
-        const delta = t.clientY - startY;
-        const newHeight = Math.max(100, startHeight + delta);
-        block.style.flex = '0 0 ' + newHeight + 'px';
-      };
-
-      const onTouchEnd = function() {
-        document.removeEventListener('touchmove', onTouchMove);
-        document.removeEventListener('touchend', onTouchEnd);
-      };
-
-      document.addEventListener('touchmove', onTouchMove);
-      document.addEventListener('touchend', onTouchEnd);
-    };
-
-    handle.addEventListener('mousedown', onMouseDown);
-    handle.addEventListener('touchstart', onTouchStart, {passive: false});
+  /**
+   * Make #textInputResize resize the chat and script area
+   * @returns {void}
+   */
+  initTextInputResize: function () {
+    AtlasMakerWidget._getTextArea();
   },
 
   /**
@@ -442,22 +417,8 @@ export const AtlasMakerInteraction = {
      * @returns {void}
      */
   toggleTextInput: function (mode) {
-    switch(mode) {
-    case 'Chat':
-      show(document.getElementById('textInputBlock'));
-      document.getElementById('logScript').classList.add('hidden');
-      document.getElementById('logChat').classList.remove('hidden');
-      document.querySelector('#logChat #msg').focus();
-      break;
-    case 'Script':
-      show(document.getElementById('textInputBlock'));
-      document.getElementById('logScript').classList.remove('hidden');
-      document.getElementById('logChat').classList.add('hidden');
-      document.querySelector('#logScript textarea').focus();
-      break;
-    default:
-      hide(document.getElementById('textInputBlock'));
-    }
+    const area = AtlasMakerWidget._getTextArea();
+    if (area) { area.show(mode); }
   },
 
   /**
@@ -1023,15 +984,20 @@ export const AtlasMakerInteraction = {
   },
 
   /**
-   * @function onkey
-   * @param {object} e Event object
+   * Enter in #msg (chatInput gives the trimmed text, and has cleared #msg):
+   * send it, or, while disconnected, put it back in #msg, as before
+   * @param {string} text The text typed
    * @returns {void}
    */
-  onkey: function (e) {
+  onChatInput: function (text) {
     const me = AtlasMakerWidget;
-    if (e.keyCode === 13) {
-      me.sendChatMessage();
+    if (me.flagConnected === 0) {
+      const msg = document.getElementById('msg');
+      if (msg) { msg.value = text; }
+
+      return;
     }
+    me.sendChatMessage(text);
   },
 
   // ==============

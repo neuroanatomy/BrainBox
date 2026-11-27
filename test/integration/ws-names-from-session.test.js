@@ -266,10 +266,9 @@ describe('WebSocket: names come from the session, and are shown as text', functi
 
       // the sender's own copy of the message
       await hostile.evaluate((msg) => {
-        document.getElementById('msg').value = msg;
-        AtlasMakerWidget.sendChatMessage();
+        AtlasMakerWidget.sendChatMessage(msg);
       }, HOSTILE_MSG);
-      assert.include(await chatText(hostile), 'me: ' + HOSTILE_MSG);
+      assert.include(await chatText(hostile), HOSTILE + ' (me): ' + HOSTILE_MSG);
       assert.strictEqual(await hostile.evaluate(() => typeof window.__h1), 'undefined', 'no script ran in the sender\'s page');
 
       // the hostile user leaves
