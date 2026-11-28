@@ -133,17 +133,16 @@ export const AtlasMakerDraw = {
     const me = AtlasMakerWidget;
     const text = me.container.querySelector('#text-layer');
     const vector = me.container.querySelector('#vector-layer');
-    let txtStr;
 
     me.info.slice = me.User.slice;
 
-    txtStr = '';
-    for(const k in me.info) {
-      if (Object.prototype.hasOwnProperty.call(me.info, k)) {
-        txtStr += '<span>' + k + ': ' + me.info[k] + '</span><br/>';
-      }
-    }
-    text.innerHTML = txtStr;
+    // as text: a region's name comes from the label set's file
+    text.replaceChildren(...Object.keys(me.info).flatMap((k) => {
+      const span = document.createElement('span');
+      span.textContent = k + ': ' + me.info[k];
+
+      return [span, document.createElement('br')];
+    }));
 
     // call registered displayInformation functions. They scale voxel
     // coordinates by the canvas size and the voxel dimensions, which are only

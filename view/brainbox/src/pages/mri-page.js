@@ -37,6 +37,19 @@ let textAnnParam;
 const jqMap = (arr, fn) => (arr || []).map(fn).filter((v) => v !== null && typeof v !== 'undefined');
 
 /**
+ * A link to a project, its name as text (it is read from the MRI's document)
+ * @param {string} shortname The project's short name
+ * @returns {HTMLAnchorElement} The link
+ */
+const projectLink = (shortname) => {
+  const a = document.createElement('a');
+  a.href = '/project/' + encodeURIComponent(shortname);
+  a.textContent = shortname;
+
+  return a;
+};
+
+/**
  * The label set's name shown by the menu in a cell, as a sort key
  * @param {number} col The cell's column
  * @returns {function} tr => the name of the option selected in that column's menu
@@ -197,7 +210,7 @@ if (isEmptyObject(mriInfo)) {
           {
             typeOfBinding: 1, // project
             path: 'mri.atlas.#.project',
-            format: (e, d) => { e.innerHTML = '<a href="/project/' + d + '">' + d + '</a>'; }
+            format: (e, d) => { e.replaceChildren(projectLink(d)); }
           },
           {
             typeOfBinding: 1,
@@ -294,7 +307,7 @@ if (isEmptyObject(mriInfo)) {
         {
           typeOfBinding: 1,
           path: '#.project', // project
-          format: (e, d) => { e.innerHTML = '<a href="/project/' + d + '">' + d + '</a>'; }
+          format: (e, d) => { e.replaceChildren(projectLink(d)); }
         },
         {
           typeOfBinding: 1,

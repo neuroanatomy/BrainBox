@@ -314,11 +314,15 @@ export const AtlasMakerWS = {
         // setup download link
         const link = me.container.querySelector('span#download_atlas');
         if (link) {
-          link.innerHTML = [
-            '<a class=\'download\' href=\'' + me.User.dirname + me.User.atlasFilename + '\'>',
-            '<img src=\'' + me.downloadIcon + '\' style=\'vertical-align:middle\'/>',
-            '</a>' + atlas.name
-          ].join('');
+          // the layer's name as text: it is read from the MRI's document
+          const a = document.createElement('a');
+          a.className = 'download';
+          a.href = me.User.dirname + me.User.atlasFilename;
+          const img = document.createElement('img');
+          img.src = me.downloadIcon;
+          img.style.verticalAlign = 'middle';
+          a.appendChild(img);
+          link.replaceChildren(a, document.createTextNode(atlas.name));
         }
 
         break;

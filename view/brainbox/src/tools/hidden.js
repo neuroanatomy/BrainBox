@@ -15,10 +15,13 @@ export default function hidden(annotation, path, username) {
     typeOfBinding:2,
     path: path,
     format: function(e, d) {
+      // the text as text: it is what a user typed
       if(typeof d.data === 'undefined') {
-        e.innerHTML = '';
+        e.replaceChildren();
       } else {
-        e.innerHTML = '<span>'+d.data+'</span>';
+        const span = document.createElement('span');
+        span.textContent = d.data;
+        e.replaceChildren(span);
       }
     },
     parse: function(e, d) {

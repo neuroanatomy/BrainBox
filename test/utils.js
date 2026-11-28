@@ -28,6 +28,15 @@ const wsURL = (Config.secure ? 'wss://' : 'ws://') + Config.wshostname;
 // address the pages use. Also for requests that must come from 127.0.0.1, not ::1.
 const testDataURL = `http://127.0.0.1:${brainboxApp.serverPorts(Config).appPort}`;
 const localBertURL = testDataURL + '/test_data/bert_brain.nii.gz';
+// The server downloads MRIs only from public addresses (controller/mri/public-fetch.js), and
+// 127.0.0.1 is not one: the tests let it through, for the test brains above.
+// mri-download-public.test.js puts the real check back for its own tests.
+const publicFetch = require('../controller/mri/public-fetch');
+const realIsRefusedAddress = publicFetch.isRefusedAddress;
+const allowTestServer = () => {
+  publicFetch.isRefusedAddress = (address) => address !== '127.0.0.1' && realIsRefusedAddress(address);
+};
+allowTestServer();
 const cheetahURL = 'https://zenodo.org/record/44846/files/MRI.nii.gz?download=1';
 const testToken = 'qwertyuiopasdfghjklzxcvbnm';
 const testTokenDuration = 2 * (1000 * 3600); // 2h
@@ -494,6 +503,8 @@ const createProjectWithPermission = function (name, accessProp) {
 
 module.exports = {
   serverURL,
+  realIsRefusedAddress,
+  allowTestServer,
   wsURL,
   testDataURL,
   cheetahURL,

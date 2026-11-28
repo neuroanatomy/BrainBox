@@ -130,7 +130,16 @@ const start = async function ({ extraRoutes } = {}) {
   // eslint-disable-next-line new-cap
   const publicFiles = express.Router();
   publicFiles.use(dataAccessMiddleware({ nativeDb }));
-  publicFiles.use(express.static(path.join(dirname, 'public')));
+  // the files of /data come from other servers (downloaded) or from users (uploaded): opened
+  // as a page, one runs no script and does not have BrainBox's origin (as microdraw's D42)
+  const dataDir = path.join(dirname, 'public', 'data') + path.sep;
+  publicFiles.use(express.static(path.join(dirname, 'public'), {
+    setHeaders: (res, filePath) => {
+      if (filePath.startsWith(dataDir)) {
+        res.set({ 'Content-Security-Policy': 'sandbox; default-src \'none\'', 'X-Content-Type-Options': 'nosniff' });
+      }
+    }
+  }));
   app.use(publicFiles);
   // nwl-components' built files, among them the shared icons (/lib/nwl-components/icons/<name>.svg)
   app.use('/lib/nwl-components', express.static(path.dirname(require.resolve('nwl-components/tokens.css'))));

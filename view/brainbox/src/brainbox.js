@@ -174,7 +174,12 @@ export const BrainBox = {
 
       // Configure MRI into atlasmaker
       if (param.info.success === false) {
-        if (msgLog) { msgLog.innerHTML += '<p>ERROR: ' + param.info.message + '.'; }
+        if (msgLog) {
+          // as text: the message may hold the MRI's URL, which a link gives
+          const p = document.createElement('p');
+          p.textContent = 'ERROR: ' + param.info.message + '.';
+          msgLog.appendChild(p);
+        }
         console.log('<p>ERROR: ' + param.info.message + '.');
         reject(new Error(param.info.message));
 

@@ -336,7 +336,11 @@ for (const k of projectInfo.annotations.list) {
   if (k.type === 'text' ||
     k.type === 'hidden text' ||
     k.type === 'multiple choices') {
-    document.querySelectorAll('#projectFiles thead tr').forEach((tr) => tr.insertAdjacentHTML('beforeend', `<th>${k.name}</th>`));
+    document.querySelectorAll('#projectFiles thead tr').forEach((tr) => {
+      const th = document.createElement('th');
+      th.textContent = k.name;
+      tr.appendChild(th);
+    });
     annotations.text.push(k);
   }
 }
@@ -438,7 +442,7 @@ BrainBox.initBrainBox()
       format: function (e, d) {
         e.querySelectorAll('a').forEach((a) => { a.href = location.origin + '/mri?url=' + d; });
         const text = d.split('/').pop();
-        e.querySelectorAll('a').forEach((a) => { a.innerHTML = text; });
+        e.querySelectorAll('a').forEach((a) => { a.textContent = text; });
       }
     });
 

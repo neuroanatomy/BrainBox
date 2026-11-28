@@ -379,8 +379,9 @@ describe('UNIT TESTING THE MRI DOCUMENTS LOCK', function () {
           return image;
         });
       });
-      sinon.stub(fs, 'mkdirSync');
-      sinon.stub(fs, 'renameSync');
+      sinon.stub(fs.promises, 'mkdir').resolves();
+      sinon.stub(fs.promises, 'rename').resolves();
+      sinon.stub(fs.promises, 'rm').resolves();
       sinon.stub(fs, 'createWriteStream').callsFake(() => new Writable({ write: (chunk, enc, cb) => cb() }));
     });
 

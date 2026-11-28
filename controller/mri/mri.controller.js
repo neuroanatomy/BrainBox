@@ -4,8 +4,9 @@
 const crypto = require('crypto');
 const url = require('url');
 const fs = require('fs');
-const request = require('request');
+const { pipeline } = require('stream/promises');
 const sanitize = require('sanitize-filename');
+const publicFetch = require('./public-fetch');
 const { body, validationResult } = require('express-validator');
 const AtlasmakerServer = require('../atlasmakerServer/atlasmakerServer');
 const dataSlices = require('../dataSlices/dataSlices.js');
@@ -119,7 +120,26 @@ const newMriDocument = (source, hash, owner) => ({
 
 /* Download MRI file
 --------------------- */
-// @todo Change this function callback into a promise
+
+/**
+ * The file name a server gives in Content-Disposition, if any
+ * @param {string} [contentDisp] The header
+ * @returns {string} The sanitized name, or ''
+ */
+const attachmentFilename = (contentDisp) => {
+  const match = (/^attachment/).test(contentDisp || '') && contentDisp.match(/filename="?([^";]+)"?/);
+
+  return match ? sanitize(match[1]) : '';
+};
+
+/**
+ * Download the MRI of a URL to /data/<md5 of the URL>/, from a public server
+ * only (public-fetch.js: no internal address, also not through a redirect;
+ * verified certificates; size and time limits), streamed to the file
+ * @param {string} myurl The MRI's source
+ * @param {object} req The request that asked for it
+ * @returns {Promise<object>} The hash, the owner and the document's new fields
+ */
 // eslint-disable-next-line max-statements
 const downloadMRI = async function (myurl, req) {
   console.log('downloadMRI');
@@ -137,112 +157,66 @@ const downloadMRI = async function (myurl, req) {
   } else {
     ({ filename } = mridb);
   }
-  let dest = req.dirname + '/public/data/' + hash + '/' + filename;
   console.log('   source:', myurl);
   console.log('     hash:', hash);
-  console.log(' filename:', filename);
-  console.log('     dest:', dest);
 
-  // eslint-disable-next-line no-sync
-  if (!fs.existsSync(req.dirname + '/public/data/' + hash)) {
-    // eslint-disable-next-line no-sync
-    fs.mkdirSync(req.dirname + '/public/data/' + hash, '0777');
-  }
-  let len, newDest, newFilename;
-  let cur = 0;
-
-  return new Promise(function (resolve, reject) {
-    let aborted = false;
-    const req_ = request({
-      uri: myurl,
-      followAllRedirects: true,
-      rejectUnauthorized: false,
-      headers: { 'User-Agent': 'BrainBox/1.0 (https://brainbox.pasteur.fr)' }
-    });
-    req_
-      .on('error', (err) => {
-        if (aborted) { return; }
-        console.log('ERROR in downloadMRI', err);
-        reject(err);
-      })
-      // eslint-disable-next-line max-statements
-      .on('response', (res) => {
-        // Check for HTTP errors before saving to disk
-        if (res.statusCode < 200 || res.statusCode >= 300) {
-          aborted = true;
-          req_.abort();
-          reject(new Error(`Remote server returned HTTP ${res.statusCode} for ${myurl}`));
-
-          return;
-        }
-
-        const contentType = res.headers['content-type'] || '';
-        if (contentType.includes('text/html')) {
-          aborted = true;
-          req_.abort();
-          const err = new Error(`Remote server returned HTML instead of a binary file for ${myurl} (possible rate limit or access restriction)`);
-          err.clientDownloadRequired = true;
-          reject(err);
-
-          return;
-        }
-
-        const contentDisp = res.headers['content-disposition'];
-        if (contentDisp && (/^attachment/).test(contentDisp)) {
-          newFilename = sanitize(contentDisp.split('filename=')[1].split(';')[0].replace(/"/g, ''));
-        } else {
-          newFilename = filename;
-        }
-        console.log('filename:', newFilename);
-        const arr = dest.split('/');
-        arr.pop();
-        arr.push(newFilename);
-        newDest = arr.join('/');
-        console.log('new dest:', newDest);
-        len = parseInt(res.headers['content-length'], 10);
-        console.log('file length:', len);
-      })
-      .on('data', (chunk) => {
-        cur += chunk.length;
-        console.log('downloaded:', cur, '/', len, newFilename);
-        downloadQueue[myurl].cur = cur;
-        downloadQueue[myurl].len = len;
-      })
-      .pipe(fs.createWriteStream(dest))
-      .on('close', () => {
-        if (aborted) { return; }
-        console.log('new:', newFilename, newDest);
-        // eslint-disable-next-line no-sync
-        fs.renameSync(dest, newDest);
-        filename = newFilename;
-        dest = newDest;
-
-        // NOTE: getBrainAtPath has to be called with a client-side path like "/data/[md5hash]/..."
-        atlasmakerServer.getBrainAtPath('/data/' + hash + '/' + filename)
-          .then((mri) => {
-            // the file's fields, and what a new document needs
-            const owner = visitor(req) || anonymousOwner(req);
-            resolve({
-              hash,
-              owner,
-              changes: {
-                filename,
-                success: true,
-                dim: mri.dim,
-                pixdim: mri.pixdim,
-                voxel2world: mri.v2w,
-                worldOrigin: mri.wori,
-                modified: (new Date()).toJSON(),
-                modifiedBy: owner
-              }
-            });
-          })
-          .catch((err) => {
-            console.log('ERROR Cannot get brain at path /data/' + hash + '/' + filename + ': ', err);
-            reject(err);
-          });
-      });
+  const { response } = await publicFetch.openPublic(myurl, {
+    headers: { 'User-Agent': 'BrainBox/1.0 (https://brainbox.pasteur.fr)' }
   });
+  // Check for HTTP errors before saving to disk
+  if (response.statusCode < 200 || response.statusCode >= 300) {
+    response.destroy();
+    throw new Error(`Remote server returned HTTP ${response.statusCode} for ${myurl}`);
+  }
+  if ((response.headers['content-type'] || '').includes('text/html')) {
+    response.destroy();
+    const err = new Error(`Remote server returned HTML instead of a binary file for ${myurl} (possible rate limit or access restriction)`);
+    err.clientDownloadRequired = true;
+    throw err;
+  }
+  filename = attachmentFilename(response.headers['content-disposition']) || filename;
+  const len = parseInt(response.headers['content-length'], 10);
+  console.log(' filename:', filename, 'length:', len);
+
+  // written under a hidden name (express.static serves no dot file), renamed
+  // once complete: a failed download leaves nothing, and replaces no file
+  const dir = req.dirname + '/public/data/' + hash;
+  const part = dir + '/.download-' + crypto.randomBytes(8).toString('hex');
+  await fs.promises.mkdir(dir, { recursive: true, mode: 0o777 });
+  try {
+    await pipeline(response, publicFetch.sizeLimit((cur) => {
+      if (downloadQueue[myurl]) { Object.assign(downloadQueue[myurl], { cur, len }); }
+    }), fs.createWriteStream(part));
+  } catch (err) {
+    response.destroy();
+    await fs.promises.rm(part, { force: true });
+    throw err;
+  }
+  await fs.promises.rename(part, dir + '/' + filename);
+
+  // NOTE: getBrainAtPath has to be called with a client-side path like "/data/[md5hash]/..."
+  const mri = await atlasmakerServer.getBrainAtPath('/data/' + hash + '/' + filename)
+    .catch((err) => {
+      console.log('ERROR Cannot get brain at path /data/' + hash + '/' + filename + ': ', err);
+      throw err;
+    });
+  // the file's fields, and what a new document needs
+  const owner = visitor(req) || anonymousOwner(req);
+
+  return {
+    hash,
+    owner,
+    changes: {
+      filename,
+      success: true,
+      dim: mri.dim,
+      pixdim: mri.pixdim,
+      voxel2world: mri.v2w,
+      worldOrigin: mri.wori,
+      modified: (new Date()).toJSON(),
+      modifiedBy: owner
+    }
+  };
 };
 
 // eslint-disable-next-line max-statements
