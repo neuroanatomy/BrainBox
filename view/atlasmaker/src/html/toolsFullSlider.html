@@ -1,0 +1,17 @@
+<!-- BrainBox's slider in the toolbar frame's #sliderBlock (nwl-components toolsFrame, built in atlasmaker-tools-full.js): its - and + buttons and its slider -->
+<div style="display:flex">
+    <div style="flex:0 0 28px">
+        <button type="button" id="prev" aria-label="Previous slice" class="nwl-tool-button push">-</button>
+    </div>
+    <div style="flex:1 0 28px;display:flex">
+        <div style="flex:1;position:relative">
+            <div id="slice" class="slider" data-max="100" data-val="0" style="position:absolute;height:100%;margin-left:10px;width:calc(100% - 20px)">
+                <div class="track" style="position:absolute;left:0;top:50%;width:100%;border-top:1px solid #fff;padding:0;display:inline-block"></div>
+                <div class="thumb" style="position:absolute;left:0;top:50%;transform:translate(-10px,-10px);border-radius:10px;padding:0;width:20px;height:20px;background:#fff;display:inline-block"></div>
+            </div>
+        </div>
+    </div>
+    <div style="flex:0 0 28px">
+        <button type="button" id="next" aria-label="Next slice" class="nwl-tool-button push">+</button>
+    </div>
+</div>

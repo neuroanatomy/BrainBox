@@ -119,4 +119,48 @@ describe('TESTING THE VIEWER\'S LINK BUTTON AND SCRIPT CONSOLE', function () {
       { timeout: U.shortTimeout }
     );
   }).timeout(U.longTimeout * 2);
+
+  // T002 K2c: the console's look is nwl-components' widgets.css (3.9.0), scoped to #logScript
+  it('the script console has the dark theme: light text on black, wrapping, in the panel\'s font size', async function () {
+    const { page } = await openViewer(browser);
+    pages.push(page);
+    await page.waitForSelector('#logScript .codeflask', { timeout: U.mediumTimeout });
+    await page.evaluate(() => AtlasMakerWidget.toggleTextInput('Script'));
+    const look = await page.evaluate(() => {
+      const token = (name) => {
+        const probe = document.createElement('div');
+        probe.style.color = `var(${name})`;
+        document.body.appendChild(probe);
+        const value = getComputedStyle(probe).color;
+        probe.remove();
+
+        return value;
+      };
+      const style = (sel) => getComputedStyle(document.querySelector(sel));
+      const flask = style('#logScript .codeflask');
+      const textarea = style('#logScript textarea.codeflask__flatten');
+
+      return {
+        canvas: token('--nwl-bg-canvas'),
+        text: token('--nwl-text'),
+        white: token('--nwl-white'),
+        background: flask.backgroundColor,
+        position: flask.position,
+        code: style('#logScript .codeflask__code').color,
+        whiteSpace: textarea.whiteSpace,
+        caret: textarea.caretColor,
+        fontSize: textarea.fontSize,
+        flaskFontSize: flask.fontSize
+      };
+    });
+    assert.strictEqual(look.canvas, 'rgb(0, 0, 0)');
+    assert.strictEqual(look.background, look.canvas);
+    assert.strictEqual(look.position, 'relative');
+    assert.strictEqual(look.code, look.text);
+    assert.strictEqual(look.whiteSpace, 'pre-wrap');
+    assert.strictEqual(look.caret, look.white);
+    // the panel's font size (BrainBox's `.text *`), not codeflask's 13px
+    assert.strictEqual(look.fontSize, look.flaskFontSize);
+    assert.notStrictEqual(look.fontSize, '13px');
+  }).timeout(U.longTimeout * 2);
 });

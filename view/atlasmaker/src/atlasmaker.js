@@ -20,7 +20,7 @@ import { chatInput } from 'nwl-components/chat';
 import deepExtendModule from '../../shared/deepExtend.js';
 import downloadIcon from 'nwl-components/dist/icons/download.svg';
 import toolsEmbed from './html/toolsEmbed.html';
-import toolsFull from './html/toolsFull.html';
+import { toolsFull } from './atlasmaker-tools-full.js';
 import toolsLight from './html/toolsLight.html';
 
 const { deepExtend } = deepExtendModule;

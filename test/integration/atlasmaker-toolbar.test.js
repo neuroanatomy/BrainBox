@@ -315,6 +315,49 @@ describe('TESTING THE VIEWER\'S TOOLBAR AND PAGE STATE', function () {
     await page.waitForFunction((s) => AtlasMakerWidget.User.slice === s + 1, { timeout: U.shortTimeout }, slice);
   }).timeout(U.longTimeout);
 
+  // T002 K2c: the full toolbar is nwl-components' toolsFrame (3.9.0) with BrainBox's own parts
+  it('has the toolbar frame\'s outline and ids, with BrainBox\'s slider, buttons and pen size in their slots', async function () {
+    const { page } = viewer;
+    const frame = await page.evaluate(() => {
+      const ids = (el) => [...el.children].map((child) => child.id);
+      const has = (block, sel) => Boolean(document.querySelector(`#${block} ${sel}`));
+      const hasId = (block, id) => has(block, `[id="${id}"]`);
+      const loaded = (img) => img.complete && img.naturalWidth > 0;
+
+      return {
+        side: ids(document.getElementById('tools-side')),
+        maximized: ids(document.getElementById('tools-maximized')),
+        header: ['display-minimize', 'toolsDragHandle', 'display-left', 'display-right']
+          .map((id) => document.querySelector(`#headerBlock #${id}`) !== null),
+        dragHandleEmpty: document.getElementById('toolsDragHandle').children.length === 0,
+        textInput: ['logChat', 'msg', 'logScript', 'textInputResize'].map((id) => has('textInputBlock', `#${id}`)),
+        slider: has('sliderBlock', '#prev') && has('sliderBlock', '#slice.slider .track') &&
+          has('sliderBlock', '#slice.slider .thumb') && has('sliderBlock', '#next'),
+        labels: ['prev', 'next'].map((id) => document.getElementById(id).getAttribute('aria-label')),
+        buttons: [
+          'plane', 'fullscreen', '3drender', 'text', 'bubble', 'script', 'link', 'precise',
+          'paintTool', 'color', 'fill', 'undo', 'upload', 'download', 'save'
+        ].filter((id) => !hasId('buttonsBlock', id)),
+        penSize: document.querySelectorAll('#penSizeBlock #penSize button').length,
+        // the frame's icons are the bundled nwl-components icons, as html-loader gave them
+        icons: [...document.querySelectorAll('#bars-icon, #headerBlock img')]
+          .map((img) => img.src.startsWith('data:image/svg+xml') && loaded(img)),
+        panels: ['loadingIndicator', 'labelset', 'landmarksDialog'].map((id) => document.getElementById(id) !== null)
+      };
+    });
+    assert.deepEqual(frame.side, ['tools-minimized', 'tools-maximized']);
+    assert.deepEqual(frame.maximized, ['headerBlock', 'sliderBlock', 'buttonsBlock', 'penSizeBlock', 'notificationsBlock', 'textInputBlock']);
+    assert.deepEqual(frame.header, [true, true, true, true]);
+    assert.isTrue(frame.dragHandleEmpty, 'no slice number in BrainBox\'s drag handle');
+    assert.deepEqual(frame.textInput, [true, true, true, true]);
+    assert.isTrue(frame.slider, 'BrainBox\'s - and + buttons and slider are in #sliderBlock');
+    assert.deepEqual(frame.labels, ['Previous slice', 'Next slice']);
+    assert.deepEqual(frame.buttons, [], 'BrainBox\'s 15 tools are in #buttonsBlock');
+    assert.strictEqual(frame.penSize, 6);
+    assert.deepEqual(frame.icons, [true, true, true, true]);
+    assert.deepEqual(frame.panels, [true, true, true]);
+  }).timeout(U.longTimeout);
+
   it('gives a pressed tool the --nwl-bg-pressed background, and hovers as U7', async function () {
     const { page } = viewer;
     const look = (sel) => page.$eval(sel, (el) => {
